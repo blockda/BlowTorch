@@ -53,8 +53,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private Boolean touchLock = new Boolean(false);
 	
-	private Boolean wasRunning = false;
-	
 	private Boolean drawn = false;
 	private Boolean isdrawn = true;
 	
@@ -175,24 +173,13 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					//buttondropstarted = false;
 					break;
 				case MSG_DELETEBUTTON:
-					//Log.e("SLICK","ATTEMPTING TO REMOVE BUTTON");
-					
-					//TODO: change this to be a dialog and set settings.
-					//build alerter dialog
 
-					RelativeLayout l = parent_layout;
 					SlickButton the_b = (SlickButton)msg.obj;
 					
 					ButtonEditorDialog d = new ButtonEditorDialog(parent_layout.getContext(),the_b,this);
 					
 					d.show();
-					
-					
-					//d shoudl contain return values after we are done
-					//if(d.EXIT_STATE == d.EXIT_DELETE) {
-					//	l.removeView(del_b);
-					//	buttons.remove(del_b);
-					//}
+
 					break;
 				case MSG_REALLYDELETEBUTTON:
 					RelativeLayout lb = parent_layout;
@@ -201,30 +188,15 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					buttons.remove(del_b);
 					break;
 				case MSG_CREATEBUTTONWITHDATA:
-					//int ix = msg.getData().getInt("X");
-					//int iy = msg.getData().getInt("Y");
-					//String text = msg.getData().getString("THETEXT");
-					//String label = msg.getData().getString("THELABEL");
-					
-					//Log.e("SLICK","CREATING BUTTON WITH DATA");
-					
-					//SlickButtonData dayta = (SlickButtonData)msg.obj;
-					//int ixp = dayta.x;
-					//int iyp = dayta.y;
-					//String textp = dayta.the_text;
-					//String labelp = dayta.the_label;
+
 					
 					SlickButton bip = new SlickButton(parent_layout.getContext(),0,0);
-					//bip.setText(textp);
-					//bip.setLabel(labelp);
 					SlickButtonData the_data = new SlickButtonData();
 					the_data.setDataFromString((String)msg.obj);
 					bip.setData(the_data);
 					
 					RelativeLayout.LayoutParams lpip = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
 					
-					//SlickButton b = new SlickButton(parent_layout.getContext(),bx,by);
-
 					bip.setClickable(true);
 					bip.setFocusable(true);
 					
@@ -273,16 +245,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 
 
 	public void surfaceCreated(SurfaceHolder arg0) {
-		//Log.e("VIEW","SURFACE CREATED!");
-		//if(!wasRunning) {
-			_runner = new DrawRunner(getHolder(),this,touchLock);
-			_runner.setRunning(true);
-			_runner.start();
-			wasRunning = true;
-		//}
-			
-
-
+		_runner = new DrawRunner(getHolder(),this,touchLock);
+		_runner.setRunning(true);
+		_runner.start();
 	}
 	
 	public String getBuffer() {
@@ -309,7 +274,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		the_buffer = new StringBuffer(betterBreakLines(the_original_buffer,77));
 		
 		synchronized(drawn) {
-			//Log.e("SLICK","WAKING UP DRAW THREAD");
 			drawn.notify();
 			drawn = false;
 		}
@@ -323,7 +287,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				try {
 					touchLock.wait();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
 			}
@@ -362,15 +326,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				retry = false;
 			} catch (InterruptedException e) { }
 		}
-		wasRunning = false;
-		
 
-		
-		//_runner = null;
 	}
 
 	public void surfaceDestroyed(SurfaceHolder arg0) {
-		//Log.e("SLICK","SURFACE DESTROYED!");
 		boolean retry = true;
 		
 
@@ -399,14 +358,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				retry = false;
 			} catch (InterruptedException e) { }
 		}
-		wasRunning = false;
+		//wasRunning = false;
 		//Log.e("SLICK","SURFACE_DESTROYED = TRUE!");
 	}
 	
 	
 	public void onAnimationStart() {
 		//Log.e("SLICK","ANIMATION START!");
-		Animation anim = this.getAnimation();
+		//Animation anim = this.getAnimation();
 		
 		//this.startAnimation(anim);
 		super.onAnimationStart();
@@ -599,9 +558,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         
         //opts.setStyle(Style.)
         opts.setTypeface(Typeface.MONOSPACE);
-        /*canvas.drawText("####------     PAINT    ------##?###?#?#?#?##",0,0,opts);
-        canvas.drawText("-----        -------      ||||| |||| Xxxxxxxx",0,13,opts);
-        canvas.drawText("||                                         ||",0,26,opts);*/
+
         Matcher toLines = newline.matcher(the_buffer.toString());
         
         StringBuffer line = new StringBuffer();
@@ -643,15 +600,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         		
         		while(colormatch.find()) {
         			colorfound = true;
-        			//String bright = colormatch.group(2);
-        			//String value = colormatch.group(3);
-        			//if(bright == null) {
-        			//	bright = "0";
-        			//}
-        			
-        			
-        			
-        			
         			colormatch.appendReplacement(csegment, "");
         			
         			//get color data
@@ -703,22 +651,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         if(!endonnewline) {
         	
         	toLines.appendTail(line);
-        	//canvas.drawText(line.toString(), 0, (currentline*linesize)+remainder+new Float(scrollback).intValue(), opts);
-        	//Log.e("SLICK","APPENDED LINE TAIL" + line.toString());
-        	
         	int screenpos = currentline - startDrawingAtLine + 1;
     		int y_position =  ((screenpos*linesize)+remainder);
-    		//int alt_y_pos = ((screenpos*linesize));
     		opts.setColor(0xFF00CCCC);
-    		//canvas.drawLine(0, y_position, canvas.getWidth(), y_position, opts);
-    		//opts.setColor(0xFF00FFFF);
-    		//canvas.drawLine(0, alt_y_pos, canvas.getWidth(), alt_y_pos, opts);
-        	//int tmpy = ((currentline)*linesize)+remainder;
-    		//opts.setColor(0xFF00CCCC);
-    		/*--------------------------------------*/
-    		
-    		//int screenpos = currentline - startDrawingAtLine;
-    		//int y_position =  ((screenpos*linesize)+remainder);
     		Matcher colormatch = colordata.matcher(line.toString());
     		
     		
@@ -728,15 +663,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     		
     		while(colormatch.find()) {
     			colorfound = true;
-    			//String bright = colormatch.group(2);
-    			//String value = colormatch.group(3);
-    			//if(bright == null) {
-    			//	bright = "0";
-    			//}
-    			
-    			
-    			
-    			
     			colormatch.appendReplacement(csegment, "");
     			
     			//get color data
@@ -763,23 +689,13 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     		if(!colorfound) {
     			canvas.drawText(line.toString(), 0, y_position , opts);
     		}
-    		/*--------------------------------------*/
-        	//canvas.drawText(line.toString(), 0, y_position, opts);
-        	//Log.e("VIEW","PROMPT:" + y_position + ":" + line.toString());
-        	line.setLength(0);
+    		line.setLength(0);
         	currentline++;		
         	
         }
         
         //release the lock
         drawn_buffer = canvas;
-        
-        /*synchronized(touchLock) {
-        	touchLock.notify();
-        	touchLock = false;
-        	//touchLock.notify();
-        }*/
-		//}
 	}
 	
 	public boolean onTouchEvent(MotionEvent t) {
@@ -811,8 +727,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				buttonaddhandler.removeMessages(MSG_BUTTONDROPSTART);
 			}
 			
-			int history = t.getHistorySize();
-			//int history = 1;
+
 			float thentime = pre_event.getEventTime();
 			float nowtime = t.getEventTime();
 			
