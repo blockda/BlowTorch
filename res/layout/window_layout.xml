@@ -92,18 +92,18 @@
     	android:layout_width="fill_parent"
     	android:layout_above="@id/filler">
     	
-    	<ScrollView
+    	<!-- <ScrollView
     		android:id="@+id/mainscroller"
     		android:layout_height="fill_parent"
    	 		android:layout_width="fill_parent">
-    			<TextView  
+    			 <TextView  
     				android:layout_width="fill_parent" 
    					android:layout_height="fill_parent" 
     				android:text="@string/hello"
    					android:textSize="12sp"
     				android:typeface="monospace"
-    				android:id="@+id/tv" /> 
-    	</ScrollView>
+    				android:id="@+id/tv" />
+    	</ScrollView>  -->
     	
  <!--   <ScrollView 
     		android:id="@+id/secscroller"
@@ -135,11 +135,11 @@
     	    android:id="@+id/thrirdscroller"
     		android:layout_height="fill_parent"
    	 		android:layout_width="fill_parent"> -->
-    		<WebView
+    		<!--  <WebView
     			android:id="@+id/webview"
     			android:layout_height="fill_parent"
     			android:layout_width="fill_parent"
-    			android:typeface="monospace"/>
+    			android:typeface="monospace"/> -->
     		
     	<!-- </ScrollView> -->	
 	</com.happygoatstudios.bt.window.FixedViewFlipper>
