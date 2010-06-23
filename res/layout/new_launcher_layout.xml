@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<RelativeLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:id = "@+id/launcher_window_content"
+		android:layout_height = "wrap_content"
+		android:layout_width = "wrap_content">
+		
+		<TextView
+			android:text = "Connections:"
+			android:textSize = "20sp"
+			android:layout_height = "wrap_content"
+			android:layout_width = "275px"
+			android:layout_below="@id/launcher_window_content"
+			android:id = "@+id/c_label"
+			android:layout_alignParentRight = "true"
+			android:layout_alignParentTop = "true"
+			android:gravity = "center"
+			/>
+			
+		<TableLayout
+			android:id = "@+id/table_container"
+			android:layout_height = "wrap_content"
+			android:layout_width = "wrap_content"
+			android:layout_alignParentRight = "true"
+			android:layout_alignParentBottom = "true"
+			>
+			
+			<TableRow
+				android:layout_height = "wrap_content"
+				android:layout_width = "wrap_content"
+				android:gravity = "center">
+				<Button
+					android:id = "@+id/new_connection"
+					android:layout_height = "wrap_content"
+					android:layout_width = "135px"
+					android:text = "[NEW]"/>
+				<Button
+					android:id = "@+id/help_button"
+					android:layout_height = "wrap_content"
+					android:layout_width = "135px"
+					android:text = "[HELP]"/>
+			</TableRow>
+			
+		</TableLayout>
+			
+		<ListView
+			android:id = "@+id/connection_list"
+			android:layout_alignParentRight = "true"
+			android:layout_above="@id/table_container"
+			android:layout_below="@id/c_label"
+			android:layout_height = "fill_parent"
+			android:layout_width = "275px">
+			
+		</ListView>
+		
+
+	
+	</RelativeLayout>

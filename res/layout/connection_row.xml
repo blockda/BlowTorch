@@ -8,18 +8,26 @@
     android:id = "@+id/displayname"
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
+  	android:textSize="18sp"
+  	android:textStyle="bold"
+  	android:text="serif"
   	/>
   <TextView
-  	android:id = "@+id/hostname"
-  	android:layout_width = "wrap_content"
+  	android:id = "@+id/hoststring"
+  	android:layout_width = "fill_parent"
   	android:layout_height = "wrap_content"
   	android:layout_below = "@id/displayname"
-  	android:layout_alignParentLeft="true"/>
-  <TextView
-  	android:id = "@+id/port"
-  	android:layout_width = "wrap_content"
-  	android:layout_height = "wrap_content"
-  	android:layout_alignTop = "@id/hostname"
-  	android:layout_toRightOf = "@id/hostname"/>
+  	android:layout_alignParentLeft="true"
+  	android:singleLine = "true"
+  	android:ellipsize = "marquee"
+  	android:marqueeRepeatLimit = "marquee_forever"
+  	android:drawableBottom = "@drawable/dashedline"
+  	android:textStyle="italic"
+  	android:textSize = "10sp"/>
+  <!--  <ImageView
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:src="@drawable/dashedline"/> -->
+
 
 </RelativeLayout>

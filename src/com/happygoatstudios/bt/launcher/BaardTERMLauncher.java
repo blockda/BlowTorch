@@ -2,14 +2,21 @@ package com.happygoatstudios.bt.launcher;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -23,24 +30,49 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.AbsoluteLayout.LayoutParams;
+
 import com.happygoatstudios.bt.window.SlickButton;
 
 import com.happygoatstudios.bt.R;
 
 public class BaardTERMLauncher extends Activity implements ReadyListener {
 	
-	Timer button_timer = new Timer();
-	Handler buttonaddhandler = null;
+	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
+	
+	private ArrayList<MudConnection> connections;
+	private BaardTERMLauncher.ConnectionAdapter apdapter;
+	
+	ListView lv = null;
+	
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		
+		setContentView(R.layout.new_launcher_layout);
+		
+		connections = new ArrayList<MudConnection>();
+		
+		lv = (ListView)findViewById(R.id.connection_list);
+		apdapter = new ConnectionAdapter(lv.getContext(),R.layout.connection_row,connections);
+		lv.setAdapter(apdapter);
+		
+		lv.setTextFilterEnabled(true);
+		lv.setOnItemClickListener(new listItemClicked());
+		lv.setOnItemLongClickListener(new listItemLongClicked());
+		
+		getConnectionsFromDisk();
+		
+		Button newbutton = (Button)findViewById(R.id.new_connection);
+		newbutton.setOnClickListener(new newClickedListener());
 		//start the initializeations
-		setContentView(R.layout.launcher_layout);
+		/*setContentView(R.layout.launcher_layout);
 		
 		
 		//get the button
@@ -57,159 +89,218 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			}
 		});
 		
-		tv.setOnTouchListener(new View.OnTouchListener() {
-			long downpresstime;
-			long duration;
-			@SuppressWarnings("deprecation")
-			public boolean onTouch(View v, MotionEvent event) {
-				//if(event.getAction() == MotionEvent.ACTION_DOWN) { 
-				//	downpresstime = event.getEventTime();
-				//}
-				if(!buttondropstarted && event.getAction() == MotionEvent.ACTION_DOWN) {
-				Log.e("LAUNCHER","MOTIONEVENTS INCOMING!" + event.getDownTime() + "|" + event.getEventTime());
-				
-				x = (int)event.getX(event.getPointerId(0));
-				y = (int)event.getY(event.getPointerId(0));
-				
-				button_timer.schedule(new AddButtonTask(), 3000);
-				buttondropstarted = true;
-				
-				return true;
-				}
-				
-				if(buttondropstarted && event.getAction() == MotionEvent.ACTION_UP) {
-					button_timer.cancel();
-					button_timer.purge();
-					button_timer = new Timer();
-					Log.e("LAUNCHER","CANCELLING BUTTON ADD");
-					//button_timer.purge();
-					buttondropstarted = false;
-					/*RelativeLayout l = (RelativeLayout)findViewById(R.id.welcomelayout);
-					l.removeAllViews();
-					BaardTERMLauncher.this.setContentView(l);
-					l.invalidate(); */
-					
-					
-				}
-				return false;
-			}
-		});
-		
-		tv.setLongClickable(false);
-		
-		/*tv.setOnLongClickListener(new View.OnLongClickListener() {
-			
-			public boolean onLongClick(View v) {
-				//add button at current xy, reset the long click coordinates and state
-				Log.e("LAUNCHER","LONG PRESS @ X:" + x + " Y:" + y);
-				buttondropstarted = false;
-				return true;
-			}
-		});*/
-		
-		buttonaddhandler = new Handler() {
-			public void handleMessage(Message what) {
-				//addbutton
-				Log.e("LAUNCHER","BUTTON HANDLER THING CALLED!");
-				RelativeLayout l = (RelativeLayout)findViewById(R.id.welcomelayout);
+		tv.setLongClickable(false);*/
 
-				RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
-			
-				SlickButton b = new SlickButton(l.getContext(),x,y);
-
-				b.setClickable(true);
-				b.setFocusable(true);
-				
-				buttons.add(b);
-				int pos = buttons.lastIndexOf(b);
-				
-				l.addView(buttons.get(pos),lp);
-				l.invalidate();
-				x = 0;
-				y = 0;
-				buttondropstarted = false;
-			}
-		};
 		
 	}
 	
-	Vector<SlickButton> buttons = new Vector<SlickButton>();
+	public void onDestroy() {
+		saveConnectionsToDisk();
+		super.onDestroy();
+	}
 	
-	int x = 0;
-	int y = 0;
-	boolean buttondropstarted = false;
-	boolean buttondropdone = true;
+	private class newClickedListener implements View.OnClickListener {
+		public void onClick(View v) {
+			//close the dialog for now
+			//ConnectionPickerDialog.this.dismiss();
+			NewConnectionDialog diag = new NewConnectionDialog(BaardTERMLauncher.this,BaardTERMLauncher.this);
+			diag.show();
+		}
+	}
 	
-	
-	//called when ConnectionPickerDialog returns.
-    public void ready(String displayname,String host,String port) {
-        /*connection = new Thread(this);
-        connection.setName("Connection_Handler");
-        connection.start();
-        
-		FixedViewFlipper vf = (FixedViewFlipper)findViewById(R.id.welcomeflipper);
-		vf.showNext();
+	private class listItemLongClicked implements ListView.OnItemLongClickListener {
+
+		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+				int arg2, long arg3) {
+			Log.e("LAUNCHER","List item long clicked!");
+			MudConnection muc = apdapter.getItem(arg2);
+			
+			
+			Message delmsg = connectionModifier.obtainMessage(MSG_DELETECONNECTION);
+			delmsg.obj = muc;
+			
+			Message modmsg = connectionModifier.obtainMessage(MSG_MODIFYCONNECTION);
+			modmsg.obj = muc;
+			
+			AlertDialog.Builder build = new AlertDialog.Builder(BaardTERMLauncher.this)
+				.setMessage("Which operation to perform on: " + muc.getDisplayName());
+			AlertDialog dialog = build.create();
+			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Modify", modmsg);
+			dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete",delmsg);
+			dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+				
+				public void onClick(DialogInterface arg0, int arg1) {
+					arg0.dismiss();
+				}
+			});
+			
+			dialog.show();
+			return true;
+		}
 		
-		synchronized(this) {
-		try {
-			this.wait(1000); //give the other thread time to start up.
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	}
+	
+	private class listItemClicked implements ListView.OnItemClickListener {
+
+		//@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+				long arg3) {
+			// TODO Auto-generated method stub
+			//ListView lv = (ListView)findViewById(R.id.connectionlist);
+			//MudConnection muc = (MudConnection)lv.getSelectedItem();
+			//ConnectionAdapter adp = (ConnectionAdapter)arg0.getAdapter();
+			//int pos = lv.getSelectedItemPosition();
+			Log.e("LAUNCHER","List Item Clicked");
+			
+			//make the item the first in the list.
+			
+			
+			MudConnection muc = apdapter.getItem(arg2);
+			
+			Intent the_intent = new Intent(com.happygoatstudios.bt.window.BaardTERMWindow.class.getName());
+	    	
+	    	the_intent.putExtra("DISPLAY",muc.getDisplayName());
+	    	the_intent.putExtra("HOST", muc.getHostName());
+	    	the_intent.putExtra("PORT", muc.getPortString());
+	    	
+	    	BaardTERMLauncher.this.startActivity(the_intent);
+	    	
+			//call ready listener
+			//saveConnectionsToDisk();
+			//reportto.ready(muc.getDisplayName(), muc.getHostName(), muc.getPortString());	
+			//ConnectionPickerDialog.this.dismiss();
 		}
+	}
+	
+	public final int MSG_DELETECONNECTION = 101;
+	public final int MSG_MODIFYCONNECTION = 102;
+	public Handler connectionModifier = new Handler() {
+		public void handleMessage(Message msg) {
+			switch(msg.what) {
+			case MSG_DELETECONNECTION:
+				MudConnection todelete = (MudConnection)msg.obj;
+				apdapter.remove(todelete);
+				apdapter.notifyDataSetChanged();
+				break;
+			case MSG_MODIFYCONNECTION:
+				MudConnection tomodify = (MudConnection)msg.obj;
+				break;
+			default:
+				break;
+			}
 		}
-		Message tmp = ConnectionHandler.obtainMessage(100);
-		ConnectionHandler.sendMessage(tmp);*/
-    	
-    	//start service
+	};
+
+    public void ready(String displayname,String host,String port) {
+
     	
     	//start window activity.
-    	Intent the_intent = new Intent(com.happygoatstudios.bt.window.BaardTERMWindow.class.getName());
+    	/*Intent the_intent = new Intent(com.happygoatstudios.bt.window.BaardTERMWindow.class.getName());
     	
     	the_intent.putExtra("DISPLAY",displayname);
     	the_intent.putExtra("HOST", host);
     	the_intent.putExtra("PORT", port);
     	
-    	this.startActivity(the_intent);
+    	this.startActivity(the_intent);*/
+    	
+    	//dont start, add new
+		MudConnection muc = new MudConnection();
+		muc.setDisplayName(displayname);
+		muc.setHostName(host);
+		muc.setPortString(port);
+		
+		//apdapter.
+		
+		apdapter.add(muc);
+		apdapter.notifyDataSetChanged();
+    	
     }
     
-    public class AddButtonTask extends TimerTask {
-    	@SuppressWarnings("deprecation")
-		public void run() {
-    		//if it comes to this, add a button to the text view.
-    		Log.e("TIMER","TIMER EVENT FIRING, ADDING BUTTON!");
-    		
-    		//RelativeLayout layout = (RelativeLayout)findViewById(R.id.welcomelayout);
-    		//TextView tv = (TextView)findViewById(R.id.welcometext);
-    		
-    		//LayoutInflater lf = BaardTERMLauncher.this.getLayoutInflater();
-    		//Button button = new Button(layout.getContext());
-    		//Button button = (Button)lf.inflate(R.id.cancelbutton,layout);
-    		//button.setText("I AM A NEW BUTTON");
-    		//button.setVisibility(Button.VISIBLE);
-    		//button.layout(100,60,150,110);
-    		
-    		//layout.removeAllViews();
-    		//layout.removeViewInLayout(tv);
-    		//layout.removeAllViews();
-    		//LayoutParams p = new LayoutParams();
-    		//LayoutParams lp = new AbsoluteLayout.LayoutParams(button.getWidth(),button.getHeight(),250,250);
-    		
-    		
-    		//RelativeLayout newlayout = new RelativeLayout(layout.getContext());
-    		//layout.addView(button);
-    		//layout.invalidate();
-    		//BaardTERMLauncher.this.setContentView(layout);
-    		
-    		
-    		
-    		
-    		//x = 0;
-    		//y = 0;
-    		
-    		buttonaddhandler.sendEmptyMessage(0);
-    		
-    	}
-    }
+	private void getConnectionsFromDisk() {
+		SharedPreferences pref = this.getSharedPreferences(PREFS_NAME, 0);
+		
+		String thestring = pref.getString("STRINGS", "");
+		if(thestring == null || thestring == "") { return; }
+		
+		Pattern connection = Pattern.compile("([^\\|]+)");
+		Pattern breakout = Pattern.compile("(.+):(.+):(.+)");
+		
+		Matcher c_m = connection.matcher(thestring);
+		
+		while(c_m.find()) {
+			String operate = c_m.group(1);
+			Matcher o_m = breakout.matcher(operate);
+			while(o_m.find()) {
+				String displayname = o_m.group(1);
+				String hostname = o_m.group(2);
+				String portstring = o_m.group(3);
+				
+				MudConnection muc = new MudConnection();
+				muc.setDisplayName(displayname);
+				muc.setHostName(hostname);
+				muc.setPortString(portstring);
+				
+				apdapter.add(muc);
+			}
+		}
+		
+	}
+	
+	private void saveConnectionsToDisk() {
+		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
+		
+		SharedPreferences.Editor editor = prefs.edit();
+		
+		//build string
+		StringBuffer buf = new StringBuffer();
+		for(int i=0;i<apdapter.getCount();i++) {
+			MudConnection tmp = apdapter.getItem(i);
+			buf.append(tmp.getDisplayName() + ":" +tmp.getHostName()+":"+tmp.getPortString());
+				buf.append("|");
+		}
+		
+		editor.putString("STRINGS", buf.toString());
+		
+		editor.commit();
+		
+	}
+    
+    
+	private class ConnectionAdapter extends ArrayAdapter<MudConnection> {
+		private ArrayList<MudConnection> items;
+		
+		public ConnectionAdapter(Context context, int txtviewresid, ArrayList<MudConnection> objects) {
+			super(context, txtviewresid, objects);
+			// TODO Auto-generated constructor stub
+			this.items = objects;
+		}
+		
+		public View getView(int position, View convertView, ViewGroup parent) {
+			View v = convertView;
+			if(v == null) {
+				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				v = li.inflate(R.layout.connection_row, null);
+			}
+			
+			MudConnection m = items.get(position);
+			if(m != null) {
+				TextView title = (TextView)v.findViewById(R.id.displayname);
+				TextView host = (TextView)v.findViewById(R.id.hoststring);
+				//TextView port = (TextView)v.findViewById(R.id.port);
+				if(title != null) {
+					title.setText(m.getDisplayName());
+				}
+				if(host != null) {
+					host.setText("\t"  + m.getHostName() + ":" + m.getPortString());
+				}
+				//if(port != null) {
+				//	port.setText(" Port: " + m.getPortString());
+				//}
+			}
+			return v;
+		}
+		
+		
+	}
 
 }

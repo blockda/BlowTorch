@@ -162,7 +162,6 @@ public class ConnectionPickerDialog extends Dialog implements ReadyListener {
 		//populateList();
 		
 		apdapter = new ConnectionAdapter(lv.getContext(),R.layout.connection_row,connections);
-		
 		lv.setAdapter(apdapter);
 		//lv.setOnClickListener(new listItemClicked());
 		lv.setTextFilterEnabled(true);
@@ -223,17 +222,17 @@ public class ConnectionPickerDialog extends Dialog implements ReadyListener {
 			MudConnection m = items.get(position);
 			if(m != null) {
 				TextView title = (TextView)v.findViewById(R.id.displayname);
-				TextView host = (TextView)v.findViewById(R.id.hostname);
-				TextView port = (TextView)v.findViewById(R.id.port);
+				TextView host = (TextView)v.findViewById(R.id.hoststring);
+				//TextView port = (TextView)v.findViewById(R.id.port);
 				if(title != null) {
 					title.setText(m.getDisplayName());
 				}
 				if(host != null) {
-					host.setText("Host: " + m.getHostName());
+					host.setText(m.getHostName() + ":" + m.getPortString());
 				}
-				if(port != null) {
-					port.setText(" Port: " + m.getPortString());
-				}
+				//if(port != null) {
+				//	port.setText(" Port: " + m.getPortString());
+				//}
 			}
 			return v;
 		}
