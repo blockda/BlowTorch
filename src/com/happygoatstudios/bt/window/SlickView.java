@@ -56,6 +56,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	private Boolean drawn = false;
 	private Boolean isdrawn = true;
 	
+	public int PREF_FONTSIZE = 18;
+	public int PREF_LINESIZE = 20;
+	public String PREF_TYPEFACE = "monospace";
+	public int CALCULATED_LINESINWINDOW = 20;
+	public int CALCULATED_ROWSINWINDOW = 77;
+	
 	boolean buttondropstarted = false;
 	
 	public Vector<SlickButton> buttons = new Vector<SlickButton>();
@@ -237,9 +243,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		dataDispatch = h;
 	}
 
-	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
+	public void surfaceChanged(SurfaceHolder arg0, int arg1, int width, int height) {
 		
-		//Log.e("SLICK","surfaceChanged called");
+		//calculate the number of rows and columns in this window.
+		CALCULATED_LINESINWINDOW = (height / PREF_LINESIZE);
+		
+		Paint p = new Paint();
+		p.setTypeface(Typeface.MONOSPACE);
+		p.setTextSize(PREF_FONTSIZE);
+		int one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
+		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
+		
+		Log.e("SLICK","surfaceChanged called, calculated" + CALCULATED_LINESINWINDOW + " lines and " + CALCULATED_ROWSINWINDOW + " rows.");
 	}
 	
 
@@ -398,12 +413,13 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//Matcher toLines = newline.matcher();
 		StringBuffer carriage_free = new StringBuffer(carriagerock.replaceAll(""));
-		StringBuffer broken_lines = betterBreakLines(carriage_free,77);
+		//PREVIOUS CHARACTER WIDTH = 77
+		StringBuffer broken_lines = betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW);
 		int numlines = countLines(broken_lines.toString());
 		
-		int linesize = 20;
+		//int linesize = 20;
 		if(scrollback > 0) {
-			scrollback = scrollback + numlines*linesize;
+			/*scrollback = scrollback + numlines*linesize;
 			
 			//EditText filler2 = (EditText) parent_layout.findViewById(R.id.filler2);
 			Animation a = new AlphaAnimation(1.0f,0.0f);
@@ -413,7 +429,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			a.setFillAfter(true);
 			a.setFillBefore(true);
 			new_text_in_buffer_indicator.startAnimation(a);
-			
+			*/
 			
 		} else {
 			if(!jumptoend) {
@@ -423,6 +439,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			} else {
 				scrollback = 0.0f;
 			}
+			
 			Animation a = new AlphaAnimation(0.0f,0.0f);
 			a.setDuration(10);
 			a.setFillAfter(true);
@@ -439,7 +456,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//Log.e("SLICK","SETTING DIRTY BUFFER FOR DRAWING!");
 		
 		//nuke buffer contents.
-		int chars_per_row = 77;
+		int chars_per_row = CALCULATED_ROWSINWINDOW;
 		int rows = 25;
 		if(the_buffer.length() > (10*chars_per_row*rows)) {
 			the_buffer.replace(0, the_buffer.length() - ((10*chars_per_row*rows)), "");
@@ -466,20 +483,20 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	public void onDraw(Canvas canvas) {
 		//IM DRAWING
 		
-		int TEXTSIZE = 18;
-		int linesize = 20;
+		//int TEXTSIZE = 18;
+		//int linesize = 20;
 		//calculate screen offset and number of lines.
-		int height = canvas.getHeight();
+		//int height = canvas.getHeight();
 		
 		
-		int numberoflinesinwindow = (int)( height / linesize );
+		//int numberoflinesinwindow = (int)( height / linesize );
 		
 		//calculate scroll distance
 		//was
 		//int scrollbacklines = scrollback.intValue() / linesize;
 		
 		//now
-		int scrollbacklines = (int)Math.floor(scrollback / (float)linesize);
+		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 		if(prev_draw_time == 0) { //never drawn before
 			if(Math.abs(fling_velocity) > 0) {
 				prev_draw_time = System.currentTimeMillis(); 
@@ -513,7 +530,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 			}
 			
-			if(scrollback.intValue() / linesize < 1) {
+			if(scrollback.intValue() / PREF_LINESIZE < 1) {
 				prev_draw_time = 0;
 				Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 			}
@@ -534,14 +551,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 
 			
-			scrollbacklines = (int)Math.floor(scrollback / (float)linesize);
+			scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 
 			Log.e("SLICK","SCROLLBACK: " + scrollback.toString() + " VELOCITY NOW:" +new Float(fling_velocity).toString() + " DURATION:" + new Float(duration_since_last_frame).toString());
 			
 		}
 		
-		int remainder = (int) (height - (numberoflinesinwindow*linesize)) - 4 + (int)Math.floor(scrollback % linesize);
-		
+		//int remainder = (int) (height - (numberoflinesinwindow*linesize)) - 4 + (int)Math.floor(scrollback % linesize);
+		int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 4 + (int)Math.floor(scrollback % PREF_LINESIZE);
 		if(remainder < 0) {
 			//Log.e("SLICK","WE HAVE A PROBLEM WITH WINDOW SIZE");
 		}
@@ -554,7 +571,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         opts.setAntiAlias(true);
         //opts.setDither(true);
         opts.setARGB(255, 255, 255, 255);
-        opts.setTextSize(TEXTSIZE);
+        opts.setTextSize(PREF_FONTSIZE);
         
         //opts.setStyle(Style.)
         opts.setTypeface(Typeface.MONOSPACE);
@@ -570,7 +587,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         
         //count lines
         int numlines = countLines();
-        int maxlines = numberoflinesinwindow; 
+        int maxlines = CALCULATED_LINESINWINDOW; 
         
         
         
@@ -590,7 +607,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         	if(currentline >= startDrawingAtLine-1 && currentline <= (startDrawingAtLine + maxlines)) {
         		
         		int screenpos = currentline - startDrawingAtLine + 1;
-        		int y_position =  ((screenpos*linesize)+remainder);
+        		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
         		Matcher colormatch = colordata.matcher(line.toString());
         		
         		
@@ -652,7 +669,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         	
         	toLines.appendTail(line);
         	int screenpos = currentline - startDrawingAtLine + 1;
-    		int y_position =  ((screenpos*linesize)+remainder);
+    		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
     		opts.setColor(0xFF00CCCC);
     		Matcher colormatch = colordata.matcher(line.toString());
     		
