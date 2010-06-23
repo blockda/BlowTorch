@@ -92,18 +92,6 @@
     	android:layout_width="fill_parent"
     	android:layout_above="@id/filler">
     	
-    	<!-- <ScrollView
-    		android:id="@+id/mainscroller"
-    		android:layout_height="fill_parent"
-   	 		android:layout_width="fill_parent">
-    			 <TextView  
-    				android:layout_width="fill_parent" 
-   					android:layout_height="fill_parent" 
-    				android:text="@string/hello"
-   					android:textSize="12sp"
-    				android:typeface="monospace"
-    				android:id="@+id/tv" />
-    	</ScrollView>  -->
     	
  <!--   <ScrollView 
     		android:id="@+id/secscroller"

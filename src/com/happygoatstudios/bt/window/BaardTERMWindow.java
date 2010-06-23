@@ -63,7 +63,8 @@ import com.happygoatstudios.bt.service.*;
 
 public class BaardTERMWindow extends Activity {
 	
-	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
+	//public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
+	public String PREFS_NAME;
 	protected static final int MESSAGE_HTMLINC = 110;
 	protected static final int MESSAGE_RAWINC = 111;
 	protected static final int MESSAGE_BUFFINC = 112;
@@ -79,7 +80,6 @@ public class BaardTERMWindow extends Activity {
 	boolean servicestarted = false;
 	
 	IBaardTERMService service = null;
-	
 	//Object ctrl_tag = new Object();
 	Processor the_processor = null;
 	
@@ -202,7 +202,11 @@ public class BaardTERMWindow extends Activity {
 		Log.e("WINDOW","onCreate()");
 		
 		setContentView(R.layout.window_layout);
-       
+		
+		String display_name = this.getIntent().getStringExtra("DISPLAY");
+        Pattern nowhitespace = Pattern.compile("\\s");
+        Matcher m = nowhitespace.matcher(display_name + ".PREFS");
+        PREFS_NAME = m.replaceAll(""); //kill off all white space in the display name, use it as the preference file
         history = new CommandKeeper(10);
         
         screen2 = (SlickView)findViewById(R.id.slickview);
@@ -844,10 +848,9 @@ public class BaardTERMWindow extends Activity {
 		String port = myintent.getStringExtra("PORT");
 		
 		//for now we are going to override:
-		host = "aardmud.org";
-		port = "4010";
+		//host = "aardmud.org";
+		//port = "4010";
 		
-		//TODO: GET CONFIGURATION PATH FROM HERE.
 		
 		while(service == null) {
 			host = "aardmud.org"; //waste time till onServiceConnected is called.
