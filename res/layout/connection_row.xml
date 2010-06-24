@@ -11,6 +11,9 @@
   	android:textSize="18sp"
   	android:textStyle="bold"
   	android:text="serif"
+  	android:background = "#AAAAAAAA"
+  	android:textColor = "#AA222222"
+  	
   	/>
   <TextView
   	android:id = "@+id/hoststring"
@@ -23,7 +26,11 @@
   	android:marqueeRepeatLimit = "marquee_forever"
   	android:drawableBottom = "@drawable/dashedline"
   	android:textStyle="italic"
-  	android:textSize = "10sp"/>
+  	android:textSize = "10sp"
+  	android:background = "#AAAAAAAA"
+  	android:textColor = "#AA222222"
+  	
+  	/>
   <!--  <ImageView
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"

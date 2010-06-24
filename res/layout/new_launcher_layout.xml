@@ -5,6 +5,12 @@
 		android:layout_height = "wrap_content"
 		android:layout_width = "wrap_content">
 		
+		<ImageView
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:scaleType="centerCrop"
+			android:src="@drawable/baardterm_background"/>
+		
 		<TextView
 			android:text = "Connections:"
 			android:textSize = "20sp"
@@ -15,7 +21,17 @@
 			android:layout_alignParentRight = "true"
 			android:layout_alignParentTop = "true"
 			android:gravity = "center"
+			android:background = "#AAAAAAAA"
+			android:textColor = "#AA222222"
+			android:drawableBottom = "@drawable/horizontal_separator"
 			/>
+			
+		<!-- <ImageView
+			android:layout_width="275px"
+			android:layout_height="5px"
+			android:layout_below="@id/c_label"
+			android:id="@+id/separator"
+			src="@drawable/horizontal_separator"/> -->
 			
 		<TableLayout
 			android:id = "@+id/table_container"
@@ -28,7 +44,8 @@
 			<TableRow
 				android:layout_height = "wrap_content"
 				android:layout_width = "wrap_content"
-				android:gravity = "center">
+				android:gravity = "center"
+				android:background = "#AAAAAAAA">
 				<Button
 					android:id = "@+id/new_connection"
 					android:layout_height = "wrap_content"

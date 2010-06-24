@@ -288,7 +288,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 				TextView host = (TextView)v.findViewById(R.id.hoststring);
 				//TextView port = (TextView)v.findViewById(R.id.port);
 				if(title != null) {
-					title.setText(m.getDisplayName());
+					title.setText(" " + m.getDisplayName());
 				}
 				if(host != null) {
 					host.setText("\t"  + m.getHostName() + ":" + m.getPortString());
