@@ -3,6 +3,8 @@ package com.happygoatstudios.bt.window;
 import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -34,6 +36,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnTouchListener;
@@ -61,7 +64,7 @@ import com.happygoatstudios.bt.R;
 //import com.happygoatstudios.bt.service.BaardTERMService;
 import com.happygoatstudios.bt.service.*;
 
-public class BaardTERMWindow extends Activity {
+public class BaardTERMWindow extends Activity implements AliasDialogDoneListener {
 	
 	//public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	public String PREFS_NAME;
@@ -206,7 +209,9 @@ public class BaardTERMWindow extends Activity {
 		String display_name = this.getIntent().getStringExtra("DISPLAY");
         Pattern nowhitespace = Pattern.compile("\\s");
         Matcher m = nowhitespace.matcher(display_name + ".PREFS");
-        PREFS_NAME = m.replaceAll(""); //kill off all white space in the display name, use it as the preference file
+        String tmpstr = m.replaceAll("");
+        Log.e("WINDOW","LAUNCHING WITH CONFIGURATION FILE NAME:" + tmpstr);
+        PREFS_NAME = tmpstr; //kill off all white space in the display name, use it as the preference file
         history = new CommandKeeper(10);
         
         screen2 = (SlickView)findViewById(R.id.slickview);
@@ -558,12 +563,32 @@ public class BaardTERMWindow extends Activity {
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		
+		menu.add(0,99,0,"Aliases");
 		menu.add(0,100,0,"Triggers");
 		menu.add(0,101,0,"Options");
 		menu.add(0,102,0,"Slick Buttons");
 		
 		return true;
 		
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+		case 99:
+			AliasEditorDialog d = null;
+			try {
+				d = new AliasEditorDialog(this,service.getAliases(),this);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			d.setTitle("Edit Aliases:");
+			d.show();
+			break;
+		default:
+			break;
+		}
+		return true;
 	}
 	
 	public void onBackPressed() {
@@ -858,7 +883,7 @@ public class BaardTERMWindow extends Activity {
 		
 		
 		try {
-			service.setConnectionData(host, new Integer(port).intValue());
+			service.setConnectionData(host, new Integer(port).intValue(),myintent.getStringExtra("DISPLAY"));
 		} catch (NumberFormatException e1) {
 			e1.printStackTrace();
 		} catch (RemoteException e1) {
@@ -933,5 +958,25 @@ public class BaardTERMWindow extends Activity {
 			myhandler.sendMessage(msg);
 		}
 	};
+	
+	public void aliasDialogDone(ArrayList<String> items) {
+		HashMap<String,String> map = new HashMap<String,String>();
+		
+		if(items.size() > 0) {
+			for(int i=0;i<items.size();i++) {
+				String[] parts = items.get(i).split("\\Q[||]\\E");
+				map.put(parts[0], parts[1]);
+			}
+			try {
+				service.setAliases(map);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}	
+
+		
+	
 
 }

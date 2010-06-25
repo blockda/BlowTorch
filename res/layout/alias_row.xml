@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<TableLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newconnectionlayout"
+  android:layout_width="420px"
+  android:layout_height="wrap_content">
+  
+  	<TableRow>
+  		<TextView 
+  			android:id="@+id/alias_pre"
+  			android:layout_width="210px"
+  			android:layout_height="wrap_content"
+ 			/>
+  		<TextView 
+  			android:id="@+id/alias_post"
+  			android:layout_width="210px"
+  			android:layout_height="wrap_content"
+ 			/>
+  	</TableRow>
+  	
+
+  	
+  
+</TableLayout>

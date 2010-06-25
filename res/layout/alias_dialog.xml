@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/aliasdialoglayout"
+  android:layout_width="420px"
+  android:layout_height="fill_parent">
+  
+  <TableLayout
+  	android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/alias_label"
+  	android:layout_alignParentTop="true">
+  	<TableRow>
+  		<TextView 
+  			android:layout_width="210px"
+  			android:layout_height="wrap_content"
+ 			android:text = "Alias:"/>
+  		<TextView 
+  			android:layout_width="210px"
+  			android:layout_height="wrap_content"
+ 			android:text = "Replace With:"/>
+  	
+  	</TableRow>
+  </TableLayout>
+  
+  <Button
+  	android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/alias_dialog_done"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:text="Done!" />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="New Alias"
+  	android:id="@+id/new_alias_button"
+  	android:layout_toLeftOf="@id/alias_dialog_done"
+  	android:layout_alignParentBottom="true"/>
+  
+
+  	
+  <ListView
+  	android:layout_width="420px"
+  	android:layout_height="fill_parent"
+  	android:id="@+id/alias_list"
+  	android:layout_above="@id/new_alias_button"
+  	android:layout_below="@id/alias_label"/>
+  	
+  
+</RelativeLayout>

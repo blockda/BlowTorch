@@ -15,6 +15,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +28,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -45,6 +49,8 @@ import com.happygoatstudios.bt.service.IBaardTERMService;
 
 public class BaardTERMService extends Service {
 
+	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
+	TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IBaardTERMServiceCallback> callbacks = new RemoteCallbackList<IBaardTERMServiceCallback>();
 	
 	NotificationManager mNM;
@@ -62,6 +68,7 @@ public class BaardTERMService extends Service {
 	InetAddress the_addr = null;
 	String host;
 	int port;
+	String display;
 	final int BAD_PORT = 999999;
 	final String BAD_HOST = "NOTSETYET";
 	Socket the_socket = null;
@@ -129,6 +136,9 @@ public class BaardTERMService extends Service {
 				case MESSAGE_SETDATA:
 					host = msg.getData().getString("HOST");
 					port = msg.getData().getInt("PORT");
+					display = msg.getData().getString("DISPLAY");
+					loadAliases();
+					showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
 					pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_COMPRESS);
@@ -144,7 +154,55 @@ public class BaardTERMService extends Service {
 					
 					byte[] bytes = msg.getData().getByteArray("THEDATA");
 					
+					//do search and replace with aliases.
 					
+					//convert all alias keys to the big match string.
+					Object[] a = aliases.keySet().toArray();
+					
+					StringBuffer joined_alias = new StringBuffer();
+					if(a.length > 0) {
+						joined_alias.append("("+(String)a[0]+")");
+						for(int i=1;i<a.length;i++) {
+							joined_alias.append("|");
+							joined_alias.append("("+(String)a[i]+")");
+						}
+						
+						Log.e("SERVICE","PATTERN: " + joined_alias.toString());
+						
+						Pattern to_replace = Pattern.compile(joined_alias.toString());
+						
+						Matcher replacer = null;
+						try {
+							replacer = to_replace.matcher(new String(bytes,"ISO-8859-1"));
+						} catch (UnsupportedEncodingException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						
+						StringBuffer replaced = new StringBuffer();
+						
+						while(replacer.find()) {
+							//String matched = replacer.group(0);
+							
+							String replace_with = aliases.get(replacer.group(0));
+							replacer.appendReplacement(replaced, replace_with);
+						}
+						
+						replacer.appendTail(replaced);
+						
+						//so replacer should contain the transformed string now.
+						//pull the bytes back out.
+						try {
+							bytes = replaced.toString().getBytes("ISO-8859-1");
+							Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
+							Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
+						} catch (UnsupportedEncodingException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						
+						replaced.setLength(0);
+					}
 					
 					try {
 						String dbgmsg = new String(bytes,"ISO-8859-1");
@@ -200,7 +258,7 @@ public class BaardTERMService extends Service {
 				
 			}
 		};
-		showNotification();
+		
 		//Log.e("SERV","REACHED THE END OF THE STARTUP METHOD");
 		//Looper.loop();
 		myhandler.sendEmptyMessageDelayed(BaardTERMService.MESSAGE_CHECKIFALIVE, 3000);
@@ -208,13 +266,76 @@ public class BaardTERMService extends Service {
 		//test_set.add("Your eyes glaze over.");
 		test_set.add("QUEST: You may now quest again.");
 		test_set.add("i love kurt");
+		aliases.put("REPLACE", "gulp");
+		aliases.put("TESTREP", "enter");
+		
+		//read in aliases from disk.
+		
 		//test_set.add("TICK");
 		//test_set.add("--> TICK <--");
 	}
 	
 	public void onDestroy() {
 		Log.e("SERV","ON DESTROY CALLED!");
+		saveAliases();
 		doShutdown();
+	}
+	
+	public void loadAliases() {
+		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
+		if(display == null || display.equals("")) {
+			return;
+			//no display set, do not try and load aliases.
+		}
+		
+		Pattern whitespacestrip = Pattern.compile("\\s");
+		Matcher stripper = whitespacestrip.matcher(display);
+		
+		String usethis = stripper.replaceAll("");
+		int count = pref.getInt("ALIASCOUNT" + usethis, 0);
+		Log.e("SERVICE","Loading: " + count + " aliases.");
+		if(count > 0) {
+			for(int i=0;i<count;i++) {
+				String alias = pref.getString(usethis + "ALIAS" + i, "");
+				if(!alias.equals("")) {
+					Log.e("SERVICE","Attempting to load: " + alias);
+					String[] parts = alias.split("\\Q[||]\\E");
+					if(parts.length == 2) {
+						//only do well formatted alias pairs.
+						aliases.put(parts[0], parts[1]);
+					}
+				}
+			}
+		}
+	}
+	
+	public void saveAliases() {
+		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
+		
+		if(display == null || display.equals("")) {
+			return;
+			//no display set, do not try and load aliases.
+		}
+		
+		Pattern whitespacestrip = Pattern.compile("\\s");
+		Matcher stripper = whitespacestrip.matcher(display);
+		
+		String usethis = stripper.replaceAll("");
+		
+		Editor ed = pref.edit();
+		
+		Object[] a = aliases.keySet().toArray();
+		
+		if(a.length > 0) {
+			for(int i=0;i<a.length;i++) {
+				ed.putString(usethis + "ALIAS" + i, (String)a[i] + "[||]" + aliases.get(a[i]));
+			}
+			
+			ed.putInt("ALIASCOUNT" + usethis, a.length);
+		}
+		
+		ed.commit();
+		
 	}
 	
 	Object binderCookie = new Object();
@@ -323,13 +444,14 @@ public class BaardTERMService extends Service {
 			
 		}
 		
-		public void setConnectionData(String ihost,int iport) {
+		public void setConnectionData(String ihost,int iport,String display) {
 			//host = ihost;
 			//port = iport;
 			Message msg = myhandler.obtainMessage(BaardTERMService.MESSAGE_SETDATA);
 			Bundle b = new Bundle();
 			b.putString("HOST",ihost);
 			b.putInt("PORT",iport);
+			b.putString("DISPLAY", display);
 			
 			msg.setData(b);
 			
@@ -358,6 +480,22 @@ public class BaardTERMService extends Service {
 			msg.setData(b);
 			myhandler.sendMessage(msg);
 			
+		}
+
+
+		public void addAlias(String what, String to) throws RemoteException {
+			aliases.put(what, to);
+		}
+
+
+		public Map<String, String> getAliases() throws RemoteException {
+			return aliases;
+		}
+
+
+		public void setAliases(Map map) throws RemoteException {
+			aliases.clear();
+			aliases = new TreeMap<String, String>(map);
 		}
 
 
@@ -468,11 +606,11 @@ public class BaardTERMService extends Service {
 				//CharSequence contentText = "Hello World!";
 				CharSequence contentText = "Triggerd on: " + test_for;
 				Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.BaardTERMWindow.class);
-
+				notificationIntent.putExtra("DISPLAY", display);
 				notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 			
-				PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
+				PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+				
 				
 				note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 				
@@ -645,10 +783,10 @@ public class BaardTERMService extends Service {
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "Connected: "+ host +":"+ port + ")";
 		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.BaardTERMWindow.class);
-
+		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);

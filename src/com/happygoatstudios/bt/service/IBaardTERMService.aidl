@@ -10,9 +10,12 @@ interface IBaardTERMService {
 	void endXfer();
 	void sendData(in byte[] seq);
 	void setNotificationText(CharSequence seq);
-	void setConnectionData(String host,int port);
+	void setConnectionData(String host,int port,String display);
 	void beginCompression();
 	void stopCompression();
 	void requestBuffer();
 	void saveBuffer(String buffer);
+	void addAlias(String what, String to);
+	Map getAliases();
+	void setAliases(in Map map);
 }
