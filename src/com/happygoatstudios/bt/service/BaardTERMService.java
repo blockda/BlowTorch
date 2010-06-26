@@ -90,6 +90,7 @@ public class BaardTERMService extends Service {
 	final static public int MESSAGE_CHECKIFALIVE = 109;
 
 	protected static final int MESSAGE_SAVEBUFFER = 108;
+	protected static final int MESSAGE_SENDOPTIONDATA = 110;
 	
 	public boolean sending = false;
 	
@@ -145,12 +146,25 @@ public class BaardTERMService extends Service {
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
+				case MESSAGE_SENDOPTIONDATA:
+					byte[] obytes = msg.getData().getByteArray("THEDATA");
+					String odbgmsg = null;
+					try {
+						odbgmsg = new String(obytes,"ISO-8859-1");
+					} catch (UnsupportedEncodingException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					Log.e("SERV","SENDING STRING " + odbgmsg + "|size: " + obytes.length);
+					try {
+						output_writer.write(obytes);
+						output_writer.flush();
+					} catch (IOException e2) {
+						e2.printStackTrace();
+					}
+					
+					break;
 				case MESSAGE_SENDDATA:
-					//Message dmsg = outputter.getHandler().obtainMessage(102);
-					//Bundle bun = new Bundle();
-					//bun.putByteArray("THEDATA", msg.getData().getByteArray("THEDATA"));
-					//dmsg.setData(bun);
-					//outputter.getHandler().sendMessage(dmsg);
 					
 					byte[] bytes = msg.getData().getByteArray("THEDATA");
 					
@@ -181,15 +195,34 @@ public class BaardTERMService extends Service {
 						
 						StringBuffer replaced = new StringBuffer();
 						
+						boolean found = false;
 						while(replacer.find()) {
 							//String matched = replacer.group(0);
-							
+							found = true;
 							String replace_with = aliases.get(replacer.group(0));
 							replacer.appendReplacement(replaced, replace_with);
 						}
 						
 						replacer.appendTail(replaced);
 						
+						StringBuffer buffertemp = new StringBuffer();
+						if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
+							boolean recursivefound = false;
+							do {
+								recursivefound = false;
+								Matcher recursivematch = to_replace.matcher(replaced.toString());
+								while(recursivematch.find()) {
+									recursivefound = true;
+									String replace_with = aliases.get(recursivematch.group(0));
+									recursivematch.appendReplacement(buffertemp, replace_with);
+								}
+								if(recursivefound) {
+									recursivematch.appendTail(buffertemp);
+									replaced.setLength(0);
+									replaced.append(buffertemp);
+								}
+							} while(recursivefound == true);
+						}
 						//so replacer should contain the transformed string now.
 						//pull the bytes back out.
 						try {
@@ -204,21 +237,38 @@ public class BaardTERMService extends Service {
 						replaced.setLength(0);
 					}
 					
+					//strip semi
+					Character cr = new Character((char)13);
+					Character lf = new Character((char)10);
+					String crlf = cr.toString() + lf.toString();
+					byte[] preserve = bytes;
+					String tostripsemi = null;
+					try {
+						tostripsemi = new String(bytes,"ISO-8859-1");
+					} catch (UnsupportedEncodingException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					String nosemidata = tostripsemi.replace(";", crlf);
+					//nosemidata = nosemidata.concat(crlf);
+					
 					try {
 						String dbgmsg = new String(bytes,"ISO-8859-1");
 						
 						
 						Log.e("SERV","SENDING STRING " + dbgmsg + "|size: " + bytes.length);
 						
-						output_writer.write(bytes);
-						//if(dbgmsg.contains("noc")) {
-							//Log.e("SERV","CLOSEING STREAM");
-							//output_writer.flush();
-							//output_writer.flush();
-							//output_writer.close();
-						//}
+						output_writer.write(nosemidata.getBytes("ISO-8859-1"));
 
 						output_writer.flush();
+						
+						//send the transformed data back to the window
+						try {
+							dispatch(preserve);
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						
 						//Log.e("SERV","calling notify.");
 
@@ -685,6 +735,44 @@ public class BaardTERMService extends Service {
 		
 		//callbacks.finishBroadcast();
 		
+	}
+	
+	public void doDispatchNoProcess(byte[] data) {
+		
+		String rawData = null;
+		try {
+			rawData = new String(data,"ISO-8859-1");
+		} catch (UnsupportedEncodingException e1) {
+			
+			e1.printStackTrace();
+		}
+		
+		final int N = callbacks.beginBroadcast();
+		int final_count = N;
+		
+
+		
+		for(int i = 0;i<N;i++) {
+			//callbacks.getBroadcastItem(i).dataIncoming(data);
+			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
+			//callbacks.getBroadcastItem(i).htmlDataIncoming(htmlText);
+			try {
+			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
+			} catch (RemoteException e) {
+				//just need to catch it, don't need to care, the list maintains itself apparently.
+				final_count = final_count - 1;
+			}
+		}
+		
+		if(final_count == 0) {
+			//someone is listening so don't save the buffer
+			//Log.e("SERV","No listeners, buffering data.");
+		} else {
+			
+			the_buffer.setLength(0);
+			//the_buffer.clearSpans();
+			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
+		}
 	}
 	
 	public void doStartup() throws SocketException {

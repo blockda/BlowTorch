@@ -419,25 +419,27 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//int linesize = 20;
 		if(scrollback > 0) {
-			/*scrollback = scrollback + numlines*linesize;
+			scrollback = scrollback + numlines*PREF_LINESIZE;
 			
 			//EditText filler2 = (EditText) parent_layout.findViewById(R.id.filler2);
 			Animation a = new AlphaAnimation(1.0f,0.0f);
-			Interpolator i = new CycleInterpolator(2);
+			Interpolator i = new CycleInterpolator(1);
 			a.setDuration(1000);
 			a.setInterpolator(i);
 			a.setFillAfter(true);
 			a.setFillBefore(true);
 			new_text_in_buffer_indicator.startAnimation(a);
-			*/
+			
 			
 		} else {
 			if(!jumptoend) {
 				//scrollback = scrollback + (numlines-1)*linesize;
 				//fling_velocity = -700;
 				scrollback = 0.0f; //scrolling is stupid and expensive for this and takes alot longer than i can ram stuff into the buffer. so jump to end on new stuff incoming, unless scrollback is > 0, then we just stay put.
+				fling_velocity = 0.0f;
 			} else {
 				scrollback = 0.0f;
+				fling_velocity = 0.0f;
 			}
 			
 			Animation a = new AlphaAnimation(0.0f,0.0f);
@@ -479,6 +481,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	StringBuffer csegment = new StringBuffer();
 	Canvas drawn_buffer = null;
 	long prev_draw_time = 0;
+	boolean finger_down_to_up = false;
 	@Override
 	public void onDraw(Canvas canvas) {
 		//IM DRAWING
@@ -498,62 +501,82 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//now
 		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 		if(prev_draw_time == 0) { //never drawn before
-			if(Math.abs(fling_velocity) > 0) {
-				prev_draw_time = System.currentTimeMillis(); 
-				Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+			if(finger_down) {
+				scrollback = (float)Math.floor(scrollback + diff_amount);
+				if(scrollback < 0) {
+					scrollback = 0.0f;
+				}
+				diff_amount = 0;
+				
+				scrollbacklines = (int)Math.floor((scrollback) / (float)PREF_LINESIZE);
+				//finger_down_to_up = true;
 				//scrollbacklines = (int)Math.floor(scrollback / (float)linesize);
 			} else {
-				//scrollbacklines = (int)Math.floor(scrollback / (float)linesize);
+				if(finger_down_to_up) {
+					prev_draw_time = System.currentTimeMillis(); 
+					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+					finger_down_to_up=false;
+				}
 			}
 		} else {
-			long nowdrawtime = System.currentTimeMillis(); 
 			
-			float duration_since_last_frame = ((float)(nowdrawtime-prev_draw_time)) / 1000.0f; //convert to seconds
-			prev_draw_time = System.currentTimeMillis();
-			//compute change in velocity: v = vo + at;
-			if(fling_velocity < 0) {
-				fling_velocity = fling_velocity + fling_accel*duration_since_last_frame;
-				scrollback = scrollback + fling_velocity*duration_since_last_frame;
-				//scrollback = scrollback + fling_velocity*duration_since_last_frame + (float)1.5*fling_accel*(duration_since_last_frame*duration_since_last_frame);
+			if(finger_down == true) {
+
+			} else {
 				
-			} else if (fling_velocity > 0) {
+				long nowdrawtime = System.currentTimeMillis(); 
 				
-				fling_velocity = fling_velocity - fling_accel*duration_since_last_frame;
-				scrollback = scrollback + fling_velocity*duration_since_last_frame;
-				//scrollback = scrollback + fling_velocity*duration_since_last_frame - (float)1.5*fling_accel*(duration_since_last_frame*duration_since_last_frame);
+				float duration_since_last_frame = ((float)(nowdrawtime-prev_draw_time)) / 1000.0f; //convert to seconds
+				prev_draw_time = System.currentTimeMillis();
+				//compute change in velocity: v = vo + at;
+				if(fling_velocity < 0) {
+					fling_velocity = fling_velocity + fling_accel*duration_since_last_frame;
+					scrollback = scrollback + fling_velocity*duration_since_last_frame;
+					//scrollback = scrollback + fling_velocity*duration_since_last_frame + (float)1.5*fling_accel*(duration_since_last_frame*duration_since_last_frame);
+					
+				} else if (fling_velocity > 0) {
+					
+					fling_velocity = fling_velocity - fling_accel*duration_since_last_frame;
+					scrollback = scrollback + fling_velocity*duration_since_last_frame;
+					//scrollback = scrollback + fling_velocity*duration_since_last_frame - (float)1.5*fling_accel*(duration_since_last_frame*duration_since_last_frame);
+					
+				}
 				
-			}
+				if(Math.abs(new Double(fling_velocity)) < 15) {
+					fling_velocity = 0;
+					prev_draw_time = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+				}
+				
+				if(scrollback.intValue() / PREF_LINESIZE < 1) {
+					prev_draw_time = 0;
+					fling_velocity = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+				}
+				
+					
+				if(scrollback <= 0) {
+					scrollback = 0.0f;
+					fling_velocity = 0;
+					prev_draw_time = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					
+					//Animation a = new AlphaAnimation(0.0f,0.0f);
+					//a.setDuration(10);
+					//a.setFillAfter(true);
+					//a.setFillBefore(true);
+					//new_text_in_buffer_indicator.startAnimation(a);
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+				}
 			
-			if(Math.abs(new Double(fling_velocity)) < 18) {
-				fling_velocity = 0;
-				prev_draw_time = 0;
-				Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-			}
 			
-			if(scrollback.intValue() / PREF_LINESIZE < 1) {
-				prev_draw_time = 0;
-				Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-			}
-			
-				
-			if(scrollback <= 0) {
-				scrollback = 0.0f;
-				fling_velocity = 0;
-				prev_draw_time = 0;
-				Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-				
-				//Animation a = new AlphaAnimation(0.0f,0.0f);
-				//a.setDuration(10);
-				//a.setFillAfter(true);
-				//a.setFillBefore(true);
-				//new_text_in_buffer_indicator.startAnimation(a);
-				buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+				scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 			}
 
 			
-			scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
+			
 
-			Log.e("SLICK","SCROLLBACK: " + scrollback.toString() + " VELOCITY NOW:" +new Float(fling_velocity).toString() + " DURATION:" + new Float(duration_since_last_frame).toString());
+			//Log.e("SLICK","SCROLLBACK: " + scrollback.toString() + " VELOCITY NOW:" +new Float(fling_velocity).toString() + " DURATION:" + new Float(duration_since_last_frame).toString());
 			
 		}
 		
@@ -715,6 +738,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         drawn_buffer = canvas;
 	}
 	
+	boolean finger_down = false;
+	
+	int diff_amount = 0;
 	public boolean onTouchEvent(MotionEvent t) {
 		
 		
@@ -722,11 +748,24 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//touchLock = true;
 		//_runner.setPause();
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
+			
+			synchronized(isdrawn) {
+				if(!isdrawn) {
+					try {
+						isdrawn.wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			
 			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
 			start_x = new Float(t.getX(t.getPointerId(0)));
 			start_y = new Float(t.getY(t.getPointerId(0)));
 			pre_event = MotionEvent.obtainNoHistory(t);
 			fling_velocity = 0.0f;
+			finger_down = true;
 		}
 		
 		if(!increadedPriority) {
@@ -735,7 +774,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			increadedPriority = true;
 		}
 		
-		if(t.getAction() == MotionEvent.ACTION_MOVE && t.getHistorySize() > 0) {
+		if(t.getAction() == MotionEvent.ACTION_MOVE) {
+			
+			synchronized(isdrawn) {
+				if(!isdrawn) {
+					try {
+						isdrawn.wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
 			//compute distance;
 			Float now_x = new Float(t.getX(t.getPointerId(0)));
 			Float now_y = new Float(t.getY(t.getPointerId(0)));
@@ -748,12 +798,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			float thentime = pre_event.getEventTime();
 			float nowtime = t.getEventTime();
 			
-			float time = (nowtime - thentime) / 1000; //convert to seconds
+			float time = (nowtime - thentime) / 1000.0f; //convert to seconds
 			
 			//float prev_y = t.getHistoricalY(t.getPointerId(0),history-1);
 			float prev_y = pre_event.getY(t.getPointerId(0));
 			float dist = now_y - prev_y;
-			
+			diff_amount = (int)dist;
 			
 			float velocity = dist / time;
 			float MAX_VELOCITY = 700;
@@ -765,7 +815,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				}
 			}
 			fling_velocity = velocity;
-			Log.e("SLICK","MOTIONEVENT HISTORICAL Y: "+new Float(dist).toString() + " TIME: " + new Float(time).toString() + " VEL: " + new Float(velocity));
+			//Log.e("SLICK","MOTIONEVENT HISTORICAL Y: "+new Float(dist).toString() + " TIME: " + new Float(time).toString() + " VEL: " + new Float(velocity));
 			
 			if(drawn) {
 				synchronized(drawn) {
@@ -774,10 +824,13 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				}
 			}
 			
-			pre_event = MotionEvent.obtainNoHistory(t);
+			if(Math.abs(diff_amount) > 5) {
+				
+				pre_event = MotionEvent.obtainNoHistory(t);
+			}
 		}
 		
-		int pointers = t.getPointerCount();
+		/*int pointers = t.getPointerCount();
 		//int the_last_pointer = t.getPointerId(0);
 		float diff = 0;
 		for(int i=0;i<pointers;i++) {
@@ -794,7 +847,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			//Log.e("SLICK","SLICK TOUCH AT PY:" + prev_y + " Y:" + y_val + " P:" + i + " DIF:" + diff);
 			prev_y = y_val;
-		}
+		}*/
 		
 		/*synchronized(isdrawn) {
 			while(isdrawn == false) {
@@ -822,6 +875,46 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		if(t.getAction() == (MotionEvent.ACTION_UP)) {
 			//Log.e("SLICK","Got up action: " + scrollback);
+			
+			//Float now_x = new Float(t.getX(t.getPointerId(0)));
+			//Float now_y = new Float(t.getY(t.getPointerId(0)));
+			//double distance = Math.sqrt(Math.pow(now_x-start_x, 2) + Math.pow(now_y-start_y,2));
+			//if(distance > 30) {
+			//	buttonaddhandler.removeMessages(MSG_BUTTONDROPSTART);
+			//}
+			
+
+			//float thentime = pre_event.getEventTime();
+			//float nowtime = t.getEventTime();
+			
+			//float time = (nowtime - thentime) / 1000.0f; //convert to seconds
+			
+			//float prev_y = t.getHistoricalY(t.getPointerId(0),history-1);
+			//float prev_y = pre_event.getY(t.getPointerId(0));
+			//float dist = now_y - prev_y;
+			//diff_amount = (int)dist;
+			
+			//float velocity = dist / time;
+			//float MAX_VELOCITY = 700;
+			//if(Math.abs(velocity) > MAX_VELOCITY) {
+			//	if(velocity > 0) {
+			//		velocity = MAX_VELOCITY;
+			//	} else {
+			//		velocity = MAX_VELOCITY * -1;
+			//	}
+			//}
+			//fling_velocity = velocity;
+			synchronized(isdrawn) {
+				if(!isdrawn) {
+					try {
+						isdrawn.wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			
 			pre_event = null;
 			prev_y = new Float(0);
 			buttonaddhandler.removeMessages(SlickView.MSG_BUTTONDROPSTART);
@@ -835,6 +928,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				drawn = false;
 			}
 	        pre_event = null;
+	        finger_down=false;
+	        finger_down_to_up = true;
 			return true;
 		}
 		

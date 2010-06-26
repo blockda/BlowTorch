@@ -294,13 +294,14 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					Character cr = new Character((char)13);
 					Character lf = new Character((char)10);
 					String crlf = cr.toString() + lf.toString();
-					String nosemidata = data.replace(";", crlf);
-					nosemidata = nosemidata.concat(crlf);
-					ByteBuffer buf = ByteBuffer.allocate(nosemidata.length());
+					//String nosemidata = data.replace(";", crlf);
+					//nosemidata = nosemidata.concat(crlf);
+					data = data.concat(crlf);
+					ByteBuffer buf = ByteBuffer.allocate(data.length());
 		
 					
 					try {
-						buf.put(nosemidata.getBytes("UTF-8"));
+						buf.put(data.getBytes("UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						
 						e.printStackTrace();
@@ -321,9 +322,9 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					//send the box to the window, with newline because we are cool.
 					//but delete that pesky carriage return, yuck
-					data.replace(cr.toString(), "\n");
-					data = data.concat("\n");
-					screen2.addText(data,false);
+					//data.replace(cr.toString(), "\n");
+					//data = data.concat("\n");
+					//screen2.addText(data,false);
 					screen2.jumpToZero();
 				
 					input_box.setText("");
@@ -366,28 +367,29 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				case MESSAGE_SENDDATAOUT:
 					byte[] data = msg.getData().getByteArray("DATA");
 					try {
-						String nosemidata = null;
-						try {
-							nosemidata = new String(data,"ISO-8859-1");
-						} catch (UnsupportedEncodingException e) {
+						//String nosemidata = null;
+						//try {
+						//	nosemidata = new String(data,"ISO-8859-1");
+						//} catch (UnsupportedEncodingException e) {
+						//	
+						//	e.printStackTrace();
+						//}
+						//Character cr = new Character((char)13);
+						//Character lf = new Character((char)10);
+						//String crlf = cr.toString() + lf.toString();
+						//nosemidata = nosemidata.replace(";", crlf);
+						//try {
+							//service.sendData(nosemidata.getBytes("ISO-8859-1"));
+							service.sendData(data);
+						//} catch (UnsupportedEncodingException e) {
 							
-							e.printStackTrace();
-						}
-						Character cr = new Character((char)13);
-						Character lf = new Character((char)10);
-						String crlf = cr.toString() + lf.toString();
-						nosemidata = nosemidata.replace(";", crlf);
-						try {
-							service.sendData(nosemidata.getBytes("ISO-8859-1"));
-						} catch (UnsupportedEncodingException e) {
-							
-							e.printStackTrace();
-						}
+						//	e.printStackTrace();
+						//}
 					} catch (RemoteException e) {
 						
 						e.printStackTrace();
 					}
-					screen2.addText(new String(msg.getData().getByteArray("DATA")),false);
+					//screen2.addText(new String(msg.getData().getByteArray("DATA")),false);
 					screen2.jumpToZero();
 					break;
 				default:

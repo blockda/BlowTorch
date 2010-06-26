@@ -13,6 +13,9 @@ import android.widget.EditText;
 public class NewAliasDialog extends Dialog {
 
 	NewAliasDialogDoneListener reportto = null;
+	String original_alias = null;
+	int old_pos = 0;
+	
 	
 	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme) {
 		super(context);
@@ -31,6 +34,55 @@ public class NewAliasDialog extends Dialog {
 				
 				if(pre != null && post != null) {
 					reportto.newAliasDialogDone(pre.getText().toString(), post.getText().toString());
+					NewAliasDialog.this.dismiss();
+				}
+			}
+		});
+		
+		Button cancel = (Button)findViewById(R.id.new_alias_cancel);
+		cancel.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				NewAliasDialog.this.dismiss();
+			}
+		});
+		//load in the array adapter to hook up the list view
+	}
+	
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,String old_alias) {
+		super(context);
+		// TODO Auto-generated constructor stub
+		reportto = useme;
+		original_alias = old_alias;
+		old_pos = position;
+		setContentView(R.layout.new_alias_dialog);
+		
+		Button b = (Button)findViewById(R.id.new_alias_done_button);
+		b.setText("Modify this alias.");
+		EditText tpre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
+		EditText tpost = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
+		
+		tpre.setText(pre);
+		tpost.setText(post);
+		
+		tpre.setEnabled(false);
+		
+		Button cancel = (Button)findViewById(R.id.new_alias_cancel);
+		cancel.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				NewAliasDialog.this.dismiss();
+			}
+		});
+		
+		b.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
+				EditText post = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
+				
+				if(pre != null && post != null) {
+					reportto.editAliasDialogDone(pre.getText().toString(), post.getText().toString(),old_pos,original_alias);
 					NewAliasDialog.this.dismiss();
 				}
 			}

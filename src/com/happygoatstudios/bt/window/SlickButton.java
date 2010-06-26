@@ -89,7 +89,7 @@ public class SlickButton extends View {
 	
 	public void doDispatchFlip() {
 		//only dispatch flip if it contains a command
-		if(data.flip_command.equals("")) {
+		if(data.flip_command == null || data.flip_command.equals("")) {
 			
 		} else {
 			dispatchText(data.flip_command);

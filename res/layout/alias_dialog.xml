@@ -15,22 +15,36 @@
   		<TextView 
   			android:layout_width="210px"
   			android:layout_height="wrap_content"
+  			android:textSize="24px"
+  			android:textStyle="bold"
+  			android:gravity="center"
  			android:text = "Alias:"/>
   		<TextView 
   			android:layout_width="210px"
   			android:layout_height="wrap_content"
+  			android:textSize="24px"
+  			android:gravity="center"
+  			android:textStyle="bold|italic"
  			android:text = "Replace With:"/>
   	
   	</TableRow>
   </TableLayout>
   
   <Button
+    android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/alias_cancel_done"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:text="Cancel" />
+  
+  <Button
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
   	android:id="@+id/alias_dialog_done"
-  	android:layout_alignParentBottom="true"
-  	android:layout_alignParentRight="true"
-  	android:text="Done!" />
+	android:layout_toLeftOf="@id/alias_cancel_done"
+	android:layout_alignParentBottom="true"
+  	android:text="Save List" />
   
   <Button
   	android:layout_width="fill_parent"

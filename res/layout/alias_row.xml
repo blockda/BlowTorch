@@ -10,12 +10,22 @@
   		<TextView 
   			android:id="@+id/alias_pre"
   			android:layout_width="210px"
-  			android:layout_height="wrap_content"
+  			android:layout_height="25sp"
+  			android:background="#AAAA3333"
+  			android:textColor="#FF3333AA"
+  			android:textSize="18sp"
+  			android:gravity="center|center_vertical"
+  			
  			/>
   		<TextView 
   			android:id="@+id/alias_post"
   			android:layout_width="210px"
-  			android:layout_height="wrap_content"
+  			android:layout_height="25sp"
+  			android:background="#AA3333AA"
+  			android:textColor="#FFAA3333"
+  			android:textSize="18sp"
+  			android:textStyle="italic"
+  			android:gravity="center_vertical"
  			/>
   	</TableRow>
   	

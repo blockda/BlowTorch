@@ -66,7 +66,7 @@ public class Processor {
 				
 				//service.sendData(resp);
 				//instead send message
-				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDDATA);
+				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
 				Bundle b = new Bundle();
 				b.putByteArray("THEDATA", resp);
 				sb.setData(b);
@@ -129,7 +129,7 @@ public class Processor {
 				//}
 			} else {
 			
-				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDDATA);
+				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
 				Bundle b = new Bundle();
 				b.putByteArray("THEDATA", sub_r);
 				sbm.setData(b);
@@ -169,6 +169,9 @@ public class Processor {
 	}
 	
 	public String RawProcess(byte[] data) throws UnsupportedEncodingException {
+		if(data == null) {
+			return "";
+		}
 		String tmp = new String(data,"ISO-8859-1");
 
 		
@@ -198,7 +201,7 @@ public class Processor {
 				
 				//service.sendData(resp);
 				//instead send message
-				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDDATA);
+				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
 				Bundle b = new Bundle();
 				b.putByteArray("THEDATA", resp);
 				sb.setData(b);
@@ -261,7 +264,7 @@ public class Processor {
 				//}
 			} else {
 			
-				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDDATA);
+				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
 				Bundle b = new Bundle();
 				b.putByteArray("THEDATA", sub_r);
 				sbm.setData(b);
