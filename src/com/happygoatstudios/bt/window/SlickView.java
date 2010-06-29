@@ -28,6 +28,7 @@ import android.view.animation.CycleInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Process;
@@ -44,7 +45,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	SlickButtonUtilities sbu = new SlickButtonUtilities();
 	
-	EditText new_text_in_buffer_indicator = null;
+	TextView new_text_in_buffer_indicator = null;
 	
 	private Pattern newline = Pattern.compile("\n");
 	private Pattern carriage = Pattern.compile("\\x0D");
@@ -217,7 +218,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					break;
 				case MSG_CLEAR_NEW_TEXT_INDICATOR:
 					Animation a = new AlphaAnimation(0.0f,0.0f);
-					a.setDuration(10);
+					a.setDuration(0);
 					a.setFillAfter(true);
 					a.setFillBefore(true);
 					new_text_in_buffer_indicator.startAnimation(a);
@@ -227,7 +228,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		};
 	}
 	
-	public void setNewTextIndicator(EditText e) {
+	public void setNewTextIndicator(TextView e) {
 		new_text_in_buffer_indicator = e;
 	}
 	
@@ -435,15 +436,15 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			if(!jumptoend) {
 				//scrollback = scrollback + (numlines-1)*linesize;
 				//fling_velocity = -700;
-				scrollback = 0.0f; //scrolling is stupid and expensive for this and takes alot longer than i can ram stuff into the buffer. so jump to end on new stuff incoming, unless scrollback is > 0, then we just stay put.
-				fling_velocity = 0.0f;
+				//scrollback = 0.0f; //scrolling is stupid and expensive for this and takes alot longer than i can ram stuff into the buffer. so jump to end on new stuff incoming, unless scrollback is > 0, then we just stay put.
+				//fling_velocity = 0.0f;
 			} else {
-				scrollback = 0.0f;
-				fling_velocity = 0.0f;
+				//scrollback = 0.0f;
+				//fling_velocity = 0.0f;
 			}
 			
 			Animation a = new AlphaAnimation(0.0f,0.0f);
-			a.setDuration(10);
+			a.setDuration(0);
 			a.setFillAfter(true);
 			a.setFillBefore(true);
 			new_text_in_buffer_indicator.startAnimation(a);
@@ -545,12 +546,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				if(Math.abs(new Double(fling_velocity)) < 15) {
 					fling_velocity = 0;
 					prev_draw_time = 0;
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 				}
 				
 				if(scrollback.intValue() / PREF_LINESIZE < 1) {
 					prev_draw_time = 0;
 					fling_velocity = 0;
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 				}
 				
@@ -743,22 +746,22 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	int diff_amount = 0;
 	public boolean onTouchEvent(MotionEvent t) {
 		
-		
+		synchronized(isdrawn) {
+			if(!isdrawn) {
+				try {
+					isdrawn.wait();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 		
 		//touchLock = true;
 		//_runner.setPause();
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
 			
-			synchronized(isdrawn) {
-				if(!isdrawn) {
-					try {
-						isdrawn.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
+
 			
 			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
 			start_x = new Float(t.getX(t.getPointerId(0)));
@@ -766,6 +769,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			pre_event = MotionEvent.obtainNoHistory(t);
 			fling_velocity = 0.0f;
 			finger_down = true;
+			finger_down_to_up = false;
+			prev_draw_time = 0;
 		}
 		
 		if(!increadedPriority) {
@@ -776,16 +781,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		if(t.getAction() == MotionEvent.ACTION_MOVE) {
 			
-			synchronized(isdrawn) {
-				if(!isdrawn) {
-					try {
-						isdrawn.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
+
 			//compute distance;
 			Float now_x = new Float(t.getX(t.getPointerId(0)));
 			Float now_y = new Float(t.getY(t.getPointerId(0)));
@@ -817,12 +813,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			fling_velocity = velocity;
 			//Log.e("SLICK","MOTIONEVENT HISTORICAL Y: "+new Float(dist).toString() + " TIME: " + new Float(time).toString() + " VEL: " + new Float(velocity));
 			
-			if(drawn) {
-				synchronized(drawn) {
-					drawn.notify();
-					drawn = false;
-				}
-			}
 			
 			if(Math.abs(diff_amount) > 5) {
 				
@@ -830,7 +820,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 		}
 		
-		/*int pointers = t.getPointerCount();
+		int pointers = t.getPointerCount();
 		//int the_last_pointer = t.getPointerId(0);
 		float diff = 0;
 		for(int i=0;i<pointers;i++) {
@@ -847,7 +837,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			//Log.e("SLICK","SLICK TOUCH AT PY:" + prev_y + " Y:" + y_val + " P:" + i + " DIF:" + diff);
 			prev_y = y_val;
-		}*/
+		}
 		
 		/*synchronized(isdrawn) {
 			while(isdrawn == false) {
@@ -904,16 +894,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			//	}
 			//}
 			//fling_velocity = velocity;
-			synchronized(isdrawn) {
-				if(!isdrawn) {
-					try {
-						isdrawn.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
+
 			
 			pre_event = null;
 			prev_y = new Float(0);
@@ -923,17 +904,17 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        increadedPriority = false;
 	        _runner.dcbPriority(Process.THREAD_PRIORITY_DEFAULT);
 	        
-	        synchronized(drawn) {
-				drawn.notify();
-				drawn = false;
-			}
+
 	        pre_event = null;
 	        finger_down=false;
 	        finger_down_to_up = true;
-			return true;
+			//return true;
 		}
 		
-		
+        synchronized(drawn) {
+			drawn.notify();
+			drawn = false;
+		}
 		//_runner.setResume();
 		//synchronized(drawn) {
 		//	drawn.notify();

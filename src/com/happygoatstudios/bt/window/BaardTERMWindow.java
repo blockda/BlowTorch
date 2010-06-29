@@ -217,8 +217,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         screen2 = (SlickView)findViewById(R.id.slickview);
         RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         screen2.setParentLayout(l);
-        EditText fill2 = (EditText)findViewById(R.id.filler2);
-        //View fill2 = findViewById(R.id.filler2);
+        //EditText fill2 = (EditText)findViewById(R.id.filler2);
+        TextView fill2 = (TextView)findViewById(R.id.filler2);
         fill2.setFocusable(false);
         fill2.setClickable(false);
         screen2.setNewTextIndicator(fill2);
@@ -256,7 +256,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         
         input_box.setVisibility(View.VISIBLE);
         input_box.setEnabled(true);
-        EditText filler = (EditText)findViewById(R.id.filler);
+        TextView filler = (TextView)findViewById(R.id.filler);
         filler.setFocusable(false);
         filler.setClickable(false);
         
@@ -467,9 +467,9 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						
 						//send the box to the window, with newline because we are cool.
 						//but delete that pesky carriage return, yuck
-						data.replace(cr.toString(), "\n");
-						data = data.concat("\n");
-						screen2.addText(data,false);
+						//data.replace(cr.toString(), "\n");
+						//data = data.concat("\n");
+						//screen2.addText(data,false);
 						screen2.jumpToZero();
 					
 						input_box.setText("");
