@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,7 @@ public class Colorizer {
 	
 	public Colorizer() {
 		//not much to do here
+
 	}
 	
 	//
@@ -396,6 +398,47 @@ public class Colorizer {
 			return null;
 		}
 	}
+	
+	
+	public static HashMap<CharSequence,Integer> colormap = new HashMap<CharSequence, Integer>();
+	static
+	{
+		colormap.put("0", 0);
+		colormap.put("1", 1);
+		colormap.put("30", 30);
+		colormap.put("31", 31);
+		colormap.put("32", 32);
+		colormap.put("33", 33);
+		colormap.put("34", 34);
+		colormap.put("35", 35);
+		colormap.put("36", 36);
+		colormap.put("37", 37);
+		colormap.put("40", 40);
+		colormap.put("41", 41);
+		colormap.put("42", 42);
+		colormap.put("43", 43);
+		colormap.put("44", 44);
+		colormap.put("45", 45);
+		colormap.put("46", 46);
+		colormap.put("47", 47);
+	}
+	public static int getColorValue(CharSequence bright, CharSequence value) {
+		
+		Integer b = colormap.get(bright.toString());
+		Integer c = colormap.get(value.toString());
+		
+		if(b == null) {
+			b = 0;
+		}
+		
+		if(c == null) {
+			c = 31;
+		}
+		
+		return getColorValue(b,c);
+	}
+
+		
 	
 	public static int getColorValue(Integer bright,Integer value) {
 		int colorval = 0x000000;

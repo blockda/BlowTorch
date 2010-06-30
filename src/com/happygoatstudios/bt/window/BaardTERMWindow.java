@@ -29,8 +29,11 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
 import android.os.RemoteException;
+import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
+import android.text.method.KeyListener;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -50,6 +53,7 @@ import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebSettings.TextSize;
 import android.widget.Button;
@@ -74,6 +78,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_PROCESS = 102;
 	protected static final int MESSAGE_PROCESSED = 104;
 	protected static final int MESSAGE_SENDDATAOUT = 105;
+	protected static final int MESSAGE_RESETINPUTWINDOW = 106;
+	protected static final int MESSAGE_PROCESSINPUTWINDOW = 107;
 	
 	
 	String host;
@@ -248,10 +254,15 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					input_box.setText(cmd);
 					return true;
 				}
+				//Log.e("WINDOW","Key event happened, invalidating view.");
+				//input_box.invalidate();
 				return false;
 			}
    
         });
+        
+        input_box.setDrawingCacheEnabled(true);
+        //input_box.addTextChangedListener()
         
         
         input_box.setVisibility(View.VISIBLE);
@@ -289,7 +300,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				
 				if((event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP)) {
 					//Message tmp = ConnectionHandler.obtainMessage(105);
-					String data = input_box.getText().toString();
+					myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_PROCESSINPUTWINDOW);
+					/*String data = input_box.getText().toString();
 					history.addCommand(data);
 					Character cr = new Character((char)13);
 					Character lf = new Character((char)10);
@@ -310,24 +322,24 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					buf.rewind();
 				
 					byte[] buffbytes = buf.array();
-					//Bundle bundle = new Bundle();
-					//bundle.putByteArray("DATA", buffbytes);
-					//tmp.setData(bundle);
-					//ConnectionHandler.sendMessage(tmp);
+
 					try {
 						service.sendData(buffbytes);
 					} catch (RemoteException e) {
 						e.printStackTrace();
-					}
+					}*/
 					
 					//send the box to the window, with newline because we are cool.
 					//but delete that pesky carriage return, yuck
 					//data.replace(cr.toString(), "\n");
 					//data = data.concat("\n");
 					//screen2.addText(data,false);
-					screen2.jumpToZero();
-				
-					input_box.setText("");
+
+					//input_box.invalidate();
+					//input_box.setSingleLine(true);
+					
+
+
 					if(actionId == EditorInfo.IME_ACTION_DONE) {
 
 						//	return false;
@@ -357,6 +369,57 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_PROCESSINPUTWINDOW:
+					
+					//input_box.debug(5);
+					
+					String pdata = input_box.getText().toString();
+					history.addCommand(pdata);
+					Character cr = new Character((char)13);
+					Character lf = new Character((char)10);
+					String crlf = cr.toString() + lf.toString();
+					//String nosemidata = data.replace(";", crlf);
+					//nosemidata = nosemidata.concat(crlf);
+					pdata = pdata.concat(crlf);
+					ByteBuffer buf = ByteBuffer.allocate(pdata.length());
+		
+					
+					try {
+						buf.put(pdata.getBytes("UTF-8"));
+					} catch (UnsupportedEncodingException e) {
+						
+						e.printStackTrace();
+					}
+				
+					buf.rewind();
+				
+					byte[] buffbytes = buf.array();
+
+					try {
+						service.sendData(buffbytes);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+					myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_RESETINPUTWINDOW);
+					break;
+				case MESSAGE_RESETINPUTWINDOW:
+					Log.e("WINDOW","Attempting to reset input bar.");
+					
+					
+					input_box.clearComposingText();
+					//input_box.beginBatchEdit();
+					input_box.setText("");
+					//input_box.
+					//input_box.endBatchEdit();
+					
+					InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+					imm.restartInput(input_box);
+					//input_box.debug(1);
+					//RelativeLayout layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.input_bar);
+					//layout.removeView(input_box);
+					//layout.addView(input_box);
+					//input_box.beginBatchEdit();
+					break;
 				case MESSAGE_RAWINC:
 					//raw data incoming
 					screen2.addText(msg.getData().getString("RAW"),false);
@@ -391,6 +454,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					}
 					//screen2.addText(new String(msg.getData().getByteArray("DATA")),false);
 					screen2.jumpToZero();
+
+					
 					break;
 				default:
 					break;
@@ -439,7 +504,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				ec.setOnClickListener(new View.OnClickListener() {
 
 					public void onClick(View arg0) {
-						String data = input_box.getText().toString();
+						/*String data = input_box.getText().toString();
 						history.addCommand(data);
 						Character cr = new Character((char)13);
 						Character lf = new Character((char)10);
@@ -470,9 +535,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						//data.replace(cr.toString(), "\n");
 						//data = data.concat("\n");
 						//screen2.addText(data,false);
-						screen2.jumpToZero();
-					
-						input_box.setText("");
+						myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_RESETINPUTWINDOW);*/
+						myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_PROCESSINPUTWINDOW);
 					}
 					
 				});

@@ -36,6 +36,7 @@ import android.os.Process;
 public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 
 	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
+	Pattern lastcolordatainline = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m.*\n");
 	
 	private DrawRunner _runner;
 	
@@ -312,6 +313,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		/*--------- set scrollBack to 0--------*/
 		scrollback = (float)0.0;
+		fling_velocity = 0.0f;
 		
 		synchronized(touchLock) {
 			touchLock.notify();
@@ -483,6 +485,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	Canvas drawn_buffer = null;
 	long prev_draw_time = 0;
 	boolean finger_down_to_up = false;
+	Matcher toLines = newline.matcher("");
+	StringBuffer drawline = new StringBuffer();
 	@Override
 	public void onDraw(Canvas canvas) {
 		//IM DRAWING
@@ -546,7 +550,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				if(Math.abs(new Double(fling_velocity)) < 15) {
 					fling_velocity = 0;
 					prev_draw_time = 0;
-					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+					//buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 				}
 				
@@ -602,10 +606,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         //opts.setStyle(Style.)
         opts.setTypeface(Typeface.MONOSPACE);
 
-        Matcher toLines = newline.matcher(the_buffer.toString());
-        
-        StringBuffer line = new StringBuffer();
-        
+        //Matcher toLines = newline.matcher(the_buffer.toString());
+        toLines.reset(the_buffer); 
+        //StringBuffer line = new StringBuffer();
+        drawline.setLength(0);
         
         
         
@@ -627,14 +631,19 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
        
         boolean endonnewline = false;
         while(toLines.find()) {
-        	toLines.appendReplacement(line, "");
+        	toLines.appendReplacement(drawline, "");
         	
+        	//Matcher lastcolor = lastcolordatainline.matcher(drawline.toString() + "\n");
         	
-        	if(currentline >= startDrawingAtLine-1 && currentline <= (startDrawingAtLine + maxlines)) {
+        	//if(lastcolor.find()) {
+        		
+        	//}
+        	
+        	if(currentline >= startDrawingAtLine-2 && currentline <= (startDrawingAtLine + maxlines)) {
         		
         		int screenpos = currentline - startDrawingAtLine + 1;
         		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
-        		Matcher colormatch = colordata.matcher(line.toString());
+        		Matcher colormatch = colordata.matcher(drawline);
         		
         		
         		float x_position = 0;
@@ -646,7 +655,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         			colormatch.appendReplacement(csegment, "");
         			
         			//get color data
-        			int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+        			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+        			int color = Colorizer.getColorValue(sel_bright, sel_color);
         			if(color == 0) {
         				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
         			}
@@ -675,7 +685,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         		}
         		
         		if(!colorfound) {
-        			canvas.drawText(line.toString(), 0, y_position , opts);
+        			canvas.drawText(drawline.toString(), 0, y_position , opts);
         		}
         		
         		
@@ -684,7 +694,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         	}
         	
         	//line = new StringBuffer();
-        	line.setLength(0);
+        	drawline.setLength(0);
         	currentline++;
         	if(toLines.end() == the_buffer.length()) {
         		endonnewline = true;
@@ -693,11 +703,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         }
         if(!endonnewline) {
         	
-        	toLines.appendTail(line);
+        	toLines.appendTail(drawline);
         	int screenpos = currentline - startDrawingAtLine + 1;
     		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
     		opts.setColor(0xFF00CCCC);
-    		Matcher colormatch = colordata.matcher(line.toString());
+    		Matcher colormatch = colordata.matcher(drawline);
     		
     		
     		float x_position = 0;
@@ -730,15 +740,15 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     		}
     		
     		if(!colorfound) {
-    			canvas.drawText(line.toString(), 0, y_position , opts);
+    			canvas.drawText(drawline.toString(), 0, y_position , opts);
     		}
-    		line.setLength(0);
+    		drawline.setLength(0);
         	currentline++;		
         	
         }
         
         //release the lock
-        drawn_buffer = canvas;
+        //drawn_buffer = canvas;
 	}
 	
 	boolean finger_down = false;
