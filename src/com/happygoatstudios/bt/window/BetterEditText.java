@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.window;
 
 import android.content.Context;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;
@@ -30,8 +31,14 @@ public class BetterEditText extends EditText {
 	
 	public InputConnection onCreateInputConnection(EditorInfo attrs) {
 		Log.e("BETTEREDIT","RETURNING NEW INPUT CONNECTION!");
+		SlickConnection slick = new SlickConnection(this,false);
+		//attrs.
+		//slick.
+		attrs.imeOptions=EditorInfo.IME_ACTION_SEND|EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+		attrs.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE;
 		
-		return super.onCreateInputConnection(attrs);
+		return new SlickConnection(this,false);
+		//return super.onCreateInputConnection(attrs);
 		
 	}
 	

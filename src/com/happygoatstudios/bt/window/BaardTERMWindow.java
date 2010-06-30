@@ -101,7 +101,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	//ScrollView screen2 = null;
 	SlickView screen2 = null;
 	
-	EditText input_box = null;
+	//EditText input_box = null;
 	CommandKeeper history = null;
 	
 
@@ -238,12 +238,12 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         screen2.setZOrderOnTop(false);
         screen2.setOnTouchListener(gestureListener);
 		
-        input_box = (EditText)findViewById(R.id.textinput);
+        EditText input_box = (EditText)findViewById(R.id.textinput);
         
         input_box.setOnKeyListener(new TextView.OnKeyListener() {
 
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				
+				EditText input_box = (EditText)findViewById(R.id.textinput);
 				if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					
 					String cmd = history.getNext();
@@ -278,7 +278,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         
 		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 		//public boolean onKey(View v, int keyCode, KeyEvent event) {
-				
+				EditText input_box = (EditText)findViewById(R.id.textinput);
 				//post message to conneciton thread
 				//only do something if enter was pressed
 				//InputConnection ic =null;
@@ -338,7 +338,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					//input_box.invalidate();
 					//input_box.setSingleLine(true);
 					
-
+					screen2.jumpToZero();
 
 					if(actionId == EditorInfo.IME_ACTION_DONE) {
 
@@ -368,6 +368,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		//assign my handler
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
+				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
 				case MESSAGE_PROCESSINPUTWINDOW:
 					
@@ -408,12 +409,14 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					input_box.clearComposingText();
 					//input_box.beginBatchEdit();
+					//input_box.
 					input_box.setText("");
 					//input_box.
 					//input_box.endBatchEdit();
 					
 					InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 					imm.restartInput(input_box);
+					//imm.
 					//input_box.debug(1);
 					//RelativeLayout layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.input_bar);
 					//layout.removeView(input_box);
@@ -422,7 +425,9 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					break;
 				case MESSAGE_RAWINC:
 					//raw data incoming
+					//while(screen2.finger_down) {}
 					screen2.addText(msg.getData().getString("RAW"),false);
+					
 					break;
 				case MESSAGE_BUFFINC:
 					screen2.addText(msg.getData().getString("RAW"), true);
@@ -470,6 +475,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			public void onClick(View v) {
 				//change my layout parameters and add a new button.
 				
+				
 				RelativeLayout rl = (RelativeLayout)findViewById(R.id.input_bar);
 				LinearLayout l = (LinearLayout)findViewById(R.id.ctrl_target);
 				if(l == null) {
@@ -487,6 +493,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				uc.setOnClickListener(new View.OnClickListener() {
 					
 					public void onClick(View arg0) {
+						EditText input_box = (EditText)findViewById(R.id.textinput);
 						String cmd = history.getNext();
 						input_box.setText(cmd);
 					}
@@ -496,6 +503,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				dc.setOnClickListener(new View.OnClickListener() {
 					
 					public void onClick(View arg0) {
+						EditText input_box = (EditText)findViewById(R.id.textinput);
 						String cmd = history.getPrev();
 						input_box.setText(cmd);
 					}
@@ -537,6 +545,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						//screen2.addText(data,false);
 						myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_RESETINPUTWINDOW);*/
 						myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_PROCESSINPUTWINDOW);
+						screen2.jumpToZero();
 					}
 					
 				});
@@ -1008,6 +1017,20 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		}
 
 		public void rawDataIncoming(String raw) throws RemoteException {
+			//while(screen2.finger_down) {}
+			/*synchronized(screen2.is_in_touch) {
+				if(screen2.is_in_touch) {
+					while(screen2.is_in_touch) {
+						try {
+							Log.e("WINDOW","WAITING TO ADD TEXT TILL TOUCH COMPLETE!");
+							screen2.is_in_touch.wait();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			}*/
 			Message msg = myhandler.obtainMessage(MESSAGE_RAWINC);
 			Bundle b = new Bundle();
 			b.putString("RAW",raw);
