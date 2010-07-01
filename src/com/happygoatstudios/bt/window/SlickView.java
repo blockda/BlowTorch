@@ -849,7 +849,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			//utilinterlock = true;
 			
 		}*/
-		
+		/*synchronized(isdrawn) {
+			if(!isdrawn) {
+				while(!isdrawn) {
+					try {
+						isdrawn.wait(10);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}*/
 		/*synchronized(isdrawn) {
 			if(!isdrawn) {
 				try {
@@ -925,10 +936,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				pre_event = MotionEvent.obtainNoHistory(t);
 			}
 			
-	        synchronized(drawn) {
-				drawn.notify();
-				drawn = false;
-			}
+
 		}
 		
 		int pointers = t.getPointerCount();
@@ -1020,10 +1028,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        finger_down=false;
 	        finger_down_to_up = true;
 	        
-	        synchronized(drawn) {
-				drawn.notify();
-				drawn = false;
-			}
+
 			//return true;
 		}
 		
@@ -1042,7 +1047,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//	drawn.notify();
 		//	drawn = false;
 		//}
-	
+        synchronized(drawn) {
+        	if(drawn.booleanValue()) {
+        		drawn.notify();
+        		drawn = false;
+        	} 
+		}
 		
 		return true; //consumes
 		

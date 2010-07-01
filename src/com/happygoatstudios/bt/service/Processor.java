@@ -66,10 +66,10 @@ public class Processor {
 				
 				//service.sendData(resp);
 				//instead send message
-				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
-				Bundle b = new Bundle();
-				b.putByteArray("THEDATA", resp);
-				sb.setData(b);
+				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,resp);
+				//Bundle b = new Bundle();
+				//b.putByteArray("THEDATA", resp);
+				//sb.setData(b);
 				
 				/*synchronized(reportto) {
 					while(reportto.hasMessages(BaardTERMService.MESSAGE_SENDDATA)) {
@@ -129,10 +129,10 @@ public class Processor {
 				//}
 			} else {
 			
-				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
-				Bundle b = new Bundle();
-				b.putByteArray("THEDATA", sub_r);
-				sbm.setData(b);
+				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,sub_r);
+				//Bundle b = new Bundle();
+				//b.putByteArray("THEDATA", sub_r);
+				//sbm.setData(b);
 				
 				/*synchronized(reportto) {
 					while(reportto.hasMessages(BaardTERMService.MESSAGE_SENDDATA)) {
@@ -201,10 +201,10 @@ public class Processor {
 				
 				//service.sendData(resp);
 				//instead send message
-				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
-				Bundle b = new Bundle();
-				b.putByteArray("THEDATA", resp);
-				sb.setData(b);
+				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,resp);
+				//Bundle b = new Bundle();
+				//b.putByteArray("THEDATA", resp);
+				//sb.setData(b);
 				
 				/*synchronized(reportto) {
 					while(reportto.hasMessages(BaardTERMService.MESSAGE_SENDDATA)) {
@@ -264,10 +264,10 @@ public class Processor {
 				//}
 			} else {
 			
-				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA);
-				Bundle b = new Bundle();
-				b.putByteArray("THEDATA", sub_r);
-				sbm.setData(b);
+				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,sub_r);
+				//Bundle b = new Bundle();
+				//b.putByteArray("THEDATA", sub_r);
+				//sbm.setData(b);
 				
 				/*synchronized(reportto) {
 					while(reportto.hasMessages(BaardTERMService.MESSAGE_SENDDATA)) {

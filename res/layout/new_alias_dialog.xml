@@ -6,12 +6,33 @@
   android:layout_width="420px"
   android:layout_height="fill_parent">
   
+    <Button
+    android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/new_alias_cancel"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:text="Cancel" />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Add this alias."
+  	android:id="@+id/new_alias_done_button"
+  	android:layout_toLeftOf="@id/new_alias_cancel"
+  	android:layout_alignParentBottom="true"/>
+  
+  <ScrollView 
+  	android:layout_width="420px"
+  	android:layout_height="fill_parent"
+  	android:layout_above="@id/new_alias_done_button">
   <TableLayout
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
   	android:layout_alignParentLeft="true"
   	android:id="@+id/alias_label"
   	android:layout_alignParentTop="true">
+
   	<TableRow>
   		<TextView 
   			android:layout_width="120px"
@@ -33,26 +54,13 @@
   			android:id="@+id/new_alias_post"
   			android:layout_width="300px"
   			android:layout_height="wrap_content"
+  			android:inputType="textMultiLine"
   			android:hint="Replace with this." />
   	
   	</TableRow>
   </TableLayout>
-  
-  <Button
-    android:layout_width="wrap_content"
-  	android:layout_height="wrap_content"
-  	android:id="@+id/new_alias_cancel"
-  	android:layout_alignParentBottom="true"
-  	android:layout_alignParentRight="true"
-  	android:text="Cancel" />
-  
-  <Button
-  	android:layout_width="fill_parent"
-  	android:layout_height="wrap_content"
-  	android:text="Add this alias."
-  	android:id="@+id/new_alias_done_button"
-  	android:layout_toLeftOf="@id/new_alias_cancel"
-  	android:layout_alignParentBottom="true"/>
+  </ScrollView>
+
 
   
 </RelativeLayout>

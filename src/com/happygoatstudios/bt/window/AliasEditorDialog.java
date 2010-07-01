@@ -1,8 +1,11 @@
 package com.happygoatstudios.bt.window;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 import java.util.Map.Entry;
 
 
@@ -26,6 +29,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListener {
 	
@@ -137,6 +141,29 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				//if(port != null) {
 				//	port.setText(" Port: " + m.getPortString());
 				//}
+				
+				Boolean isoffender = false;
+				if(offenders.contains(new Integer(position))) {
+					isoffender = true;
+					//Log.e("ALIASEDITOR","POSITION " + position + " is a circular reference offender.");
+				}
+				if(isoffender) {
+					Log.e("ALIASEDITOR","POSITION " + position + " is a circular reference offender.");
+					//activate view elements to notify the user that this is a circular reference offender.
+					TextView tmp1 = (TextView)v.findViewById(R.id.alias_pre);
+					TextView tmp2 = (TextView)v.findViewById(R.id.alias_post);
+					tmp1.setBackgroundColor(0xAAFF0000);
+					tmp2.setBackgroundColor(0xAAFF0000);
+					tmp1.setTextColor(0xFF000000);
+					tmp2.setTextColor(0xFF000000);
+				} else {
+					TextView tmp1 = (TextView)v.findViewById(R.id.alias_pre);
+					TextView tmp2 = (TextView)v.findViewById(R.id.alias_post);
+					tmp1.setBackgroundColor(0xAA630460);
+					tmp2.setBackgroundColor(0xAAF7941D);
+					tmp1.setTextColor(0xFFF7941D);
+					tmp2.setTextColor(0xFF630460);
+				}
 			}
 			return v;
 		}
@@ -203,14 +230,85 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	};
 
 	public void newAliasDialogDone(String pre, String post) {
+
+		
+		/****
+		 * 
+		 * CHECK FOR CIRCULUAR REFERENCES
+		 * 
+		 */
+
+
+		
 		apdapter.add(pre + "[||]" + post);
 		apdapter.notifyDataSetChanged();
+		
+		boolean validated = validateEntry(pre,post);
+		if(!validated) {
+			//do some stuff to make the dialog better.
+			apdapter.notifyDataSetChanged();
+		} else {
+			Log.e("ALIASEDITOR","NEW ALIAS VALID!");
+			offenders.removeAllElements();
+			offenders.clear();
+			apdapter.notifyDataSetChanged();
+			//apdapter.
+		}
+
 	}
 	
 	public void editAliasDialogDone(String pre,String post,int pos,String orig) {
 		apdapter.remove(orig);
 		apdapter.insert(pre + "[||]" + post,pos);
 		apdapter.notifyDataSetChanged();
+		
+		boolean validated = validateEntry(pre,post);
+		if(!validated) {
+			//do some stuff to make the dialog better.
+			apdapter.notifyDataSetChanged();
+		} else {
+			Log.e("ALIASEDITOR","EDITED ALIAS VALID!");
+			offenders.removeAllElements();
+			offenders.clear();
+			apdapter.notifyDataSetChanged();
+			
+		}
+	}
+	
+	Vector<Integer> offenders = new Vector<Integer>();
+	
+	public boolean validateEntry(String pre,String post) {
+		Boolean retval = true;
+		int count = apdapter.getCount();
+		
+		offenders.removeAllElements();
+		offenders.clear();
+		
+		Integer offendingpos = apdapter.getPosition(pre + "[||]" + post);
+		
+		for(int i=0;i<count;i++) {
+			String test = apdapter.getItem(i);
+			String[] parts = test.split("\\Q[||]\\E");
+			String test_pre = parts[0];
+			String test_post = parts[1];
+			
+			//test to see if the test post matches the new pre, afterstep test
+			if(test_post.contains(pre)) {
+				//it is circuluar only if the old pre is contained in the new pre.
+				if(post.contains(test_pre)) {
+					//circular reference. flag accordingly.
+					//Toast.makeText(this.getContext(), "CIRCULAR REFERENCES DETECTED", 2000);
+					Log.e("ALIASEDITOR","CIRCULAR ALIAS DETECTED!");
+					offenders.add(new Integer(i));
+					retval = false;
+					
+					if(!offenders.contains(offendingpos)) {
+						offenders.add(offendingpos);
+					}
+				}
+			}
+		}
+		return retval;
 	}
 
 }

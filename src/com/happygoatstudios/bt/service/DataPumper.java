@@ -196,14 +196,14 @@ public class DataPumper extends Thread {
 					//}
 					//report to our superior
 					if(reportto != null) {
-						Message msg = reportto.obtainMessage(102); //get a send data message.
-						Bundle bundle = new Bundle();
-						bundle.putByteArray("THEBYTES", data);
-						msg.setData(bundle);
+						Message msg = reportto.obtainMessage(BaardTERMService.MESSAGE_PROCESS,data); //get a send data message.
+						//Bundle bundle = new Bundle();
+						//bundle.putByteArray("THEBYTES", data);
+						//msg.setData(bundle);
 						
 						//only send if they are ready
 						synchronized(reportto) {
-							while(reportto.hasMessages(102)) {
+							while(reportto.hasMessages(BaardTERMService.MESSAGE_PROCESS)) {
 								try {
 									reportto.wait();
 								} catch (InterruptedException e) {

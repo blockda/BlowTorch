@@ -426,14 +426,16 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				case MESSAGE_RAWINC:
 					//raw data incoming
 					//while(screen2.finger_down) {}
-					screen2.addText(msg.getData().getString("RAW"),false);
-					
+					//screen2.addText(msg.getData().getString("RAW"),false);
+					screen2.addText((String)msg.obj,false);
 					break;
 				case MESSAGE_BUFFINC:
-					screen2.addText(msg.getData().getString("RAW"), true);
+					//screen2.addText(msg.getData().getString("RAW"), true);
+					screen2.addText((String)msg.obj,false);
 					break;
 				case MESSAGE_SENDDATAOUT:
-					byte[] data = msg.getData().getByteArray("DATA");
+					//byte[] data = msg.getData().getByteArray("DATA");
+					//byte[] data = (byte[])msg.obj;
 					try {
 						//String nosemidata = null;
 						//try {
@@ -448,7 +450,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						//nosemidata = nosemidata.replace(";", crlf);
 						//try {
 							//service.sendData(nosemidata.getBytes("ISO-8859-1"));
-							service.sendData(data);
+							service.sendData((byte[])msg.obj);
 						//} catch (UnsupportedEncodingException e) {
 							
 						//	e.printStackTrace();
@@ -1031,19 +1033,19 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					}
 				}
 			}*/
-			Message msg = myhandler.obtainMessage(MESSAGE_RAWINC);
-			Bundle b = new Bundle();
-			b.putString("RAW",raw);
-			msg.setData(b);
+			Message msg = myhandler.obtainMessage(MESSAGE_RAWINC,raw);
+			//Bundle b = new Bundle();
+			//b.putString("RAW",raw);
+			//msg.setData(b);
 			myhandler.sendMessage(msg);
 			
 		}
 		
 		public void rawBufferIncoming(String rawbuf) throws RemoteException {
-			Message msg = myhandler.obtainMessage(MESSAGE_BUFFINC);
-			Bundle b = msg.getData();
-			b.putString("RAW", rawbuf);
-			msg.setData(b);
+			Message msg = myhandler.obtainMessage(MESSAGE_BUFFINC,rawbuf);
+			//Bundle b = msg.getData();
+			//b.putString("RAW", rawbuf);
+			//msg.setData(b);
 			myhandler.sendMessage(msg);
 		}
 	};

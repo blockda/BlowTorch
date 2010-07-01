@@ -122,10 +122,11 @@ public class BaardTERMService extends Service {
 					doShutdown();
 					break;
 				case MESSAGE_PROCESS:
-					byte[] data = msg.getData().getByteArray("THEBYTES");
+					//byte[] data = msg.getData().getByteArray("THEBYTES");
+					
 					//need to throttle this somehow to avoid sending messages too fast.
 					try {
-						dispatch(data);
+						dispatch((byte[])msg.obj);
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -147,7 +148,8 @@ public class BaardTERMService extends Service {
 				case MESSAGE_ENDCOMPRESS:
 					break;
 				case MESSAGE_SENDOPTIONDATA:
-					byte[] obytes = msg.getData().getByteArray("THEDATA");
+					//byte[] obytes = msg.getData().getByteArray("THEDATA");
+					byte[] obytes = (byte[])msg.obj;
 					String odbgmsg = null;
 					try {
 						odbgmsg = new String(obytes,"ISO-8859-1");
@@ -166,8 +168,8 @@ public class BaardTERMService extends Service {
 					break;
 				case MESSAGE_SENDDATA:
 					
-					byte[] bytes = msg.getData().getByteArray("THEDATA");
-					
+					//byte[] bytes = msg.getData().getByteArray("THEDATA");
+					byte[] bytes = (byte[]) msg.obj;
 					//do search and replace with aliases.
 					
 					//convert all alias keys to the big match string.
@@ -481,13 +483,13 @@ public class BaardTERMService extends Service {
 			
 			}
 			
-			Message msg = myhandler.obtainMessage(BaardTERMService.MESSAGE_SENDDATA);
+			Message msg = myhandler.obtainMessage(BaardTERMService.MESSAGE_SENDDATA,seq);
 			
-			Bundle b = new Bundle();
+			//Bundle b = new Bundle();
 			
-			b.putByteArray("THEDATA",seq);
+			//b.putByteArray("THEDATA",seq);
 			
-			msg.setData(b);
+			//msg.setData(b);
 			
 			myhandler.sendMessage(msg);
 		
