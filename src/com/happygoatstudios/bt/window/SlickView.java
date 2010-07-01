@@ -137,24 +137,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					break;
 				case MSG_BUTTONDROPSTART:
 					
-					//wait for touchlock
-					/*synchronized(touchLock) {
-						while(touchLock.booleanValue()) {
-							try {
-								touchLock.wait();
-							} catch (InterruptedException e) {
-								
-								e.printStackTrace();
-							}
-						}
-						touchLock = true;
-						Log.e("SLICK","TOUCHLOCK TRUE FOR NEW BUTTON CREATION")
-					}*/
+
 					if(parent_layout == null) {
 						return;
 					}
-					//Log.e("LAUNCHER","BUTTON HANDLER THING CALLED!");
-					//RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
 
 					RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
 				
@@ -176,11 +162,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					by = 0;
 					buttondropstarted = false;
 					
-					/*synchronized(touchLock) {
-						touchLock.notify();
-						touchLock = true;
-					}*/
-					//buttondropstarted = false;
+
 					break;
 				case MSG_DELETEBUTTON:
 
@@ -367,100 +349,42 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				
 				
 				synchronized(touchLock) {
-					//while(touchLock) {
-						//touchLock.wait();
-					//}
+
 					if(touchLock) {
 						touchLock.notify();
 						touchLock = false;
 					}
 				}
-				//Log.e("SLICK","Waiting for runner to stop!");
+				
 				_runner.join();
 				retry = false;
 			} catch (InterruptedException e) { }
 		}
-		//wasRunning = false;
-		//Log.e("SLICK","SURFACE_DESTROYED = TRUE!");
+		
 	}
 	
 	
 	public void onAnimationStart() {
-		//Log.e("SLICK","ANIMATION START!");
-		//Animation anim = this.getAnimation();
-		
-		//this.startAnimation(anim);
+
 		super.onAnimationStart();
 	}
 	
 	public void onAnimationEnd() {
-		//Log.e("SLICK","ANIMATION END!");
 		super.onAnimationEnd();
 	}
 	
 	static final int MSG_UTIL_ADDTEXT = 400;
 	static final int MSG_UTIL_PROCTOUCH = 401;
-	/*private class SlickUtils extends Handler {
-		public void handleMessage(Message msg) {
-			switch(msg.what) {
-			case MSG_UTIL_ADDTEXT:
-				addTextImpl((String)msg.obj,false);
-				break;
-			case MSG_UTIL_PROCTOUCH:
-				onTouchEventImpl((MotionEvent)msg.obj);
-				break;
-			default:
-				break;
-			}
-			synchronized(this) {
-				this.notify();
-			}
-		}
-	}
 	
-	SlickUtils utils = new SlickUtils();
-	*/
 	
 	StringBuffer the_buffer = new StringBuffer();
 	StringBuffer the_original_buffer = new StringBuffer();
 	
 	Boolean utilinterlock = false;
 	
-	/*public void addText(String input,boolean jumptoend) {
-		synchronized(utils) {
-			while(utils.hasMessages(MSG_UTIL_PROCTOUCH)) {
-				try {
-					utils.wait();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-		Message msg = utils.obtainMessage(MSG_UTIL_ADDTEXT, input);
-		utils.sendMessage(msg);
-	}*/
+	
 	
 	public void addText(String input,boolean jumptoend) {
-		
-		//prevent addText from colliding with onTouchEvent
-		//synchronized(utilinterlock) {
-			
-			
-			//utilinterlock = true;
-			
-		//}
-		
-		/*synchronized(isdrawn) {
-			while(isdrawn == false) {
-				try {
-					isdrawn.wait();
-				} catch (InterruptedException e) {
-					//Log.e("SLICK","addText interrupted waiting for screen to be done drawing");
-					e.printStackTrace();
-				}
-			}
-		}*/
 		
 		Matcher carriagerock = carriage.matcher(input);
 		
@@ -470,7 +394,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		StringBuffer broken_lines = betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW);
 		int numlines = countLines(broken_lines.toString());
 		
-		//int linesize = 20;
+		
 		if(scrollback > 0) {
 			scrollback = scrollback + numlines*PREF_LINESIZE;
 			
@@ -485,15 +409,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			
 		} else {
-			if(!jumptoend) {
-				//scrollback = scrollback + (numlines-1)*linesize;
-				//fling_velocity = -700;
-				//scrollback = 0.0f; //scrolling is stupid and expensive for this and takes alot longer than i can ram stuff into the buffer. so jump to end on new stuff incoming, unless scrollback is > 0, then we just stay put.
-				//fling_velocity = 0.0f;
-			} else {
-				//scrollback = 0.0f;
-				//fling_velocity = 0.0f;
-			}
+			
 			
 			Animation a = new AlphaAnimation(0.0f,0.0f);
 			a.setDuration(0);
@@ -504,13 +420,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		
 		the_buffer.append(broken_lines);
-		//the_buffer.append(betterBreakLines(carriage_free,77));
+		
 		the_original_buffer.append(carriage_free);
 		
-		//drawn = false;
-		//Log.e("SLICK","SETTING DIRTY BUFFER FOR DRAWING!");
-		
-		//nuke buffer contents.
 		int chars_per_row = CALCULATED_ROWSINWINDOW;
 		int rows = 25;
 		if(the_buffer.length() > (10*chars_per_row*rows)) {
@@ -521,15 +433,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
         
 		synchronized(drawn) {
-			//Log.e("SLICK","WAKING UP DRAW THREAD");
 			drawn.notify();
 			drawn = false;
 		}
-		
-		/*synchronized(utilinterlock) {
-			utilinterlock.notify();
-			utilinterlock = false;
-		}*/
 		
 	}
 	
@@ -544,21 +450,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	StringBuffer drawline = new StringBuffer();
 	@Override
 	public void onDraw(Canvas canvas) {
-		//IM DRAWING
 		
-		//int TEXTSIZE = 18;
-		//int linesize = 20;
-		//calculate screen offset and number of lines.
-		//int height = canvas.getHeight();
-		
-		
-		//int numberoflinesinwindow = (int)( height / linesize );
-		
-		//calculate scroll distance
-		//was
-		//int scrollbacklines = scrollback.intValue() / linesize;
-		
-		//now
 		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 		if(prev_draw_time == 0) { //never drawn before
 			if(finger_down) {
@@ -569,8 +461,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				diff_amount = 0;
 				
 				scrollbacklines = (int)Math.floor((scrollback) / (float)PREF_LINESIZE);
-				//finger_down_to_up = true;
-				//scrollbacklines = (int)Math.floor(scrollback / (float)linesize);
+
 			} else {
 				if(finger_down_to_up) {
 					prev_draw_time = System.currentTimeMillis(); 
@@ -592,20 +483,17 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				if(fling_velocity < 0) {
 					fling_velocity = fling_velocity + fling_accel*duration_since_last_frame;
 					scrollback = scrollback + fling_velocity*duration_since_last_frame;
-					//scrollback = scrollback + fling_velocity*duration_since_last_frame + (float)1.5*fling_accel*(duration_since_last_frame*duration_since_last_frame);
 					
 				} else if (fling_velocity > 0) {
 					
 					fling_velocity = fling_velocity - fling_accel*duration_since_last_frame;
 					scrollback = scrollback + fling_velocity*duration_since_last_frame;
-					//scrollback = scrollback + fling_velocity*duration_since_last_frame - (float)1.5*fling_accel*(duration_since_last_frame*duration_since_last_frame);
 					
 				}
 				
 				if(Math.abs(new Double(fling_velocity)) < 15) {
 					fling_velocity = 0;
 					prev_draw_time = 0;
-					//buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 				}
 				
@@ -622,12 +510,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					fling_velocity = 0;
 					prev_draw_time = 0;
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-					
-					//Animation a = new AlphaAnimation(0.0f,0.0f);
-					//a.setDuration(10);
-					//a.setFillAfter(true);
-					//a.setFillBefore(true);
-					//new_text_in_buffer_indicator.startAnimation(a);
+
 					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 				}
 			
@@ -636,13 +519,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 
 			
-			
-
-			//Log.e("SLICK","SCROLLBACK: " + scrollback.toString() + " VELOCITY NOW:" +new Float(fling_velocity).toString() + " DURATION:" + new Float(duration_since_last_frame).toString());
-			
 		}
 		
-		//int remainder = (int) (height - (numberoflinesinwindow*linesize)) - 4 + (int)Math.floor(scrollback % linesize);
+		
 		int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 4 + (int)Math.floor(scrollback % PREF_LINESIZE);
 		if(remainder < 0) {
 			//Log.e("SLICK","WE HAVE A PROBLEM WITH WINDOW SIZE");
@@ -807,79 +686,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	boolean finger_down = false;
-	
 	int diff_amount = 0;
-	/*public boolean onTouchEvent(MotionEvent t) {
-		if(t != null) {
-			
-			synchronized(utils) {
-				while(utils.hasMessages(MSG_UTIL_ADDTEXT)) {
-					try {
-						utils.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-			Message msg = utils.obtainMessage(MSG_UTIL_PROCTOUCH, t);
-			utils.sendMessage(msg);
-				
-		}
-		return true;
-	}*/
 	public Boolean is_in_touch = false;
+	
 	public boolean onTouchEvent(MotionEvent t) {
-		//synchronized(is_in_touch)  {
-		//	is_in_touch = true;
-		//}
-		/*synchronized(utilinterlock) {
-			if(utilinterlock) {
-				while(utilinterlock) {
-					try {
-						Log.e("SLICK","LOCKING AT TOP OF TOUCH");
-						utilinterlock.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			} 
-			
-			//utilinterlock = true;
-			
-		}*/
-		/*synchronized(isdrawn) {
-			if(!isdrawn) {
-				while(!isdrawn) {
-					try {
-						isdrawn.wait(10);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-		}*/
-		/*synchronized(isdrawn) {
-			if(!isdrawn) {
-				try {
-					isdrawn.wait();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}*/
 		
-		
-		
-		//touchLock = true;
-		//_runner.setPause();
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
-			
-
-			
 			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
 			start_x = new Float(t.getX(t.getPointerId(0)));
 			start_y = new Float(t.getY(t.getPointerId(0)));
@@ -958,62 +770,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			prev_y = y_val;
 		}
 		
-		/*synchronized(isdrawn) {
-			while(isdrawn == false) {
-				try {
-					Log.e("SLICK","TOUCH EVENT DELAYED FOR SCREEN DRAWING");
-					isdrawn.wait();
-					
-				} catch (InterruptedException e) {
-					//Log.e("SLICK","addText interrupted waiting for screen to be done drawing");
-					e.printStackTrace();
-				}
-			}
-			Log.e("SLICK","RESUMING TOUCH EVENT");
-		}*/
-		
-		//scrollback = scrollback + diff;
-		
-			
-		
-		//if(scrollback < 0) {
-		//	scrollback = (float)0.0;
-		//}
-		
-		
 		
 		if(t.getAction() == (MotionEvent.ACTION_UP)) {
-			//Log.e("SLICK","Got up action: " + scrollback);
-			
-			//Float now_x = new Float(t.getX(t.getPointerId(0)));
-			//Float now_y = new Float(t.getY(t.getPointerId(0)));
-			//double distance = Math.sqrt(Math.pow(now_x-start_x, 2) + Math.pow(now_y-start_y,2));
-			//if(distance > 30) {
-			//	buttonaddhandler.removeMessages(MSG_BUTTONDROPSTART);
-			//}
-			
-
-			//float thentime = pre_event.getEventTime();
-			//float nowtime = t.getEventTime();
-			
-			//float time = (nowtime - thentime) / 1000.0f; //convert to seconds
-			
-			//float prev_y = t.getHistoricalY(t.getPointerId(0),history-1);
-			//float prev_y = pre_event.getY(t.getPointerId(0));
-			//float dist = now_y - prev_y;
-			//diff_amount = (int)dist;
-			
-			//float velocity = dist / time;
-			//float MAX_VELOCITY = 700;
-			//if(Math.abs(velocity) > MAX_VELOCITY) {
-			//	if(velocity > 0) {
-			//		velocity = MAX_VELOCITY;
-			//	} else {
-			//		velocity = MAX_VELOCITY * -1;
-			//	}
-			//}
-			//fling_velocity = velocity;
-
 			
 			pre_event = null;
 			prev_y = new Float(0);
@@ -1028,25 +786,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        finger_down=false;
 	        finger_down_to_up = true;
 	        
-
-			//return true;
 		}
 		
-        /*synchronized(drawn) {
-			drawn.notify();
-			drawn = false;
-		}*/
-        
-        /*synchronized(is_in_touch) {
-        	is_in_touch.notify();
-        	is_in_touch = false;
-        	Log.e("SLICK","NOTIFYING WINDOW TOUCH COMPLETE!!");
-        }*/
-		//_runner.setResume();
-		//synchronized(drawn) {
-		//	drawn.notify();
-		//	drawn = false;
-		//}
         synchronized(drawn) {
         	if(drawn.booleanValue()) {
         		drawn.notify();
@@ -1056,7 +797,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		return true; //consumes
 		
-		//return false; //does not consume
 	}
 
 
@@ -1131,9 +871,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		while(l.find()) {
 			l.appendReplacement(bline,"");
 			found = true;
-			//StringBuffer splitline = ;
-			//Log.e("SLICK","ORGINIAL:" + line);
-			//Log.e("SLICK","MOD:" + splitline);
 			bholder.append(splitLine(bline,char_limit) + "\n");
 			bline.setLength(0);
 		}

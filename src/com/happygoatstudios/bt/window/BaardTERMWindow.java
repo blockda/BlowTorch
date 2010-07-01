@@ -197,15 +197,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	
 	String html_buffer = new String();
 	
-	//public void onResized
-	/*public void onSizeChanged(int w, int h,int oldw,int oldh) {
-		Log.e("WINDOW","WINDOW RESIZED!!!!");
-	}
-	
-	public void onLayout(boolean changed, int left, int top, int right, int bottom) {
-		Log.e("WINDOW","RE-LAYOUT!!!!!");
-	}*/
-	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		Log.e("WINDOW","onCreate()");
@@ -223,7 +214,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         screen2 = (SlickView)findViewById(R.id.slickview);
         RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         screen2.setParentLayout(l);
-        //EditText fill2 = (EditText)findViewById(R.id.filler2);
         TextView fill2 = (TextView)findViewById(R.id.filler2);
         fill2.setFocusable(false);
         fill2.setClickable(false);
@@ -273,78 +263,31 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         
         
         input_box.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-        //input_box.setOnKeyListener(new EditText.OnKeyListener() {
+        
 
         
 		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-		//public boolean onKey(View v, int keyCode, KeyEvent event) {
+		
 				EditText input_box = (EditText)findViewById(R.id.textinput);
-				//post message to conneciton thread
-				//only do something if enter was pressed
-				//InputConnection ic =null;
-				//ic.
-			
-				//LOG.e("WINDOW","EDITOR ACTION" + actionId);
+				
 			
 				if(event == null)  {
-					//return false;
-					//LOG.e("WINDOW","EDITOR EVENT HAD NULL EVENT");
+					
 				}
 				
 				if(actionId == EditorInfo.IME_ACTION_SEND) {
 
-				//	return false;
+				
 					event = new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_ENTER);
 					
 				}
 				
 				if((event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP)) {
-					//Message tmp = ConnectionHandler.obtainMessage(105);
 					myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_PROCESSINPUTWINDOW);
-					/*String data = input_box.getText().toString();
-					history.addCommand(data);
-					Character cr = new Character((char)13);
-					Character lf = new Character((char)10);
-					String crlf = cr.toString() + lf.toString();
-					//String nosemidata = data.replace(";", crlf);
-					//nosemidata = nosemidata.concat(crlf);
-					data = data.concat(crlf);
-					ByteBuffer buf = ByteBuffer.allocate(data.length());
-		
-					
-					try {
-						buf.put(data.getBytes("UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						
-						e.printStackTrace();
-					}
-				
-					buf.rewind();
-				
-					byte[] buffbytes = buf.array();
-
-					try {
-						service.sendData(buffbytes);
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}*/
-					
-					//send the box to the window, with newline because we are cool.
-					//but delete that pesky carriage return, yuck
-					//data.replace(cr.toString(), "\n");
-					//data = data.concat("\n");
-					//screen2.addText(data,false);
-
-					//input_box.invalidate();
-					//input_box.setSingleLine(true);
-					
 					screen2.jumpToZero();
 
 					if(actionId == EditorInfo.IME_ACTION_DONE) {
-
-						//	return false;
 							return true;
-							
 					} else { return true; }
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getNext();
@@ -379,8 +322,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					Character cr = new Character((char)13);
 					Character lf = new Character((char)10);
 					String crlf = cr.toString() + lf.toString();
-					//String nosemidata = data.replace(";", crlf);
-					//nosemidata = nosemidata.concat(crlf);
 					pdata = pdata.concat(crlf);
 					ByteBuffer buf = ByteBuffer.allocate(pdata.length());
 		
@@ -408,58 +349,24 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					
 					input_box.clearComposingText();
-					//input_box.beginBatchEdit();
-					//input_box.
 					input_box.setText("");
-					//input_box.
-					//input_box.endBatchEdit();
 					
 					InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 					imm.restartInput(input_box);
-					//imm.
-					//input_box.debug(1);
-					//RelativeLayout layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.input_bar);
-					//layout.removeView(input_box);
-					//layout.addView(input_box);
-					//input_box.beginBatchEdit();
 					break;
 				case MESSAGE_RAWINC:
-					//raw data incoming
-					//while(screen2.finger_down) {}
-					//screen2.addText(msg.getData().getString("RAW"),false);
 					screen2.addText((String)msg.obj,false);
 					break;
 				case MESSAGE_BUFFINC:
-					//screen2.addText(msg.getData().getString("RAW"), true);
 					screen2.addText((String)msg.obj,false);
 					break;
 				case MESSAGE_SENDDATAOUT:
-					//byte[] data = msg.getData().getByteArray("DATA");
-					//byte[] data = (byte[])msg.obj;
 					try {
-						//String nosemidata = null;
-						//try {
-						//	nosemidata = new String(data,"ISO-8859-1");
-						//} catch (UnsupportedEncodingException e) {
-						//	
-						//	e.printStackTrace();
-						//}
-						//Character cr = new Character((char)13);
-						//Character lf = new Character((char)10);
-						//String crlf = cr.toString() + lf.toString();
-						//nosemidata = nosemidata.replace(";", crlf);
-						//try {
-							//service.sendData(nosemidata.getBytes("ISO-8859-1"));
-							service.sendData((byte[])msg.obj);
-						//} catch (UnsupportedEncodingException e) {
-							
-						//	e.printStackTrace();
-						//}
-					} catch (RemoteException e) {
+						service.sendData((byte[])msg.obj);
 						
+					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-					//screen2.addText(new String(msg.getData().getByteArray("DATA")),false);
 					screen2.jumpToZero();
 
 					
@@ -514,38 +421,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				ec.setOnClickListener(new View.OnClickListener() {
 
 					public void onClick(View arg0) {
-						/*String data = input_box.getText().toString();
-						history.addCommand(data);
-						Character cr = new Character((char)13);
-						Character lf = new Character((char)10);
-						String crlf = cr.toString() + lf.toString();
-						String nosemidata = data.replace(";", crlf);
-						nosemidata = nosemidata.concat(crlf);
-						ByteBuffer buf = ByteBuffer.allocate(nosemidata.length());
-			
-						
-						try {
-							buf.put(nosemidata.getBytes("UTF-8"));
-						} catch (UnsupportedEncodingException e) {
-							
-							e.printStackTrace();
-						}
-					
-						buf.rewind();
-					
-						byte[] buffbytes = buf.array();
-						try {
-							service.sendData(buffbytes);
-						} catch (RemoteException e) {
-							e.printStackTrace();
-						}
-						
-						//send the box to the window, with newline because we are cool.
-						//but delete that pesky carriage return, yuck
-						//data.replace(cr.toString(), "\n");
-						//data = data.concat("\n");
-						//screen2.addText(data,false);
-						myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_RESETINPUTWINDOW);*/
 						myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_PROCESSINPUTWINDOW);
 						screen2.jumpToZero();
 					}
@@ -606,19 +481,14 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		settingsLoaded.notify();
 		settingsLoaded = true;
-		} /*END SYNCHRONIZATION!*/
-		//get the saved buffer from the prefs
+		} 
 		if(icicle != null) {
 			CharSequence seq = icicle.getCharSequence("BUFFER");
 			if(seq != null) {
-				//the_buffer = new SpannableStringBuilder();
 				screen2.setBuffer((new StringBuffer(seq).toString()));
 			} else {
-				//the_buffer = new SpannableStringBuilder();
-				
 			}
 		} else {
-			//the_buffer = new StringBuffer();
 		}
 		
 		if(!servicestarted) {
@@ -633,7 +503,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			try {
 				this.wait(5);
 			} catch (InterruptedException e) {
-				//e.printStackTrace();
 			}
 		}
 	}
@@ -702,7 +571,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		//shut down the service
 		if(isBound) {
 			try {
-				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
 				if(service != null) {
 					service.unregisterCallback(the_callback);
 				}
@@ -1019,33 +887,14 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		}
 
 		public void rawDataIncoming(String raw) throws RemoteException {
-			//while(screen2.finger_down) {}
-			/*synchronized(screen2.is_in_touch) {
-				if(screen2.is_in_touch) {
-					while(screen2.is_in_touch) {
-						try {
-							Log.e("WINDOW","WAITING TO ADD TEXT TILL TOUCH COMPLETE!");
-							screen2.is_in_touch.wait();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-				}
-			}*/
+			
 			Message msg = myhandler.obtainMessage(MESSAGE_RAWINC,raw);
-			//Bundle b = new Bundle();
-			//b.putString("RAW",raw);
-			//msg.setData(b);
 			myhandler.sendMessage(msg);
 			
 		}
 		
 		public void rawBufferIncoming(String rawbuf) throws RemoteException {
 			Message msg = myhandler.obtainMessage(MESSAGE_BUFFINC,rawbuf);
-			//Bundle b = msg.getData();
-			//b.putString("RAW", rawbuf);
-			//msg.setData(b);
 			myhandler.sendMessage(msg);
 		}
 	};
@@ -1061,7 +910,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			try {
 				service.setAliases(map);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

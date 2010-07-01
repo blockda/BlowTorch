@@ -124,10 +124,6 @@ public class SlickButton extends View {
 		byte[] buffbytes = buf.array();
 		
 		Message msg = dispatcher.obtainMessage(BaardTERMWindow.MESSAGE_SENDDATAOUT,buffbytes);
-		//Bundle b = msg.getData();
-		//b.putByteArray("DATA", buffbytes);
-		//msg.setData(b);
-		
 		dispatcher.sendMessage(msg);
 	}
 	

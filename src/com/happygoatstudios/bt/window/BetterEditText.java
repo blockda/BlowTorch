@@ -26,11 +26,11 @@ public class BetterEditText extends EditText {
 	}
 	
 	public void onAnimationEnd() {
-		Log.e("BETTEREDIT","BETTER EDIT TEXT ANIMATION COMPLETE");
+		//Log.e("BETTEREDIT","BETTER EDIT TEXT ANIMATION COMPLETE");
 	}
 	
 	public InputConnection onCreateInputConnection(EditorInfo attrs) {
-		Log.e("BETTEREDIT","RETURNING NEW INPUT CONNECTION!");
+		//Log.e("BETTEREDIT","RETURNING NEW INPUT CONNECTION!");
 		SlickConnection slick = new SlickConnection(this,false);
 		//attrs.
 		//slick.
@@ -43,7 +43,7 @@ public class BetterEditText extends EditText {
 	}
 	
 	public boolean onCheckIsTextEditor() {
-		Log.e("BETTEREDIT","CHECKING IF TEXT EDITOR: super returns: " + super.onCheckIsTextEditor());
+		//Log.e("BETTEREDIT","CHECKING IF TEXT EDITOR: super returns: " + super.onCheckIsTextEditor());
 		return true;
 	}
 }
