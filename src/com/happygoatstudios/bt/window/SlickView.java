@@ -441,7 +441,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		utils.sendMessage(msg);
 	}*/
 	
-	public synchronized void addText(String input,boolean jumptoend) {
+	public void addText(String input,boolean jumptoend) {
 		
 		//prevent addText from colliding with onTouchEvent
 		//synchronized(utilinterlock) {
@@ -451,7 +451,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 		//}
 		
-		synchronized(isdrawn) {
+		/*synchronized(isdrawn) {
 			while(isdrawn == false) {
 				try {
 					isdrawn.wait();
@@ -460,7 +460,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					e.printStackTrace();
 				}
 			}
-		}
+		}*/
 		
 		Matcher carriagerock = carriage.matcher(input);
 		
@@ -829,7 +829,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		return true;
 	}*/
 	public Boolean is_in_touch = false;
-	public synchronized boolean onTouchEvent(MotionEvent t) {
+	public boolean onTouchEvent(MotionEvent t) {
 		//synchronized(is_in_touch)  {
 		//	is_in_touch = true;
 		//}
@@ -850,7 +850,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 		}*/
 		
-		synchronized(isdrawn) {
+		/*synchronized(isdrawn) {
 			if(!isdrawn) {
 				try {
 					isdrawn.wait();
@@ -859,7 +859,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					e.printStackTrace();
 				}
 			}
-		}
+		}*/
 		
 		
 		
@@ -923,6 +923,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			if(Math.abs(diff_amount) > 5) {
 				
 				pre_event = MotionEvent.obtainNoHistory(t);
+			}
+			
+	        synchronized(drawn) {
+				drawn.notify();
+				drawn = false;
 			}
 		}
 		
@@ -1014,13 +1019,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        pre_event = null;
 	        finger_down=false;
 	        finger_down_to_up = true;
+	        
+	        synchronized(drawn) {
+				drawn.notify();
+				drawn = false;
+			}
 			//return true;
 		}
 		
-        synchronized(drawn) {
+        /*synchronized(drawn) {
 			drawn.notify();
 			drawn = false;
-		}
+		}*/
         
         /*synchronized(is_in_touch) {
         	is_in_touch.notify();
