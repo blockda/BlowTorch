@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.window;
 
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -431,7 +432,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		if(the_original_buffer.length() > (10*chars_per_row*rows)) {
 			the_original_buffer.replace(0, the_original_buffer.length() - ((10*chars_per_row*rows)), "");
 		}
+		
+		//linetrap = newline.split(the_buffer);
         
+		synchronized(dlines) {
+			dlines.removeAllElements();
+			dlines.addAll(Arrays.asList(newline.split(the_buffer)));
+		}
+		
 		synchronized(drawn) {
 			drawn.notify();
 			drawn = false;
@@ -448,8 +456,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	boolean finger_down_to_up = false;
 	Matcher toLines = newline.matcher("");
 	StringBuffer drawline = new StringBuffer();
+	
+	String[] linetrap = new String[0];
+	Vector<String> dlines = new Vector<String>();
 	@Override
 	public void onDraw(Canvas canvas) {
+		
+		//dlines.addAll(Arrays.asList(linetrap));
+		//dlines.get = "foo";
 		
 		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 		if(prev_draw_time == 0) { //never drawn before
@@ -497,12 +511,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 				}
 				
-				if(scrollback.intValue() / PREF_LINESIZE < 1) {
+				/*if(scrollback.intValue() / PREF_LINESIZE < 1) {
 					prev_draw_time = 0;
 					fling_velocity = 0;
 					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-				}
+				}*/
 				
 					
 				if(scrollback <= 0) {
@@ -522,7 +536,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		
 		
-		int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 4 + (int)Math.floor(scrollback % PREF_LINESIZE);
+		int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 6 + (int)Math.floor(scrollback % PREF_LINESIZE);
 		if(remainder < 0) {
 			//Log.e("SLICK","WE HAVE A PROBLEM WITH WINDOW SIZE");
 		}
@@ -541,16 +555,33 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         opts.setTypeface(Typeface.MONOSPACE);
 
         //Matcher toLines = newline.matcher(the_buffer.toString());
-        toLines.reset(the_buffer); 
+        //toLines.reset(the_buffer); 
         //StringBuffer line = new StringBuffer();
-        drawline.setLength(0);
+        //drawline.setLength(0);
         
+        //linetrap = null;
+        //linetrap = newline.split(the_buffer);
+        //linetrap.clear();
+        //linetrap.removeAllElements();
+        //linetrap.
+        //Log.e("SLICK","Buffer contains: " + lines.length + " lines.");
+        //if(linetrap.length < 1) {
+       // 	return;
+        //}
+        
+        synchronized(dlines) {
+        
+        if(dlines.size() < 1) { return; }
         
         
         int currentline = 1;
         
         //count lines
-        int numlines = countLines();
+       // int numlines = countLines();
+        
+        //
+        
+        int numlines = dlines.size();
         int maxlines = CALCULATED_LINESINWINDOW; 
         
         
@@ -564,7 +595,69 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         
        
         boolean endonnewline = false;
-        while(toLines.find()) {
+        
+        int startpos = startDrawingAtLine -2;
+        if(startpos < 0) {
+        	startpos = 0;
+        }
+        
+        int endpos = startDrawingAtLine + maxlines;
+        if(endpos > dlines.size()) {
+        	endpos = dlines.size();
+        }
+        
+        for(int i=startpos;i<endpos;i++) {
+        	//Log.e("SLICK","Drawing line:" + i + ":" + lines[i]);
+        	int screenpos = i - startDrawingAtLine + 2;
+    		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
+    		Matcher colormatch = colordata.matcher(dlines.get(i));
+    		//Log.e("SLICK","Drawing line:" + i + ":" +":"+y_position +":" + lines[i]);
+    		
+    		float x_position = 0;
+    		
+    		boolean colorfound = false;
+    		
+    		while(colormatch.find()) {
+    			colorfound = true;
+    			colormatch.appendReplacement(csegment, "");
+    			
+    			//get color data
+    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+    			int color = Colorizer.getColorValue(sel_bright, sel_color);
+    			if(color == 0) {
+    				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
+    			}
+    			opts.setColor(0xFF000000 | color);
+    			
+    			canvas.drawText(csegment.toString(), x_position, y_position, opts);
+    			x_position = x_position + opts.measureText(csegment.toString());
+    			csegment.setLength(0);
+    			
+    			sel_bright.setLength(0);
+    			sel_color.setLength(0);
+    			sel_bright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2));
+    			sel_color.append(colormatch.group(3));
+    			if(sel_color.toString().equalsIgnoreCase("0")) {
+    				//Log.e("SLICK","COLOLPARSE GOT 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
+    				sel_color.setLength(0);
+    				sel_color.append("37");
+    			}
+    		}
+    		if(colorfound) {
+    			int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+    			opts.setColor(0xFF000000 | color);
+    			colormatch.appendTail(csegment);
+    			canvas.drawText(csegment.toString(), x_position, y_position, opts);
+    			csegment.setLength(0);
+    		}
+    		
+    		if(!colorfound) {
+    			canvas.drawText(dlines.get(i), 0, y_position , opts);
+    		}
+        }
+        }
+        
+        /*while(toLines.find()) {
         	toLines.appendReplacement(drawline, "");
         	
         	//Matcher lastcolor = lastcolordatainline.matcher(drawline.toString() + "\n");
@@ -679,7 +772,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     		drawline.setLength(0);
         	currentline++;		
         	
-        }
+        }*/
         
         //release the lock
         //drawn_buffer = canvas;
