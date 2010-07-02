@@ -203,15 +203,26 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					parent_layout.addView(buttons.get(posip),lpip);
 					break;
 				case MSG_CLEAR_NEW_TEXT_INDICATOR:
-					Animation a = new AlphaAnimation(0.0f,0.0f);
-					a.setDuration(0);
-					a.setFillAfter(true);
-					a.setFillBefore(true);
-					new_text_in_buffer_indicator.startAnimation(a);
+					//Animation a = new AlphaAnimation(0.0f,0.0f);
+					//a.setDuration(0);
+					//a.setFillAfter(true);
+					//a.setFillBefore(true);
+					new_text_in_buffer_indicator.startAnimation(indicator_off);
+					
 					break;
 				}
 			}
 		};
+		
+		Interpolator i = new CycleInterpolator(1);
+		indicator_on.setDuration(1000);
+		indicator_on.setInterpolator(i);
+		indicator_on.setFillAfter(true);
+		indicator_on.setFillBefore(true);
+		
+		indicator_off.setDuration(0);
+		indicator_off.setFillAfter(true);
+		indicator_off.setFillBefore(true);
 	}
 	
 	public void setNewTextIndicator(TextView e) {
@@ -384,6 +395,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	Boolean utilinterlock = false;
 	
 	
+	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
+	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
+		
 	
 	public void addText(String input,boolean jumptoend) {
 		
@@ -395,28 +409,28 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		StringBuffer broken_lines = betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW);
 		int numlines = countLines(broken_lines.toString());
 		
-		
+		synchronized(dlines) {
 		if(scrollback > 0) {
 			scrollback = scrollback + numlines*PREF_LINESIZE;
 			
 			//EditText filler2 = (EditText) parent_layout.findViewById(R.id.filler2);
-			Animation a = new AlphaAnimation(1.0f,0.0f);
-			Interpolator i = new CycleInterpolator(1);
-			a.setDuration(1000);
-			a.setInterpolator(i);
-			a.setFillAfter(true);
-			a.setFillBefore(true);
-			new_text_in_buffer_indicator.startAnimation(a);
+			//Animation a = new AlphaAnimation(1.0f,0.0f);
+			//Interpolator i = new CycleInterpolator(1);
+			//a.setDuration(1000);
+			//a.setInterpolator(i);
+			//a.setFillAfter(true);
+			//a.setFillBefore(true);
+			new_text_in_buffer_indicator.startAnimation(indicator_on);
 			
 			
 		} else {
 			
 			
-			Animation a = new AlphaAnimation(0.0f,0.0f);
-			a.setDuration(0);
-			a.setFillAfter(true);
-			a.setFillBefore(true);
-			new_text_in_buffer_indicator.startAnimation(a);
+			//Animation a = new AlphaAnimation(0.0f,0.0f);
+			//a.setDuration(0);
+			//a.setFillAfter(true);
+			//a.setFillBefore(true);
+			new_text_in_buffer_indicator.startAnimation(indicator_off);
 			
 		}
 		
@@ -435,9 +449,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//linetrap = newline.split(the_buffer);
         
-		synchronized(dlines) {
-			dlines.removeAllElements();
-			dlines.addAll(Arrays.asList(newline.split(the_buffer)));
+		int PREF_MAX_LINES = 200;
+			//dlines.removeAllElements();
+			//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
+			//dlines.
+			dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+			if(dlines.size() > PREF_MAX_LINES) {
+				dlines.removeRange(0,dlines.size() - PREF_MAX_LINES);
+			}
 		}
 		
 		synchronized(drawn) {
@@ -458,12 +477,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	StringBuffer drawline = new StringBuffer();
 	
 	String[] linetrap = new String[0];
-	Vector<String> dlines = new Vector<String>();
+	BufferVector<String> dlines = new BufferVector<String>();
 	@Override
 	public void onDraw(Canvas canvas) {
 		
 		//dlines.addAll(Arrays.asList(linetrap));
 		//dlines.get = "foo";
+		
+		synchronized(dlines) {
 		
 		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 		if(prev_draw_time == 0) { //never drawn before
@@ -569,7 +590,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
        // 	return;
         //}
         
-        synchronized(dlines) {
+       
         
         if(dlines.size() < 1) { return; }
         
@@ -629,8 +650,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     			}
     			opts.setColor(0xFF000000 | color);
     			
-    			canvas.drawText(csegment.toString(), x_position, y_position, opts);
-    			x_position = x_position + opts.measureText(csegment.toString());
+    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
+    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+    			//x_position = x_position + opts.measureText(csegment.toString());
+    			x_position = x_position + opts.measureText(csegment,0,csegment.length());
+    			//opts.mea
     			csegment.setLength(0);
     			
     			sel_bright.setLength(0);
@@ -644,10 +668,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     			}
     		}
     		if(colorfound) {
-    			int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+    			int color = Colorizer.getColorValue(sel_bright, sel_color);
     			opts.setColor(0xFF000000 | color);
     			colormatch.appendTail(csegment);
-    			canvas.drawText(csegment.toString(), x_position, y_position, opts);
+    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
+    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
     			csegment.setLength(0);
     		}
     		
@@ -784,6 +810,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	public boolean onTouchEvent(MotionEvent t) {
 		
+		synchronized(dlines) {
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
 			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
 			start_x = new Float(t.getX(t.getPointerId(0)));
@@ -887,7 +914,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         		drawn = false;
         	} 
 		}
-		
+		}
 		return true; //consumes
 		
 	}
@@ -1199,10 +1226,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 							}
 						}
 					
-					synchronized(drawn) {
-						drawn.notify();
+					//synchronized(drawn) {
+						//drawn.notify();
 						//drawn = true;
-					}
+					//}
 					synchronized(isdrawn) {
 						isdrawn.notify();
 						isdrawn = true;
