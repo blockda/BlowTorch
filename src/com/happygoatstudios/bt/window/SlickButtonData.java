@@ -16,9 +16,9 @@ public class SlickButtonData implements Parcelable {
 	public String the_label;
 	public String flip_command;
 	
-	final static public int MOVE_FREE = 56;
-	final static public int MOVE_NUDGE = 57;
-	final static public int MOVE_FREEZE = 58;
+	final static public int MOVE_FREE = 0;
+	final static public int MOVE_NUDGE = 1;
+	final static public int MOVE_FREEZE = 2;
 	
 	public int MOVE_STATE = MOVE_FREE;
 	
@@ -34,6 +34,28 @@ public class SlickButtonData implements Parcelable {
 		y = iy;
 		the_text = itext;
 		the_label = ilbl;
+	}
+	
+	public boolean equals(Object aTest) {
+		//check for self equality
+		if(this == aTest) {
+			return true;
+		}
+		
+		//return false if this is not a slickbuttondata holder
+		if( !(aTest instanceof SlickButtonData)) return false;
+		
+		SlickButtonData test = (SlickButtonData)aTest;
+		
+		boolean retval = true;
+		if(this.x != test.x) retval = false;
+		if(this.y != test.y) retval = false;
+		if(!this.the_label.equals(test.the_label)) retval = false;
+		if(!this.the_text.equals(test.the_text)) retval = false;
+		if(!this.flip_command.equals(test.flip_command)) retval = false;
+		if(this.MOVE_STATE != test.MOVE_STATE) retval = false;
+		
+		return retval;
 	}
 	
 	public String toString() {
@@ -111,7 +133,7 @@ public class SlickButtonData implements Parcelable {
 		tmp.flip_command = this.flip_command;
 		tmp.the_label = this.the_label;
 		tmp.the_text = this.the_text;
-		
+		tmp.MOVE_STATE = this.MOVE_STATE;
 		return tmp;
 	}
 

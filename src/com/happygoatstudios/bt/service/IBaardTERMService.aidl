@@ -29,4 +29,5 @@ interface IBaardTERMService {
 	void removeButton(String targetset,in SlickButtonData button_to_nuke);
 	List<SlickButtonData> getButtonSet(String setname);
 	List<String> getButtonSetNames();
+	void modifyButton(String targetset,in SlickButtonData orig, in SlickButtonData mod);
 }

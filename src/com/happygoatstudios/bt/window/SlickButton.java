@@ -307,6 +307,15 @@ public class SlickButton extends View {
 		return;
 	}
 	
+	public void iHaveChanged(SlickButtonData orig_data) {
+		Message modify = deleter.obtainMessage(BaardTERMWindow.MESSAGE_MODIFYBUTTON);
+		Bundle b = modify.getData();
+		b.putParcelable("ORIG_DATA", orig_data);
+		b.putParcelable("MOD_DATA", this.data);
+		modify.setData(b);
+		deleter.sendMessage(modify);
+	}
+	
 	public void setOnClickListener(OnClickListener l) {
 		the_listener.setListener(l);
 	}

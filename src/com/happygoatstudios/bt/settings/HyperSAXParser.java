@@ -99,6 +99,7 @@ public class HyperSAXParser extends BaseParser {
 		buttonset.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes attributes) {
+				button_set_name.setLength(0);
 				button_set_name.append(attributes.getValue("",ATTR_SETNAME));
 			}
 			

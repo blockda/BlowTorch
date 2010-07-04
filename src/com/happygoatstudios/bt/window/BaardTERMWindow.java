@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +82,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_RESETINPUTWINDOW = 106;
 	protected static final int MESSAGE_PROCESSINPUTWINDOW = 107;
 	protected static final int MESSAGE_LOADSETTINGS = 200;
+	protected static final int MESSAGE_ADDBUTTON = 201;
+	protected static final int MESSAGE_MODIFYBUTTON = 202;
 	
 	
 	String host;
@@ -371,9 +374,77 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_MODIFYBUTTON:
+					SlickButtonData orig = msg.getData().getParcelable("ORIG_DATA");
+					SlickButtonData mod = msg.getData().getParcelable("MOD_DATA");
+					
+					try {
+						if(orig != null && mod != null) {
+							service.modifyButton("TEST_SET_1",orig,mod);
+						} else {
+							Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
+						}
+					} catch (RemoteException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
 					//TODO: HERE!
+					//attemppt to load button sets.
+					try {
+						List<SlickButtonData> buttons =  service.getButtonSet("TEST_SET_1");
+						RelativeLayout button_layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
+						if(buttons != null) {
+							for(SlickButtonData button : buttons) {
+								SlickButton tmp = new SlickButton(BaardTERMWindow.this,0,0);
+								tmp.setData(button);
+								tmp.setDispatcher(this);
+								tmp.setDeleter(this);
+								button_layout.addView(tmp);
+							}
+						}
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					break;
+				case SlickView.MSG_DELETEBUTTON:
+					ButtonEditorDialog d = new ButtonEditorDialog(BaardTERMWindow.this,(SlickButton)msg.obj,this);
+					d.show();
+					break;
+				case SlickView.MSG_REALLYDELETEBUTTON:
+					try {
+						service.removeButton("TEST_SET_1", ((SlickButton)msg.obj).getData());
+					} catch (RemoteException e1) {
+						throw new RuntimeException(e1);
+					}
+					RelativeLayout layout = (RelativeLayout) BaardTERMWindow.this.findViewById(R.id.slickholder);
+					layout.removeView((SlickButton)msg.obj);
+					//remove from the service.
+					
+					break;
+				case MESSAGE_ADDBUTTON:
+					SlickButtonData tmp = new SlickButtonData();
+					tmp.x = msg.arg1;
+					tmp.y = msg.arg2;
+					tmp.the_text = input_box.getText().toString();
+					tmp.the_label = "NOTSET";
+					
+					SlickButton new_button = new SlickButton(BaardTERMWindow.this,0,0);
+					new_button.setData(tmp);
+					
+					try {
+						service.addButton("TEST_SET_1", tmp);
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					
+					RelativeLayout hold = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
+					hold.addView(new_button);
+					
 					break;
 				case MESSAGE_PROCESSINPUTWINDOW:
 					
@@ -586,6 +657,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		});
 		
 		screen2.setDispatcher(myhandler);
+		screen2.setButtonHandler(myhandler);
 		screen2.setInputType(input_box);
 		input_box.bringToFront();
 		//icicile is out, prefs are in

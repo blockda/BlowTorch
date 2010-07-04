@@ -69,7 +69,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		//attempt to read the file.
 		com.happygoatstudios.bt.settings.HyperSettings settings = new com.happygoatstudios.bt.settings.HyperSettings();
 		
-		String filename = "test_settings2.xml";
+		String filename = "test_settings3.xml";
 		try {
 			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
 			settings.setMaxLines(5000);
@@ -87,11 +87,11 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			SlickButtonData test4 = new SlickButtonData();
 			SlickButtonData test5 = new SlickButtonData();
 			
-			test1.setDataFromString("12||30||east||EAST||open e||1");
-			test2.setDataFromString("12||60||west||WEST||open w||1");
-			test3.setDataFromString("12||90||north||NORTH||open n||0");
-			test4.setDataFromString("12||120||south||SOUTH||open s||3");
-			test5.setDataFromString("12||150||scan||SCAN||look||2");
+			test1.setDataFromString("40||40||east||EAST||open e||1");
+			test2.setDataFromString("40||125||west||WEST||open w||1");
+			test3.setDataFromString("40||210||north||NORTH||open n||0");
+			test4.setDataFromString("40||295||south||SOUTH||open s||1");
+			test5.setDataFromString("40||380||scan||SCAN||look||2");
 			
 			test_set.add(test1);
 			test_set.add(test2);

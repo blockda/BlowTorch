@@ -31,6 +31,8 @@ public class ButtonEditorDialog extends Dialog {
 	CheckBox move_nudge = null;
 	CheckBox move_freeze = null;
 	
+	SlickButtonData orig_data = null;
+	
 	public ButtonEditorDialog(Context context,SlickButton useme,Handler callback) {
 		super(context);
 		
@@ -39,6 +41,7 @@ public class ButtonEditorDialog extends Dialog {
 		
 		the_button = useme;
 		deleter = callback;
+		orig_data = useme.getData().copy();
 	}
 	
 	public void onCreate(Bundle b) {
@@ -158,6 +161,7 @@ public class ButtonEditorDialog extends Dialog {
 					the_button.setMoveMethod(SlickButtonData.MOVE_FREEZE);
 				}
 				
+				the_button.iHaveChanged(orig_data);
 				the_button.invalidate();
 				EXIT_STATE = EXIT_DONE;
 				ButtonEditorDialog.this.dismiss();
