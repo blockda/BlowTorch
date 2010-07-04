@@ -14,7 +14,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -38,6 +41,7 @@ import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.Bundle;
+import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
@@ -45,6 +49,9 @@ import android.widget.Toast;
 
 import com.happygoatstudios.bt.service.IBaardTERMServiceCallback;
 import com.happygoatstudios.bt.service.IBaardTERMService;
+import com.happygoatstudios.bt.settings.HyperSAXParser;
+import com.happygoatstudios.bt.settings.HyperSettings;
+import com.happygoatstudios.bt.window.SlickButtonData;
 
 
 public class BaardTERMService extends Service {
@@ -52,6 +59,8 @@ public class BaardTERMService extends Service {
 	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IBaardTERMServiceCallback> callbacks = new RemoteCallbackList<IBaardTERMServiceCallback>();
+	
+	HyperSettings the_settings = new HyperSettings();
 	
 	NotificationManager mNM;
 	
@@ -139,6 +148,9 @@ public class BaardTERMService extends Service {
 					host = msg.getData().getString("HOST");
 					port = msg.getData().getInt("PORT");
 					display = msg.getData().getString("DISPLAY");
+					String settingslocation = "test_settings2.xml";
+					loadXmlSettings(settingslocation);
+					
 					loadAliases();
 					showNotification();
 					break;
@@ -331,6 +343,16 @@ public class BaardTERMService extends Service {
 		Log.e("SERV","ON DESTROY CALLED!");
 		saveAliases();
 		doShutdown();
+	}
+	
+	public void loadXmlSettings(String filename) {
+		
+		HyperSAXParser parser = new HyperSAXParser(filename,this);
+		
+		the_settings = parser.load();
+		
+		//omg. look at how clean that is.
+		
 	}
 	
 	public void loadAliases() {
@@ -548,6 +570,83 @@ public class BaardTERMService extends Service {
 		public void setAliases(Map map) throws RemoteException {
 			aliases.clear();
 			aliases = new TreeMap<String, String>(map);
+		}
+
+
+		public void addButton(String targetset, SlickButtonData newButton)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			the_settings.getButtonSets().get(targetset).add(newButton);
+		}
+
+
+		/*public List<SlickButtonData> getSelectedButtonSet()
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}*/
+
+
+		public void removeButton(String targetset, SlickButtonData buttonToNuke)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
+		}
+
+
+		public void setFontName(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			the_settings.setFontName(name);
+		}
+
+
+		public void setFontPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			the_settings.setFontPath(path);
+		}
+
+
+		public void setFontSize(int size) throws RemoteException {
+			// TODO Auto-generated method stub
+			the_settings.setLineSize(size);
+		}
+
+
+		public void setFontSpaceExtra(int size) throws RemoteException {
+			// TODO Auto-generated method stub
+			the_settings.setLineSpaceExtra(size);
+		}
+
+
+		/*public void setSelectedButtonSet(String setname) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}*/
+
+
+		public void setSemiOption(boolean boolsAreNewline)
+				throws RemoteException {
+			the_settings.setSemiIsNewLine(boolsAreNewline);
+			
+		}
+
+
+		public List<SlickButtonData> getButtonSet(String setname)
+				throws RemoteException {
+			return the_settings.getButtonSets().get(setname);
+		}
+
+
+		public List<String> getButtonSetNames() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+			ArrayList<String> keys = new ArrayList<String>();
+			
+			for(String key : the_settings.getButtonSets().keySet()) {
+				keys.add(key);
+			}
+			
+			return keys;
 		}
 
 

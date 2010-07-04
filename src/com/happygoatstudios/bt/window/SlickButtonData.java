@@ -1,7 +1,11 @@
 package com.happygoatstudios.bt.window;
 
+import org.xml.sax.Attributes;
+
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.sax.EndTextElementListener;
+import android.sax.StartElementListener;
 import android.util.Log;
 
 public class SlickButtonData implements Parcelable {
@@ -86,7 +90,8 @@ public class SlickButtonData implements Parcelable {
 		d.writeInt(y);
 		d.writeString(the_text);
 		d.writeString(the_label);
-		
+		d.writeString(flip_command);
+		d.writeInt(MOVE_STATE);
 	}
 	
 	public void readFromParcel(Parcel in) {
@@ -94,6 +99,20 @@ public class SlickButtonData implements Parcelable {
 		y = in.readInt();
 		the_text = in.readString();
 		the_label = in.readString();
+		flip_command = in.readString();
+		MOVE_STATE = in.readInt();
+	}
+
+	
+	public SlickButtonData copy() {
+		SlickButtonData tmp = new SlickButtonData();
+		tmp.x = this.x;
+		tmp.y = this.y;
+		tmp.flip_command = this.flip_command;
+		tmp.the_label = this.the_label;
+		tmp.the_text = this.the_text;
+		
+		return tmp;
 	}
 
 }

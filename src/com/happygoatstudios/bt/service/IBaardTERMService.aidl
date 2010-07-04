@@ -1,6 +1,8 @@
 package com.happygoatstudios.bt.service;
 
+import com.happygoatstudios.bt.window.SlickButtonData;
 import com.happygoatstudios.bt.service.IBaardTERMServiceCallback;
+
 
 interface IBaardTERMService {
 	void registerCallback(IBaardTERMServiceCallback c);
@@ -18,4 +20,13 @@ interface IBaardTERMService {
 	void addAlias(String what, String to);
 	Map getAliases();
 	void setAliases(in Map map);
+	void setFontSize(int size);
+	void setFontSpaceExtra(int size);
+	void setFontName(String name);
+	void setFontPath(String path);
+	void setSemiOption(boolean bools_are_newline);
+	void addButton(String targetset, in SlickButtonData new_button);
+	void removeButton(String targetset,in SlickButtonData button_to_nuke);
+	List<SlickButtonData> getButtonSet(String setname);
+	List<String> getButtonSetNames();
 }

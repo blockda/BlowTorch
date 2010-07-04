@@ -7,5 +7,5 @@ oneway interface IBaardTERMServiceCallback {
 	void htmlDataIncoming(String html);
 	void rawDataIncoming(String raw);
 	void rawBufferIncoming(String rawbuf);
-
+	void loadSettings();
 }

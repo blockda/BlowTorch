@@ -80,6 +80,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_SENDDATAOUT = 105;
 	protected static final int MESSAGE_RESETINPUTWINDOW = 106;
 	protected static final int MESSAGE_PROCESSINPUTWINDOW = 107;
+	protected static final int MESSAGE_LOADSETTINGS = 200;
 	
 	
 	String host;
@@ -370,6 +371,10 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_LOADSETTINGS:
+					//the service is connected at this point, so the service is alive and settings are loaded
+					//TODO: HERE!
+					break;
 				case MESSAGE_PROCESSINPUTWINDOW:
 					
 					//input_box.debug(5);
@@ -1047,6 +1052,11 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			//b.putString("RAW", rawbuf);
 			//msg.setData(b);
 			myhandler.sendMessage(msg);
+		}
+
+		public void loadSettings() throws RemoteException {
+			// TODO Auto-generated method stub
+			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
 		}
 	};
 	
