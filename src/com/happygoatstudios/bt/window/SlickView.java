@@ -85,6 +85,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	protected static final int MSG_UPPRIORITY = 200;
 	protected static final int MSG_NORMALPRIORITY = 201;
 	public Handler buttonaddhandler = null;
+	public Handler realbuttonhandler = null;
 	
 	public SlickView(Context context) {
 		super(context);
@@ -145,9 +146,22 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					
 					break;
 				case MSG_BUTTONDROPSTART:
-					
-
-					if(parent_layout == null) {
+					Message addbtn = realbuttonhandler.obtainMessage(BaardTERMWindow.MESSAGE_ADDBUTTON, bx, by);
+					realbuttonhandler.sendMessage(addbtn);
+					//wait for touchlock
+					/*synchronized(touchLock) {
+						while(touchLock.booleanValue()) {
+							try {
+								touchLock.wait();
+							} catch (InterruptedException e) {
+								
+								e.printStackTrace();
+							}
+						}
+						touchLock = true;
+						Log.e("SLICK","TOUCHLOCK TRUE FOR NEW BUTTON CREATION")
+					}*/
+					/*if(parent_layout == null) {
 						return;
 					}
 
@@ -168,7 +182,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					parent_layout.addView(buttons.get(pos),lp);
 					parent_layout.invalidate();
 					bx = 0;
-					by = 0;
+					by = 0;*/
 					buttondropstarted = false;
 					
 
@@ -180,7 +194,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					ButtonEditorDialog d = new ButtonEditorDialog(parent_layout.getContext(),the_b,this);
 					
 					d.show();
-
+					
 					break;
 				case MSG_REALLYDELETEBUTTON:
 					RelativeLayout lb = parent_layout;
@@ -231,6 +245,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		indicator_off.setDuration(0);
 		indicator_off.setFillAfter(true);
 		indicator_off.setFillBefore(true);
+	}
+	
+	public void setButtonHandler(Handler useme) {
+		realbuttonhandler = useme;
 	}
 	
 	public void setNewTextIndicator(TextView e) {

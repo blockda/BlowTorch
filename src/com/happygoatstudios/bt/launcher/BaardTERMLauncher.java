@@ -1,8 +1,12 @@
 package com.happygoatstudios.bt.launcher;
 
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -40,8 +44,10 @@ import android.widget.TextView;
 import android.widget.AbsoluteLayout.LayoutParams;
 
 import com.happygoatstudios.bt.window.SlickButton;
+import com.happygoatstudios.bt.window.SlickButtonData;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.settings.*;
 
 public class BaardTERMLauncher extends Activity implements ReadyListener {
 	
@@ -60,6 +66,68 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		
 		connections = new ArrayList<MudConnection>();
 		
+		//attempt to read the file.
+		com.happygoatstudios.bt.settings.HyperSettings settings = new com.happygoatstudios.bt.settings.HyperSettings();
+		
+		String filename = "test_settings3.xml";
+		try {
+			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
+			settings.setMaxLines(5000);
+			HashMap<String,String> test_alias = new HashMap<String,String>();
+			test_alias.put("FOO", "BAR");
+			test_alias.put("SEMI", "semicolon;test");
+			test_alias.put("newline", "This\nHas\nNewlines");
+			
+			HashMap<String,Vector<SlickButtonData>> test_btnholder = new HashMap<String,Vector<SlickButtonData>>();
+			Vector<SlickButtonData> test_set = new Vector<SlickButtonData>();
+			Vector<SlickButtonData> test_set2 = new Vector<SlickButtonData>();
+			SlickButtonData test1 = new SlickButtonData();
+			SlickButtonData test2 = new SlickButtonData();
+			SlickButtonData test3 = new SlickButtonData();
+			SlickButtonData test4 = new SlickButtonData();
+			SlickButtonData test5 = new SlickButtonData();
+			
+			test1.setDataFromString("40||40||east||EAST||open e||1");
+			test2.setDataFromString("40||125||west||WEST||open w||1");
+			test3.setDataFromString("40||210||north||NORTH||open n||0");
+			test4.setDataFromString("40||295||south||SOUTH||open s||1");
+			test5.setDataFromString("40||380||scan||SCAN||look||2");
+			
+			test_set.add(test1);
+			test_set.add(test2);
+			test_set.add(test3);
+			
+			test_set2.add(test4);
+			test_set2.add(test5);
+			
+			test_btnholder.put("TEST_SET_1", test_set);
+			test_btnholder.put("TEST_SET_2", test_set2);
+			
+			settings.setButtonSets(test_btnholder);
+			settings.setAliases(test_alias);
+			
+			fos.write(com.happygoatstudios.bt.settings.HyperSettings.writeXml2(settings).getBytes());
+			fos.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		com.happygoatstudios.bt.settings.HyperSAXParser parser = new com.happygoatstudios.bt.settings.HyperSAXParser(filename,this);
+		com.happygoatstudios.bt.settings.HyperSettings newSettings = parser.load();
+		
+		
+		
+		
+		//EasySAXParser parse = new EasySAXParser(filename,this);
+		
+		//List<com.happygoatstudios.bt.settings.HyperSettings> list = parse.parse();
+		
+		//com.happygoatstudios.bt.settings.HyperSettings new_settings = list.get(0);
+		
 		lv = (ListView)findViewById(R.id.connection_list);
 		apdapter = new ConnectionAdapter(lv.getContext(),R.layout.connection_row,connections);
 		lv.setAdapter(apdapter);
@@ -74,6 +142,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		newbutton.setOnClickListener(new newClickedListener());
 		//start the initializeations
 		/*setContentView(R.layout.launcher_layout);
+		
 		
 		
 		//get the button
@@ -156,7 +225,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			//make the item the first in the list.
 			
 			
-			MudConnection muc = apdapter.getItem(arg2);
+			MudConnection muc = apdapter.getItem(arg2);		
 			
 			Intent the_intent = new Intent(com.happygoatstudios.bt.window.BaardTERMWindow.class.getName());
 	    	
@@ -170,6 +239,8 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			//saveConnectionsToDisk();
 			//reportto.ready(muc.getDisplayName(), muc.getHostName(), muc.getPortString());	
 			//ConnectionPickerDialog.this.dismiss();
+	    	
+	    	
 		}
 	}
 	

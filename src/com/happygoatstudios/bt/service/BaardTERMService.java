@@ -6,6 +6,8 @@ package com.happygoatstudios.bt.service;
 import java.io.BufferedOutputStream;
 
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -14,8 +16,13 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -38,6 +45,7 @@ import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.Bundle;
+import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
@@ -45,6 +53,9 @@ import android.widget.Toast;
 
 import com.happygoatstudios.bt.service.IBaardTERMServiceCallback;
 import com.happygoatstudios.bt.service.IBaardTERMService;
+import com.happygoatstudios.bt.settings.HyperSAXParser;
+import com.happygoatstudios.bt.settings.HyperSettings;
+import com.happygoatstudios.bt.window.SlickButtonData;
 
 
 public class BaardTERMService extends Service {
@@ -52,6 +63,8 @@ public class BaardTERMService extends Service {
 	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IBaardTERMServiceCallback> callbacks = new RemoteCallbackList<IBaardTERMServiceCallback>();
+	
+	HyperSettings the_settings = new HyperSettings();
 	
 	NotificationManager mNM;
 	
@@ -95,7 +108,7 @@ public class BaardTERMService extends Service {
 	public boolean sending = false;
 	
 	StringBuffer the_buffer = new StringBuffer();
-	
+	String settingslocation = "test_settings2.xml";
 	
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
@@ -105,6 +118,8 @@ public class BaardTERMService extends Service {
 		port = BAD_PORT;
 		
 		//Looper.prepare();
+		
+		loadXmlSettings(settingslocation);
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -139,7 +154,15 @@ public class BaardTERMService extends Service {
 					host = msg.getData().getString("HOST");
 					port = msg.getData().getInt("PORT");
 					display = msg.getData().getString("DISPLAY");
-					loadAliases();
+					
+					//
+					//try {
+					//	sendInitOk();
+					//} catch (RemoteException e3) {
+					//	// TODO Auto-generated catch block
+					//	e3.printStackTrace();
+					//}
+					//loadAliases();
 					showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
@@ -329,8 +352,40 @@ public class BaardTERMService extends Service {
 	
 	public void onDestroy() {
 		Log.e("SERV","ON DESTROY CALLED!");
-		saveAliases();
+		saveXmlSettings(settingslocation);
+		//saveAliases();
 		doShutdown();
+	}
+	
+	public void saveXmlSettings(String filename) {
+		try {
+			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
+			fos.write(HyperSettings.writeXml2(the_settings).getBytes());
+			fos.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void loadXmlSettings(String filename) {
+		
+		HyperSAXParser parser = new HyperSAXParser(filename,this);
+		
+		the_settings = parser.load();
+		
+		
+		Log.e("SERVICE","SETTINGS LOADED");
+		Log.e("SEERVICE","Contains " + the_settings.getButtonSets().size() + " button sets");
+		Set<String> keys = the_settings.getButtonSets().keySet();
+		for(String key : keys) {
+			Log.e("SERVICE","Found ButtonSet:" + key + " , it contains " + the_settings.getButtonSets().get(key).size() + " buttons.");
+		}
+		//omg. look at how clean that is.
+		
 	}
 	
 	public void loadAliases() {
@@ -393,7 +448,7 @@ public class BaardTERMService extends Service {
 	Object binderCookie = new Object();
 	Boolean hasListener = false;
 	private final IBaardTERMService.Stub mBinder = new IBaardTERMService.Stub() {
-		public void registerCallback(IBaardTERMServiceCallback m) {
+		public void registerCallback(IBaardTERMServiceCallback m) throws RemoteException {
 			if(m != null && !hasListener) {
 				if(callbacks.register(m,binderCookie)) {
 					bindCount++;
@@ -411,6 +466,8 @@ public class BaardTERMService extends Service {
 				}
 				
 			}
+			
+			sendInitOk();
 		}
 		
 		
@@ -536,20 +593,163 @@ public class BaardTERMService extends Service {
 
 
 		public void addAlias(String what, String to) throws RemoteException {
-			aliases.put(what, to);
+			//aliases.put(what, to);
+			the_settings.getAliases().put(what, to);
 		}
 
 
 		public Map<String, String> getAliases() throws RemoteException {
-			return aliases;
+			//return aliases;
+			return the_settings.getAliases();
 		}
 
 
 		public void setAliases(Map map) throws RemoteException {
-			aliases.clear();
-			aliases = new TreeMap<String, String>(map);
+			//aliases.clear();
+			//aliases = new TreeMap<String, String>(map);
+			the_settings.getAliases().clear();
+			the_settings.setAliases(new HashMap<String,String>(map));
 		}
 
+
+		public void addButton(String targetset, SlickButtonData newButton)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.getButtonSets().get(targetset).add(newButton);
+			}
+			
+			Log.e("SERVICE","ADDING BUTTON " + newButton.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
+			Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
+			for(SlickButtonData data : buttons) {
+				Log.e("SERVICE",data.toString());
+			}
+		}
+
+
+		/*public List<SlickButtonData> getSelectedButtonSet()
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}*/
+
+
+		public void removeButton(String targetset, SlickButtonData buttonToNuke)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+			synchronized(the_settings) {
+				//Vector<SlickButtonData> testset = the_settings.getButtonSets().get(targetset);
+				//for(SlickButtonData tmp : testset) {
+					//if(tmp.equals(buttonToNuke)) {
+						the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
+					//}
+				//}
+				
+				
+			}
+			
+			Log.e("SERVICE","REMOVING BUTTON " + buttonToNuke.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
+			Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
+			for(SlickButtonData data : buttons) {
+				Log.e("SERVICE",data.toString());
+			}
+			
+		}
+
+
+		public void setFontName(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setFontName(name);
+			}
+		}
+
+
+		public void setFontPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setFontPath(path);
+			}
+		}
+
+
+		public void setFontSize(int size) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setLineSize(size);
+			}
+		}
+
+
+		public void setFontSpaceExtra(int size) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setLineSpaceExtra(size);
+			}
+		}
+
+
+		/*public void setSelectedButtonSet(String setname) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}*/
+
+
+		public void setSemiOption(boolean boolsAreNewline)
+				throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setSemiIsNewLine(boolsAreNewline);
+			}
+		}
+
+
+		public List<SlickButtonData> getButtonSet(String setname)
+				throws RemoteException {
+			synchronized(the_settings) {
+				Vector<SlickButtonData> tmp = the_settings.getButtonSets().get(setname);
+				if(tmp == null) {
+					Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " but got null");
+				} else {
+					Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " and am returning real data");
+				}
+				return tmp;
+			}
+		}
+
+
+		public List<String> getButtonSetNames() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+			synchronized(the_settings) {
+				ArrayList<String> keys = new ArrayList<String>();
+			
+				for(String key : the_settings.getButtonSets().keySet()) {
+					keys.add(key);
+				}
+			
+			return keys;
+			}
+		}
+
+
+		public void modifyButton(String targetset, SlickButtonData orig,
+				SlickButtonData mod) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				int loc = the_settings.getButtonSets().get(targetset).indexOf(orig);
+				the_settings.getButtonSets().get(targetset).remove(loc); //remove original
+				the_settings.getButtonSets().get(targetset).add(loc,mod); //insert mod in its place
+			}
+			
+			Log.e("SERVICE","MODIFYING BUTTON " + orig.toString() + " FROM BUTTONSET: " + targetset + " with " + mod.toString() + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
+			Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
+			for(SlickButtonData data : buttons) {
+				Log.e("SERVICE",data.toString());
+			}
+		}
+
+		
 
 	};
 	
@@ -582,6 +782,16 @@ public class BaardTERMService extends Service {
 		dat.putInt("PRUNELOC", prunelocation);
 		
 		return dat;
+	}
+	
+	public void sendInitOk() throws RemoteException {
+		
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			callbacks.getBroadcastItem(i).loadSettings();
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
 	}
 	
 	public void sendBuffer() throws RemoteException {
