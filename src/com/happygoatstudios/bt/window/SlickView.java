@@ -82,6 +82,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 
 	protected static final int MSG_CREATEBUTTONWITHDATA = 103;
 	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
+	protected static final int MSG_UPPRIORITY = 200;
+	protected static final int MSG_NORMALPRIORITY = 201;
 	public Handler buttonaddhandler = null;
 	
 	public SlickView(Context context) {
@@ -105,6 +107,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		buttonaddhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MSG_UPPRIORITY:
+					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+					break;
+				case MSG_NORMALPRIORITY:
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					break;
 				case MSG_CREATEBUTTON:
 					int ix = msg.getData().getInt("X");
 					int iy = msg.getData().getInt("Y");
@@ -409,10 +417,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		StringBuffer broken_lines = betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW);
 		int numlines = countLines(broken_lines.toString());
 		
-		synchronized(dlines) {
+		
+		
 		if(scrollback > 0) {
+			synchronized(scrollback) {
 			scrollback = scrollback + numlines*PREF_LINESIZE;
-			
+			}
 			//EditText filler2 = (EditText) parent_layout.findViewById(R.id.filler2);
 			//Animation a = new AlphaAnimation(1.0f,0.0f);
 			//Interpolator i = new CycleInterpolator(1);
@@ -448,7 +458,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		
 		//linetrap = newline.split(the_buffer);
-        
+		synchronized(dlines) {
 		int PREF_MAX_LINES = 200;
 			//dlines.removeAllElements();
 			//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
@@ -484,9 +494,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//dlines.addAll(Arrays.asList(linetrap));
 		//dlines.get = "foo";
 		
-		synchronized(dlines) {
-		
 		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
+		
+		synchronized(scrollback) {
+		
 		if(prev_draw_time == 0) { //never drawn before
 			if(finger_down) {
 				scrollback = (float)Math.floor(scrollback + diff_amount);
@@ -501,6 +512,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				if(finger_down_to_up) {
 					prev_draw_time = System.currentTimeMillis(); 
 					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_UPPRIORITY);
 					finger_down_to_up=false;
 				}
 			}
@@ -530,6 +542,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					fling_velocity = 0;
 					prev_draw_time = 0;
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
 				}
 				
 				/*if(scrollback.intValue() / PREF_LINESIZE < 1) {
@@ -545,6 +558,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					fling_velocity = 0;
 					prev_draw_time = 0;
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
 
 					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 				}
@@ -555,8 +569,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 
 			
 		}
+		}
 		
-		
+		synchronized(dlines) {
 		int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 6 + (int)Math.floor(scrollback % PREF_LINESIZE);
 		if(remainder < 0) {
 			//Log.e("SLICK","WE HAVE A PROBLEM WITH WINDOW SIZE");
@@ -810,7 +825,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	public boolean onTouchEvent(MotionEvent t) {
 		
-		synchronized(dlines) {
+		synchronized(scrollback) {
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
 			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
 			start_x = new Float(t.getX(t.getPointerId(0)));
@@ -1169,6 +1184,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			_sv = view;
 			lock = drawlock;
 		}
+		
+		
 		
 		public void dcbPriority(int val) {
 			Process.setThreadPriority(val);
