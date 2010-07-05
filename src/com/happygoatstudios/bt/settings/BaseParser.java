@@ -39,6 +39,7 @@ public class BaseParser {
 	
 	static final String TAG_BUTTONSETS = "buttonsets";
 	static final String TAG_BUTTONSET = "buttonset";
+	static final String TAG_SELECTEDSET = "selectedset";
 	static final String ATTR_SETNAME = "setName";
 	static final String TAG_BUTTON = "button";
 	static final String ATTR_XPOS = "xPos";

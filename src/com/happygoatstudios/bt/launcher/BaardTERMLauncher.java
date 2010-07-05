@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -232,6 +233,12 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 	    	the_intent.putExtra("DISPLAY",muc.getDisplayName());
 	    	the_intent.putExtra("HOST", muc.getHostName());
 	    	the_intent.putExtra("PORT", muc.getPortString());
+	    	
+	    	//write out the intent to the service so it can do some lookup work in advance of the connection, such as loading the settings wad
+	    	SharedPreferences prefs = BaardTERMLauncher.this.getSharedPreferences("SERVICE_INFO",0);
+	    	Editor edit = prefs.edit();
+	    	edit.putString("SETTINGS_PATH", muc.getDisplayName() + ".xml");
+	    	edit.commit();
 	    	
 	    	BaardTERMLauncher.this.startActivity(the_intent);
 	    	

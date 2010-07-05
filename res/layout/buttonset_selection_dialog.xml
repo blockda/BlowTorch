@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/buttonsetselectionlayout"
+	android:layout_width="420px"
+	android:layout_height="wrap_content">
+	
+	<Button
+		android:id="@+id/new_buttonset_button"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+		android:layout_height="wrap_content"
+		android:layout_width="220px"
+		android:text="New Button Set!"/>
+		
+	<Button
+		android:id="@+id/cancel_buttonset_button"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentRight="true"
+		android:layout_height="wrap_content"
+		android:layout_width="200px"
+		android:text="Cancel"/>
+		
+	<ScrollView
+		android:id="@+id/buttonset_scroller"
+		android:layout_alignParentTop="true"
+		android:layout_width="420px"
+		android:layout_height="wrap_content">
+		
+		<ListView
+			android:id="@+id/buttonset_list"
+			android:layout_height="wrap_content"
+			android:layout_width="420px"/>
+		
+	</ScrollView>
+		
+</RelativeLayout>

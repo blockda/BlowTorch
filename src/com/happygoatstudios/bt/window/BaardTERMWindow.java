@@ -84,6 +84,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_LOADSETTINGS = 200;
 	protected static final int MESSAGE_ADDBUTTON = 201;
 	protected static final int MESSAGE_MODIFYBUTTON = 202;
+	protected static final int MESSAGE_NEWBUTTONSET = 205;
+	protected static final int MESSAGE_CHANGEBUTTONSET = 206;
 	
 	
 	String host;
@@ -317,13 +319,43 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_NEWBUTTONSET:
+					try {
+						service.addNewButtonSet((String)msg.obj);
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					RelativeLayout clearb = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
+					clearb.removeAllViews();
+					clearb.invalidate();
+					break;
+				case MESSAGE_CHANGEBUTTONSET:
+					RelativeLayout modb = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
+					//get the new list
+					try {
+						
+						List<SlickButtonData> newset = service.getButtonSet((String)msg.obj);
+						modb.removeAllViews();
+						for(SlickButtonData tmp : newset) {
+							SlickButton new_button = new SlickButton(modb.getContext(),0,0);
+							new_button.setData(tmp);
+							new_button.setDispatcher(this);
+							new_button.setDeleter(this);
+							modb.addView(new_button);
+						}
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					break;
 				case MESSAGE_MODIFYBUTTON:
 					SlickButtonData orig = msg.getData().getParcelable("ORIG_DATA");
 					SlickButtonData mod = msg.getData().getParcelable("MOD_DATA");
 					
 					try {
 						if(orig != null && mod != null) {
-							service.modifyButton("TEST_SET_1",orig,mod);
+							service.modifyButton(service.getLastSelectedSet(),orig,mod);
 						} else {
 							Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
 						}
@@ -337,7 +369,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					//TODO: HERE!
 					//attemppt to load button sets.
 					try {
-						List<SlickButtonData> buttons =  service.getButtonSet("TEST_SET_1");
+						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
 						RelativeLayout button_layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
 						if(buttons != null) {
 							for(SlickButtonData button : buttons) {
@@ -359,7 +391,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					break;
 				case SlickView.MSG_REALLYDELETEBUTTON:
 					try {
-						service.removeButton("TEST_SET_1", ((SlickButton)msg.obj).getData());
+						service.removeButton(service.getLastSelectedSet(), ((SlickButton)msg.obj).getData());
 					} catch (RemoteException e1) {
 						throw new RuntimeException(e1);
 					}
@@ -379,7 +411,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					new_button.setData(tmp);
 					
 					try {
-						service.addButton("TEST_SET_1", tmp);
+						service.addButton("default", tmp);
 					} catch (RemoteException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -607,6 +639,17 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			}
 			d.setTitle("Edit Aliases:");
 			d.show();
+			break;
+		case 102:
+			//show the button set selector dialog
+			ButtonSetSelectorDialog buttoneditor = null;
+			try{
+				buttoneditor = new ButtonSetSelectorDialog(this,myhandler,(HashMap<String,Integer>)service.getButtonSetListInfo(),service.getLastSelectedSet());
+				buttoneditor.setTitle("Select Button Set");
+				buttoneditor.show();
+			} catch(RemoteException e) {
+				e.printStackTrace();
+			}
 			break;
 		default:
 			break;

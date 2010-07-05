@@ -30,4 +30,10 @@ interface IBaardTERMService {
 	List<SlickButtonData> getButtonSet(String setname);
 	List<String> getButtonSetNames();
 	void modifyButton(String targetset,in SlickButtonData orig, in SlickButtonData mod);
+	void addNewButtonSet(String name);
+	List<String> getButtonSets();
+	void deleteButtonSet(String name);
+	void clearButtonSet(String name);
+	Map getButtonSetListInfo();
+	String getLastSelectedSet();
 }

@@ -6,6 +6,8 @@ package com.happygoatstudios.bt.service;
 import java.io.BufferedOutputStream;
 
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -118,6 +120,12 @@ public class BaardTERMService extends Service {
 		port = BAD_PORT;
 		
 		//Looper.prepare();
+		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
+		settingslocation = prefs.getString("SETTINGS_PATH", "");
+		if(settingslocation.equals("")) {
+			Log.e("SERVICE","LAUNCHER FAILED TO PROVIDE SETTINGS PATH");
+			return;
+		}
 		
 		loadXmlSettings(settingslocation);
 		
@@ -373,9 +381,21 @@ public class BaardTERMService extends Service {
 	
 	public void loadXmlSettings(String filename) {
 		
-		HyperSAXParser parser = new HyperSAXParser(filename,this);
-		
-		the_settings = parser.load();
+		try {
+			FileInputStream fos = this.openFileInput(filename);
+			fos.close();
+			
+			//if the file exists, we will get here, if not, it will go to file not found.
+			HyperSAXParser parser = new HyperSAXParser(filename,this);
+			the_settings = parser.load();
+		} catch (FileNotFoundException e) {
+			//if the file does not exist, then we need to load the default settings
+			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		
 		
 		Log.e("SERVICE","SETTINGS LOADED");
@@ -707,6 +727,7 @@ public class BaardTERMService extends Service {
 		public List<SlickButtonData> getButtonSet(String setname)
 				throws RemoteException {
 			synchronized(the_settings) {
+				the_settings.setLastSelected(setname);
 				Vector<SlickButtonData> tmp = the_settings.getButtonSets().get(setname);
 				if(tmp == null) {
 					Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " but got null");
@@ -749,6 +770,66 @@ public class BaardTERMService extends Service {
 			}
 		}
 
+
+		public void addNewButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setLastSelected(name);
+				the_settings.getButtonSets().put(name, new Vector<SlickButtonData>());
+			}
+			
+		}
+
+
+		public List<String> getButtonSets() throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				Set<String> keys = the_settings.getAliases().keySet();
+				return new ArrayList<String>(keys);
+			}
+		}
+
+
+		public void clearButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.getButtonSets().get(name).removeAllElements();
+			}
+			
+		}
+
+
+		public void deleteButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				if(name.equals("default")) {
+					//cannot delete default button set, only clear it
+					the_settings.getButtonSets().get(name).removeAllElements();
+				} else {
+					the_settings.getButtonSets().remove(name);
+				}
+			}
+		}
+
+
+		public Map getButtonSetListInfo() throws RemoteException {
+			// TODO Auto-generated method stub
+			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
+			
+			synchronized(the_settings) {
+				for(String key : the_settings.getButtonSets().keySet()) {
+					tmp.put(key, the_settings.getButtonSets().get(key).size());
+				}
+			}
+			
+			return tmp;
+		}
+		
+		public String getLastSelectedSet() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getLastSelected();
+			}
+		}
 		
 
 	};

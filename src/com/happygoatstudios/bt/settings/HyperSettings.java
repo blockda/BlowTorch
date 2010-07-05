@@ -27,7 +27,7 @@ public class HyperSettings {
 	
 	private HashMap<String,String> Aliases = new HashMap<String,String>();
 	private HashMap<String,Vector<SlickButtonData>> ButtonSets = new HashMap<String,Vector<SlickButtonData>>();
-	
+	private String lastSelected = "default";
 	enum WRAP_MODE {
 		NONE,
 		BREAK,
@@ -246,6 +246,10 @@ public class HyperSettings {
 				out.endTag("", BaseParser.TAG_BUTTONSET);
 			}
 			
+			out.startTag("",BaseParser.TAG_SELECTEDSET);
+			out.text(data.getLastSelected());
+			out.endTag("", BaseParser.TAG_SELECTEDSET);
+			
 			out.endTag("", BaseParser.TAG_BUTTONSETS);
 			out.endTag("", "root");
 			
@@ -273,6 +277,14 @@ public class HyperSettings {
 
 	public HashMap<String,Vector<SlickButtonData>> getButtonSets() {
 		return ButtonSets;
+	}
+
+	public void setLastSelected(String lastSelected) {
+		this.lastSelected = lastSelected;
+	}
+
+	public String getLastSelected() {
+		return lastSelected;
 	}
 
 }

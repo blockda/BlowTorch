@@ -33,6 +33,7 @@ public class HyperSAXParser extends BaseParser {
 		Element alias = aliases.getChild(TAG_ALIAS);
 		Element buttonsets = root.getChild(TAG_BUTTONSETS);
 		Element buttonset = buttonsets.getChild(TAG_BUTTONSET);
+		Element selected = buttonsets.getChild(TAG_SELECTEDSET);
 		Element button = buttonset.getChild(TAG_BUTTON);
 		
 		final HashMap<String,String> aliases_read = new HashMap<String,String>();
@@ -146,7 +147,13 @@ public class HyperSAXParser extends BaseParser {
 			
 		});
 		
-		
+		selected.setEndTextElementListener(new EndTextElementListener() {
+
+			public void end(String body) {
+				tmp.setLastSelected(body);
+			}
+			
+		});
 		
 		
 		try {
