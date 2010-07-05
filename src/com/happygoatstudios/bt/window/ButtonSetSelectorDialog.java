@@ -7,6 +7,7 @@ import java.util.List;
 import com.happygoatstudios.bt.R;
 import android.app.Dialog;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.LayoutInflater;
@@ -24,13 +25,17 @@ public class ButtonSetSelectorDialog extends Dialog {
 	ArrayList<ButtonEntry> entries = new ArrayList<ButtonEntry>();
 	Handler dispater = null;
 	String selected_set;
-	
-	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> data,String selectedset) {
+	HashMap<String,Integer> data;
+	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		dispater = reportto;
 		selected_set = selectedset;
-		
+		data = datai;
+	}
+	
+	public void onCreate(Bundle b) {
+		super.onCreate(b);
 		setContentView(R.layout.buttonset_selection_dialog);
 		
 		ListView lv = (ListView) findViewById(R.id.buttonset_list);
@@ -43,7 +48,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 		lv.setAdapter(new ConnectionAdapter(lv.getContext(),R.layout.buttonset_selection_list_row,entries));
 		lv.setTextFilterEnabled(true);
 		
-		lv.setSelection(entries.indexOf(new ButtonEntry(selectedset,data.get(selectedset))));
+		lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
 		
 		Button newbutton = (Button)findViewById(R.id.new_buttonset_button);
 		Button cancel = (Button)findViewById(R.id.cancel_buttonset_button);

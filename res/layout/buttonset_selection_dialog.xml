@@ -4,7 +4,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/buttonsetselectionlayout"
 	android:layout_width="420px"
-	android:layout_height="wrap_content">
+	android:layout_height="fill_parent">
 	
 	<Button
 		android:id="@+id/new_buttonset_button"
@@ -22,17 +22,19 @@
 		android:layout_width="200px"
 		android:text="Cancel"/>
 		
-	<ScrollView
+	<!-- <ScrollView
 		android:id="@+id/buttonset_scroller"
 		android:layout_alignParentTop="true"
 		android:layout_width="420px"
-		android:layout_height="wrap_content">
+		android:layout_height="fill_parent"
+		android:layout_above="@id/new_buttonset_button"> -->
 		
 		<ListView
 			android:id="@+id/buttonset_list"
-			android:layout_height="wrap_content"
+			android:layout_height="fill_parent"
+			android:layout_above="@id/new_buttonset_button"
 			android:layout_width="420px"/>
 		
-	</ScrollView>
+	<!-- </ScrollView> -->
 		
 </RelativeLayout>

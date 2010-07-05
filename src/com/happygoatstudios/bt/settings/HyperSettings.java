@@ -9,6 +9,7 @@ import java.util.Vector;
 
 import org.xmlpull.v1.XmlSerializer;
 
+import android.util.Log;
 import android.util.Xml;
 
 import com.happygoatstudios.bt.window.SlickButtonData;
@@ -280,10 +281,12 @@ public class HyperSettings {
 	}
 
 	public void setLastSelected(String lastSelected) {
+		Log.e("SETTINGS","LAST SELECTED SET CHANGED TO:" + lastSelected);
 		this.lastSelected = lastSelected;
 	}
 
 	public String getLastSelected() {
+		Log.e("SETTINGS","RETURNING SELECTED SET:" + lastSelected);
 		return lastSelected;
 	}
 

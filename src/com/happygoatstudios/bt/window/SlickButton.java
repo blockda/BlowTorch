@@ -168,6 +168,8 @@ public class SlickButton extends View {
 	boolean nudged = false;
 	boolean button_down = false;
 	
+	SlickButtonData orig_data = null;	
+	
 	public boolean onTouchEvent(MotionEvent e) {
 		
 		//if(!nudged) {
@@ -177,6 +179,8 @@ public class SlickButton extends View {
 		int pointer = e.getPointerId(0);
 		int touchx = (int) e.getX(pointer);
 		int touchy = (int) e.getY(pointer);
+		
+
 		
 		Rect rect = new Rect();
 		rect.set(data.x-(size/2),data.y-(size/2),data.x+(size/2),data.y+(size/2));
@@ -197,6 +201,7 @@ public class SlickButton extends View {
 		
 		//Log.e("SB","SB GOT TOUCH EVENT");
 		if(e.getAction() == MotionEvent.ACTION_DOWN) {
+			orig_data = this.getData().copy();
 			hasfocus = true;
 			start_x = touchx;
 			start_y = touchy;
@@ -250,6 +255,10 @@ public class SlickButton extends View {
 			
 			moving = false;
 			nudged = false;
+			
+			if(!orig_data.equals(this.data)) {
+				iHaveChanged(orig_data);
+			}
 			
 			this.invalidate();
 		}

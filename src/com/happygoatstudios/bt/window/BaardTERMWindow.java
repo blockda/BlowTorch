@@ -202,6 +202,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	public boolean finishStart = true;
 	
 	String html_buffer = new String();
+	Vector<SlickButton> current_button_views = new Vector<SlickButton>();
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
@@ -327,8 +328,19 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						e3.printStackTrace();
 					}
 					RelativeLayout clearb = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
-					clearb.removeAllViews();
-					clearb.invalidate();
+					//for(SlickButton b : current_button_views) {
+					//	clearb.removeView(b);
+					//	clearb.removeV
+					//}
+					int pos = clearb.indexOfChild(screen2);
+					int count = clearb.getChildCount();
+					if(pos == 0) {
+						clearb.removeViews(1, count-1);
+					} else {
+						clearb.removeViews(0,pos);
+						clearb.removeViews(pos+1,count - pos);
+					}
+					current_button_views.clear();
 					break;
 				case MESSAGE_CHANGEBUTTONSET:
 					RelativeLayout modb = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
@@ -336,7 +348,15 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					try {
 						
 						List<SlickButtonData> newset = service.getButtonSet((String)msg.obj);
-						modb.removeAllViews();
+						
+						int posm = modb.indexOfChild(screen2);
+						int countm = modb.getChildCount();
+						if(posm == 0) {
+							modb.removeViews(1, countm-1);
+						} else {
+							modb.removeViews(0,posm);
+							modb.removeViews(posm+1,countm - posm);
+						}
 						for(SlickButtonData tmp : newset) {
 							SlickButton new_button = new SlickButton(modb.getContext(),0,0);
 							new_button.setData(tmp);
@@ -369,6 +389,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					//TODO: HERE!
 					//attemppt to load button sets.
 					try {
+						//current_button_views.clear();
 						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
 						RelativeLayout button_layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
 						if(buttons != null) {
@@ -378,6 +399,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 								tmp.setDispatcher(this);
 								tmp.setDeleter(this);
 								button_layout.addView(tmp);
+								//current_button_views.add(tmp);
 							}
 						}
 					} catch (RemoteException e1) {
@@ -397,6 +419,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					}
 					RelativeLayout layout = (RelativeLayout) BaardTERMWindow.this.findViewById(R.id.slickholder);
 					layout.removeView((SlickButton)msg.obj);
+					//current_button_views.remove((SlickView)msg.obj);
 					//remove from the service.
 					
 					break;
@@ -411,7 +434,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					new_button.setData(tmp);
 					
 					try {
-						service.addButton("default", tmp);
+						service.addButton(service.getLastSelectedSet(), tmp);
 					} catch (RemoteException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -419,6 +442,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					RelativeLayout hold = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
 					hold.addView(new_button);
+					//current_button_views.add(new_button);
 					
 					break;
 				case MESSAGE_PROCESSINPUTWINDOW:
