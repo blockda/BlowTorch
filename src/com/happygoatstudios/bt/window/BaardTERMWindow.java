@@ -675,6 +675,11 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				e.printStackTrace();
 			}
 			break;
+		case 101:
+			SettingEditorDialog sedit = new SettingEditorDialog(this,service);
+			sedit.setTitle("Modify Settings...");
+			sedit.show();
+			break;
 		default:
 			break;
 		}
