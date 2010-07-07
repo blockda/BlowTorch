@@ -5,11 +5,13 @@ package com.happygoatstudios.bt.service;
 
 import java.io.BufferedOutputStream;
 
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -39,6 +41,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -829,6 +832,78 @@ public class BaardTERMService extends Service {
 			synchronized(the_settings) {
 				return the_settings.getLastSelected();
 			}
+		}
+
+
+		public void setMaxLines(int keepcount) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setMaxLines(keepcount);
+			}
+			
+		}
+		
+		public int getMaxLines() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getMaxLines();
+			}
+		}
+
+
+		public int getFontSize() throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.getLineSize();
+			}
+		}
+
+
+		public int getFontSpaceExtra() throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.getLineSpaceExtra();
+			}
+		}
+
+
+		public String getFontName() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getFontName();
+			}
+		}
+
+
+		public void ExportSettingsToPath(String path) throws RemoteException {
+			synchronized(the_settings) {
+				//FileOutputStream tmp = null;
+				
+				try {
+				//tmp = BaardTERMService.this.openFileOutput(path, Context.MODE_WORLD_READABLE|Context.MODE_WORLD_WRITEABLE);
+				//BaardTERMService.this.openF
+				File root = Environment.getExternalStorageDirectory();
+				if(root.canWrite()) {
+					File file = new File(root,"testsettingexport.xml");
+					Log.e("SERVICE","ATTEMPTING TO WRITE TO FILE: " + file.getPath());
+					FileWriter writer = new FileWriter(file);
+					BufferedWriter tmp = new BufferedWriter(writer);
+					tmp.write(HyperSettings.writeXml2(the_settings));
+					tmp.close();
+				} else {
+					Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
+				}
+				} catch(Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+			
+		}
+		
+		public void LoadSettingsFromPath(String path) throws RemoteException {
+			synchronized(the_settings) {
+				HyperSAXParser loader = new HyperSAXParser(path,BaardTERMService.this);
+				the_settings = loader.load();
+			}
+			sendInitOk();
 		}
 		
 

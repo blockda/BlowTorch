@@ -22,7 +22,9 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -30,6 +32,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -41,6 +44,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnTouchListener;
@@ -68,6 +72,7 @@ import android.widget.TextView;
 import com.happygoatstudios.bt.R;
 //import com.happygoatstudios.bt.service.BaardTERMService;
 import com.happygoatstudios.bt.service.*;
+import com.happygoatstudios.bt.settings.HyperSettingsActivity;
 
 public class BaardTERMWindow extends Activity implements AliasDialogDoneListener {
 	
@@ -86,6 +91,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_MODIFYBUTTON = 202;
 	protected static final int MESSAGE_NEWBUTTONSET = 205;
 	protected static final int MESSAGE_CHANGEBUTTONSET = 206;
+	
+	protected boolean settingsDialogRun = false;
 	
 	
 	String host;
@@ -340,7 +347,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						clearb.removeViews(0,pos);
 						clearb.removeViews(pos+1,count - pos);
 					}
-					current_button_views.clear();
+					//current_button_views.clear();
 					break;
 				case MESSAGE_CHANGEBUTTONSET:
 					RelativeLayout modb = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
@@ -388,10 +395,44 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					//the service is connected at this point, so the service is alive and settings are loaded
 					//TODO: HERE!
 					//attemppt to load button sets.
+					if(settingsDialogRun) {
+						//so, if we a are here, then the dialog screen has been run.
+						//we need to read in the values and supply them to the service
+						settingsDialogRun = false;
+						Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
+						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(BaardTERMWindow.this);
+						Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
+						Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
+						Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
+						String font_name = prefs.getString("FONT_NAME", "monospace");
+						try {
+							service.setFontSize(font_size);
+							service.setFontSpaceExtra(line_space);
+							service.setMaxLines(max_lines);
+							service.setFontName(font_name);
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
+					
 					try {
 						//current_button_views.clear();
 						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
+						
 						RelativeLayout button_layout = (RelativeLayout)BaardTERMWindow.this.findViewById(R.id.slickholder);
+						
+						int posl = button_layout.indexOfChild(screen2);
+						int countl = button_layout.getChildCount();
+						if(posl == 0) {
+							button_layout.removeViews(1, countl-1);
+						} else {
+							button_layout.removeViews(0,posl);
+							button_layout.removeViews(posl+1,countl - posl);
+						}
+						//current_button_views.clear();
+						
 						if(buttons != null) {
 							for(SlickButtonData button : buttons) {
 								SlickButton tmp = new SlickButton(BaardTERMWindow.this,0,0);
@@ -402,6 +443,47 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 								//current_button_views.add(tmp);
 							}
 						}
+						
+						//screen2.setFontSize(service.getFontSize());
+						//screen2.setLineSpace(service.getFontSpaceExtra());
+						screen2.setCharacterSizes(service.getFontSize(), service.getFontSpaceExtra());
+						screen2.setMaxLines(service.getMaxLines());
+						
+						//get the font name 
+						String tmpname = service.getFontName();
+						Typeface font = Typeface.MONOSPACE;
+						Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
+						if(tmpname.contains("/")) {
+							//string is a path
+							if(tmpname.contains(Environment.getExternalStorageDirectory().getPath())) {
+								Log.e("WINDOW","Loading font from SDCARD!");
+								boolean available = false;
+								String sdstate = Environment.getExternalStorageState();
+								if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
+									font = Typeface.createFromFile(tmpname);
+								} else {
+									font = Typeface.MONOSPACE;
+								}
+								//path is an sdcard path
+							} else {
+								//path is a system path
+								Log.e("WINDOW","Loading font from path!");
+								font = Typeface.createFromFile(tmpname);
+							}
+							
+						} else {
+							if(tmpname.equals("monospace")) {
+								font = Typeface.MONOSPACE;
+							} else if(tmpname.equals("sans serif")) {
+								font = Typeface.SANS_SERIF;
+							} else if (tmpname.equals("default")) {
+								font = Typeface.DEFAULT;
+							}
+						}
+						
+						screen2.setFont(font);
+						//get the rest of the window options that are necessary to function
+						
 					} catch (RemoteException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -640,15 +722,40 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		}
 	}
 	
+	boolean showsettingsoptions = false;
+	boolean settingsmenuclosed  = true;
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		
+		menu.clear();
+		if(!showsettingsoptions) {
+			menu.add(0,99,0,"Aliases");
+			menu.add(0,100,0,"Triggers");
+			menu.add(0,101,0,"Options");
+			menu.add(0,102,0,"Button Sets");
+		} else {
+			menu.add(0,103,0,"Edit Settings");
+			menu.add(0,104,0,"Import Settings");
+			menu.add(0,105,0,"Export Settings");
+		}
+		
+		return true;
+	}
+	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		
 		menu.add(0,99,0,"Aliases");
 		menu.add(0,100,0,"Triggers");
 		menu.add(0,101,0,"Options");
-		menu.add(0,102,0,"Slick Buttons");
+		menu.add(0,102,0,"Button Sets");
 		
 		return true;
 		
+	}
+	
+	public void onOptionMenuClose(Menu menu) {
+		//if(showsettingsoptions) {
+		//	showsettingsoptions = false;
+		//}
 	}
 	
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -676,15 +783,56 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			}
 			break;
 		case 101:
-			SettingEditorDialog sedit = new SettingEditorDialog(this,service);
-			sedit.setTitle("Modify Settings...");
-			sedit.show();
+			//SettingEditorDialog sedit = new SettingEditorDialog(this,service);
+			//sedit.setTitle("Modify Settings...");
+			//sedit.show();
+			showsettingsoptions = true;
+			//settingsmenuclosed = false;
+			BaardTERMWindow.this.myhandler.postDelayed(new Runnable() { public void run() { openOptionsMenu();}}, 1);
+			//Intent settingintent = new Intent(this,HyperSettingsActivity.class);
+			//this.startActivityForResult(settingintent, 0);
+			break;
+		case 103:
+			Intent settingintent = new Intent(this,HyperSettingsActivity.class);
+			this.startActivityForResult(settingintent, 0);
+			//settingsmenuclosed = true;
+			showsettingsoptions = false;
+			break;
+		case 104:
+			//settingsmenuclosed = true;
+			showsettingsoptions = false;
+			break;
+		case 105:
+			//settingsmenuclosed = true;
+			showExportDialog();
+			showsettingsoptions = false;
 			break;
 		default:
 			break;
 		}
 		return true;
 	}
+	
+	void showExportDialog() {
+		NewButtonSetEntryDialog diag = new NewButtonSetEntryDialog(this,extporthandler);
+		diag.setTitle("Enter Filename:(/sdcard/)");
+		diag.show();
+	}
+	
+	Handler extporthandler = new Handler() {
+		public void handleMessage(Message msg) {
+			//so we are kludging out the new button set dialog to just be a "string enterer" dialog.
+			//should be a full path /sdcard/something.xml
+			String filename = (String)msg.obj;
+			try {
+				Log.e("WINDOW","TRYING TO GET SERVICE TO WRITE A FILE FOR ME!");
+				service.ExportSettingsToPath(filename);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	};
 	
 	public void onBackPressed() {
 		//Log.e("WINDOW","BACK PRESSED TRAPPED");
@@ -850,6 +998,15 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		}
 		
 	}
+	
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		
+		if(resultCode == RESULT_OK) {
+			Log.e("WINDOW","onActivityResult()");
+			settingsDialogRun = true;
+		}
+	}
+	
 	
 	public void onStart() {
 		Log.e("WINDOW","onStart()");

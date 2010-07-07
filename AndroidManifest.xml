@@ -16,9 +16,19 @@
         		  android:label="BaardTERM"
         		  android:screenOrientation="landscape"
 				  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
-        		  android:launchMode = "singleInstance">
+        		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	<action android:name="com.happygoatstudios.bt.window.BaardTERMWindow"/>
+        		  	<category android:name="android.intent.category.DEFAULT"/>
+        		  </intent-filter>
+        </activity>
+        <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
+        		  android:label="Settings Editor"
+        		  android:screenOrientation="landscape"
+        		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
+        		  android:noHistory = "true">
+        		  <intent-filter>
+        		  	<action android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>

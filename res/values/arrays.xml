@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<resources>
+
+	<string-array name="colors">
+		<item>monospace</item>
+		<item>san serif</item>
+		<item>default</item>
+	</string-array>
+
+</resources>

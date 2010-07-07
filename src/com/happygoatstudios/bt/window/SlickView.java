@@ -41,6 +41,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private DrawRunner _runner;
 	
+	private int WINDOW_WIDTH = 0;
+	private int WINDOW_HEIGHT = 0;
 	
 	
 	RelativeLayout parent_layout = null; //for adding buttons.
@@ -61,6 +63,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	private Boolean drawn = false;
 	private Boolean isdrawn = true;
 	
+	private Typeface PREF_FONT = Typeface.MONOSPACE;
+	private int PREF_MAX_LINES = 300;
 	public int PREF_FONTSIZE = 18;
 	public int PREF_LINESIZE = 20;
 	public String PREF_TYPEFACE = "monospace";
@@ -269,16 +273,32 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int width, int height) {
 		
+		WINDOW_HEIGHT = height;
+		WINDOW_WIDTH = width;
+		
+		calculateCharacterFeatures(WINDOW_WIDTH,WINDOW_HEIGHT);
+		
 		//calculate the number of rows and columns in this window.
-		CALCULATED_LINESINWINDOW = (height / PREF_LINESIZE);
+		/*CALCULATED_LINESINWINDOW = (height / PREF_LINESIZE);
 		
 		Paint p = new Paint();
 		p.setTypeface(Typeface.MONOSPACE);
 		p.setTextSize(PREF_FONTSIZE);
 		int one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
 		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
+		*/
+		}
+	
+	public void calculateCharacterFeatures(int width,int height) {
+		CALCULATED_LINESINWINDOW = (height / PREF_LINESIZE);
+		Paint p = new Paint();
+		p.setTypeface(PREF_FONT);
+		p.setTextSize(PREF_FONTSIZE);
+		int one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
+		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
 		
 		Log.e("SLICK","surfaceChanged called, calculated" + CALCULATED_LINESINWINDOW + " lines and " + CALCULATED_ROWSINWINDOW + " rows.");
+		
 	}
 	
 
@@ -423,6 +443,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
+	
 		
 	
 	public void addText(String input,boolean jumptoend) {
@@ -477,7 +498,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//linetrap = newline.split(the_buffer);
 		synchronized(dlines) {
-		int PREF_MAX_LINES = 200;
+		//int PREF_MAX_LINES = 200;
 			//dlines.removeAllElements();
 			//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
 			//dlines.
@@ -494,6 +515,39 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 	}
 	
+	public void setFont(Typeface font) {
+		synchronized(dlines) {
+			PREF_FONT = font;
+			calculateCharacterFeatures(WINDOW_WIDTH,WINDOW_HEIGHT);
+		}
+	}
+	
+	public void setFontSize(int size) {
+		synchronized(dlines) {
+			PREF_FONTSIZE = size;
+		}
+	}
+	
+	public void setLineSpace(int space) {
+		synchronized(dlines) {
+			PREF_LINESIZE = PREF_FONTSIZE + space;
+		}
+	}
+	
+	public void setMaxLines(int amount) {
+		synchronized(dlines) {
+			PREF_MAX_LINES = amount;
+		}
+	}
+	
+	public void setCharacterSizes(int size,int space) {
+		synchronized(dlines) {
+			PREF_FONTSIZE = size;
+			PREF_LINESIZE = size+space;
+			
+			calculateCharacterFeatures(WINDOW_WIDTH,WINDOW_HEIGHT);
+		}
+	}
 	
 	StringBuffer sel_color = new StringBuffer(new Integer(0xFFBBBBBB).toString());
 	StringBuffer sel_bright = new StringBuffer(new Integer(0).toString()); 
@@ -606,7 +660,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         opts.setTextSize(PREF_FONTSIZE);
         
         //opts.setStyle(Style.)
-        opts.setTypeface(Typeface.MONOSPACE);
+        opts.setTypeface(PREF_FONT);
 
         //Matcher toLines = newline.matcher(the_buffer.toString());
         //toLines.reset(the_buffer); 

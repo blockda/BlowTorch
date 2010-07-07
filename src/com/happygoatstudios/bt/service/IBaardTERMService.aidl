@@ -21,9 +21,14 @@ interface IBaardTERMService {
 	Map getAliases();
 	void setAliases(in Map map);
 	void setFontSize(int size);
+	int getFontSize();
 	void setFontSpaceExtra(int size);
+	int getFontSpaceExtra();
 	void setFontName(String name);
+	String getFontName();
 	void setFontPath(String path);
+	void setMaxLines(int keepcount);
+	int getMaxLines();
 	void setSemiOption(boolean bools_are_newline);
 	void addButton(String targetset, in SlickButtonData new_button);
 	void removeButton(String targetset,in SlickButtonData button_to_nuke);
@@ -36,4 +41,6 @@ interface IBaardTERMService {
 	void clearButtonSet(String name);
 	Map getButtonSetListInfo();
 	String getLastSelectedSet();
+	void LoadSettingsFromPath(String path);
+	void ExportSettingsToPath(String path);
 }

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<PreferenceScreen
+
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:key="first_screen">
+	
+	<PreferenceCategory android:title = "Window Settings">
+		<EditTextPreference
+			android:key="FONT_SIZE"
+			android:title="Font Size"
+			android:defaultValue="18"
+			android:summary="The height of a drawn character (in pixels)."
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity = "right"
+			android:inputType="number"/>
+		<EditTextPreference
+			android:key="FONT_SIZE_EXTRA"
+			android:title="Line Spacing"
+			android:defaultValue="2"
+			android:summary="The extra space inbetween lines (in pixels)."
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity = "right"
+			android:inputType="number"/>
+		<EditTextPreference
+			android:key="MAX_LINES"
+			android:title="Text Buffer Size"
+			android:defaultValue="300"
+			android:summary="The number of lines kept by the window for scrollback."
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity = "right"
+			android:inputType="number"/>
+		<ListPreference
+			android:key="FONT_NAME"
+			android:title="Font"
+			android:summary="The font used by the window to render text."
+			android:defaultValue="monospace"/>
+	</PreferenceCategory>
+	
+	
+
+</PreferenceScreen>
