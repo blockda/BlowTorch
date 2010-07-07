@@ -45,8 +45,11 @@ public class BaseParser {
 	static final String TAG_BUTTON = "button";
 	static final String ATTR_XPOS = "xPos";
 	static final String ATTR_YPOS = "yPos";
+	static final String ATTR_HEIGHT = "height";
+	static final String ATTR_WIDTH = "width";
 	static final String ATTR_LABEL = "label";
 	static final String ATTR_CMD = "command";
+	static final String ATTR_TARGETSET = "targetSet";
 	static final String ATTR_FLIPCMD = "flipCommand";
 	static final String ATTR_MOVEMETHOD = "moveMethod";
 	

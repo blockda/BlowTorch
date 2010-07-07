@@ -31,7 +31,7 @@ public class ButtonEditorDialog extends Dialog {
 	CheckBox move_nudge = null;
 	CheckBox move_freeze = null;
 	
-	SlickButtonData orig_data = null;
+	//SlickButtonData orig_data = null;
 	
 	public ButtonEditorDialog(Context context,SlickButton useme,Handler callback) {
 		super(context);
@@ -41,7 +41,7 @@ public class ButtonEditorDialog extends Dialog {
 		
 		the_button = useme;
 		deleter = callback;
-		orig_data = useme.getData().copy();
+		//orig_data = useme.getData().copy();
 	}
 	
 	public void onCreate(Bundle b) {
@@ -51,13 +51,13 @@ public class ButtonEditorDialog extends Dialog {
 		setContentView(R.layout.button_properties_dialog);
 		
 		EditText label = (EditText)findViewById(R.id.button_text_et);
-		label.setText(the_button.getData().the_label);
+		label.setText(the_button.getData().getLabel());
 		
 		EditText command = (EditText)findViewById(R.id.button_command_et);
-		command.setText(the_button.getData().the_text);
+		command.setText(the_button.getData().getText());
 		
 		EditText flip = (EditText)findViewById(R.id.button_flip_et);
-		flip.setText(the_button.getData().flip_command);
+		flip.setText(the_button.getData().getFlipCommand());
 		
 		move_free = (CheckBox)findViewById(R.id.move_free);
 		move_nudge = (CheckBox)findViewById(R.id.move_nudge);
@@ -160,8 +160,8 @@ public class ButtonEditorDialog extends Dialog {
 				if(tfreeze.isChecked()) {
 					the_button.setMoveMethod(SlickButtonData.MOVE_FREEZE);
 				}
-				
-				the_button.iHaveChanged(orig_data);
+				the_button.dialog_launched = false;
+				the_button.iHaveChanged(the_button.orig_data);
 				the_button.invalidate();
 				EXIT_STATE = EXIT_DONE;
 				ButtonEditorDialog.this.dismiss();

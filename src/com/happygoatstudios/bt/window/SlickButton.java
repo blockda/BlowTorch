@@ -38,16 +38,18 @@ public class SlickButton extends View {
 	final static public int MSG_BEGINMOVE = 100;
 	final static public int MSG_DELETE = 101;
 	
+	boolean dialog_launched = false;
+	
 	public SlickButton(Context context,int px,int py) {
 		super(context);
 		//x = px;
 		//y = py;
-		data.x = px;
-		data.y = py;
+		data.setX(px);
+		data.setY(py);
 		this.setClickable(true);
 		this.setFocusable(true);
 		this.setOnClickListener(the_listener);
-		data.the_label = "NULL!";
+		data.setLabel("NULL!");
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -57,6 +59,11 @@ public class SlickButton extends View {
 					SlickButton.this.invalidate();
 					break;
 				case MSG_DELETE:
+					dialog_launched = true;
+					button_down = false;
+					moving = false;
+					nudged = false;
+					hasfocus = false;
 					Message deleme = deleter.obtainMessage(666, SlickButton.this);
 					deleter.sendMessage(deleme);
 					//dispatcher.
@@ -66,7 +73,7 @@ public class SlickButton extends View {
 		};
 		
 		
-		Log.e("SB","SLICKBUTTON CONSTRUCTOR PASSED");
+		//Log.e("SB","SLICKBUTTON CONSTRUCTOR PASSED");
 		
 	}
 	
@@ -89,17 +96,22 @@ public class SlickButton extends View {
 	
 	public void doDispatchFlip() {
 		//only dispatch flip if it contains a command
-		if(data.flip_command == null || data.flip_command.equals("")) {
+		if(data.getFlipCommand() == null || data.getFlipCommand().equals("")) {
 			
 		} else {
-			dispatchText(data.flip_command);
+			dispatchText(data.getFlipCommand());
 		}
 	}
 	
 	public void doDispatch() {
 		//Message tmp = ConnectionHandler.obtainMessage(105);
-		dispatchText(data.the_text);
+		dispatchText(data.getText());
 		
+	}
+	
+	private void doButtonSetChange() {
+		Message swaptoset = dispatcher.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET, data.getTargetSet());
+		dispatcher.sendMessage(swaptoset);
 	}
 	
 	public void dispatchText(String istr) {
@@ -128,19 +140,19 @@ public class SlickButton extends View {
 	}
 	
 	public void setText(String t) {
-		data.the_text = t;
+		data.setText(t);
 	}
 	
 	public String getText() {
-		return data.the_text;
+		return data.getText();
 	}
 	
 	public String getLabel() {
-		return data.the_label;
+		return data.getLabel();
 	}
 	
 	public void setFlipCommand(String t) {
-		data.flip_command = t;
+		data.setFlipCommand(t);
 	}
 	
 	public void setMoveMethod(int i) {
@@ -156,7 +168,7 @@ public class SlickButton extends View {
 		if(t == null) {
 			t = "NULL!";
 		}
-		data.the_label = t;
+		data.setLabel(t);
 	}
 	
 	private int start_x = 0;
@@ -170,12 +182,21 @@ public class SlickButton extends View {
 	
 	SlickButtonData orig_data = null;	
 	
+	//down only once per cycle lock
+	boolean preserve_lock = false;
+	
 	public boolean onTouchEvent(MotionEvent e) {
 		
 		//if(!nudged) {
 		//	save_x = data.x;
 		//	save_y = data.y;
 		//}
+		
+		if(dialog_launched) {
+			//Log.e("SLICKBUTTON","BAILING BECAUSE DIALOG LAUNCHED!");
+			return true; //bail if anything happens
+		}
+		
 		int pointer = e.getPointerId(0);
 		int touchx = (int) e.getX(pointer);
 		int touchy = (int) e.getY(pointer);
@@ -183,7 +204,7 @@ public class SlickButton extends View {
 
 		
 		Rect rect = new Rect();
-		rect.set(data.x-(size/2),data.y-(size/2),data.x+(size/2),data.y+(size/2));
+		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
 		
 		if(rect.contains(touchx,touchy)) {
 			//continue
@@ -201,29 +222,32 @@ public class SlickButton extends View {
 		
 		//Log.e("SB","SB GOT TOUCH EVENT");
 		if(e.getAction() == MotionEvent.ACTION_DOWN) {
-			orig_data = this.getData().copy();
+			if(!preserve_lock) {
+				//Log.e("SLICKBUTTON","SETTING ORIGINAL DATA TO IDENTIFY MYSELF WHEN THE DIALOG GOES.");
+				orig_data = this.getData().copy();
+			}
 			hasfocus = true;
 			start_x = touchx;
 			start_y = touchy;
 			//schedule message for moving
 			myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1500);
 			myhandler.sendEmptyMessageDelayed(MSG_DELETE, 4000);
-			save_x = data.x;
-			save_y = data.y;
+			save_x = data.getX();
+			save_y = data.getY();
 			button_down=true;
 			this.invalidate();
 		}
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {
 			if(moving) {
 				if(data.MOVE_STATE == data.MOVE_FREE) {
-					data.x = touchx;
-					data.y = touchy;
+					data.setX(touchx);
+					data.setY(touchy);
 				} else if (data.MOVE_STATE == data.MOVE_NUDGE) {
 					//compute nudge
 					int tmpx = touchx - start_x;
 					int tmpy = touchy - start_y;
-					data.x = save_x + tmpx / 10;
-					data.y = save_y + tmpy / 10;
+					data.setX(save_x + tmpx / 10);
+					data.setY(save_y + tmpy / 10);
 					//double dist = 
 					nudged = true;
 				}
@@ -245,11 +269,20 @@ public class SlickButton extends View {
 			if(!moving) {
 				if(!rect.contains(touchx,touchy)) {
 					//up action happend outside of recticle, do dispatch flip
-					doDispatchFlip(); //execute flip command
+					//Log.e("BUTTON",this.data.toString() + "CLICKED!");
+					if(data.getTargetSet().equals("")) {
+						doDispatchFlip(); //execute flip command
+					} 
 				} else {
-					doDispatch();
+					if(data.getTargetSet().equals("")) {
+						doDispatch();
+					} else {
+						doButtonSetChange();
+					}
 				}
 			}
+			
+			preserve_lock = false;
 			
 			button_down = false;
 			
@@ -265,6 +298,8 @@ public class SlickButton extends View {
 		return true;
 	}
 	
+
+
 	protected void onFocusChanged(boolean gainFocus,int direction,Rect prev_rect) {
 		//Log.e("SB","FOCUS CHANGED");
 		if(gainFocus == true) {
@@ -278,7 +313,7 @@ public class SlickButton extends View {
 	public void onDraw(Canvas c) {
 		Rect rect = new Rect();
 		
-		rect.set(data.x-(size/2),data.y-(size/2),data.x+(size/2),data.y+(size/2));
+		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
 		//RectF f_rect = new RectF(rect);
 		//c.drawColor(0xFF0FF000);
 		Paint p = new Paint();
@@ -296,12 +331,12 @@ public class SlickButton extends View {
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
 		opts.setColor(0x990000FF);
 		opts.setTextSize(24);
-		float tsize = opts.measureText(data.the_label);
-		c.drawText(data.the_label, data.x-tsize/2, data.y+12, opts);
+		float tsize = opts.measureText(data.getLabel());
+		c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
 		
 		if(moving) {
 			Rect m_rect = new Rect();
-			m_rect.set(data.x-(size/2)+5,data.y-(size/2)+5,data.x+(size/2)-5,data.y+(size/2)-5);
+			m_rect.set(data.getX()-(data.getWidth()/2)+5,data.getY()-(data.getHeight()/2)+5,data.getX()+(data.getWidth()/2)-5,data.getY()+(data.getHeight()/2)-5);
 			Paint rpaint = new Paint();
 			rpaint.setColor(0xAAFF0000);
 			c.drawRect(m_rect, rpaint);

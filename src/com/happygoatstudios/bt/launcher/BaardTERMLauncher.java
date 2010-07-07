@@ -88,11 +88,11 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			SlickButtonData test4 = new SlickButtonData();
 			SlickButtonData test5 = new SlickButtonData();
 			
-			test1.setDataFromString("40||40||east||EAST||open e||1");
-			test2.setDataFromString("40||125||west||WEST||open w||1");
-			test3.setDataFromString("40||210||north||NORTH||open n||0");
-			test4.setDataFromString("40||295||south||SOUTH||open s||1");
-			test5.setDataFromString("40||380||scan||SCAN||look||2");
+			//test1.setDataFromString("40||40||east||EAST||open e||1");
+			//test2.setDataFromString("40||125||west||WEST||open w||1");
+			//test3.setDataFromString("40||210||north||NORTH||open n||0");
+			//test4.setDataFromString("40||295||south||SOUTH||open s||1");
+			//test5.setDataFromString("40||380||scan||SCAN||look||2");
 			
 			test_set.add(test1);
 			test_set.add(test2);

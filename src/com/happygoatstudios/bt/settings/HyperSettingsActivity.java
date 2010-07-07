@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.settings;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,8 +17,13 @@ import com.happygoatstudios.bt.service.IBaardTERMService;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.Preference.OnPreferenceChangeListener;
 
 public class HyperSettingsActivity extends PreferenceActivity {
 	
@@ -47,11 +53,29 @@ public class HyperSettingsActivity extends PreferenceActivity {
 			
 		};
 		
+		FilenameFilter xml_only = new FilenameFilter() {
+
+			public boolean accept(File arg0, String arg1) {
+				return arg1.endsWith(".xml");
+			}
+			
+		};
+		
 		File tmp = Environment.getExternalStorageDirectory();
+		
+		File btermdir = new File(tmp,"/BaardTERM/");
+		
 		String sdstate = Environment.getExternalStorageState();
 		HashMap<String,String> efonts = new HashMap<String,String>();
+		HashMap<String,String> xmlfiles = new HashMap<String,String>();
 		if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
-			for(File efont : tmp.listFiles(ttf_only)) {
+			btermdir.mkdirs();
+			
+			for(File xml : btermdir.listFiles(xml_only)) {
+				xmlfiles.put(xml.getName(), xml.getPath());
+			}
+			
+			for(File efont : btermdir.listFiles(ttf_only)) {
 				efonts.put(efont.getName(), efont.getPath());
 			}
 		}
@@ -60,6 +84,10 @@ public class HyperSettingsActivity extends PreferenceActivity {
 			//fontnames.add(font.getName());
 			fontmap.put(font.getName(),font.getPath());
 		}
+		
+		Set<String> xmlkeys = xmlfiles.keySet();
+		List<String> sortedxmlkeys = new ArrayList<String>(xmlkeys);
+		Collections.sort(sortedxmlkeys,String.CASE_INSENSITIVE_ORDER);
 		
 		Set<String> keys = fontmap.keySet();
 		
@@ -101,9 +129,56 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		fonts.setEntryValues(paths);
 		
 		
+		String[] xmlentries = new String[sortedxmlkeys.size()];
+		String[] xmlpaths = new String[sortedxmlkeys.size()];
+		i=0;
+		for(String file : sortedxmlkeys) {
+			xmlentries[i] = file;
+			xmlpaths[i] = xmlfiles.get(file);
+			i++;
+		}
+		
+		ListPreference xmlfile_list = (ListPreference)findPreference("IMPORT_PATH");
+		xmlfile_list.setEntries(xmlentries);
+		xmlfile_list.setEntryValues(xmlpaths);
+		
+		xmlfile_list.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+			public boolean onPreferenceChange(Preference arg0, Object arg1) {
+				importexport.sendEmptyMessageDelayed(0, 10);
+				return true;
+			}
+			
+		});
+		
+		EditTextPreference export = (EditTextPreference)findPreference("EXPORT_PATH");
+		export.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+			public boolean onPreferenceChange(Preference arg0, Object arg1) {
+				//EditTextPreference pref = (EditTextPreference)arg0;
+				//arg1 = "/BaardTERM/" + pref.getText();
+				importexport.sendEmptyMessageDelayed(0, 10);
+				return true;
+			}
+			
+		});
+		
+		HyperDialogPreference defaulter = (HyperDialogPreference)findPreference("RESET_DEFAULTS");
+		defaulter.setHandler(importexport);
 	}
 	
+	public Handler importexport = new Handler() {
+		public void handleMessage(Message msg) {
+			//we only get one message, so we do the dumpout.
+			dumpout();
+		}
+	};
+	
 	public void onBackPressed() {
+		dumpout();
+	}
+	
+	public void dumpout() {
 		Intent retval = new Intent();
 		setResult(RESULT_OK,retval);
 		finish();

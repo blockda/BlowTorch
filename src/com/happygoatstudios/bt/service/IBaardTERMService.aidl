@@ -43,4 +43,5 @@ interface IBaardTERMService {
 	String getLastSelectedSet();
 	void LoadSettingsFromPath(String path);
 	void ExportSettingsToPath(String path);
+	void resetSettings();
 }

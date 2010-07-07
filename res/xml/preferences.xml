@@ -39,6 +39,27 @@
 			android:summary="The font used by the window to render text."
 			android:defaultValue="monospace"/>
 	</PreferenceCategory>
+	<PreferenceCategory>
+		<com.happygoatstudios.bt.settings.HyperDialogPreference
+			android:key="RESET_DEFAULTS"
+			android:title="Reset Settings to Defaults"
+			android:summary="Somethin strange. In your neighborhood."
+			android:dialogTitle="Reset all settings:"
+			android:dialogMessage="This will reset all options, including buttons."
+			android:negativeButtonText="Uhhhhhh, wait, no."
+			android:positiveButtonText="Yes. Reset Everything."/>
+		<ListPreference
+			android:key="IMPORT_PATH"
+			android:defaultValue=""
+			android:title="Import Settings from File"
+			android:summary="Import settings from .xml files in /sdcard/BaardTERM/"/>
+		<EditTextPreference
+			android:key="EXPORT_PATH"
+			android:defaultValue=""
+			android:title="Export Settings to File"
+			android:summary="Export settings to .xml file in /sdcard/BaardTERM/"
+			android:hint = "Please enter a file name."/>
+	</PreferenceCategory>
 	
 	
 

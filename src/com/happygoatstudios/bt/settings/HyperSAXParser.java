@@ -126,13 +126,15 @@ public class HyperSAXParser extends BaseParser {
 
 			public void start(Attributes attributes) {
 				SlickButtonData tmp  = new SlickButtonData();
-				tmp.x = new Integer(attributes.getValue("",ATTR_XPOS));
-				tmp.y = new Integer(attributes.getValue("",ATTR_YPOS));
-				tmp.the_text = attributes.getValue("",ATTR_CMD);
-				tmp.flip_command = attributes.getValue("", ATTR_FLIPCMD);
-				tmp.the_label = attributes.getValue("",ATTR_LABEL);
+				tmp.setX( (attributes.getValue("",ATTR_XPOS) == null) ? 40 : new Integer(attributes.getValue("",ATTR_XPOS)));
+				tmp.setY( (attributes.getValue("",ATTR_YPOS) == null) ? 40 : new Integer(attributes.getValue("",ATTR_YPOS)));
+				tmp.setText(attributes.getValue("",ATTR_CMD));
+				tmp.setFlipCommand(attributes.getValue("", ATTR_FLIPCMD));
+				tmp.setLabel(attributes.getValue("",ATTR_LABEL));
 				tmp.MOVE_STATE = new Integer(attributes.getValue("",ATTR_MOVEMETHOD));
-				
+				tmp.setTargetSet(attributes.getValue("",ATTR_TARGETSET));
+				tmp.setWidth( (attributes.getValue("",ATTR_WIDTH) == null) ? 80 : new Integer(attributes.getValue("",ATTR_WIDTH)));
+				tmp.setHeight( (attributes.getValue("",ATTR_HEIGHT)==null) ? 80 : new Integer(attributes.getValue("",ATTR_HEIGHT)));
 				//add the new button to the current list.
 				current_button_set.add(tmp);
 			}

@@ -642,11 +642,11 @@ public class BaardTERMService extends Service {
 				the_settings.getButtonSets().get(targetset).add(newButton);
 			}
 			
-			Log.e("SERVICE","ADDING BUTTON " + newButton.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
-			Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
-			for(SlickButtonData data : buttons) {
-				Log.e("SERVICE",data.toString());
-			}
+			//Log.e("SERVICE","ADDING BUTTON " + newButton.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
+			//Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
+			//for(SlickButtonData data : buttons) {
+			//	Log.e("SERVICE",data.toString());
+			//}
 		}
 
 
@@ -672,11 +672,11 @@ public class BaardTERMService extends Service {
 				
 			}
 			
-			Log.e("SERVICE","REMOVING BUTTON " + buttonToNuke.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
-			Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
-			for(SlickButtonData data : buttons) {
-				Log.e("SERVICE",data.toString());
-			}
+			//Log.e("SERVICE","REMOVING BUTTON " + buttonToNuke.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
+			//Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
+			//for(SlickButtonData data : buttons) {
+			//	Log.e("SERVICE",data.toString());
+			//}
 			
 		}
 
@@ -761,16 +761,21 @@ public class BaardTERMService extends Service {
 				SlickButtonData mod) throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
+				
 				int loc = the_settings.getButtonSets().get(targetset).indexOf(orig);
+				
+				//Log.e("SERVICE","ATTEMPTING TO MODIFY BUTTON: " + orig.toString() + " at location " + loc);
 				the_settings.getButtonSets().get(targetset).remove(loc); //remove original
 				the_settings.getButtonSets().get(targetset).add(loc,mod); //insert mod in its place
+				//the_settings.getButtonSets().get(targetset).
+				
 			}
 			
-			Log.e("SERVICE","MODIFYING BUTTON " + orig.toString() + " FROM BUTTONSET: " + targetset + " with " + mod.toString() + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
-			Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
-			for(SlickButtonData data : buttons) {
-				Log.e("SERVICE",data.toString());
-			}
+			//Log.e("SERVICE","MODIFYING BUTTON " + orig.toString() + " FROM BUTTONSET: " + targetset + " with " + mod.toString() + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
+			//Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
+			//for(SlickButtonData data : buttons) {
+			//	Log.e("SERVICE",data.toString());
+			//}
 		}
 
 
@@ -883,7 +888,7 @@ public class BaardTERMService extends Service {
 				File root = Environment.getExternalStorageDirectory();
 				String state = Environment.getExternalStorageState();
 				if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-					File file = new File(root,"testsettingexport.xml");
+					File file = new File(root,path);
 					file.createNewFile();
 					Log.e("SERVICE","ATTEMPTING TO WRITE TO FILE: " + file.getPath());
 					FileWriter writer = new FileWriter(file);
@@ -904,6 +909,15 @@ public class BaardTERMService extends Service {
 			synchronized(the_settings) {
 				HyperSAXParser loader = new HyperSAXParser(path,BaardTERMService.this);
 				the_settings = loader.load();
+			}
+			sendInitOk();
+		}
+
+
+		public void resetSettings() throws RemoteException {
+			synchronized(the_settings) {
+				the_settings = new HyperSettings();
+				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
 			}
 			sendInitOk();
 		}

@@ -118,7 +118,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				case MSG_NORMALPRIORITY:
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 					break;
-				case MSG_CREATEBUTTON:
+				/*case MSG_CREATEBUTTON:
 					int ix = msg.getData().getInt("X");
 					int iy = msg.getData().getInt("Y");
 					String text = msg.getData().getString("THETEXT");
@@ -148,7 +148,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					
 					parent_layout.addView(buttons.get(posi),lpi);
 					
-					break;
+					break;*/
 				case MSG_BUTTONDROPSTART:
 					Message addbtn = realbuttonhandler.obtainMessage(BaardTERMWindow.MESSAGE_ADDBUTTON, bx, by);
 					realbuttonhandler.sendMessage(addbtn);
@@ -191,7 +191,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					
 
 					break;
-				case MSG_DELETEBUTTON:
+				/*case MSG_DELETEBUTTON:
 
 					SlickButton the_b = (SlickButton)msg.obj;
 					
@@ -205,8 +205,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					SlickButton del_b = (SlickButton)msg.obj;
 					lb.removeView(del_b);
 					buttons.remove(del_b);
-					break;
-				case MSG_CREATEBUTTONWITHDATA:
+					break;*/
+				/*case MSG_CREATEBUTTONWITHDATA:
 
 					
 					SlickButton bip = new SlickButton(parent_layout.getContext(),0,0);
@@ -227,7 +227,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					int posip = buttons.lastIndexOf(bip);
 					
 					parent_layout.addView(buttons.get(posip),lpip);
-					break;
+					break;*/
 				case MSG_CLEAR_NEW_TEXT_INDICATOR:
 					//Animation a = new AlphaAnimation(0.0f,0.0f);
 					//a.setDuration(0);

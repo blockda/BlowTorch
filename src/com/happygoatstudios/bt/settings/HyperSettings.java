@@ -235,12 +235,15 @@ public class HyperSettings {
 				Vector<SlickButtonData> the_set = data.getButtonSets().get(key);
 				for(SlickButtonData button : the_set) {
 					out.startTag("",BaseParser.TAG_BUTTON);
-					out.attribute("", BaseParser.ATTR_XPOS, new Integer(button.x).toString());
-					out.attribute("", BaseParser.ATTR_YPOS, new Integer(button.y).toString());
-					out.attribute("", BaseParser.ATTR_LABEL, button.the_label);
-					out.attribute("", BaseParser.ATTR_CMD, button.the_text);
-					out.attribute("", BaseParser.ATTR_FLIPCMD, button.flip_command);
+					out.attribute("", BaseParser.ATTR_XPOS, new Integer(button.getX()).toString());
+					out.attribute("", BaseParser.ATTR_YPOS, new Integer(button.getY()).toString());
+					out.attribute("", BaseParser.ATTR_LABEL, button.getLabel());
+					out.attribute("", BaseParser.ATTR_CMD, button.getText());
+					out.attribute("", BaseParser.ATTR_FLIPCMD, button.getFlipCommand());
 					out.attribute("", BaseParser.ATTR_MOVEMETHOD, new Integer(button.MOVE_STATE).toString());
+					out.attribute("", BaseParser.ATTR_TARGETSET, button.getTargetSet());
+					out.attribute("", BaseParser.ATTR_WIDTH, new Integer(button.getWidth()).toString());
+					out.attribute("", BaseParser.ATTR_HEIGHT, new Integer(button.getHeight()).toString());
 					out.endTag("", BaseParser.TAG_BUTTON);
 				}
 				

@@ -91,6 +91,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_MODIFYBUTTON = 202;
 	protected static final int MESSAGE_NEWBUTTONSET = 205;
 	protected static final int MESSAGE_CHANGEBUTTONSET = 206;
+	protected static final int MESSAGE_BUTTONREQUESTINGSETCHANGE = 207;
 	
 	protected boolean settingsDialogRun = false;
 	
@@ -382,6 +383,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					try {
 						if(orig != null && mod != null) {
+							Log.e("WINDOW","MODIFY BUTTON " +orig.toString() + " TO " + mod.toString() + " attempting service call now");
 							service.modifyButton(service.getLastSelectedSet(),orig,mod);
 						} else {
 							Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
@@ -414,6 +416,52 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
+						
+						String importPath = prefs.getString("IMPORT_PATH","");
+						String exportPath = prefs.getString("EXPORT_PATH", "");
+						String defaultSettings = prefs.getString("SETTINGS_TO_DEFAULT", "");
+						
+
+						
+						SharedPreferences.Editor editor = prefs.edit();
+						
+						if(defaultSettings.equals("doit")) {
+							editor.putString("SETTINGS_TO_DEFAULT", "");
+							try {
+								service.resetSettings();
+							} catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+						
+						if(!importPath.equals("")) {
+							//import needed
+							Log.e("WINDOW","WINDOW SENDING IMPORT REQUEST FOR " + importPath);
+							try {
+								service.LoadSettingsFromPath(importPath);
+							} catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							editor.putString("IMPORT_PATH", "");
+						}
+						
+						if(!exportPath.equals("")) {
+							//export needed
+							String fullPath = "/BaardTERM/" + exportPath;
+							Log.e("WINDOW","WINDOW SENDING EXPORT REQUEST TO PATH: " + fullPath);
+							try {
+								service.ExportSettingsToPath(fullPath);
+							} catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							editor.putString("EXPORT_PATH","");
+						}
+						
+						editor.commit();
+						
 					}
 					
 					
@@ -495,7 +543,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					break;
 				case SlickView.MSG_REALLYDELETEBUTTON:
 					try {
-						service.removeButton(service.getLastSelectedSet(), ((SlickButton)msg.obj).getData());
+						service.removeButton(service.getLastSelectedSet(), ((SlickButton)msg.obj).orig_data);
 					} catch (RemoteException e1) {
 						throw new RuntimeException(e1);
 					}
@@ -507,10 +555,10 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					break;
 				case MESSAGE_ADDBUTTON:
 					SlickButtonData tmp = new SlickButtonData();
-					tmp.x = msg.arg1;
-					tmp.y = msg.arg2;
-					tmp.the_text = input_box.getText().toString();
-					tmp.the_label = "NOTSET";
+					tmp.setX(msg.arg1);
+					tmp.setY(msg.arg2);
+					tmp.setText(input_box.getText().toString());
+					tmp.setLabel("NOTSET");
 					
 					SlickButton new_button = new SlickButton(BaardTERMWindow.this,0,0);
 					new_button.setData(tmp);
@@ -724,7 +772,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		}
 	}
 	
-	boolean showsettingsoptions = false;
+	/*boolean showsettingsoptions = false;
 	boolean settingsmenuclosed  = true;
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		
@@ -741,13 +789,13 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		}
 		
 		return true;
-	}
+	}*/
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		
 		menu.add(0,99,0,"Aliases");
 		menu.add(0,100,0,"Triggers");
-		menu.add(0,101,0,"Options");
+		menu.add(0,103,0,"Options");
 		menu.add(0,102,0,"Button Sets");
 		
 		return true;
@@ -788,7 +836,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			//SettingEditorDialog sedit = new SettingEditorDialog(this,service);
 			//sedit.setTitle("Modify Settings...");
 			//sedit.show();
-			showsettingsoptions = true;
+			//showsettingsoptions = true;
 			//settingsmenuclosed = false;
 			BaardTERMWindow.this.myhandler.postDelayed(new Runnable() { public void run() { openOptionsMenu();}}, 1);
 			//Intent settingintent = new Intent(this,HyperSettingsActivity.class);
@@ -798,16 +846,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			Intent settingintent = new Intent(this,HyperSettingsActivity.class);
 			this.startActivityForResult(settingintent, 0);
 			//settingsmenuclosed = true;
-			showsettingsoptions = false;
-			break;
-		case 104:
-			//settingsmenuclosed = true;
-			showsettingsoptions = false;
-			break;
-		case 105:
-			//settingsmenuclosed = true;
-			showExportDialog();
-			showsettingsoptions = false;
+			//showsettingsoptions = false;
 			break;
 		default:
 			break;
@@ -815,11 +854,6 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		return true;
 	}
 	
-	void showExportDialog() {
-		NewButtonSetEntryDialog diag = new NewButtonSetEntryDialog(this,extporthandler);
-		diag.setTitle("Enter Filename:(/sdcard/)");
-		diag.show();
-	}
 	
 	Handler extporthandler = new Handler() {
 		public void handleMessage(Message msg) {
@@ -971,7 +1005,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			editor.putString("BUTTON" + buttoncount,b.getData().toString());
 			//LOG.e("WINDOW","SERIALIZING: " + b.toString());
 			buttoncount++;
-			String str = new String(b.getData().x +"||" +b.getData().y + "||"+b.getData().the_text+"||"+b.getData().the_label);
+			String str = new String(b.getData().getX() +"||" +b.getData().getY() + "||"+b.getData().getText()+"||"+b.getData().getLabel());
 			serialbuttons.append(str + "&&");
 			
 			
