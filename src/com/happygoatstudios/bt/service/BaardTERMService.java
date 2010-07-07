@@ -881,8 +881,10 @@ public class BaardTERMService extends Service {
 				//tmp = BaardTERMService.this.openFileOutput(path, Context.MODE_WORLD_READABLE|Context.MODE_WORLD_WRITEABLE);
 				//BaardTERMService.this.openF
 				File root = Environment.getExternalStorageDirectory();
-				if(root.canWrite()) {
+				String state = Environment.getExternalStorageState();
+				if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 					File file = new File(root,"testsettingexport.xml");
+					file.createNewFile();
 					Log.e("SERVICE","ATTEMPTING TO WRITE TO FILE: " + file.getPath());
 					FileWriter writer = new FileWriter(file);
 					BufferedWriter tmp = new BufferedWriter(writer);

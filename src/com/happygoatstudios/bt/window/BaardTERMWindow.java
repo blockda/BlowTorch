@@ -514,6 +514,8 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					SlickButton new_button = new SlickButton(BaardTERMWindow.this,0,0);
 					new_button.setData(tmp);
+					new_button.setDeleter(this);
+					new_button.setDispatcher(this);
 					
 					try {
 						service.addButton(service.getLastSelectedSet(), tmp);

@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.List;
 
 import android.content.Context;
+import android.os.Environment;
 import android.os.Message;
 
 public class BaseParser {
@@ -62,8 +63,15 @@ public class BaseParser {
 	
 	protected InputStream getInputStream() {
 		try {
-			FileInputStream input = window.openFileInput(path);
-			
+			FileInputStream input = null;
+			if(path.contains(Environment.getExternalStorageDirectory().getPath())) {
+				String state = Environment.getExternalStorageState();
+				if(Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+					input = new FileInputStream(path);
+				}
+			} else {
+				input = window.openFileInput(path);
+			}
 			return input;
 		} catch (IOException e) {
 			throw new RuntimeException(e);

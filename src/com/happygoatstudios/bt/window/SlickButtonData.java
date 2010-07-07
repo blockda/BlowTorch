@@ -27,6 +27,7 @@ public class SlickButtonData implements Parcelable {
 		int y = 0;
 		the_text = "";
 		the_label = "";
+		flip_command = "";
 	}
 	
 	public SlickButtonData(int ix, int iy, String itext, String ilbl) {
@@ -34,6 +35,7 @@ public class SlickButtonData implements Parcelable {
 		y = iy;
 		the_text = itext;
 		the_label = ilbl;
+		flip_command = "";
 	}
 	
 	public boolean equals(Object aTest) {
