@@ -241,9 +241,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 		};
 		
-		Interpolator i = new CycleInterpolator(1);
-		indicator_on.setDuration(1000);
-		indicator_on.setInterpolator(i);
+		//Interpolator i = new CycleInterpolator(1);
+		//indicator_on.setDuration(1000);
+		//indicator_on.setInterpolator(i);
+		indicator_on.setDuration(0);
 		indicator_on.setFillAfter(true);
 		indicator_on.setFillBefore(true);
 		

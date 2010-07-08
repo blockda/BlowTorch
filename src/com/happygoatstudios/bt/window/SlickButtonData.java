@@ -19,11 +19,27 @@ public class SlickButtonData implements Parcelable {
 	private String flipCommand;
 	private String targetSet;
 	
+	private int primaryColor;
+	private int selectedColor;
+	private int flipColor;
+	private int labelColor;
+	
+	private int labelSize;
+	
 	//private String foo;
 	
 	final static public int MOVE_FREE = 0;
 	final static public int MOVE_NUDGE = 1;
 	final static public int MOVE_FREEZE = 2;
+	
+	final static public int DEFAULT_COLOR = 0x550000FF;
+	final static public int DEFAULT_SELECTED_COLOR = 0x8800FF00;
+	final static public int DEFAULT_FLIP_COLOR = 0x88FF0000;
+	final static public int DEFAULT_LABEL_COLOR = 0x990000FF;
+	
+	final static public int DEFAULT_BUTTON_WDITH = 80;
+	final static public int DEFAULT_BUTTON_HEIGHT = 80;
+	final static public int DEFAULT_LABEL_SIZE = 24;
 	
 	public int MOVE_STATE = MOVE_FREE;
 	
@@ -36,6 +52,11 @@ public class SlickButtonData implements Parcelable {
 		targetSet = "";
 		height=80;
 		width=80;
+		primaryColor=DEFAULT_COLOR;
+		selectedColor=DEFAULT_SELECTED_COLOR;
+		flipColor=DEFAULT_FLIP_COLOR;
+		labelColor=DEFAULT_LABEL_COLOR;
+		labelSize = DEFAULT_LABEL_SIZE;
 	}
 	
 	public SlickButtonData(int ix, int iy, String itext, String ilbl) {
@@ -47,6 +68,11 @@ public class SlickButtonData implements Parcelable {
 		targetSet = "";
 		height=80;
 		width=80;
+		primaryColor=DEFAULT_COLOR;
+		selectedColor=DEFAULT_SELECTED_COLOR;
+		flipColor=DEFAULT_FLIP_COLOR;
+		labelColor=DEFAULT_LABEL_COLOR;
+		labelSize = DEFAULT_LABEL_SIZE;
 	}
 	
 	public boolean equals(Object aTest) {
@@ -71,6 +97,12 @@ public class SlickButtonData implements Parcelable {
 		if(this.MOVE_STATE != test.MOVE_STATE) retval = false;
 		//if(this.id != test.id) retval = false;
 		if(!this.targetSet.equals(test.targetSet)) retval = false;
+		
+		if(this.primaryColor != test.primaryColor) retval=false;
+		if(this.selectedColor != test.selectedColor) retval=false;
+		if(this.flipColor != test.flipColor) retval=false;
+		if(this.labelColor != test.labelColor) retval=false;
+		if(this.labelSize != test.labelSize) retval = false;
 		//Log.e("SLICKBUTTONDATA","Comparing " + this.toString() + " against " + test.toString() + " returning " + retval);
 		
 		return retval;
@@ -135,6 +167,11 @@ public class SlickButtonData implements Parcelable {
 		d.writeString(targetSet);
 		d.writeInt(height);
 		d.writeInt(width);
+		d.writeInt(primaryColor);
+		d.writeInt(selectedColor);
+		d.writeInt(flipColor);
+		d.writeInt(labelColor);
+		d.writeInt(labelSize);
 	}
 	
 	public void readFromParcel(Parcel in) {
@@ -147,6 +184,11 @@ public class SlickButtonData implements Parcelable {
 		targetSet = in.readString();
 		height = in.readInt();
 		width = in.readInt();
+		primaryColor = in.readInt();
+		selectedColor = in.readInt();
+		flipColor = in.readInt();
+		labelColor = in.readInt();
+		labelSize = in.readInt();
 	}
 
 	
@@ -161,6 +203,11 @@ public class SlickButtonData implements Parcelable {
 		tmp.targetSet = this.targetSet;
 		tmp.height = this.height;
 		tmp.width = this.width;
+		tmp.primaryColor = this.primaryColor;
+		tmp.selectedColor = this.selectedColor;
+		tmp.flipColor = this.flipColor;
+		tmp.labelColor = this.labelColor;
+		tmp.labelSize = this.labelSize;
 		return tmp;
 	}
 
@@ -230,6 +277,46 @@ public class SlickButtonData implements Parcelable {
 
 	public int getHeight() {
 		return height;
+	}
+
+	public void setPrimaryColor(int primaryColor) {
+		this.primaryColor = primaryColor;
+	}
+
+	public int getPrimaryColor() {
+		return primaryColor;
+	}
+
+	public void setSelectedColor(int selectedColor) {
+		this.selectedColor = selectedColor;
+	}
+
+	public int getSelectedColor() {
+		return selectedColor;
+	}
+
+	public void setFlipColor(int flipColor) {
+		this.flipColor = flipColor;
+	}
+
+	public int getFlipColor() {
+		return flipColor;
+	}
+
+	public void setLabelColor(int labelColor) {
+		this.labelColor = labelColor;
+	}
+
+	public int getLabelColor() {
+		return labelColor;
+	}
+
+	public void setLabelSize(int labelSize) {
+		this.labelSize = labelSize;
+	}
+
+	public int getLabelSize() {
+		return labelSize;
 	}
 
 }

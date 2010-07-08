@@ -58,6 +58,7 @@ import android.widget.Toast;
 
 import com.happygoatstudios.bt.service.IBaardTERMServiceCallback;
 import com.happygoatstudios.bt.service.IBaardTERMService;
+import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.window.SlickButtonData;
@@ -394,6 +395,10 @@ public class BaardTERMService extends Service {
 		} catch (FileNotFoundException e) {
 			//if the file does not exist, then we need to load the default settings
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
+			ColorSetSettings def_colorset = new ColorSetSettings();
+			def_colorset.toDefautls();
+			def_colorset.setPrimaryColor(0xFFFFFFFF);
+			the_settings.getSetSettings().put("default", def_colorset);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -784,6 +789,9 @@ public class BaardTERMService extends Service {
 			synchronized(the_settings) {
 				the_settings.setLastSelected(name);
 				the_settings.getButtonSets().put(name, new Vector<SlickButtonData>());
+				ColorSetSettings def_colorset = new ColorSetSettings();
+				def_colorset.toDefautls();
+				the_settings.getSetSettings().put(name, def_colorset);
 			}
 			
 		}
@@ -920,6 +928,15 @@ public class BaardTERMService extends Service {
 				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
 			}
 			sendInitOk();
+		}
+
+
+		public ColorSetSettings getCurrentColorSetDefaults()
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.getSetSettings().get(the_settings.getLastSelected());
+			}
 		}
 		
 

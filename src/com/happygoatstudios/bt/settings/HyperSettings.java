@@ -26,8 +26,12 @@ public class HyperSettings {
 	
 	private boolean SemiIsNewLine = true;
 	
+
+	
 	private HashMap<String,String> Aliases = new HashMap<String,String>();
 	private HashMap<String,Vector<SlickButtonData>> ButtonSets = new HashMap<String,Vector<SlickButtonData>>();
+	private HashMap<String,ColorSetSettings> SetSettings = new HashMap<String,ColorSetSettings>();
+	
 	private String lastSelected = "default";
 	enum WRAP_MODE {
 		NONE,
@@ -230,9 +234,22 @@ public class HyperSettings {
 			Set<String> buttonsets = data.getButtonSets().keySet();
 			for(String key : buttonsets) {
 				out.startTag("", BaseParser.TAG_BUTTONSET);
+				ColorSetSettings setdefaults = data.getSetSettings().get(key);
+				Log.e("OUTPUT","ATTEMPTING TO WRITE SOME COLOR INFO FOR:" + key);
+				for(String color : data.getSetSettings().keySet()) {
+					Log.e("OUTPUT","SET SETTINGS MAP CONTAINS ENTRY: " + color);
+				}
 				out.attribute("", BaseParser.ATTR_SETNAME, key);
+				if(setdefaults.getPrimaryColor() != SlickButtonData.DEFAULT_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getPrimaryColor()));
+				if(setdefaults.getSelectedColor() != SlickButtonData.DEFAULT_SELECTED_COLOR) out.attribute("", BaseParser.ATTR_SELECTEDCOLOR, Integer.toHexString(setdefaults.getSelectedColor()));
+				if(setdefaults.getFlipColor() != SlickButtonData.DEFAULT_FLIP_COLOR) out.attribute("", BaseParser.ATTR_FLIPCOLOR, Integer.toHexString(setdefaults.getFlipColor()));
+				if(setdefaults.getLabelColor() != SlickButtonData.DEFAULT_LABEL_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getLabelColor()));
+				if(setdefaults.getButtonHeight() != SlickButtonData.DEFAULT_BUTTON_HEIGHT) out.attribute("", BaseParser.ATTR_BUTTONHEIGHT, new Integer(setdefaults.getButtonHeight()).toString());
+				if(setdefaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) out.attribute("", BaseParser.ATTR_BUTTONHEIGHT, new Integer(setdefaults.getButtonHeight()).toString());
+				if(setdefaults.getLabelSize() != SlickButtonData.DEFAULT_LABEL_SIZE) out.attribute("", BaseParser.ATTR_LABELSIZE, new Integer(setdefaults.getLabelSize()).toString());
 				
 				Vector<SlickButtonData> the_set = data.getButtonSets().get(key);
+				
 				for(SlickButtonData button : the_set) {
 					out.startTag("",BaseParser.TAG_BUTTON);
 					out.attribute("", BaseParser.ATTR_XPOS, new Integer(button.getX()).toString());
@@ -242,8 +259,14 @@ public class HyperSettings {
 					if(!button.getFlipCommand().equals("")) out.attribute("", BaseParser.ATTR_FLIPCMD, button.getFlipCommand());
 					out.attribute("", BaseParser.ATTR_MOVEMETHOD, new Integer(button.MOVE_STATE).toString());
 					if(!button.getTargetSet().equals("")) out.attribute("", BaseParser.ATTR_TARGETSET, button.getTargetSet());
-					out.attribute("", BaseParser.ATTR_WIDTH, new Integer(button.getWidth()).toString());
-					out.attribute("", BaseParser.ATTR_HEIGHT, new Integer(button.getHeight()).toString());
+					if(button.getWidth() != setdefaults.getButtonWidth()) out.attribute("", BaseParser.ATTR_WIDTH, new Integer(button.getWidth()).toString());
+					if(button.getHeight() != setdefaults.getButtonHeight()) out.attribute("", BaseParser.ATTR_HEIGHT, new Integer(button.getHeight()).toString()); 
+					if(button.getPrimaryColor() != setdefaults.getPrimaryColor())  out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(button.getPrimaryColor()));
+					if(button.getSelectedColor() != setdefaults.getSelectedColor())  out.attribute("", BaseParser.ATTR_SELECTEDCOLOR, Integer.toHexString(button.getSelectedColor()));
+					if(button.getFlipColor() != setdefaults.getFlipColor())  out.attribute("", BaseParser.ATTR_FLIPCOLOR, Integer.toHexString(button.getFlipColor()).toString());
+					if(button.getLabelColor() != setdefaults.getLabelColor())  out.attribute("", BaseParser.ATTR_LABELCOLOR, Integer.toHexString(button.getLabelColor()));
+					if(button.getLabelSize() != setdefaults.getLabelSize())  out.attribute("", BaseParser.ATTR_LABELSIZE,  new Integer(button.getLabelSize()).toString());
+					
 					out.endTag("", BaseParser.TAG_BUTTON);
 				}
 				
@@ -266,6 +289,9 @@ public class HyperSettings {
 		}
 		//return writer.toString();
 	}
+	
+
+	//getters and setters under nya.
 
 	public void setAliases(HashMap<String,String> aliases) {
 		Aliases = aliases;
@@ -281,6 +307,14 @@ public class HyperSettings {
 
 	public HashMap<String,Vector<SlickButtonData>> getButtonSets() {
 		return ButtonSets;
+	}
+	
+	public void setSetSettings(HashMap<String,ColorSetSettings> setSettings) {
+		SetSettings = setSettings;
+	}
+	
+	public HashMap<String,ColorSetSettings> getSetSettings() {
+		return SetSettings;
 	}
 
 	public void setLastSelected(String lastSelected) {

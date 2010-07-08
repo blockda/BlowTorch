@@ -80,6 +80,9 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			test_alias.put("newline", "This\nHas\nNewlines");
 			
 			HashMap<String,Vector<SlickButtonData>> test_btnholder = new HashMap<String,Vector<SlickButtonData>>();
+			HashMap<String,ColorSetSettings> test_settings = new HashMap<String,ColorSetSettings>();
+			ColorSetSettings colorsettings = new ColorSetSettings();
+			colorsettings.toDefautls();
 			Vector<SlickButtonData> test_set = new Vector<SlickButtonData>();
 			Vector<SlickButtonData> test_set2 = new Vector<SlickButtonData>();
 			SlickButtonData test1 = new SlickButtonData();
@@ -104,6 +107,11 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			test_btnholder.put("TEST_SET_1", test_set);
 			test_btnholder.put("TEST_SET_2", test_set2);
 			
+			test_settings.put("TEST_SET_1", colorsettings.copy());
+			test_settings.put("TEST_SET_2", colorsettings.copy());
+			
+			
+			settings.setSetSettings(test_settings);
 			settings.setButtonSets(test_btnholder);
 			settings.setAliases(test_alias);
 			

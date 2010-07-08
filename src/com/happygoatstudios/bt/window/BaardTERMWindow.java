@@ -72,6 +72,7 @@ import android.widget.TextView;
 import com.happygoatstudios.bt.R;
 //import com.happygoatstudios.bt.service.BaardTERMService;
 import com.happygoatstudios.bt.service.*;
+import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
 
 public class BaardTERMWindow extends Activity implements AliasDialogDoneListener {
@@ -559,6 +560,22 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					tmp.setY(msg.arg2);
 					tmp.setText(input_box.getText().toString());
 					tmp.setLabel("NOTSET");
+					
+					ColorSetSettings colorset = null;
+					try {
+						colorset = service.getCurrentColorSetDefaults();
+					} catch (RemoteException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					
+					tmp.setLabelColor(colorset.getLabelColor());
+					tmp.setPrimaryColor(colorset.getPrimaryColor());
+					tmp.setFlipColor(colorset.getFlipColor());
+					tmp.setSelectedColor(colorset.getSelectedColor());
+					
+					tmp.setWidth(colorset.getButtonWidth());
+					tmp.setHeight(colorset.getButtonHeight());
 					
 					SlickButton new_button = new SlickButton(BaardTERMWindow.this,0,0);
 					new_button.setData(tmp);

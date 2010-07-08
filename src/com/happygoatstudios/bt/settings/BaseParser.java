@@ -41,6 +41,8 @@ public class BaseParser {
 	static final String TAG_BUTTONSETS = "buttonsets";
 	static final String TAG_BUTTONSET = "buttonset";
 	static final String TAG_SELECTEDSET = "selectedset";
+	static final String ATTR_BUTTONWIDTH = "buttonWidth";
+	static final String ATTR_BUTTONHEIGHT = "buttonHeight";
 	static final String ATTR_SETNAME = "setName";
 	static final String TAG_BUTTON = "button";
 	static final String ATTR_XPOS = "xPos";
@@ -52,6 +54,11 @@ public class BaseParser {
 	static final String ATTR_TARGETSET = "targetSet";
 	static final String ATTR_FLIPCMD = "flipCommand";
 	static final String ATTR_MOVEMETHOD = "moveMethod";
+	static final String ATTR_PRIMARYCOLOR = "color";
+	static final String ATTR_SELECTEDCOLOR = "focusColor";
+	static final String ATTR_FLIPCOLOR = "flipColor";
+	static final String ATTR_LABELCOLOR = "labelColor";
+	static final String ATTR_LABELSIZE = "labelSize";
 	
 	final String path;
 	Context window;

@@ -319,9 +319,9 @@ public class SlickButton extends View {
 		Paint p = new Paint();
 		
 		if(hasfocus) {
-			p.setColor(0x8800FF00);
+			p.setColor(data.getSelectedColor());
 		} else {
-			p.setColor(0x550000FF);
+			p.setColor(data.getPrimaryColor());
 		}
 		//c.drawRoundRect(f_rect, 8,8, p);
 		c.drawRect(rect, p);
@@ -329,8 +329,8 @@ public class SlickButton extends View {
 		//get text size.
 		Paint opts = new Paint();
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
-		opts.setColor(0x990000FF);
-		opts.setTextSize(24);
+		opts.setColor(data.getLabelColor());
+		opts.setTextSize(data.getLabelSize());
 		float tsize = opts.measureText(data.getLabel());
 		c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
 		

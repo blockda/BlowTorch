@@ -2,7 +2,7 @@ package com.happygoatstudios.bt.service;
 
 import com.happygoatstudios.bt.window.SlickButtonData;
 import com.happygoatstudios.bt.service.IBaardTERMServiceCallback;
-
+import com.happygoatstudios.bt.settings.ColorSetSettings;
 
 interface IBaardTERMService {
 	void registerCallback(IBaardTERMServiceCallback c);
@@ -44,4 +44,5 @@ interface IBaardTERMService {
 	void LoadSettingsFromPath(String path);
 	void ExportSettingsToPath(String path);
 	void resetSettings();
+	ColorSetSettings getCurrentColorSetDefaults();
 }

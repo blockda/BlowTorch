@@ -1,11 +1,13 @@
 package com.happygoatstudios.bt.settings;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
 import org.xml.sax.Attributes;
+
 
 import com.happygoatstudios.bt.window.SlickButtonData;
 
@@ -15,6 +17,7 @@ import android.sax.EndElementListener;
 import android.sax.EndTextElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
+import android.util.Log;
 import android.util.Xml;
 
 public class HyperSAXParser extends BaseParser {
@@ -40,6 +43,8 @@ public class HyperSAXParser extends BaseParser {
 		final HashMap<String,Vector<SlickButtonData>> buttons = new HashMap<String,Vector<SlickButtonData>>();
 		final Vector<SlickButtonData> current_button_set = new Vector<SlickButtonData>();
 		final StringBuffer button_set_name = new StringBuffer("default");
+		final ColorSetSettings setinfo =  new ColorSetSettings();
+		final HashMap<String,ColorSetSettings> colorsets = new HashMap<String,ColorSetSettings>();
 		
 		window.setStartElementListener(new StartElementListener() {
 
@@ -102,6 +107,18 @@ public class HyperSAXParser extends BaseParser {
 			public void start(Attributes attributes) {
 				button_set_name.setLength(0);
 				button_set_name.append(attributes.getValue("",ATTR_SETNAME));
+				
+				//we have the button set name, construct a new ColorSetSettings for it
+				//BigInteger fline = new BigInteger("FFFFFFFF",16);
+				//Log.e("PARSER","HOLY CRAP I PARSED " +fline.intValue() + " FROM FFFFFFFF");
+				setinfo.setPrimaryColor( (attributes.getValue("",ATTR_PRIMARYCOLOR) == null) ? SlickButtonData.DEFAULT_COLOR : new BigInteger((attributes.getValue("",ATTR_PRIMARYCOLOR)).toUpperCase(),16).intValue());
+				setinfo.setSelectedColor( (attributes.getValue("",ATTR_SELECTEDCOLOR) == null) ? SlickButtonData.DEFAULT_SELECTED_COLOR : new BigInteger((attributes.getValue("",ATTR_SELECTEDCOLOR)),16).intValue());
+				setinfo.setFlipColor( (attributes.getValue("",ATTR_FLIPCOLOR) == null) ? SlickButtonData.DEFAULT_FLIP_COLOR : new BigInteger(attributes.getValue("",ATTR_FLIPCOLOR),16).intValue());
+				setinfo.setLabelColor( (attributes.getValue("",ATTR_LABELCOLOR) == null) ? SlickButtonData.DEFAULT_LABEL_COLOR : new BigInteger(attributes.getValue("",ATTR_LABELCOLOR),16).intValue());
+				setinfo.setButtonWidth( (attributes.getValue("",ATTR_BUTTONWIDTH) == null) ? SlickButtonData.DEFAULT_BUTTON_WDITH : new Integer(attributes.getValue("",ATTR_BUTTONWIDTH)));
+				setinfo.setButtonHeight( (attributes.getValue("",ATTR_BUTTONHEIGHT) == null) ? SlickButtonData.DEFAULT_BUTTON_HEIGHT : new Integer(attributes.getValue("",ATTR_BUTTONHEIGHT)));
+				setinfo.setLabelSize( (attributes.getValue("",ATTR_LABELSIZE)==null) ? SlickButtonData.DEFAULT_LABEL_SIZE : new Integer(attributes.getValue("",ATTR_LABELSIZE)));
+				colorsets.put(button_set_name.toString(), setinfo.copy());
 			}
 			
 		});
@@ -118,6 +135,7 @@ public class HyperSAXParser extends BaseParser {
 				button_set_name.append("default");
 				current_button_set.removeAllElements();
 				current_button_set.clear();
+				setinfo.toDefautls();
 			}
 			
 		});
@@ -133,8 +151,14 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setLabel(attributes.getValue("",ATTR_LABEL));
 				tmp.MOVE_STATE = new Integer(attributes.getValue("",ATTR_MOVEMETHOD));
 				tmp.setTargetSet(attributes.getValue("",ATTR_TARGETSET));
-				tmp.setWidth( (attributes.getValue("",ATTR_WIDTH) == null) ? 80 : new Integer(attributes.getValue("",ATTR_WIDTH)));
-				tmp.setHeight( (attributes.getValue("",ATTR_HEIGHT)==null) ? 80 : new Integer(attributes.getValue("",ATTR_HEIGHT)));
+				tmp.setWidth( (attributes.getValue("",ATTR_WIDTH) == null) ? setinfo.getButtonWidth() : new Integer(attributes.getValue("",ATTR_WIDTH)));
+				tmp.setHeight( (attributes.getValue("",ATTR_HEIGHT)==null) ? setinfo.getButtonHeight() : new Integer(attributes.getValue("",ATTR_HEIGHT)));
+				
+				tmp.setPrimaryColor( (attributes.getValue("",ATTR_PRIMARYCOLOR) == null) ? setinfo.getPrimaryColor() : new BigInteger(attributes.getValue("",ATTR_PRIMARYCOLOR),16).intValue());
+				tmp.setSelectedColor( (attributes.getValue("",ATTR_SELECTEDCOLOR) == null) ? setinfo.getSelectedColor() : new BigInteger(attributes.getValue("",ATTR_SELECTEDCOLOR),16).intValue());
+				tmp.setFlipColor( (attributes.getValue("",ATTR_FLIPCOLOR) == null) ? setinfo.getFlipColor() : new BigInteger(attributes.getValue("",ATTR_FLIPCOLOR),16).intValue());
+				tmp.setLabelColor( (attributes.getValue("",ATTR_LABELCOLOR) == null) ? setinfo.getLabelColor() : new BigInteger(attributes.getValue("",ATTR_LABELCOLOR),16).intValue());
+				tmp.setLabelSize((attributes.getValue("",ATTR_LABELSIZE) == null) ? setinfo.getLabelSize() : new Integer(attributes.getValue("",ATTR_LABELSIZE)));
 				//add the new button to the current list.
 				current_button_set.add(tmp);
 			}
@@ -145,6 +169,7 @@ public class HyperSAXParser extends BaseParser {
 
 			public void end() {
 				tmp.setButtonSets(buttons);
+				tmp.setSetSettings(colorsets);
 			}
 			
 		});
