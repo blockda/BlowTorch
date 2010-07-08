@@ -237,11 +237,11 @@ public class HyperSettings {
 					out.startTag("",BaseParser.TAG_BUTTON);
 					out.attribute("", BaseParser.ATTR_XPOS, new Integer(button.getX()).toString());
 					out.attribute("", BaseParser.ATTR_YPOS, new Integer(button.getY()).toString());
-					out.attribute("", BaseParser.ATTR_LABEL, button.getLabel());
-					out.attribute("", BaseParser.ATTR_CMD, button.getText());
-					out.attribute("", BaseParser.ATTR_FLIPCMD, button.getFlipCommand());
+					if(!button.getLabel().equals(""))  out.attribute("", BaseParser.ATTR_LABEL, button.getLabel());
+					if(!button.getText().equals("")) out.attribute("", BaseParser.ATTR_CMD, button.getText());
+					if(!button.getFlipCommand().equals("")) out.attribute("", BaseParser.ATTR_FLIPCMD, button.getFlipCommand());
 					out.attribute("", BaseParser.ATTR_MOVEMETHOD, new Integer(button.MOVE_STATE).toString());
-					out.attribute("", BaseParser.ATTR_TARGETSET, button.getTargetSet());
+					if(!button.getTargetSet().equals("")) out.attribute("", BaseParser.ATTR_TARGETSET, button.getTargetSet());
 					out.attribute("", BaseParser.ATTR_WIDTH, new Integer(button.getWidth()).toString());
 					out.attribute("", BaseParser.ATTR_HEIGHT, new Integer(button.getHeight()).toString());
 					out.endTag("", BaseParser.TAG_BUTTON);

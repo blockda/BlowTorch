@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 
@@ -315,57 +316,72 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	public String getBuffer() {
-		
-		return the_original_buffer.toString();
+		StringBuilder build = new StringBuilder();
+		for(String line : dlines) {
+			build.append(line + "\n");
+		}
+		return build.toString();
+		//return the_original_buffer.toString();
 	}
 	
 	public void setBuffer(String input) {
 
-		synchronized(isdrawn) {
-			while(isdrawn == false) {
-				try {
-					isdrawn.wait();
-				} catch (InterruptedException e) {
-					//Log.e("SLICK","setBuffer interrupted waiting for screen to be done drawing");
-					e.printStackTrace();
-				}
-			}
+		//synchronized(isdrawn) {
+		//	while(isdrawn == false) {
+		//		try {
+		//			isdrawn.wait();
+		//		} catch (InterruptedException e) {
+		//			//Log.e("SLICK","setBuffer interrupted waiting for screen to be done drawing");
+		//			e.printStackTrace();
+		//		}
+		//	}
+		//}
+		
+		synchronized(dlines) {
+			dlines.addAll(Arrays.asList(newline.split(input)));
 		}
 		
-		the_original_buffer.setLength(0);
-		the_buffer.setLength(0);
-		the_original_buffer = new StringBuffer(input);
-		the_buffer = new StringBuffer(betterBreakLines(the_original_buffer,77));
+		//the_original_buffer.setLength(0);
+		//the_buffer.setLength(0);
+		//the_original_buffer = new StringBuffer(input);
+		//the_buffer = new StringBuffer(betterBreakLines(the_original_buffer,77));
 		
-		synchronized(drawn) {
-			drawn.notify();
-			drawn = false;
+		//synchronized(drawn) {
+		//	drawn.notify();
+		//	drawn = false;
+		//}
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
 		
 	}
 	
 	public void jumpToZero() {
 		//call this to scroll back to 0.
-		synchronized(drawn) {
-			while(!drawn) {
-				try {
-					drawn.wait();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
+		//synchronized(drawn) {
+		//	while(!drawn) {
+		//		try {
+		//			drawn.wait();
+		//		} catch (InterruptedException e) {
+		//			// TODO Auto-generated catch block
+		//			e.printStackTrace();
+		//		}
+		//	}
+		//}
 		
 		/*--------- set scrollBack to 0--------*/
-		scrollback = (float)0.0;
-		fling_velocity = 0.0f;
-		
-		synchronized(drawn) {
+		synchronized(scrollback) {
+			scrollback = (float)0.0;
+			fling_velocity = 0.0f;
+		}
+		/*synchronized(drawn) {
 			if(drawn) {
 				drawn.notify();
 				drawn = false;
 			}
+		}*/
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
  
 	}
@@ -377,8 +393,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			//wasRunning = true;
 		}
 		
-		synchronized(drawn) {
-			drawn.notify();
+		//synchronized(drawn) {
+		//	drawn.notify();
+		//}
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
 		
 	}
@@ -403,21 +422,22 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		while(retry) {
 			try{
 				_runner.setRunning(false);
-				synchronized(drawn) {
-					drawn.notify();
-					drawn = false;
-					_runner.setRunning(false);
-				}
-				_runner.setRunning(false);
+				//synchronized(drawn) {
+				//	drawn.notify();
+				//	drawn = false;
+				//	_runner.setRunning(false);
+				//}
+				//_runner.setRunning(false);
 				
 				
-				synchronized(touchLock) {
+				//synchronized(touchLock) {
 
-					if(touchLock) {
-						touchLock.notify();
-						touchLock = false;
-					}
-				}
+				//	if(touchLock) {
+				//		touchLock.notify();
+				//		touchLock = false;
+				//	}
+				//}
+				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_SHUTDOWN);
 				
 				_runner.join();
 				retry = false;
@@ -440,8 +460,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	static final int MSG_UTIL_PROCTOUCH = 401;
 	
 	
-	StringBuffer the_buffer = new StringBuffer();
-	StringBuffer the_original_buffer = new StringBuffer();
+	//StringBuffer the_buffer = new StringBuffer();
+	//StringBuffer the_original_buffer = new StringBuffer();
 	
 	Boolean utilinterlock = false;
 	
@@ -459,13 +479,28 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		StringBuffer carriage_free = new StringBuffer(carriagerock.replaceAll(""));
 		//PREVIOUS CHARACTER WIDTH = 77
 		StringBuffer broken_lines = betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW);
-		int numlines = countLines(broken_lines.toString());
+		//int numlines = countLines(broken_lines.toString());
 		
+		int size_before = 0;
+		int size_after = 0;
 		
+		synchronized(dlines) {
+			//int PREF_MAX_LINES = 200;
+				//dlines.removeAllElements();
+				//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
+				//dlines.
+				size_before = dlines.size();
+				dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+				size_after = dlines.size();
+				if(dlines.size() > PREF_MAX_LINES) {
+					dlines.removeRange(0,dlines.size() - PREF_MAX_LINES);
+				}
+				
+			}
 		
 		if(scrollback > 0) {
 			synchronized(scrollback) {
-			scrollback = scrollback + numlines*PREF_LINESIZE;
+			scrollback = scrollback + (size_after-size_before)*PREF_LINESIZE;
 			}
 			//EditText filler2 = (EditText) parent_layout.findViewById(R.id.filler2);
 			//Animation a = new AlphaAnimation(1.0f,0.0f);
@@ -488,34 +523,34 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 		}
 		
-		the_buffer.append(broken_lines);
+		//the_buffer.append(broken_lines);
 		
-		the_original_buffer.append(carriage_free);
+		//the_original_buffer.append(carriage_free);
 		
-		int chars_per_row = CALCULATED_ROWSINWINDOW;
-		int rows = 25;
-		if(the_buffer.length() > (10*chars_per_row*rows)) {
-			the_buffer.replace(0, the_buffer.length() - ((10*chars_per_row*rows)), "");
-		}
-		if(the_original_buffer.length() > (10*chars_per_row*rows)) {
-			the_original_buffer.replace(0, the_original_buffer.length() - ((10*chars_per_row*rows)), "");
-		}
+		//int chars_per_row = CALCULATED_ROWSINWINDOW;
+		//int rows = 25;
+		//if(the_buffer.length() > (10*chars_per_row*rows)) {
+		//	the_buffer.replace(0, the_buffer.length() - ((10*chars_per_row*rows)), "");
+		//}
+		//if(the_original_buffer.length() > (10*chars_per_row*rows)) {
+		//	the_original_buffer.replace(0, the_original_buffer.length() - ((10*chars_per_row*rows)), "");
+		//}
 		
 		//linetrap = newline.split(the_buffer);
-		synchronized(dlines) {
-		//int PREF_MAX_LINES = 200;
-			//dlines.removeAllElements();
-			//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
-			//dlines.
-			dlines.addAll(Arrays.asList(newline.split(broken_lines)));
-			if(dlines.size() > PREF_MAX_LINES) {
-				dlines.removeRange(0,dlines.size() - PREF_MAX_LINES);
-			}
-		}
+
 		
-		synchronized(drawn) {
-			drawn.notify();
-			drawn = false;
+		//synchronized(drawn) {
+		//	drawn.notify();
+		//	drawn = false;
+		//}
+		
+		if(_runner != null) {
+				//if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
+			//s//ynchronized(_runner) {
+			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW))
+					_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+				//}
+			//}
 		}
 		
 	}
@@ -1000,11 +1035,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        
 		}
 		
-        synchronized(drawn) {
+        /*synchronized(drawn) {
         	if(drawn.booleanValue()) {
         		drawn.notify();
         		drawn = false;
         	} 
+		}*/
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
 		}
 		return true; //consumes
@@ -1194,7 +1232,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	
-	public StringBuffer prompt_string = new StringBuffer();
+	/*public StringBuffer prompt_string = new StringBuffer();
 	public StringBuffer garbage_string = new StringBuffer();
 	public int countLines() {
 		Matcher toLines = newline.matcher(the_buffer.toString());
@@ -1247,7 +1285,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		garbage_string.setLength(0);
 		
 		return found;
-	}
+	}*/
 	
 	public class DrawRunner extends Thread {
 		private SurfaceHolder _surfaceHolder;
@@ -1255,6 +1293,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		private boolean running = false;
 		private boolean paused = false;
 		private Boolean lock = null;
+		
+		public static final int MSG_DRAW = 100;
+		public static final int MSG_SHUTDOWN = 101;
+		
+		private Handler threadHandler = null;
 		
 		public DrawRunner(SurfaceHolder parent,SlickView view,Boolean drawlock) {
 			_surfaceHolder = parent;
@@ -1283,9 +1326,42 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		@Override
 		public void run() {
+			Looper.prepare();
+			
+			threadHandler = new Handler() {
+				public void handleMessage(Message msg) {
+					switch(msg.what) {
+					case MSG_DRAW:
+						Canvas c = null;
+						try{
+							c = _surfaceHolder.lockCanvas(null);
+							synchronized(_surfaceHolder) {
+								_sv.onDraw(c);
+								_surfaceHolder.notify();
+							}
+						} finally { 
+							if(c != null) {
+								_surfaceHolder.unlockCanvasAndPost(c);
+							}
+						}
+						if(Math.abs(fling_velocity) > 0.0f) {
+							this.sendEmptyMessageDelayed(MSG_DRAW, 3); //throttle myself, just a little bit.
+						}
+						break;
+					case MSG_SHUTDOWN:
+						this.getLooper().quit();
+						break;
+					default:
+						break;
+					}
+				}
+			};
+			threadHandler.sendEmptyMessage(MSG_DRAW); //just to get us started.
+			//threadHandler.getLooper();
+			Looper.loop();
 			
 			//Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
-			Canvas c;
+			/*Canvas c;
 			//Log.e("SLICK","VIEW THREAD RUNNING");
 			while(running) {
 				//if(!paused) {
@@ -1328,7 +1404,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 						isdrawn.notify();
 						isdrawn = true;
 					}
-			}
+			}*/
 		}
 		
 	}
