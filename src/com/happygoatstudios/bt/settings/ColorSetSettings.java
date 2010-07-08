@@ -14,6 +14,7 @@ public class ColorSetSettings implements Parcelable {
 	private int buttonHeight;
 	private int buttonWidth;
 	private int labelSize;
+	private int flipLabelColor;
 	
 	public ColorSetSettings() {
 		toDefautls();
@@ -28,6 +29,7 @@ public class ColorSetSettings implements Parcelable {
 		tmp.buttonHeight = this.buttonHeight;
 		tmp.buttonWidth = this.buttonWidth;
 		tmp.labelSize = this.labelSize;
+		tmp.flipLabelColor = this.flipLabelColor;
 		return tmp;
 	}
 	
@@ -39,6 +41,7 @@ public class ColorSetSettings implements Parcelable {
 		buttonWidth = SlickButtonData.DEFAULT_BUTTON_WDITH;
 		buttonHeight = SlickButtonData.DEFAULT_BUTTON_HEIGHT;
 		labelSize = SlickButtonData.DEFAULT_LABEL_SIZE;
+		flipLabelColor = SlickButtonData.DEFAULT_FLIPLABEL_COLOR;
 	}
 
 	public void setSelectedColor(int selectedColor) {
@@ -97,6 +100,14 @@ public class ColorSetSettings implements Parcelable {
 		return labelSize;
 	}
 	
+	public void setFlipLabelColor(int flipLabelColor) {
+		this.flipLabelColor = flipLabelColor;
+	}
+
+	public int getFlipLabelColor() {
+		return flipLabelColor;
+	}
+
 	public static final Parcelable.Creator<ColorSetSettings> CREATOR = new Parcelable.Creator<ColorSetSettings>() {
 
 		public ColorSetSettings createFromParcel(Parcel arg0) {
@@ -129,6 +140,7 @@ public class ColorSetSettings implements Parcelable {
 		d.writeInt(buttonHeight);
 		d.writeInt(buttonWidth);
 		d.writeInt(labelSize);
+		d.writeInt(flipLabelColor);
 	}
 	
 	public void readFromParcel(Parcel in) {
@@ -139,6 +151,7 @@ public class ColorSetSettings implements Parcelable {
 		buttonHeight = in.readInt();
 		buttonWidth = in.readInt();
 		labelSize = in.readInt();
+		flipLabelColor = in.readInt();
 	}
 
 

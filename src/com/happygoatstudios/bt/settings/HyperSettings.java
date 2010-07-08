@@ -245,8 +245,9 @@ public class HyperSettings {
 				if(setdefaults.getFlipColor() != SlickButtonData.DEFAULT_FLIP_COLOR) out.attribute("", BaseParser.ATTR_FLIPCOLOR, Integer.toHexString(setdefaults.getFlipColor()));
 				if(setdefaults.getLabelColor() != SlickButtonData.DEFAULT_LABEL_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getLabelColor()));
 				if(setdefaults.getButtonHeight() != SlickButtonData.DEFAULT_BUTTON_HEIGHT) out.attribute("", BaseParser.ATTR_BUTTONHEIGHT, new Integer(setdefaults.getButtonHeight()).toString());
-				if(setdefaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) out.attribute("", BaseParser.ATTR_BUTTONHEIGHT, new Integer(setdefaults.getButtonHeight()).toString());
+				if(setdefaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) out.attribute("", BaseParser.ATTR_BUTTONWIDTH, new Integer(setdefaults.getButtonWidth()).toString());
 				if(setdefaults.getLabelSize() != SlickButtonData.DEFAULT_LABEL_SIZE) out.attribute("", BaseParser.ATTR_LABELSIZE, new Integer(setdefaults.getLabelSize()).toString());
+				if(setdefaults.getFlipLabelColor() != SlickButtonData.DEFAULT_FLIPLABEL_COLOR) out.attribute("", BaseParser.ATTR_FLIPLABELCOLOR, Integer.toHexString(setdefaults.getFlipLabelColor()));
 				
 				Vector<SlickButtonData> the_set = data.getButtonSets().get(key);
 				
@@ -266,7 +267,8 @@ public class HyperSettings {
 					if(button.getFlipColor() != setdefaults.getFlipColor())  out.attribute("", BaseParser.ATTR_FLIPCOLOR, Integer.toHexString(button.getFlipColor()).toString());
 					if(button.getLabelColor() != setdefaults.getLabelColor())  out.attribute("", BaseParser.ATTR_LABELCOLOR, Integer.toHexString(button.getLabelColor()));
 					if(button.getLabelSize() != setdefaults.getLabelSize())  out.attribute("", BaseParser.ATTR_LABELSIZE,  new Integer(button.getLabelSize()).toString());
-					
+					if(button.getFlipLabelColor() != setdefaults.getFlipLabelColor()) out.attribute("", BaseParser.ATTR_FLIPLABELCOLOR, Integer.toHexString(button.getFlipLabelColor()));
+					if(!button.getFlipLabel().equals("")) out.attribute("", BaseParser.ATTR_FLIPLABEL, button.getFlipLabel());
 					out.endTag("", BaseParser.TAG_BUTTON);
 				}
 				

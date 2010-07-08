@@ -118,6 +118,7 @@ public class HyperSAXParser extends BaseParser {
 				setinfo.setButtonWidth( (attributes.getValue("",ATTR_BUTTONWIDTH) == null) ? SlickButtonData.DEFAULT_BUTTON_WDITH : new Integer(attributes.getValue("",ATTR_BUTTONWIDTH)));
 				setinfo.setButtonHeight( (attributes.getValue("",ATTR_BUTTONHEIGHT) == null) ? SlickButtonData.DEFAULT_BUTTON_HEIGHT : new Integer(attributes.getValue("",ATTR_BUTTONHEIGHT)));
 				setinfo.setLabelSize( (attributes.getValue("",ATTR_LABELSIZE)==null) ? SlickButtonData.DEFAULT_LABEL_SIZE : new Integer(attributes.getValue("",ATTR_LABELSIZE)));
+				setinfo.setFlipLabelColor( (attributes.getValue("",ATTR_FLIPLABELCOLOR) == null ? SlickButtonData.DEFAULT_FLIPLABEL_COLOR : new BigInteger((attributes.getValue("",ATTR_FLIPLABELCOLOR)),16).intValue()));
 				colorsets.put(button_set_name.toString(), setinfo.copy());
 			}
 			
@@ -159,6 +160,9 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setFlipColor( (attributes.getValue("",ATTR_FLIPCOLOR) == null) ? setinfo.getFlipColor() : new BigInteger(attributes.getValue("",ATTR_FLIPCOLOR),16).intValue());
 				tmp.setLabelColor( (attributes.getValue("",ATTR_LABELCOLOR) == null) ? setinfo.getLabelColor() : new BigInteger(attributes.getValue("",ATTR_LABELCOLOR),16).intValue());
 				tmp.setLabelSize((attributes.getValue("",ATTR_LABELSIZE) == null) ? setinfo.getLabelSize() : new Integer(attributes.getValue("",ATTR_LABELSIZE)));
+				
+				tmp.setFlipLabel(attributes.getValue("",ATTR_FLIPLABEL));
+				tmp.setFlipLabelColor( (attributes.getValue("",ATTR_FLIPLABELCOLOR) == null) ? setinfo.getFlipLabelColor() : new BigInteger(attributes.getValue("",ATTR_FLIPLABELCOLOR),16).intValue());
 				//add the new button to the current list.
 				current_button_set.add(tmp);
 			}

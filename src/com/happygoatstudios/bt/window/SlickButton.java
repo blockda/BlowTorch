@@ -184,6 +184,7 @@ public class SlickButton extends View {
 	
 	//down only once per cycle lock
 	boolean preserve_lock = false;
+	boolean doing_flip = false;
 	
 	public boolean onTouchEvent(MotionEvent e) {
 		
@@ -208,6 +209,11 @@ public class SlickButton extends View {
 		
 		if(rect.contains(touchx,touchy)) {
 			//continue
+			if(doing_flip) {
+				doing_flip = false;
+				this.invalidate();
+			}
+			
 		} else {
 			if(!moving && !button_down) {
 				return false;
@@ -217,6 +223,14 @@ public class SlickButton extends View {
 				return false;
 			} else {
 				//Log.e("SB","LETTING CLICK PASS THROUGH BECAUSE BUTTON IS DOWN");
+				if(!moving && button_down) {
+					if(!doing_flip) {
+						doing_flip = true;
+						this.invalidate();
+					}
+				} else {
+					doing_flip = false;
+				}
 			}
 		}
 		
@@ -230,8 +244,8 @@ public class SlickButton extends View {
 			start_x = touchx;
 			start_y = touchy;
 			//schedule message for moving
-			myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1500);
-			myhandler.sendEmptyMessageDelayed(MSG_DELETE, 4000);
+			myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1000);
+			myhandler.sendEmptyMessageDelayed(MSG_DELETE, 2000);
 			save_x = data.getX();
 			save_y = data.getY();
 			button_down=true;
@@ -258,11 +272,13 @@ public class SlickButton extends View {
 			if(abs_length > 18.0) {
 				//Log.e("SLICK","Length: " + (new Double(abs_length)));
 				myhandler.removeMessages(MSG_DELETE);
+				myhandler.removeMessages(MSG_BEGINMOVE);
 			}
 			this.invalidate();
 		}
 		
 		if(e.getAction() == MotionEvent.ACTION_UP) {
+			doing_flip = false;
 			hasfocus = false;
 			myhandler.removeMessages(MSG_BEGINMOVE);
 			myhandler.removeMessages(MSG_DELETE);
@@ -319,7 +335,11 @@ public class SlickButton extends View {
 		Paint p = new Paint();
 		
 		if(hasfocus) {
-			p.setColor(data.getSelectedColor());
+			if(doing_flip) {
+				p.setColor(data.getFlipColor());
+			} else {
+				p.setColor(data.getSelectedColor());
+			}
 		} else {
 			p.setColor(data.getPrimaryColor());
 		}
@@ -329,10 +349,20 @@ public class SlickButton extends View {
 		//get text size.
 		Paint opts = new Paint();
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
-		opts.setColor(data.getLabelColor());
 		opts.setTextSize(data.getLabelSize());
-		float tsize = opts.measureText(data.getLabel());
-		c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
+		
+		float tsize = 0;
+		if(doing_flip) {
+			opts.setColor(data.getFlipLabelColor());
+			tsize = opts.measureText( (data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel());
+			c.drawText((data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel(), data.getX()-tsize/2, data.getY()+12, opts);
+		} else {
+			opts.setColor(data.getLabelColor());
+			tsize = opts.measureText(data.getLabel());
+			c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
+		}
+		//float tsize = opts.measureText(data.getLabel());
+		//c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
 		
 		if(moving) {
 			Rect m_rect = new Rect();

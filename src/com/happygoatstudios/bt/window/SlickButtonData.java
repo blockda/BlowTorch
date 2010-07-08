@@ -26,6 +26,9 @@ public class SlickButtonData implements Parcelable {
 	
 	private int labelSize;
 	
+	private String flipLabel;
+	private int flipLabelColor;
+	
 	//private String foo;
 	
 	final static public int MOVE_FREE = 0;
@@ -36,6 +39,7 @@ public class SlickButtonData implements Parcelable {
 	final static public int DEFAULT_SELECTED_COLOR = 0x8800FF00;
 	final static public int DEFAULT_FLIP_COLOR = 0x88FF0000;
 	final static public int DEFAULT_LABEL_COLOR = 0x990000FF;
+	final static public int DEFAULT_FLIPLABEL_COLOR = 0x990000FF;
 	
 	final static public int DEFAULT_BUTTON_WDITH = 80;
 	final static public int DEFAULT_BUTTON_HEIGHT = 80;
@@ -57,6 +61,8 @@ public class SlickButtonData implements Parcelable {
 		flipColor=DEFAULT_FLIP_COLOR;
 		labelColor=DEFAULT_LABEL_COLOR;
 		labelSize = DEFAULT_LABEL_SIZE;
+		flipLabel="";
+		flipLabelColor=DEFAULT_FLIPLABEL_COLOR;
 	}
 	
 	public SlickButtonData(int ix, int iy, String itext, String ilbl) {
@@ -73,6 +79,8 @@ public class SlickButtonData implements Parcelable {
 		flipColor=DEFAULT_FLIP_COLOR;
 		labelColor=DEFAULT_LABEL_COLOR;
 		labelSize = DEFAULT_LABEL_SIZE;
+		flipLabel="";
+		flipLabelColor=DEFAULT_FLIPLABEL_COLOR;
 	}
 	
 	public boolean equals(Object aTest) {
@@ -87,22 +95,24 @@ public class SlickButtonData implements Parcelable {
 		SlickButtonData test = (SlickButtonData)aTest;
 		
 		boolean retval = true;
-		if(this.x != test.x) retval = false;
-		if(this.y != test.y) retval = false;
-		if(this.height != test.height) retval = false;
-		if(this.width != test.width) retval = false;
-		if(!this.label.equals(test.label)) retval = false;
-		if(!this.text.equals(test.text)) retval = false;
-		if(!this.flipCommand.equals(test.flipCommand)) retval = false;
-		if(this.MOVE_STATE != test.MOVE_STATE) retval = false;
+		if(this.x != test.x) return false;
+		if(this.y != test.y) return false;
+		if(this.height != test.height) return false;
+		if(this.width != test.width) return false;
+		if(!this.label.equals(test.label)) return false;
+		if(!this.text.equals(test.text)) return false;
+		if(!this.flipCommand.equals(test.flipCommand)) return false;
+		if(this.MOVE_STATE != test.MOVE_STATE) return false;
 		//if(this.id != test.id) retval = false;
-		if(!this.targetSet.equals(test.targetSet)) retval = false;
+		if(!this.targetSet.equals(test.targetSet)) return false;
 		
-		if(this.primaryColor != test.primaryColor) retval=false;
-		if(this.selectedColor != test.selectedColor) retval=false;
-		if(this.flipColor != test.flipColor) retval=false;
-		if(this.labelColor != test.labelColor) retval=false;
-		if(this.labelSize != test.labelSize) retval = false;
+		if(this.primaryColor != test.primaryColor) return false;
+		if(this.selectedColor != test.selectedColor) return false;
+		if(this.flipColor != test.flipColor) return false;
+		if(this.labelColor != test.labelColor) return false;
+		if(this.labelSize != test.labelSize) return false;
+		if(!this.flipLabel.equals(test.flipLabel)) return false;
+		if(this.flipLabelColor != test.flipLabelColor) return false;
 		//Log.e("SLICKBUTTONDATA","Comparing " + this.toString() + " against " + test.toString() + " returning " + retval);
 		
 		return retval;
@@ -172,6 +182,8 @@ public class SlickButtonData implements Parcelable {
 		d.writeInt(flipColor);
 		d.writeInt(labelColor);
 		d.writeInt(labelSize);
+		d.writeString(flipLabel);
+		d.writeInt(flipLabelColor);
 	}
 	
 	public void readFromParcel(Parcel in) {
@@ -189,6 +201,8 @@ public class SlickButtonData implements Parcelable {
 		flipColor = in.readInt();
 		labelColor = in.readInt();
 		labelSize = in.readInt();
+		flipLabel = in.readString();
+		flipLabelColor = in.readInt();
 	}
 
 	
@@ -208,7 +222,10 @@ public class SlickButtonData implements Parcelable {
 		tmp.flipColor = this.flipColor;
 		tmp.labelColor = this.labelColor;
 		tmp.labelSize = this.labelSize;
+		tmp.flipLabel = this.flipLabel;
+		tmp.flipLabelColor = this.flipLabelColor;
 		return tmp;
+		
 	}
 
 	public void setX(int x) {
@@ -317,6 +334,25 @@ public class SlickButtonData implements Parcelable {
 
 	public int getLabelSize() {
 		return labelSize;
+	}
+
+	public void setFlipLabel(String flipLabel) {
+		if(flipLabel == null) {
+			flipLabel = "";
+		}
+		this.flipLabel = flipLabel;
+	}
+
+	public String getFlipLabel() {
+		return flipLabel;
+	}
+
+	public void setFlipLabelColor(int flipLabelColor) {
+		this.flipLabelColor = flipLabelColor;
+	}
+
+	public int getFlipLabelColor() {
+		return flipLabelColor;
 	}
 
 }

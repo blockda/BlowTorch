@@ -59,6 +59,8 @@ public class BaseParser {
 	static final String ATTR_FLIPCOLOR = "flipColor";
 	static final String ATTR_LABELCOLOR = "labelColor";
 	static final String ATTR_LABELSIZE = "labelSize";
+	static final String ATTR_FLIPLABELCOLOR = "flipLabelColor";
+	static final String ATTR_FLIPLABEL = "flipLabel";
 	
 	final String path;
 	Context window;
