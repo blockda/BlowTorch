@@ -14,7 +14,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
-public class ButtonEditorDialog extends Dialog {
+public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnColorChangedListener {
 	
 	final int EXIT_CANCEL = 0;
 	final int EXIT_DONE = 1;
@@ -30,6 +30,12 @@ public class ButtonEditorDialog extends Dialog {
 	CheckBox move_free = null;
 	CheckBox move_nudge = null;
 	CheckBox move_freeze = null;
+	
+	Button normalColor = null;
+	Button focusColor = null;
+	Button flipColor = null;
+	Button labelColor = null;
+	Button flipLabelColor = null;
 	
 	//SlickButtonData orig_data = null;
 	
@@ -58,6 +64,9 @@ public class ButtonEditorDialog extends Dialog {
 		
 		EditText flip = (EditText)findViewById(R.id.button_flip_et);
 		flip.setText(the_button.getData().getFlipCommand());
+		
+		EditText fliplabel = (EditText)findViewById(R.id.button_flip_label_et);
+		fliplabel.setText(the_button.getData().getFlipLabel());
 		
 		move_free = (CheckBox)findViewById(R.id.move_free);
 		move_nudge = (CheckBox)findViewById(R.id.move_nudge);
@@ -116,6 +125,71 @@ public class ButtonEditorDialog extends Dialog {
 				//}
 			}
 		});
+		//Button normalColor = null;
+		//Button focusColor = null;
+		//Button flipColor = null;
+		//Button labelColor = null;
+		//Button flipLabelColor = null;
+		
+		
+		normalColor = (Button)findViewById(R.id.btn_defaultcolor);
+		focusColor =(Button)findViewById(R.id.btn_focuscolor);
+		flipColor = (Button)findViewById(R.id.btn_flippedcolor);
+		labelColor = (Button)findViewById(R.id.btn_labelcolor);
+		flipLabelColor = (Button)findViewById(R.id.btn_fliplabelcolor);
+		//normalColor = (Button)findViewById(R.id.btn_defaultcolor);
+		normalColor.setBackgroundColor(the_button.getData().getPrimaryColor());
+		focusColor.setBackgroundColor(the_button.getData().getSelectedColor());
+		labelColor.setBackgroundColor(the_button.getData().getLabelColor());
+		flipColor.setBackgroundColor(the_button.getData().getFlipColor());
+		flipLabelColor.setBackgroundColor(the_button.getData().getFlipLabelColor());
+		
+		
+		normalColor.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getPrimaryColor(),COLOR_FIELDS.COLOR_MAIN);
+				diag.show();
+			}
+		});
+		
+		focusColor.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getSelectedColor(),COLOR_FIELDS.COLOR_SELECTED);
+				diag.show();
+			}
+		});
+		
+		labelColor.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getLabelColor(),COLOR_FIELDS.COLOR_LABEL);
+				diag.show();
+			}
+		});
+		
+		flipColor.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getFlipColor(),COLOR_FIELDS.COLOR_FLIPPED);
+				diag.show();
+			}
+		});
+		
+		flipLabelColor.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getFlipLabelColor(),COLOR_FIELDS.COLOR_FLIPLABEL);
+				diag.show();
+			}
+		});
+		
+		
 		
 		Button delbutton = (Button)findViewById(R.id.button_delete_btn);
 		
@@ -133,15 +207,20 @@ public class ButtonEditorDialog extends Dialog {
 		donebutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
+				
+				//ColorPickerDialog cpd = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,0xFF00FF00,COLOR_FIELDS.COLOR_MAIN);
+				//cpd.show();
+				
 				EditText label = (EditText)findViewById(R.id.button_text_et);
 				
 				
 				EditText command = (EditText)findViewById(R.id.button_command_et);
 				EditText flip = (EditText)findViewById(R.id.button_flip_et);
-				
+				EditText fliplbl = (EditText)findViewById(R.id.button_flip_label_et);
 				the_button.setLabel(label.getText().toString());
 				the_button.setText(command.getText().toString());
 				the_button.setFlipCommand(flip.getText().toString());
+				the_button.getData().setFlipLabel(fliplbl.getText().toString());
 				
 				CheckBox tfree = (CheckBox)findViewById(R.id.move_free);
 				CheckBox tnudge = (CheckBox)findViewById(R.id.move_nudge);
@@ -167,6 +246,49 @@ public class ButtonEditorDialog extends Dialog {
 				ButtonEditorDialog.this.dismiss();
 			}
 		});
+	}
+	
+	public enum COLOR_FIELDS {
+		COLOR_MAIN,
+		COLOR_SELECTED,
+		COLOR_FLIPPED,
+		COLOR_LABEL,
+		COLOR_FLIPLABEL
+	}
+
+	//Button normalColor = null;
+	//Button focusColor = null;
+	//Button flipColor = null;
+	//Button labelColor = null;
+	//Button flipLabelColor = null;
+	public void colorChanged(int color,COLOR_FIELDS which) {
+		// TODO Auto-generated method stub
+		Log.e("BTNEDITOR","GOT NEW COLOR FOR" + which + " returned " + color);
+		switch(which) {
+		case COLOR_MAIN:
+			the_button.getData().setPrimaryColor(color);
+			normalColor.setBackgroundColor(color);
+			break;
+		case COLOR_SELECTED:
+			the_button.getData().setSelectedColor(color);
+			focusColor.setBackgroundColor(color);
+			break;
+		case COLOR_FLIPPED:
+			flipColor.setBackgroundColor(color);
+			the_button.getData().setFlipColor(color);
+			break;
+		case COLOR_LABEL:
+			the_button.getData().setLabelColor(color);
+			labelColor.setBackgroundColor(color);
+			break;
+		case COLOR_FLIPLABEL:
+			the_button.getData().setFlipLabelColor(color);
+			flipLabelColor.setBackgroundColor(color);
+			break;
+		default:
+			break;
+		}
+		
 	}
 
 }

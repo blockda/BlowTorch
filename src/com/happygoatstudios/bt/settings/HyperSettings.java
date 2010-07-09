@@ -243,7 +243,7 @@ public class HyperSettings {
 				if(setdefaults.getPrimaryColor() != SlickButtonData.DEFAULT_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getPrimaryColor()));
 				if(setdefaults.getSelectedColor() != SlickButtonData.DEFAULT_SELECTED_COLOR) out.attribute("", BaseParser.ATTR_SELECTEDCOLOR, Integer.toHexString(setdefaults.getSelectedColor()));
 				if(setdefaults.getFlipColor() != SlickButtonData.DEFAULT_FLIP_COLOR) out.attribute("", BaseParser.ATTR_FLIPCOLOR, Integer.toHexString(setdefaults.getFlipColor()));
-				if(setdefaults.getLabelColor() != SlickButtonData.DEFAULT_LABEL_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getLabelColor()));
+				if(setdefaults.getLabelColor() != SlickButtonData.DEFAULT_LABEL_COLOR) out.attribute("", BaseParser.ATTR_LABELCOLOR, Integer.toHexString(setdefaults.getLabelColor()));
 				if(setdefaults.getButtonHeight() != SlickButtonData.DEFAULT_BUTTON_HEIGHT) out.attribute("", BaseParser.ATTR_BUTTONHEIGHT, new Integer(setdefaults.getButtonHeight()).toString());
 				if(setdefaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) out.attribute("", BaseParser.ATTR_BUTTONWIDTH, new Integer(setdefaults.getButtonWidth()).toString());
 				if(setdefaults.getLabelSize() != SlickButtonData.DEFAULT_LABEL_SIZE) out.attribute("", BaseParser.ATTR_LABELSIZE, new Integer(setdefaults.getLabelSize()).toString());

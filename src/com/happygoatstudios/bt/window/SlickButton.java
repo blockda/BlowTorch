@@ -351,15 +351,17 @@ public class SlickButton extends View {
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
 		opts.setTextSize(data.getLabelSize());
 		
+		opts.setFlags(Paint.ANTI_ALIAS_FLAG);
+		
 		float tsize = 0;
 		if(doing_flip) {
 			opts.setColor(data.getFlipLabelColor());
 			tsize = opts.measureText( (data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel());
-			c.drawText((data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel(), data.getX()-tsize/2, data.getY()+12, opts);
+			c.drawText((data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel(), data.getX()-tsize/2, data.getY()+data.getLabelSize()/2, opts);
 		} else {
 			opts.setColor(data.getLabelColor());
 			tsize = opts.measureText(data.getLabel());
-			c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
+			c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+data.getLabelSize()/2, opts);
 		}
 		//float tsize = opts.measureText(data.getLabel());
 		//c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
