@@ -59,6 +59,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 	
 	ListView lv = null;
 	
+	//make this save a change
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
