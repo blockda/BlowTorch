@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.R;
 //import com.happygoatstudios.bt.launcher.SlickButton;
+import com.happygoatstudios.bt.button.SlickButton;
+import com.happygoatstudios.bt.legacy.SlickButtonUtilities;
 import com.happygoatstudios.bt.service.Colorizer;
 
 import android.app.AlertDialog;
@@ -83,7 +85,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	final static public int MSG_DELETEBUTTON = 666;
 	final static public int MSG_CREATEBUTTON = 102;
 
-	protected static final int MSG_REALLYDELETEBUTTON = 667;
+	public static final int MSG_REALLYDELETEBUTTON = 667;
 
 	protected static final int MSG_CREATEBUTTONWITHDATA = 103;
 	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;

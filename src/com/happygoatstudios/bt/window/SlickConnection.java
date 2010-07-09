@@ -10,7 +10,7 @@ public class SlickConnection extends BaseInputConnection {
 
 	public SlickConnection(View targetView, boolean fullEditor) {
 		super(targetView, fullEditor);
-		Log.e("CONNECTION","CONSTRUCTING NEW SLICK CONNECTION FOR KEYBOARD AWSOMENESS!");
+		//Log.e("CONNECTION","CONSTRUCTING NEW SLICK CONNECTION FOR KEYBOARD AWSOMENESS!");
 	}
 
 

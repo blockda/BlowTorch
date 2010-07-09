@@ -12,7 +12,7 @@ import org.xmlpull.v1.XmlSerializer;
 import android.util.Log;
 import android.util.Xml;
 
-import com.happygoatstudios.bt.window.SlickButtonData;
+import com.happygoatstudios.bt.button.SlickButtonData;
 
 public class HyperSettings {
 	

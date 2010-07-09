@@ -1,6 +1,6 @@
 package com.happygoatstudios.bt.service;
 
-import com.happygoatstudios.bt.window.SlickButtonData;
+import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.service.IBaardTERMServiceCallback;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 

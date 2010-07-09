@@ -71,6 +71,13 @@ import android.widget.TextView;
 
 import com.happygoatstudios.bt.R;
 //import com.happygoatstudios.bt.service.BaardTERMService;
+import com.happygoatstudios.bt.alias.AliasDialogDoneListener;
+import com.happygoatstudios.bt.alias.AliasEditorDialog;
+import com.happygoatstudios.bt.button.ButtonEditorDialog;
+import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
+import com.happygoatstudios.bt.button.SlickButton;
+import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.legacy.FixedViewFlipper;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
@@ -84,14 +91,14 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	protected static final int MESSAGE_BUFFINC = 112;
 	protected static final int MESSAGE_PROCESS = 102;
 	protected static final int MESSAGE_PROCESSED = 104;
-	protected static final int MESSAGE_SENDDATAOUT = 105;
+	public static final int MESSAGE_SENDDATAOUT = 105;
 	protected static final int MESSAGE_RESETINPUTWINDOW = 106;
 	protected static final int MESSAGE_PROCESSINPUTWINDOW = 107;
 	protected static final int MESSAGE_LOADSETTINGS = 200;
 	protected static final int MESSAGE_ADDBUTTON = 201;
-	protected static final int MESSAGE_MODIFYBUTTON = 202;
-	protected static final int MESSAGE_NEWBUTTONSET = 205;
-	protected static final int MESSAGE_CHANGEBUTTONSET = 206;
+	public static final int MESSAGE_MODIFYBUTTON = 202;
+	public static final int MESSAGE_NEWBUTTONSET = 205;
+	public static final int MESSAGE_CHANGEBUTTONSET = 206;
 	protected static final int MESSAGE_BUTTONREQUESTINGSETCHANGE = 207;
 	
 	protected boolean settingsDialogRun = false;

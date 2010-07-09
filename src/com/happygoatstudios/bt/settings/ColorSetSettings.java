@@ -3,7 +3,7 @@ package com.happygoatstudios.bt.settings;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.happygoatstudios.bt.window.SlickButtonData;
+import com.happygoatstudios.bt.button.SlickButtonData;
 
 public class ColorSetSettings implements Parcelable {
 	

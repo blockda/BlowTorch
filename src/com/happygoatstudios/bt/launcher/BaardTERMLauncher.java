@@ -44,10 +44,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.AbsoluteLayout.LayoutParams;
 
-import com.happygoatstudios.bt.window.SlickButton;
-import com.happygoatstudios.bt.window.SlickButtonData;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.button.SlickButton;
+import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.settings.*;
 
 public class BaardTERMLauncher extends Activity implements ReadyListener {

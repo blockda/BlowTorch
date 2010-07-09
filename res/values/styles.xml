@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <resources>
-
+	<style name="SuperSweetDialog" parent="@android:style/Theme.Dialog">
+		<item name="android:windowBackground">@drawable/horizontal_separator</item>
+	</style>
 	
 
 

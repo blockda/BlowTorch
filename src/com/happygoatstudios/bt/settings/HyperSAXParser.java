@@ -9,7 +9,7 @@ import java.util.Vector;
 import org.xml.sax.Attributes;
 
 
-import com.happygoatstudios.bt.window.SlickButtonData;
+import com.happygoatstudios.bt.button.SlickButtonData;
 
 import android.content.Context;
 import android.sax.Element;
