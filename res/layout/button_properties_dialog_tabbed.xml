@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/button_properties_rl"
+	android:layout_width = "300dp"
+	android:layout_height = "200dp">
+	
+	<Button
+		android:id = "@+id/button_delete_btn"
+		android:layout_width = "wrap_content"
+		android:layout_height = "wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+		android:text = "Delete"/>
+	<Button
+		android:id = "@+id/button_done_btn"
+		android:layout_width = "fill_parent"
+		android:layout_height = "wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_toRightOf="@id/button_delete_btn"
+		android:layout_alignTop="@id/button_delete_btn"
+		android:text = "Done!"/>
+	
+	<TabHost android:id="@+id/btn_editor_tabhost" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_above="@id/button_delete_btn">
+		<TabWidget android:id="@android:id/tabs" android:layout_width="fill_parent" android:layout_height="28sp"/>
+		<FrameLayout android:id="@android:id/tabcontent" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingTop="32sp">
+		<!--	<TextView android:id="@+id/btn_editor_testtab1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TESTSTESTERT"/> -->
+			<TableLayout
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/btn_editor_tab1">
+				<TableRow
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content">
+						<TextView
+							android:id="@+id/lbl_label"
+							android:layout_width = "wrap_content"
+							android:layout_height = "wrap_content"
+							android:textSize="22sp"
+							android:text = "LABEL:"
+							android:layout_alignParentTop = "true"
+							android:layout_alignParentLeft = "true"/>
+						<EditText
+							android:id = "@+id/button_text_et"
+							android:layout_width = "225dp"
+							android:singleLine = "true"
+							android:layout_height = "wrap_content"
+							android:layout_toRightOf="@id/lbl_label"/>
+				</TableRow>
+			
+				<TableRow		
+				android:layout_width="300dp"
+				android:layout_height="wrap_content">
+					<TextView
+					android:id="@+id/cmd_label"
+					android:layout_width = "wrap_content"
+					android:layout_height = "wrap_content"
+					android:textSize="22sp"
+					android:layout_below = "@id/lbl_label"
+					android:layout_alignBottom = "@id/button_text_et"
+					android:text = "CMD:"/>
+					<EditText
+					android:id = "@+id/button_command_et"
+					android:layout_width = "225dp"
+					android:layout_height = "wrap_content"
+					android:singleLine = "true"
+					android:layout_toRightOf ="@id/cmd_label"
+					android:layout_alignTop ="@id/cmd_label"/>	
+				</TableRow>
+			</TableLayout>
+			<TableLayout android:layout_width="fill_parent" android:layout_height="fill_parent" android:id="@+id/btn_editor_tab2">				
+				<TableRow		
+				android:layout_width="300dp"
+				android:layout_height="wrap_content">
+					<TextView
+					android:id="@+id/flip_label_label"
+					android:layout_width = "wrap_content"
+					android:layout_height = "wrap_content"
+					android:textSize="22sp"
+					android:layout_below = "@id/cmd_label"
+					android:layout_alignBottom = "@id/button_command_et"
+					android:text = "LBL2:"/>
+					<EditText
+					android:id = "@+id/button_flip_label_et"
+					android:layout_width = "225dp"
+					android:layout_height = "wrap_content"
+					android:singleLine = "true"
+					android:layout_toRightOf ="@id/flip_label_label"
+					android:layout_alignTop ="@id/flip_label_label"/>	
+				</TableRow>
+
+				<TableRow		
+				android:layout_width="300dp"
+				android:layout_height="wrap_content">
+					<TextView
+					android:id="@+id/flip_label"
+					android:layout_width = "wrap_content"
+					android:layout_height = "wrap_content"
+					android:textSize="22sp"
+					android:layout_below = "@id/cmd_label"
+					android:layout_alignBottom = "@id/button_command_et"
+					android:text = "FLIP:"/>
+					<EditText
+					android:id = "@+id/button_flip_et"
+					android:layout_width = "225dp"
+					android:layout_height = "wrap_content"
+					android:singleLine = "true"
+					android:layout_toRightOf ="@id/flip_label"
+					android:layout_alignTop ="@id/flip_label"/>	
+				</TableRow>	
+			</TableLayout>
+			
+			<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/btn_editor_tab3">
+			<ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content">
+			<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginRight="10sp">
+			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Movement method:" android:gravity="left"/>
+				
+			<TableLayout
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:background="@drawable/movemethod_frame">
+				
+				
+				<TableRow
+					android:layout_span="3">
+						<CheckBox
+						android:id="@+id/move_free"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center"/>
+						<CheckBox
+						android:id="@+id/move_nudge"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center"/>
+						<CheckBox
+						android:id="@+id/move_freeze"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center"/>
+				</TableRow>
+				<TableRow
+				android:layout_span="3">
+					<TextView
+					android:layout_width="89dp"
+					android:layout_height="wrap_content"
+					android:gravity="center"
+					android:text="Free"/>
+					<TextView
+					android:layout_width="89dp"
+					android:layout_height="wrap_content"
+					android:gravity="center"
+					android:text="Nudge"/>
+					<TextView
+					android:layout_width="89dp"
+					android:layout_height="wrap_content"
+					android:text="Freeze"
+					android:gravity="center"/>
+				</TableRow>
+				</TableLayout>
+				
+				<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Button Colors:"  android:layout_marginTop="10sp"/>
+				
+				<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="@drawable/movemethod_frame">
+				
+				
+				<TableRow android:layout_span = "3" android:layout_marginTop="10sp">
+					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_defaultcolor" android:background="#FF000000"/>
+					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_focuscolor" android:background="#FF000000"/>
+					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_flippedcolor" android:background="#FF000000"/>
+				</TableRow>
+				<TableRow android:layout_span = "3">
+					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Normal"/>
+					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Focused"/>
+					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Flipped"/>
+				</TableRow>
+				<TableRow android:layout_span ="2" android:layout_marginTop="5sp">
+					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_labelcolor" android:background="#FF000000"/>
+					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_fliplabelcolor" android:background="#FF000000"/>
+				</TableRow>
+				<TableRow android:layout_span = "2">
+					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Label"/>
+					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="FlipLabel"/>
+				</TableRow>
+			</TableLayout>
+			
+			<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content"/>
+			
+			</TableLayout>
+			</LinearLayout>
+			</ScrollView>
+			</LinearLayout>
+		</FrameLayout>
+	</TabHost>
+	
+</RelativeLayout>

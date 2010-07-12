@@ -299,10 +299,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				}
 				
 				if(actionId == EditorInfo.IME_ACTION_SEND) {
-
-				
 					event = new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_ENTER);
-					
 				}
 				
 				if((event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP)) {
@@ -546,7 +543,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					}
 					break;
 				case SlickView.MSG_DELETEBUTTON:
-					ButtonEditorDialog d = new ButtonEditorDialog(BaardTERMWindow.this,(SlickButton)msg.obj,this);
+					ButtonEditorDialog d = new ButtonEditorDialog(BaardTERMWindow.this,R.style.SuperSweetDialog,(SlickButton)msg.obj,this);
 					d.show();
 					break;
 				case SlickView.MSG_REALLYDELETEBUTTON:
@@ -580,6 +577,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					tmp.setPrimaryColor(colorset.getPrimaryColor());
 					tmp.setFlipColor(colorset.getFlipColor());
 					tmp.setSelectedColor(colorset.getSelectedColor());
+					tmp.setLabelSize(colorset.getLabelSize());
 					
 					tmp.setWidth(colorset.getButtonWidth());
 					tmp.setHeight(colorset.getButtonHeight());
@@ -656,7 +654,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						e.printStackTrace();
 					}
 					screen2.jumpToZero();
-
+					
 					
 					break;
 				default:

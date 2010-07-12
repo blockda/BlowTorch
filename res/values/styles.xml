@@ -2,7 +2,9 @@
 
 <resources>
 	<style name="SuperSweetDialog" parent="@android:style/Theme.Dialog">
-		<item name="android:windowBackground">@drawable/horizontal_separator</item>
+		<item name="android:windowBackground">@drawable/dialog_window_crawler1</item>
+	<!--	<item name="android:windowBackground">@drawable/dialogbackground</item> -->
+		<item name="android:windowIsFloating">true</item>
 	</style>
 	
 

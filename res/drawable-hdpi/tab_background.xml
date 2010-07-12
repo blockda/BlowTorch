@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<selector
+    android:id="@+id/myselector"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Non focused states -->
+    <item
+        android:state_selected="true"
+        android:drawable="@drawable/stupid_white"/>
+    <item
+        android:drawable="@drawable/stupid_grey"/>
+</selector>

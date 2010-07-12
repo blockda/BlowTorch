@@ -5,15 +5,22 @@ import com.happygoatstudios.bt.window.SlickView;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
+import android.widget.TabHost;
+import android.widget.TextView;
+import android.widget.TabHost.TabSpec;
 
 public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnColorChangedListener {
 	
@@ -51,11 +58,59 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		//orig_data = useme.getData().copy();
 	}
 	
+	public ButtonEditorDialog(Context context,int themeid,SlickButton useme,Handler callback) {
+		super(context,themeid);
+		
+		//mod_cmd = cmd;
+		//mod_lbl = lbl;
+		
+		the_button = useme;
+		deleter = callback;
+		//orig_data = useme.getData().copy();
+	}
+	
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
 
 		this.setTitle("Modify Button Properties...");
-		setContentView(R.layout.button_properties_dialog);
+		setContentView(R.layout.button_properties_dialog_tabbed);
+		
+		TabHost thost = (TabHost)findViewById(R.id.btn_editor_tabhost);
+		
+		thost.setup();
+		
+		TabSpec tab1 = (TabSpec) thost.newTabSpec("tab_one_btn_tab");
+		TextView lbl1 = new TextView(this.getContext());
+		lbl1.setText("Click");
+		lbl1.setGravity(Gravity.CENTER);
+		lbl1.setBackgroundResource(R.drawable.tab_background);
+		
+		//lbl1.setHeight(20);
+		tab1.setIndicator(lbl1);
+		tab1.setContent(R.id.btn_editor_tab1);
+		thost.addTab(tab1);
+		
+		TabSpec tab2 = (TabSpec) thost.newTabSpec("tab_two_btn_tab");
+		TextView lbl2 = new TextView(this.getContext());
+		lbl2.setText("Flip");
+		lbl2.setGravity(Gravity.CENTER);
+		lbl2.setBackgroundResource(R.drawable.tab_background);
+		tab2.setIndicator(lbl2);
+		tab2.setContent(R.id.btn_editor_tab2);
+		thost.addTab(tab2);
+		
+		TabSpec tab3 = (TabSpec) thost.newTabSpec("tab_three_btn_tab");
+		TextView lbl3 = new TextView(this.getContext());
+		lbl3.setText("Advanced");
+		lbl3.setGravity(Gravity.CENTER);
+		lbl3.setBackgroundResource(R.drawable.tab_background);
+		tab3.setIndicator(lbl3);
+		tab3.setContent(R.id.btn_editor_tab3);
+		thost.addTab(tab3);
+		
+		thost.setCurrentTab(1);
+		
+		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
 		EditText label = (EditText)findViewById(R.id.button_text_et);
 		label.setText(the_button.getData().getLabel());
@@ -246,7 +301,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				EXIT_STATE = EXIT_DONE;
 				ButtonEditorDialog.this.dismiss();
 			}
-		});
+		}); 
 	}
 	
 	public enum COLOR_FIELDS {

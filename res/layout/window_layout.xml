@@ -87,7 +87,7 @@
     android:layout_above="@id/input_bar" 
     />
 
-    <com.happygoatstudios.bt.window.FixedViewFlipper 
+    <com.happygoatstudios.bt.legacy.FixedViewFlipper 
     	android:id="@+id/flippdipper"
     	android:layout_height="fill_parent"
     	android:layout_width="fill_parent"
@@ -132,7 +132,7 @@
     			android:typeface="monospace"/> -->
     		
     	<!-- </ScrollView> -->	
-	</com.happygoatstudios.bt.window.FixedViewFlipper>
+	</com.happygoatstudios.bt.legacy.FixedViewFlipper>
 	
 
 </RelativeLayout>
