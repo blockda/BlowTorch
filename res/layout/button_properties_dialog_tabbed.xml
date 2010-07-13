@@ -161,18 +161,18 @@
 				
 				<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Button Colors:"  android:layout_marginTop="10sp"/>
 				
-				<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="@drawable/movemethod_frame">
+				<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="@drawable/movemethod_frame" stretchColumnns="1,2,3">
 				
 				
-				<TableRow android:layout_span = "3" android:layout_marginTop="10sp">
-					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_defaultcolor" android:background="#FF000000"/>
-					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_focuscolor" android:background="#FF000000"/>
-					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_flippedcolor" android:background="#FF000000"/>
+				<TableRow  android:layout_marginTop="10sp">
+					<Button  android:id="@+id/btn_defaultcolor" android:background="#FF000000"/>
+					<Button  android:id="@+id/btn_focuscolor" android:background="#FF000000"/>
+					<Button   android:id="@+id/btn_flippedcolor" android:background="#FF000000"/>
 				</TableRow>
-				<TableRow android:layout_span = "3">
-					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Normal"/>
-					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Focused"/>
-					<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Flipped"/>
+				<TableRow>
+					<TextView  android:text="Normal"/>
+					<TextView  android:text="Focused"/>
+					<TextView  android:text="Flipped"/>
 				</TableRow>
 				<TableRow android:layout_span ="2" android:layout_marginTop="5sp">
 					<Button android:layout_width="30px" android:width="30px" android:layout_height="60px" android:id="@+id/btn_labelcolor" android:background="#FF000000"/>
@@ -184,8 +184,10 @@
 				</TableRow>
 			</TableLayout>
 			
-			<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content"/>
-			
+			<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TableRow android:layout_span = "2">
+					
+				</TableRow>
 			</TableLayout>
 			</LinearLayout>
 			</ScrollView>
