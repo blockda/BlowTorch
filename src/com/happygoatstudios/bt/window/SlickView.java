@@ -641,8 +641,22 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	String[] linetrap = new String[0];
 	BufferVector<String> dlines = new BufferVector<String>();
+	
+	boolean optsInitialized = false;
+	Paint opts;
+	Paint bg_opts;
+	
+	boolean bgColorSpanning = false;
+	int bgColorSpanStart = 0;
+	StringBuffer sel_bgcolor = new StringBuffer(new Integer(0xFF000000).toString());
+	StringBuffer sel_bgbright = new StringBuffer(new Integer(0).toString());
 	@Override
 	public void onDraw(Canvas canvas) {
+		
+		if(!optsInitialized) {
+			opts = new Paint();
+			bg_opts = new Paint();
+		}
 		
 		//dlines.addAll(Arrays.asList(linetrap));
 		//dlines.get = "foo";
@@ -733,7 +747,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//first clear the background
 		canvas.drawColor(0xFF0A0A0A); //fill with black
 		//canvas.drawColor(0xFF333333); //fill with grey
-        Paint opts = new Paint();
+        
         opts.setAlpha(0);
         opts.setAntiAlias(true);
         //opts.setDither(true);
@@ -811,18 +825,46 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     			colormatch.appendReplacement(csegment, "");
     			
     			//get color data
+
     			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
     			int color = Colorizer.getColorValue(sel_bright, sel_color);
     			if(color == 0) {
     				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
     			}
+    			
+    			//Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(sel_color);
+    			
     			opts.setColor(0xFF000000 | color);
     			
     			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
+    			if(bg_opts.getColor() != 0xFF000000) {
+    				Log.e("WINDOW","DRAWING BGCOLOR!!!!!");
+    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
+    				
+    			} 
     			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
     			//x_position = x_position + opts.measureText(csegment.toString());
     			x_position = x_position + opts.measureText(csegment,0,csegment.length());
     			//opts.mea
+    			
+				sel_bgcolor.setLength(0);
+				sel_bgbright.setLength(0);
+				sel_bgcolor.append(colormatch.group(3));
+				sel_bgbright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2)); 			
+    			Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(sel_bgcolor);
+    			if(fgbgType == Colorizer.COLOR_TYPE.BACKGROUND) {
+    				//if(bgColorSpanning) {
+    					//draw the rectangle, set to the new color, reset the indicator.
+    					//bgColorSpanning = false;
+    				//} else {
+    					Log.e("WINDOW","GOT BGCOLOR: " + colormatch.group(0));
+
+    					
+    					bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(sel_bgbright, sel_bgcolor));
+    				//	bgColorSpanning = true;
+    				//}
+    			} else {
+    			
     			csegment.setLength(0);
     			
     			sel_bright.setLength(0);
@@ -834,15 +876,24 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
     				sel_color.setLength(0);
     				sel_color.append("37");
     			}
+    			}
     		}
     		if(colorfound) {
     			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
     			int color = Colorizer.getColorValue(sel_bright, sel_color);
-    			opts.setColor(0xFF000000 | color);
+    			opts.setColor(0xFF000000 | color); //always alpha
     			colormatch.appendTail(csegment);
+    			
+    			if(bg_opts.getColor() != 0xFF000000) {
+    				
+    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
+    			} 
+    			
     			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
     			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
     			csegment.setLength(0);
+    			
+    			bg_opts.setColor(0xFF000000);
     		}
     		
     		if(!colorfound) {

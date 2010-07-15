@@ -437,7 +437,31 @@ public class Colorizer {
 		
 		return getColorValue(b,c);
 	}
+	
+	public enum COLOR_TYPE {
+		BACKGROUND,
+		FOREGROUND
+	}
+	
+	public static COLOR_TYPE getColorType(CharSequence value) {
+		
+		Integer c = colormap.get(value.toString());
+		
+		if(c == null) {
+			c = 40;
+		}
+		
+		return getColorType(c);
+	}
 
+	public static COLOR_TYPE getColorType(Integer value) {
+		
+		if(value < 40) {
+			return COLOR_TYPE.FOREGROUND;
+		} else {
+			return COLOR_TYPE.BACKGROUND;
+		}
+	}
 		
 	
 	public static int getColorValue(Integer bright,Integer value) {
@@ -458,6 +482,7 @@ public class Colorizer {
 			switch(onespot) {
 			case 0:
 				//black, nothing
+				colorval = colorval & 0x000000;
 				break;
 			case 1:
 				//red
