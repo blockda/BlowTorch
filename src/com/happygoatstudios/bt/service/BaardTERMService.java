@@ -1062,7 +1062,7 @@ public class BaardTERMService extends Service {
 	public void dispatch(byte[] data) throws RemoteException, UnsupportedEncodingException {
 		
 		String rawData = the_processor.RawProcess(data);
-
+		//changing this to send data to the window, then process the triggers.
 		
 		//Spannable processed = the_processor.DoProcess(data);
 		
@@ -1070,7 +1070,35 @@ public class BaardTERMService extends Service {
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
 		
-		the_buffer.append(rawData);
+		
+		
+		final int N = callbacks.beginBroadcast();
+		int final_count = N;
+	
+		for(int i = 0;i<N;i++) {
+			//callbacks.getBroadcastItem(i).dataIncoming(data);
+			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
+			//callbacks.getBroadcastItem(i).htmlDataIncoming(htmlText);
+			try {
+			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
+			} catch (RemoteException e) {
+				//just need to catch it, don't need to care, the list maintains itself apparently.
+				final_count = final_count - 1;
+			}
+		}
+		callbacks.finishBroadcast();
+		
+		//if(callbacks.)
+		if(final_count == 0) {
+			//someone isnt listening so save the buffer
+			the_buffer.append(rawData);
+			//Log.e("SERV","No listeners, buffering data.");
+		} else {
+			//someone is listening so save the buffer.
+			the_buffer.setLength(0);
+			//the_buffer.clearSpans();
+			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
+		}
 		
 		//IDLE:  "Your eyes glaze over."
 		//REQU:  "QUEST: You may now quest again."
@@ -1157,35 +1185,7 @@ public class BaardTERMService extends Service {
 		
 		
 		
-		final int N = callbacks.beginBroadcast();
-		int final_count = N;
-		
 
-		
-		for(int i = 0;i<N;i++) {
-			//callbacks.getBroadcastItem(i).dataIncoming(data);
-			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
-			//callbacks.getBroadcastItem(i).htmlDataIncoming(htmlText);
-			try {
-			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
-			} catch (RemoteException e) {
-				//just need to catch it, don't need to care, the list maintains itself apparently.
-				final_count = final_count - 1;
-			}
-		}
-		
-		callbacks.finishBroadcast();
-		
-		//if(callbacks.)
-		if(final_count == 0) {
-			//someone is listening so don't save the buffer
-			//Log.e("SERV","No listeners, buffering data.");
-		} else {
-			
-			the_buffer.setLength(0);
-			//the_buffer.clearSpans();
-			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
-		}
 		
 		//callbacks.finishBroadcast();
 		

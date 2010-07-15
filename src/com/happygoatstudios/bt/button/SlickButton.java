@@ -52,6 +52,7 @@ public class SlickButton extends View {
 		this.setFocusable(true);
 		this.setOnClickListener(the_listener);
 		data.setLabel("NULL!");
+		updateRect();
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -59,6 +60,7 @@ public class SlickButton extends View {
 				case MSG_BEGINMOVE:
 					moving = true;
 					SlickButton.this.invalidate();
+					//SlickButton.this.invalidate(SlickButton.this.rect); //only invaldate my rect.
 					break;
 				case MSG_DELETE:
 					dialog_launched = true;
@@ -81,6 +83,9 @@ public class SlickButton extends View {
 	
 	public void setData(SlickButtonData in) {
 		data = in;
+		//Rect rect = new Rect();
+		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
+		
 	}
 	
 	public SlickButtonData getData() {
@@ -188,12 +193,29 @@ public class SlickButton extends View {
 	boolean preserve_lock = false;
 	boolean doing_flip = false;
 	
+	Rect rect = new Rect();
+	
+	public void updateRect() {
+		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
+	}
+	
+	private enum DISPLAY_STATE {
+		NONE,
+		NORMAL,
+		SELECTED,
+		FLIPPED,
+		MOVING
+	}
+	
+	private DISPLAY_STATE state = DISPLAY_STATE.NONE;
+	
 	public boolean onTouchEvent(MotionEvent e) {
 		
 		//if(!nudged) {
 		//	save_x = data.x;
 		//	save_y = data.y;
 		//}
+		DISPLAY_STATE newstate = state;
 		
 		if(dialog_launched) {
 			//Log.e("SLICKBUTTON","BAILING BECAUSE DIALOG LAUNCHED!");
@@ -206,14 +228,16 @@ public class SlickButton extends View {
 		
 
 		
-		Rect rect = new Rect();
-		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
+		//Rect rect = new Rect();
+		//rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
 		
 		if(rect.contains(touchx,touchy)) {
 			//continue
 			if(doing_flip) {
 				doing_flip = false;
-				this.invalidate();
+				//this.invalidate();
+				newstate = DISPLAY_STATE.SELECTED;
+				//this.invalidate(rect); //only invaldate my rect.
 			}
 			
 		} else {
@@ -227,8 +251,11 @@ public class SlickButton extends View {
 				//Log.e("SB","LETTING CLICK PASS THROUGH BECAUSE BUTTON IS DOWN");
 				if(!moving && button_down) {
 					if(!doing_flip) {
+						
 						doing_flip = true;
-						this.invalidate();
+						//this.invalidate();
+						newstate = DISPLAY_STATE.FLIPPED;
+						//this.invalidate(rect); //only invaldate my rect.
 					}
 				} else {
 					doing_flip = false;
@@ -251,21 +278,29 @@ public class SlickButton extends View {
 			save_x = data.getX();
 			save_y = data.getY();
 			button_down=true;
-			this.invalidate();
+			//this.invalidate();
+			newstate = DISPLAY_STATE.SELECTED;
+			//this.invalidate(rect);
 		}
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {
 			if(moving) {
 				if(data.MOVE_STATE == data.MOVE_FREE) {
 					data.setX(touchx);
 					data.setY(touchy);
+					updateRect();
+					//this.invalidate();
+					newstate = DISPLAY_STATE.MOVING;
 				} else if (data.MOVE_STATE == data.MOVE_NUDGE) {
 					//compute nudge
 					int tmpx = touchx - start_x;
 					int tmpy = touchy - start_y;
 					data.setX(save_x + tmpx / 10);
 					data.setY(save_y + tmpy / 10);
+					updateRect();
 					//double dist = 
 					nudged = true;
+					newstate = DISPLAY_STATE.MOVING;
+					//this.invalidate();
 				}
 			}
 			int diff_x = touchx - start_x;
@@ -276,7 +311,7 @@ public class SlickButton extends View {
 				myhandler.removeMessages(MSG_DELETE);
 				myhandler.removeMessages(MSG_BEGINMOVE);
 			}
-			this.invalidate();
+			
 		}
 		
 		if(e.getAction() == MotionEvent.ACTION_UP) {
@@ -311,29 +346,41 @@ public class SlickButton extends View {
 				iHaveChanged(orig_data);
 			}
 			
+			//this.invalidate();
+			newstate = DISPLAY_STATE.NORMAL;
+		}
+		
+		if(newstate != state || newstate == DISPLAY_STATE.MOVING) {
+			//Log.e("BUTTON","DRAWING BUTTON BECAUSE STATE CHANGED");
 			this.invalidate();
+			state = newstate;
+		} else {
+			//Log.e("BUTTON","NOT DRAWING BUTTON BECAUSE STATE DIDN'T CHANGE");
 		}
 		return true;
 	}
 	
 
 
-	protected void onFocusChanged(boolean gainFocus,int direction,Rect prev_rect) {
+	/*protected void onFocusChanged(boolean gainFocus,int direction,Rect prev_rect) {
 		//Log.e("SB","FOCUS CHANGED");
 		if(gainFocus == true) {
 			hasfocus = true;
 		} else {
 			hasfocus = false;
 		}
-		this.invalidate();
-	}
+		this.invalidate(rect);
+	}*/
 	
 	public void onDraw(Canvas c) {
-		Rect rect = new Rect();
+		//c.
+		//Log.e("BUTTON","DRAWING BUTTON!");
+		//Rect rect = new Rect();
 		
-		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
+		//rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
 		//RectF f_rect = new RectF(rect);
 		//c.drawColor(0xFF0FF000);
+		//c.
 		Paint p = new Paint();
 		
 		if(hasfocus) {
@@ -352,6 +399,7 @@ public class SlickButton extends View {
 		Paint opts = new Paint();
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
 		opts.setTextSize(data.getLabelSize());
+		//opts.setF
 		
 		opts.setFlags(Paint.ANTI_ALIAS_FLAG);
 		

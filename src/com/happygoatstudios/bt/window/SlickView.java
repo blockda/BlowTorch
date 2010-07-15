@@ -476,6 +476,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	//Pattern endsonnewline = Pattern.compile(".*\n$");
 	
 	boolean endedonnewline = false;
+	boolean prompted = false;
+	StringBuffer the_prompt = new StringBuffer();
 	StringBuffer color_free = new StringBuffer();
 	Matcher colorfree = colordata.matcher("");
 	public void addText(String input,boolean jumptoend) {
@@ -485,7 +487,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//Matcher toLines = newline.matcher();
 		StringBuffer carriage_free = new StringBuffer(carriagerock.replaceAll(""));
 		//PREVIOUS CHARACTER WIDTH = 77
-		StringBuffer broken_lines = betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW);
+		
 		//int numlines = countLines(broken_lines.toString());
 		
 		int size_before = 0;
@@ -502,18 +504,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					//TODO:FIXTHIS
 					//TODO:FIXTHIS
 					if(dlines.size() > 0) {
-						broken_lines.insert(0, dlines.get(dlines.size()-1));
+						carriage_free.insert(0, dlines.get(dlines.size()-1));
 						dlines.remove(dlines.size()-1);
-						dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+						dlines.addAll(Arrays.asList(newline.split(betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW))));
 					} else {
-						dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+						dlines.addAll(Arrays.asList(newline.split(betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW))));
 					}
 					
 				} else {
-					dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+					dlines.addAll(Arrays.asList(newline.split(betterBreakLines(carriage_free,CALCULATED_ROWSINWINDOW))));
 				}
+				
 				if(carriage_free.toString().endsWith("\n")){
-					
 					
 					//unless the last line was a newline
 						colorfree.reset(dlines.get(dlines.size()-1));
@@ -522,6 +524,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 						if(!color_free.toString().equals("")) {
 					//if(!dlines.get(dlines.size()-1).equals("")) {
 							dlines.add("");
+							
 							//endedonnewline = true;
 						}
 						endedonnewline=true;

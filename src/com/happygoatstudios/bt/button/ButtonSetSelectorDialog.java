@@ -110,6 +110,22 @@ public class ButtonSetSelectorDialog extends Dialog {
 		
 	}
 	
+	public void onBackPressed() {
+		if(setSettingsHaveChanged) {
+			//ListView lv = (ListView)ButtonSetSelectorDialog.this.findViewById(R.id.buttonset_list);
+			//ButtonEntry item = adapter.getItem(lv.getSelectedItemPosition());
+			Message reloadbuttonset = null;
+			try {
+				reloadbuttonset = dispater.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			dispater.sendMessage(reloadbuttonset);
+		}
+		this.dismiss();
+	}
+	
 	private class ConnectionAdapter extends ArrayAdapter<ButtonEntry> {
 
 		private List<ButtonEntry> items;
