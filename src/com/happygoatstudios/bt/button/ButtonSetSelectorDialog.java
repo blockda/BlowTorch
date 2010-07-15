@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.service.IBaardTERMService;
 import com.happygoatstudios.bt.window.BaardTERMWindow;
 
 import android.app.Dialog;
@@ -13,6 +14,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
+import android.provider.Contacts.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,12 +33,15 @@ public class ButtonSetSelectorDialog extends Dialog {
 	Handler dispater = null;
 	String selected_set;
 	HashMap<String,Integer> data;
-	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset) {
+	ConnectionAdapter adapter;
+	IBaardTERMService service;
+	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IBaardTERMService the_service) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		dispater = reportto;
 		selected_set = selectedset;
 		data = datai;
+		service = the_service;
 	}
 	
 	public void onCreate(Bundle b) {
@@ -50,8 +56,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 		for(String key : data.keySet()) {
 			entries.add(new ButtonEntry(key,data.get(key)));
 		}
-
-		lv.setAdapter(new ConnectionAdapter(lv.getContext(),R.layout.buttonset_selection_list_row,entries));
+		adapter = new ConnectionAdapter(lv.getContext(),R.layout.buttonset_selection_list_row,entries);
+		lv.setAdapter(adapter);
 		lv.setTextFilterEnabled(true);
 		
 		lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
@@ -72,6 +78,18 @@ public class ButtonSetSelectorDialog extends Dialog {
 		cancel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
+				if(setSettingsHaveChanged) {
+					//ListView lv = (ListView)ButtonSetSelectorDialog.this.findViewById(R.id.buttonset_list);
+					//ButtonEntry item = adapter.getItem(lv.getSelectedItemPosition());
+					Message reloadbuttonset = null;
+					try {
+						reloadbuttonset = dispater.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					dispater.sendMessage(reloadbuttonset);
+				}
 				ButtonSetSelectorDialog.this.dismiss();
 			}
 		});
@@ -87,6 +105,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 			}
 			
 		});
+		
+		lv.setOnItemLongClickListener(new ButtonSetEditorOpener());
 		
 	}
 	
@@ -129,7 +149,32 @@ public class ButtonSetSelectorDialog extends Dialog {
 			return v;
 			
 		}
+		
 	}
+	
+	private class ButtonSetEditorOpener implements ListView.OnItemLongClickListener {
+
+		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+				int arg2, long arg3) {
+			// TODO Auto-generated method stub
+			ButtonEntry entry = adapter.getItem(arg2);
+			
+			ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
+			editor.show();
+			
+			return false;
+		}
+		
+	}
+	
+	boolean setSettingsHaveChanged = false;
+	private Handler editordonelistenr = new Handler() {
+		public void handleMessage(Message msg) {
+			//handle the thing comin back;
+			//if we got this, it means some settings have changed, and we should reload the button set when we are done regardless if it is the one already selected, or cancelled.
+			setSettingsHaveChanged = true;
+		}
+	};
 	
 	private class ButtonEntry {
 		public String name;

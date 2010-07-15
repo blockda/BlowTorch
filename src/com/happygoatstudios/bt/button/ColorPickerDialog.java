@@ -40,9 +40,10 @@ public class ColorPickerDialog extends Dialog {
             super(c);
             mListener = l;
             thefield = usethisfield;
+            int alphapart = (0xFF000000&color);
             mColors = new int[] {
-                0xAAFF0000, 0xAAFF00FF, 0xAA0000FF, 0xAA00FFFF, 0xAA00FF00,
-                0xAAFFFF00, 0xAAFF0000
+                (alphapart|0x00FF0000), (alphapart|0x00FF00FF), (alphapart|0x000000FF), (alphapart|0x0000FFFF), (alphapart|0x0000FF00),
+                		(alphapart|0x00FFFF00), (alphapart|0x00FF0000)
             };
             Shader s = new SweepGradient(0, 0, mColors, null);
 
@@ -57,12 +58,12 @@ public class ColorPickerDialog extends Dialog {
             
             mCenterIndicator = new Paint(Paint.ANTI_ALIAS_FLAG);
             mCenterIndicator.setColor(0xFFAAAAAA);
-            mCenterIndicator.setStrokeWidth(1);
-            mCenterIndicator.setTextSize(8.0f * this.getContext().getResources().getDisplayMetrics().density);
+            mCenterIndicator.setStrokeWidth(2);
+            mCenterIndicator.setTextSize(10.0f * this.getContext().getResources().getDisplayMetrics().density);
             
             mCenterCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
             mCenterCircle.setColor(0xFFAAAAAA);
-            mCenterCircle.setStrokeWidth(1);
+            mCenterCircle.setStrokeWidth(2);
             mCenterCircle.setStyle(Paint.Style.STROKE);
             //circle_path = new Path();
            // circle_path.addCircle(0, 0, (float) (CENTER_X - mPaint.getStrokeWidth()*0.5f*0.5), Direction.CW);
@@ -81,11 +82,11 @@ public class ColorPickerDialog extends Dialog {
             
             circle_path = new Path();
             //circle_path.addCircle(0, 0, (float) (r*0.5), Direction.CW);
-            float nr = (float) (mCenterPaint.getStrokeWidth() + CENTER_RADIUS + 5);
+            float nr = (float) (mCenterPaint.getStrokeWidth() + CENTER_RADIUS + 5 * this.getContext().getResources().getDisplayMetrics().density);
             circle_path.addOval(new RectF(-nr, -nr, nr, nr), Direction.CW);
             Matrix m = new Matrix();
             m.reset();
-            m.postRotate(-180);
+            m.postRotate(-190);
             circle_path.transform(m);
 
             canvas.translate(CENTER_X, CENTER_X);

@@ -18,12 +18,14 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -39,15 +41,26 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	ListView lv = null;
 	
 	AliasDialogDoneListener reporto = null;
+	Map<String,String> input;
 
-	public AliasEditorDialog(Context context,Map<String,String> input,AliasDialogDoneListener useme) {
+	public AliasEditorDialog(Context context,Map<String,String> pinput,AliasDialogDoneListener useme) {
 		super(context);
-		setContentView(R.layout.alias_dialog);
 		reporto = useme;
+		input = pinput;
+		
+		
+		
+		
+	}
+	
+	public void onCreate(Bundle b) {
+		
 		if(input != null) {
 			//load aliases
+			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+			this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 			
-			
+			setContentView(R.layout.alias_dialog);
 			aliases = new ArrayList<String>();
 			
 			lv = (ListView)findViewById(R.id.alias_list);

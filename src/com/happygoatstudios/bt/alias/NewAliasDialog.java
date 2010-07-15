@@ -6,7 +6,9 @@ import java.util.Map;
 import com.happygoatstudios.bt.R;
 import android.app.Dialog;
 import android.content.Context;
+import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -21,6 +23,13 @@ public class NewAliasDialog extends Dialog {
 		super(context);
 		// TODO Auto-generated constructor stub
 		reportto = useme;
+		
+	}
+	
+	public void onCreate(Bundle instanceData) {
+		
+		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
 		setContentView(R.layout.new_alias_dialog);
 		

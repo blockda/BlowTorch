@@ -53,6 +53,8 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 	EditText eWidth;
 	EditText eHeight;
 	
+	EditText targetSet;
+	
 	//SlickButtonData orig_data = null;
 	
 	public ButtonEditorDialog(Context context,SlickButton useme,Handler callback) {
@@ -209,6 +211,8 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		flipLabelColor.setBackgroundColor(the_button.getData().getFlipLabelColor());
 		
 		
+
+		
 		normalColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
@@ -265,6 +269,9 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		eWidth.setText(new Integer(the_button.getData().getWidth()).toString());
 		eHeight.setText(new Integer(the_button.getData().getHeight()).toString());
 		
+		targetSet = (EditText)findViewById(R.id.btn_editor_targetset_et);
+		targetSet.setText(the_button.getData().getTargetSet());
+		
 		Button delbutton = (Button)findViewById(R.id.button_delete_btn);
 		
 		delbutton.setOnClickListener(new View.OnClickListener() {
@@ -300,6 +307,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				the_button.getData().setY(new Integer(yPos.getText().toString()));
 				the_button.getData().setWidth(new Integer(eWidth.getText().toString()));
 				the_button.getData().setHeight(new Integer(eHeight.getText().toString()));
+				the_button.getData().setTargetSet(targetSet.getText().toString());
 				CheckBox tfree = (CheckBox)findViewById(R.id.move_free);
 				CheckBox tnudge = (CheckBox)findViewById(R.id.move_nudge);
 				CheckBox tfreeze = (CheckBox)findViewById(R.id.move_freeze);

@@ -43,6 +43,26 @@ public class ColorSetSettings implements Parcelable {
 		labelSize = SlickButtonData.DEFAULT_LABEL_SIZE;
 		flipLabelColor = SlickButtonData.DEFAULT_FLIPLABEL_COLOR;
 	}
+	
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		
+		if(!(o instanceof ColorSetSettings)) {
+			return false;
+		}
+		
+		ColorSetSettings test = (ColorSetSettings)o;
+		
+		if(this.selectedColor != test.selectedColor) return false;
+		if(this.flipColor != test.flipColor) return false;
+		if(this.primaryColor != test.primaryColor) return false;
+		if(this.labelColor != test.labelColor) return false;
+		if(this.flipLabelColor != test.flipLabelColor) return false;
+		if(this.labelSize != test.labelSize) return false;
+		if(this.buttonHeight != test.buttonHeight) return false;
+		if(this.buttonWidth != test.buttonWidth) return false;
+		return true;
+	}
 
 	public void setSelectedColor(int selectedColor) {
 		this.selectedColor = selectedColor;

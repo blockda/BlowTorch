@@ -175,6 +175,16 @@
 				</TableRow>
 				</TableLayout>
 				
+				<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Switch to named button set:"  android:layout_marginTop="10sp" android:background="@drawable/movemethod_frame" android:layout_marginBottom="-3sp"/>
+				<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="@drawable/movemethod_frame">
+					<TableRow>
+						<EditText
+							android:id="@+id/btn_editor_targetset_et"
+							android:inputType="text"
+							android:hint="Button set to switch to."/>
+					</TableRow>
+				</TableLayout>
+				
 				<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Button Colors:"  android:layout_marginTop="10sp" android:background="@drawable/movemethod_frame" android:layout_marginBottom="-3sp"/>
 				
 				<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:background="@drawable/movemethod_frame" android:stretchColumns="*">
@@ -201,6 +211,8 @@
 				</TableRow>
 			</TableLayout>
 			
+
+			
 			<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10sp">
 				<TableRow>
 				<TableLayout android:layout_marginLeft="5sp" android:layout_marginRight="5sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/blue_frame_nomargin">
@@ -208,7 +220,7 @@
 					<TextView android:text="Label Size:" />
 					</TableRow>
 					<TableRow>
-					<EditText android:id="@+id/btn_editor_lblsize_et" android:width="30sp"/>
+					<EditText android:id="@+id/btn_editor_lblsize_et" android:width="30sp" android:inputType="number" android:singleLine="true"/>
 					</TableRow>
 				</TableLayout>
 				<TableLayout android:layout_marginLeft="5sp" android:layout_marginRight="5sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/blue_frame_nomargin">
@@ -216,7 +228,7 @@
 					<TextView android:text="  X coord: " />
 					</TableRow>
 					<TableRow>
-					<EditText android:id="@+id/btn_editor_xcoord_et" android:width="30sp"/>
+					<EditText android:id="@+id/btn_editor_xcoord_et" android:width="30sp" android:inputType="number" android:singleLine="true"/>
 					</TableRow>
 				</TableLayout>
 				<TableLayout android:layout_marginLeft="5sp" android:layout_marginRight="5sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/blue_frame_nomargin">
@@ -224,7 +236,7 @@
 					<TextView android:text="  Y coord: " />
 					</TableRow>
 					<TableRow>
-					<EditText android:id="@+id/btn_editor_ycoord_et" android:width="30sp"/>
+					<EditText android:id="@+id/btn_editor_ycoord_et" android:width="30sp" android:inputType="number" android:singleLine="true"/>
 					</TableRow>
 				</TableLayout>
 				</TableRow>
@@ -234,7 +246,7 @@
 					<TextView android:text="    Width:   " android:layout_gravity="center" />
 					</TableRow>
 					<TableRow>
-					<EditText android:id="@+id/btn_editor_width_et" android:width="30sp"/>
+					<EditText android:id="@+id/btn_editor_width_et" android:width="30sp" android:inputType="number" android:singleLine="true"/>
 					</TableRow>
 				</TableLayout>
 				<TableLayout android:layout_marginTop="15sp" android:layout_marginLeft="5sp" android:layout_marginRight="5sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/blue_frame_nomargin">
@@ -242,7 +254,7 @@
 					<TextView android:text="  Height:  " android:layout_gravity="center" />
 					</TableRow>
 					<TableRow>
-					<EditText android:id="@+id/btn_editor_height_et" android:width="30sp"/>
+					<EditText android:id="@+id/btn_editor_height_et" android:width="30sp" android:inputType="number" android:singleLine="true"/>
 					</TableRow>
 				</TableLayout>
 				</TableRow>

@@ -2,6 +2,8 @@ package com.happygoatstudios.bt.button;
 
 import org.xml.sax.Attributes;
 
+import com.happygoatstudios.bt.settings.ColorSetSettings;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.sax.EndTextElementListener;
@@ -81,6 +83,17 @@ public class SlickButtonData implements Parcelable {
 		labelSize = DEFAULT_LABEL_SIZE;
 		flipLabel="";
 		flipLabelColor=DEFAULT_FLIPLABEL_COLOR;
+	}
+	
+	public void setFromSetSettings(ColorSetSettings in,ColorSetSettings old) {
+		if(primaryColor == old.getPrimaryColor()) primaryColor = in.getPrimaryColor();
+		if(selectedColor == old.getSelectedColor()) selectedColor = in.getSelectedColor();
+		if(flipColor == old.getFlipColor()) flipColor = in.getFlipColor();
+		if(labelColor == old.getLabelColor()) labelColor = in.getLabelColor();
+		if(flipLabelColor == old.getFlipLabelColor()) flipLabelColor = in.getFlipLabelColor();
+		if(labelSize == old.getLabelSize()) labelSize = in.getLabelSize();
+		if(width == old.getButtonWidth()) width = in.getButtonWidth();
+		if(height == old.getButtonHeight()) height = in.getButtonHeight();
 	}
 	
 	public boolean equals(Object aTest) {

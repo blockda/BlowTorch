@@ -45,4 +45,6 @@ interface IBaardTERMService {
 	void ExportSettingsToPath(String path);
 	void resetSettings();
 	ColorSetSettings getCurrentColorSetDefaults();
+	ColorSetSettings getColorSetDefaultsForSet(String the_set);
+	void setColorSetDefaultsForSet(String the_set,in ColorSetSettings input);
 }

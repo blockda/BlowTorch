@@ -4,13 +4,25 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/aliasdialoglayout"
   android:layout_width="420px"
-  android:layout_height="fill_parent">
+  android:layout_height="200dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="EDIT ALIASES"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
   
   <TableLayout
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
   	android:id="@+id/alias_label"
-  	android:layout_alignParentTop="true">
+  	android:layout_below="@id/titlebar">
   	<TableRow>
   		<TextView 
   			android:layout_width="210px"

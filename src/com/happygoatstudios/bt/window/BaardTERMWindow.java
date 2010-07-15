@@ -99,6 +99,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	public static final int MESSAGE_MODIFYBUTTON = 202;
 	public static final int MESSAGE_NEWBUTTONSET = 205;
 	public static final int MESSAGE_CHANGEBUTTONSET = 206;
+	public static final int MESSAGE_RELOADBUTTONSET = 208;
 	protected static final int MESSAGE_BUTTONREQUESTINGSETCHANGE = 207;
 	
 	protected boolean settingsDialogRun = false;
@@ -333,6 +334,9 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_RELOADBUTTONSET:
+					
+					break;
 				case MESSAGE_NEWBUTTONSET:
 					try {
 						service.addNewButtonSet((String)msg.obj);
@@ -847,7 +851,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			//show the button set selector dialog
 			ButtonSetSelectorDialog buttoneditor = null;
 			try{
-				buttoneditor = new ButtonSetSelectorDialog(this,myhandler,(HashMap<String,Integer>)service.getButtonSetListInfo(),service.getLastSelectedSet());
+				buttoneditor = new ButtonSetSelectorDialog(this,myhandler,(HashMap<String,Integer>)service.getButtonSetListInfo(),service.getLastSelectedSet(),service);
 				buttoneditor.setTitle("Select Button Set");
 				buttoneditor.show();
 			} catch(RemoteException e) {
@@ -1279,6 +1283,13 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			try {
 				service.setAliases(map);
 			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		} else {
+			try {
+				service.setAliases(map);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

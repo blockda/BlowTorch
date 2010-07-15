@@ -208,17 +208,17 @@ public class BaardTERMService extends Service {
 					//do search and replace with aliases.
 					
 					//convert all alias keys to the big match string.
-					Object[] a = aliases.keySet().toArray();
+					//Object[] a = aliases.keySet().toArray();
 					
-					StringBuffer joined_alias = new StringBuffer();
-					if(a.length > 0) {
-						joined_alias.append("("+(String)a[0]+")");
+					//StringBuffer joined_alias = new StringBuffer();
+					if(joined_alias.length() > 0) {
+						/*joined_alias.append("("+(String)a[0]+")");
 						for(int i=1;i<a.length;i++) {
 							joined_alias.append("|");
 							joined_alias.append("("+(String)a[i]+")");
 						}
+						*/
 						
-						Log.e("SERVICE","PATTERN: " + joined_alias.toString());
 						
 						Pattern to_replace = Pattern.compile(joined_alias.toString());
 						
@@ -236,7 +236,7 @@ public class BaardTERMService extends Service {
 						while(replacer.find()) {
 							//String matched = replacer.group(0);
 							found = true;
-							String replace_with = aliases.get(replacer.group(0));
+							String replace_with = the_settings.getAliases().get(replacer.group(0));
 							replacer.appendReplacement(replaced, replace_with);
 						}
 						
@@ -250,7 +250,7 @@ public class BaardTERMService extends Service {
 								Matcher recursivematch = to_replace.matcher(replaced.toString());
 								while(recursivematch.find()) {
 									recursivefound = true;
-									String replace_with = aliases.get(recursivematch.group(0));
+									String replace_with = the_settings.getAliases().get(recursivematch.group(0));
 									recursivematch.appendReplacement(buffertemp, replace_with);
 								}
 								if(recursivefound) {
@@ -301,7 +301,7 @@ public class BaardTERMService extends Service {
 						
 						//send the transformed data back to the window
 						try {
-							dispatch(preserve);
+							doDispatchNoProcess(preserve);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -392,6 +392,7 @@ public class BaardTERMService extends Service {
 			//if the file exists, we will get here, if not, it will go to file not found.
 			HyperSAXParser parser = new HyperSAXParser(filename,this);
 			the_settings = parser.load();
+			buildAliases();
 		} catch (FileNotFoundException e) {
 			//if the file does not exist, then we need to load the default settings
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
@@ -623,6 +624,7 @@ public class BaardTERMService extends Service {
 		public void addAlias(String what, String to) throws RemoteException {
 			//aliases.put(what, to);
 			the_settings.getAliases().put(what, to);
+			buildAliases();
 		}
 
 
@@ -637,6 +639,7 @@ public class BaardTERMService extends Service {
 			//aliases = new TreeMap<String, String>(map);
 			the_settings.getAliases().clear();
 			the_settings.setAliases(new HashMap<String,String>(map));
+			buildAliases();
 		}
 
 
@@ -938,6 +941,38 @@ public class BaardTERMService extends Service {
 				return the_settings.getSetSettings().get(the_settings.getLastSelected());
 			}
 		}
+
+
+		public ColorSetSettings getColorSetDefaultsForSet(String theSet)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.getSetSettings().get(theSet);
+			}
+		}
+
+
+		public void setColorSetDefaultsForSet(String theSet,ColorSetSettings input)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				//back up old set to use for the button update.
+				ColorSetSettings oldsettings = the_settings.getSetSettings().get(theSet);
+				
+				//set the new settings
+				the_settings.getSetSettings().remove(theSet);
+				the_settings.getSetSettings().put(theSet, input);
+				
+				//update all the button in the new set with the new data, if they have the same data as the old settings.
+				Vector<SlickButtonData> edited_set = the_settings.getButtonSets().get(theSet);
+				for(SlickButtonData button : edited_set) {
+					button.setFromSetSettings(input, oldsettings);
+				}
+				
+				//need to go through all the button in the set and update the values.
+			}
+			
+		}
 		
 
 	};
@@ -971,6 +1006,24 @@ public class BaardTERMService extends Service {
 		dat.putInt("PRUNELOC", prunelocation);
 		
 		return dat;
+	}
+	
+	StringBuffer joined_alias = new StringBuffer();
+	public void buildAliases() {
+		joined_alias.setLength(0);
+		
+		Object[] a = the_settings.getAliases().keySet().toArray();
+		
+		//StringBuffer joined_alias = new StringBuffer();
+		if(a.length > 0) {
+			joined_alias.append("("+(String)a[0]+")");
+			for(int i=1;i<a.length;i++) {
+				joined_alias.append("|");
+				joined_alias.append("("+(String)a[i]+")");
+			}
+			
+		}
+		Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
 	}
 	
 	public void sendInitOk() throws RemoteException {
@@ -1138,7 +1191,7 @@ public class BaardTERMService extends Service {
 		
 	}
 	
-	public void doDispatchNoProcess(byte[] data) {
+	public void doDispatchNoProcess(byte[] data) throws RemoteException{
 		
 		String rawData = null;
 		try {
@@ -1164,7 +1217,7 @@ public class BaardTERMService extends Service {
 				final_count = final_count - 1;
 			}
 		}
-		
+		callbacks.finishBroadcast();
 		if(final_count == 0) {
 			//someone is listening so don't save the buffer
 			//Log.e("SERV","No listeners, buffering data.");
