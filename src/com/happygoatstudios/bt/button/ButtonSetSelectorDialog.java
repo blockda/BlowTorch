@@ -16,6 +16,7 @@ import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -39,6 +40,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 	
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
+		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		setContentView(R.layout.buttonset_selection_dialog);
 		
 		ListView lv = (ListView) findViewById(R.id.buttonset_list);

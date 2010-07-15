@@ -1176,11 +1176,19 @@ public class BaardTERMService extends Service {
 		}
 	}
 	
+	boolean debug = false;
+	
 	public void doStartup() throws SocketException {
 		if(host == BAD_HOST || port == BAD_PORT) {
 			return; //dont' start 
 		}
 		
+		if(debug) {
+			return;
+		}
+		
+		
+		//return; //TODO: WE WILL NEVER START UP;
 		InetAddress addr = null;
 		try {
 			//InetAddress[] x = InetAddress.getAllByName(host);

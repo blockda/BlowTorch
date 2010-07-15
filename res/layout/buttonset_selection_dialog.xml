@@ -6,6 +6,18 @@
 	android:layout_width="420px"
 	android:layout_height="fill_parent">
 	
+	<TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="SELECT BUTTON SET"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+	
 	<Button
 		android:id="@+id/new_buttonset_button"
 		android:layout_alignParentBottom="true"
@@ -33,6 +45,7 @@
 			android:id="@+id/buttonset_list"
 			android:layout_height="fill_parent"
 			android:layout_above="@id/new_buttonset_button"
+			android:layout_below="@id/titlebar"
 			android:layout_width="420px"/>
 		
 	<!-- </ScrollView> -->

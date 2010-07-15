@@ -1,14 +1,19 @@
 package com.happygoatstudios.bt.button;
 
+import android.R;
 import android.os.Bundle;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.*;
+import android.graphics.Path.Direction;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.RelativeLayout.LayoutParams;
 
 public class ColorPickerDialog extends Dialog {
@@ -24,9 +29,12 @@ public class ColorPickerDialog extends Dialog {
     private static class ColorPickerView extends View implements SeekBar.OnSeekBarChangeListener {
         private Paint mPaint;
         private Paint mCenterPaint;
+        private Paint mCenterIndicator;
         private int[] mColors;
         private OnColorChangedListener mListener;
         private ButtonEditorDialog.COLOR_FIELDS thefield;
+        private Path circle_path;
+        private Paint mCenterCircle;
 
         ColorPickerView(Context c, OnColorChangedListener l, int color,ButtonEditorDialog.COLOR_FIELDS usethisfield) {
             super(c);
@@ -41,11 +49,27 @@ public class ColorPickerDialog extends Dialog {
             mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             mPaint.setShader(s);
             mPaint.setStyle(Paint.Style.STROKE);
-            mPaint.setStrokeWidth(32);
+            mPaint.setStrokeWidth(42);
 
             mCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             mCenterPaint.setColor(color);
             mCenterPaint.setStrokeWidth(5);
+            
+            mCenterIndicator = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mCenterIndicator.setColor(0xFFAAAAAA);
+            mCenterIndicator.setStrokeWidth(1);
+            mCenterIndicator.setTextSize(8.0f * this.getContext().getResources().getDisplayMetrics().density);
+            
+            mCenterCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mCenterCircle.setColor(0xFFAAAAAA);
+            mCenterCircle.setStrokeWidth(1);
+            mCenterCircle.setStyle(Paint.Style.STROKE);
+            //circle_path = new Path();
+           // circle_path.addCircle(0, 0, (float) (CENTER_X - mPaint.getStrokeWidth()*0.5f*0.5), Direction.CW);
+            //Matrix m = new Matrix();
+            //m.reset();
+           // m.postRotate(-90);
+           // circle_path.transform(m);
         }
 
         private boolean mTrackingCenter;
@@ -54,9 +78,21 @@ public class ColorPickerDialog extends Dialog {
         @Override 
         protected void onDraw(Canvas canvas) {
             float r = CENTER_X - mPaint.getStrokeWidth()*0.5f;
+            
+            circle_path = new Path();
+            //circle_path.addCircle(0, 0, (float) (r*0.5), Direction.CW);
+            float nr = (float) (mCenterPaint.getStrokeWidth() + CENTER_RADIUS + 5);
+            circle_path.addOval(new RectF(-nr, -nr, nr, nr), Direction.CW);
+            Matrix m = new Matrix();
+            m.reset();
+            m.postRotate(-180);
+            circle_path.transform(m);
 
             canvas.translate(CENTER_X, CENTER_X);
 
+            canvas.drawTextOnPath("Select Inside To Confirm.", circle_path, 0, -3, mCenterIndicator);
+            canvas.drawPath(circle_path, mCenterCircle);
+            
             canvas.drawOval(new RectF(-r, -r, r, r), mPaint);            
             canvas.drawCircle(0, 0, CENTER_RADIUS, mCenterPaint);
 
@@ -83,8 +119,8 @@ public class ColorPickerDialog extends Dialog {
             setMeasuredDimension(CENTER_X*2, CENTER_Y*2);
         }
 
-        private static final int CENTER_X = 100;
-        private static final int CENTER_Y = 100;
+        private static final int CENTER_X = 125;
+        private static final int CENTER_Y = 125;
         private static final int CENTER_RADIUS = 32;
 
         private int floatToByte(float x) {
@@ -224,7 +260,7 @@ public class ColorPickerDialog extends Dialog {
                 mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
                 mPaint.setShader(s);
                 mPaint.setStyle(Paint.Style.STROKE);
-                mPaint.setStrokeWidth(32);
+                mPaint.setStrokeWidth(42);
 
                 mCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
                 mCenterPaint.setColor((modalpha|(color&0x00FFFFFF)));
@@ -254,37 +290,73 @@ public class ColorPickerDialog extends Dialog {
             }
         };
         
-        RelativeLayout relay = new RelativeLayout(getContext());
+        this.getWindow().setBackgroundDrawableResource(com.happygoatstudios.bt.R.drawable.dialog_window_crawler1);
+        this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        //strip off the alpha part.
+        int alphapart = ((mInitialColor&0xFF000000)>>24)&0x000000FF;
+			Log.e("COLORPICKER","AlphaPart is:"+alphapart);
+			
+	    RelativeLayout relay = new RelativeLayout(getContext());
+	    RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+	    relay.setLayoutParams(lparams);
+	    //relay.setBackgroundResource(R.drawable.dialog_frame);
+	    setContentView(relay);
+	    
+	    
+		RelativeLayout.LayoutParams titlep = new RelativeLayout.LayoutParams(250,LayoutParams.WRAP_CONTENT);
+		titlep.addRule(RelativeLayout.ALIGN_PARENT_TOP, 1);
+		TextView title = new TextView(this.getContext());
+		title.setText("COLOR PICKER");
+		title.setBackgroundColor(0xFF999999);
+		title.setTextColor(0xFF333333);
+		title.setLayoutParams(titlep);
+		title.setId(0x01);
+		title.setGravity(Gravity.CENTER);
+		title.setTextSize(15*this.getContext().getResources().getDisplayMetrics().density);
+		title.setTypeface(Typeface.DEFAULT_BOLD);
+		relay.addView(title);
+        
+
+        
         ColorPickerView view = new ColorPickerView(getContext(), l, mInitialColor,whichfield);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-        params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 1);
+        params.addRule(RelativeLayout.BELOW,0x01);
         params.width = LayoutParams.WRAP_CONTENT;
         params.height = LayoutParams.WRAP_CONTENT;
+        params.topMargin =  (int) (5 * this.getContext().getResources().getDisplayMetrics().density);
+        view.setLayoutParams(params);
+        view.setId(0x02);
+        relay.addView(view);
+        //params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 1);
+
         
         RelativeLayout.LayoutParams barparams = new RelativeLayout.LayoutParams(250,LayoutParams.WRAP_CONTENT);
-        barparams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,1);
-        barparams.addRule(RelativeLayout.BELOW,view.getId());
-        barparams.leftMargin = 10;
-        barparams.rightMargin = 10;
+        //barparams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,1);
+        barparams.addRule(RelativeLayout.BELOW,0x02);
+        barparams.addRule(RelativeLayout.ALIGN_LEFT,1);
+        barparams.topMargin = (int) (5 * this.getContext().getResources().getDisplayMetrics().density);
+        //barparams.leftMargin = barparams.topMargin;
+        //barparams.rightMargin = barparams.topMargin;
+        //barparams.bottomMargin = barparams.topMargin;
         //barparams.width = LayoutParams.FILL_PARENT;
         //barparams.height = LayoutParams.WRAP_CONTENT;
         
         SeekBar sb = new SeekBar(getContext());
         sb.setMax(255);
-        sb.setProgress(0xAA);
+        sb.setProgress(alphapart);
+       
         
         sb.setOnSeekBarChangeListener(view);
         
         sb.setLayoutParams(barparams);
         
-        view.setLayoutParams(params);
         
-        relay.setLayoutParams(params);
-        relay.addView(view);
         relay.addView(sb);
-
-        setContentView(relay);
         
-        setTitle("Pick a Color");
+        relay.forceLayout();
+        relay.invalidate();
+        
+
+        //setTitle("Color Picker:");
     }
 }

@@ -473,11 +473,15 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
 	
 		
+	//Pattern endsonnewline = Pattern.compile(".*\n$");
 	
+	boolean endedonnewline = false;
+	StringBuffer color_free = new StringBuffer();
+	Matcher colorfree = colordata.matcher("");
 	public void addText(String input,boolean jumptoend) {
 		
 		Matcher carriagerock = carriage.matcher(input);
-		
+		color_free.setLength(0);
 		//Matcher toLines = newline.matcher();
 		StringBuffer carriage_free = new StringBuffer(carriagerock.replaceAll(""));
 		//PREVIOUS CHARACTER WIDTH = 77
@@ -493,7 +497,41 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
 				//dlines.
 				size_before = dlines.size();
-				dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+				if(!endedonnewline) {
+					//TODO:FIXTHIS
+					//TODO:FIXTHIS
+					//TODO:FIXTHIS
+					if(dlines.size() > 0) {
+						broken_lines.insert(0, dlines.get(dlines.size()-1));
+						dlines.remove(dlines.size()-1);
+						dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+					} else {
+						dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+					}
+					
+				} else {
+					dlines.addAll(Arrays.asList(newline.split(broken_lines)));
+				}
+				if(carriage_free.toString().endsWith("\n")){
+					
+					
+					//unless the last line was a newline
+						colorfree.reset(dlines.get(dlines.size()-1));
+						color_free.append(colorfree.replaceAll(""));
+						//Log.e("WINDOW","INPUT ENDED ON NEWLINE, LAST LINE IS:" + dlines.get(dlines.size()-1) + "| i debug thee into |" + color_free.toString() + "|hahaha");
+						if(!color_free.toString().equals("")) {
+					//if(!dlines.get(dlines.size()-1).equals("")) {
+							dlines.add("");
+							//endedonnewline = true;
+						}
+						endedonnewline=true;
+					//} else {
+						//Log.e("WINDOW","NOT ADDING A NEWLINE BECAUSE BUFFER ALREADY ENDS ON A NEWLINE!");
+					//}
+				} else {
+					endedonnewline = false;
+				}
+				
 				size_after = dlines.size();
 				if(dlines.size() > PREF_MAX_LINES) {
 					dlines.removeRange(0,dlines.size() - PREF_MAX_LINES);

@@ -5,9 +5,11 @@ import com.happygoatstudios.bt.window.BaardTERMWindow;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -19,6 +21,15 @@ public class NewButtonSetEntryDialog extends Dialog {
 		super(context);
 		// TODO Auto-generated constructor stub
 		dispatcher = reportto;
+		
+
+		
+	}
+	
+	public void onCreate(Bundle b) {
+		
+		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
 		setContentView(R.layout.new_buttonset_entry);
 		
@@ -36,6 +47,5 @@ public class NewButtonSetEntryDialog extends Dialog {
 				NewButtonSetEntryDialog.this.dismiss();
 			}
 		});
-		
 	}
 }

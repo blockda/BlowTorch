@@ -13,6 +13,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -32,6 +33,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 	public String mod_lbl = null;
 	public int EXIT_STATE = EXIT_CANCEL;
 	
+	
 	Handler deleter = null;
 	SlickButton the_button = null;
 	
@@ -44,6 +46,12 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 	Button flipColor = null;
 	Button labelColor = null;
 	Button flipLabelColor = null;
+	
+	EditText labelSize;
+	EditText xPos;
+	EditText yPos;
+	EditText eWidth;
+	EditText eHeight;
 	
 	//SlickButtonData orig_data = null;
 	
@@ -71,8 +79,8 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 	
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
-
-		this.setTitle("Modify Button Properties...");
+		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		//this.setTitle("Modify Button Properties...");
 		setContentView(R.layout.button_properties_dialog_tabbed);
 		
 		TabHost thost = (TabHost)findViewById(R.id.btn_editor_tabhost);
@@ -245,7 +253,17 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 			}
 		});
 		
+		labelSize = (EditText)findViewById(R.id.btn_editor_lblsize_et);
+		xPos = (EditText)findViewById(R.id.btn_editor_xcoord_et);
+		yPos = (EditText)findViewById(R.id.btn_editor_ycoord_et);
+		eWidth = (EditText)findViewById(R.id.btn_editor_width_et);
+		eHeight = (EditText)findViewById(R.id.btn_editor_height_et);
 		
+		labelSize.setText(new Integer(this.the_button.getData().getLabelSize()).toString());
+		xPos.setText(new Integer(the_button.getData().getX()).toString());
+		yPos.setText(new Integer(the_button.getData().getY()).toString());
+		eWidth.setText(new Integer(the_button.getData().getWidth()).toString());
+		eHeight.setText(new Integer(the_button.getData().getHeight()).toString());
 		
 		Button delbutton = (Button)findViewById(R.id.button_delete_btn);
 		
@@ -277,7 +295,11 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				the_button.setText(command.getText().toString());
 				the_button.setFlipCommand(flip.getText().toString());
 				the_button.getData().setFlipLabel(fliplbl.getText().toString());
-				
+				the_button.getData().setLabelSize(new Integer(labelSize.getText().toString()));
+				the_button.getData().setX(new Integer(xPos.getText().toString()));
+				the_button.getData().setY(new Integer(yPos.getText().toString()));
+				the_button.getData().setWidth(new Integer(eWidth.getText().toString()));
+				the_button.getData().setHeight(new Integer(eHeight.getText().toString()));
 				CheckBox tfree = (CheckBox)findViewById(R.id.move_free);
 				CheckBox tnudge = (CheckBox)findViewById(R.id.move_nudge);
 				CheckBox tfreeze = (CheckBox)findViewById(R.id.move_freeze);
@@ -302,6 +324,18 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				ButtonEditorDialog.this.dismiss();
 			}
 		}); 
+	}
+	
+	public void onBackPressed() {
+		//the_button.iHaveChanged(the_button.orig_data);
+		the_button.moving = false;
+		the_button.button_down = false;
+		the_button.doing_flip = false;
+		the_button.hasfocus = false;
+		the_button.dialog_launched = false;
+		//the_button.
+		the_button.invalidate();
+		this.dismiss();
 	}
 	
 	public enum COLOR_FIELDS {

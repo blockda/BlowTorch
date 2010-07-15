@@ -3,7 +3,7 @@
     
     <solid android:color="#F0000000"/>
     <stroke android:color="#FF832222" android:width="2sp" android:dashGap="3sp" android:dashWidth="3sp"/> 
-	<padding android:left="10dp" android:top="10dp"
-        android:right="10dp" android:bottom="10dp" />
+	<padding android:left="3sp" android:top="3sp"
+        android:right="3sp" android:bottom="3sp" /> 
 	
 </shape>
