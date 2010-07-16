@@ -118,7 +118,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		tab3.setContent(R.id.btn_editor_tab3);
 		thost.addTab(tab3);
 		
-		thost.setCurrentTab(1);
+		thost.setCurrentTab(0);
 		
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
