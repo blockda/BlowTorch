@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -426,6 +427,9 @@ public class Colorizer {
 		
 		Integer b = colormap.get(bright.toString());
 		Integer c = colormap.get(value.toString());
+		
+		//Integer b = BigInteger(bright);
+		//Integer b = Integer.parseInt(bright);
 		
 		if(b == null) {
 			b = 0;

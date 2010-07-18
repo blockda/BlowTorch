@@ -60,7 +60,7 @@ public class DataPumper extends Thread {
 						sendData(msg.getData().getByteArray("THEDATA"));
 						break;
 					case MESSAGE_END:
-						Log.e("PUMP","PUMP QUITTING!");
+						//Log.e("PUMP","PUMP QUITTING!");
 						this.getLooper().quit();
 						break;
 					case MESSAGE_INITXFER:
@@ -94,7 +94,7 @@ public class DataPumper extends Thread {
 		}
 		
 		public void useCompression() {
-			Log.e("PUMP","COMPRESSION BEGINNING NOW!");
+			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
 			compressed = true;
 		}
 		
@@ -112,7 +112,7 @@ public class DataPumper extends Thread {
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-					Log.e("PUMP","PUMP QUIT UNEXPECTEDLY!");
+					//Log.e("PUMP","PUMP QUIT UNEXPECTEDLY!");
 				}
 				if(numtoread < 1) {
 					//no data to read
@@ -133,7 +133,7 @@ public class DataPumper extends Thread {
 					
 					if(retval == -1) {
 						//end of stream has been reached. need to abort the who dealio.
-						Log.e("PUMPER","END OF STREAM REACHED");
+						//Log.e("PUMPER","END OF STREAM REACHED");
 					}
 					
 					if(compressed) {
@@ -215,7 +215,7 @@ public class DataPumper extends Thread {
 						//either we woke up or the processor was ready.
 						
 						reportto.sendMessage(msg); //report to mom and dad.
-						Log.e("PUMP","SENDING DATA FROM PUMP TO SERVICE");
+						//Log.e("PUMP","SENDING DATA FROM PUMP TO SERVICE");
 						//sleep until they wake us
 						//waitme(); //pause till processor is done.
 
@@ -262,7 +262,7 @@ public class DataPumper extends Thread {
 			int sec_byte = (int)data[data.length -2];
 			int last_byte = (int)data[data.length -1];
 			
-			Log.e("PUMP","PUMP SENDING: "+ debugmsg + " | stlb: " + sec_byte + " lasb: " +last_byte + " size: " + size);
+			//Log.e("PUMP","PUMP SENDING: "+ debugmsg + " | stlb: " + sec_byte + " lasb: " +last_byte + " size: " + size);
 			try {
 				writer.write(data);
 				writer.flush();

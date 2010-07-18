@@ -155,7 +155,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				//do nothing here, as there isn't much we can do
 			}
 			synchronized(serviceConnected) {
-				Log.e("WINDOW","SERVICE CONNECTED, SENDING NOTIFICATION");
+				//Log.e("WINDOW","SERVICE CONNECTED, SENDING NOTIFICATION");
 				serviceConnected.notify();
 				serviceConnected = true;
 			}
@@ -223,7 +223,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		Log.e("WINDOW","onCreate()");
+		//Log.e("WINDOW","onCreate()");
 		
 		setContentView(R.layout.window_layout);
 		
@@ -231,7 +231,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
         Pattern nowhitespace = Pattern.compile("\\s");
         Matcher m = nowhitespace.matcher(display_name + ".PREFS");
         String tmpstr = m.replaceAll("");
-        Log.e("WINDOW","LAUNCHING WITH CONFIGURATION FILE NAME:" + tmpstr);
+        //Log.e("WINDOW","LAUNCHING WITH CONFIGURATION FILE NAME:" + tmpstr);
         PREFS_NAME = tmpstr; //kill off all white space in the display name, use it as the preference file
         history = new CommandKeeper(10);
         
@@ -392,10 +392,10 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 					try {
 						if(orig != null && mod != null) {
-							Log.e("WINDOW","MODIFY BUTTON " +orig.toString() + " TO " + mod.toString() + " attempting service call now");
+							//Log.e("WINDOW","MODIFY BUTTON " +orig.toString() + " TO " + mod.toString() + " attempting service call now");
 							service.modifyButton(service.getLastSelectedSet(),orig,mod);
 						} else {
-							Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
+							//Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
 						}
 					} catch (RemoteException e2) {
 						// TODO Auto-generated catch block
@@ -410,7 +410,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						//so, if we a are here, then the dialog screen has been run.
 						//we need to read in the values and supply them to the service
 						settingsDialogRun = false;
-						Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
+						//Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(BaardTERMWindow.this);
 						Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
 						Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
@@ -446,7 +446,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						
 						if(!importPath.equals("")) {
 							//import needed
-							Log.e("WINDOW","WINDOW SENDING IMPORT REQUEST FOR " + importPath);
+							//Log.e("WINDOW","WINDOW SENDING IMPORT REQUEST FOR " + importPath);
 							try {
 								service.LoadSettingsFromPath(importPath);
 							} catch (RemoteException e) {
@@ -459,7 +459,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						if(!exportPath.equals("")) {
 							//export needed
 							String fullPath = "/BaardTERM/" + exportPath;
-							Log.e("WINDOW","WINDOW SENDING EXPORT REQUEST TO PATH: " + fullPath);
+							//Log.e("WINDOW","WINDOW SENDING EXPORT REQUEST TO PATH: " + fullPath);
 							try {
 								service.ExportSettingsToPath(fullPath);
 							} catch (RemoteException e) {
@@ -509,11 +509,11 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						//get the font name 
 						String tmpname = service.getFontName();
 						Typeface font = Typeface.MONOSPACE;
-						Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
+						//Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
 						if(tmpname.contains("/")) {
 							//string is a path
 							if(tmpname.contains(Environment.getExternalStorageDirectory().getPath())) {
-								Log.e("WINDOW","Loading font from SDCARD!");
+								//Log.e("WINDOW","Loading font from SDCARD!");
 								boolean available = false;
 								String sdstate = Environment.getExternalStorageState();
 								if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
@@ -524,7 +524,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 								//path is an sdcard path
 							} else {
 								//path is a system path
-								Log.e("WINDOW","Loading font from path!");
+								//Log.e("WINDOW","Loading font from path!");
 								font = Typeface.createFromFile(tmpname);
 							}
 							
@@ -635,7 +635,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					myhandler.sendEmptyMessage(BaardTERMWindow.MESSAGE_RESETINPUTWINDOW);
 					break;
 				case MESSAGE_RESETINPUTWINDOW:
-					Log.e("WINDOW","Attempting to reset input bar.");
+					//Log.e("WINDOW","Attempting to reset input bar.");
 					
 					
 					input_box.clearComposingText();
@@ -887,7 +887,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			//should be a full path /sdcard/something.xml
 			String filename = (String)msg.obj;
 			try {
-				Log.e("WINDOW","TRYING TO GET SERVICE TO WRITE A FILE FOR ME!");
+				//Log.e("WINDOW","TRYING TO GET SERVICE TO WRITE A FILE FOR ME!");
 				service.ExportSettingsToPath(filename);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
@@ -1040,7 +1040,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		editor.putInt("BUTTONCOUNT", buttoncount);
 		if(buttoncount == 0) {
-			Log.e("WINDOW","SAVED BUTTONCOUNT OF ZERO!!!");
+			//Log.e("WINDOW","SAVED BUTTONCOUNT OF ZERO!!!");
 		}
 		
 		editor.commit();
@@ -1064,26 +1064,26 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		
 		if(resultCode == RESULT_OK) {
-			Log.e("WINDOW","onActivityResult()");
+			//Log.e("WINDOW","onActivityResult()");
 			settingsDialogRun = true;
 		}
 	}
 	
 	
 	public void onStart() {
-		Log.e("WINDOW","onStart()");
+		//Log.e("WINDOW","onStart()");
 		super.onStart();
 	}
 	
 
 	
 	public void onPause() {
-		Log.e("WINDOW","onPause()");
+		//Log.e("WINDOW","onPause()");
 		
 		if(isBound) {
 			
 			try {
-				Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
+				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
 				if(service != null) {
 					service.unregisterCallback(the_callback);
 					
@@ -1111,12 +1111,12 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	}
 	
 	public void onStop() {
-		Log.e("WINDOW","onStop()");
+		//Log.e("WINDOW","onStop()");
 		super.onStop();
 	}
 	
 	public void onDestroy() {
-		Log.e("WINDOW","onDestroy()");
+		//Log.e("WINDOW","onDestroy()");
 		super.onDestroy();
 	}
 	
@@ -1124,7 +1124,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		
 
-		Log.e("WINDOW","onResume()");
+		//Log.e("WINDOW","onResume()");
 		
 		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
 		servicestarted = prefs.getBoolean("CONNECTED", false);
@@ -1149,7 +1149,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		if(!isBound) {
 			bindService(new Intent(com.happygoatstudios.bt.service.IBaardTERMService.class.getName()), mConnection, 0); //do not auto create
-			Log.e("WINDOW","Bound connection at onResume");
+			//Log.e("WINDOW","Bound connection at onResume");
 			isBound = true;
 			
 			
@@ -1161,7 +1161,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	}
 	
 	public void onDestroy(Bundle saveInstance) {
-		Log.e("WINDOW","onDestroy()");
+		//Log.e("WINDOW","onDestroy()");
 		super.onDestroy();
 	}
 	

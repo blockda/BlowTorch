@@ -60,7 +60,7 @@ public class Processor {
 				
 			String debug_input = TC.getEncodedString(snd);
 			String debug_output = TC.getEncodedString(resp);
-			Log.e("SERV","OPT: " + debug_input + "|RES: " + debug_output);
+			//Log.e("SERV","OPT: " + debug_input + "|RES: " + debug_output);
 				
 			//try {
 				
@@ -116,7 +116,7 @@ public class Processor {
 			byte[] compressresp = new byte[1];
 			compressresp[0] = TC.COMPRESS2;
 			if(sub_r[0] == compressresp[0]) {
-				Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
+				//Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
 				
 				reportto.sendEmptyMessage(BaardTERMService.MESSAGE_STARTCOMPRESS);
 				
@@ -195,7 +195,7 @@ public class Processor {
 				
 			String debug_input = TC.getEncodedString(snd);
 			String debug_output = TC.getEncodedString(resp);
-			Log.e("SERV","OPT: " + debug_input + "|RES: " + debug_output);
+			//Log.e("SERV","OPT: " + debug_input + "|RES: " + debug_output);
 				
 			//try {
 				
@@ -251,7 +251,7 @@ public class Processor {
 			byte[] compressresp = new byte[1];
 			compressresp[0] = TC.COMPRESS2;
 			if(sub_r[0] == compressresp[0]) {
-				Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
+				//Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
 				
 				reportto.sendEmptyMessage(BaardTERMService.MESSAGE_STARTCOMPRESS);
 				

@@ -139,7 +139,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		move_freeze = (CheckBox)findViewById(R.id.move_freeze);
 		//set up radio button handling.
 		//set initial checked value
-		Log.e("BTNEDITOR","INITIALIZING DIALOG WITH:" + the_button.getMoveMethod());
+		////Log.e("BTNEDITOR","INITIALIZING DIALOG WITH:" + the_button.getMoveMethod());
 		switch(the_button.getMoveMethod()) {
 		case SlickButtonData.MOVE_FREE:
 			move_free.setChecked(true);
@@ -313,12 +313,12 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				CheckBox tfreeze = (CheckBox)findViewById(R.id.move_freeze);
 				
 				if(tfree.isChecked()) {
-					Log.e("BTNEDITOR","SAVING WITH MOVE_FREE");
+					//Log.e("BTNEDITOR","SAVING WITH MOVE_FREE");
 					the_button.setMoveMethod(SlickButtonData.MOVE_FREE);
 				}
 				
 				if(tnudge.isChecked()) {
-					Log.e("BTNEDITOR","SAVING WITH MOVE_NUDGE");
+					//Log.e("BTNEDITOR","SAVING WITH MOVE_NUDGE");
 					the_button.setMoveMethod(SlickButtonData.MOVE_NUDGE);
 				}
 				
@@ -361,7 +361,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 	//Button flipLabelColor = null;
 	public void colorChanged(int color,COLOR_FIELDS which) {
 		// TODO Auto-generated method stub
-		Log.e("BTNEDITOR","GOT NEW COLOR FOR" + which + " returned " + color);
+		//Log.e("BTNEDITOR","GOT NEW COLOR FOR" + which + " returned " + color);
 		switch(which) {
 		case COLOR_MAIN:
 			the_button.getData().setPrimaryColor(color);

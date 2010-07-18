@@ -295,7 +295,7 @@ public class ColorPickerDialog extends Dialog {
         this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         //strip off the alpha part.
         int alphapart = ((mInitialColor&0xFF000000)>>24)&0x000000FF;
-			Log.e("COLORPICKER","AlphaPart is:"+alphapart);
+			//Log.e("COLORPICKER","AlphaPart is:"+alphapart);
 			
 	    RelativeLayout relay = new RelativeLayout(getContext());
 	    RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);

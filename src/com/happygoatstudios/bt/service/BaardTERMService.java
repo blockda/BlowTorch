@@ -118,7 +118,7 @@ public class BaardTERMService extends Service {
 	
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
-		Log.e("SERV","BAARDTERMSERVICE STARTING!");
+		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		host = BAD_HOST;
 		port = BAD_PORT;
@@ -127,7 +127,7 @@ public class BaardTERMService extends Service {
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
 		settingslocation = prefs.getString("SETTINGS_PATH", "");
 		if(settingslocation.equals("")) {
-			Log.e("SERVICE","LAUNCHER FAILED TO PROVIDE SETTINGS PATH");
+			//Log.e("SERVICE","LAUNCHER FAILED TO PROVIDE SETTINGS PATH");
 			return;
 		}
 		
@@ -192,7 +192,7 @@ public class BaardTERMService extends Service {
 						// TODO Auto-generated catch block
 						e2.printStackTrace();
 					}
-					Log.e("SERV","SENDING STRING " + odbgmsg + "|size: " + obytes.length);
+					//Log.e("SERV","SENDING STRING " + odbgmsg + "|size: " + obytes.length);
 					try {
 						output_writer.write(obytes);
 						output_writer.flush();
@@ -264,8 +264,8 @@ public class BaardTERMService extends Service {
 						//pull the bytes back out.
 						try {
 							bytes = replaced.toString().getBytes("ISO-8859-1");
-							Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
-							Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
+							//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
+							//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
 						} catch (UnsupportedEncodingException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -293,7 +293,7 @@ public class BaardTERMService extends Service {
 						String dbgmsg = new String(bytes,"ISO-8859-1");
 						
 						
-						Log.e("SERV","SENDING STRING " + dbgmsg + "|size: " + bytes.length);
+						//Log.e("SERV","SENDING STRING " + dbgmsg + "|size: " + bytes.length);
 						
 						output_writer.write(nosemidata.getBytes("ISO-8859-1"));
 
@@ -363,7 +363,7 @@ public class BaardTERMService extends Service {
 	}
 	
 	public void onDestroy() {
-		Log.e("SERV","ON DESTROY CALLED!");
+		//Log.e("SERV","ON DESTROY CALLED!");
 		saveXmlSettings(settingslocation);
 		//saveAliases();
 		doShutdown();
@@ -407,12 +407,12 @@ public class BaardTERMService extends Service {
 
 		
 		
-		Log.e("SERVICE","SETTINGS LOADED");
-		Log.e("SEERVICE","Contains " + the_settings.getButtonSets().size() + " button sets");
-		Set<String> keys = the_settings.getButtonSets().keySet();
-		for(String key : keys) {
-			Log.e("SERVICE","Found ButtonSet:" + key + " , it contains " + the_settings.getButtonSets().get(key).size() + " buttons.");
-		}
+		//Log.e("SERVICE","SETTINGS LOADED");
+		//Log.e("SEERVICE","Contains " + the_settings.getButtonSets().size() + " button sets");
+		//Set<String> keys = the_settings.getButtonSets().keySet();
+		//for(String key : keys) {
+			//Log.e("SERVICE","Found ButtonSet:" + key + " , it contains " + the_settings.getButtonSets().get(key).size() + " buttons.");
+		//}
 		//omg. look at how clean that is.
 		
 	}
@@ -429,12 +429,12 @@ public class BaardTERMService extends Service {
 		
 		String usethis = stripper.replaceAll("");
 		int count = pref.getInt("ALIASCOUNT" + usethis, 0);
-		Log.e("SERVICE","Loading: " + count + " aliases.");
+		//Log.e("SERVICE","Loading: " + count + " aliases.");
 		if(count > 0) {
 			for(int i=0;i<count;i++) {
 				String alias = pref.getString(usethis + "ALIAS" + i, "");
 				if(!alias.equals("")) {
-					Log.e("SERVICE","Attempting to load: " + alias);
+					//Log.e("SERVICE","Attempting to load: " + alias);
 					String[] parts = alias.split("\\Q[||]\\E");
 					if(parts.length == 2) {
 						//only do well formatted alias pairs.
@@ -481,10 +481,10 @@ public class BaardTERMService extends Service {
 			if(m != null && !hasListener) {
 				if(callbacks.register(m,binderCookie)) {
 					bindCount++;
-					Log.e("SERV","Registering callback, " + bindCount + " now.");
+					//Log.e("SERV","Registering callback, " + bindCount + " now.");
 					hasListener = true;
 				} else {
-					Log.e("SERV","Callback not registerd because it is already in the list, " + bindCount + " now.");
+					//Log.e("SERV","Callback not registerd because it is already in the list, " + bindCount + " now.");
 				}
 			} else {
 				callbacks.kill();
@@ -505,7 +505,7 @@ public class BaardTERMService extends Service {
 			if(m != null) {
 				if(callbacks.unregister(m)) {
 					bindCount--;
-					Log.e("SERV","Unregistering callback, " + bindCount + " left.");
+					//Log.e("SERV","Unregistering callback, " + bindCount + " left.");
 					hasListener = false;
 				}
 			}
@@ -741,9 +741,9 @@ public class BaardTERMService extends Service {
 				the_settings.setLastSelected(setname);
 				Vector<SlickButtonData> tmp = the_settings.getButtonSets().get(setname);
 				if(tmp == null) {
-					Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " but got null");
+					//Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " but got null");
 				} else {
-					Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " and am returning real data");
+					//Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " and am returning real data");
 				}
 				return tmp;
 			}
@@ -901,13 +901,13 @@ public class BaardTERMService extends Service {
 				if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 					File file = new File(root,path);
 					file.createNewFile();
-					Log.e("SERVICE","ATTEMPTING TO WRITE TO FILE: " + file.getPath());
+					//Log.e("SERVICE","ATTEMPTING TO WRITE TO FILE: " + file.getPath());
 					FileWriter writer = new FileWriter(file);
 					BufferedWriter tmp = new BufferedWriter(writer);
 					tmp.write(HyperSettings.writeXml2(the_settings));
 					tmp.close();
 				} else {
-					Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
+					//Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
 				}
 				} catch(Exception e) {
 					throw new RuntimeException(e);
@@ -1023,7 +1023,7 @@ public class BaardTERMService extends Service {
 			}
 			
 		}
-		Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
+		//Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
 	}
 	
 	public void sendInitOk() throws RemoteException {
@@ -1128,7 +1128,7 @@ public class BaardTERMService extends Service {
 			//results.
 			if(results.matches()) {
 				//NOTIFICATION: 
-				Log.e("SERVICE","SERVICE MATCHED: " + test_for);
+				//Log.e("SERVICE","SERVICE MATCHED: " + test_for);
 				//build a new notification.
 				Notification note = new Notification(R.drawable.btn_plus,"BaardTERM-Pattern Matched",System.currentTimeMillis());
 				//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);

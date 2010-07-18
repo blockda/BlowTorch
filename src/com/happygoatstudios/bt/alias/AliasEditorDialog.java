@@ -75,7 +75,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			Object[] values = input.values().toArray();
 			
 			if(keys.length != values.length) {
-				Log.e("ALIAS","UNEQUAL ALIAS TARGETS");
+				//Log.e("ALIAS","UNEQUAL ALIAS TARGETS");
 			}
 			
 			for(int i=0;i<keys.length;i++) {
@@ -161,7 +161,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 					//Log.e("ALIASEDITOR","POSITION " + position + " is a circular reference offender.");
 				}
 				if(isoffender) {
-					Log.e("ALIASEDITOR","POSITION " + position + " is a circular reference offender.");
+					//Log.e("ALIASEDITOR","POSITION " + position + " is a circular reference offender.");
 					//activate view elements to notify the user that this is a circular reference offender.
 					TextView tmp1 = (TextView)v.findViewById(R.id.alias_pre);
 					TextView tmp2 = (TextView)v.findViewById(R.id.alias_post);
@@ -188,7 +188,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
-			Log.e("LAUNCHER","List item long clicked!");
+			//Log.e("LAUNCHER","List item long clicked!");
 			String muc = apdapter.getItem(arg2);
 			
 			
@@ -261,7 +261,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			//do some stuff to make the dialog better.
 			apdapter.notifyDataSetChanged();
 		} else {
-			Log.e("ALIASEDITOR","NEW ALIAS VALID!");
+			//Log.e("ALIASEDITOR","NEW ALIAS VALID!");
 			offenders.removeAllElements();
 			offenders.clear();
 			apdapter.notifyDataSetChanged();
@@ -280,7 +280,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			//do some stuff to make the dialog better.
 			apdapter.notifyDataSetChanged();
 		} else {
-			Log.e("ALIASEDITOR","EDITED ALIAS VALID!");
+			//Log.e("ALIASEDITOR","EDITED ALIAS VALID!");
 			offenders.removeAllElements();
 			offenders.clear();
 			apdapter.notifyDataSetChanged();
@@ -311,7 +311,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				if(post.contains(test_pre)) {
 					//circular reference. flag accordingly.
 					//Toast.makeText(this.getContext(), "CIRCULAR REFERENCES DETECTED", 2000);
-					Log.e("ALIASEDITOR","CIRCULAR ALIAS DETECTED!");
+					//Log.e("ALIASEDITOR","CIRCULAR ALIAS DETECTED!");
 					offenders.add(new Integer(i));
 					retval = false;
 					

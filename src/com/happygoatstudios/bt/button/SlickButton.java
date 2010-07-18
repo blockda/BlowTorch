@@ -371,7 +371,8 @@ public class SlickButton extends View {
 		}
 		this.invalidate(rect);
 	}*/
-	
+	Paint p = new Paint();
+	Paint opts = new Paint();
 	public void onDraw(Canvas c) {
 		//c.
 		//Log.e("BUTTON","DRAWING BUTTON!");
@@ -381,7 +382,7 @@ public class SlickButton extends View {
 		//RectF f_rect = new RectF(rect);
 		//c.drawColor(0xFF0FF000);
 		//c.
-		Paint p = new Paint();
+		
 		
 		if(hasfocus) {
 			if(doing_flip) {
@@ -396,7 +397,7 @@ public class SlickButton extends View {
 		c.drawRect(rect, p);
 		
 		//get text size.
-		Paint opts = new Paint();
+		
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
 		opts.setTextSize(data.getLabelSize());
 		//opts.setF

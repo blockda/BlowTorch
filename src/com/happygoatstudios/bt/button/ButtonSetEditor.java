@@ -149,7 +149,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				
 				if(newsettings.equals(oldsettings)) {
 					//no changes made, do nothing
-					Log.e("SETEDITOR","NOT MODIFYING SET DEFAULTS FOR:" +set);
+					//Log.e("SETEDITOR","NOT MODIFYING SET DEFAULTS FOR:" +set);
 				} else {
 					//changes made, notify the service that the change has been made, and notify the settings dialog that when it exits it needs to reload whatever button set changed.
 					try {
@@ -158,7 +158,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					Log.e("SETEDITOR","NOT MODIFYING SET DEFAULTS FOR:" +set);
+					//Log.e("SETEDITOR","NOT MODIFYING SET DEFAULTS FOR:" +set);
 					notifychanged.sendEmptyMessage(100);
 					
 					

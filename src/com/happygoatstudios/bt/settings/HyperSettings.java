@@ -235,9 +235,9 @@ public class HyperSettings {
 			for(String key : buttonsets) {
 				out.startTag("", BaseParser.TAG_BUTTONSET);
 				ColorSetSettings setdefaults = data.getSetSettings().get(key);
-				Log.e("OUTPUT","ATTEMPTING TO WRITE SOME COLOR INFO FOR:" + key);
+				//Log.e("OUTPUT","ATTEMPTING TO WRITE SOME COLOR INFO FOR:" + key);
 				for(String color : data.getSetSettings().keySet()) {
-					Log.e("OUTPUT","SET SETTINGS MAP CONTAINS ENTRY: " + color);
+					//Log.e("OUTPUT","SET SETTINGS MAP CONTAINS ENTRY: " + color);
 				}
 				out.attribute("", BaseParser.ATTR_SETNAME, key);
 				if(setdefaults.getPrimaryColor() != SlickButtonData.DEFAULT_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getPrimaryColor()));
@@ -320,12 +320,12 @@ public class HyperSettings {
 	}
 
 	public void setLastSelected(String lastSelected) {
-		Log.e("SETTINGS","LAST SELECTED SET CHANGED TO:" + lastSelected);
+		//Log.e("SETTINGS","LAST SELECTED SET CHANGED TO:" + lastSelected);
 		this.lastSelected = lastSelected;
 	}
 
 	public String getLastSelected() {
-		Log.e("SETTINGS","RETURNING SELECTED SET:" + lastSelected);
+		//Log.e("SETTINGS","RETURNING SELECTED SET:" + lastSelected);
 		return lastSelected;
 	}
 

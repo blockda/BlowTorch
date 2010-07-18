@@ -192,7 +192,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
-			Log.e("LAUNCHER","List item long clicked!");
+			//Log.e("LAUNCHER","List item long clicked!");
 			MudConnection muc = apdapter.getItem(arg2);
 			
 			
@@ -230,7 +230,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			//MudConnection muc = (MudConnection)lv.getSelectedItem();
 			//ConnectionAdapter adp = (ConnectionAdapter)arg0.getAdapter();
 			//int pos = lv.getSelectedItemPosition();
-			Log.e("LAUNCHER","List Item Clicked");
+			//Log.e("LAUNCHER","List Item Clicked");
 			
 			//make the item the first in the list.
 			

@@ -40,7 +40,7 @@ public class OutputWriter extends Thread {
 					byte[] data = msg.getData().getByteArray("THEDATA");
 					
 					String dbgmsg = new String(data);
-					Log.e("OUTPUT","Attempting to write:" +dbgmsg);
+					//Log.e("OUTPUT","Attempting to write:" +dbgmsg);
 					
 					try {
 						the_stream.write(data);
