@@ -111,7 +111,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	Handler myhandler = null;
 	boolean servicestarted = false;
 	
-	IBaardTERMService service = null;
+	IStellarService service = null;
 	//Object ctrl_tag = new Object();
 	Processor the_processor = null;
 	
@@ -145,7 +145,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	private ServiceConnection mConnection = new ServiceConnection() {
 
 		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
-			service = IBaardTERMService.Stub.asInterface(arg1); //turn the binder into something useful
+			service = IStellarService.Stub.asInterface(arg1); //turn the binder into something useful
 			
 			//register callback
 			try {
@@ -784,7 +784,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		if(!servicestarted) {
 			//start the service
-			this.startService(new Intent(com.happygoatstudios.bt.service.IBaardTERMService.class.getName()));
+			this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			servicestarted = true;
 		}
 		
@@ -951,7 +951,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		saveSettings();
 		
-		stopService(new Intent(com.happygoatstudios.bt.service.IBaardTERMService.class.getName()));
+		stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 		
 	}
 	
@@ -1148,7 +1148,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		
 		
 		if(!isBound) {
-			bindService(new Intent(com.happygoatstudios.bt.service.IBaardTERMService.class.getName()), mConnection, 0); //do not auto create
+			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
 			//Log.e("WINDOW","Bound connection at onResume");
 			isBound = true;
 			
@@ -1227,7 +1227,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 	}
 	
 	
-	private IBaardTERMServiceCallback.Stub the_callback = new IBaardTERMServiceCallback.Stub() {
+	private IStellarServiceCallback.Stub the_callback = new IStellarServiceCallback.Stub() {
 
 		public void dataIncoming(byte[] seq) throws RemoteException {
 			Message msg = myhandler.obtainMessage(MESSAGE_PROCESS);

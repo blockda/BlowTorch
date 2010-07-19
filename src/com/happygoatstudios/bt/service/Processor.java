@@ -18,9 +18,9 @@ public class Processor {
 	Handler reportto = null;
 	Colorizer colormebad = new Colorizer();
 	OptionNegotiator opthandler = new OptionNegotiator();
-	IBaardTERMService.Stub service = null;
+	IStellarService.Stub service = null;
 	
-	public Processor(Handler useme,IBaardTERMService.Stub theserv) {
+	public Processor(Handler useme,IStellarService.Stub theserv) {
 		//not really much to do here, this will be a static class thing
 		reportto = useme;
 		service = theserv;
@@ -66,7 +66,7 @@ public class Processor {
 				
 				//service.sendData(resp);
 				//instead send message
-				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,resp);
+				Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
 				//Bundle b = new Bundle();
 				//b.putByteArray("THEDATA", resp);
 				//sb.setData(b);
@@ -118,7 +118,7 @@ public class Processor {
 			if(sub_r[0] == compressresp[0]) {
 				//Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
 				
-				reportto.sendEmptyMessage(BaardTERMService.MESSAGE_STARTCOMPRESS);
+				reportto.sendEmptyMessage(StellarService.MESSAGE_STARTCOMPRESS);
 				
 				//service.
 				//try {
@@ -129,7 +129,7 @@ public class Processor {
 				//}
 			} else {
 			
-				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,sub_r);
+				Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,sub_r);
 				//Bundle b = new Bundle();
 				//b.putByteArray("THEDATA", sub_r);
 				//sbm.setData(b);
@@ -201,7 +201,7 @@ public class Processor {
 				
 				//service.sendData(resp);
 				//instead send message
-				Message sb = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,resp);
+				Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
 				//Bundle b = new Bundle();
 				//b.putByteArray("THEDATA", resp);
 				//sb.setData(b);
@@ -253,7 +253,7 @@ public class Processor {
 			if(sub_r[0] == compressresp[0]) {
 				//Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
 				
-				reportto.sendEmptyMessage(BaardTERMService.MESSAGE_STARTCOMPRESS);
+				reportto.sendEmptyMessage(StellarService.MESSAGE_STARTCOMPRESS);
 				
 				//service.
 				//try {
@@ -264,7 +264,7 @@ public class Processor {
 				//}
 			} else {
 			
-				Message sbm = reportto.obtainMessage(BaardTERMService.MESSAGE_SENDOPTIONDATA,sub_r);
+				Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,sub_r);
 				//Bundle b = new Bundle();
 				//b.putByteArray("THEDATA", sub_r);
 				//sbm.setData(b);

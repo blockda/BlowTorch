@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IBaardTERMService;
 
 
 import android.content.Intent;

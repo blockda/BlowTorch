@@ -32,10 +32,10 @@
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <service android:name="com.happygoatstudios.bt.service.BaardTERMService"
+        <service android:name="com.happygoatstudios.bt.service.StellarService"
         		 android:process=":remote">
         		 <intent-filter>
-        		 	<action android:name="com.happygoatstudios.bt.service.IBaardTERMService"/>
+        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService"/>
         		 </intent-filter>
         </service>
         		  

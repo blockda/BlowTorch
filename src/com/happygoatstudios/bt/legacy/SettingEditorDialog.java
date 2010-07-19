@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IBaardTERMService;
+import com.happygoatstudios.bt.service.IStellarService;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -22,8 +22,8 @@ public class SettingEditorDialog extends Dialog {
 	ArrayList<BaseSetting> settings = new ArrayList<BaseSetting>();
 	ConnectionAdapter adapter = null;
 	
-	IBaardTERMService service = null;
-	public SettingEditorDialog(Context context,IBaardTERMService serv) {
+	IStellarService service = null;
+	public SettingEditorDialog(Context context,IStellarService serv) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		service = serv;

@@ -2,7 +2,7 @@ package com.happygoatstudios.bt.button;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.button.ButtonEditorDialog.COLOR_FIELDS;
-import com.happygoatstudios.bt.service.IBaardTERMService;
+import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 
 import android.app.Dialog;
@@ -33,9 +33,9 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 	
 	Handler notifychanged = null;
 	
-	IBaardTERMService service;
+	IStellarService service;
 	String set;
-	public ButtonSetEditor(Context context,IBaardTERMService the_service,String selected_set,Handler use_this_handler) {
+	public ButtonSetEditor(Context context,IStellarService the_service,String selected_set,Handler use_this_handler) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		service = the_service;

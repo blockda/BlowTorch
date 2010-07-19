@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IBaardTERMService;
+import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.window.BaardTERMWindow;
 
 import android.app.Dialog;
@@ -34,8 +34,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 	String selected_set;
 	HashMap<String,Integer> data;
 	ConnectionAdapter adapter;
-	IBaardTERMService service;
-	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IBaardTERMService the_service) {
+	IStellarService service;
+	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IStellarService the_service) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		dispater = reportto;
