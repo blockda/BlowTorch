@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.responder.notification.*;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -17,7 +18,9 @@ import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -33,10 +36,23 @@ public class NotificationResponderEditor extends Dialog {
 	TextView lights_extra;
 	TextView vibrate_extra;
 	TextView sound_extra;
-
-	public NotificationResponderEditor(Context context) {
+	
+	NotificationResponder the_responder;
+	//NotificationResponder new_data;
+	NotificationResponderDoneListener finish_with;
+	boolean isEditor = false;
+	
+	public NotificationResponderEditor(Context context,NotificationResponder input,NotificationResponderDoneListener listener) {
 		super(context);
 		// TODO Auto-generated constructor stub
+		finish_with = listener;
+		if(input == null) {
+			the_responder = new NotificationResponder();
+			//new_data = input;
+		} else {
+			the_responder = input;
+			isEditor = true;
+		}
 	}
 	
 	public void onCreate(Bundle b) {
@@ -59,6 +75,19 @@ public class NotificationResponderEditor extends Dialog {
 		sound.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.SOUND));
 		spawnnew.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.SPAWNNEW));
 		useongoing.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.USEONGOING));
+		
+		Button done = (Button)findViewById(R.id.responder_notification_done_button);
+		done.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				doFinish();
+			}
+		});
+	}
+	
+	private void doFinish() {
+		finish_with.newNotificationResponder(the_responder);
+		this.dismiss();
 	}
 	
 	public static enum CHECK_TYPE {
@@ -88,13 +117,15 @@ public class NotificationResponderEditor extends Dialog {
 			case LIGHTS:
 				if(arg1) {
 					AlertDialog.Builder light_builder = new AlertDialog.Builder(NotificationResponderEditor.this.getContext());
-					CharSequence[] light_types = {"Blue","Green","Red","Magenta","Cyan","White"};
+					CharSequence[] light_types = {"Default","Blue","Green","Red","Magenta","Cyan","White"};
 					light_builder.setTitle("Select Color");
 					light_builder.setItems(light_types, new LightListReturnListener());
 					AlertDialog light_picker = light_builder.create();
 					light_picker.show();
 				} else {
 					//just reset
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0);
 				}
 				break;
 			case VIBRATE:
@@ -103,11 +134,16 @@ public class NotificationResponderEditor extends Dialog {
 					CharSequence[] vibrate_types = {"Default","Very Short","Short","Long","Suuuper Long"};
 					vibrate_builder.setTitle("Select Sequence:");
 					vibrate_builder.setItems(vibrate_types, new VibrateListReturnListener());
+					AlertDialog vibrate_dialog = vibrate_builder.create();
+					vibrate_dialog.show();
 				} else {
 					//turn option off.
+					the_responder.setUseDefaultVibrate(false);
+					the_responder.setVibrateLength(0);
 				}
 				break;
 			case SOUND:
+				if(arg1) {
 				String state = Environment.getExternalStorageState();
 				if(state.equals(Environment.MEDIA_MOUNTED_READ_ONLY) || state.equals(Environment.MEDIA_MOUNTED)) {
 					File sdcardroot = Environment.getExternalStorageDirectory();
@@ -162,20 +198,29 @@ public class NotificationResponderEditor extends Dialog {
 				} else {
 					//can't really do antying because the sdcard isn't mounted.
 					//set to "dont use"
+					
+				}
+				} else {
+					the_responder.setUseDefaultSound(false);
+					the_responder.setSoundPath("");
 				}
 				break;
 			case SPAWNNEW:
 				if(arg1) {
 					//set the value
+					the_responder.setSpawnNewNotification(true);
 				} else {
 					//set the value
+					the_responder.setSpawnNewNotification(false);
 				}
 				break;
 			case USEONGOING:
 				if(arg1) {
 					//set the value
+					the_responder.setUseOnGoingNotification(true);
 				} else {
 					//set the value
+					the_responder.setUseOnGoingNotification(false);
 				}
 				break;
 			default:
@@ -187,6 +232,45 @@ public class NotificationResponderEditor extends Dialog {
 		private class LightListReturnListener implements DialogInterface.OnClickListener {
 
 			public void onClick(DialogInterface arg0, int arg1) {
+				CharSequence[] light_types = {"Default","Blue","Green","Red","Magenta","Cyan","White"};
+				switch(arg1) {
+				case 0:
+					//default;
+					the_responder.setUseDefaultLight(true);
+					break;
+				case 1:
+					//blue
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0xFF0000FF);
+					break;
+				case 2:
+					//green
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0xFF00FF00);
+					break;
+				case 3:
+					//red
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0xFFFF0000);
+					break;
+				case 4:
+					//magenta
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0xFFFF00FF);
+					break;
+				case 5:
+					//cyan
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0xFF00FFFF);
+					break;
+				case 6:
+					//white
+					the_responder.setUseDefaultLight(false);
+					the_responder.setColorToUse(0xFFFFFFFF);
+					break;
+				default:
+					break;
+				}
 				
 			}
 			
@@ -194,7 +278,36 @@ public class NotificationResponderEditor extends Dialog {
 		
 		private class VibrateListReturnListener implements DialogInterface.OnClickListener {
 			public void onClick(DialogInterface arg0, int arg1) {
-				
+				CharSequence[] vibrate_types = {"Default","Very Short","Short","Long","Suuuper Long"};
+				//CharSequence type = vibrate_types[arg1];
+				switch(arg1) {
+				case 0:
+					//default
+					the_responder.setUseDefaultVibrate(true);
+					break;
+				case 1:
+					//very short
+					the_responder.setUseDefaultVibrate(false);
+					the_responder.setVibrateLength(1);
+					break;
+				case 2:
+					//short
+					the_responder.setUseDefaultVibrate(false);
+					the_responder.setVibrateLength(2);
+					break;
+				case 3:
+					//Long
+					the_responder.setUseDefaultVibrate(false);
+					the_responder.setVibrateLength(3);
+					break;
+				case 4:
+					//Suuper Long
+					the_responder.setUseDefaultVibrate(false);
+					the_responder.setVibrateLength(4);
+					break;
+				default:
+					break;
+				}
 			}
 		}
 		
@@ -202,6 +315,9 @@ public class NotificationResponderEditor extends Dialog {
 			public void onClick(DialogInterface arg0, int arg1) {
 				String name = sound_files.get(arg1);
 				//String path = 
+				String path = paths.get(name);
+				the_responder.setUseDefaultSound(false);
+				the_responder.setSoundPath(path);
 			}
 		}
 		

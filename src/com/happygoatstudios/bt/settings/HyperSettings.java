@@ -315,8 +315,27 @@ public class HyperSettings {
 						out.attribute("", BaseParser.ATTR_NOTIFICATIONTITLE,notify.getTitle());
 						out.attribute("", BaseParser.ATTR_NOTIFICATIONMESSAGE, notify.getMessage());
 						out.attribute("", BaseParser.ATTR_FIRETYPE, notify.getFireType().getString() );
-						//notify.
-						//notify.
+						if(notify.isUseDefaultSound()) {
+							out.attribute("", BaseParser.ATTR_USEDEFAULTSOUND, "true");
+						} else {
+							out.attribute("", BaseParser.ATTR_USEDEFAULTSOUND, "false");
+							out.attribute("", BaseParser.ATTR_SOUNDPATH, notify.getSoundPath());
+						}
+						
+						if(notify.isUseDefaultLight()) {
+							out.attribute("", BaseParser.ATTR_USEDEFAULTLIGHT, "true");
+						} else {
+							out.attribute("", BaseParser.ATTR_USEDEFAULTLIGHT, "false");
+							out.attribute("", BaseParser.ATTR_LIGHTCOLOR, Integer.toHexString(notify.getColorToUse()));
+						}
+						
+						if(notify.isUseDefaultVibrate()) {
+							out.attribute("", BaseParser.ATTR_VIBRATELENGTH, "true");
+						} else {
+							out.attribute("", BaseParser.ATTR_VIBRATELENGTH, "false");
+							out.attribute("", BaseParser.ATTR_VIBRATELENGTH, Integer.toString(notify.getVibrateLength()));
+						}
+						
 						out.attribute("", BaseParser.ATTR_NEWNOTIFICATION, (notify.isSpawnNewNotification()) ? "true" : "false");
 						out.attribute("", BaseParser.ATTR_USEONGOING, (notify.isUseOnGoingNotification()) ? "true" : "false");
 						out.endTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);

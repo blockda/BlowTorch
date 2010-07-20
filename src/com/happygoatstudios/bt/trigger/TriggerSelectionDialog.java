@@ -72,7 +72,7 @@ public class TriggerSelectionDialog extends Dialog {
 			
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
-				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext());
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null);
 				editor.show();
 			}
 		});

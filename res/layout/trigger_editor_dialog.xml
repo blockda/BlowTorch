@@ -71,13 +71,16 @@
   		<TableLayout android:id="@+id/trigger_notification_table" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="0" android:shrinkColumns="1,2" android:layout_marginLeft="50dip" android:layout_marginRight="50dip" android:background="@drawable/movemethod_frame">
   			<TableRow android:id="@+id/trigger_notification_legend">
   				<TextView
-  					android:text="Type"/>
+  					android:text="TYPE"
+  					android:gravity="center"/>
   				<TextView
-  					android:text="     Open     "/>
+  					android:text="Open"
+  					android:gravity="center"/>
   				<TextView
-  					android:text="    Closed    "/>
+  					android:text="Closed"
+  					android:gravity="center"/>
   			</TableRow>
-  			<TableRow>
+  			<TableRow android:id="@+id/trigger_new_responder_row">
   				<Button android:id="@+id/trigger_new_notification" android:text="Add new responder."/>
   				<TextView android:text=""/>
   				<TextView android:text=""/>
