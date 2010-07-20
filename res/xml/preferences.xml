@@ -40,6 +40,13 @@
 			android:defaultValue="monospace"/>
 	</PreferenceCategory>
 	<PreferenceCategory>
+		<CheckBoxPreference
+			android:key="PROCESS_PERIOD"
+			android:defaultValue="true"
+			android:summary="Perform internal functions using input starting with a period."
+			android:title="Process Dot Commands"/>
+	</PreferenceCategory>
+	<PreferenceCategory android:title="Import/Export Settings">
 		<com.happygoatstudios.bt.settings.HyperDialogPreference
 			android:key="RESET_DEFAULTS"
 			android:title="Reset Settings to Defaults"

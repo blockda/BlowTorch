@@ -19,6 +19,9 @@ public class Colorizer {
 	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
 	Pattern nocrlf = Pattern.compile("\\x0D");
 	
+	public static Character escape = new Character((char) 0x1B);
+	public static String colorRed = escape+"[1;31m";
+	public static String colorWhite = escape+"[0;37m";
 	Pattern newline = Pattern.compile("\\x0D");
 	Pattern carriage = Pattern.compile("\\x0A");
 	Pattern subnego_reg = Pattern.compile("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0");

@@ -10,6 +10,9 @@ import org.xml.sax.Attributes;
 
 
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.responder.NotificationResponder;
+import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.trigger.TriggerData;
 
 import android.content.Context;
 import android.sax.Element;
@@ -38,6 +41,10 @@ public class HyperSAXParser extends BaseParser {
 		Element buttonset = buttonsets.getChild(TAG_BUTTONSET);
 		Element selected = buttonsets.getChild(TAG_SELECTEDSET);
 		Element button = buttonset.getChild(TAG_BUTTON);
+		Element processperiod = root.getChild(TAG_PROCESSPERIOD);
+		Element triggers = root.getChild(TAG_TRIGGERS);
+		Element trigger = triggers.getChild(TAG_TRIGGER);
+		Element notificationResponder = trigger.getChild(TAG_NOTIFICATIONRESPONDER);
 		
 		final HashMap<String,String> aliases_read = new HashMap<String,String>();
 		final HashMap<String,Vector<SlickButtonData>> buttons = new HashMap<String,Vector<SlickButtonData>>();
@@ -45,6 +52,8 @@ public class HyperSAXParser extends BaseParser {
 		final StringBuffer button_set_name = new StringBuffer("default");
 		final ColorSetSettings setinfo =  new ColorSetSettings();
 		final HashMap<String,ColorSetSettings> colorsets = new HashMap<String,ColorSetSettings>();
+		final HashMap<String,TriggerData> triggerSet = new HashMap<String,TriggerData>();
+		final TriggerData current_trigger = new TriggerData();
 		
 		window.setStartElementListener(new StartElementListener() {
 
@@ -182,6 +191,79 @@ public class HyperSAXParser extends BaseParser {
 
 			public void end(String body) {
 				tmp.setLastSelected(body);
+			}
+			
+		});
+		
+		processperiod.setEndTextElementListener(new EndTextElementListener() {
+
+			public void end(String arg0) {
+				if(arg0.equals("true")) {
+					tmp.setProcessPeriod(true);
+				} else {
+					tmp.setProcessPeriod(false);
+				}
+				
+			}
+			
+		});
+		
+		trigger.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes attr) {
+				//current_trigger = new TriggerData();
+				Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
+				current_trigger.setName(attr.getValue("",ATTR_TRIGGERTITLE));
+				current_trigger.setPattern(attr.getValue("",ATTR_TRIGGERPATTERN));
+				current_trigger.setInterpretAsRegex( attr.getValue("",ATTR_TRIGGERLITERAL).equals("true") ? true : false);
+				current_trigger.setResponders(new ArrayList<TriggerResponder>());
+			}
+			
+		});
+		
+		notificationResponder.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes attr) {
+				Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
+				NotificationResponder responder = new NotificationResponder();
+				responder.setMessage(attr.getValue("",ATTR_NOTIFICATIONMESSAGE));
+				responder.setTitle(attr.getValue("",ATTR_NOTIFICATIONTITLE));
+				String fireType = attr.getValue("",ATTR_FIRETYPE);
+				if(fireType == null) fireType = "";
+				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
+					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
+				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
+					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
+				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
+					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				} else {
+					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				}
+				String spawnnew = attr.getValue("",ATTR_NEWNOTIFICATION);
+				if(spawnnew == null) spawnnew = "";
+				if(spawnnew.equals("true")) {
+					responder.setSpawnNewNotification(true);
+				} else {
+					responder.setSpawnNewNotification(false);
+				}
+				
+				String useongoing = attr.getValue("",ATTR_USEONGOING);
+				if(useongoing == null) useongoing = "";
+				if(useongoing.equals("true")) {
+					responder.setUseOnGoingNotification(true);
+				} else {
+					responder.setUseOnGoingNotification(false);
+				}
+				
+				current_trigger.getResponders().add(responder);
+			}
+			
+		});
+		
+		trigger.setEndElementListener(new EndElementListener() {
+
+			public void end() {
+				tmp.getTriggers().put(current_trigger.getPattern(), current_trigger.copy());
 			}
 			
 		});

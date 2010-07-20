@@ -32,6 +32,7 @@ public class BaseParser {
 	static final String ATTR_FONTNAME = "fontName";
 	static final String ATTR_FONTPATH = "fontPath";
 	static final String TAG_DATASEMINEWLINE = "seminewline";
+	static final String TAG_PROCESSPERIOD = "processPeriod";
 	
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";
@@ -61,6 +62,22 @@ public class BaseParser {
 	static final String ATTR_LABELSIZE = "labelSize";
 	static final String ATTR_FLIPLABELCOLOR = "flipLabelColor";
 	static final String ATTR_FLIPLABEL = "flipLabel";
+	
+	static final String TAG_TRIGGERS = "triggers";
+	static final String TAG_TRIGGER = "trigger";
+	static final String ATTR_TRIGGERTITLE = "title";
+	static final String ATTR_TRIGGERPATTERN = "pattern";
+	static final String ATTR_TRIGGERLITERAL = "interpretLiteral";
+	
+	static final String ATTR_FIRETYPE = "fireWhen";
+	
+	static final String TAG_NOTIFICATIONRESPONDER = "notification";
+	static final String ATTR_NOTIFICATIONTITLE = "title";
+	static final String ATTR_NOTIFICATIONMESSAGE = "message";
+	static final String ATTR_NEWNOTIFICATION = "spawnNew";
+	static final String ATTR_USEONGOING = "useOngoing";
+	
+
 	
 	final String path;
 	Context window;

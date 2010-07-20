@@ -13,6 +13,9 @@ import android.util.Log;
 import android.util.Xml;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.responder.NotificationResponder;
+import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.trigger.TriggerData;
 
 public class HyperSettings {
 	
@@ -25,12 +28,14 @@ public class HyperSettings {
 	private String SaveLocation = "none";
 	
 	private boolean SemiIsNewLine = true;
+	private boolean ProcessPeriod = true;
 	
 
 	
 	private HashMap<String,String> Aliases = new HashMap<String,String>();
 	private HashMap<String,Vector<SlickButtonData>> ButtonSets = new HashMap<String,Vector<SlickButtonData>>();
 	private HashMap<String,ColorSetSettings> SetSettings = new HashMap<String,ColorSetSettings>();
+	private HashMap<String,TriggerData> Triggers = new HashMap<String,TriggerData>();
 	
 	private String lastSelected = "default";
 	enum WRAP_MODE {
@@ -191,6 +196,7 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_FONTNAME, data.getFontName());
 			out.attribute("", BaseParser.ATTR_FONTPATH, data.getFontPath());
 			
+			
 			switch(data.getWrapMode()) {
 			case NONE:
 				out.attribute("", BaseParser.ATTR_WRAPMODE, "0");
@@ -214,6 +220,15 @@ public class HyperSettings {
 			}
 			
 			out.endTag("", BaseParser.TAG_DATASEMINEWLINE);
+			
+			out.startTag("", BaseParser.TAG_PROCESSPERIOD);
+			if(data.isProcessPeriod()) {
+				out.text("true");
+			} else {
+				out.text("false");
+			}
+			
+			out.endTag("",BaseParser.TAG_PROCESSPERIOD);
 			
 			//output aliases
 			out.startTag("", BaseParser.TAG_ALIASES);
@@ -280,6 +295,44 @@ public class HyperSettings {
 			out.endTag("", BaseParser.TAG_SELECTEDSET);
 			
 			out.endTag("", BaseParser.TAG_BUTTONSETS);
+			
+			//write trigger stuffs.
+			out.startTag("",BaseParser.TAG_TRIGGERS);
+			
+			for(TriggerData trigger : data.getTriggers().values()) {
+				out.startTag("", BaseParser.TAG_TRIGGER);
+				out.attribute("", BaseParser.ATTR_TRIGGERTITLE, trigger.getName());
+				out.attribute("", BaseParser.ATTR_TRIGGERPATTERN, trigger.getPattern());
+				out.attribute("", BaseParser.ATTR_TRIGGERLITERAL, trigger.isInterpretAsRegex() ? "true" : "false");
+				
+				for(TriggerResponder responder : trigger.getResponders()) {
+					switch(responder.getType()) {
+					case NOTIFICATION:
+						NotificationResponder notify = (NotificationResponder)responder;
+						out.startTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
+						out.attribute("", BaseParser.ATTR_NOTIFICATIONTITLE,notify.getTitle());
+						out.attribute("", BaseParser.ATTR_NOTIFICATIONMESSAGE, notify.getMessage());
+						out.attribute("", BaseParser.ATTR_FIRETYPE, notify.getFireType().getString() );
+						out.attribute("", BaseParser.ATTR_NEWNOTIFICATION, (notify.isSpawnNewNotification()) ? "true" : "false");
+						out.attribute("", BaseParser.ATTR_USEONGOING, (notify.isUseOnGoingNotification()) ? "true" : "false");
+						out.endTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
+						break;
+					case TOAST:
+						break;
+					case ACK:
+						break;
+					default:
+						break;
+					}
+					
+				}
+				
+				
+				out.endTag("", BaseParser.TAG_TRIGGER);
+			}
+			
+			out.endTag("",BaseParser.TAG_TRIGGERS);
+			
 			out.endTag("", "root");
 			
 			out.endDocument();
@@ -327,6 +380,22 @@ public class HyperSettings {
 	public String getLastSelected() {
 		//Log.e("SETTINGS","RETURNING SELECTED SET:" + lastSelected);
 		return lastSelected;
+	}
+
+	public void setProcessPeriod(boolean processPeriod) {
+		ProcessPeriod = processPeriod;
+	}
+
+	public boolean isProcessPeriod() {
+		return ProcessPeriod;
+	}
+
+	public void setTriggers(HashMap<String,TriggerData> triggers) {
+		Triggers = triggers;
+	}
+
+	public HashMap<String,TriggerData> getTriggers() {
+		return Triggers;
 	}
 
 }

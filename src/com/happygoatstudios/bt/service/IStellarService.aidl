@@ -47,4 +47,5 @@ interface IStellarService {
 	ColorSetSettings getCurrentColorSetDefaults();
 	ColorSetSettings getColorSetDefaultsForSet(String the_set);
 	void setColorSetDefaultsForSet(String the_set,in ColorSetSettings input);
+	void setProcessPeriod(boolean value);
 }

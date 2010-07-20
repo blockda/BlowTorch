@@ -416,11 +416,13 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
 						Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
 						String font_name = prefs.getString("FONT_NAME", "monospace");
+						boolean process_periods = prefs.getBoolean("PROCESS_PERIOD", true);
 						try {
 							service.setFontSize(font_size);
 							service.setFontSpaceExtra(line_space);
 							service.setMaxLines(max_lines);
 							service.setFontName(font_name);
+							service.setProcessPeriod(process_periods);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();

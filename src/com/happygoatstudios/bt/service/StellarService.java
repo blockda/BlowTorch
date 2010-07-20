@@ -50,6 +50,7 @@ import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -57,11 +58,14 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.responder.NotificationResponder;
+import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
+import com.happygoatstudios.bt.trigger.TriggerData;
 
 
 public class StellarService extends Service {
@@ -207,11 +211,20 @@ public class StellarService extends Service {
 					
 					//dispatch this for command processing
 					String retval = ProcessCommands(new String(bytes));
-					if(retval == null) {
+					if(retval == null || retval.equals("")) {
 						//command was intercepted. do nothing for now and return
+						Log.e("SERVICE","CONSUMED ALL COMMANDS");
 						return;
 					} else {
 						//not a command data.
+						try {
+							Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
+							if(retval.equals("")) { return; }
+							bytes = retval.getBytes("ISO-8859-1");
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 					//do search and replace with aliases.
 					
@@ -219,38 +232,6 @@ public class StellarService extends Service {
 					//convert all alias keys to the big match string.
 					//Object[] a = aliases.keySet().toArray();
 					
-
-					//search for commands.
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN.
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN.
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN.
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN.
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN.
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
-					//TODO:MAKE IT HAPPEN
 					//StringBuffer joined_alias = new StringBuffer();
 					if(joined_alias.length() > 0) {
 						/*joined_alias.append("("+(String)a[0]+")");
@@ -436,6 +417,7 @@ public class StellarService extends Service {
 			HyperSAXParser parser = new HyperSAXParser(filename,this);
 			the_settings = parser.load();
 			buildAliases();
+			buildTriggerData();
 		} catch (FileNotFoundException e) {
 			//if the file does not exist, then we need to load the default settings
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
@@ -443,6 +425,17 @@ public class StellarService extends Service {
 			def_colorset.toDefautls();
 			def_colorset.setPrimaryColor(0xFFFFFFFF);
 			the_settings.getSetSettings().put("default", def_colorset);
+			
+			//TriggerData new_trigger = new TriggerData();
+			//new_trigger.setName("testtrigger");
+			//new_trigger.setPattern("FOOOCHANGROO!");
+			//new_trigger.setInterpretAsRegex(true);
+			//NotificationResponder responder = new NotificationResponder();
+			//responder.setTitle("You have triggered the beast");
+			//responder.setMessage("Mud output for you");
+			//new_trigger.getResponders().add(responder);
+			//the_settings.getTriggers().put(new_trigger.getName(), new_trigger);
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -963,6 +956,8 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				HyperSAXParser loader = new HyperSAXParser(path,StellarService.this);
 				the_settings = loader.load();
+				buildAliases();
+				buildTriggerData();
 			}
 			sendInitOk();
 		}
@@ -1016,44 +1011,160 @@ public class StellarService extends Service {
 			}
 			
 		}
+
+
+		public void setProcessPeriod(boolean value) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setProcessPeriod(value);
+			}
+			
+		}
 		
 
 	};
 	
 	Pattern newline = Pattern.compile("\n");
-	
+	Pattern semicolon = Pattern.compile(";");
 
 	Pattern commandPattern = Pattern.compile("^.(\\w+)\\s+(.+)$");
 	Matcher commandMatcher = commandPattern.matcher("");
 	
+	Character cr = new Character((char)13);
+	Character lf = new Character((char)10);
+	String crlf = cr.toString() + lf.toString();
+	
 	public String ProcessCommands(String input) {
-		String output = null;
-		if(input.startsWith(".")) {
-			//we have a player
-			if(input.startsWith("..")) {
-				output = input.replace("..", ".");
-				//allow it to go through
-			} else {
-				//attempt to look up alias name;
-				synchronized(the_settings) {
-					//string should be of the form .aliasname |settarget can have whitespace|
-					commandMatcher.reset(input);
-					
-					String alias = the_settings.getAliases().get(commandMatcher.group(1));
-					String argument = commandMatcher.group(2);
-					
-					if(alias != null) {
-						//real argument
-						the_settings.getAliases().remove(alias);
-						the_settings.getAliases().put(alias, argument);
+		
+		
+		
+		//split input into groups.
+		String[] commands = semicolon.split(input);
+		String output = "";
+		int currentstr = 1;
+		for(String cmd : commands) {
+		
+			//cmd = cmd.concat("\n");
+			if(cmd.startsWith(".") && the_settings.isProcessPeriod()) {
+				//we have a player
+				if(cmd.startsWith("..")) {
+					if(cmd.equals(".." + crlf) || cmd.equals("..") ) {
+						//special case, toggle processing.
+						synchronized(the_settings) {
+							String outputmsg = "\n" + Colorizer.colorRed + "Dot command processing ";
+							if(the_settings.isProcessPeriod()) {
+								//the_settings.setProcessPeriod(false);
+								overrideProcessPeriods(false);
+								outputmsg = outputmsg.concat("disabled.");
+							} else {
+								//the_settings.setProcessPeriod(true);
+								overrideProcessPeriods(true);
+								outputmsg = outputmsg.concat("enabled.");
+							}
+							outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
+							try {
+								doDispatchNoProcess(outputmsg.getBytes());
+							} catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					} else {
+						output = output.concat(cmd.replace("..", ".") + ";");
 					}
+					
+					//allow it to go through
+				} else {
+					//attempt to look up alias name
+					commandMatcher.reset(cmd);
+					if(commandMatcher.find()) {
+						synchronized(the_settings) {
+							
+							//string should be of the form .aliasname |settarget can have whitespace|
+
+								String alias = commandMatcher.group(1);
+								String argument = commandMatcher.group(2);
+								
+								
+								if(the_settings.getAliases().containsKey(alias)) {
+									//real argument
+									the_settings.getAliases().remove(alias);
+									the_settings.getAliases().put(alias, argument);
+								} else {
+									//format error message.
+									
+									String error = Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
+									error += "  \""+alias+"\" is not a recognized alias or command.\n";
+									error += "   No data has been sent to the server. If you intended\n";
+									error += "   this to be done, please type \".."+alias+"\"\n";
+									error += "   To toggle command processing, input \"..\" with no arguments\n";
+									error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";  
+									
+									try {
+										doDispatchNoProcess(error.getBytes());
+									} catch (RemoteException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+								}
+							}
+					} else {
+						Log.e("SERVICE",cmd + " not valid.");
+					}
+				}
+				
+				
+			} else {
+				//normal command
+				Log.e("SERVICE", cmd+ "| UP FOR NORMAL PROCESSING" );
+				if(cmd.equals(".." + crlf) || cmd.equals("..")) {
+					Log.e("SERVICE",cmd + " == ..");
+					synchronized(the_settings) {
+						String outputmsg = "\n" + Colorizer.colorRed + "Dot command processing ";
+						if(the_settings.isProcessPeriod()) {
+							//the_settings.setProcessPeriod(false);
+							overrideProcessPeriods(false);
+							outputmsg = outputmsg.concat("disabled.");
+						} else {
+							//the_settings.setProcessPeriod(true);
+							overrideProcessPeriods(true);
+							outputmsg = outputmsg.concat("enabled.");
+						}
+						outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
+						try {
+							doDispatchNoProcess(outputmsg.getBytes());
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				} else {
+					output = output.concat(cmd + ((currentstr == commands.length) ? "" : ";"));
 				}
 			}
 			
-			
+			currentstr++;
+		
 		}
 		
-		return null;
+		return output;
+	}
+	
+	private void overrideProcessPeriods(boolean value) {
+		synchronized(the_settings) {
+			the_settings.setProcessPeriod(value);
+			//this can be called from somewhere esle, so to make sure
+			//the settings activity doesn't reset a wrong value, we will write
+			//the shared preferences key here
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
+			boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
+			SharedPreferences.Editor editor = prefs.edit();
+			editor.putBoolean("PROCESS_PERIOD", value);
+			editor.commit();
+			
+			Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);
+			
+		}
 	}
 	
 	public Bundle CountNewLine(String ISOLATINstring,int maxlines) {
@@ -1130,6 +1241,28 @@ public class StellarService extends Service {
 		}
 	}
 	
+	Pattern trigger_regex = Pattern.compile("");
+	Matcher trigger_matcher = trigger_regex.matcher("");
+	private StringBuffer trigger_string = new StringBuffer();
+	private void buildTriggerData() {
+		synchronized(the_settings) {
+			trigger_string.setLength(0);
+			for(TriggerData trigger: the_settings.getTriggers().values()) {
+				Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
+				if(trigger.isInterpretAsRegex()) {
+					trigger_string.append("(" + trigger.getPattern() + ")|");
+				} else {
+					trigger_string.append("(\\Q" + trigger.getPattern() + "\\E)|");
+				}
+			}
+			
+		}
+		trigger_string.replace(trigger_string.length()-1, trigger_string.length(), ""); //kill the last |
+		trigger_regex = Pattern.compile(trigger_string.toString());
+		trigger_matcher = trigger_regex.matcher("");
+		Log.e("SERVICE","TRIGGER STRING NOW:" + trigger_string.toString());
+	}
+	
 	Colorizer colorer = new Colorizer();
 	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
 	StringBuffer regexp_test = new StringBuffer();
@@ -1181,9 +1314,29 @@ public class StellarService extends Service {
 		Matcher stripcolor = colordata.matcher(rawData);
 		regexp_test.append(stripcolor.replaceAll(""));
 		
-		//
+		
 		//test the de-colorized data against registered patterns.
-		Iterator<String> items = test_set.listIterator();
+		
+		//Pattern triger_regex = Pattern.compile(trigger_string.toString());
+		//Matcher trigger_matcher = trigger_regex.matcher("");
+		Log.e("SERVICE","ATTEMPTING TO MATCH" + trigger_matcher.pattern().toString() + " on " + regexp_test.toString());
+		trigger_matcher.reset(regexp_test);
+		
+		while(trigger_matcher.find()) {
+			//so if we found something here, we triggered.
+			Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
+			TriggerData triggered = the_settings.getTriggers().get(trigger_matcher.group(0));
+			if(triggered != null) {
+				//shouldn't be
+				Log.e("SERVICE","TRIGGERED:" + triggered.getName());
+				//iterate through the responders.
+				for(TriggerResponder responder : triggered.getResponders()) {
+					responder.doResponse(this, display, trigger_count++,hasListener);
+				}
+			}
+		}
+		
+		/*Iterator<String> items = test_set.listIterator();
 		while(items.hasNext()) {
 			
 			String test_for = (String)items.next();
@@ -1239,7 +1392,7 @@ public class StellarService extends Service {
 				mNM.notify(trigger_count++,note);
 				
 			}
-		}
+		}*/
 		
 		regexp_test.setLength(0);
 		//the_buffer.append(sstr);

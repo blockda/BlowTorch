@@ -148,7 +148,7 @@ public class SlickButtonData implements Parcelable {
 		//String[] elements = input.split("\\|\\|");
 		
 		//if(elements.length != 6) {
-			//Log.e("SBD","String not properly formatted");
+			//SBD","String not properly formatted");
 		}
 		
 		x = new Integer(elements[0]).intValue();
