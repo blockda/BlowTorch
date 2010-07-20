@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.responder;
 
 import android.content.Context;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -32,11 +33,13 @@ public abstract class TriggerResponder implements Parcelable {
 	public static final String FIRE_WINDOW_OPEN = "windowOpen";
 	public static final String FIRE_WINDOW_CLOSED = "windowClosed";
 	public static final String FIRE_ALWAYS = "always";
+	public static final String FIRE_NEVER = "none";
 	
 	public enum FIRE_WHEN {
 		WINDOW_CLOSED(FIRE_WINDOW_OPEN),
 		WINDOW_OPEN(FIRE_WINDOW_CLOSED),
-		WINDOW_BOTH(FIRE_ALWAYS);
+		WINDOW_BOTH(FIRE_ALWAYS),
+		WINDOW_NEVER(FIRE_NEVER);
 		
 		private String value;
 		
@@ -67,7 +70,7 @@ public abstract class TriggerResponder implements Parcelable {
 		return type;
 	}
 	
-	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen);
+	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher);
 	//public abstract void writeToParcel(Parcel in,int args);
 
 	public void setFireType(FIRE_WHEN fireType) {

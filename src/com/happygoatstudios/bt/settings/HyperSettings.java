@@ -13,8 +13,10 @@ import android.util.Log;
 import android.util.Xml;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.responder.NotificationResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.ack.AckResponder;
+import com.happygoatstudios.bt.responder.notification.NotificationResponder;
+import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
 public class HyperSettings {
@@ -318,8 +320,19 @@ public class HyperSettings {
 						out.endTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
 						break;
 					case TOAST:
+						ToastResponder toasty = (ToastResponder)responder;
+						out.startTag("", BaseParser.TAG_TOASTRESPONDER);
+						out.attribute("", BaseParser.ATTR_TOASTMESSAGE, toasty.getMessage());
+						out.attribute("", BaseParser.ATTR_TOASTDELAY, new Integer(toasty.getDelay()).toString());
+						out.attribute("", BaseParser.ATTR_FIRETYPE, toasty.getFireType().getString());
+						out.endTag("", BaseParser.TAG_TOASTRESPONDER);
 						break;
 					case ACK:
+						AckResponder ack = (AckResponder)responder;
+						out.startTag("", BaseParser.TAG_ACKRESPONDER);
+						out.attribute("", BaseParser.ATTR_ACKWITH, ack.getAckWith());
+						out.attribute("", BaseParser.ATTR_FIRETYPE, ack.getFireType().getString());
+						out.endTag("", BaseParser.TAG_ACKRESPONDER);
 						break;
 					default:
 						break;

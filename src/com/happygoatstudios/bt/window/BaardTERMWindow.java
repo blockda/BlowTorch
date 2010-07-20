@@ -81,6 +81,7 @@ import com.happygoatstudios.bt.legacy.FixedViewFlipper;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
+import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
 public class BaardTERMWindow extends Activity implements AliasDialogDoneListener {
 	
@@ -875,6 +876,11 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 			this.startActivityForResult(settingintent, 0);
 			//settingsmenuclosed = true;
 			//showsettingsoptions = false;
+			break;
+		case 100:
+			//launch the sweet trigger dialog.
+			TriggerSelectionDialog trigger_selector = new TriggerSelectionDialog(this,service);
+			trigger_selector.show();
 			break;
 		default:
 			break;

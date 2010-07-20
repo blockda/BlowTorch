@@ -58,8 +58,8 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.responder.NotificationResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -1020,6 +1020,14 @@ public class StellarService extends Service {
 			}
 			
 		}
+
+
+		public Map getTriggerData() throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.getTriggers();
+			}
+		}
 		
 
 	};
@@ -1246,6 +1254,11 @@ public class StellarService extends Service {
 	private StringBuffer trigger_string = new StringBuffer();
 	private void buildTriggerData() {
 		synchronized(the_settings) {
+			
+			if(the_settings.getTriggers().keySet().size() < 1) {
+				return;
+			}
+			
 			trigger_string.setLength(0);
 			for(TriggerData trigger: the_settings.getTriggers().values()) {
 				Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
@@ -1311,6 +1324,10 @@ public class StellarService extends Service {
 		
 		//IDLE:  "Your eyes glaze over."
 		//REQU:  "QUEST: You may now quest again."
+		if(trigger_string.length() < 1) {
+			return; //return without processing, if there are no triggers.
+		}
+		
 		Matcher stripcolor = colordata.matcher(rawData);
 		regexp_test.append(stripcolor.replaceAll(""));
 		
@@ -1319,19 +1336,19 @@ public class StellarService extends Service {
 		
 		//Pattern triger_regex = Pattern.compile(trigger_string.toString());
 		//Matcher trigger_matcher = trigger_regex.matcher("");
-		Log.e("SERVICE","ATTEMPTING TO MATCH" + trigger_matcher.pattern().toString() + " on " + regexp_test.toString());
+		//Log.e("SERVICE","ATTEMPTING TO MATCH" + trigger_matcher.pattern().toString() + " on " + regexp_test.toString());
 		trigger_matcher.reset(regexp_test);
 		
 		while(trigger_matcher.find()) {
 			//so if we found something here, we triggered.
-			Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
+			//Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
 			TriggerData triggered = the_settings.getTriggers().get(trigger_matcher.group(0));
 			if(triggered != null) {
 				//shouldn't be
-				Log.e("SERVICE","TRIGGERED:" + triggered.getName());
+				//Log.e("SERVICE","TRIGGERED:" + triggered.getName());
 				//iterate through the responders.
 				for(TriggerResponder responder : triggered.getResponders()) {
-					responder.doResponse(this, display, trigger_count++,hasListener);
+					responder.doResponse(this, display, trigger_count++,hasListener,myhandler);
 				}
 			}
 		}
@@ -1603,7 +1620,7 @@ public class StellarService extends Service {
 		}
 		//kill the notification.
 		mNM.cancel(5545);
-		
+		mNM.cancelAll();
 		
 	}
 	

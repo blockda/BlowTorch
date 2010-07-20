@@ -10,8 +10,11 @@ import org.xml.sax.Attributes;
 
 
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.responder.NotificationResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
+import com.happygoatstudios.bt.responder.ack.AckResponder;
+import com.happygoatstudios.bt.responder.notification.NotificationResponder;
+import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
 import android.content.Context;
@@ -45,6 +48,8 @@ public class HyperSAXParser extends BaseParser {
 		Element triggers = root.getChild(TAG_TRIGGERS);
 		Element trigger = triggers.getChild(TAG_TRIGGER);
 		Element notificationResponder = trigger.getChild(TAG_NOTIFICATIONRESPONDER);
+		Element toastResponder = trigger.getChild(TAG_TOASTRESPONDER);
+		Element ackResponder = trigger.getChild(TAG_ACKRESPONDER);
 		
 		final HashMap<String,String> aliases_read = new HashMap<String,String>();
 		final HashMap<String,Vector<SlickButtonData>> buttons = new HashMap<String,Vector<SlickButtonData>>();
@@ -256,6 +261,56 @@ public class HyperSAXParser extends BaseParser {
 				}
 				
 				current_trigger.getResponders().add(responder);
+			}
+			
+		});
+		
+		toastResponder.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes a) {
+				ToastResponder toast = new ToastResponder();
+				toast.setDelay( (a.getValue("",ATTR_TOASTDELAY) == null) ? 1500 : Integer.parseInt(a.getValue("",ATTR_TOASTDELAY)));
+				toast.setMessage(a.getValue("",ATTR_TOASTMESSAGE));
+				
+				String fireType = a.getValue("",ATTR_FIRETYPE);
+				if(fireType == null) fireType = "";
+				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
+					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
+				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
+					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
+				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
+					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				} else {
+					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				}
+				
+				current_trigger.getResponders().add(toast);
+			}
+			
+		});
+		
+		ackResponder.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes attributes) {
+				AckResponder ack = new AckResponder();
+				ack.setAckWith(attributes.getValue("",ATTR_ACKWITH));
+				
+				String fireType = attributes.getValue("",ATTR_FIRETYPE);
+				if(fireType == null) fireType = "";
+				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
+					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
+				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
+					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
+				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
+					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
+					ack.setFireType(FIRE_WHEN.WINDOW_NEVER);
+				} else {
+					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				}
+				
+				
+				current_trigger.getResponders().add(ack);
 			}
 			
 		});

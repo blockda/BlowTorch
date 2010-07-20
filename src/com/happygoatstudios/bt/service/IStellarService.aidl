@@ -3,6 +3,11 @@ package com.happygoatstudios.bt.service;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
+import com.happygoatstudios.bt.trigger.TriggerData;
+import com.happygoatstudios.bt.responder.notification.NotificationResponder;
+import com.happygoatstudios.bt.responder.ack.AckResponder;
+import com.happygoatstudios.bt.responder.toast.ToastResponder;
+
 
 interface IStellarService {
 	void registerCallback(IStellarServiceCallback c);
@@ -48,4 +53,5 @@ interface IStellarService {
 	ColorSetSettings getColorSetDefaultsForSet(String the_set);
 	void setColorSetDefaultsForSet(String the_set,in ColorSetSettings input);
 	void setProcessPeriod(boolean value);
+	Map getTriggerData();
 }

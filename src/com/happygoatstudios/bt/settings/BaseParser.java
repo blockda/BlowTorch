@@ -77,6 +77,13 @@ public class BaseParser {
 	static final String ATTR_NEWNOTIFICATION = "spawnNew";
 	static final String ATTR_USEONGOING = "useOngoing";
 	
+	static final String TAG_TOASTRESPONDER = "toast";
+	static final String ATTR_TOASTDELAY = "delay";
+	static final String ATTR_TOASTMESSAGE = "message";
+	
+	static final String TAG_ACKRESPONDER = "ack";
+	static final String ATTR_ACKWITH = "with";
+	
 
 	
 	final String path;
