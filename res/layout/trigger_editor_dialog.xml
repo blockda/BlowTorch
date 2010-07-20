@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newtriggerlayout"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:layout_marginLeft="10dip"
+  android:layout_marginRight="10dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="TRIGGER EDITOR"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+    <Button
+    android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/new_trigger_cancel"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:text="Dismiss." />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Add this trigger."
+  	android:id="@+id/trigger_editor_done_button"
+  	android:layout_toLeftOf="@id/new_trigger_cancel"
+  	android:layout_alignParentBottom="true"/>
+  
+  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/trigger_editor_done_button" android:layout_below="@id/titlebar">
+  	<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:shrinkColumns="0,2">
+  			<TableRow>
+  				<TextView
+  					android:text="Name:"/>
+  				<EditText
+  					android:id="@+id/trigger_editor_name"
+  					android:hint=""/>
+  				<TextView
+  					android:text="literal?"/>
+  			</TableRow>
+  			<TableRow>
+  				<TextView
+  					android:text="Pattern:"/>
+  				<EditText
+  					android:id="@+id/trigger_editor_pattern"
+  					android:hint=""/>
+  				<CheckBox
+  					android:id="@+id/trigger_literal_checkbox"
+  					android:checked="true"/>
+  			</TableRow>
+  		</TableLayout>
+  		<TextView android:layout_width="fill_parent"
+  					android:layout_height="wrap_content"
+  					android:text="RESPONDERS"
+  					android:layout_marginLeft="10dip"
+  					android:layout_marginRight="10dip"
+  					android:background="#FF999999"
+  					android:gravity="center"
+  					android:textStyle="bold"
+  					android:textColor="#FF111111"/>
+  		<TableLayout android:id="@+id/trigger_notification_table" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="0" android:shrinkColumns="1,2" android:layout_marginLeft="50dip" android:layout_marginRight="50dip" android:background="@drawable/movemethod_frame">
+  			<TableRow android:id="@+id/trigger_notification_legend">
+  				<TextView
+  					android:text="Type"/>
+  				<TextView
+  					android:text="     Open     "/>
+  				<TextView
+  					android:text="    Closed    "/>
+  			</TableRow>
+  			<TableRow>
+  				<Button android:id="@+id/trigger_new_notification" android:text="Add new responder."/>
+  				<TextView android:text=""/>
+  				<TextView android:text=""/>
+  			</TableRow>
+  		</TableLayout>
+  	</LinearLayout>
+  	
+  </ScrollView>
+
+
+  
+</RelativeLayout>

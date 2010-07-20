@@ -20,6 +20,13 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	private String message;
 	private String title;
 	
+	private boolean useDefaultSound;
+	private String soundPath;
+	private boolean useDefaultLight;
+	private int colorToUse;
+	private boolean useDefaultVibrate;
+	private int vibrateLength;
+	
 	private Integer myTriggerId = null;
 	
 	private boolean spawnNewNotification;
@@ -29,6 +36,12 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		super(RESPONDER_TYPE.NOTIFICATION);
 		message = "";
 		title = "";
+		useDefaultSound = true;
+		soundPath ="";
+		useDefaultLight = true;
+		colorToUse = 0xFFFFFFFF;
+		useDefaultVibrate = true;
+		vibrateLength = 0x03;
 	}
 	
 	public static final Parcelable.Creator<NotificationResponder> CREATOR = new Parcelable.Creator<NotificationResponder>() {
@@ -64,6 +77,12 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		} else {
 			setFireType(FIRE_WHEN.WINDOW_BOTH);
 		}
+		setUseDefaultSound( (in.readInt() < 1) ? false : true);
+		setSoundPath(in.readString());
+		setUseDefaultLight((in.readInt() < 1) ? false : true);
+		setColorToUse(in.readInt());
+		setUseDefaultVibrate( (in.readInt() < 1) ? false : true);
+		setVibrateLength(in.readInt());
 		Log.e("RESPONDER","BEING PARCEL CREATED:" + getMessage() + " || " + getTitle());
 	}
 
@@ -79,6 +98,12 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		out.writeString(message);
 		out.writeString(title);
 		out.writeString(this.getFireType().getString());
+		out.writeInt( (useDefaultSound) ? 1 : 0);
+		out.writeString(soundPath);
+		out.writeInt((useDefaultLight) ? 1 : 0);
+		out.writeInt(colorToUse);
+		out.writeInt((useDefaultVibrate) ? 1 : 0);
+		out.writeInt(vibrateLength);
 		Log.e("RESPONDER","BEING PARCELE OUTPUTED");
 		
 	}
@@ -165,6 +190,54 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 
 	public boolean isUseOnGoingNotification() {
 		return useOnGoingNotification;
+	}
+
+	public void setUseDefaultSound(boolean useDefaultSound) {
+		this.useDefaultSound = useDefaultSound;
+	}
+
+	public boolean isUseDefaultSound() {
+		return useDefaultSound;
+	}
+
+	public void setSoundPath(String soundPath) {
+		this.soundPath = soundPath;
+	}
+
+	public String getSoundPath() {
+		return soundPath;
+	}
+
+	public void setUseDefaultLight(boolean useDefaultLight) {
+		this.useDefaultLight = useDefaultLight;
+	}
+
+	public boolean isUseDefaultLight() {
+		return useDefaultLight;
+	}
+
+	public void setColorToUse(int colorToUse) {
+		this.colorToUse = colorToUse;
+	}
+
+	public int getColorToUse() {
+		return colorToUse;
+	}
+
+	public void setUseDefaultVibrate(boolean useDefaultVibrate) {
+		this.useDefaultVibrate = useDefaultVibrate;
+	}
+
+	public boolean isUseDefaultVibrate() {
+		return useDefaultVibrate;
+	}
+
+	public void setVibrateLength(int vibrateLength) {
+		this.vibrateLength = vibrateLength;
+	}
+
+	public int getVibrateLength() {
+		return vibrateLength;
 	}
 
 }

@@ -10,12 +10,15 @@ import com.happygoatstudios.bt.service.IStellarService;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -63,6 +66,27 @@ public class TriggerSelectionDialog extends Dialog {
 		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
 		list.setAdapter(adapter);
 		
+		Button newbutton = (Button)findViewById(R.id.trigger_new_button);
+		
+		newbutton.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext());
+				editor.show();
+			}
+		});
+		
+		
+		Button cancelbutton = (Button)findViewById(R.id.trigger_cancel_button);
+		
+		cancelbutton.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				TriggerSelectionDialog.this.dismiss();
+			}
+			
+		});
 		
 		
 	}
@@ -102,10 +126,52 @@ public class TriggerSelectionDialog extends Dialog {
 		
 	}
 	
+	
 	public class TriggerItem {
 		String name;
 		String extra;
 	}
+	
+	public static final int MESSAGE_NEW_TRIGGER = 100;
+	public static final int MESSAGE_MOD_TRIGGER = 101;
+	public static final int MESSAGE_DELETE_TRIGGER = 102;
+	
+	public Handler triggerModifier = new Handler() {
+		public void handleMessage(Message msg) {
+			switch(msg.what) {
+			case MESSAGE_NEW_TRIGGER:
+				TriggerData tmp = (TriggerData)msg.obj;
+				//attempt to modify service
+				try {
+					service.newTrigger(tmp);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			case MESSAGE_MOD_TRIGGER:
+				TriggerData from = msg.getData().getParcelable("old");
+				TriggerData to = msg.getData().getParcelable("new");
+				
+				try {
+					service.updateTrigger(from, to);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			case MESSAGE_DELETE_TRIGGER:
+				String which = (String)msg.obj;
+				try {
+					service.deleteTrigger(which);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+	};
 	
 	
 	

@@ -315,6 +315,8 @@ public class HyperSettings {
 						out.attribute("", BaseParser.ATTR_NOTIFICATIONTITLE,notify.getTitle());
 						out.attribute("", BaseParser.ATTR_NOTIFICATIONMESSAGE, notify.getMessage());
 						out.attribute("", BaseParser.ATTR_FIRETYPE, notify.getFireType().getString() );
+						//notify.
+						//notify.
 						out.attribute("", BaseParser.ATTR_NEWNOTIFICATION, (notify.isSpawnNewNotification()) ? "true" : "false");
 						out.attribute("", BaseParser.ATTR_USEONGOING, (notify.isUseOnGoingNotification()) ? "true" : "false");
 						out.endTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);

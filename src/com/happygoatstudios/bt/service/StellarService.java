@@ -1028,6 +1028,33 @@ public class StellarService extends Service {
 				return the_settings.getTriggers();
 			}
 		}
+
+
+		public void deleteTrigger(String which) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.getTriggers().remove(which);
+			}
+			
+		}
+
+
+		public void newTrigger(TriggerData data) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.getTriggers().put(data.getPattern(), data);
+			}
+		}
+
+
+		public void updateTrigger(TriggerData from, TriggerData to)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.getTriggers().remove(from.getPattern());
+				the_settings.getTriggers().put(to.getPattern(), to);
+			}
+		}
 		
 
 	};
