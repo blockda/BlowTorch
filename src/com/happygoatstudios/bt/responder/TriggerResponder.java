@@ -71,6 +71,7 @@ public abstract class TriggerResponder implements Parcelable {
 	}
 	
 	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher);
+	public abstract TriggerResponder copy();
 	//public abstract void writeToParcel(Parcel in,int args);
 
 	public void setFireType(FIRE_WHEN fireType) {

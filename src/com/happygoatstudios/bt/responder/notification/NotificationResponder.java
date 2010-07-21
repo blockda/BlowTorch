@@ -44,6 +44,44 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		vibrateLength = 0x03;
 	}
 	
+	public NotificationResponder copy() {
+		NotificationResponder tmp = new NotificationResponder();
+		tmp.message = this.message;
+		tmp.title = this.title;
+		tmp.useDefaultLight = this.useDefaultLight;
+		tmp.useDefaultSound = this.useDefaultSound;
+		tmp.useDefaultVibrate = this.useDefaultVibrate;
+		tmp.useOnGoingNotification = this.useOnGoingNotification;
+		tmp.spawnNewNotification = this.spawnNewNotification;
+		tmp.soundPath = this.soundPath;
+		tmp.colorToUse = this.colorToUse;
+		tmp.vibrateLength = this.vibrateLength;
+		tmp.setFireType(this.getFireType());
+		return tmp;
+	}
+	
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		
+		if(!(o instanceof NotificationResponder)) return false;
+		
+		NotificationResponder test = (NotificationResponder)o;
+		
+		if(test.getFireType() != this.getFireType()) return false;
+		if(!test.getMessage().equals(this.getMessage())) return false;
+		if(!test.getTitle().equals(this.getTitle())) return false;
+		if(test.useDefaultLight != this.useDefaultLight) return false;
+		if(test.useDefaultSound != this.useDefaultSound) return false;
+		if(test.useDefaultVibrate != this.useDefaultVibrate) return false;
+		if(test.useOnGoingNotification != this.useOnGoingNotification) return false;
+		if(test.spawnNewNotification != this.spawnNewNotification) return false;
+		if(!test.getSoundPath().equals(this.getSoundPath())) return false;
+		if(test.getColorToUse() != this.getColorToUse()) return false;
+		if(test.getVibrateLength() != this.getVibrateLength()) return false;
+		
+		return true;
+	}
+	
 	public static final Parcelable.Creator<NotificationResponder> CREATOR = new Parcelable.Creator<NotificationResponder>() {
 
 		public NotificationResponder createFromParcel(Parcel arg0) {
@@ -201,6 +239,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	}
 
 	public void setSoundPath(String soundPath) {
+		if(soundPath == null) soundPath = "";
 		this.soundPath = soundPath;
 	}
 

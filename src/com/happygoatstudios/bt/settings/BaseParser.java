@@ -76,9 +76,9 @@ public class BaseParser {
 	static final String ATTR_NOTIFICATIONMESSAGE = "message";
 	static final String ATTR_NEWNOTIFICATION = "spawnNew";
 	static final String ATTR_USEONGOING = "useOngoing";
-	static final String ATTR_USEDEFAULTSOUND = "useDefaultSound";
-	static final String ATTR_USEDEFAULTLIGHT = "useDefaultLights";
-	static final String ATTR_USEDEFAULTVIBRATE = "useDefaultVibrate";
+	static final String ATTR_USEDEFAULTSOUND = "useSound";
+	static final String ATTR_USEDEFAULTLIGHT = "useLights";
+	static final String ATTR_USEDEFAULTVIBRATE = "useVibrate";
 	static final String ATTR_SOUNDPATH = "soundPath";
 	static final String ATTR_LIGHTCOLOR = "lightColor";
 	static final String ATTR_VIBRATELENGTH = "vibrateType";

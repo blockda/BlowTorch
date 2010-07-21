@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.trigger;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
@@ -23,16 +24,6 @@ public class TriggerData implements Parcelable {
 	
 	private List<TriggerResponder> responders;
 	
-	public boolean equals(Object o) {
-		if(o == this) return true;
-		if(!(o instanceof TriggerData)) return false;
-		TriggerData tmp = (TriggerData)o;
-		
-		if(!this.getName().equals(tmp.getName())) return false;
-		if(!this.getPattern().equals(tmp.getPattern())) return false;
-		
-		return true;
-	}
 	
 	public TriggerData() {
 		name = "";
@@ -46,9 +37,31 @@ public class TriggerData implements Parcelable {
 		tmp.name = this.name;
 		tmp.pattern = this.pattern;
 		tmp.interpretAsRegex = this.interpretAsRegex;
-		tmp.responders = this.responders;
+		for(TriggerResponder responder : this.responders) {
+			tmp.responders.add(responder.copy());
+		}
 		
 		return tmp;
+	}
+	
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		if(!(o instanceof TriggerData)) return false;
+		TriggerData test = (TriggerData)o;
+		if(!test.name.equals(this.name)) return false;
+		if(!test.pattern.equals(this.pattern)) return false;
+		if(test.interpretAsRegex != this.interpretAsRegex) return false;
+		
+		Iterator<TriggerResponder> test_responders = test.responders.iterator();
+		Iterator<TriggerResponder> my_responders = this.responders.iterator();
+		while(test_responders.hasNext()) {
+			TriggerResponder test_responder = test_responders.next();
+			TriggerResponder my_responder = my_responders.next();
+			
+			if(!test_responder.equals(my_responder)) return false;
+		}
+		
+		return true;
 	}
 	
 	public static final Parcelable.Creator<TriggerData> CREATOR = new Parcelable.Creator<TriggerData>() {

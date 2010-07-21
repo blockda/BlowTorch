@@ -41,7 +41,7 @@
   				<TextView
   					android:text="Title:" android:layout_marginLeft="15dip"/>
   				<EditText
-  					android:id="@+id/trigger_editor_name"
+  					android:id="@+id/responder_notification_title"
   					android:hint=""
   					android:singleLine="true"
   					android:inputType="text"
@@ -52,7 +52,7 @@
   				<TextView
   					android:text="Message:" android:layout_marginLeft="15dip"/>
   				<EditText
-  					android:id="@+id/trigger_editor_pattern"
+  					android:id="@+id/responder_notification_extra"
   					android:hint=""
   					android:singleLine="true"
   					android:inputType="text"

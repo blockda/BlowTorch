@@ -26,6 +26,24 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 		super(pType);
 	}
 	
+	public AckResponder copy() {
+		AckResponder tmp = new AckResponder();
+		tmp.ackWith = this.ackWith;
+		tmp.setFireType(this.getFireType());
+		return tmp;
+	}
+	
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		if(!(o instanceof AckResponder)) return false;
+		
+		AckResponder test = (AckResponder)o;
+		
+		if(!test.getAckWith().equals(this.getAckWith())) return false;
+		if(test.getFireType() != this.getFireType()) return false;
+		return true;
+	}
+	
 	Character cr = new Character((char)13);
 	Character lf = new Character((char)10);
 	String crlf = cr.toString() + lf.toString();

@@ -264,27 +264,27 @@ public class HyperSAXParser extends BaseParser {
 				if(usedefaultlight == null) usedefaultlight = "false";
 				if(usedefaultlight.equals("true")) {
 					responder.setUseDefaultLight(true);
+					responder.setColorToUse( (attr.getValue("",ATTR_LIGHTCOLOR) == null) ? 0xFFFF0000 : new BigInteger(attr.getValue("",ATTR_LIGHTCOLOR),16).intValue());
 				} else {
 					responder.setUseDefaultLight(false);
-					responder.setColorToUse( (attr.getValue("",ATTR_LIGHTCOLOR) == null) ? 0xFFFF0000 : new BigInteger(attr.getValue("",ATTR_LIGHTCOLOR),16).intValue());
 				}
 				
 				String usedefaultvibrate = attr.getValue("",ATTR_USEDEFAULTVIBRATE);
 				if(usedefaultvibrate == null) usedefaultvibrate = "false";
 				if(usedefaultvibrate.equals("true")) {
 					responder.setUseDefaultVibrate(true);
+					responder.setVibrateLength( (attr.getValue("",ATTR_VIBRATELENGTH) == null) ? 0 : Integer.parseInt(attr.getValue("",ATTR_VIBRATELENGTH)));
 				} else {
 					responder.setUseDefaultVibrate(false);
-					responder.setVibrateLength( (attr.getValue("",ATTR_VIBRATELENGTH) == null) ? 0 : Integer.parseInt(attr.getValue("",ATTR_VIBRATELENGTH)));
 				}
 				
 				String usedefaultsound = attr.getValue("",ATTR_USEDEFAULTSOUND);
 				if(usedefaultsound == null) usedefaultsound = "false";
 				if(usedefaultsound.equals("true")) {
 					responder.setUseDefaultSound(true);
+					responder.setSoundPath(attr.getValue("",ATTR_SOUNDPATH));
 				} else {
 					responder.setUseDefaultSound(false);
-					responder.setSoundPath(attr.getValue("",ATTR_SOUNDPATH));
 				}
 				
 				current_trigger.getResponders().add(responder);

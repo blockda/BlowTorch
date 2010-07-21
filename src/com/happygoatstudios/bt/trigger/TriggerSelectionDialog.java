@@ -17,10 +17,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
 
 public class TriggerSelectionDialog extends Dialog {
 
@@ -45,26 +47,10 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		//initialize the list view
 		list = (ListView)findViewById(R.id.trigger_list);
-		
-		
-		//attempt to fish out the trigger list.
-		HashMap<String, TriggerData> trigger_list = null;
-		try {
-			trigger_list = (HashMap<String, TriggerData>) service.getTriggerData();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		for(TriggerData data : trigger_list.values()) {
-			TriggerItem t = new TriggerItem();
-			t.name = data.getName();
-			t.extra = data.getPattern();
-			entries.add(t);
-		}
-		
-		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
-		list.setAdapter(adapter);
+		list.setOnItemClickListener(new EditTriggerListener());
+		//list.setOnI
+		//attempt to fish out the trigger list.		
+		buildList();
 		
 		Button newbutton = (Button)findViewById(R.id.trigger_new_button);
 		
@@ -72,7 +58,7 @@ public class TriggerSelectionDialog extends Dialog {
 			
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
-				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null);
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler);
 				editor.show();
 			}
 		});
@@ -90,6 +76,57 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		
 	}
+	
+	private class EditTriggerListener implements AdapterView.OnItemClickListener {
+
+		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+				long arg3) {
+			// TODO Auto-generated method stub
+			TriggerItem entry = adapter.getItem(arg2);
+			//launch the trigger editor with this item.
+			try {
+				TriggerData data = (TriggerData) (service.getTriggerData()).get(entry.extra);
+				
+				//launch the editor
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
+				editor.show();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	};
+	
+	private void buildList() {
+		if(adapter != null) {
+			adapter.clear();
+		}
+		HashMap<String, TriggerData> trigger_list = null;
+		try {
+			trigger_list = (HashMap<String, TriggerData>) service.getTriggerData();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		for(TriggerData data : trigger_list.values()) {
+			TriggerItem t = new TriggerItem();
+			t.name = data.getName();
+			t.extra = data.getPattern();
+			entries.add(t);
+		}
+		
+		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
+		list.setAdapter(adapter);
+	}
+	
+	private Handler triggerEditorDoneHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			//refresh the list because it's done.
+			buildList();
+		}
+	};
 
 	public class TriggerListAdapter extends ArrayAdapter<TriggerItem> {
 

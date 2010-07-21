@@ -25,6 +25,30 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public ToastResponder copy() {
+		ToastResponder tmp = new ToastResponder();
+		tmp.delay = this.delay;
+		tmp.message = this.message;
+		tmp.setFireType(this.getFireType());
+		return tmp;
+	}
+	
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		
+		if(!(o instanceof ToastResponder)) return false;
+		
+		ToastResponder test = (ToastResponder)o;
+		
+		if(test.delay != this.delay) return false;
+		if(test.message != this.message) return false;
+		if(test.getFireType() != this.getFireType()) return false;
+		
+		return true;
+		
+	}
+	
+	
 	public ToastResponder(Parcel in) {
 		super(RESPONDER_TYPE.TOAST);
 		readFromParcel(in);

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.notification.*;
 
 import android.app.AlertDialog;
@@ -23,6 +24,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class NotificationResponderEditor extends Dialog {
@@ -37,8 +39,13 @@ public class NotificationResponderEditor extends Dialog {
 	TextView vibrate_extra;
 	TextView sound_extra;
 	
+	EditText title;
+	EditText message;
+	
+	
+	
 	NotificationResponder the_responder;
-	//NotificationResponder new_data;
+	NotificationResponder original;
 	NotificationResponderDoneListener finish_with;
 	boolean isEditor = false;
 	
@@ -48,9 +55,11 @@ public class NotificationResponderEditor extends Dialog {
 		finish_with = listener;
 		if(input == null) {
 			the_responder = new NotificationResponder();
+			the_responder.setFireType(FIRE_WHEN.WINDOW_BOTH);
 			//new_data = input;
 		} else {
 			the_responder = input;
+			original = input.copy();
 			isEditor = true;
 		}
 	}
@@ -60,11 +69,83 @@ public class NotificationResponderEditor extends Dialog {
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		setContentView(R.layout.responder_notification_dialog);
 		
+		title = (EditText)findViewById(R.id.responder_notification_title);
+		message = (EditText)findViewById(R.id.responder_notification_extra);
+		
 		lights = (CheckBox)findViewById(R.id.responder_notification_lights_check);
 		vibrate = (CheckBox)findViewById(R.id.responder_notification_vibrate_check);
 		sound = (CheckBox)findViewById(R.id.responder_notification_sound_check);
 		spawnnew = (CheckBox)findViewById(R.id.responder_notification_spawnnew_check);
 		useongoing = (CheckBox)findViewById(R.id.responder_notification_useongoing_check);
+		
+		lights_extra = (TextView)findViewById(R.id.responder_notification_lights_extra);
+		sound_extra = (TextView)findViewById(R.id.responder_notification_sound_extra);
+		vibrate_extra = (TextView)findViewById(R.id.responder_notification_vibrate_extra);
+	
+		if(isEditor) {
+			//we have so much work to do.
+			title.setText(the_responder.getTitle());
+			message.setText(the_responder.getMessage());
+			
+			if(the_responder.isUseDefaultSound()) {
+				sound.setChecked(true);
+				if(the_responder.getSoundPath().equals("")) {
+					
+					sound_extra.setText("Currently using system default sound.");
+					
+				} else {
+					sound_extra.setText("Using: " + the_responder.getSoundPath());
+					//should be "", if useDefaultSounds is true;
+				}
+				//the_responder.setSoundPath("");
+			} else {
+				sound.setChecked(false);
+				if(the_responder.getSoundPath().equals("")) {
+					sound_extra.setText("Currently disabled.");
+				} else {
+					sound_extra.setText(the_responder.getSoundPath() + "[ERROR]");
+				}
+				//the_responder.setSoundPath("");
+			}
+			
+			if(the_responder.isUseDefaultLight()) {
+				lights.setChecked(true);
+				if(the_responder.getColorToUse() != 0) {
+					lights_extra.setText("Currently Using: 0x" + Integer.toHexString(the_responder.getColorToUse()));
+				} else {
+					lights_extra.setText("Currently Using: default");
+				}
+			} else {
+				lights.setChecked(false);
+				lights_extra.setText("Currently disabled.");
+			}
+			
+			if(the_responder.isUseDefaultVibrate())  {
+				
+				vibrate.setChecked(true);
+				if(the_responder.getVibrateLength() != 0) {
+					//vibrate_extra.setText("Currently using: " + the_responder.getVibrateLength());
+				} else {
+					vibrate_extra.setText("Currently using: default");
+				}
+			} else {
+				vibrate.setChecked(false);
+				vibrate.setText("Currently disabled.");
+			}
+			
+			if(the_responder.isUseOnGoingNotification()) {
+				useongoing.setChecked(true);
+			} else {
+				useongoing.setChecked(false);
+			}
+			
+			if(the_responder.isSpawnNewNotification()) {
+				spawnnew.setChecked(true);
+			} else {
+				spawnnew.setChecked(false);
+			}
+			
+		}
 		
 		lights_extra = (TextView)findViewById(R.id.responder_notification_lights_extra);
 		vibrate_extra = (TextView)findViewById(R.id.responder_notification_vibrate_extra);
@@ -83,10 +164,22 @@ public class NotificationResponderEditor extends Dialog {
 				doFinish();
 			}
 		});
+		
+		
 	}
 	
 	private void doFinish() {
-		finish_with.newNotificationResponder(the_responder);
+		EditText title = (EditText)findViewById(R.id.responder_notification_title);
+		EditText extra = (EditText)findViewById(R.id.responder_notification_extra);
+		
+		the_responder.setTitle(title.getText().toString());
+		the_responder.setMessage(extra.getText().toString());
+		
+		if(isEditor) {		
+			finish_with.editNotificationResponder(the_responder, original);
+		} else {
+			finish_with.newNotificationResponder(the_responder);
+		}
 		this.dismiss();
 	}
 	
@@ -102,7 +195,8 @@ public class NotificationResponderEditor extends Dialog {
 	protected HashMap<String,String> paths = new HashMap<String,String>();
 	
 	
-	
+	private static final String DISABLED_MSG = "Currently disabled.";
+	private static final String DEFAULT_MSG = "Currently using: default";
 	private class CheckChangedListener implements CompoundButton.OnCheckedChangeListener {
 		
 		private CHECK_TYPE type;
@@ -121,11 +215,22 @@ public class NotificationResponderEditor extends Dialog {
 					light_builder.setTitle("Select Color");
 					light_builder.setItems(light_types, new LightListReturnListener());
 					AlertDialog light_picker = light_builder.create();
+					light_picker.setOnCancelListener(new DialogInterface.OnCancelListener() {
+						
+						public void onCancel(DialogInterface dialog) {
+							lights.setChecked(false);
+							the_responder.setUseDefaultLight(false);
+							the_responder.setColorToUse(0);
+							lights_extra.setText(DISABLED_MSG);
+						}
+						
+					});
 					light_picker.show();
 				} else {
 					//just reset
 					the_responder.setUseDefaultLight(false);
 					the_responder.setColorToUse(0);
+					lights_extra.setText(DISABLED_MSG);
 				}
 				break;
 			case VIBRATE:
@@ -135,11 +240,21 @@ public class NotificationResponderEditor extends Dialog {
 					vibrate_builder.setTitle("Select Sequence:");
 					vibrate_builder.setItems(vibrate_types, new VibrateListReturnListener());
 					AlertDialog vibrate_dialog = vibrate_builder.create();
+					vibrate_dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+						
+						public void onCancel(DialogInterface dialog) {
+							vibrate.setChecked(false);
+							the_responder.setUseDefaultVibrate(false);
+							the_responder.setVibrateLength(0);
+							vibrate_extra.setText(DISABLED_MSG);
+						}
+					});
 					vibrate_dialog.show();
 				} else {
 					//turn option off.
 					the_responder.setUseDefaultVibrate(false);
 					the_responder.setVibrateLength(0);
+					vibrate_extra.setText(DISABLED_MSG);
 				}
 				break;
 			case SOUND:
@@ -193,6 +308,17 @@ public class NotificationResponderEditor extends Dialog {
 					}
 					sound_list.setItems(items, new SoundListReturnListener());
 					AlertDialog sound_picker = sound_list.create();
+					sound_picker.setOnCancelListener(new DialogInterface.OnCancelListener() {
+						
+						public void onCancel(DialogInterface dialog) {
+							//if we got here then we need to uncheck the box.
+							sound.setChecked(false);
+							the_responder.setUseDefaultSound(false);
+							the_responder.setSoundPath("");
+							sound_extra.setText(DISABLED_MSG);
+						}
+					});
+					//
 					sound_picker.show();
 					
 				} else {
@@ -203,6 +329,7 @@ public class NotificationResponderEditor extends Dialog {
 				} else {
 					the_responder.setUseDefaultSound(false);
 					the_responder.setSoundPath("");
+					sound_extra.setText(DISABLED_MSG);
 				}
 				break;
 			case SPAWNNEW:
@@ -229,6 +356,27 @@ public class NotificationResponderEditor extends Dialog {
 			
 		}
 		
+		private String lookupColor(int input) {
+			switch(input) {
+			case 0:
+				return "default";
+			case 1:
+				return "Blue";
+			case 2:
+				return "Green";
+			case 3:
+				return "Red";
+			case 4:
+				return "Magenta";
+			case 5:
+				return "Cyan";
+			case 6:
+				return "White";
+			default:
+				return "default";
+			}
+		}
+		
 		private class LightListReturnListener implements DialogInterface.OnClickListener {
 
 			public void onClick(DialogInterface arg0, int arg1) {
@@ -240,40 +388,56 @@ public class NotificationResponderEditor extends Dialog {
 					break;
 				case 1:
 					//blue
-					the_responder.setUseDefaultLight(false);
+					the_responder.setUseDefaultLight(true);
 					the_responder.setColorToUse(0xFF0000FF);
 					break;
 				case 2:
 					//green
-					the_responder.setUseDefaultLight(false);
+					the_responder.setUseDefaultLight(true);
 					the_responder.setColorToUse(0xFF00FF00);
 					break;
 				case 3:
 					//red
-					the_responder.setUseDefaultLight(false);
+					the_responder.setUseDefaultLight(true);
 					the_responder.setColorToUse(0xFFFF0000);
 					break;
 				case 4:
 					//magenta
-					the_responder.setUseDefaultLight(false);
+					the_responder.setUseDefaultLight(true);
 					the_responder.setColorToUse(0xFFFF00FF);
 					break;
 				case 5:
 					//cyan
-					the_responder.setUseDefaultLight(false);
+					the_responder.setUseDefaultLight(true);
 					the_responder.setColorToUse(0xFF00FFFF);
 					break;
 				case 6:
 					//white
-					the_responder.setUseDefaultLight(false);
+					the_responder.setUseDefaultLight(true);
 					the_responder.setColorToUse(0xFFFFFFFF);
 					break;
 				default:
 					break;
 				}
+				if(arg1 != 0) {	
+					lights_extra.setText("Currently using: " + lookupColor(arg1));
+				} else {
+					lights_extra.setText(DEFAULT_MSG);
+				}
 				
 			}
 			
+		}
+		
+		private String lookupVibrateLength(int i) {
+			switch(i) {
+			case 0: return "default";
+			case 1: return "Very Short";
+			case 2: return "Short";
+			case 3: return "Long";
+			case 4: return "Suuper Long";
+			default: return "default";
+			}
 		}
 		
 		private class VibrateListReturnListener implements DialogInterface.OnClickListener {
@@ -287,26 +451,31 @@ public class NotificationResponderEditor extends Dialog {
 					break;
 				case 1:
 					//very short
-					the_responder.setUseDefaultVibrate(false);
+					the_responder.setUseDefaultVibrate(true);
 					the_responder.setVibrateLength(1);
 					break;
 				case 2:
 					//short
-					the_responder.setUseDefaultVibrate(false);
+					the_responder.setUseDefaultVibrate(true);
 					the_responder.setVibrateLength(2);
 					break;
 				case 3:
 					//Long
-					the_responder.setUseDefaultVibrate(false);
+					the_responder.setUseDefaultVibrate(true);
 					the_responder.setVibrateLength(3);
 					break;
 				case 4:
 					//Suuper Long
-					the_responder.setUseDefaultVibrate(false);
+					the_responder.setUseDefaultVibrate(true);
 					the_responder.setVibrateLength(4);
 					break;
 				default:
 					break;
+				}
+				if(arg1 != 0){
+					vibrate_extra.setText("Currently using: " + lookupVibrateLength(arg1));
+				} else {
+					vibrate_extra.setText(DEFAULT_MSG);
 				}
 			}
 		}
@@ -316,8 +485,13 @@ public class NotificationResponderEditor extends Dialog {
 				String name = sound_files.get(arg1);
 				//String path = 
 				String path = paths.get(name);
-				the_responder.setUseDefaultSound(false);
+				the_responder.setUseDefaultSound(true);
 				the_responder.setSoundPath(path);
+				if(path.equals("")) {
+					sound_extra.setText(DEFAULT_MSG);
+				} else {
+					sound_extra.setText("Currently using: " + path);
+				}
 			}
 		}
 		
