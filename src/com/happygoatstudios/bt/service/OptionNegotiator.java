@@ -3,11 +3,16 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import android.os.Handler;
+
 
 public class OptionNegotiator {
+	
+	private Handler dispatcher;
 
-	public OptionNegotiator() {
+	public OptionNegotiator(Handler idispatcher) {
 		//not really much to initialize, this class just returns a response to an option
+		dispatcher = idispatcher;
 	}
 	
 	 public byte[] processCommand(byte first,byte second,byte third) {
@@ -41,6 +46,7 @@ public class OptionNegotiator {
 	    		case COMPRESS2:
 	    			response = IAC_DO;
 	    			//TODO: turn compression back on.
+	    			dispatcher.sendEmptyMessage(StellarService.MESSAGE_COMPRESSIONREQUESTED);
 	    			//response = IAC_DONT;
 	    			break;
 	   			

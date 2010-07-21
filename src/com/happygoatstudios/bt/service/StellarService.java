@@ -114,11 +114,15 @@ public class StellarService extends Service {
 
 	protected static final int MESSAGE_SAVEBUFFER = 108;
 	protected static final int MESSAGE_SENDOPTIONDATA = 110;
+	private static final int MESSAGE_DOFINALDISPATCH = 121;
+	public static final int MESSAGE_COMPRESSIONREQUESTED = 131;
 	
 	public boolean sending = false;
 	
 	StringBuffer the_buffer = new StringBuffer();
 	String settingslocation = "test_settings2.xml";
+	
+	private boolean compressionStarting = false;
 	
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
@@ -140,7 +144,11 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_COMPRESSIONREQUESTED:
+					compressionStarting = true;
+					break;
 				case MESSAGE_INIT:
+					//Log.e("BTSERVICE","INTIIALIZING");
 					try {
 						doStartup();
 					} catch (SocketException e1) {
@@ -149,10 +157,12 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_END:
+					//Log.e("BTSERVICE","ENDING");
 					pump.stop();
 					doShutdown();
 					break;
 				case MESSAGE_PROCESS:
+					//Log.e("BTSERVICE","PROCESSING");
 					//byte[] data = msg.getData().getByteArray("THEBYTES");
 					
 					//need to throttle this somehow to avoid sending messages too fast.
@@ -166,7 +176,16 @@ public class StellarService extends Service {
 						e.printStackTrace();
 					}
 					break;
+				case MESSAGE_DOFINALDISPATCH:
+					//Log.e("BTSERVICE","FINAL DISPATCH");
+					if(compressionStarting) {
+						this.sendMessageDelayed(Message.obtain(msg), 10); //re-send this message for processing until compress is turned on.
+					} else {
+						dispatchFinish((String)msg.obj);
+					}
+					break;
 				case MESSAGE_SETDATA:
+					//Log.e("BTSERVICE","SETTING DISPLAY DATA!");
 					host = msg.getData().getString("HOST");
 					port = msg.getData().getInt("PORT");
 					display = msg.getData().getString("DISPLAY");					
@@ -181,13 +200,16 @@ public class StellarService extends Service {
 					showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
+					//Log.e("BTSERVICE","STARTING COMPRESSION!");
+					compressionStarting = false;
 					pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_COMPRESS);
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
 				case MESSAGE_SENDOPTIONDATA:
+					//Log.e("BTSERVICE","SENDING OPTION DATA");
 					//byte[] obytes = msg.getData().getByteArray("THEDATA");
-					byte[] obytes = (byte[])msg.obj;
+					byte[] obytes = (byte[])(msg.obj);
 					String odbgmsg = null;
 					try {
 						odbgmsg = new String(obytes,"ISO-8859-1");
@@ -199,13 +221,17 @@ public class StellarService extends Service {
 					try {
 						output_writer.write(obytes);
 						output_writer.flush();
+						
+						//end a "enter" to make sure that the options are recieved.
+						//output_writer.write(crlf.getBytes());
+						//output_writer.flush();
 					} catch (IOException e2) {
 						e2.printStackTrace();
 					}
 					
 					break;
 				case MESSAGE_SENDDATA:
-					
+					//Log.e("BTSERVICE","SENDING NORMAL DATA");
 					//byte[] bytes = msg.getData().getByteArray("THEDATA");
 					byte[] bytes = (byte[]) msg.obj;
 					
@@ -213,12 +239,12 @@ public class StellarService extends Service {
 					String retval = ProcessCommands(new String(bytes));
 					if(retval == null || retval.equals("")) {
 						//command was intercepted. do nothing for now and return
-						Log.e("SERVICE","CONSUMED ALL COMMANDS");
+						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
 						return;
 					} else {
 						//not a command data.
 						try {
-							Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
+							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
 							if(retval.equals("")) { return; }
 							bytes = retval.getBytes("ISO-8859-1");
 						} catch (UnsupportedEncodingException e) {
@@ -342,6 +368,7 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_REQUESTBUFFER:
+					//Log.e("BTSERVICE","SENDING REQUESTED BUFFER");
 					//dispatch();
 					try {
 						sendBuffer();
@@ -351,18 +378,19 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_SAVEBUFFER:
+					//Log.e("BTSERVICE","SAVING TARGET BUFFER");
 					the_buffer = new StringBuffer(msg.getData().getString("BUFFER") + the_buffer);
 					break;
-				case MESSAGE_CHECKIFALIVE:
-					if(the_socket != null) {
+				//case MESSAGE_CHECKIFALIVE:
+				//	if(the_socket != null) {
 						//the_socket.
 						/*if(!the_socket.isConnected() || the_socket.isClosed()) {
 						//do shutdown, except now, attempt to launch a dialog.
 							Toast.makeText(BaardTERMService.this, "CONNECTION DEAD", 3000);
 						}*/
-					}
-					this.sendEmptyMessageDelayed(StellarService.MESSAGE_CHECKIFALIVE, 3000);
-					break;
+				//	}
+				//	this.sendEmptyMessageDelayed(StellarService.MESSAGE_CHECKIFALIVE, 3000);
+				//	break;
 				default:
 					break;	
 				}
@@ -372,13 +400,13 @@ public class StellarService extends Service {
 		
 		//Log.e("SERV","REACHED THE END OF THE STARTUP METHOD");
 		//Looper.loop();
-		myhandler.sendEmptyMessageDelayed(StellarService.MESSAGE_CHECKIFALIVE, 3000);
+		//myhandler.sendEmptyMessageDelayed(StellarService.MESSAGE_CHECKIFALIVE, 3000);
 		//REGISTER TRIGGER PATTERS.
 		//test_set.add("Your eyes glaze over.");
-		test_set.add("QUEST: You may now quest again.");
-		test_set.add("i love kurt");
-		aliases.put("REPLACE", "gulp");
-		aliases.put("TESTREP", "enter");
+		//test_set.add("QUEST: You may now quest again.");
+		//test_set.add("i love kurt");
+		//aliases.put("REPLACE", "gulp");
+		//aliases.put("TESTREP", "enter");
 		
 		//read in aliases from disk.
 		
@@ -1144,14 +1172,14 @@ public class StellarService extends Service {
 								}
 							}
 					} else {
-						Log.e("SERVICE",cmd + " not valid.");
+						//Log.e("SERVICE",cmd + " not valid.");
 					}
 				}
 				
 				
 			} else {
 				//normal command
-				Log.e("SERVICE", cmd+ "| UP FOR NORMAL PROCESSING" );
+				//Log.e("SERVICE", cmd+ "| UP FOR NORMAL PROCESSING" );
 				if(cmd.equals(".." + crlf) || cmd.equals("..")) {
 					Log.e("SERVICE",cmd + " == ..");
 					synchronized(the_settings) {
@@ -1288,11 +1316,13 @@ public class StellarService extends Service {
 			
 			trigger_string.setLength(0);
 			for(TriggerData trigger: the_settings.getTriggers().values()) {
-				Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
-				if(trigger.isInterpretAsRegex()) {
-					trigger_string.append("(" + trigger.getPattern() + ")|");
-				} else {
-					trigger_string.append("(\\Q" + trigger.getPattern() + "\\E)|");
+				if((trigger.isFireOnce() && !trigger.isFired()) || !trigger.isFireOnce()) {
+					Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
+					if(trigger.isInterpretAsRegex()) {
+						trigger_string.append("(" + trigger.getPattern() + ")|");
+					} else {
+						trigger_string.append("(\\Q" + trigger.getPattern() + "\\E)|");
+					}
 				}
 			}
 			
@@ -1308,17 +1338,25 @@ public class StellarService extends Service {
 	StringBuffer regexp_test = new StringBuffer();
 	Vector<String> test_set = new Vector<String>();
 	
+	boolean firstDispatch = true;
+	
 	public void dispatch(byte[] data) throws RemoteException, UnsupportedEncodingException {
 		
 		String rawData = the_processor.RawProcess(data);
 		//changing this to send data to the window, then process the triggers.
-		
+		//if(firstDispatch)
 		//Spannable processed = the_processor.DoProcess(data);
-		
+		Message dofinal = myhandler.obtainMessage(MESSAGE_DOFINALDISPATCH,rawData);
+		myhandler.sendMessage(dofinal);
+	}
+	
+
+	
+	public void dispatchFinish(String rawData) {
 		
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
-		
+		//if(firstDispatch)
 		
 		
 		final int N = callbacks.beginBroadcast();
@@ -1358,7 +1396,7 @@ public class StellarService extends Service {
 		Matcher stripcolor = colordata.matcher(rawData);
 		regexp_test.append(stripcolor.replaceAll(""));
 		
-		
+		boolean rebuildTriggers = false;
 		//test the de-colorized data against registered patterns.
 		
 		//Pattern triger_regex = Pattern.compile(trigger_string.toString());
@@ -1377,7 +1415,17 @@ public class StellarService extends Service {
 				for(TriggerResponder responder : triggered.getResponders()) {
 					responder.doResponse(this, display, trigger_count++,hasListener,myhandler);
 				}
+				
+				if(triggered.isFireOnce()) {
+					triggered.setFired(true);
+					rebuildTriggers = true;
+				}
 			}
+		}
+		
+		if(rebuildTriggers) {
+			rebuildTriggers = false;
+			buildTriggerData();
 		}
 		
 		/*Iterator<String> items = test_set.listIterator();

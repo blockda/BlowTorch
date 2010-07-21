@@ -305,9 +305,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		int one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
 		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
 		
-		if(CALCULATED_ROWSINWINDOW > 0) {
-			Log.e("SLICK","surfaceChanged called, calculated" + CALCULATED_LINESINWINDOW + " lines and " + CALCULATED_ROWSINWINDOW + " rows.");
-		}
+		//if(CALCULATED_ROWSINWINDOW > 0) {
+			//Log.e("SLICK","surfaceChanged called, calculated" + CALCULATED_LINESINWINDOW + " lines and " + CALCULATED_ROWSINWINDOW + " rows.");
+		//}
 	}
 	
 

@@ -1,10 +1,13 @@
 package com.happygoatstudios.bt.responder.notification;
 
+import java.io.File;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -34,14 +37,16 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	
 	public NotificationResponder() {
 		super(RESPONDER_TYPE.NOTIFICATION);
-		message = "";
-		title = "";
+		message = "Custom Message!";
+		title = "BlowTorch Triggered";
 		useDefaultSound = true;
 		soundPath ="";
 		useDefaultLight = true;
-		colorToUse = 0xFFFFFFFF;
+		colorToUse = 0x00;
 		useDefaultVibrate = true;
-		vibrateLength = 0x03;
+		vibrateLength = 0x00;
+		useOnGoingNotification = false;
+		spawnNewNotification = true;
 	}
 	
 	public NotificationResponder copy() {
@@ -164,16 +169,26 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		return title;
 	}
 
+	long[] very_short = {0,200,50,200};
+	long[] normal_short = {0,500,100,300};
+	long[] normal_long = {0,1000,500,1000};
+	long[] super_long = {0,2000,1000,2000,1000,2000};
+	//long[] vp = new long[4];
+	//vp[0] = 0;
+	//vp[1] = 200;
+	//vp[2] = 50;
+	//vp[3] = 200;
+	
 	@Override
 	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED) {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
 				return;
 			}
 		} else {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN) {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
 				return;
 			}
 		}
@@ -197,19 +212,52 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		PendingIntent contentIntent = PendingIntent.getActivity(c, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		note.setLatestEventInfo(c, title, message, contentIntent);
+		
+		int defaults = 0;
+		if(useDefaultSound && soundPath.equals("")) {
+			defaults |= Notification.DEFAULT_SOUND;
+		} else if(useDefaultSound) {
+			note.sound = Uri.fromFile(new File(soundPath));
+		}
+		
+		if(useDefaultVibrate && vibrateLength == 0) {
+			defaults |= Notification.DEFAULT_VIBRATE;
+		} else if(useDefaultVibrate) {
+			switch(vibrateLength) {
+			case 1:
+				note.vibrate = very_short;
+				break;
+			case 2:
+				note.vibrate = normal_short;
+				break;
+			case 3:
+				note.vibrate = normal_long;
+				break;
+			case 4:
+				note.vibrate = super_long;
+				break;
+			}
+		}
+		
+		if(useDefaultLight && colorToUse == 0) {
+			defaults |= Notification.DEFAULT_LIGHTS;
+		} else if(useDefaultLight) {
+			note.flags |= Notification.FLAG_SHOW_LIGHTS;
+			note.ledARGB = colorToUse;
+			note.ledOnMS = 300;
+			note.ledOffMS = 300;
+		}
+		
 		note.flags = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL;
-		note.defaults = Notification.DEFAULT_SOUND;
-		note.ledARGB = 0xFFFF00FF;
-		note.ledOnMS = 300;
-		note.ledOffMS = 300;
+		note.defaults = defaults;
 		
-		long[] vp = new long[4];
-		vp[0] = 0;
-		vp[1] = 200;
-		vp[2] = 50;
-		vp[3] = 200;
+		//long[] vp = new long[4];
+		//vp[0] = 0;
+		//vp[1] = 200;
+		//vp[2] = 50;
+		//vp[3] = 200;
 		
-		note.vibrate = vp;
+		//note.vibrate = vp;
 		
 		NM.notify(myTriggerId,note);
 	}

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.responder.TriggerResponderEditorDoneListener;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.notification.*;
 
@@ -46,10 +47,10 @@ public class NotificationResponderEditor extends Dialog {
 	
 	NotificationResponder the_responder;
 	NotificationResponder original;
-	NotificationResponderDoneListener finish_with;
+	TriggerResponderEditorDoneListener finish_with;
 	boolean isEditor = false;
 	
-	public NotificationResponderEditor(Context context,NotificationResponder input,NotificationResponderDoneListener listener) {
+	public NotificationResponderEditor(Context context,NotificationResponder input,TriggerResponderEditorDoneListener listener) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		finish_with = listener;
@@ -82,7 +83,9 @@ public class NotificationResponderEditor extends Dialog {
 		sound_extra = (TextView)findViewById(R.id.responder_notification_sound_extra);
 		vibrate_extra = (TextView)findViewById(R.id.responder_notification_vibrate_extra);
 	
-		if(isEditor) {
+		sound_extra.setMaxWidth((int) (50*this.getContext().getResources().getDisplayMetrics().density));
+		sound_extra.setSingleLine(true);
+		//if(isEditor) {
 			//we have so much work to do.
 			title.setText(the_responder.getTitle());
 			message.setText(the_responder.getMessage());
@@ -91,10 +94,10 @@ public class NotificationResponderEditor extends Dialog {
 				sound.setChecked(true);
 				if(the_responder.getSoundPath().equals("")) {
 					
-					sound_extra.setText("Currently using system default sound.");
+					sound_extra.setText("Currently using default sound.");
 					
 				} else {
-					sound_extra.setText("Using: " + the_responder.getSoundPath());
+					sound_extra.setText(the_responder.getSoundPath());
 					//should be "", if useDefaultSounds is true;
 				}
 				//the_responder.setSoundPath("");
@@ -111,7 +114,7 @@ public class NotificationResponderEditor extends Dialog {
 			if(the_responder.isUseDefaultLight()) {
 				lights.setChecked(true);
 				if(the_responder.getColorToUse() != 0) {
-					lights_extra.setText("Currently Using: 0x" + Integer.toHexString(the_responder.getColorToUse()));
+					lights_extra.setText("Currently Using: " + lookupRawColor(the_responder.getColorToUse()));
 				} else {
 					lights_extra.setText("Currently Using: default");
 				}
@@ -125,6 +128,7 @@ public class NotificationResponderEditor extends Dialog {
 				vibrate.setChecked(true);
 				if(the_responder.getVibrateLength() != 0) {
 					//vibrate_extra.setText("Currently using: " + the_responder.getVibrateLength());
+					vibrate_extra.setText("Currently using: " + lookupVibrateLength(the_responder.getVibrateLength()));
 				} else {
 					vibrate_extra.setText("Currently using: default");
 				}
@@ -145,7 +149,7 @@ public class NotificationResponderEditor extends Dialog {
 				spawnnew.setChecked(false);
 			}
 			
-		}
+		//}
 		
 		lights_extra = (TextView)findViewById(R.id.responder_notification_lights_extra);
 		vibrate_extra = (TextView)findViewById(R.id.responder_notification_vibrate_extra);
@@ -165,6 +169,15 @@ public class NotificationResponderEditor extends Dialog {
 			}
 		});
 		
+		Button cancel = (Button)findViewById(R.id.responder_notification_cancel);
+		cancel.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				NotificationResponderEditor.this.dismiss();
+			}
+		});
+		
 		
 	}
 	
@@ -176,9 +189,9 @@ public class NotificationResponderEditor extends Dialog {
 		the_responder.setMessage(extra.getText().toString());
 		
 		if(isEditor) {		
-			finish_with.editNotificationResponder(the_responder, original);
+			finish_with.editTriggerResponder(the_responder, original);
 		} else {
-			finish_with.newNotificationResponder(the_responder);
+			finish_with.newTriggerResponder(the_responder);
 		}
 		this.dismiss();
 	}
@@ -194,6 +207,58 @@ public class NotificationResponderEditor extends Dialog {
 	protected ArrayList<String> sound_files = new ArrayList<String>();
 	protected HashMap<String,String> paths = new HashMap<String,String>();
 	
+	private String lookupColor(int input) {
+		switch(input) {
+		case 0:
+			return "default";
+		case 1:
+			return "Blue";
+		case 2:
+			return "Green";
+		case 3:
+			return "Red";
+		case 4:
+			return "Magenta";
+		case 5:
+			return "Cyan";
+		case 6:
+			return "White";
+		default:
+			return "default";
+		}
+	}
+	
+	private String lookupRawColor(int rawColor) {
+		switch(rawColor) {
+		case 0x00000000:
+			return "default";
+		case 0xFF0000FF:
+			return "Blue";
+		case 0xFF00FF00:
+			return "Green";
+		case 0xFFFF0000:
+			return "Red";
+		case 0xFFFF00FF:
+			return "Magenta";
+		case 0xFF00FFFF:
+			return "Cyan";
+		case 0xFFFFFFFF:
+			return "White";
+		default:
+			return "default";
+		}
+	}
+	
+	private String lookupVibrateLength(int i) {
+		switch(i) {
+		case 0: return "default";
+		case 1: return "Very Short";
+		case 2: return "Short";
+		case 3: return "Long";
+		case 4: return "Suuper Long";
+		default: return "default";
+		}
+	}
 	
 	private static final String DISABLED_MSG = "Currently disabled.";
 	private static final String DEFAULT_MSG = "Currently using: default";
@@ -356,26 +421,7 @@ public class NotificationResponderEditor extends Dialog {
 			
 		}
 		
-		private String lookupColor(int input) {
-			switch(input) {
-			case 0:
-				return "default";
-			case 1:
-				return "Blue";
-			case 2:
-				return "Green";
-			case 3:
-				return "Red";
-			case 4:
-				return "Magenta";
-			case 5:
-				return "Cyan";
-			case 6:
-				return "White";
-			default:
-				return "default";
-			}
-		}
+
 		
 		private class LightListReturnListener implements DialogInterface.OnClickListener {
 
@@ -429,16 +475,7 @@ public class NotificationResponderEditor extends Dialog {
 			
 		}
 		
-		private String lookupVibrateLength(int i) {
-			switch(i) {
-			case 0: return "default";
-			case 1: return "Very Short";
-			case 2: return "Short";
-			case 3: return "Long";
-			case 4: return "Suuper Long";
-			default: return "default";
-			}
-		}
+
 		
 		private class VibrateListReturnListener implements DialogInterface.OnClickListener {
 			public void onClick(DialogInterface arg0, int arg1) {
@@ -448,6 +485,7 @@ public class NotificationResponderEditor extends Dialog {
 				case 0:
 					//default
 					the_responder.setUseDefaultVibrate(true);
+					the_responder.setVibrateLength(0);
 					break;
 				case 1:
 					//very short

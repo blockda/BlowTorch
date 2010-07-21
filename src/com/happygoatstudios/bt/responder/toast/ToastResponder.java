@@ -18,6 +18,9 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 	
 	public ToastResponder() {
 		super(RESPONDER_TYPE.TOAST);
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
+		message = "";
+		delay = 2;
 	}
 	
 	public ToastResponder(RESPONDER_TYPE pType) {
@@ -81,15 +84,15 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 		//Handler ha;
 		// TODO Auto-generated method stub
 		if(windowIsOpen) {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED) {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
 				return;
 			}
 		} else {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN) {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN  || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
 				return;
 			}
 		}
-		Toast t = Toast.makeText(c, message, delay);
+		Toast t = Toast.makeText(c, message, delay*1000);
 		t.show();
 	}
 

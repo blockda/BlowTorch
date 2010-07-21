@@ -20,6 +20,8 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	
 	public AckResponder() {
 		super(RESPONDER_TYPE.ACK);
+		ackWith = "";
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 	}
 	
 	public AckResponder(RESPONDER_TYPE pType) {
@@ -52,9 +54,9 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	public void doResponse(Context c, String displayname, int triggernumber,
 			boolean windowIsOpen,Handler dispatcher) {
 		if(windowIsOpen) {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED) return;
+			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
 		} else {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN) return;
+			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
 		}
 		
 		Message msg = null;

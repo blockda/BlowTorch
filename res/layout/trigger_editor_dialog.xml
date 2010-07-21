@@ -38,15 +38,13 @@
   
   <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/trigger_editor_done_button" android:layout_below="@id/titlebar">
   	<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
-  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:shrinkColumns="0,2">
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:shrinkColumns="0">
   			<TableRow>
   				<TextView
   					android:text="Name:"/>
   				<EditText
   					android:id="@+id/trigger_editor_name"
   					android:hint=""/>
-  				<TextView
-  					android:text="literal?"/>
   			</TableRow>
   			<TableRow>
   				<TextView
@@ -54,10 +52,23 @@
   				<EditText
   					android:id="@+id/trigger_editor_pattern"
   					android:hint=""/>
-  				<CheckBox
-  					android:id="@+id/trigger_literal_checkbox"
-  					android:checked="true"/>
   			</TableRow>
+  		</TableLayout>
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="*">
+  			<TableRow android:layout_marginLeft="30dip" android:layout_marginRight="30dip">
+  				<LinearLayout android:gravity="center" android:background="@drawable/movemethod_frame">
+  					<CheckBox
+  						android:id="@+id/trigger_literal_checkbox"
+  						android:text="Interpret as literal?"
+  						android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+  				</LinearLayout>
+  				<LinearLayout android:gravity="center" android:background="@drawable/movemethod_frame">
+  				  	<CheckBox
+  						android:id="@+id/trigger_once_checkbox"
+  						android:text="Only fire once?"
+  						android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+  				</LinearLayout>
+			</TableRow>
   		</TableLayout>
   		<TextView android:layout_width="fill_parent"
   					android:layout_height="wrap_content"
@@ -68,17 +79,25 @@
   					android:gravity="center"
   					android:textStyle="bold"
   					android:textColor="#FF111111"/>
-  		<TableLayout android:id="@+id/trigger_notification_table" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="0" android:shrinkColumns="1,2" android:layout_marginLeft="50dip" android:layout_marginRight="50dip" android:background="@drawable/movemethod_frame">
+  		<TableLayout android:id="@+id/trigger_notification_table" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="0" android:shrinkColumns="1,2,3" android:layout_marginLeft="50dip" android:layout_marginRight="50dip" android:background="@drawable/movemethod_frame">
   			<TableRow android:id="@+id/trigger_notification_legend">
   				<TextView
   					android:text="TYPE"
-  					android:gravity="center"/>
+  					android:gravity="center"
+  					/>
   				<TextView
-  					android:text="Open"
-  					android:gravity="center"/>
+  					android:text="Window Open"
+  					android:gravity="center"
+  					android:layout_marginRight="5dip" android:layout_marginLeft="5dip"/>
   				<TextView
-  					android:text="Closed"
-  					android:gravity="center"/>
+  					android:text="Window Closed"
+  					android:gravity="center"
+  					android:layout_marginRight="5dip" android:layout_marginLeft="5dip"/>
+  				<TextView
+  					android:text="Delete"
+  					android:id="@+id/trigger_nabmylayoutparams"
+  					android:gravity="center"
+  					android:layout_marginRight="5dip" android:layout_marginLeft="5dip"/>
   			</TableRow>
   			<TableRow android:id="@+id/trigger_new_responder_row">
   				<Button android:id="@+id/trigger_new_notification" android:text="Add new responder."/>

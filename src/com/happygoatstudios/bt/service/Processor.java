@@ -17,13 +17,15 @@ public class Processor {
 	
 	Handler reportto = null;
 	Colorizer colormebad = new Colorizer();
-	OptionNegotiator opthandler = new OptionNegotiator();
+	OptionNegotiator opthandler;
 	IStellarService.Stub service = null;
 	
 	public Processor(Handler useme,IStellarService.Stub theserv) {
 		//not really much to do here, this will be a static class thing
 		reportto = useme;
 		service = theserv;
+		
+		opthandler = new OptionNegotiator(reportto);
 	}
 	
 	Pattern iac_cmd_reg = Pattern.compile("\\xFF([\\xFB-\\xFE])(.{1})");
@@ -251,9 +253,12 @@ public class Processor {
 			byte[] compressresp = new byte[1];
 			compressresp[0] = TC.COMPRESS2;
 			if(sub_r[0] == compressresp[0]) {
-				//Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
+				Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
 				
-				reportto.sendEmptyMessage(StellarService.MESSAGE_STARTCOMPRESS);
+				//reportto.sendEmptyMessage(StellarService.MESSAGE_STARTCOMPRESS);
+				reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS));
+				
+				
 				
 				//service.
 				//try {

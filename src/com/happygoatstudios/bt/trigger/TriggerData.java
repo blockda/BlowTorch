@@ -19,6 +19,9 @@ public class TriggerData implements Parcelable {
 	private String name;
 	private String pattern;
 	private boolean interpretAsRegex;
+	private boolean fireOnce;
+	
+	private boolean fired = false;
 	
 
 	
@@ -30,6 +33,7 @@ public class TriggerData implements Parcelable {
 		pattern = "";
 		interpretAsRegex = false;
 		responders = new ArrayList<TriggerResponder>();
+		fireOnce = false;
 	}
 	
 	public TriggerData copy() {
@@ -37,6 +41,7 @@ public class TriggerData implements Parcelable {
 		tmp.name = this.name;
 		tmp.pattern = this.pattern;
 		tmp.interpretAsRegex = this.interpretAsRegex;
+		tmp.fireOnce = this.fireOnce;
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
@@ -51,7 +56,7 @@ public class TriggerData implements Parcelable {
 		if(!test.name.equals(this.name)) return false;
 		if(!test.pattern.equals(this.pattern)) return false;
 		if(test.interpretAsRegex != this.interpretAsRegex) return false;
-		
+		if(test.fireOnce != this.fireOnce) return false;
 		Iterator<TriggerResponder> test_responders = test.responders.iterator();
 		Iterator<TriggerResponder> my_responders = this.responders.iterator();
 		while(test_responders.hasNext()) {
@@ -87,7 +92,7 @@ public class TriggerData implements Parcelable {
 		setPattern(in.readString());
 		setResponders(new ArrayList<TriggerResponder>());
 		setInterpretAsRegex( (in.readInt() == 1) ? true : false);
-		
+		setFireOnce ((in.readInt() == 1) ? true : false);
 		int numresponders = in.readInt();
 		for(int i = 0;i<numresponders;i++) {
 			int type = in.readInt();
@@ -159,6 +164,7 @@ public class TriggerData implements Parcelable {
 		out.writeString(name);
 		out.writeString(pattern);
 		out.writeInt( interpretAsRegex ? 1 : 0);
+		out.writeInt(fireOnce ? 1 : 0);
 		//out.writeP
 		out.writeInt(responders.size());
 		for(TriggerResponder responder : responders) {
@@ -216,6 +222,22 @@ public class TriggerData implements Parcelable {
 
 	public List<TriggerResponder> getResponders() {
 		return responders;
+	}
+
+	public void setFireOnce(boolean fireOnce) {
+		this.fireOnce = fireOnce;
+	}
+
+	public boolean isFireOnce() {
+		return fireOnce;
+	}
+
+	public void setFired(boolean fired) {
+		this.fired = fired;
+	}
+
+	public boolean isFired() {
+		return fired;
 	}
 
 }

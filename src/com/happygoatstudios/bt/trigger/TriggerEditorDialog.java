@@ -1,5 +1,8 @@
 package com.happygoatstudios.bt.trigger;
 
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import com.happygoatstudios.bt.R;
 
 import android.app.AlertDialog;
@@ -16,11 +19,16 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.RelativeLayout.LayoutParams;
 import android.widget.SimpleAdapter.ViewBinder;
+
 
 import com.happygoatstudios.bt.responder.*;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
@@ -30,7 +38,7 @@ import com.happygoatstudios.bt.responder.notification.*;
 import com.happygoatstudios.bt.responder.toast.*;
 import com.happygoatstudios.bt.service.IStellarService;
 
-public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,NotificationResponderDoneListener{
+public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener{
 
 	private TableRow legend;
 	private TableLayout responderTable;
@@ -42,6 +50,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	private IStellarService service;
 	
 	private Handler finish_with;
+	
+	private CheckBox literal;
+	private CheckBox once;
 	
 	public TriggerEditorDialog(Context context,TriggerData input,IStellarService pService,Handler finisher) {
 		super(context);
@@ -73,17 +84,38 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		Button donelistener = (Button)findViewById(R.id.trigger_editor_done_button);
 		donelistener.setOnClickListener(new TriggerEditorDoneListener());
 		
+		Button cancel = (Button)findViewById(R.id.new_trigger_cancel);
+		cancel.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				TriggerEditorDialog.this.dismiss();
+			}
+		});
+		
+		literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
+		once = (CheckBox)findViewById(R.id.trigger_once_checkbox);
+		
+		//if(isEditor) {
+		EditText title = (EditText)findViewById(R.id.trigger_editor_name);
+		EditText pattern = (EditText)findViewById(R.id.trigger_editor_pattern);
+		
+		CheckBox literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
+		
+		title.setText(the_trigger.getName());
+		pattern.setText(the_trigger.getPattern());
+		
+		literal.setChecked(!the_trigger.isInterpretAsRegex());
+		once.setChecked(the_trigger.isFireOnce());
+		
 		if(isEditor) {
-			EditText title = (EditText)findViewById(R.id.trigger_editor_name);
-			EditText pattern = (EditText)findViewById(R.id.trigger_editor_pattern);
-			
-			CheckBox literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
-			
-			title.setText(the_trigger.getName());
-			pattern.setText(the_trigger.getPattern());
-			
-			literal.setChecked(!the_trigger.isInterpretAsRegex());
-		}
+			Button editdone = (Button)findViewById(R.id.trigger_editor_done_button);
+			editdone.setText("Modify this trigger.");
+		}	
+		//}
+		
+		literal.setOnCheckedChangeListener(new LiteralCheckChangedListener());
+		once.setOnCheckedChangeListener(new FireOnceCheckChangedListener());
 	}
 	
 	private class TriggerEditorDoneListener implements View.OnClickListener {
@@ -92,12 +124,54 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			//return the trigger whatever the modification state.
 			
 
+		
 			
 			//responders should already be set up.
 			EditText title = (EditText)findViewById(R.id.trigger_editor_name);
 			EditText pattern = (EditText)findViewById(R.id.trigger_editor_pattern);
 			
 			CheckBox literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
+			
+			if(pattern.getText().toString().equals("")) {
+				//the pattern can not be blank.
+				AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
+				builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface arg0, int arg1) {
+						// TODO Auto-generated method stub
+						arg0.dismiss();
+					}
+				});
+				
+				builder.setMessage("Pattern can not be blank.");
+				builder.setTitle("Pattern error.");
+				AlertDialog error = builder.create();
+				error.show();
+				
+				return;
+			} else {
+				//check to make sure it is a valid pattern
+				if(the_trigger.isInterpretAsRegex()) {
+					try {
+						Pattern p = Pattern.compile(pattern.getText().toString());
+					} catch (PatternSyntaxException e) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
+						builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
+							
+							public void onClick(DialogInterface arg0, int arg1) {
+								arg0.dismiss();
+							}
+						});
+						
+						builder.setMessage("Pattern Error: " + e.getMessage());
+						builder.setTitle("Problem with pattern syntax.");
+						
+						AlertDialog error = builder.create();
+						error.show();
+						
+						return;
+					}
+				}
+			}
 			
 			if(isEditor) {
 				//do editor type action
@@ -135,6 +209,14 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		//responderTable.removeView(newbutton);
 		responderTable.removeViews(1, responderTable.getChildCount()-1);
 		
+		RelativeLayout p = (RelativeLayout)findViewById(R.id.newtriggerlayout);
+		LayoutParams params = new LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+		int margin =  (int) (2*this.getContext().getResources().getDisplayMetrics().density);
+		params.rightMargin = margin;
+		params.leftMargin =  margin;
+		params.topMargin =  margin;
+		params.bottomMargin = margin;
+		
 		int count = 0;
 		boolean legendAdded = false;
 		for(TriggerResponder responder : the_trigger.getResponders()) {
@@ -146,11 +228,50 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			
 			TextView label = new TextView(this.getContext());
 			label.setOnClickListener(new EditResponderListener(the_trigger.getResponders().indexOf(responder)));
-			label.setText("Notification");
+			if(responder.getType() == RESPONDER_TYPE.NOTIFICATION) {
+				label.setText("Notification: " + ((NotificationResponder)responder).getTitle());
+			} else if(responder.getType() == RESPONDER_TYPE.TOAST) {
+				label.setText("Toast Message: " + ((ToastResponder)responder).getMessage());
+			} else if(responder.getType() == RESPONDER_TYPE.ACK){
+				label.setText("Ack With: " + ((AckResponder)responder).getAckWith());
+			}
 			label.setGravity(Gravity.CENTER);
-			CheckBox windowOpen = new CheckBox(this.getContext()); windowOpen.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
+			label.setSingleLine(true);
+			label.setWidth((int) (150 * this.getContext().getResources().getDisplayMetrics().density));
+			LinearLayout l1 = new LinearLayout(this.getContext());
+			l1.setGravity(Gravity.CENTER);
+			LinearLayout l2 = new LinearLayout(this.getContext());
+			l2.setGravity(Gravity.CENTER);
 			CheckBox windowClose = new CheckBox(this.getContext()); windowClose.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
-			row.addView(label); row.addView(windowOpen); row.addView(windowClose);
+			CheckBox windowOpen = new CheckBox(this.getContext()); windowOpen.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
+			
+			if(responder.getFireType() == FIRE_WHEN.WINDOW_OPEN || responder.getFireType()==FIRE_WHEN.WINDOW_BOTH) {
+				windowOpen.setChecked(true);
+			} else {
+				windowOpen.setChecked(false);
+			}
+			
+			if(responder.getFireType() == FIRE_WHEN.WINDOW_CLOSED || responder.getFireType() == FIRE_WHEN.WINDOW_BOTH) {
+				windowClose.setChecked(true);
+			} else {
+				windowClose.setChecked(false);
+			}
+			/******* NOT SURE WHY THESE NEED TO BE REVERSED *******/
+			windowOpen.setOnCheckedChangeListener(new WindowOpenCheckChangeListener(the_trigger.getResponders().indexOf(responder)));
+			windowClose.setOnCheckedChangeListener(new WindowClosedCheckChangeListener(the_trigger.getResponders().indexOf(responder)));
+			
+			Button delete = new Button(this.getContext()); delete.setBackgroundResource(android.R.drawable.ic_delete);
+			delete.setOnClickListener(new DeleteResponderListener(the_trigger.getResponders().indexOf(responder)));
+			
+			windowOpen.setGravity(Gravity.CENTER); windowOpen.setText("");
+			windowClose.setGravity(Gravity.CENTER); windowClose.setText("");
+			delete.setGravity(Gravity.CENTER | Gravity.CENTER_VERTICAL);
+			
+			l1.addView(windowOpen);
+			l2.addView(windowClose);
+			//windowOpen.setLayoutParams(params); windowClose.setLayoutParams(params); delete.setLayoutParams(params);
+			
+			row.addView(label); row.addView(l2); row.addView(l1); row.addView(delete);
 			responderTable.addView(row);
 			count++;
 		}
@@ -180,8 +301,12 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				redit.show();
 				break;
 			case TOAST:
+				ToastResponderEditor tedit = new ToastResponderEditor(TriggerEditorDialog.this.getContext(),(ToastResponder)responder.copy(),TriggerEditorDialog.this);
+				tedit.show();
 				break;
 			case ACK:
+				AckResponderEditor aedit = new AckResponderEditor(TriggerEditorDialog.this.getContext(),(AckResponder)responder.copy(),TriggerEditorDialog.this);
+				aedit.show();
 				break;
 			default:
 				break;
@@ -190,6 +315,74 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		}
 		
 	}
+	
+	private class WindowOpenCheckChangeListener implements CompoundButton.OnCheckedChangeListener {
+
+		int position;
+		
+		WindowOpenCheckChangeListener(int i) {
+			position = i;
+		}
+		
+		public void onCheckedChanged(CompoundButton arg0, boolean checked) {
+			if(checked) {
+				//check the closed check state.
+				the_trigger.getResponders().get(position).addFireType(FIRE_WHEN.WINDOW_OPEN);
+			} else {
+				the_trigger.getResponders().get(position).removeFireType(FIRE_WHEN.WINDOW_OPEN);
+			}
+		}
+		
+	};
+	
+	private class WindowClosedCheckChangeListener implements CompoundButton.OnCheckedChangeListener {
+
+		int position;
+		
+		WindowClosedCheckChangeListener(int i) {
+			position = i;
+		}
+		
+		public void onCheckedChanged(CompoundButton arg0, boolean checked) {
+			if(checked) {
+				//check the closed check state.
+				the_trigger.getResponders().get(position).addFireType(FIRE_WHEN.WINDOW_CLOSED);
+			} else {
+				the_trigger.getResponders().get(position).removeFireType(FIRE_WHEN.WINDOW_CLOSED);
+			}
+		}
+		
+	};
+	
+	private class DeleteResponderListener implements View.OnClickListener,DialogInterface.OnClickListener {
+
+		int position;
+		
+		public DeleteResponderListener(int i) {
+			position = i;
+		}
+		
+		public void onClick(View arg0) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
+			builder.setPositiveButton("Delete", this);
+			builder.setNegativeButton("Cancel", this);
+			builder.setTitle("Are you sure?");
+			AlertDialog deleter = builder.create();
+			deleter.show();
+		}
+
+		public void onClick(DialogInterface arg0, int arg1) {
+			// TODO Auto-generated method stub
+			Log.e("TEDITOR","DELETE ALERT RETURNED " + arg1);
+			if(arg1 == DialogInterface.BUTTON_POSITIVE) {
+				//really delete the button
+				the_trigger.getResponders().remove(position);
+				refreshResponderTable();
+			}
+		}
+		
+	};
+	
 	
 	private class NewResponderListener implements View.OnClickListener {
 
@@ -205,6 +398,30 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		}
 		
 	}
+	
+	private class LiteralCheckChangedListener implements CompoundButton.OnCheckedChangeListener {
+
+		public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
+			if(arg1) {
+				the_trigger.setInterpretAsRegex(false); //NO NOT INTERPRET AS REGEX
+			} else {
+				the_trigger.setInterpretAsRegex(true); //DO INTERPRET AS REGEX.
+			}
+		}
+		
+	}
+	
+	private class FireOnceCheckChangedListener implements CompoundButton.OnCheckedChangeListener {
+
+		public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
+			if(arg1) {
+				the_trigger.setFireOnce(true); 
+			} else {
+				the_trigger.setFireOnce(false); 
+			}
+		}
+		
+	}
 
 	public void onClick(DialogInterface arg0, int arg1) {
 		// TODO Auto-generated method stub
@@ -215,9 +432,13 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			NotificationResponderEditor notifyEditor = new NotificationResponderEditor(this.getContext(),null,this);
 			notifyEditor.show();
 			break;
-		case 1:
-			break; //toast
+		case 1: //toast
+			ToastResponderEditor tedit = new ToastResponderEditor(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
+			tedit.show();
+			break; 
 		case 2:
+			AckResponderEditor aedit = new AckResponderEditor(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
+			aedit.show();
 			break; //ack
 		default:
 			break;
@@ -225,20 +446,25 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		
 	}
 	
-	public void editNotificationResponder(NotificationResponder edited,NotificationResponder original) {
-		Log.e("TEDITOR","ATTEMPTING TO MODIFY TRIGGER");
+
+	public void editTriggerResponder(TriggerResponder edited,TriggerResponder original) {
+		//Log.e("TEDITOR","ATTEMPTING TO MODIFY TRIGGER");
 		int pos = the_trigger.getResponders().indexOf(original);
-		Log.e("TEDITOR","ORIGINAL RESPONDER LIVES AT:" + pos);
+		//Log.e("TEDITOR","ORIGINAL RESPONDER LIVES AT:" + pos);
 		the_trigger.getResponders().remove(pos);
 		the_trigger.getResponders().add(pos,edited);
 		refreshResponderTable();
 	}
 
-	public void newNotificationResponder(NotificationResponder newresponder) {
+	public void newTriggerResponder(TriggerResponder newresponder) {
 		//so the new responder is in.
 		the_trigger.getResponders().add(newresponder);
 		refreshResponderTable();
 	}
+
+	
+
+
 
 
 	

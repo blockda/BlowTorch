@@ -156,8 +156,9 @@ public class DataPumper extends Thread {
 									count = decompress.inflate(tmp,0,tmp.length);
 									//int remain = decompress.getRemaining();
 								} catch (DataFormatException e) {
-								// TODO Auto-generated catch block
-									e.printStackTrace();
+									Log.e("BTSERVICE","Encountered data format exception and must quit.");
+									myhandler.sendEmptyMessage(MESSAGE_END);
+									return;
 								}
 								
 									if(decompressed_data == null && count > 0) {
@@ -202,19 +203,20 @@ public class DataPumper extends Thread {
 						//msg.setData(bundle);
 						
 						//only send if they are ready
-						synchronized(reportto) {
-							while(reportto.hasMessages(StellarService.MESSAGE_PROCESS)) {
-								try {
-									reportto.wait();
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}
-						}
+						//synchronized(reportto) {
+						//	while(reportto.hasMessages(StellarService.MESSAGE_PROCESS)) {
+						//		try {
+						//			reportto.wait();
+						//		} catch (InterruptedException e) {
+						///			// TODO Auto-generated catch block
+						//			e.printStackTrace();
+						//		}
+						//	}
+						//}
 						//either we woke up or the processor was ready.
-						
-						reportto.sendMessage(msg); //report to mom and dad.
+						synchronized(reportto) {
+							reportto.sendMessage(msg); //report to mom and dad.
+						}
 						//Log.e("PUMP","SENDING DATA FROM PUMP TO SERVICE");
 						//sleep until they wake us
 						//waitme(); //pause till processor is done.

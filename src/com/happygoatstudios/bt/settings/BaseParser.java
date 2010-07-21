@@ -68,6 +68,7 @@ public class BaseParser {
 	static final String ATTR_TRIGGERTITLE = "title";
 	static final String ATTR_TRIGGERPATTERN = "pattern";
 	static final String ATTR_TRIGGERLITERAL = "interpretLiteral";
+	static final String ATTR_TRIGGERONCE = "fireOnce";
 	
 	static final String ATTR_FIRETYPE = "fireWhen";
 	

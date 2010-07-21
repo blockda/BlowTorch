@@ -221,6 +221,7 @@ public class HyperSAXParser extends BaseParser {
 				current_trigger.setName(attr.getValue("",ATTR_TRIGGERTITLE));
 				current_trigger.setPattern(attr.getValue("",ATTR_TRIGGERPATTERN));
 				current_trigger.setInterpretAsRegex( attr.getValue("",ATTR_TRIGGERLITERAL).equals("true") ? true : false);
+				current_trigger.setFireOnce(attr.getValue("",ATTR_TRIGGERONCE).equals("true") ? true : false);
 				current_trigger.setResponders(new ArrayList<TriggerResponder>());
 			}
 			

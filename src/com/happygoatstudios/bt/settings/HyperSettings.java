@@ -306,6 +306,7 @@ public class HyperSettings {
 				out.attribute("", BaseParser.ATTR_TRIGGERTITLE, trigger.getName());
 				out.attribute("", BaseParser.ATTR_TRIGGERPATTERN, trigger.getPattern());
 				out.attribute("", BaseParser.ATTR_TRIGGERLITERAL, trigger.isInterpretAsRegex() ? "true" : "false");
+				out.attribute("", BaseParser.ATTR_TRIGGERONCE, trigger.isFireOnce() ? "true" : "false");
 				
 				for(TriggerResponder responder : trigger.getResponders()) {
 					switch(responder.getType()) {
