@@ -89,7 +89,7 @@ public abstract class TriggerResponder implements Parcelable {
 			}
 			break;
 		}
-		Log.e("RESPONDER","Added " + in.getString() + " FIRE TYPE NOW" + fireType.getString());
+		Log.e("RESPONDER","ADDED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
 	public void removeFireType(FIRE_WHEN in) {
@@ -112,7 +112,7 @@ public abstract class TriggerResponder implements Parcelable {
 			break;
 		}
 		
-		Log.e("RESPONDER","Removed " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
+		Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
 	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher);

@@ -75,7 +75,7 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 			setFireType(FIRE_WHEN.WINDOW_BOTH);
 		}
 		
-		Log.e("TOAST","PARCEL IN:" + message + " |[]| " + delay );
+		//Log.e("TOAST","PARCEL IN:" + message + " |[]| " + delay );
 	}
 
 	@Override
@@ -117,7 +117,7 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 
 	public void writeToParcel(Parcel out, int flags) {
 		// TODO Auto-generated method stub
-		Log.e("TOAST","PARCEL OUT:" + message + " |[]| " + delay);
+		//Log.e("TOAST","PARCEL OUT:" + message + " |[]| " + delay);
 		out.writeString(message);
 		out.writeInt(delay);
 		out.writeString(this.getFireType().getString());

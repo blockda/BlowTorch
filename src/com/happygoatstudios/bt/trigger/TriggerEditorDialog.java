@@ -63,7 +63,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			the_trigger = new TriggerData();
 			
 		} else {
-			the_trigger = input;
+			the_trigger = input.copy();
 			original_trigger = input.copy();
 			isEditor=true;
 		}
@@ -178,6 +178,14 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				the_trigger.setName(title.getText().toString());
 				the_trigger.setPattern(pattern.getText().toString());
 				the_trigger.setInterpretAsRegex(!literal.isChecked());
+				
+				//i don't care anymore about the checkchanged listeners. it was a neat idea, but here goes.
+				
+				
+				Log.e("TEDITOR","SENDING TRIGGER TO SERVICE:");
+				for(TriggerResponder responder : the_trigger.getResponders()) {
+					Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
+				}
 				try {
 					service.updateTrigger(original_trigger,the_trigger);
 				} catch (RemoteException e) {
@@ -217,6 +225,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		params.topMargin =  margin;
 		params.bottomMargin = margin;
 		
+		int checkboxnumber = 123456; //generate semi unique id's each time we generate this table. we need to do this because the check changed listeners are freaking. out.
+		
+		
 		int count = 0;
 		boolean legendAdded = false;
 		for(TriggerResponder responder : the_trigger.getResponders()) {
@@ -242,8 +253,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			l1.setGravity(Gravity.CENTER);
 			LinearLayout l2 = new LinearLayout(this.getContext());
 			l2.setGravity(Gravity.CENTER);
-			CheckBox windowClose = new CheckBox(this.getContext()); windowClose.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
-			CheckBox windowOpen = new CheckBox(this.getContext()); windowOpen.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
+			CheckBox windowOpen = new CheckBox(this.getContext()); windowOpen.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL); windowOpen.setId(checkboxnumber++);
+			
+			CheckBox windowClose = new CheckBox(this.getContext()); windowClose.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL); windowClose.setId(checkboxnumber++);
 			
 			if(responder.getFireType() == FIRE_WHEN.WINDOW_OPEN || responder.getFireType()==FIRE_WHEN.WINDOW_BOTH) {
 				windowOpen.setChecked(true);
@@ -256,7 +268,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			} else {
 				windowClose.setChecked(false);
 			}
-			/******* NOT SURE WHY THESE NEED TO BE REVERSED *******/
+			
 			windowOpen.setOnCheckedChangeListener(new WindowOpenCheckChangeListener(the_trigger.getResponders().indexOf(responder)));
 			windowClose.setOnCheckedChangeListener(new WindowClosedCheckChangeListener(the_trigger.getResponders().indexOf(responder)));
 			
@@ -318,7 +330,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	
 	private class WindowOpenCheckChangeListener implements CompoundButton.OnCheckedChangeListener {
 
-		int position;
+		private final int position;
 		
 		WindowOpenCheckChangeListener(int i) {
 			position = i;
@@ -328,16 +340,21 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			if(checked) {
 				//check the closed check state.
 				the_trigger.getResponders().get(position).addFireType(FIRE_WHEN.WINDOW_OPEN);
+				///Log.e("TEDITOR","TRIGGER TYPE " + the_trigger.getResponders().get(position).getType().getIntVal() + " AT "+ position + " ADDING windowOpen");
 			} else {
 				the_trigger.getResponders().get(position).removeFireType(FIRE_WHEN.WINDOW_OPEN);
+				//Log.e("TEDITOR","TRIGGER TYPE " + the_trigger.getResponders().get(position).getType().getIntVal() + " AT "+ position + " REMOVING windowOpen");
 			}
+			//Log.e("TEDITOR","TRIGGER TYPE " + the_trigger.getResponders().get(position).getType() + " AT "+ position + " NOW " + the_trigger.getResponders().get(position).getFireType().getString());
+			
+			
 		}
 		
 	};
 	
 	private class WindowClosedCheckChangeListener implements CompoundButton.OnCheckedChangeListener {
 
-		int position;
+		private final int position;
 		
 		WindowClosedCheckChangeListener(int i) {
 			position = i;
@@ -347,9 +364,14 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			if(checked) {
 				//check the closed check state.
 				the_trigger.getResponders().get(position).addFireType(FIRE_WHEN.WINDOW_CLOSED);
+				//Log.e("TEDITOR","TRIGGER TYPE " + the_trigger.getResponders().get(position).getType().getIntVal() + " AT "+ position + " ADDING windowClosed");
 			} else {
 				the_trigger.getResponders().get(position).removeFireType(FIRE_WHEN.WINDOW_CLOSED);
+				//Log.e("TEDITOR","TRIGGER TYPE " + the_trigger.getResponders().get(position).getType().getIntVal() + " AT "+ position + " REMOVING windowClosed");
+				
 			}
+			//Log.e("TEDITOR","TRIGGER TYPE " + the_trigger.getResponders().get(position).getType().getIntVal() + " AT "+ position + " NOW " + the_trigger.getResponders().get(position).getFireType().getString());
+			
 		}
 		
 	};
@@ -448,12 +470,18 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	
 
 	public void editTriggerResponder(TriggerResponder edited,TriggerResponder original) {
+		
 		//Log.e("TEDITOR","ATTEMPTING TO MODIFY TRIGGER");
 		int pos = the_trigger.getResponders().indexOf(original);
 		//Log.e("TEDITOR","ORIGINAL RESPONDER LIVES AT:" + pos);
 		the_trigger.getResponders().remove(pos);
 		the_trigger.getResponders().add(pos,edited);
 		refreshResponderTable();
+		
+		Log.e("TEDITOR","ATTEMPTING TO MODIFY RESPONDERS");
+		for(TriggerResponder responder : the_trigger.getResponders()) {
+			Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
+		}
 	}
 
 	public void newTriggerResponder(TriggerResponder newresponder) {

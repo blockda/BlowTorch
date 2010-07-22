@@ -242,6 +242,8 @@ public class HyperSAXParser extends BaseParser {
 					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
 				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
 					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
+					responder.setFireType(FIRE_WHEN.WINDOW_NEVER);
 				} else {
 					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
 				}
@@ -308,6 +310,8 @@ public class HyperSAXParser extends BaseParser {
 					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
 				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
 					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
+					toast.setFireType(FIRE_WHEN.WINDOW_NEVER);
 				} else {
 					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
 				}

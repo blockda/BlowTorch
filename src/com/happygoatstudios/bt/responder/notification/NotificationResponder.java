@@ -126,7 +126,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		setColorToUse(in.readInt());
 		setUseDefaultVibrate( (in.readInt() < 1) ? false : true);
 		setVibrateLength(in.readInt());
-		Log.e("RESPONDER","BEING PARCEL CREATED:" + getMessage() + " || " + getTitle());
+		//Log.e("RESPONDER","BEING PARCEL CREATED:" + getMessage() + " || " + getTitle());
 	}
 
 	public NotificationResponder(RESPONDER_TYPE pType) {
@@ -147,7 +147,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		out.writeInt(colorToUse);
 		out.writeInt((useDefaultVibrate) ? 1 : 0);
 		out.writeInt(vibrateLength);
-		Log.e("RESPONDER","BEING PARCELE OUTPUTED");
+		//Log.e("RESPONDER","BEING PARCELE OUTPUTED");
 		
 	}
 

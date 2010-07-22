@@ -1081,6 +1081,9 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				the_settings.getTriggers().remove(from.getPattern());
 				the_settings.getTriggers().put(to.getPattern(), to);
+				for(TriggerResponder responder : to.getResponders()) {
+					Log.e("SERVICE","MODIFIED TRIGGER, RESPONDER NOW: "+ responder.getFireType().getString());
+				}
 			}
 		}
 		
