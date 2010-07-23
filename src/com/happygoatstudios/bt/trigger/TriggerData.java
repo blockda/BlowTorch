@@ -23,7 +23,7 @@ public class TriggerData implements Parcelable {
 	
 	private boolean fired = false;
 	
-
+	private boolean hidden = false;
 	
 	private List<TriggerResponder> responders;
 	
@@ -34,6 +34,7 @@ public class TriggerData implements Parcelable {
 		interpretAsRegex = false;
 		responders = new ArrayList<TriggerResponder>();
 		fireOnce = false;
+		hidden = false;
 	}
 	
 	public TriggerData copy() {
@@ -42,6 +43,7 @@ public class TriggerData implements Parcelable {
 		tmp.pattern = this.pattern;
 		tmp.interpretAsRegex = this.interpretAsRegex;
 		tmp.fireOnce = this.fireOnce;
+		tmp.hidden = this.hidden;
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
@@ -57,6 +59,7 @@ public class TriggerData implements Parcelable {
 		if(!test.pattern.equals(this.pattern)) return false;
 		if(test.interpretAsRegex != this.interpretAsRegex) return false;
 		if(test.fireOnce != this.fireOnce) return false;
+		if(test.hidden != this.hidden) return false;
 		Iterator<TriggerResponder> test_responders = test.responders.iterator();
 		Iterator<TriggerResponder> my_responders = this.responders.iterator();
 		while(test_responders.hasNext()) {
@@ -93,6 +96,7 @@ public class TriggerData implements Parcelable {
 		setResponders(new ArrayList<TriggerResponder>());
 		setInterpretAsRegex( (in.readInt() == 1) ? true : false);
 		setFireOnce ((in.readInt() == 1) ? true : false);
+		setHidden( (in.readInt() == 1) ? true : false);
 		int numresponders = in.readInt();
 		for(int i = 0;i<numresponders;i++) {
 			int type = in.readInt();
@@ -165,6 +169,7 @@ public class TriggerData implements Parcelable {
 		out.writeString(pattern);
 		out.writeInt( interpretAsRegex ? 1 : 0);
 		out.writeInt(fireOnce ? 1 : 0);
+		out.writeInt(hidden ? 1 : 0);
 		//out.writeP
 		out.writeInt(responders.size());
 		for(TriggerResponder responder : responders) {
@@ -238,6 +243,14 @@ public class TriggerData implements Parcelable {
 
 	public boolean isFired() {
 		return fired;
+	}
+
+	public void setHidden(boolean hidden) {
+		this.hidden = hidden;
+	}
+
+	public boolean isHidden() {
+		return hidden;
 	}
 
 }

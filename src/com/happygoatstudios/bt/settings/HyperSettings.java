@@ -26,11 +26,15 @@ public class HyperSettings {
 	private int MaxLines = 300;
 	private String FontName = "monospace";
 	private String FontPath = "none";
+	private boolean UseExtractUI = false;
 	
 	private String SaveLocation = "none";
 	
 	private boolean SemiIsNewLine = true;
 	private boolean ProcessPeriod = true;
+	private boolean ThrottleBackground = false;
+	
+	
 	
 
 	
@@ -112,77 +116,7 @@ public class HyperSettings {
 		return WrapMode;
 	}
 	
-	public static String writeXml(List<HyperSettings> settings) {
-		if(settings.size() < 1) {
-			return null;
-		}
-		HyperSettings data = settings.get(0);
-		XmlSerializer out = Xml.newSerializer();
-		StringWriter writer = new StringWriter();
-		try {
-			out.setOutput(writer);
-			out.startDocument("UTF-8", true);
-			out.startTag("", "root");
-			out.startTag("", BaseParser.SETTINGS_BLOCK);
-			out.startTag("", BaseParser.SAVE_LOCATION);
-			out.text(data.getSaveLocation());
-			out.endTag("", BaseParser.SAVE_LOCATION);
-			
-			out.startTag("", BaseParser.WINDOW_LINESIZE);
-			out.text(new Integer(data.getLineSize()).toString());
-			out.endTag("", BaseParser.WINDOW_LINESIZE);
-			
-			out.startTag("", BaseParser.WINDOW_LINESIZEEXTRA);
-			out.text(new Integer(data.getLineSpaceExtra()).toString());
-			out.endTag("", BaseParser.WINDOW_LINESIZEEXTRA);
-			
-			out.startTag("", BaseParser.WINDOW_FONT);
-			out.text(data.getFontName());
-			out.endTag("", BaseParser.WINDOW_FONT);
-			
-			out.startTag("", BaseParser.WINDOW_FONTPATH);
-			out.text(data.getFontPath());
-			out.endTag("", BaseParser.WINDOW_FONTPATH);
-			
-			out.startTag("", BaseParser.WINDOW_WRAPMODE);
-			int putval = 0;
-			switch(data.getWrapMode()) {
-			case NONE:
-				putval = 0;
-				break;
-			case BREAK:
-				putval = 1;
-				break;
-			case WORD:
-				putval = 2;
-				break;
-			default:
-			}
-			out.text(new Integer(putval).toString());
-			out.endTag("", BaseParser.WINDOW_WRAPMODE);
-			
-			out.startTag("", BaseParser.WINDOW_MAXLINES);
-			out.text(new Integer(data.getMaxLines()).toString());
-			out.endTag("", BaseParser.WINDOW_MAXLINES);
-			
-			out.startTag("", BaseParser.DATA_SEMINEWLINE);
-			if(data.isSemiIsNewLine()) {
-				out.text("1");
-			} else {
-				out.text("0");
-			}
-			out.endTag("", BaseParser.DATA_SEMINEWLINE);
-			
-			out.endTag("", BaseParser.SETTINGS_BLOCK);
-			out.endTag("", "root");
-			out.endDocument();
-			return writer.toString();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		
-	}
-	
+
 	public static String writeXml2(HyperSettings data) {
 		XmlSerializer out = Xml.newSerializer();
 		StringWriter writer = new StringWriter();
@@ -214,6 +148,7 @@ public class HyperSettings {
 			
 			out.endTag("", BaseParser.TAG_WINDOW);
 			
+			/****************************************
 			out.startTag("",BaseParser.TAG_DATASEMINEWLINE);
 			if(data.isSemiIsNewLine()) {
 				out.text("1");
@@ -229,8 +164,16 @@ public class HyperSettings {
 			} else {
 				out.text("false");
 			}
-			
 			out.endTag("",BaseParser.TAG_PROCESSPERIOD);
+			********************************************/
+			
+			out.startTag("",BaseParser.TAG_SERVICE);
+			
+			out.attribute("", BaseParser.ATTR_SEMINEWLINE, (data.isSemiIsNewLine()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_THROTTLEBACKGROUND, (data.isThrottleBackground()) ? "true" : "false");
+			
+			out.endTag("",BaseParser.TAG_SERVICE);
 			
 			//output aliases
 			out.startTag("", BaseParser.TAG_ALIASES);
@@ -307,6 +250,7 @@ public class HyperSettings {
 				out.attribute("", BaseParser.ATTR_TRIGGERPATTERN, trigger.getPattern());
 				out.attribute("", BaseParser.ATTR_TRIGGERLITERAL, trigger.isInterpretAsRegex() ? "true" : "false");
 				out.attribute("", BaseParser.ATTR_TRIGGERONCE, trigger.isFireOnce() ? "true" : "false");
+				if(trigger.isHidden())  out.attribute("", BaseParser.ATTR_TRIGGERHIDDEN, "true");
 				
 				for(TriggerResponder responder : trigger.getResponders()) {
 					switch(responder.getType()) {
@@ -431,6 +375,22 @@ public class HyperSettings {
 
 	public HashMap<String,TriggerData> getTriggers() {
 		return Triggers;
+	}
+
+	public void setUseExtractUI(boolean useExtractUI) {
+		UseExtractUI = useExtractUI;
+	}
+
+	public boolean isUseExtractUI() {
+		return UseExtractUI;
+	}
+
+	public void setThrottleBackground(boolean throttleBackground) {
+		ThrottleBackground = throttleBackground;
+	}
+
+	public boolean isThrottleBackground() {
+		return ThrottleBackground;
 	}
 
 }

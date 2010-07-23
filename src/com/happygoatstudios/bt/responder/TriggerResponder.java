@@ -37,8 +37,8 @@ public abstract class TriggerResponder implements Parcelable {
 	public static final String FIRE_NEVER = "none";
 	
 	public enum FIRE_WHEN {
-		WINDOW_CLOSED(FIRE_WINDOW_OPEN),
-		WINDOW_OPEN(FIRE_WINDOW_CLOSED),
+		WINDOW_CLOSED(FIRE_WINDOW_CLOSED),
+		WINDOW_OPEN(FIRE_WINDOW_OPEN),
 		WINDOW_BOTH(FIRE_ALWAYS),
 		WINDOW_NEVER(FIRE_NEVER);
 		
@@ -89,7 +89,7 @@ public abstract class TriggerResponder implements Parcelable {
 			}
 			break;
 		}
-		Log.e("RESPONDER","ADDED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
+		//Log.e("RESPONDER","ADDED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
 	public void removeFireType(FIRE_WHEN in) {
@@ -112,7 +112,7 @@ public abstract class TriggerResponder implements Parcelable {
 			break;
 		}
 		
-		Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
+		//Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
 	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher);

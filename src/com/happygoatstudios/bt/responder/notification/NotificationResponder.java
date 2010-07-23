@@ -258,6 +258,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		//vp[3] = 200;
 		
 		//note.vibrate = vp;
+		NM.cancel(myTriggerId); //cancel my id if i am a not spawn new kind of guy, if that is true this shouldn't be a problem here, as the id doens't exist in the notification system yet.
 		
 		NM.notify(myTriggerId,note);
 	}

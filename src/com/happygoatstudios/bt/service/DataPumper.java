@@ -35,7 +35,11 @@ public class DataPumper extends Thread {
 		final static public int MESSAGE_ENDXFER = 104;
 		final static public int MESSAGE_COMPRESS = 105;
 		final static public int MESSAGE_NOCOMPRESS = 106;
+		public static final int MESSAGE_THROTTLE = 108;
+		public static final int MESSAGE_NOTHROTTLE = 109;
 	
+		private boolean throttle = false;
+		
 		public DataPumper(InputStream istream,OutputStream ostream,Handler useme) {
 			reader = new BufferedInputStream(istream);
 			//writer = new BufferedOutputStream(ostream);
@@ -51,6 +55,17 @@ public class DataPumper extends Thread {
 			myhandler = new Handler() {
 				public void handleMessage(Message msg) {
 					switch(msg.what) {
+					case MESSAGE_THROTTLE:
+						Log.e("PUMPER","DATA PUMP THROTTLING");
+						throttle = true;
+						break;
+					case MESSAGE_NOTHROTTLE:
+						Log.e("PUMPER","DATA PUMP RESUMING NORMAL OPERATION");
+						this.removeMessages(MESSAGE_RETRIEVE);
+						throttle = false;
+						this.sendEmptyMessage(MESSAGE_RETRIEVE);
+						
+						break;
 					case MESSAGE_RETRIEVE:
 						//Log.e("PUMP","PUMP CHECKING FOR NEW DATA!");
 						getData();
@@ -81,7 +96,11 @@ public class DataPumper extends Thread {
 					//keep the pump flowing.
 					if(!myhandler.hasMessages(MESSAGE_RETRIEVE)) {
 						//only send if there are no messages already in queue.
-						myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 500);
+						if(!throttle) {
+							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 500);
+						} else {
+							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 1500);
+						}
 					}
 				}
 			};

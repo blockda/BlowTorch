@@ -38,13 +38,28 @@
 			android:title="Font"
 			android:summary="The font used by the window to render text."
 			android:defaultValue="monospace"/>
+		<CheckBoxPreference
+			android:key="USE_EXTRACTUI"
+			android:defaultValue="false"
+			android:summary="Show the full screen editor when the input bar is clicked."
+			android:title="Use Full Screen Editor?"/>
 	</PreferenceCategory>
-	<PreferenceCategory>
+	<PreferenceCategory android:title="Service Settings:">
 		<CheckBoxPreference
 			android:key="PROCESS_PERIOD"
 			android:defaultValue="true"
 			android:summary="Perform internal functions using input starting with a period."
-			android:title="Process Dot Commands"/>
+			android:title="Process Dot Commands?"/>
+		<CheckBoxPreference
+			android:key="THROTTLE_BACKGROUND"
+			android:defaultValue="false"
+			android:summary="Slow down service when the window is closed. Conserve battery."
+			android:title="Throttle Service In Background"/>
+		<CheckBoxPreference
+			android:key="PROCESS_SEMI"
+			android:defaultValue="true"
+			android:summary="Semicolons will be replaced with a newline character."
+			android:title="Process Semicolons"/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Import/Export Settings">
 		<com.happygoatstudios.bt.settings.HyperDialogPreference

@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.button;
 
 import java.util.ArrayList;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -57,6 +58,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 			entries.add(new ButtonEntry(key,data.get(key)));
 		}
 		adapter = new ConnectionAdapter(lv.getContext(),R.layout.buttonset_selection_list_row,entries);
+		adapter.sort(new EntryCompare());
 		lv.setAdapter(adapter);
 		lv.setTextFilterEnabled(true);
 		
@@ -191,6 +193,17 @@ public class ButtonSetSelectorDialog extends Dialog {
 			setSettingsHaveChanged = true;
 		}
 	};
+	
+	private class EntryCompare implements Comparator<ButtonEntry> {
+
+		public int compare(ButtonEntry a, ButtonEntry b) {
+			// TODO Auto-generated method stub
+			return a.name.compareTo(b.name);
+		}
+
+
+		
+	}
 	
 	private class ButtonEntry {
 		public String name;

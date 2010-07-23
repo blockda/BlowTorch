@@ -31,39 +31,43 @@ public class NewAliasDialog extends Dialog {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
-		setContentView(R.layout.new_alias_dialog);
+		if(isEditor) {
+			createeditor();
+		} else {
 		
-		Button b = (Button)findViewById(R.id.new_alias_done_button);
-		
-		b.setOnClickListener(new View.OnClickListener() {
+			setContentView(R.layout.new_alias_dialog);
 			
-			public void onClick(View arg0) {
-				EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
-				EditText post = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
+			Button b = (Button)findViewById(R.id.new_alias_done_button);
+			
+			b.setOnClickListener(new View.OnClickListener() {
 				
-				if(pre != null && post != null) {
-					reportto.newAliasDialogDone(pre.getText().toString(), post.getText().toString());
+				public void onClick(View arg0) {
+					EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
+					EditText post = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
+					
+					if(pre != null && post != null) {
+						reportto.newAliasDialogDone(pre.getText().toString(), post.getText().toString());
+						NewAliasDialog.this.dismiss();
+					}
+				}
+			});
+			
+			Button cancel = (Button)findViewById(R.id.new_alias_cancel);
+			cancel.setOnClickListener(new View.OnClickListener() {
+				
+				public void onClick(View arg0) {
 					NewAliasDialog.this.dismiss();
 				}
-			}
-		});
+			});
 		
-		Button cancel = (Button)findViewById(R.id.new_alias_cancel);
-		cancel.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View arg0) {
-				NewAliasDialog.this.dismiss();
-			}
-		});
+		}
 		//load in the array adapter to hook up the list view
 	}
 	
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,String old_alias) {
-		super(context);
-		// TODO Auto-generated constructor stub
-		reportto = useme;
-		original_alias = old_alias;
-		old_pos = position;
+	private String mPre;
+	private String mPost;
+	
+	private void createeditor() {
 		setContentView(R.layout.new_alias_dialog);
 		
 		Button b = (Button)findViewById(R.id.new_alias_done_button);
@@ -71,8 +75,8 @@ public class NewAliasDialog extends Dialog {
 		EditText tpre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
 		EditText tpost = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
 		
-		tpre.setText(pre);
-		tpost.setText(post);
+		tpre.setText(mPre);
+		tpost.setText(mPost);
 		
 		tpre.setEnabled(false);
 		
@@ -96,7 +100,21 @@ public class NewAliasDialog extends Dialog {
 				}
 			}
 		});
-		//load in the array adapter to hook up the list view
 	}
+	
+	boolean isEditor = false;
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,String old_alias) {
+		super(context);
+		isEditor=true;
+		// TODO Auto-generated constructor stub
+		reportto = useme;
+		original_alias = old_alias;
+		old_pos = position;
+		mPre = pre;
+		mPost = post;
+	}
+
+		//load in the array adapter to hook up the list view
+	
 
 }

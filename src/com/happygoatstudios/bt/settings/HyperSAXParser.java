@@ -37,7 +37,7 @@ public class HyperSAXParser extends BaseParser {
 		final HyperSettings tmp = new HyperSettings();
 		RootElement root = new RootElement("root");
 		Element window = root.getChild(TAG_WINDOW);
-		Element data = root.getChild(TAG_DATASEMINEWLINE);
+		Element data = root.getChild(TAG_SERVICE);
 		Element aliases = root.getChild(TAG_ALIASES);
 		Element alias = aliases.getChild(TAG_ALIAS);
 		Element buttonsets = root.getChild(TAG_BUTTONSETS);
@@ -87,7 +87,20 @@ public class HyperSAXParser extends BaseParser {
 			
 		});
 		
-		data.setEndTextElementListener(new EndTextElementListener() {
+		data.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes a) {
+				//read in the attributes.
+				//ouch. just look at that nested ternary operator.
+				tmp.setUseExtractUI( (a.getValue("",ATTR_USEEXTRACTUI) == null) ? false : (a.getValue("",ATTR_USEEXTRACTUI).equals("true")) ? true : false);
+				tmp.setSemiIsNewLine( (a.getValue("",ATTR_SEMINEWLINE) == null) ? true : (a.getValue("",ATTR_SEMINEWLINE).equals("true")) ? true : false);
+				tmp.setThrottleBackground( (a.getValue("",ATTR_THROTTLEBACKGROUND) == null) ? false : (a.getValue("",ATTR_THROTTLEBACKGROUND).equals("true")) ? true : false);
+				
+			}
+			
+		});
+		
+		/*(data.setEndTextElementListener(new EndTextElementListener() {
 
 			public void end(String body) {
 				int newline = new Integer(body).intValue();
@@ -98,7 +111,7 @@ public class HyperSAXParser extends BaseParser {
 				}
 			}
 			
-		});
+		});*/
 		
 		alias.setStartElementListener(new StartElementListener() {
 
@@ -217,11 +230,12 @@ public class HyperSAXParser extends BaseParser {
 
 			public void start(Attributes attr) {
 				//current_trigger = new TriggerData();
-				Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
+				//Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
 				current_trigger.setName(attr.getValue("",ATTR_TRIGGERTITLE));
 				current_trigger.setPattern(attr.getValue("",ATTR_TRIGGERPATTERN));
 				current_trigger.setInterpretAsRegex( attr.getValue("",ATTR_TRIGGERLITERAL).equals("true") ? true : false);
 				current_trigger.setFireOnce(attr.getValue("",ATTR_TRIGGERONCE).equals("true") ? true : false);
+				current_trigger.setHidden( (attr.getValue("",ATTR_TRIGGERHIDDEN) == null) ? false : (attr.getValue("",ATTR_TRIGGERHIDDEN)).equals("true") ? true : false);
 				current_trigger.setResponders(new ArrayList<TriggerResponder>());
 			}
 			
@@ -230,7 +244,7 @@ public class HyperSAXParser extends BaseParser {
 		notificationResponder.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes attr) {
-				Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
+				//Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
 				NotificationResponder responder = new NotificationResponder();
 				responder.setMessage(attr.getValue("",ATTR_NOTIFICATIONMESSAGE));
 				responder.setTitle(attr.getValue("",ATTR_NOTIFICATIONTITLE));
@@ -324,11 +338,13 @@ public class HyperSAXParser extends BaseParser {
 		ackResponder.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes attributes) {
+				
 				AckResponder ack = new AckResponder();
 				ack.setAckWith(attributes.getValue("",ATTR_ACKWITH));
 				
 				String fireType = attributes.getValue("",ATTR_FIRETYPE);
 				if(fireType == null) fireType = "";
+				//Log.e("PARSER","ACK TAG READ, FIRETYPE IS:" + fireType);
 				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
 					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
 				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {

@@ -57,4 +57,9 @@ interface IStellarService {
 	void newTrigger(in TriggerData data);
 	void updateTrigger(in TriggerData from,in TriggerData to);
 	void deleteTrigger(String which);
+	TriggerData getTrigger(String pattern);
+	void setUseExtractUI(boolean use);
+	boolean getUseExtractUI();
+	void setThrottleBackground(boolean use);
+	
 }

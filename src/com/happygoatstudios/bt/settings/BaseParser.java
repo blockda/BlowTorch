@@ -34,6 +34,11 @@ public class BaseParser {
 	static final String TAG_DATASEMINEWLINE = "seminewline";
 	static final String TAG_PROCESSPERIOD = "processPeriod";
 	
+	static final String TAG_SERVICE = "service";
+	static final String ATTR_SEMINEWLINE = "processSemi";
+	static final String ATTR_USEEXTRACTUI = "proccessPeriod";
+	static final String ATTR_THROTTLEBACKGROUND = "throttle";
+	
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";
 	static final String ATTR_PRE = "pre";
@@ -69,6 +74,7 @@ public class BaseParser {
 	static final String ATTR_TRIGGERPATTERN = "pattern";
 	static final String ATTR_TRIGGERLITERAL = "interpretLiteral";
 	static final String ATTR_TRIGGERONCE = "fireOnce";
+	static final String ATTR_TRIGGERHIDDEN = "hidden";
 	
 	static final String ATTR_FIRETYPE = "fireWhen";
 	

@@ -1,10 +1,12 @@
 package com.happygoatstudios.bt.trigger;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.IStellarService;
 
 import android.app.Dialog;
@@ -13,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,8 +88,12 @@ public class TriggerSelectionDialog extends Dialog {
 			TriggerItem entry = adapter.getItem(arg2);
 			//launch the trigger editor with this item.
 			try {
-				TriggerData data = (TriggerData) (service.getTriggerData()).get(entry.extra);
-				
+				//TriggerData data = (TriggerData) (service.getTriggerData()).get(entry.extra);
+				TriggerData data = service.getTrigger(entry.extra);
+				//Log.e("TSELECTOR","ABOUT TO HAND OFF A TRIGGER TO THE EDITOR, THIS ONE HAS RESPONDERS");
+				//for(TriggerResponder responder: data.getResponders() ) {
+				//	Log.e("TSELECTOR","has responder " + responder.getType() + " fires " + responder.getFireType());
+				//}
 				//launch the editor
 				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
 				editor.show();
@@ -111,14 +118,17 @@ public class TriggerSelectionDialog extends Dialog {
 		}
 		
 		for(TriggerData data : trigger_list.values()) {
-			TriggerItem t = new TriggerItem();
-			t.name = data.getName();
-			t.extra = data.getPattern();
-			entries.add(t);
+			if(!data.isHidden()) {
+				TriggerItem t = new TriggerItem();
+				t.name = data.getName();
+				t.extra = data.getPattern();
+				entries.add(t);
+			}
 		}
 		
 		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
 		list.setAdapter(adapter);
+		adapter.sort(new ItemSorter());
 	}
 	
 	private Handler triggerEditorDoneHandler = new Handler() {
@@ -163,6 +173,15 @@ public class TriggerSelectionDialog extends Dialog {
 		
 	}
 	
+	
+	public class ItemSorter implements Comparator<TriggerItem>{
+
+		public int compare(TriggerItem a, TriggerItem b) {
+			// TODO Auto-generated method stub
+			return a.name.compareTo(b.name);
+		}
+		
+	}
 	
 	public class TriggerItem {
 		String name;

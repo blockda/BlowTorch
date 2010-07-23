@@ -59,7 +59,7 @@
     android:isScrollContainer = "false"
     android:lineSpacingExtra = "-2sp"
     android:keepScreenOn = "true"
-    android:imeOptions = "actionSend|flagNoExtractUi"/>
+    android:imeOptions = "actionSend"/>
  </RelativeLayout>
 
     

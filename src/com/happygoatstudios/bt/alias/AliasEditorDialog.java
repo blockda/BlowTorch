@@ -85,6 +85,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			apdapter = new ConnectionAdapter(lv.getContext(),R.layout.alias_row,aliases);
 			lv.setAdapter(apdapter);
 			lv.setTextFilterEnabled(true);
+			apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 		}
 		
 		Button butt = (Button)findViewById(R.id.new_alias_button);
@@ -267,6 +268,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			apdapter.notifyDataSetChanged();
 			//apdapter.
 		}
+		apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 
 	}
 	
@@ -286,6 +288,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			apdapter.notifyDataSetChanged();
 			
 		}
+		apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 	}
 	
 	Vector<Integer> offenders = new Vector<Integer>();

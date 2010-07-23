@@ -34,6 +34,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
@@ -418,12 +419,18 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
 						String font_name = prefs.getString("FONT_NAME", "monospace");
 						boolean process_periods = prefs.getBoolean("PROCESS_PERIOD", true);
+						boolean use_semi = prefs.getBoolean("PROCESS_SEMI", true);
+						boolean use_extractui = prefs.getBoolean("USE_EXTRACTUI", false);
+						boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
 						try {
 							service.setFontSize(font_size);
 							service.setFontSpaceExtra(line_space);
 							service.setMaxLines(max_lines);
 							service.setFontName(font_name);
 							service.setProcessPeriod(process_periods);
+							service.setUseExtractUI(use_extractui);
+							service.setThrottleBackground(throttle_background);
+							service.setSemiOption(use_semi);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -542,6 +549,28 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						}
 						
 						screen2.setFont(font);
+						
+						
+						if(service.getUseExtractUI()) {
+							
+							int current = input_box.getImeOptions();
+							int wanted = current & (0xFFFFFFFF^EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+							
+							//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
+							input_box.setImeOptions(wanted);
+							input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+						} else {
+							int current = input_box.getImeOptions();
+							int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+							//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
+							input_box.setImeOptions(wanted);
+							input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_AUTO_CORRECT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+							//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
+						}
+						InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+						imm.restartInput(input_box);
+						//imm.
+						//im
 						//get the rest of the window options that are necessary to function
 						
 					} catch (RemoteException e1) {

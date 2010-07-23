@@ -11,9 +11,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.BaardTERMWindow"
         		  android:windowSoftInputMode="adjustResize"
-        		  android:label="BaardTERM"
+        		  android:label="BlowTorch"
         		  android:screenOrientation="landscape"
 				  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
         		  android:launchMode = "singleTask">

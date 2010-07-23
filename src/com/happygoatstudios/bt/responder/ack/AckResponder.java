@@ -99,15 +99,21 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	public void readFromParcel(Parcel in) {
 		setAckWith(in.readString());
 		String fireType = in.readString();
+		//Log.e("ACKRESPONDER","READING FROM PARCEL, FIRE TYPE:" + fireType);
 		if(fireType.equals(FIRE_WINDOW_OPEN)) {
+			//Log.e("ACKRESPONDER","attempting to set open");
 			setFireType(FIRE_WHEN.WINDOW_OPEN);
 		} else if (fireType.equals(FIRE_WINDOW_CLOSED)) {
+			//Log.e("ACKRESPONDER","attempting to set closed");
 			setFireType(FIRE_WHEN.WINDOW_CLOSED);
 		} else if (fireType.equals(FIRE_ALWAYS)) {
+			//Log.e("ACKRESPONDER","attempting to set both");
 			setFireType(FIRE_WHEN.WINDOW_BOTH);
 		} else if (fireType.equals(FIRE_NEVER)) {
+			//Log.e("ACKRESPONDER","attempting to set never");
 			setFireType(FIRE_WHEN.WINDOW_NEVER);
 		} else {
+			//Log.e("ACKRESPONDER","defaulting to both");
 			setFireType(FIRE_WHEN.WINDOW_BOTH);
 		}
 	}
@@ -116,6 +122,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 		// TODO Auto-generated method stub
 		out.writeString(ackWith);
 		out.writeString(this.getFireType().getString());
+		//Log.e("ACKRESPONDER","WRITING OUT TO PARCEL, FIRETYPE IS:" + this.getFireType().getString());
 	}
 
 	public void setAckWith(String ackWith) {

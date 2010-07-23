@@ -116,6 +116,7 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_SENDOPTIONDATA = 110;
 	private static final int MESSAGE_DOFINALDISPATCH = 121;
 	public static final int MESSAGE_COMPRESSIONREQUESTED = 131;
+	private static final int MESSAGE_THROTTLEEVENT = 197;
 	
 	public boolean sending = false;
 	
@@ -144,6 +145,9 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_THROTTLEEVENT:
+					doThrottleBackgroundImpl();
+					break;
 				case MESSAGE_COMPRESSIONREQUESTED:
 					compressionStarting = true;
 					break;
@@ -336,7 +340,15 @@ public class StellarService extends Service {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-					String nosemidata = tostripsemi.replace(";", crlf);
+					
+					String nosemidata = null;
+					synchronized(the_settings) {
+						if(the_settings.isSemiIsNewLine()) {
+							nosemidata = tostripsemi.replace(";", crlf);
+						} else {
+							nosemidata = tostripsemi;
+						}
+					}
 					//nosemidata = nosemidata.concat(crlf);
 					
 					try {
@@ -538,6 +550,27 @@ public class StellarService extends Service {
 		
 	}
 	
+
+	
+	private void doThrottleBackgroundImpl() {
+		if(pump == null) return;
+		if(pump.getHandler() == null) return;
+		if(the_settings == null) return;
+		
+		synchronized(the_settings) {
+			if(the_settings.isThrottleBackground()) {
+				if(!hasListener && pump != null) {
+					if(pump.getHandler() != null) 
+						pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_THROTTLE);
+				} else {
+					if(pump.getHandler() != null)
+						pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_NOTHROTTLE);
+				}
+			}
+		}
+		
+	}
+	
 	Object binderCookie = new Object();
 	Boolean hasListener = false;
 	private final IStellarService.Stub mBinder = new IStellarService.Stub() {
@@ -561,8 +594,13 @@ public class StellarService extends Service {
 			}
 			
 			sendInitOk();
+			
+			doThrottleBackground();
 		}
 		
+		private void doThrottleBackground() {
+			myhandler.sendEmptyMessage(MESSAGE_THROTTLEEVENT);
+		}
 		
 		public void unregisterCallback(IStellarServiceCallback m)
 		throws RemoteException {
@@ -573,8 +611,17 @@ public class StellarService extends Service {
 					hasListener = false;
 				}
 			}
+			
+			//if(hasListener) {
+				doThrottleBackground();
+			//}
 	
 		}
+		
+		
+
+
+
 
 		public int getPid() throws RemoteException {
 			return Process.myPid();
@@ -1081,9 +1128,47 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				the_settings.getTriggers().remove(from.getPattern());
 				the_settings.getTriggers().put(to.getPattern(), to);
-				for(TriggerResponder responder : to.getResponders()) {
-					Log.e("SERVICE","MODIFIED TRIGGER, RESPONDER NOW: "+ responder.getFireType().getString());
-				}
+				//for(TriggerResponder responder : to.getResponders()) {
+				//	Log.e("SERVICE","MODIFIED TRIGGER, RESPONDER NOW: "+ responder.getFireType().getString());
+				//}
+			}
+		}
+
+
+		public TriggerData getTrigger(String pattern) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				//Log.e("SERVICE","REQUESTED TRIGGER " + pattern);
+				//for(TriggerResponder responder : the_settings.getTriggers().get(pattern).getResponders()) {
+				//	Log.e("SERVICE","REQUESTED TRIGGER RESPONDER " + responder.getType() + " fires " + responder.getFireType());
+				//}
+				
+				return the_settings.getTriggers().get(pattern);
+			}
+		}
+
+
+		public boolean getUseExtractUI() throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.isUseExtractUI();
+				
+			}
+		}
+
+
+		public void setThrottleBackground(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				
+				the_settings.setThrottleBackground(use);
+			}
+		}
+
+
+		public void setUseExtractUI(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setUseExtractUI(use);
+				
 			}
 		}
 		
@@ -1320,7 +1405,8 @@ public class StellarService extends Service {
 			trigger_string.setLength(0);
 			for(TriggerData trigger: the_settings.getTriggers().values()) {
 				if((trigger.isFireOnce() && !trigger.isFired()) || !trigger.isFireOnce()) {
-					Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
+					//Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
+					
 					if(trigger.isInterpretAsRegex()) {
 						trigger_string.append("(" + trigger.getPattern() + ")|");
 					} else {
@@ -1333,7 +1419,7 @@ public class StellarService extends Service {
 		trigger_string.replace(trigger_string.length()-1, trigger_string.length(), ""); //kill the last |
 		trigger_regex = Pattern.compile(trigger_string.toString());
 		trigger_matcher = trigger_regex.matcher("");
-		Log.e("SERVICE","TRIGGER STRING NOW:" + trigger_string.toString());
+		//Log.e("SERVICE","TRIGGER STRING NOW:" + trigger_string.toString());
 	}
 	
 	Colorizer colorer = new Colorizer();

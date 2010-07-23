@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.trigger;
 
+import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -54,6 +55,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	private CheckBox literal;
 	private CheckBox once;
 	
+	HashMap<Integer,Integer> checkopens;
+	HashMap<Integer,Integer> checkclosed;
+	
 	public TriggerEditorDialog(Context context,TriggerData input,IStellarService pService,Handler finisher) {
 		super(context);
 		
@@ -67,6 +71,16 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			original_trigger = input.copy();
 			isEditor=true;
 		}
+		
+		//Log.e("TEDITOR","CONSTRUCTED, GOT A FUCKING STUPID OBJECT THAT HAS RESPONDERS.");
+		//for(TriggerResponder responder : the_trigger.getResponders()) {
+		///	Log.e("TEDITOR","responder " + responder.getType() + " fires " + responder.getFireType());
+		//}
+		
+		//initialized hashmaps.
+		checkopens = new HashMap<Integer,Integer>();
+		checkclosed = new HashMap<Integer,Integer>();
+		
 	}
 
 	public void onCreate(Bundle b) {
@@ -181,11 +195,28 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				
 				//i don't care anymore about the checkchanged listeners. it was a neat idea, but here goes.
 				
-				
-				Log.e("TEDITOR","SENDING TRIGGER TO SERVICE:");
+				/*TableLayout table = (TableLayout)findViewById(R.id.trigger_notification_table);
+				//Log.e("TEDITOR","SENDING TRIGGER TO SERVICE:");
 				for(TriggerResponder responder : the_trigger.getResponders()) {
-					Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
-				}
+					//Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
+					int position = the_trigger.getResponders().indexOf(responder);
+					CheckBox open = (CheckBox)table.findViewById(checkopens.get(position));
+					CheckBox closed = (CheckBox)table.findViewById(checkclosed.get(position));
+					if(open.isChecked() && closed.isChecked()) {
+						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO BOTH");
+						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_BOTH);
+					} else if(open.isChecked()) {
+						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO OPEN");
+						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_OPEN);
+					} else if(closed.isChecked()) {
+						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_CLOSED);
+						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO CLOSED");
+					} else {
+						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO NONE");
+						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_NEVER);
+					}
+					//Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType() + " AFTER MY LITTLE \"PUSH\"");
+				}*/
 				try {
 					service.updateTrigger(original_trigger,the_trigger);
 				} catch (RemoteException e) {
@@ -227,7 +258,8 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		
 		int checkboxnumber = 123456; //generate semi unique id's each time we generate this table. we need to do this because the check changed listeners are freaking. out.
 		
-		
+		checkopens.clear();
+		checkclosed.clear();
 		int count = 0;
 		boolean legendAdded = false;
 		for(TriggerResponder responder : the_trigger.getResponders()) {
@@ -253,21 +285,14 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			l1.setGravity(Gravity.CENTER);
 			LinearLayout l2 = new LinearLayout(this.getContext());
 			l2.setGravity(Gravity.CENTER);
-			CheckBox windowOpen = new CheckBox(this.getContext()); windowOpen.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL); windowOpen.setId(checkboxnumber++);
+			CheckBox windowOpen = new CheckBox(this.getContext()); windowOpen.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL); windowOpen.setId(checkboxnumber);
+			checkopens.put(the_trigger.getResponders().indexOf(responder), checkboxnumber);
+			checkboxnumber++;
 			
-			CheckBox windowClose = new CheckBox(this.getContext()); windowClose.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL); windowClose.setId(checkboxnumber++);
-			
-			if(responder.getFireType() == FIRE_WHEN.WINDOW_OPEN || responder.getFireType()==FIRE_WHEN.WINDOW_BOTH) {
-				windowOpen.setChecked(true);
-			} else {
-				windowOpen.setChecked(false);
-			}
-			
-			if(responder.getFireType() == FIRE_WHEN.WINDOW_CLOSED || responder.getFireType() == FIRE_WHEN.WINDOW_BOTH) {
-				windowClose.setChecked(true);
-			} else {
-				windowClose.setChecked(false);
-			}
+			CheckBox windowClose = new CheckBox(this.getContext()); windowClose.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL); windowClose.setId(checkboxnumber);
+			checkclosed.put(the_trigger.getResponders().indexOf(responder),checkboxnumber);
+			checkboxnumber++;
+
 			
 			windowOpen.setOnCheckedChangeListener(new WindowOpenCheckChangeListener(the_trigger.getResponders().indexOf(responder)));
 			windowClose.setOnCheckedChangeListener(new WindowClosedCheckChangeListener(the_trigger.getResponders().indexOf(responder)));
@@ -283,8 +308,26 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			l2.addView(windowClose);
 			//windowOpen.setLayoutParams(params); windowClose.setLayoutParams(params); delete.setLayoutParams(params);
 			
-			row.addView(label); row.addView(l2); row.addView(l1); row.addView(delete);
+			row.addView(label); row.addView(l1); row.addView(l2); row.addView(delete);
 			responderTable.addView(row);
+			
+			
+			if(responder.getFireType() == FIRE_WHEN.WINDOW_OPEN || responder.getFireType()==FIRE_WHEN.WINDOW_BOTH) {
+				windowOpen.setChecked(true);
+				//windowOpen.setText("OC");
+			} else {
+				windowOpen.setChecked(false);
+				//windowOpen.setText("OU");
+			}
+			
+			if(responder.getFireType() == FIRE_WHEN.WINDOW_CLOSED || responder.getFireType() == FIRE_WHEN.WINDOW_BOTH) {
+				windowClose.setChecked(true);
+				//windowClose.setText("CC");
+			} else {
+				windowClose.setChecked(false);
+				//windowClose.setText("CU");
+			}
+			
 			count++;
 		}
 		if(count > 0) {
