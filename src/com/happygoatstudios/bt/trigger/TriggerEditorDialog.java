@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.trigger;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -103,7 +104,42 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
-				TriggerEditorDialog.this.dismiss();
+				boolean changed = hasTriggerChanged();
+				if(changed) {
+					Log.e("TEDITR","DATA CHANGED");
+					AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
+					builder.setTitle("Destroy Changes?");
+					builder.setMessage("You have changed the data of this trigger, are you sure you want to dismiss?");
+					DialogInterface.OnClickListener listner = new DialogInterface.OnClickListener() {
+						
+						public void onClick(DialogInterface arg0, int arg1) {
+							switch(arg1) {
+							case DialogInterface.BUTTON_POSITIVE: //quit
+								arg0.dismiss();
+								TriggerEditorDialog.this.dismiss();
+								break;
+							case DialogInterface.BUTTON_NEGATIVE: //cancel
+								arg0.dismiss();
+								break;
+							case DialogInterface.BUTTON_NEUTRAL: //save and quit
+								arg0.dismiss();
+								Button done = (Button)TriggerEditorDialog.this.findViewById(R.id.trigger_editor_done_button);
+								done.performClick();
+								break;
+								
+							}
+						}
+					};
+					builder.setPositiveButton("Destroy changes", listner);
+					builder.setNegativeButton("Cancel.", listner);
+					builder.setNeutralButton("Save and quit.", listner);
+					AlertDialog dialog = builder.create();
+					dialog.show();
+				} else {
+					Log.e("TEDITR","DATA NOT CHANGED");
+					TriggerEditorDialog.this.dismiss();
+				}
+				
 			}
 		});
 		
@@ -130,6 +166,40 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		
 		literal.setOnCheckedChangeListener(new LiteralCheckChangedListener());
 		once.setOnCheckedChangeListener(new FireOnceCheckChangedListener());
+	}
+	
+	
+	private boolean hasTriggerChanged() {
+		TriggerData test = original_trigger.copy();
+		
+		EditText title = (EditText)findViewById(R.id.trigger_editor_name);
+		EditText pattern = (EditText)findViewById(R.id.trigger_editor_pattern);
+		
+		CheckBox literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
+		CheckBox fireOnce = (CheckBox)findViewById(R.id.trigger_once_checkbox);
+		boolean retval = false;
+		if(!(title.getText().toString().equals(test.getName()))) retval = true;
+		if(!(pattern.getText().toString().equals(test.getPattern()))) retval = true;
+		if(test.isInterpretAsRegex() != !literal.isChecked()) retval = true;
+		if(test.isFireOnce() != fireOnce.isChecked()) retval = true; 
+		
+		boolean checkresponder = false;
+		if(test.getResponders().size() == the_trigger.getResponders().size()) { checkresponder = true; } else { retval = true; }
+		
+		if(checkresponder) {
+			Iterator<TriggerResponder> test_responders = original_trigger.getResponders().iterator();
+			Iterator<TriggerResponder> current_responders = the_trigger.getResponders().iterator();
+			
+			while(test_responders.hasNext()) {
+				TriggerResponder torig = test_responders.next();
+				TriggerResponder tcurr = current_responders.next();
+				if(!torig.equals(tcurr)) {
+					retval = true;
+				}
+			}
+			
+		}
+		return retval;
 	}
 	
 	private class TriggerEditorDoneListener implements View.OnClickListener {
@@ -470,6 +540,19 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			if(arg1) {
 				the_trigger.setInterpretAsRegex(false); //NO NOT INTERPRET AS REGEX
 			} else {
+				AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
+				builder.setTitle("Don't kill your phone.");
+				builder.setMessage("You have turned on regular expression parsing for this trigger. Poorly formed expressions can cause the following: break other triggers, drain your battery, dump thousands of bytes to the server, etc. Please read the guide to the Java Pattern Class if you need more information. Have a nice day.");
+				builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
+
+					public void onClick(DialogInterface arg0, int arg1) {
+						arg0.dismiss();
+					}
+					
+				});
+				
+				AlertDialog dialog = builder.create();
+				dialog.show();
 				the_trigger.setInterpretAsRegex(true); //DO INTERPRET AS REGEX.
 			}
 		}

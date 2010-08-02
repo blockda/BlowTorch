@@ -38,11 +38,11 @@
 			android:title="Font"
 			android:summary="The font used by the window to render text."
 			android:defaultValue="monospace"/>
-		<CheckBoxPreference
+	<!--	<CheckBoxPreference
 			android:key="USE_EXTRACTUI"
 			android:defaultValue="false"
 			android:summary="Show the full screen editor when the input bar is clicked."
-			android:title="Use Full Screen Editor?"/>
+			android:title="Use Full Screen Editor?"/> -->
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Service Settings:">
 		<CheckBoxPreference

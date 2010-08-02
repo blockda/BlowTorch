@@ -1109,7 +1109,9 @@ public class StellarService extends Service {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				the_settings.getTriggers().remove(which);
+				
 			}
+			buildTriggerData();
 			
 		}
 
@@ -1118,7 +1120,9 @@ public class StellarService extends Service {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				the_settings.getTriggers().put(data.getPattern(), data);
+				
 			}
+			buildTriggerData();
 		}
 
 
@@ -1132,6 +1136,7 @@ public class StellarService extends Service {
 				//	Log.e("SERVICE","MODIFIED TRIGGER, RESPONDER NOW: "+ responder.getFireType().getString());
 				//}
 			}
+			buildTriggerData();
 		}
 
 
@@ -1735,11 +1740,11 @@ public class StellarService extends Service {
 		
 		
 		
-		Notification note = new Notification(R.drawable.btn_plus,"BaardTERM",System.currentTimeMillis());
+		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Initialized",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
 		
 		Context context = getApplicationContext();
-		CharSequence contentTitle = "BaardTERM";
+		CharSequence contentTitle = "BlowTorch";
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "Connected: "+ host +":"+ port + ")";
 		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.BaardTERMWindow.class);
@@ -1750,7 +1755,7 @@ public class StellarService extends Service {
 
 		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		
+		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
 		note.flags = Notification.FLAG_ONGOING_EVENT;
 		
 		mNM.notify(5545,note);

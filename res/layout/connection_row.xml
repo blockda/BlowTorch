@@ -8,7 +8,7 @@
     android:id = "@+id/displayname"
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:textSize="18sp"
+  	android:textSize="25sp"
   	android:textStyle="bold"
   	android:text="serif"
   	android:background = "#AAAAAAAA"
@@ -26,7 +26,7 @@
   	android:marqueeRepeatLimit = "marquee_forever"
   	android:drawableBottom = "@drawable/dashedline"
   	android:textStyle="italic"
-  	android:textSize = "10sp"
+  	android:textSize = "16sp"
   	android:background = "#AAAAAAAA"
   	android:textColor = "#AA222222"
   	

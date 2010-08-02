@@ -3,9 +3,10 @@
       package="com.happygoatstudios.bt"
       android:versionCode="1"
       android:versionName="1.0">
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar">
+    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
         <activity android:name="com.happygoatstudios.bt.launcher.BaardTERMLauncher"
-                  android:label="@string/app_name">
+                  android:label="BlowTorch"
+                  >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -16,6 +17,7 @@
         		  android:windowSoftInputMode="adjustResize"
         		  android:label="BlowTorch"
         		  android:screenOrientation="landscape"
+        		  
 				  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
@@ -25,6 +27,7 @@
         </activity>
         <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
         		  android:label="Settings Editor"
+        		  
         		  android:screenOrientation="landscape"
         		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
         		  android:noHistory = "true">

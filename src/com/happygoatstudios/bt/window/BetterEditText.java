@@ -43,9 +43,9 @@ public class BetterEditText extends EditText {
 		//slick.
 		//attrs.imeOptions=EditorInfo.IME_ACTION_SEND|EditorInfo.IME_FLAG_NO_EXTRACT_UI;
 		//attrs.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE;
-		//attrs.imeOptions = this.getImeOptions();
-		//attrs.inputType = this.getInputType();
-		//attrs.fieldId = this.getId();
+		attrs.imeOptions = this.getImeOptions();
+		attrs.inputType = this.getInputType();
+		attrs.fieldId = this.getId();
 		//attrs.label = "Command:";
 		//attrs.actionLabel = "Fuuck:";
 		//attrs.fieldName = "input_box";
@@ -55,15 +55,16 @@ public class BetterEditText extends EditText {
 		//boolean usefullscreen = ((this.getImeOptions()&EditorInfo.IME_FLAG_NO_EXTRACT_UI) == EditorInfo.IME_FLAG_NO_EXTRACT_UI) ? false : true;
 		
 		//return new SlickConnection(this,usefullscreen);
+		return new BaseInputConnection(this,false);
 		//SlickConnection conn = new SlickConnection(this,usefullscreen);
 		//InputConnectionWrapper wrapper = new InputConnectionWrapper(conn, false) {
 		//wrapper.setTarget(conn);
 		//};
-		InputConnectionWrapper wrapper = new InputConnectionWrapper(super.onCreateInputConnection(attrs), false);
+		//InputConnectionWrapper wrapper = new InputConnectionWrapper(super.onCreateInputConnection(attrs), false);
 		
 		//InputConnection conny = super.onCreateInputConnection(attrs);
 		
-		return wrapper;
+		//return wrapper;
 		
 		
 	}

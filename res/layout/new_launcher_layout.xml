@@ -15,7 +15,7 @@
 			android:text = "Connections:"
 			android:textSize = "20sp"
 			android:layout_height = "wrap_content"
-			android:layout_width = "275px"
+			android:layout_width = "300dip"
 			android:layout_below="@id/launcher_window_content"
 			android:id = "@+id/c_label"
 			android:layout_alignParentRight = "true"
@@ -49,12 +49,12 @@
 				<Button
 					android:id = "@+id/new_connection"
 					android:layout_height = "wrap_content"
-					android:layout_width = "135px"
+					android:layout_width = "180dip"
 					android:text = "[NEW]"/>
 				<Button
 					android:id = "@+id/help_button"
 					android:layout_height = "wrap_content"
-					android:layout_width = "135px"
+					android:layout_width = "180dip"
 					android:text = "[HELP]"/>
 			</TableRow>
 			
@@ -66,7 +66,7 @@
 			android:layout_above="@id/table_container"
 			android:layout_below="@id/c_label"
 			android:layout_height = "fill_parent"
-			android:layout_width = "275px"
+			android:layout_width = "300dip"
 			android:divider= "#00000000">
 			
 		</ListView>

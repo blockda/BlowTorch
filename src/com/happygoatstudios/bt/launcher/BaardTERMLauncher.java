@@ -69,7 +69,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		connections = new ArrayList<MudConnection>();
 		
 		//attempt to read the file.
-		com.happygoatstudios.bt.settings.HyperSettings settings = new com.happygoatstudios.bt.settings.HyperSettings();
+		/*com.happygoatstudios.bt.settings.HyperSettings settings = new com.happygoatstudios.bt.settings.HyperSettings();
 		
 		String filename = "test_settings3.xml";
 		try {
@@ -130,7 +130,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		com.happygoatstudios.bt.settings.HyperSettings newSettings = parser.load();
 		
 		
-		
+		*/
 		
 		//EasySAXParser parse = new EasySAXParser(filename,this);
 		

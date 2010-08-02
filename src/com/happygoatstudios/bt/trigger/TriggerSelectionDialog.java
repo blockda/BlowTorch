@@ -9,8 +9,11 @@ import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.IStellarService;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -26,6 +29,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 
 public class TriggerSelectionDialog extends Dialog {
 
@@ -51,6 +55,7 @@ public class TriggerSelectionDialog extends Dialog {
 		//initialize the list view
 		list = (ListView)findViewById(R.id.trigger_list);
 		list.setOnItemClickListener(new EditTriggerListener());
+		list.setOnItemLongClickListener(new DeleteTriggerListener());
 		//list.setOnI
 		//attempt to fish out the trigger list.		
 		buildList();
@@ -104,6 +109,71 @@ public class TriggerSelectionDialog extends Dialog {
 		}
 		
 	};
+	
+	private class DeleteTriggerListener implements OnItemLongClickListener {
+
+		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+				int arg2, long arg3) {
+			// TODO Auto-generated method stub
+			//TriggerItem item = entries.get(arg2);
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerSelectionDialog.this.getContext());
+			builder.setTitle("Delete Trigger?");
+			DeleteTriggerFinishListener delete_me = new DeleteTriggerFinishListener(arg2);
+			builder.setPositiveButton("Delete.",delete_me);
+			builder.setNegativeButton("Cancel.", delete_me);
+			builder.setNeutralButton("Modify", delete_me);
+			AlertDialog dialog = builder.create();
+			dialog.show();
+			
+			return true;
+		}
+		
+	}
+	
+	private class DeleteTriggerFinishListener implements DialogInterface.OnClickListener {
+
+		private int position;
+		
+		public DeleteTriggerFinishListener(int i) {
+			position = i;
+		}
+		
+		public void onClick(DialogInterface arg0, int arg1) {
+			switch(arg1) {
+			case DialogInterface.BUTTON_POSITIVE:
+				//attempt delete
+				try {
+					service.deleteTrigger(entries.get(position).extra);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				buildList();
+				arg0.dismiss();
+				
+				break;
+			case DialogInterface.BUTTON_NEGATIVE:
+				arg0.dismiss();
+				break;
+			case DialogInterface.BUTTON_NEUTRAL:
+				TriggerItem entry = adapter.getItem(position);
+				//launch the trigger editor with this item.
+				try {
+					TriggerData data = service.getTrigger(entry.extra);
+
+					TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
+					editor.show();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+		
+	}
+	
 	
 	private void buildList() {
 		if(adapter != null) {
@@ -232,3 +302,4 @@ public class TriggerSelectionDialog extends Dialog {
 	
 	
 }
+
