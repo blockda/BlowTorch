@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.responder.notification;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
@@ -16,6 +17,7 @@ import android.app.Dialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.media.MediaPlayer;
 import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
@@ -332,7 +334,8 @@ public class NotificationResponderEditor extends Dialog {
 											 "/system/media/audio/alarms/",
 											 "/system/media/audio/notificiation/"};
 					paths.clear();
-					
+					//paths.put("Disabled", "");
+					//paths.put("Default","");
 					for(String path : system_paths) {
 						//Log.e("RESPONDER","TESTING PATH:"+path);
 						File tmp = new File(path);
@@ -365,22 +368,40 @@ public class NotificationResponderEditor extends Dialog {
 					}
 					
 					AlertDialog.Builder sound_list = new AlertDialog.Builder(NotificationResponderEditor.this.getContext());
-					sound_list.setTitle("Pick Sound:");
-					String[] items = new String[sound_files.size()];
-					int i = 0;
+					sound_list.setTitle("Pick Sound: (Back to Exit)");
+					String[] items = new String[sound_files.size() + 2];
+					items[0] = "Disabled";
+					items[1] = "Default";
+					int i = 2;
+					int position = 0;
+					if(the_responder.isUseDefaultSound()) {
+						if(!the_responder.getSoundPath().equals("")) {
+							position = 1;
+						}
+					} 
 					for(String file : sound_files) {
-						items[i++] = file;
+						if(paths.get(file).equals(the_responder.getSoundPath())) {
+							position = i;
+						}
+						//if(file.equals("Disabled") || file.equals("Default")) {
+							
+						//} else {
+						items[i] = file;
+						i++;
+						//}
 					}
-					sound_list.setItems(items, new SoundListReturnListener());
+					
+					sound_list.setSingleChoiceItems(items, position ,new SoundListReturnListener());
 					AlertDialog sound_picker = sound_list.create();
 					sound_picker.setOnCancelListener(new DialogInterface.OnCancelListener() {
 						
 						public void onCancel(DialogInterface dialog) {
 							//if we got here then we need to uncheck the box.
-							sound.setChecked(false);
-							the_responder.setUseDefaultSound(false);
-							the_responder.setSoundPath("");
-							sound_extra.setText(DISABLED_MSG);
+							//sound.setChecked(false);
+							//the_responder.setUseDefaultSound(false);
+							//the_responder.setSoundPath("");
+							//sound_extra.setText(DISABLED_MSG);
+							mp.stop();
 						}
 					});
 					//
@@ -518,17 +539,55 @@ public class NotificationResponderEditor extends Dialog {
 			}
 		}
 		
+		MediaPlayer mp = new MediaPlayer();
 		private class SoundListReturnListener implements DialogInterface.OnClickListener {
 			public void onClick(DialogInterface arg0, int arg1) {
-				String name = sound_files.get(arg1);
-				//String path = 
-				String path = paths.get(name);
-				the_responder.setUseDefaultSound(true);
-				the_responder.setSoundPath(path);
-				if(path.equals("")) {
+				
+				if(arg1 == 0) {
+					//none selected
+					the_responder.setUseDefaultSound(false);
+					the_responder.setSoundPath("");
+					sound.setChecked(false);
+					sound_extra.setText(DISABLED_MSG);
+				} else if(arg1 == 1) {
+					the_responder.setUseDefaultSound(true);
+					the_responder.setSoundPath("");
+					sound.setChecked(true);
 					sound_extra.setText(DEFAULT_MSG);
 				} else {
-					sound_extra.setText("Currently using: " + path);
+					int position = arg1 - 2;
+					String name = sound_files.get(position);
+					//String path = 
+					String path = paths.get(name);
+					the_responder.setUseDefaultSound(true);
+					the_responder.setSoundPath(path);
+					if(path.equals("")) {
+						sound_extra.setText(DEFAULT_MSG);
+					} else {
+						sound_extra.setText("Currently using: " + path);
+					}
+					
+					//so we have a path now, we should just play it and be cool.
+					
+					try {
+						mp.stop();
+						mp = new MediaPlayer();
+						
+						//mp.
+						mp.setDataSource(path);
+						mp.prepare();
+						mp.start();
+					} catch (IllegalArgumentException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IllegalStateException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				
 				}
 			}
 		}

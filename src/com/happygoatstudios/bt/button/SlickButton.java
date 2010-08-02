@@ -280,6 +280,7 @@ public class SlickButton extends View {
 			button_down=true;
 			//this.invalidate();
 			newstate = DISPLAY_STATE.SELECTED;
+			this.bringToFront();
 			//this.invalidate(rect);
 		}
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {

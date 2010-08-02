@@ -17,16 +17,21 @@ import java.util.regex.Pattern;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.app.ActivityManager.RunningServiceInfo;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -249,6 +254,41 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 	    	edit.putString("SETTINGS_PATH", muc.getDisplayName() + ".xml");
 	    	edit.commit();
 	    	
+	    	//check to see if the service is actually running
+	    	
+	    	ActivityManager activityManager = (ActivityManager)BaardTERMLauncher.this.getSystemService(Context.ACTIVITY_SERVICE);
+	    	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+	    	boolean found = false;
+	    	for(RunningServiceInfo service : services) {
+	    		Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
+	    		//service.service.
+	    		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
+	    			//service is running, don't do anything.
+	    			found = true;
+	    		} else {
+
+	    			
+	    		}
+	    	}
+	    	
+	    	if(!found) {
+    			//service is not running, reset the values in the shared prefs that the window uses to keep track of weather or not to finish init routines.
+    			//kill all whitespace in the display name.
+	    		Pattern whitespace = Pattern.compile("\\s");
+    			Matcher nowhitespace = whitespace.matcher(muc.getDisplayName());
+    			String prefsname = nowhitespace.replaceAll("") + ".PREFS";
+    			
+    			SharedPreferences sprefs = BaardTERMLauncher.this.getSharedPreferences(prefsname,0);
+    			//servicestarted = prefs.getBoolean("CONNECTED", false);
+    			//finishStart = prefs.getBoolean("FINISHSTART", true);
+    			SharedPreferences.Editor editor = sprefs.edit();
+    			editor.putBoolean("CONNECTED", false);
+    			editor.putBoolean("FINISHSTART", true);
+    			editor.commit();
+    			Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
+    			
+	    	}
+	    	
 	    	BaardTERMLauncher.this.startActivity(the_intent);
 	    	
 			//call ready listener
@@ -352,6 +392,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		editor.commit();
 		
 	}
+	
     
     
 	private class ConnectionAdapter extends ArrayAdapter<MudConnection> {

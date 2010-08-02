@@ -500,9 +500,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				//dlines.
 				size_before = dlines.size();
 				if(!endedonnewline) {
-					//TODO:FIXTHIS
-					//TODO:FIXTHIS
-					//TODO:FIXTHIS
+
 					if(dlines.size() > 0) {
 						carriage_free.insert(0, dlines.get(dlines.size()-1));
 						dlines.remove(dlines.size()-1);

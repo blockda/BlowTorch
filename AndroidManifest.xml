@@ -48,10 +48,7 @@
     <uses-sdk android:minSdkVersion="7" />
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.RAISED_THREAD_PRIORITY"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	
-	<uses-library android:name="com.happygoatstudios.bt.responder.notification"/>
-	<uses-library android:name="com.happygoatstudios.bt.responder.ack"/>
-	<uses-library android:name="com.happygoatstudios.bt.responder.toast"/>
+
 </manifest> 
