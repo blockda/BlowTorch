@@ -36,8 +36,8 @@
     	android:text="|DOWN|"/>
 
     <!--  android:background="#0A0A0A" -->
-    <!--  <com.happygoatstudios.bt.window.BetterEditText -->
-    <EditText
+    <!-- <EditText -->
+    <com.happygoatstudios.bt.window.BetterEditText
     android:layout_width="fill_parent"
     android:layout_height="30px"
     android:height = "30px"
@@ -58,7 +58,6 @@
     android:nextFocusLeft = "@id/textinput"
     android:nextFocusRight = "@id/textinput"
     android:isScrollContainer = "false"
-    
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"/>
  </RelativeLayout>

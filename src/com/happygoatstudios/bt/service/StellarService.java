@@ -128,6 +128,10 @@ public class StellarService extends Service {
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
+		
+		//set up the crash reporter
+		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		host = BAD_HOST;
 		port = BAD_PORT;
@@ -849,10 +853,12 @@ public class StellarService extends Service {
 		public List<SlickButtonData> getButtonSet(String setname)
 				throws RemoteException {
 			synchronized(the_settings) {
+				String orig_set = the_settings.getLastSelected();
 				the_settings.setLastSelected(setname);
 				Vector<SlickButtonData> tmp = the_settings.getButtonSets().get(setname);
 				if(tmp == null) {
 					//Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " but got null");
+					the_settings.setLastSelected(orig_set);
 				} else {
 					//Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " and am returning real data");
 				}

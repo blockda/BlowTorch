@@ -198,7 +198,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 
 		public int compare(ButtonEntry a, ButtonEntry b) {
 			// TODO Auto-generated method stub
-			return a.name.compareTo(b.name);
+			return a.name.compareToIgnoreCase(b.name);
 		}
 
 

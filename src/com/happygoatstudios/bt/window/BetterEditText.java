@@ -14,7 +14,7 @@ import android.widget.EditText;
 
 public class BetterEditText extends EditText {
 
-	
+	private Boolean useFullScreen = false;
 	
 	public BetterEditText(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -55,7 +55,11 @@ public class BetterEditText extends EditText {
 		//boolean usefullscreen = ((this.getImeOptions()&EditorInfo.IME_FLAG_NO_EXTRACT_UI) == EditorInfo.IME_FLAG_NO_EXTRACT_UI) ? false : true;
 		
 		//return new SlickConnection(this,usefullscreen);
-		return new BaseInputConnection(this,false);
+		if(useFullScreen) {
+			return super.onCreateInputConnection(attrs);
+		} else {
+			return new BaseInputConnection(this,false);		
+		}
 		//SlickConnection conn = new SlickConnection(this,usefullscreen);
 		//InputConnectionWrapper wrapper = new InputConnectionWrapper(conn, false) {
 		//wrapper.setTarget(conn);
@@ -77,6 +81,14 @@ public class BetterEditText extends EditText {
 	public void setExtractedText(ExtractedText text) {
 		//Log.e("BETTEREDIT","SETTING EXTRACTED TEXT");
 		super.setExtractedText(text);
+	}
+
+	public void setUseFullScreen(Boolean useFullScreen) {
+		this.useFullScreen = useFullScreen;
+	}
+
+	public Boolean getUseFullScreen() {
+		return useFullScreen;
 	}
 	
 	//protected boolean getDefaultEditable() {

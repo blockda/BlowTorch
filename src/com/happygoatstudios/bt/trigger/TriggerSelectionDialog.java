@@ -248,7 +248,7 @@ public class TriggerSelectionDialog extends Dialog {
 
 		public int compare(TriggerItem a, TriggerItem b) {
 			// TODO Auto-generated method stub
-			return a.name.compareTo(b.name);
+			return a.name.compareToIgnoreCase(b.name);
 		}
 		
 	}

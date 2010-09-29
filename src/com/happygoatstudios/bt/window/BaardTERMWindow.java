@@ -229,6 +229,9 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 		super.onCreate(icicle);
 		//Log.e("WINDOW","onCreate()");
 		
+		//set up the crash reporter
+		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this));
+		
 		setContentView(R.layout.window_layout);
 		
 		String display_name = this.getIntent().getStringExtra("DISPLAY");
@@ -370,20 +373,23 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						
 						List<SlickButtonData> newset = service.getButtonSet((String)msg.obj);
 						
-						int posm = modb.indexOfChild(screen2);
-						int countm = modb.getChildCount();
-						if(posm == 0) {
-							modb.removeViews(1, countm-1);
-						} else {
-							modb.removeViews(0,posm);
-							modb.removeViews(posm+1,countm - posm);
-						}
-						for(SlickButtonData tmp : newset) {
-							SlickButton new_button = new SlickButton(modb.getContext(),0,0);
-							new_button.setData(tmp);
-							new_button.setDispatcher(this);
-							new_button.setDeleter(this);
-							modb.addView(new_button);
+						if(newset != null) {
+							
+							int posm = modb.indexOfChild(screen2);
+							int countm = modb.getChildCount();
+							if(posm == 0) {
+								modb.removeViews(1, countm-1);
+							} else {
+								modb.removeViews(0,posm);
+								modb.removeViews(posm+1,countm - posm);
+							}
+							for(SlickButtonData tmp : newset) {
+								SlickButton new_button = new SlickButton(modb.getContext(),0,0);
+								new_button.setData(tmp);
+								new_button.setDispatcher(this);
+								new_button.setDeleter(this);
+								modb.addView(new_button);
+							}
 						}
 					} catch (RemoteException e3) {
 						// TODO Auto-generated catch block
@@ -562,12 +568,16 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 							//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 							input_box.setImeOptions(wanted);
 							input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+							BetterEditText better = (BetterEditText)input_box;
+							better.setUseFullScreen(true);
 						} else {
 							int current = input_box.getImeOptions();
 							int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
 							//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 							input_box.setImeOptions(wanted);
 							input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+							BetterEditText better = (BetterEditText)input_box;
+							better.setUseFullScreen(false);
 							//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
 						}
 						InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
