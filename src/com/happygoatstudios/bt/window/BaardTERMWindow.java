@@ -86,6 +86,8 @@ import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
 public class BaardTERMWindow extends Activity implements AliasDialogDoneListener {
 	
+	
+	
 	//public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	public String PREFS_NAME;
 	protected static final int MESSAGE_HTMLINC = 110;
@@ -553,6 +555,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 						
 						if(service.getUseExtractUI()) {
 							
+							
 							int current = input_box.getImeOptions();
 							int wanted = current & (0xFFFFFFFF^EditorInfo.IME_FLAG_NO_EXTRACT_UI);
 							
@@ -564,7 +567,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 							int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
 							//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 							input_box.setImeOptions(wanted);
-							input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_AUTO_CORRECT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+							input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 							//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
 						}
 						InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);

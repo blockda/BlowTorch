@@ -36,7 +36,8 @@
     	android:text="|DOWN|"/>
 
     <!--  android:background="#0A0A0A" -->
-    <com.happygoatstudios.bt.window.BetterEditText
+    <!--  <com.happygoatstudios.bt.window.BetterEditText -->
+    <EditText
     android:layout_width="fill_parent"
     android:layout_height="30px"
     android:height = "30px"
@@ -51,17 +52,17 @@
     android:layout_toRightOf="@id/test_btn"
     android:id="@+id/textinput"
     android:singleLine = "true"
-    android:inputType = "textNoSuggestions|textLongMessage"
+    android:inputType = "textLongMessage"
     android:nextFocusUp = "@id/textinput"
     android:nextFocusDown = "@id/textinput"
     android:nextFocusLeft = "@id/textinput"
     android:nextFocusRight = "@id/textinput"
     android:isScrollContainer = "false"
-    android:lineSpacingExtra = "-2sp"
+    
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"/>
  </RelativeLayout>
-
+	<!--  android:lineSpacingExtra = "-2sp" -->
     
     <TextView 
     android:layout_width = "fill_parent" 

@@ -97,7 +97,7 @@ public class DataPumper extends Thread {
 					if(!myhandler.hasMessages(MESSAGE_RETRIEVE)) {
 						//only send if there are no messages already in queue.
 						if(!throttle) {
-							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 500);
+							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 100);
 						} else {
 							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 1500);
 						}
