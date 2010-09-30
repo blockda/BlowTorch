@@ -3,19 +3,18 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/window_container"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
+    android:layout_height="fill_parent">
     
     
 
 <RelativeLayout
-	android:layout_height="30px"
+	android:layout_height="20dip"
 	android:layout_width="wrap_content"
 	android:id="@+id/input_bar"
 	android:layout_alignParentBottom="true"
 	android:layout_alignParentLeft="true">
     <LinearLayout
-    	android:layout_height="30px"
+    	android:layout_height="20dip"
     	android:layout_width="wrap_content"
        	android:layout_alignParentBottom="true"
     	
@@ -24,8 +23,8 @@
     
      <ImageButton
     	android:id="@+id/test_btn"
-    	android:layout_width="60px"
-    	android:layout_height="30px"
+    	android:layout_width="40dip"
+    	android:layout_height="20dip"
     	android:background="#0A0A0A"
     	android:src="@drawable/sliderwidgetout"
     	android:textSize="16sp"
@@ -37,10 +36,11 @@
 
     <!--  android:background="#0A0A0A" -->
     <!-- <EditText -->
+    <!-- pre-screen size support android:height = "30px" -->
     <com.happygoatstudios.bt.window.BetterEditText
     android:layout_width="fill_parent"
-    android:layout_height="30px"
-    android:height = "30px"
+    android:layout_height="20dip"
+    android:height = "20dip"
     android:textSize="16sp"
     android:typeface="monospace"
     android:textColor="#9999FF"

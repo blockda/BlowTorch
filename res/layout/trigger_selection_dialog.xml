@@ -3,7 +3,7 @@
 <RelativeLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/buttonsetselectionlayout"
-	android:layout_width="420px"
+	android:layout_width="280dip"
 	android:layout_height="fill_parent">
 	
 	<TextView
@@ -23,7 +23,7 @@
 		android:layout_alignParentBottom="true"
 		android:layout_alignParentLeft="true"
 		android:layout_height="wrap_content"
-		android:layout_width="220px"
+		android:layout_width="146dip"
 		android:text="New Trigger!"/>
 		
 	<Button
@@ -31,7 +31,7 @@
 		android:layout_alignParentBottom="true"
 		android:layout_alignParentRight="true"
 		android:layout_height="wrap_content"
-		android:layout_width="200px"
+		android:layout_width="133dip"
 		android:text="Cancel"/>
 		
 	<!-- <ScrollView
@@ -46,7 +46,7 @@
 			android:layout_height="fill_parent"
 			android:layout_above="@id/trigger_new_button"
 			android:layout_below="@id/titlebar"
-			android:layout_width="420px"/>
+			android:layout_width="280dip"/>
 		
 	<!-- </ScrollView> -->
 		

@@ -3,27 +3,27 @@
 <TableLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/newconnectionlayout"
-  android:layout_width="420px"
+  android:layout_width="330dip"
   android:layout_height="wrap_content">
   
   	<TableRow>
   		<TextView 
   			android:id="@+id/alias_pre"
-  			android:layout_width="210px"
-  			android:layout_height="25sp"
+  			android:layout_width="165dip"
+  			android:layout_height="16dip"
   			android:background="#AA630460"
   			android:textColor="#FFF7941D"
-  			android:textSize="18sp"
+  			android:textSize="13dip"
   			android:gravity="center|center_vertical"
   			
  			/>
   		<TextView 
   			android:id="@+id/alias_post"
-  			android:layout_width="210px"
+  			android:layout_width="165dip"
   			android:layout_height="wrap_content"
   			android:background="#AAF7941D"
   			android:textColor="#FF630460"
-  			android:textSize="18sp"
+  			android:textSize="12dip"
   			android:textStyle="italic"
   			android:gravity="center_vertical"
   			android:singleLine = "false"

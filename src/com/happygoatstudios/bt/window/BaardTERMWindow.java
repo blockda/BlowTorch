@@ -762,8 +762,9 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 					
 				});
 				
-
-				Animation a = new TranslateAnimation(-178,0,0,0);
+				//pre multi screen support animation value 178px
+				float amount = 119*BaardTERMWindow.this.getResources().getDisplayMetrics().density;
+				Animation a = new TranslateAnimation(-1*amount,0,0,0);
 				a.setDuration(120);
 				AnimationSet set = new AnimationSet(true);
 				set.addAnimation(a);
@@ -774,7 +775,7 @@ public class BaardTERMWindow extends Activity implements AliasDialogDoneListener
 				
 				if(input_controls_expanded) {
 					//switch the image resource
-					Animation outanim = new TranslateAnimation(178,0,0,0);
+					Animation outanim = new TranslateAnimation(amount,0,0,0);
 					outanim.setDuration(120);
 					LayoutAnimationController lac2 = new LayoutAnimationController(outanim,0.0f);
 					rl.setLayoutAnimation(lac2);

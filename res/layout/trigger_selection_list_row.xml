@@ -7,7 +7,7 @@
   	
   	<TextView
   		android:id="@+id/trigger_title"
-  		android:layout_width="420px"
+  		android:layout_width="280dip"
   		android:layout_height="wrap_content"
   		android:layout_alignParentTop = "true"
   		android:gravity = "center"
@@ -17,7 +17,7 @@
   		
   	<TextView
   		android:id="@+id/trigger_extra"
-  		android:layout_width="420px"
+  		android:layout_width="280dip"
   		android:layout_height="wrap_content"
   		android:layout_below="@id/trigger_title"
   		android:gravity = "center"

@@ -320,7 +320,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		
 		RelativeLayout p = (RelativeLayout)findViewById(R.id.newtriggerlayout);
 		LayoutParams params = new LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-		int margin =  (int) (2*this.getContext().getResources().getDisplayMetrics().density);
+		int margin =  (int) (0*this.getContext().getResources().getDisplayMetrics().density);
 		params.rightMargin = margin;
 		params.leftMargin =  margin;
 		params.topMargin =  margin;
@@ -350,7 +350,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			}
 			label.setGravity(Gravity.CENTER);
 			label.setSingleLine(true);
-			label.setWidth((int) (150 * this.getContext().getResources().getDisplayMetrics().density));
+			label.setWidth((int) (130 * this.getContext().getResources().getDisplayMetrics().density));
 			LinearLayout l1 = new LinearLayout(this.getContext());
 			l1.setGravity(Gravity.CENTER);
 			LinearLayout l2 = new LinearLayout(this.getContext());

@@ -47,14 +47,26 @@ public class ColorPickerDialog extends Dialog {
             };
             Shader s = new SweepGradient(0, 0, mColors, null);
 
+            //get the screen density.
+            float scale = this.getContext().getResources().getDisplayMetrics().density;
+            
+            //CENTER_X = 125;
+            //CENTER_Y = 125;
+            //CENTER_RADIUS = 32;
+            
+            CENTER_X = (int) (83*scale);
+            CENTER_Y = (int) (83*scale);
+            CENTER_RADIUS = (int) (21*scale);
+            
             mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             mPaint.setShader(s);
             mPaint.setStyle(Paint.Style.STROKE);
-            mPaint.setStrokeWidth(42);
+            //mPaint.setStrokeWidth(42);
+            mPaint.setStrokeWidth(28*scale);
 
             mCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             mCenterPaint.setColor(color);
-            mCenterPaint.setStrokeWidth(5);
+            mCenterPaint.setStrokeWidth(3*scale);
             
             mCenterIndicator = new Paint(Paint.ANTI_ALIAS_FLAG);
             mCenterIndicator.setColor(0xFFAAAAAA);
@@ -78,8 +90,13 @@ public class ColorPickerDialog extends Dialog {
 
         @Override 
         protected void onDraw(Canvas canvas) {
+        	//float scale = this.getContext().getResources().getDisplayMetrics().density;
+        	//Log.e("COLORPICK","CENTER_X:" + CENTER_X + " || mPaint.strokewidth" + mPaint.getStrokeWidth() );
+        	
             float r = CENTER_X - mPaint.getStrokeWidth()*0.5f;
-            
+        	
+        	//CENTER_RADIUS = (int) (21*scale);
+        	//float r = CENTER_RADIUS;
             circle_path = new Path();
             //circle_path.addCircle(0, 0, (float) (r*0.5), Direction.CW);
             float nr = (float) (mCenterPaint.getStrokeWidth() + CENTER_RADIUS + 5 * this.getContext().getResources().getDisplayMetrics().density);
@@ -117,12 +134,14 @@ public class ColorPickerDialog extends Dialog {
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            setMeasuredDimension(CENTER_X*2, CENTER_Y*2);
+        	float scale = this.getContext().getResources().getDisplayMetrics().density;
+            setMeasuredDimension((int)(83*scale)*2, (int)(83*scale)*2);
+            
         }
 
-        private static final int CENTER_X = 125;
-        private static final int CENTER_Y = 125;
-        private static final int CENTER_RADIUS = 32;
+        private  int CENTER_X = 125;
+        private int  CENTER_Y = 125;
+        private int CENTER_RADIUS = 32;
 
         private int floatToByte(float x) {
             int n = java.lang.Math.round(x);
@@ -258,14 +277,26 @@ public class ColorPickerDialog extends Dialog {
                 };
                 Shader s = new SweepGradient(0, 0, mColors, null);
 
+                //mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                //mPaint.setShader(s);
+                //mPaint.setStyle(Paint.Style.STROKE);
+                //mPaint.setStrokeWidth(42);
+
+                //mCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                //mCenterPaint.setColor((modalpha|(color&0x00FFFFFF)));
+                //mCenterPaint.setStrokeWidth(5);
+                
+                float scale = this.getContext().getResources().getDisplayMetrics().density;
+                
                 mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
                 mPaint.setShader(s);
                 mPaint.setStyle(Paint.Style.STROKE);
-                mPaint.setStrokeWidth(42);
+                //mPaint.setStrokeWidth(42);
+                mPaint.setStrokeWidth(28*scale);
 
                 mCenterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
                 mCenterPaint.setColor((modalpha|(color&0x00FFFFFF)));
-                mCenterPaint.setStrokeWidth(5);
+                mCenterPaint.setStrokeWidth(3*scale);
                 
                 this.invalidate();
 		}
@@ -276,6 +307,9 @@ public class ColorPickerDialog extends Dialog {
                              int initialColor,ButtonEditorDialog.COLOR_FIELDS fieldtouse) {
         super(context);
 
+        
+
+        
         mListener = listener;
         mInitialColor = initialColor;
         whichfield = fieldtouse;
@@ -291,6 +325,8 @@ public class ColorPickerDialog extends Dialog {
             }
         };
         
+        float scale = this.getContext().getResources().getDisplayMetrics().density;
+        
         this.getWindow().setBackgroundDrawableResource(com.happygoatstudios.bt.R.drawable.dialog_window_crawler1);
         this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         //strip off the alpha part.
@@ -304,7 +340,7 @@ public class ColorPickerDialog extends Dialog {
 	    setContentView(relay);
 	    
 	    
-		RelativeLayout.LayoutParams titlep = new RelativeLayout.LayoutParams(250,LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams titlep = new RelativeLayout.LayoutParams((int) (166.66*scale),LayoutParams.WRAP_CONTENT);
 		titlep.addRule(RelativeLayout.ALIGN_PARENT_TOP, 1);
 		TextView title = new TextView(this.getContext());
 		title.setText("COLOR PICKER");
@@ -330,8 +366,9 @@ public class ColorPickerDialog extends Dialog {
         relay.addView(view);
         //params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 1);
 
+       
         
-        RelativeLayout.LayoutParams barparams = new RelativeLayout.LayoutParams(250,LayoutParams.WRAP_CONTENT);
+        RelativeLayout.LayoutParams barparams = new RelativeLayout.LayoutParams((int) (166.66*scale),LayoutParams.WRAP_CONTENT);
         //barparams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,1);
         barparams.addRule(RelativeLayout.BELOW,0x02);
         barparams.addRule(RelativeLayout.ALIGN_LEFT,1);
