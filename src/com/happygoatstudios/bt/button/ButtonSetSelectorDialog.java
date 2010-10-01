@@ -49,10 +49,14 @@ public class ButtonSetSelectorDialog extends Dialog {
 		super.onCreate(b);
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
+		
 		setContentView(R.layout.buttonset_selection_dialog);
+		
+		
 		
 		ListView lv = (ListView) findViewById(R.id.buttonset_list);
 
+		lv.setScrollbarFadingEnabled(false);
 		//build list.
 		for(String key : data.keySet()) {
 			entries.add(new ButtonEntry(key,data.get(key)));

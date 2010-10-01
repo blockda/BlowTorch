@@ -34,9 +34,10 @@
   	android:layout_toLeftOf="@id/responder_notification_cancel"
   	android:layout_alignParentBottom="true"/>
   
-  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/responder_notification_done_button" android:layout_below="@id/titlebar">
+  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/responder_notification_done_button" android:layout_below="@id/titlebar"
+  android:id="@+id/trigger_notification_responder_scroll_container">
   	<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
-  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:shrinkColumns="0">
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1">
   			<TableRow>
   				<TextView
   					android:text="Title:" android:layout_marginLeft="15dip"/>

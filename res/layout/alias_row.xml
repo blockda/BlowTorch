@@ -10,10 +10,10 @@
   		<TextView 
   			android:id="@+id/alias_pre"
   			android:layout_width="165dip"
-  			android:layout_height="16dip"
+  			android:layout_height="wrap_content"
   			android:background="#AA630460"
   			android:textColor="#FFF7941D"
-  			android:textSize="13dip"
+  			android:textSize="18dip"
   			android:gravity="center|center_vertical"
   			
  			/>
@@ -23,7 +23,7 @@
   			android:layout_height="wrap_content"
   			android:background="#AAF7941D"
   			android:textColor="#FF630460"
-  			android:textSize="12dip"
+  			android:textSize="18dip"
   			android:textStyle="italic"
   			android:gravity="center_vertical"
   			android:singleLine = "false"

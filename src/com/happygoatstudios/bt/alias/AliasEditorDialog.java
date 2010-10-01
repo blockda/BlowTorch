@@ -64,7 +64,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			aliases = new ArrayList<String>();
 			
 			lv = (ListView)findViewById(R.id.alias_list);
-			
+			lv.setScrollbarFadingEnabled(false);
 			
 			lv.setOnItemLongClickListener(new listItemLongClicked());
 			//Object[] pres = input.keySet().toArray();

@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ScrollView;
 
 public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColorChangedListener {
 
@@ -50,6 +51,8 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		
 		setContentView(R.layout.buttonset_settings_editor_dialog);
 		
+		ScrollView sv = (ScrollView)findViewById(R.id.btn_set_editor_scroll);
+		sv.setScrollbarFadingEnabled(false);
 		//attempt to fetch the settings.
 		//ColorSetSettings the_settings =  null;
 		try {

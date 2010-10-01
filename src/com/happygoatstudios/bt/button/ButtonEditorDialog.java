@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
+import android.widget.ScrollView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.TabHost.TabSpec;
@@ -133,6 +134,9 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		
 		EditText fliplabel = (EditText)findViewById(R.id.button_flip_label_et);
 		fliplabel.setText(the_button.getData().getFlipLabel());
+		
+		ScrollView sv = (ScrollView)findViewById(R.id.btn_editor_advanced_scroll_containter);
+		sv.setScrollbarFadingEnabled(false);
 		
 		move_free = (CheckBox)findViewById(R.id.move_free);
 		move_nudge = (CheckBox)findViewById(R.id.move_nudge);

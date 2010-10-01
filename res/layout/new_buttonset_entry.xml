@@ -2,7 +2,7 @@
 
 <RelativeLayout
   	xmlns:android="http://schemas.android.com/apk/res/android"
-  	android:layout_width="420px"
+  	android:layout_width="280dip"
   	android:layout_height="wrap_content">
   	
   	<TextView
@@ -19,14 +19,14 @@
 	
 	<EditText 
 		android:id="@+id/newbuttonset_entry"
-		android:layout_width="420px"
+		android:layout_width="280dip"
 		android:layout_height="wrap_content"
 		android:layout_below="@id/titlebar"
 		android:hint="Enter new set name."/>
 		
 	<Button
 		android:id="@+id/newbuttonset_done"
-		android:layout_width="420px"
+		android:layout_width="280dip"
 		android:layout_height="wrap_content"
 		android:layout_below="@id/newbuttonset_entry"
 		android:text="Add and select new set!"/> 

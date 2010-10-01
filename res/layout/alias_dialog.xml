@@ -27,14 +27,14 @@
   		<TextView 
   			android:layout_width="165dip"
   			android:layout_height="wrap_content"
-  			android:textSize="16dip"
+  			android:textSize="20dip"
   			android:textStyle="bold"
   			android:gravity="center"
  			android:text = "Alias:"/>
   		<TextView 
   			android:layout_width="165dip"
   			android:layout_height="wrap_content"
-  			android:textSize="16dip"
+  			android:textSize="20dip"
   			android:gravity="center"
   			android:textStyle="bold|italic"
  			android:text = "Replace With:"/>

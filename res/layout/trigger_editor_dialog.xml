@@ -36,7 +36,8 @@
   	android:layout_toLeftOf="@id/new_trigger_cancel"
   	android:layout_alignParentBottom="true"/>
   
-  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/trigger_editor_done_button" android:layout_below="@id/titlebar">
+  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/trigger_editor_done_button" android:layout_below="@id/titlebar"
+  android:id="@+id/trigger_editor_scroll_container">
   	<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
   		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:shrinkColumns="0">
   			<TableRow>
@@ -44,14 +45,22 @@
   					android:text="Name:"/>
   				<EditText
   					android:id="@+id/trigger_editor_name"
-  					android:hint=""/>
+  					android:hint=""
+  					android:layout_marginRight="10dip"
+  					android:width="300dip"
+  					android:singleLine="true"
+  					android:inputType="text"/>
   			</TableRow>
   			<TableRow>
   				<TextView
   					android:text="Pattern:"/>
   				<EditText
   					android:id="@+id/trigger_editor_pattern"
-  					android:hint=""/>
+  					android:hint=""
+  					android:layout_marginRight="10dip"
+  					android:width="300dip"
+  					android:singleLine="true"
+  					android:inputType="text"/>
   			</TableRow>
   		</TableLayout>
   		<!-- <TableLayout android:layout_width="390dip" android:layout_height="wrap_content" android:stretchColumns="*"> -->

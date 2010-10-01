@@ -54,6 +54,9 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		//initialize the list view
 		list = (ListView)findViewById(R.id.trigger_list);
+		
+		list.setScrollbarFadingEnabled(false);
+		
 		list.setOnItemClickListener(new EditTriggerListener());
 		list.setOnItemLongClickListener(new DeleteTriggerListener());
 		//list.setOnI

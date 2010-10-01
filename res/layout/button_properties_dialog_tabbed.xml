@@ -127,7 +127,7 @@
 			</TableLayout>
 			
 			<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/btn_editor_tab3">
-			<ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content">
+			<ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/btn_editor_advanced_scroll_containter">
 			<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginRight="10sp">
 			<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Movement method:" android:gravity="left" android:background="@drawable/movemethod_frame" android:layout_marginBottom="-3sp"/>
 				

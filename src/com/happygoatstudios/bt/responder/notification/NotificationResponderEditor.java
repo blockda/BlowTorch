@@ -28,6 +28,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 public class NotificationResponderEditor extends Dialog {
@@ -71,6 +72,9 @@ public class NotificationResponderEditor extends Dialog {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		setContentView(R.layout.responder_notification_dialog);
+		
+		ScrollView sv = (ScrollView)findViewById(R.id.trigger_notification_responder_scroll_container);
+		sv.setScrollbarFadingEnabled(false);
 		
 		title = (EditText)findViewById(R.id.responder_notification_title);
 		message = (EditText)findViewById(R.id.responder_notification_extra);

@@ -25,6 +25,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -88,6 +89,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(com.happygoatstudios.bt.R.drawable.dialog_window_crawler1);
 		setContentView(com.happygoatstudios.bt.R.layout.trigger_editor_dialog);
+		
+		ScrollView sv = (ScrollView)findViewById(R.id.trigger_editor_scroll_container);
+		sv.setScrollbarFadingEnabled(false);
 		
 		legend= (TableRow)findViewById(R.id.trigger_notification_legend);
 		responderTable = (TableLayout)findViewById(R.id.trigger_notification_table);
