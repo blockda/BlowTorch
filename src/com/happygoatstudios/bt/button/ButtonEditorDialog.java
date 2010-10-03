@@ -35,6 +35,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 	public int EXIT_STATE = EXIT_CANCEL;
 	
 	
+	
 	Handler deleter = null;
 	SlickButton the_button = null;
 	
