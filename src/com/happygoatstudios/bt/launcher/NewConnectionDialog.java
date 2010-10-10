@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -15,14 +16,39 @@ public class NewConnectionDialog extends Dialog {
 
 	ReadyListener reportto = null;
 	
+	String m_display;
+	String m_host;
+	int m_port;
+	
+	MudConnection m_prev;
+	
+	boolean isEditor = false;
+	
 	public NewConnectionDialog(Context context,ReadyListener useme) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		reportto = useme;
+		isEditor = false;
+	}
+	
+	public NewConnectionDialog(Context context,ReadyListener useme,String display,String host,int port,MudConnection old) {
+		super(context);
+		
+		reportto = useme;
+		m_display = display;
+		m_host = host;
+		m_port = port;
+		
+		
+		isEditor = true;
+		m_prev = old;
 	}
 	
 	@Override
 	public void onCreate(Bundle settings) {
+		
+		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		super.onCreate(settings);
 		
 		setContentView(R.layout.newconnectiondialog);
@@ -34,6 +60,16 @@ public class NewConnectionDialog extends Dialog {
 		
 		ok.setOnClickListener(new OKListener());
 		cancel.setOnClickListener(new CANCELListener());
+		
+		if(isEditor) {
+			EditText disp_input = (EditText)findViewById(R.id.dispinput);
+			EditText host_input = (EditText)findViewById(R.id.hostinput);
+			EditText port_input = (EditText)findViewById(R.id.portinput);
+			
+			disp_input.setText(m_display);
+			host_input.setText(m_host);
+			port_input.setText(Integer.toString(m_port));
+		}
 	}
 	
 	private class OKListener implements View.OnClickListener {
@@ -44,7 +80,12 @@ public class NewConnectionDialog extends Dialog {
 			EditText port = (EditText)findViewById(R.id.portinput);
 			//String dispstr = disp.getText().toStri;
 			
-			reportto.ready(disp.getText().toString(), host.getText().toString(), port.getText().toString());
+			if(isEditor) {
+				reportto.modify(disp.getText().toString(), host.getText().toString(), port.getText().toString(),m_prev);
+			} else {
+				reportto.ready(disp.getText().toString(), host.getText().toString(), port.getText().toString());
+			}
+			
 			NewConnectionDialog.this.dismiss();
 		}
 	}

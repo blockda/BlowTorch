@@ -125,6 +125,10 @@ public class StellarService extends Service {
 	
 	private boolean compressionStarting = false;
 	
+	public void onLowMemory() {
+		Log.e("SERVICE","The service has been requested to shore up memory usage, potentially going to be killed.");
+	}
+	
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");

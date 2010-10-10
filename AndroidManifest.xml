@@ -4,7 +4,7 @@
       android:versionCode="1"
       android:versionName="1.0">
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
-        <activity android:name="com.happygoatstudios.bt.launcher.BaardTERMLauncher"
+        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
                   android:label="BlowTorch"
                   >
             <intent-filter>

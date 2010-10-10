@@ -9,7 +9,7 @@
 			android:layout_width="fill_parent"
 			android:layout_height="fill_parent"
 			android:scaleType="centerCrop"
-			android:src="@drawable/baardterm_background"/>
+			android:src="@drawable/background"/>
 		
 		<TextView
 			android:text = "Connections:"

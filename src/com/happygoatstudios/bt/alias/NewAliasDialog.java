@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class NewAliasDialog extends Dialog {
 
@@ -69,6 +70,9 @@ public class NewAliasDialog extends Dialog {
 	
 	private void createeditor() {
 		setContentView(R.layout.new_alias_dialog);
+		
+		TextView titlebar = (TextView)findViewById(R.id.titlebar);
+		titlebar.setText("Modify Alias");
 		
 		Button b = (Button)findViewById(R.id.new_alias_done_button);
 		b.setText("Modify this alias.");

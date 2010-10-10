@@ -29,4 +29,16 @@ public class MudConnection {
 	public void setPortString(String in) {
 		port = in;
 	}
+	
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		if(!(o instanceof MudConnection)) return false;
+		
+		MudConnection test = (MudConnection)o;
+		
+		if(!test.getDisplayName().equals(this.getDisplayName())) return false;
+		if(!test.getHostName().equals(this.getHostName())) return false;
+		if(!test.getPortString().equals(this.getPortString())) return false;
+		return true;
+	}
 }

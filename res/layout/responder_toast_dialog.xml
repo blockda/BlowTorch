@@ -19,7 +19,7 @@
 		android:gravity="center"/>
   
     <Button
-    	android:layout_width="wrap_content"
+    	android:layout_width="100dip"
   		android:layout_height="wrap_content"
   		android:id="@+id/responder_toast_cancel"
   		android:layout_alignParentBottom="true"
@@ -27,7 +27,7 @@
   		android:text="Dismiss." />
   
   <Button
-  	android:layout_width="fill_parent"
+  	android:layout_width="240dip"
   	android:layout_height="wrap_content"
   	android:text="Done."
   	android:id="@+id/responder_toast_done_button"
@@ -43,7 +43,7 @@
   </TableLayout>
   <TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:shrinkColumns="1" android:stretchColumns="0">
   	<TableRow>
-  		<TextView android:text="Delay is seconds:" android:gravity="right" android:layout_marginRight="5dip"/>
+  		<TextView android:text="Show for (seconds):" android:gravity="right" android:layout_marginRight="5dip"/>
   		<EditText android:id="@+id/responder_toast_delay" android:width="60dip"/>
   	</TableRow>
   </TableLayout>

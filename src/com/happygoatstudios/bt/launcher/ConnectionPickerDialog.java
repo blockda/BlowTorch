@@ -240,4 +240,9 @@ public class ConnectionPickerDialog extends Dialog implements ReadyListener {
 		
 	}
 
+	public void modify(String displayname, String host, String port,MudConnection old) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

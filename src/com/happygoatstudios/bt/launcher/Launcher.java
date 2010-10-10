@@ -55,12 +55,12 @@ import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.settings.*;
 
-public class BaardTERMLauncher extends Activity implements ReadyListener {
+public class Launcher extends Activity implements ReadyListener {
 	
 	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	
 	private ArrayList<MudConnection> connections;
-	private BaardTERMLauncher.ConnectionAdapter apdapter;
+	private Launcher.ConnectionAdapter apdapter;
 	
 	ListView lv = null;
 	
@@ -188,7 +188,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		public void onClick(View v) {
 			//close the dialog for now
 			//ConnectionPickerDialog.this.dismiss();
-			NewConnectionDialog diag = new NewConnectionDialog(BaardTERMLauncher.this,BaardTERMLauncher.this);
+			NewConnectionDialog diag = new NewConnectionDialog(Launcher.this,Launcher.this);
 			diag.show();
 		}
 	}
@@ -207,7 +207,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 			Message modmsg = connectionModifier.obtainMessage(MSG_MODIFYCONNECTION);
 			modmsg.obj = muc;
 			
-			AlertDialog.Builder build = new AlertDialog.Builder(BaardTERMLauncher.this)
+			AlertDialog.Builder build = new AlertDialog.Builder(Launcher.this)
 				.setMessage("Which operation to perform on: " + muc.getDisplayName());
 			AlertDialog dialog = build.create();
 			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Modify", modmsg);
@@ -249,14 +249,14 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 	    	the_intent.putExtra("PORT", muc.getPortString());
 	    	
 	    	//write out the intent to the service so it can do some lookup work in advance of the connection, such as loading the settings wad
-	    	SharedPreferences prefs = BaardTERMLauncher.this.getSharedPreferences("SERVICE_INFO",0);
+	    	SharedPreferences prefs = Launcher.this.getSharedPreferences("SERVICE_INFO",0);
 	    	Editor edit = prefs.edit();
 	    	edit.putString("SETTINGS_PATH", muc.getDisplayName() + ".xml");
 	    	edit.commit();
 	    	
 	    	//check to see if the service is actually running
 	    	
-	    	ActivityManager activityManager = (ActivityManager)BaardTERMLauncher.this.getSystemService(Context.ACTIVITY_SERVICE);
+	    	ActivityManager activityManager = (ActivityManager)Launcher.this.getSystemService(Context.ACTIVITY_SERVICE);
 	    	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
 	    	boolean found = false;
 	    	for(RunningServiceInfo service : services) {
@@ -278,7 +278,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
     			Matcher nowhitespace = whitespace.matcher(muc.getDisplayName());
     			String prefsname = nowhitespace.replaceAll("") + ".PREFS";
     			
-    			SharedPreferences sprefs = BaardTERMLauncher.this.getSharedPreferences(prefsname,0);
+    			SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
     			//servicestarted = prefs.getBoolean("CONNECTED", false);
     			//finishStart = prefs.getBoolean("FINISHSTART", true);
     			SharedPreferences.Editor editor = sprefs.edit();
@@ -289,7 +289,7 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
     			
 	    	}
 	    	
-	    	BaardTERMLauncher.this.startActivity(the_intent);
+	    	Launcher.this.startActivity(the_intent);
 	    	
 			//call ready listener
 			//saveConnectionsToDisk();
@@ -312,6 +312,8 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 				break;
 			case MSG_MODIFYCONNECTION:
 				MudConnection tomodify = (MudConnection)msg.obj;
+				NewConnectionDialog diag = new NewConnectionDialog(Launcher.this,Launcher.this,tomodify.getDisplayName(),tomodify.getHostName(),Integer.parseInt(tomodify.getPortString()),tomodify);
+				diag.show();
 				break;
 			default:
 				break;
@@ -343,6 +345,19 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 		apdapter.notifyDataSetChanged();
     	
     }
+    
+	public void modify(String displayname, String host, String port,MudConnection old) {
+		// TODO Auto-generated method stub
+		MudConnection muc = new MudConnection();
+		muc.setDisplayName(displayname);
+		muc.setHostName(host);
+		muc.setPortString(port);
+		
+		apdapter.remove(old);
+		
+		apdapter.add(muc);
+		apdapter.notifyDataSetChanged();
+	}
     
 	private void getConnectionsFromDisk() {
 		SharedPreferences pref = this.getSharedPreferences(PREFS_NAME, 0);
@@ -427,9 +442,15 @@ public class BaardTERMLauncher extends Activity implements ReadyListener {
 				//}
 			}
 			return v;
+			
+			
 		}
 		
 		
 	}
+
+
+
+
 
 }
