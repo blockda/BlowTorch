@@ -113,7 +113,8 @@ public class OptionNegotiator {
     	switch(sequence[2]) {
     	case TC.TERM:
     		//get terminal response.
-    		String termtype = "UNKNOWN";
+    		//String termtype = "UNKNOWN";
+    		String termtype = "BlowTorch";
     		try {
 				responsedata = termtype.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {

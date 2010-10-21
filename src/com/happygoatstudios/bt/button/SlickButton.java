@@ -3,7 +3,7 @@ package com.happygoatstudios.bt.button;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import com.happygoatstudios.bt.window.BaardTERMWindow;
+import com.happygoatstudios.bt.window.MainWindow;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -117,7 +117,7 @@ public class SlickButton extends View {
 	}
 	
 	private void doButtonSetChange() {
-		Message swaptoset = dispatcher.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET, data.getTargetSet());
+		Message swaptoset = dispatcher.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET, data.getTargetSet());
 		dispatcher.sendMessage(swaptoset);
 	}
 	
@@ -142,7 +142,7 @@ public class SlickButton extends View {
 	
 		byte[] buffbytes = buf.array();
 		
-		Message msg = dispatcher.obtainMessage(BaardTERMWindow.MESSAGE_SENDDATAOUT,buffbytes);
+		Message msg = dispatcher.obtainMessage(MainWindow.MESSAGE_SENDDATAOUT,buffbytes);
 		dispatcher.sendMessage(msg);
 	}
 	
@@ -432,7 +432,7 @@ public class SlickButton extends View {
 	}
 	
 	public void iHaveChanged(SlickButtonData orig_data) {
-		Message modify = deleter.obtainMessage(BaardTERMWindow.MESSAGE_MODIFYBUTTON);
+		Message modify = deleter.obtainMessage(MainWindow.MESSAGE_MODIFYBUTTON);
 		Bundle b = modify.getData();
 		b.putParcelable("ORIG_DATA", orig_data);
 		b.putParcelable("MOD_DATA", this.data);

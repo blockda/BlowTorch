@@ -1756,8 +1756,8 @@ public class StellarService extends Service {
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "BlowTorch";
 		//CharSequence contentText = "Hello World!";
-		CharSequence contentText = "Connected: "+ host +":"+ port + ")";
-		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.BaardTERMWindow.class);
+		CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
+		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
 		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
@@ -1768,7 +1768,10 @@ public class StellarService extends Service {
 		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
 		note.flags = Notification.FLAG_ONGOING_EVENT;
 		
-		mNM.notify(5545,note);
+		//startForeground to avoid being killed off.
+		this.startForeground(5545, note);
+		
+		//mNM.notify(5545,note);
 		
 	}
 	

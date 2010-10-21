@@ -1,7 +1,7 @@
 package com.happygoatstudios.bt.button;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.window.BaardTERMWindow;
+import com.happygoatstudios.bt.window.MainWindow;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -41,7 +41,7 @@ public class NewButtonSetEntryDialog extends Dialog {
 				EditText ed = (EditText)findViewById(R.id.newbuttonset_entry);
 				
 				//send a message to add and start working on the new button set
-				Message newset = dispatcher.obtainMessage(BaardTERMWindow.MESSAGE_NEWBUTTONSET,ed.getText().toString());
+				Message newset = dispatcher.obtainMessage(MainWindow.MESSAGE_NEWBUTTONSET,ed.getText().toString());
 				dispatcher.sendMessage(newset);
 				
 				NewButtonSetEntryDialog.this.dismiss();

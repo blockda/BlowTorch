@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.service.IStellarService;
-import com.happygoatstudios.bt.window.BaardTERMWindow;
+import com.happygoatstudios.bt.window.MainWindow;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -89,7 +89,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 					//ButtonEntry item = adapter.getItem(lv.getSelectedItemPosition());
 					Message reloadbuttonset = null;
 					try {
-						reloadbuttonset = dispater.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
+						reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -105,7 +105,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
 				ButtonEntry item = entries.get(arg2);
-				Message changebuttonset = dispater.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET,item.name);
+				Message changebuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,item.name);
 				dispater.sendMessage(changebuttonset);
 				ButtonSetSelectorDialog.this.dismiss();
 			}
@@ -122,7 +122,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 			//ButtonEntry item = adapter.getItem(lv.getSelectedItemPosition());
 			Message reloadbuttonset = null;
 			try {
-				reloadbuttonset = dispater.obtainMessage(BaardTERMWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
+				reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

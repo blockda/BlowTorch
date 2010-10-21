@@ -13,7 +13,7 @@
             </intent-filter>
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
-        <activity android:name="com.happygoatstudios.bt.window.BaardTERMWindow"
+        <activity android:name="com.happygoatstudios.bt.window.MainWindow"
         		  android:windowSoftInputMode="adjustResize"
         		  android:label="BlowTorch"
         		  android:screenOrientation="landscape"
@@ -21,7 +21,7 @@
 				  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.window.BaardTERMWindow"/>
+        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>

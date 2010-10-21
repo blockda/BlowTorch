@@ -1,6 +1,6 @@
 package com.happygoatstudios.bt.legacy;
 
-import com.happygoatstudios.bt.window.BaardTERMWindow;
+import com.happygoatstudios.bt.window.MainWindow;
 
 import android.view.MotionEvent;
 import android.view.GestureDetector.SimpleOnGestureListener;
@@ -11,9 +11,9 @@ class BgestureListener extends SimpleOnGestureListener {
 	final int SWIPE_MIN_DISTANCE = 40;
 	final int SWIPE_THRESHOLD_VELOCITY = 10;
 	
-	BaardTERMWindow inform = null;
+	MainWindow inform = null;
 	
-	public BgestureListener(BaardTERMWindow reportto) {
+	public BgestureListener(MainWindow reportto) {
 		super();
 		inform = reportto;
 	}

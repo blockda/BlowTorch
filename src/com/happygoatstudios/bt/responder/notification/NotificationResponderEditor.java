@@ -83,7 +83,7 @@ public class NotificationResponderEditor extends Dialog {
 		vibrate = (CheckBox)findViewById(R.id.responder_notification_vibrate_check);
 		sound = (CheckBox)findViewById(R.id.responder_notification_sound_check);
 		spawnnew = (CheckBox)findViewById(R.id.responder_notification_spawnnew_check);
-		useongoing = (CheckBox)findViewById(R.id.responder_notification_useongoing_check);
+		//useongoing = (CheckBox)findViewById(R.id.responder_notification_useongoing_check);
 		
 		lights_extra = (TextView)findViewById(R.id.responder_notification_lights_extra);
 		sound_extra = (TextView)findViewById(R.id.responder_notification_sound_extra);
@@ -143,11 +143,12 @@ public class NotificationResponderEditor extends Dialog {
 				vibrate.setText("Currently disabled.");
 			}
 			
-			if(the_responder.isUseOnGoingNotification()) {
+			//use of the on-going notification is not supported at this time.
+			/*if(the_responder.isUseOnGoingNotification()) {
 				useongoing.setChecked(true);
 			} else {
 				useongoing.setChecked(false);
-			}
+			}*/
 			
 			if(the_responder.isSpawnNewNotification()) {
 				spawnnew.setChecked(true);
@@ -165,7 +166,7 @@ public class NotificationResponderEditor extends Dialog {
 		vibrate.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.VIBRATE));
 		sound.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.SOUND));
 		spawnnew.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.SPAWNNEW));
-		useongoing.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.USEONGOING));
+		//useongoing.setOnCheckedChangeListener(new CheckChangedListener(CHECK_TYPE.USEONGOING));
 		
 		Button done = (Button)findViewById(R.id.responder_notification_done_button);
 		done.setOnClickListener(new View.OnClickListener() {
@@ -361,7 +362,7 @@ public class NotificationResponderEditor extends Dialog {
 						
 					};
 					
-					File btermdir = new File(sdcardroot,"/BaardTERM/");
+					File btermdir = new File(sdcardroot,"/BlowTorch/");
 					for(File path : btermdir.listFiles(mp3_only)) {
 						paths.put(path.getName(), path.getPath());
 					}

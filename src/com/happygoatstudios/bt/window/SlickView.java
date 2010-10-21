@@ -153,7 +153,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					
 					break;*/
 				case MSG_BUTTONDROPSTART:
-					Message addbtn = realbuttonhandler.obtainMessage(BaardTERMWindow.MESSAGE_ADDBUTTON, bx, by);
+					Message addbtn = realbuttonhandler.obtainMessage(MainWindow.MESSAGE_ADDBUTTON, bx, by);
 					realbuttonhandler.sendMessage(addbtn);
 					//wait for touchlock
 					/*synchronized(touchLock) {
@@ -353,10 +353,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//	drawn.notify();
 		//	drawn = false;
 		//}
-		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
-			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+		if(_runner.threadHandler != null) {
+			if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+			}
 		}
-		
 	}
 	
 	public void jumpToZero() {

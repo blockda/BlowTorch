@@ -3,13 +3,13 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:id="@+id/input_ctrl_container"
-    android:layout_width="184dip"
+    android:layout_width="180dip"
     android:layout_height="20dip"
     >
     
     <ImageButton
     	android:id="@+id/down_btn_c"
-    	android:layout_width="48dip"
+    	android:layout_width="60dip"
     	android:layout_height="20dip"
     	android:layout_alignParentBottom="true"
     	android:layout_alignParentLeft="true"
@@ -22,7 +22,7 @@
 
     <ImageButton
     	android:id="@+id/up_btn_c"
-    	android:layout_width="48dip"
+    	android:layout_width="60dip"
     	android:layout_height="20dip"
     	android:layout_alignParentBottom="true"
     	android:layout_toRightOf="@id/down_btn_c"
@@ -34,7 +34,7 @@
     	android:text="| UP |"/>
     <ImageButton
     	android:id="@+id/enter_btn_c"
-    	android:layout_width="48dip"
+    	android:layout_width="60dip"
     	android:layout_height="20dip"
     	android:layout_alignParentBottom="true"
     	android:layout_toRightOf="@id/up_btn_c"

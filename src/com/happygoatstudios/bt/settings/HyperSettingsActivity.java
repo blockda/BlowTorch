@@ -62,7 +62,7 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		
 		File tmp = Environment.getExternalStorageDirectory();
 		
-		File btermdir = new File(tmp,"/BaardTERM/");
+		File btermdir = new File(tmp,"/BlowTorch/");
 		
 		String sdstate = Environment.getExternalStorageState();
 		HashMap<String,String> efonts = new HashMap<String,String>();

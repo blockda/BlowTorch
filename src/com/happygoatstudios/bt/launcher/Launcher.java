@@ -29,6 +29,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -155,6 +156,9 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		Button newbutton = (Button)findViewById(R.id.new_connection);
 		newbutton.setOnClickListener(new newClickedListener());
+		
+		Button helpbutton = (Button)findViewById(R.id.help_button);
+		helpbutton.setOnClickListener(new helpClickedListener());
 		//start the initializeations
 		/*setContentView(R.layout.launcher_layout);
 		
@@ -182,6 +186,15 @@ public class Launcher extends Activity implements ReadyListener {
 	public void onDestroy() {
 		saveConnectionsToDisk();
 		super.onDestroy();
+	}
+	
+	private class helpClickedListener implements View.OnClickListener {
+
+		public void onClick(View v) {
+			Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse("http://bt.happygoatstudios.com/"));
+			startActivity(web_help);
+		}
+		
 	}
 	
 	private class newClickedListener implements View.OnClickListener {
@@ -242,7 +255,7 @@ public class Launcher extends Activity implements ReadyListener {
 			
 			MudConnection muc = apdapter.getItem(arg2);		
 			
-			Intent the_intent = new Intent(com.happygoatstudios.bt.window.BaardTERMWindow.class.getName());
+			Intent the_intent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.getName());
 	    	
 	    	the_intent.putExtra("DISPLAY",muc.getDisplayName());
 	    	the_intent.putExtra("HOST", muc.getHostName());
