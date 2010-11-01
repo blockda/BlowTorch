@@ -353,9 +353,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//	drawn.notify();
 		//	drawn = false;
 		//}
-		if(_runner.threadHandler != null) {
-			if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
-				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+		if(_runner != null) {
+			if(_runner.threadHandler != null) {
+		
+				if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+					_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+				}
 			}
 		}
 	}
@@ -472,7 +475,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
-	
+	Boolean indicated = false;
 		
 	//Pattern endsonnewline = Pattern.compile(".*\n$");
 	
@@ -553,7 +556,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			//a.setFillAfter(true);
 			//a.setFillBefore(true);
 			new_text_in_buffer_indicator.startAnimation(indicator_on);
-			
+			indicated = true;
 			
 		} else {
 			
@@ -562,8 +565,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			//a.setDuration(0);
 			//a.setFillAfter(true);
 			//a.setFillBefore(true);
-			new_text_in_buffer_indicator.startAnimation(indicator_off);
-			
+			if(indicated) {
+				new_text_in_buffer_indicator.startAnimation(indicator_off);
+				indicated = false;
+			}
 		}
 		
 		//the_buffer.append(broken_lines);
