@@ -882,6 +882,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}*/
 	
 	private void makeFakeButton() {
+		
+		//the uglyest of ugly hacks.
 		RelativeLayout modb = (RelativeLayout)findViewById(R.id.slickholder);
 		Log.e("WINDOW","ADDING FAKE BUTTON!");
 		SlickButton fakey = new SlickButton(modb.getContext(),0,0);
