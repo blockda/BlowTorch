@@ -1044,25 +1044,26 @@ public class StellarService extends Service {
 				buildAliases();
 				buildTriggerData();
 				
-				
 				//fix up the options page such that it looks correct. after importing.
 				//attempt a stab at com.happygoatstuidos.bt_preferences.xml
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
 				
-				Editor edit = prefs.edit();
+				SharedPreferences.Editor editor = prefs.edit();
 				
 				Log.e("SERVICE","LOADING SETTINGS, FIXING UP SHARED PREFS");
-				edit.putString("MAX_LINES", Integer.toString(the_settings.getMaxLines()));
-				edit.putString("FONT_SIZE_EXTRA",  Integer.toString(the_settings.getLineSpaceExtra()));
-				edit.putString("FONT_SIZE",  Integer.toString(the_settings.getLineSize()));
-				edit.putString("FONT_NAME", the_settings.getFontName());
+				editor.putString("MAX_LINES", Integer.toString(the_settings.getMaxLines()));
+				editor.putString("FONT_SIZE_EXTRA",  Integer.toString(the_settings.getLineSpaceExtra()));
+				editor.putString("FONT_SIZE",  Integer.toString(the_settings.getLineSize()));
+				editor.putString("FONT_NAME", the_settings.getFontName());
 				
-				edit.putBoolean("PROCESS_PERIOD",the_settings.isProcessPeriod()); Log.e("SERVICE","PERIOD VALUE" + Boolean.toString(the_settings.isProcessPeriod()));
-				edit.putBoolean("PROCESS_SEMI", the_settings.isSemiIsNewLine());Log.e("SERVICE","SEMI VALUE" + Boolean.toString(the_settings.isSemiIsNewLine()));
-				edit.putBoolean("USE_EXTRACTUI", the_settings.isUseExtractUI());Log.e("SERVICE","EXTRACTUI VALUE" + Boolean.toString(the_settings.isUseExtractUI()));
-				edit.putBoolean("THROTTLE_BACKGROUND", the_settings.isThrottleBackground());Log.e("SERVICE","THROTTLE VALUE" + Boolean.toString(the_settings.isThrottleBackground()));
+				editor.putBoolean("PROCESS_PERIOD",the_settings.isProcessPeriod()); Log.e("SERVICE","PERIOD VALUE" + Boolean.toString(the_settings.isProcessPeriod()));
+				editor.putBoolean("PROCESS_SEMI", the_settings.isSemiIsNewLine());Log.e("SERVICE","SEMI VALUE" + Boolean.toString(the_settings.isSemiIsNewLine()));
+				editor.putBoolean("USE_EXTRACTUI", the_settings.isUseExtractUI());Log.e("SERVICE","EXTRACTUI VALUE" + Boolean.toString(the_settings.isUseExtractUI()));
+				editor.putBoolean("THROTTLE_BACKGROUND", the_settings.isThrottleBackground());Log.e("SERVICE","THROTTLE VALUE" + Boolean.toString(the_settings.isThrottleBackground()));
 				
-				edit.commit();
+				editor.commit();
+				
+				Log.e("SERVICE",prefs.getString("USE_EXTRACTUI"));
 			}
 			sendInitOk();
 		}
@@ -1343,7 +1344,7 @@ public class StellarService extends Service {
 			//the settings activity doesn't reset a wrong value, we will write
 			//the shared preferences key here
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
-			boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
+			//boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
 			SharedPreferences.Editor editor = prefs.edit();
 			editor.putBoolean("PROCESS_PERIOD", value);
 			editor.commit();
