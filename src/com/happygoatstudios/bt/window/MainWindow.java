@@ -106,6 +106,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_CHANGEBUTTONSET = 206;
 	public static final int MESSAGE_RELOADBUTTONSET = 208;
 	protected static final int MESSAGE_BUTTONREQUESTINGSETCHANGE = 207;
+	protected static final int MESSAGE_XMLERROR = 397;
 	
 	protected boolean settingsDialogRun = false;
 	
@@ -347,6 +348,25 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_XMLERROR:
+					//got an xml error, need to display it.
+					String xmlerror = (String)msg.obj;
+					
+					//display it
+					AlertDialog.Builder builder = new AlertDialog.Builder(MainWindow.this);
+					builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
+						
+						public void onClick(DialogInterface arg0, int arg1) {
+							arg0.dismiss();
+						}
+					});
+					
+					builder.setMessage("XML Error: " + xmlerror + "\nSettings have not been loaded.");
+					builder.setTitle("Problem with XML File.");
+					
+					AlertDialog error = builder.create();
+					error.show();
+					break;
 				case MESSAGE_RELOADBUTTONSET:
 					
 					break;
@@ -1388,6 +1408,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		public void loadSettings() throws RemoteException {
 			// TODO Auto-generated method stub
 			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
+		}
+
+		public void displayXMLError(String error) throws RemoteException {
+			// TODO Auto-generated method stub
+			Message xmlerror = myhandler.obtainMessage(MESSAGE_XMLERROR);
+			xmlerror.obj = error;
+			myhandler.sendMessage(xmlerror);
+			
 		}
 	};
 	

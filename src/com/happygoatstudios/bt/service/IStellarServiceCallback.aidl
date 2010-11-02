@@ -8,4 +8,5 @@ oneway interface IStellarServiceCallback {
 	void rawDataIncoming(String raw);
 	void rawBufferIncoming(String rawbuf);
 	void loadSettings();
+	void displayXMLError(String error);
 }

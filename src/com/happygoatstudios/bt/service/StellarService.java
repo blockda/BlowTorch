@@ -1040,10 +1040,17 @@ public class StellarService extends Service {
 		public void LoadSettingsFromPath(String path) throws RemoteException {
 			synchronized(the_settings) {
 				HyperSAXParser loader = new HyperSAXParser(path,StellarService.this);
-				the_settings = loader.load();
-				buildAliases();
-				buildTriggerData();
-
+				try {
+					the_settings = loader.load();
+				} catch(RuntimeException e) {
+					//extract the message.
+					String message = e.getMessage();
+					//send the message.
+					dispatchXMLError(message);
+				} finally {
+					buildAliases();
+					buildTriggerData();
+				}
 			}
 
 			sendInitOk();
@@ -1405,6 +1412,15 @@ public class StellarService extends Service {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			callbacks.getBroadcastItem(i).loadSettings();
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
+	}
+	
+	public void dispatchXMLError(String error) throws RemoteException {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			callbacks.getBroadcastItem(i).displayXMLError(error);
 			//notify listeners that data can be read
 		}
 		callbacks.finishBroadcast();
