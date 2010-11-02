@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<root>
+  <window lineSize="18" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" wrapMode="1" />
+  <service processSemi="true" proccessPeriod="false" throttle="true" />
+  <aliases>
+    <alias pre="hht" post="prince" />
+    <alias pre="USEPORTAL" post="get portaltarget bag;hold portaltarget;enter;hold amu;put portaltarget bag" />
+    <alias pre="portaltarget" post="mirror" />
+    <alias pre="buttonhunt" post="hunt hht" />
+  </aliases>
+  <buttonsets>
+    <buttonset setName="fasttravel" color="ff00ff00" flipColor="ffff0000" labelColor="ffff0000" buttonHeight="50" buttonWidth="170" labelSize="20" flipLabelColor="ff00ff00">
+      <button xPos="50" yPos="40" label="MAIN" moveMethod="1" targetSet="default" width="100" />
+      <button xPos="765" yPos="55" label="KNOSSOS" moveMethod="1" targetSet="city_knossos" width="100" />
+      <button xPos="309" yPos="375" label="SHADOW" command="enter;run e2swse" moveMethod="0" />
+      <button xPos="316" yPos="305" label="PLANES" command=".portaltarget 'amulet planes';USEPORTAL" flipCommand="d;runto pets;adopt kitten" moveMethod="0" />
+      <button xPos="327" yPos="169" label="KILLING" command="get trip backp;hold trip;enter;hold amu;put trip backp" moveMethod="0" />
+      <button xPos="310" yPos="44" label="FORTRESS" command="get warplans backp;hold warplans;enter;hold amu;put warplans backp" moveMethod="0" />
+      <button xPos="109" yPos="202" label="NULAN" command="runto nulan" moveMethod="0" />
+      <button xPos="503" yPos="304" label="NSTAR" command="enter;run e2w13nu" flipCommand="enter orb" moveMethod="0" />
+      <button xPos="318" yPos="237" label="OZ" command="runto oz" moveMethod="0" />
+      <button xPos="322" yPos="103" label="ILLOR" command="enter;run w7e11n" moveMethod="0" />
+      <button xPos="755" yPos="375" label="SCARRED LANDS" command="runto sacarred;.hht dragons" flipCommand="dance self" moveMethod="0" labelSize="24" flipLabelColor="990000ff" />
+      <button xPos="520" yPos="377" label="VIDBLAIN" command="runto vidblain;coord" flipCommand="coord" moveMethod="0" flipLabelColor="990000ff" flipLabel="COORD" />
+      <button xPos="493" yPos="242" label="JENNY'S" command="enter;run 3w3nw3s2eu3wn;enter portal" flipCommand=".portaltarget kali;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" flipLabel="PORTAL" />
+      <button xPos="518" yPos="175" label="DIAMOND REACH" command="enter;run n2e11s" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="764" yPos="323" label="SNUCKLES" command="enter;run d6suesne3n" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="727" yPos="191" label="AARDHOTEL" command="enter" flipCommand="gulp" moveMethod="0" flipLabelColor="990000ff" flipLabel="GULP" />
+      <button xPos="508" yPos="38" label="FIREBIRD" command="enter;run n25su" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="742" yPos="258" label="YURGATCH" command=".portaltarget kali;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="733" yPos="118" label="LOST TIME" command="enter;run w10e12s5e" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="108" yPos="126" label="HAWKLORD" command="runto hawklord" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="91" yPos="278" label="DEATHTRAP" command="enter;run d8sunwdn" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="558" yPos="113" label="IMPERIAL NATION" command=".portaltarget 'dark crystal';USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="99" yPos="363" label="GLADIATOR'S" command="runto gladiator;n;n;give 5000 gold gu" moveMethod="0" flipLabelColor="990000ff" />
+    </buttonset>
+    <buttonset setName="intentionallyblank">
+      <button xPos="779" yPos="370" label="MAIN" moveMethod="0" targetSet="default" width="150" height="40" color="55ff5400" labelColor="99ff0011" />
+    </buttonset>
+    <buttonset setName="default" color="510004ff" focusColor="c6fff800" labelColor="ffff1700" buttonHeight="70" buttonWidth="70" labelSize="20">
+      <button xPos="820" yPos="31" label="STAND" command="stand" flipCommand="sleep" moveMethod="1" />
+      <button xPos="735" yPos="30" label="HOME" command="home" flipCommand="enter" moveMethod="1" flipLabel="ENTER" />
+      <button xPos="650" yPos="30" label="QUEST" command="quest request" flipCommand="quest complete" moveMethod="1" />
+      <button xPos="550" yPos="30" label="INFO" command="quest info" flipCommand="cp check" moveMethod="1" />
+      <button xPos="685" yPos="115" label="UP" command="u" flipCommand="open u" moveMethod="1" />
+      <button xPos="600" yPos="115" label="NORTH" command="n" flipCommand="open n" moveMethod="1" />
+      <button xPos="515" yPos="115" label="SCAN" command="scan" flipCommand="study" moveMethod="1" />
+      <button xPos="685" yPos="200" label="EAST" command="e" flipCommand="open e" moveMethod="1" />
+      <button xPos="600" yPos="200" label="EXIT" command="exit" flipCommand="spellup" moveMethod="1" />
+      <button xPos="515" yPos="200" label="WEST" command="w" flipCommand="open w" moveMethod="1" />
+      <button xPos="685" yPos="285" label="DOWN" command="d" flipCommand="open d" moveMethod="1" />
+      <button xPos="600" yPos="285" label="SOUTH" command="s" flipCommand="open s" moveMethod="1" />
+      <button xPos="805" yPos="385" label="KICK" command="ca 'solar flare'" flipCommand="kick" moveMethod="1" />
+      <button xPos="720" yPos="385" label="ENFEEB" command="hydra" flipCommand="marbu" moveMethod="1" />
+      <button xPos="50" yPos="40" label="TRAVEL" moveMethod="1" targetSet="fasttravel2" width="100" height="50" />
+      <button xPos="821" yPos="106" label="HP UP" command="get ballad bag;quaff ballad" moveMethod="1"  />
+      <button xPos="821" yPos="270" label="GQ" command="gquest check" flipCommand="gquest progress" moveMethod="0" />
+      <button xPos="197" yPos="60" label="CLEAR" moveMethod="0" targetSet="intentionallyblank" width="100" height="60" />
+      <button xPos="75" yPos="140" label="WEB" command="ca web" flipCommand="ca diss" moveMethod="0" />
+      <button xPos="516" yPos="286" label="HUNT" command="buttonhunt" flipCommand="bs hht" moveMethod="1" flipLabel="kill" />
+      <button xPos="462" yPos="33" label="CP" command="cp check" flipCommand="d;runto campaign;cp request" moveMethod="0" />
+      <button xPos="817" yPos="186" label="MP UP" command="get rev bag;quaff rev" moveMethod="1" />
+      <button xPos="331" yPos="68" label="afk" command="afk" moveMethod="0" />
+    </buttonset>
+    <buttonset setName="city_knossos" color="ff0000ff" labelColor="ffff1e00">
+      <button xPos="50" yPos="40" label="MAIN" moveMethod="1" targetSet="default" width="100" height="50" />
+      <button xPos="769" yPos="65" label="RUNTO" command="runto knossos" moveMethod="1" />
+      <button xPos="649" yPos="61" label="STEAK" command="buy steak" flipCommand="give steak hobo" moveMethod="1" />
+      <button xPos="544" yPos="60" label="SILVER" command="buy silver" moveMethod="1" />
+      <button xPos="651" yPos="157" label="SHACK" command="enter shack" flipCommand="give steak hobo" moveMethod="1" />
+      <button xPos="545" yPos="159" label="CRACK" command="enter crack" flipCommand="give silver say" moveMethod="1" />
+      <button xPos="645" yPos="254" label="GUARD" command="give id g" flipCommand="give pass g" moveMethod="1" />
+    </buttonset>
+    <buttonset setName="blackjack" color="6bff0700" labelColor="ff1b00ff" buttonHeight="50" buttonWidth="100" labelSize="28">
+      <button xPos="755" yPos="360" label="STAY" command="bj stay" moveMethod="0" />
+      <button xPos="760" yPos="268" label="HIT" command="bj hit" moveMethod="0" />
+      <button xPos="767" yPos="162" label="BET" command="bj bet 100000" moveMethod="0" />
+      <button xPos="739" yPos="42" label="MAIN" moveMethod="0" targetSet="default" />
+      <button xPos="655" yPos="165" label="GOTO" command="enter;run d6s4wn2w" moveMethod="0" />
+      <button xPos="599" yPos="262" label="SPLIT" command="bj split" moveMethod="0" />
+    </buttonset>
+    <buttonset setName="fasttravel2" color="ff20ff00" focusColor="ffff8700" flipColor="ff00ffc9" labelColor="ffff000f" buttonHeight="50" buttonWidth="170" labelSize="20" flipLabelColor="ffff00d5">
+      <button xPos="103" yPos="40" label="MAIN" moveMethod="0" targetSet="default" />
+      <button xPos="371" yPos="228" label="NEW VERTIGO" command=".portaltarget share;USEPORTAL" flipCommand="get share bag;open w;put share bag" moveMethod="0" flipLabelColor="990000ff" flipLabel="UNLOCK" />
+      <button xPos="741" yPos="351" label="XYL'S MOSAIC" command=".portaltarget xyl;USEPORTAL" flipCommand="say handsome devil;open w" moveMethod="0" flipLabelColor="990000ff" flipLabel="OPENWEST" />
+      <button xPos="378" yPos="294" label="ST:TNG" command=".portaltarget transporter;USEPORTAL" flipCommand=".portaltarget tasha;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" flipLabel="KLINGON SHIP" />
+      <button xPos="111" yPos="226" label="AMAZON NATION" command=".portaltarget mirror;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="94" yPos="140" label="PAGE1" moveMethod="0" targetSet="fasttravel" flipLabelColor="990000ff" />
+      <button xPos="119" yPos="298" label="SANCTITY" command="runto sanctity" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="365" yPos="38" label="HOUSE OF CARDS" command="runto cards;n;say deal me in" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="740" yPos="277" label="TIRNA 'NOG" command=".portaltarget mushroom;USEPORTAL" moveMethod="1" flipLabelColor="990000ff" />
+      <button xPos="342" yPos="119" label="DRAGERAN EMPIRE" command=".portaltarget audience;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="573" yPos="34" label="LONG NIGHT" command="runto longnight" flipCommand="run 9e2sue" moveMethod="0" flipLabelColor="990000ff" flipLabel="moneu" />
+      <button xPos="553" yPos="129" label="NANJIKI RUINS" command=".portaltarget banana;USEPORTAL " moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="566" yPos="207" label="MOSSFLOWER" command=".portaltarget bell;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="550" yPos="297" label="ONSLAUGHT" command="runto onslaught;e;enter hope" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="125" yPos="360" label="DUNE" command=".portaltarget mua;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="380" yPos="360" label="KEEP OF KEREVEK" command=".portaltarget vampire;USEPORTAL;n;give gem co" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="555" yPos="369" label="TREE OF LIFE" command=".portaltarget starburst;USEPORTAL" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="749" yPos="129" label="RESTOCK MP" command="enter;run d2e;buy 30 rev;put all.rev bag" moveMethod="0" flipLabelColor="990000ff" />
+      <button xPos="762" yPos="41" label="RESTOCK HP" command="enter;run dwwn;buy 40 ballad;put all.ballad bag;buy 40 ballad;put all.ballad bag" moveMethod="0" flipLabelColor="990000ff" />
+    </buttonset>
+    <selectedset>default</selectedset>
+  </buttonsets>
+  <triggers>
+  </triggers>
+</root>

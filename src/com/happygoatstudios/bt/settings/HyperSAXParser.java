@@ -44,7 +44,7 @@ public class HyperSAXParser extends BaseParser {
 		Element buttonset = buttonsets.getChild(TAG_BUTTONSET);
 		Element selected = buttonsets.getChild(TAG_SELECTEDSET);
 		Element button = buttonset.getChild(TAG_BUTTON);
-		Element processperiod = root.getChild(TAG_PROCESSPERIOD);
+		Element processperiod = root.getChild(ATTR_PROCESSPERIOD);
 		Element triggers = root.getChild(TAG_TRIGGERS);
 		Element trigger = triggers.getChild(TAG_TRIGGER);
 		Element notificationResponder = trigger.getChild(TAG_NOTIFICATIONRESPONDER);
@@ -69,6 +69,7 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setMaxLines(new Integer(attributes.getValue("",ATTR_MAXLINES)).intValue());
 				tmp.setFontName(attributes.getValue("",ATTR_FONTNAME));
 				tmp.setFontPath(attributes.getValue("",ATTR_FONTPATH));
+				tmp.setUseExtractUI( (attributes.getValue("",ATTR_USEEXTRACTUI) == null) ? false : (attributes.getValue("",ATTR_USEEXTRACTUI).equals("true")) ? true : false);
 				
 				int wmode = new Integer(attributes.getValue("",ATTR_WRAPMODE));
 				switch(wmode) {
@@ -92,7 +93,8 @@ public class HyperSAXParser extends BaseParser {
 			public void start(Attributes a) {
 				//read in the attributes.
 				//ouch. just look at that nested ternary operator.
-				tmp.setUseExtractUI( (a.getValue("",ATTR_USEEXTRACTUI) == null) ? false : (a.getValue("",ATTR_USEEXTRACTUI).equals("true")) ? true : false);
+				//tmp.setUseExtractUI( (a.getValue("",ATTR_USEEXTRACTUI) == null) ? false : (a.getValue("",ATTR_USEEXTRACTUI).equals("true")) ? true : false);
+				tmp.setProcessPeriod( (a.getValue("",ATTR_PROCESSPERIOD) == null) ? false : (a.getValue("",ATTR_PROCESSPERIOD).equals("true")) ? true : false);
 				tmp.setSemiIsNewLine( (a.getValue("",ATTR_SEMINEWLINE) == null) ? true : (a.getValue("",ATTR_SEMINEWLINE).equals("true")) ? true : false);
 				tmp.setThrottleBackground( (a.getValue("",ATTR_THROTTLEBACKGROUND) == null) ? false : (a.getValue("",ATTR_THROTTLEBACKGROUND).equals("true")) ? true : false);
 				

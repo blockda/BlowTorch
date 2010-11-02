@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<root>
+  <window lineSize="18" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" wrapMode="1" />
+  <service processSemi="true" proccessPeriod="false" throttle="true" />
+  <aliases>
+    <alias pre="USEPORTAL" post="get portaltarget bag;hold portaltarget;enter;hold amu;put portaltarget bag" />
+    <alias pre="portaltarget" post="mirror" />
+  </aliases>
+  <buttonsets>
+    <buttonset setName="intentionallyblank">
+      <button xPos="779" yPos="370" label="MAIN" moveMethod="0" targetSet="default" width="150" height="40" color="55ff5400" labelColor="99ff0011" />
+    </buttonset>
+    <buttonset setName="default" color="510004ff" focusColor="c6fff800" labelColor="ffff1700" buttonHeight="70" buttonWidth="70" labelSize="20">
+      <button xPos="685" yPos="115" label="UP" command="u" flipCommand="open u" moveMethod="1" />
+      <button xPos="600" yPos="115" label="NORTH" command="n" flipCommand="open n" moveMethod="1" />
+      <button xPos="685" yPos="200" label="EAST" command="e" flipCommand="open e" moveMethod="1" />
+      <button xPos="600" yPos="200" label="EXIT" command="exit" flipCommand="spellup" moveMethod="1" />
+      <button xPos="515" yPos="200" label="WEST" command="w" flipCommand="open w" moveMethod="1" />
+      <button xPos="685" yPos="285" label="DOWN" command="d" flipCommand="open d" moveMethod="1" />
+      <button xPos="600" yPos="285" label="SOUTH" command="s" flipCommand="open s" moveMethod="1" />
+      <button xPos="197" yPos="60" label="CLEAR" moveMethod="0" targetSet="intentionallyblank" width="100" height="60" />
+      <button xPos="331" yPos="68" label="afk" command="afk" moveMethod="0" />
+    </buttonset>
+    <selectedset>default</selectedset>
+  </buttonsets>
+  <triggers>
+  </triggers>
+</root>

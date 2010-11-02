@@ -131,7 +131,7 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_MAXLINES, new Integer(data.getMaxLines()).toString());
 			out.attribute("", BaseParser.ATTR_FONTNAME, data.getFontName());
 			out.attribute("", BaseParser.ATTR_FONTPATH, data.getFontPath());
-			
+			out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -170,8 +170,9 @@ public class HyperSettings {
 			out.startTag("",BaseParser.TAG_SERVICE);
 			
 			out.attribute("", BaseParser.ATTR_SEMINEWLINE, (data.isSemiIsNewLine()) ? "true" : "false");
-			out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
+			//out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_THROTTLEBACKGROUND, (data.isThrottleBackground()) ? "true" : "false");
+			out.attribute("" , BaseParser.ATTR_PROCESSPERIOD, data.isProcessPeriod() ? "true" : "false");
 			
 			out.endTag("",BaseParser.TAG_SERVICE);
 			
