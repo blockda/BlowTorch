@@ -117,7 +117,7 @@ public class StellarService extends Service {
 	private static final int MESSAGE_DOFINALDISPATCH = 121;
 	public static final int MESSAGE_COMPRESSIONREQUESTED = 131;
 	private static final int MESSAGE_THROTTLEEVENT = 197;
-	
+
 	public boolean sending = false;
 	
 	StringBuffer the_buffer = new StringBuffer();
@@ -1043,28 +1043,9 @@ public class StellarService extends Service {
 				the_settings = loader.load();
 				buildAliases();
 				buildTriggerData();
-				
-				//fix up the options page such that it looks correct. after importing.
-				//attempt a stab at com.happygoatstuidos.bt_preferences.xml
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
-				
-				SharedPreferences.Editor editor = prefs.edit();
-				
-				Log.e("SERVICE","LOADING SETTINGS, FIXING UP SHARED PREFS");
-				editor.putString("MAX_LINES", Integer.toString(the_settings.getMaxLines()));
-				editor.putString("FONT_SIZE_EXTRA",  Integer.toString(the_settings.getLineSpaceExtra()));
-				editor.putString("FONT_SIZE",  Integer.toString(the_settings.getLineSize()));
-				editor.putString("FONT_NAME", the_settings.getFontName());
-				
-				editor.putBoolean("PROCESS_PERIOD",the_settings.isProcessPeriod()); Log.e("SERVICE","PERIOD VALUE" + Boolean.toString(the_settings.isProcessPeriod()));
-				editor.putBoolean("PROCESS_SEMI", the_settings.isSemiIsNewLine());Log.e("SERVICE","SEMI VALUE" + Boolean.toString(the_settings.isSemiIsNewLine()));
-				editor.putBoolean("USE_EXTRACTUI", the_settings.isUseExtractUI());Log.e("SERVICE","EXTRACTUI VALUE" + Boolean.toString(the_settings.isUseExtractUI()));
-				editor.putBoolean("THROTTLE_BACKGROUND", the_settings.isThrottleBackground());Log.e("SERVICE","THROTTLE VALUE" + Boolean.toString(the_settings.isThrottleBackground()));
-				
-				editor.commit();
-				
-				Log.e("SERVICE",prefs.getString("USE_EXTRACTUI"));
+
 			}
+
 			sendInitOk();
 		}
 
@@ -1207,6 +1188,25 @@ public class StellarService extends Service {
 				
 			}
 		}
+
+		public boolean isProcessPeriod() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isProcessPeriod();
+				
+			}
+		}
+
+		public boolean isSemiNewline() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isSemiIsNewLine();
+			}
+		}
+
+		public boolean isThrottleBackground() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isThrottleBackground();
+			}
+		}
 		
 
 	};
@@ -1346,7 +1346,7 @@ public class StellarService extends Service {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
 			//boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
 			SharedPreferences.Editor editor = prefs.edit();
-			editor.putBoolean("PROCESS_PERIOD", value);
+			editor.putBoolean("PROCESS_PERIOD", the_settings.isProcessPeriod());
 			editor.commit();
 			
 			//Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);
