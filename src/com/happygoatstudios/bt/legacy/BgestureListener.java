@@ -25,10 +25,10 @@ class BgestureListener extends SimpleOnGestureListener {
 			// right to left swipe
 			if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
         //Toast.makeText(SelectFilterActivity.this, "Left Swipe", Toast.LENGTH_SHORT`enter code here`).show();
-				inform.flingLeft();
+				//inform.flingLeft();
 			}  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
         //Toast.makeText(SelectFilterActivity.this, "Right Swipe", Toast.LENGTH_SHORT).show();
-				inform.flingRight();
+				///inform.flingRight();
 			}
 		} catch (Exception e) {
     // nothing
