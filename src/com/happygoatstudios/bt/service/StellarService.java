@@ -117,6 +117,7 @@ public class StellarService extends Service {
 	private static final int MESSAGE_DOFINALDISPATCH = 121;
 	public static final int MESSAGE_COMPRESSIONREQUESTED = 131;
 	private static final int MESSAGE_THROTTLEEVENT = 197;
+	protected static final int MESSAGE_FIXUPSETTINGSPREFERENCEFILE = 259;
 	
 	public boolean sending = false;
 	
@@ -153,6 +154,23 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_FIXUPSETTINGSPREFERENCEFILE:
+					
+					//SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
+					//SharedPreferences prefs = StellarService.this.getSharedPreferences("com.happygoatstudios.bt_preferences.xml", 0);
+					//SharedPreferences.Editor edit = prefs.edit();
+					
+					
+					//Log.e("SERVICE","FUCKING FUCK FUCK SERVICE IS MODIFYING THE FUCKING FILE");
+					//edit.putBoolean("THROTTLE_BACKGROUND",the_settings.isThrottleBackground());
+					//edit.putBoolean("USE_EXTRACTUI", the_settings.isUseExtractUI());
+					//edit.putBoolean("PROCESS_PERIODS", the_settings.isProcessPeriod());
+					//edit.putBoolean("PROCESS_SEMI", the_settings.isSemiIsNewLine());
+					
+					
+					//edit.commit();
+					
+					break;
 				case MESSAGE_THROTTLEEVENT:
 					doThrottleBackgroundImpl();
 					break;
@@ -1047,23 +1065,15 @@ public class StellarService extends Service {
 				
 				//fix up the options page such that it looks correct. after importing.
 				//attempt a stab at com.happygoatstuidos.bt_preferences.xml
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
+
 				
-				Editor edit = prefs.edit();
-				
-				Log.e("SERVICE","LOADING SETTINGS, FIXING UP SHARED PREFS");
-				edit.putString("MAX_LINES", Integer.toString(the_settings.getMaxLines()));
-				edit.putString("FONT_SIZE_EXTRA",  Integer.toString(the_settings.getLineSpaceExtra()));
-				edit.putString("FONT_SIZE",  Integer.toString(the_settings.getLineSize()));
-				edit.putString("FONT_NAME", the_settings.getFontName());
-				
-				edit.putBoolean("PROCESS_PERIOD",the_settings.isProcessPeriod()); Log.e("SERVICE","PERIOD VALUE" + Boolean.toString(the_settings.isProcessPeriod()));
-				edit.putBoolean("PROCESS_SEMI", the_settings.isSemiIsNewLine());Log.e("SERVICE","SEMI VALUE" + Boolean.toString(the_settings.isSemiIsNewLine()));
-				edit.putBoolean("USE_EXTRACTUI", the_settings.isUseExtractUI());Log.e("SERVICE","EXTRACTUI VALUE" + Boolean.toString(the_settings.isUseExtractUI()));
-				edit.putBoolean("THROTTLE_BACKGROUND", the_settings.isThrottleBackground());Log.e("SERVICE","THROTTLE VALUE" + Boolean.toString(the_settings.isThrottleBackground()));
-				
-				edit.commit();
 			}
+			
+			//can't fix up the setting here, so we need to fire a message ot the main service thread's handler to tell it to fix it up
+			myhandler.sendEmptyMessage(MESSAGE_FIXUPSETTINGSPREFERENCEFILE);
+
+			//edit.
+			
 			sendInitOk();
 		}
 
@@ -1206,6 +1216,25 @@ public class StellarService extends Service {
 				
 			}
 		}
+
+		public boolean isProcessPeriod() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isProcessPeriod();
+				
+			}
+		}
+
+		public boolean isSemiNewline() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isSemiIsNewLine();
+			}
+		}
+
+		public boolean isThrottleBackground() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isThrottleBackground();
+			}
+		}
 		
 
 	};
@@ -1343,9 +1372,9 @@ public class StellarService extends Service {
 			//the settings activity doesn't reset a wrong value, we will write
 			//the shared preferences key here
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
-			boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
+			//boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
 			SharedPreferences.Editor editor = prefs.edit();
-			editor.putBoolean("PROCESS_PERIOD", value);
+			editor.putBoolean("PROCESS_PERIOD", the_settings.isProcessPeriod());
 			editor.commit();
 			
 			//Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);

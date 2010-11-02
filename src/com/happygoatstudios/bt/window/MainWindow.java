@@ -48,6 +48,7 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.MotionEvent;
@@ -256,6 +257,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
         alphaout.setFillAfter(true);
         fill2.startAnimation(alphaout);
         
+        //RelativeLayout input_bar = (RelativeLayout)findViewById(R.id.input_bar);
+        //ViewParent parent = input_bar.getParent();
+        //parent.bringChildToFront(input_bar);
+        //input_bar.set
+        
         screen2.setZOrderOnTop(false);
         screen2.setOnTouchListener(gestureListener);
 		
@@ -365,6 +371,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						clearb.removeViews(pos+1,count - pos);
 					}
 					//current_button_views.clear();
+					//make the fake button.
+					makeFakeButton();
+					
 					break;
 				case MESSAGE_CHANGEBUTTONSET:
 					RelativeLayout modb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
@@ -383,12 +392,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 								modb.removeViews(0,posm);
 								modb.removeViews(posm+1,countm - posm);
 							}
-							for(SlickButtonData tmp : newset) {
-								SlickButton new_button = new SlickButton(modb.getContext(),0,0);
-								new_button.setData(tmp);
-								new_button.setDispatcher(this);
-								new_button.setDeleter(this);
-								modb.addView(new_button);
+							
+							if(newset.size() > 0) {
+								for(SlickButtonData tmp : newset) {
+									SlickButton new_button = new SlickButton(modb.getContext(),0,0);
+									new_button.setData(tmp);
+									new_button.setDispatcher(this);
+									new_button.setDeleter(this);
+									modb.addView(new_button);
+								}
+							} else {
+								makeFakeButton();
 							}
 						}
 					} catch (RemoteException e3) {
@@ -509,13 +523,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						//current_button_views.clear();
 						
 						if(buttons != null) {
-							for(SlickButtonData button : buttons) {
-								SlickButton tmp = new SlickButton(MainWindow.this,0,0);
-								tmp.setData(button);
-								tmp.setDispatcher(this);
-								tmp.setDeleter(this);
-								button_layout.addView(tmp);
-								//current_button_views.add(tmp);
+							if(buttons.size() > 0) {
+								for(SlickButtonData button : buttons) {
+									SlickButton tmp = new SlickButton(MainWindow.this,0,0);
+									tmp.setData(button);
+									tmp.setDispatcher(this);
+									tmp.setDeleter(this);
+									button_layout.addView(tmp);
+									//current_button_views.add(tmp);
+								}
+							} else {
+								makeFakeButton();
 							}
 						}
 						
@@ -863,6 +881,30 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		return true;
 	}*/
 	
+	private void makeFakeButton() {
+		RelativeLayout modb = (RelativeLayout)findViewById(R.id.slickholder);
+		Log.e("WINDOW","ADDING FAKE BUTTON!");
+		SlickButton fakey = new SlickButton(modb.getContext(),0,0);
+		SlickButtonData fakedatay = new SlickButtonData();
+		fakedatay.setPrimaryColor(0x00FFFFFF);
+		fakedatay.setLabelColor(0x00FFFFFF);
+		fakedatay.setFlipColor(0x00FFFFFF);
+		fakedatay.setFlipLabelColor(0x00FFFFFF);
+		fakedatay.setSelectedColor(0x00FFFFFF);
+		fakedatay.setText("");
+		fakedatay.setFlipCommand("");
+		fakedatay.setLabel("");
+		fakedatay.setFlipLabel("");
+		fakedatay.setWidth(2);
+		fakedatay.setHeight(2);
+		fakedatay.setX(-10);
+		fakedatay.setY(-10);
+		
+		fakey.setData(fakedatay);
+		
+		modb.addView(fakey);
+	}
+	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		
 		menu.add(0,99,0,"Aliases");
@@ -915,6 +957,30 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//this.startActivityForResult(settingintent, 0);
 			break;
 		case 103:
+			//fix up the shared preferences so that it will actually work.
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
+			
+			SharedPreferences.Editor edit = prefs.edit();
+			
+			try {
+				//Log.e("WINDOW","FUCKING FUCK FUCK SERVICE IS MODIFYING THE FUCKING FILE");
+				edit.putBoolean("THROTTLE_BACKGROUND",service.isThrottleBackground());
+				edit.putBoolean("USE_EXTRACTUI", service.getUseExtractUI());
+				edit.putBoolean("PROCESS_PERIOD", service.isProcessPeriod());
+				edit.putBoolean("PROCESS_SEMI", service.isSemiNewline());
+				
+				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
+				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
+				edit.putString("MAX_LINES", Integer.toString(service.getMaxLines()));
+				edit.putString("FONT_NAME", service.getFontName());
+				
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			edit.commit();
+			
 			Intent settingintent = new Intent(this,HyperSettingsActivity.class);
 			this.startActivityForResult(settingintent, 0);
 			//settingsmenuclosed = true;
@@ -1263,7 +1329,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 	}
 	
-	public void flingLeft() {
+	/*public void flingLeft() {
     	FixedViewFlipper tmp = (FixedViewFlipper)findViewById(R.id.flippdipper);
     	tmp.setInAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_left_in));
     	tmp.setOutAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_left_out));
@@ -1275,7 +1341,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
     	tmp.setOutAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_right_out));
     	tmp.setInAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_right_in));
     	tmp.showNext();
-	}
+	}*/
 	
 	
 	private IStellarServiceCallback.Stub the_callback = new IStellarServiceCallback.Stub() {
