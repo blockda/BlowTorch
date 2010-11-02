@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <root>
-  <window lineSize="18" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" wrapMode="1" />
+  <window lineSize="18" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" wrapMode="1" />
   <service processSemi="true" proccessPeriod="false" throttle="true" />
   <aliases>
     <alias pre="hht" post="prince" />
