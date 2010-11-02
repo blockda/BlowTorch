@@ -32,13 +32,12 @@ public class BaseParser {
 	static final String ATTR_FONTNAME = "fontName";
 	static final String ATTR_FONTPATH = "fontPath";
 	static final String TAG_DATASEMINEWLINE = "seminewline";
-	static final String TAG_PROCESSPERIOD = "processPeriod";
+	static final String ATTR_USEEXTRACTUI = "useExtractUI";
 	
 	static final String TAG_SERVICE = "service";
 	static final String ATTR_SEMINEWLINE = "processSemi";
-	static final String ATTR_USEEXTRACTUI = "proccessPeriod";
 	static final String ATTR_THROTTLEBACKGROUND = "throttle";
-	
+	static final String ATTR_PROCESSPERIOD = "processPeriod";
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";
 	static final String ATTR_PRE = "pre";

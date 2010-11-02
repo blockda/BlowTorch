@@ -1043,6 +1043,26 @@ public class StellarService extends Service {
 				the_settings = loader.load();
 				buildAliases();
 				buildTriggerData();
+				
+				
+				//fix up the options page such that it looks correct. after importing.
+				//attempt a stab at com.happygoatstuidos.bt_preferences.xml
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(StellarService.this);
+				
+				Editor edit = prefs.edit();
+				
+				Log.e("SERVICE","LOADING SETTINGS, FIXING UP SHARED PREFS");
+				edit.putString("MAX_LINES", Integer.toString(the_settings.getMaxLines()));
+				edit.putString("FONT_SIZE_EXTRA",  Integer.toString(the_settings.getLineSpaceExtra()));
+				edit.putString("FONT_SIZE",  Integer.toString(the_settings.getLineSize()));
+				edit.putString("FONT_NAME", the_settings.getFontName());
+				
+				edit.putBoolean("PROCESS_PERIOD",the_settings.isProcessPeriod()); Log.e("SERVICE","PERIOD VALUE" + Boolean.toString(the_settings.isProcessPeriod()));
+				edit.putBoolean("PROCESS_SEMI", the_settings.isSemiIsNewLine());Log.e("SERVICE","SEMI VALUE" + Boolean.toString(the_settings.isSemiIsNewLine()));
+				edit.putBoolean("USE_EXTRACTUI", the_settings.isUseExtractUI());Log.e("SERVICE","EXTRACTUI VALUE" + Boolean.toString(the_settings.isUseExtractUI()));
+				edit.putBoolean("THROTTLE_BACKGROUND", the_settings.isThrottleBackground());Log.e("SERVICE","THROTTLE VALUE" + Boolean.toString(the_settings.isThrottleBackground()));
+				
+				edit.commit();
 			}
 			sendInitOk();
 		}
@@ -1328,7 +1348,7 @@ public class StellarService extends Service {
 			editor.putBoolean("PROCESS_PERIOD", value);
 			editor.commit();
 			
-			Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);
+			//Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);
 			
 		}
 	}
