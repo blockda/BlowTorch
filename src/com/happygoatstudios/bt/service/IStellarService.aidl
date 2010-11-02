@@ -61,5 +61,8 @@ interface IStellarService {
 	void setUseExtractUI(boolean use);
 	boolean getUseExtractUI();
 	void setThrottleBackground(boolean use);
+	boolean isThrottleBackground();
+	boolean isProcessPeriod();
+	boolean isSemiNewline();
 	
 }

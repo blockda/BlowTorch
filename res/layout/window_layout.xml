@@ -87,7 +87,7 @@
     android:layout_above="@id/input_bar" 
     />
 
-    <com.happygoatstudios.bt.legacy.FixedViewFlipper 
+     <com.happygoatstudios.bt.legacy.FixedViewFlipper 
     	android:id="@+id/flippdipper"
     	android:layout_height="fill_parent"
     	android:layout_width="fill_parent"
@@ -112,12 +112,14 @@
     					android:layout_x="0px"
     					android:layout_y="0px">
     				
+    				    
     				<com.happygoatstudios.bt.window.SlickView
     					android:id="@+id/slickview"
     					android:layout_width="fill_parent"
     					android:layout_height="fill_parent"
     					android:layout_marginLeft = "0px"
     					android:layout_marginTop= "0px"/>
+    					
     				</RelativeLayout>
     					
     <!--	</ScrollView> -->
@@ -132,7 +134,7 @@
     			android:typeface="monospace"/> -->
     		
     	<!-- </ScrollView> -->	
-	</com.happygoatstudios.bt.legacy.FixedViewFlipper>
+	 </com.happygoatstudios.bt.legacy.FixedViewFlipper>
 	
 
 </RelativeLayout>
