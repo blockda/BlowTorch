@@ -445,6 +445,16 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						// TODO Auto-generated catch block
 						e2.printStackTrace();
 					}
+					
+					//we modified the button, now load the set again to make the changes appear on the screen.
+					Message reloadset = myhandler.obtainMessage(MESSAGE_CHANGEBUTTONSET);
+					try {
+						reloadset.obj = service.getLastSelectedSet();
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					myhandler.sendMessage(reloadset);
 					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
