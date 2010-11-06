@@ -34,6 +34,8 @@ public class Processor {
 	
 	Pattern normal_reg = Pattern.compile("[\\x00-\\x7F]*"); //match any 7-bit ascii character, zero or more times
 	
+	Pattern goahead_reg = Pattern.compile("\\xFF\\xF9");
+	
 	public Spannable DoProcess(byte[] data) throws UnsupportedEncodingException {
 		
 
@@ -159,8 +161,17 @@ public class Processor {
 			}
 		}
 		
+		//sigh. gotta avoid displaying the IAC GOAHEAD characters. So I'm gonna have a third pass, because I'm finding it hard to shoehorn it into the other regular expressions.
 		
-		String textdata = sub_match.replaceAll("");
+		
+		Matcher third_pass = goahead_reg.matcher(sub_match.replaceAll(""));
+		
+		while(third_pass.find()) {
+			Log.e("SERVICE","FOUND IAC GOAHEAD");
+		}
+		
+		//String textdata = sub_match.replaceAll("");
+		String textdata = third_pass.replaceAll("");
 		
 		byte[] textbytes = textdata.getBytes("ISO-8859-1");
 		
@@ -297,8 +308,14 @@ public class Processor {
 			}
 		}
 		
+		Matcher third_pass = goahead_reg.matcher(sub_match.replaceAll(""));
 		
-		String textdata = sub_match.replaceAll("");
+		//while(third_pass.find()) {
+		//	Log.e("SERVICE","FOUND IAC GOAHEAD");
+		//}
+		
+		//String textdata = sub_match.replaceAll("");
+		String textdata = third_pass.replaceAll("");
 		
 		byte[] textbytes = textdata.getBytes("ISO-8859-1");
 		
