@@ -39,8 +39,8 @@ import android.os.Process;
 
 public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 
-	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
-	Pattern lastcolordatainline = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m.*$");
+	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?(([0-9]{1,2});)?([0-9]{1,2})m");
+	Pattern lastcolordatainline = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)*?([0-9]{1,2})m.*$");
 	
 	private DrawRunner _runner;
 	
@@ -755,349 +755,352 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		
 		synchronized(dlines) {
-		int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 6 + (int)Math.floor(scrollback % PREF_LINESIZE);
-		if(remainder < 0) {
-			//Log.e("SLICK","WE HAVE A PROBLEM WITH WINDOW SIZE");
-		}
-		
-		//first clear the background
-		canvas.drawColor(0xFF0A0A0A); //fill with black
-		//canvas.drawColor(0xFF333333); //fill with grey
-        
-        opts.setAlpha(0);
-        opts.setAntiAlias(true);
-        //opts.setDither(true);
-        opts.setARGB(255, 255, 255, 255);
-        opts.setTextSize(PREF_FONTSIZE);
-        
-        //opts.setStyle(Style.)
-        opts.setTypeface(PREF_FONT);
-
-        //Matcher toLines = newline.matcher(the_buffer.toString());
-        //toLines.reset(the_buffer); 
-        //StringBuffer line = new StringBuffer();
-        //drawline.setLength(0);
-        
-        //linetrap = null;
-        //linetrap = newline.split(the_buffer);
-        //linetrap.clear();
-        //linetrap.removeAllElements();
-        //linetrap.
-        //Log.e("SLICK","Buffer contains: " + lines.length + " lines.");
-        //if(linetrap.length < 1) {
-       // 	return;
-        //}
-        
-       
-        
-        if(dlines.size() < 1) { return; }
-        
-        
-        int currentline = 1;
-        
-        //count lines
-       // int numlines = countLines();
-        
-        //
-        
-        int numlines = dlines.size();
-        int maxlines = CALCULATED_LINESINWINDOW; 
-        
-        
-        
-        int startDrawingAtLine = 1;
-        if(numlines > maxlines) {
-        	startDrawingAtLine = numlines - maxlines - scrollbacklines + 1;
-        } else {
-        	startDrawingAtLine = 1;
-        }
-        
-       
-        boolean endonnewline = false;
-        
-        int startpos = startDrawingAtLine -2;
-        if(startpos < 0) {
-        	startpos = 0;
-        }
-        
-        int endpos = startDrawingAtLine + maxlines;
-        if(endpos > dlines.size()) {
-        	endpos = dlines.size();
-        }
-        
-        //start from startpos backwards, try and find a color tag in the line
-        boolean notFound = true;
-        int colorBleed = startpos - 1;
-        //int bleedColor = 0;
-        //StringBuffer bleed_bright = new StringBuffer();
-        //StringBuffer bleed_color = new StringBuffer();
-        while(notFound) {
-        	if(colorBleed < 1) {
-        		//we made it all the way here and couldn't find it, yikes.
-        		//Log.e("SLICK","COULD NOT FIND A COLOR, DEFAULTING");
-            	//sel_bright.append("0");
-            	//sel_color.append("37");
-            	selectedBright = 0;
-            	selectedColor = 37;
-        		notFound = false;
-        	} else {
-        		//get the matcher
-        		
-        		bleedfind.reset(dlines.get(colorBleed));
-        		while(bleedfind.find()) {
-        			//sel_bright.setLength(0);
-        			//sel_color.setLength(0);
-        			//keep the current group. or transform it to a color here.
-        			//sel_bright.append((bleedfind.group(2) == null) ? "0" : bleedfind.group(2));
-        			//sel_color.append(bleedfind.group(3));
-        			selectedBright = Integer.parseInt((bleedfind.group(2) == null) ? "0" : bleedfind.group(2));
-        			selectedColor = Integer.parseInt(bleedfind.group(3));
-        			//opts.setColor(0xFF000000 | Colorizer.getColorValue(sel_bright, sel_color));
-        			opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-        			notFound = false;
-        			//Log.e("SLICK","Found "+bleedfind.group(0)+" in: " +(startpos - colorBleed) + " steps.");
-        			//Log.e("SLICK","On line:" + dlines.get(colorBleed));
-        		}
-        		if(notFound) {
-        			//if we got here than it means the line didnt have color data, decrement and try again
-        			colorBleed = colorBleed - 1; //working backwards.
-        		}
-        	}
-        	
-        }
-        
-        //if(notFound) {
-        	
-        //}
-        
-        //get regexp matcher
-        
-        //while found, keep the color group. @ end, the keep will be the last color code in the line
-        
-        for(int i=startpos;i<endpos;i++) {
-        	//Log.e("SLICK","Drawing line:" + i + ":" + lines[i]);
-        	int screenpos = i - startDrawingAtLine + 2;
-    		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
-    		
-    		colormatch.reset(dlines.get(i));
-    		
-    		
-    		//Log.e("SLICK","Drawing line:" + i + ":" +":"+y_position +":" + lines[i]);
-    		
-    		float x_position = 0;
-    		
-    		boolean colorfound = false;
-    		
-    		while(colormatch.find()) {
-    			colorfound = true;
-    			colormatch.appendReplacement(csegment, "");
-    			
-    			//get color data
-
-    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-    			//int color = Colorizer.getColorValue(sel_bright, sel_color);
-    			int color = Colorizer.getColorValue(selectedBright, selectedColor);
-    			if(color == 0) {
-    				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
-    			}
-    			
-    			//Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(sel_color);
-    			
-    			opts.setColor(0xFF000000 | color);
-    			
-    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
-    			if(bg_opts.getColor() != 0xFF000000) {
-    				//Log.e("WINDOW","DRAWING BGCOLOR!!!!!");
-    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
-    				
-    			} 
-    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
-    			//x_position = x_position + opts.measureText(csegment.toString());
-    			x_position = x_position + opts.measureText(csegment,0,csegment.length());
-    			//opts.mea
-    			
-				//sel_bgcolor.setLength(0);
-				//sel_bgbright.setLength(0);
-				//sel_bgcolor.append(colormatch.group(3));
-				//sel_bgbright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2)); 			
-				selectedBackgroundColor = Integer.parseInt(colormatch.group(3));
-				selectedBackgroundBright = Integer.parseInt((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-				Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(selectedBackgroundColor);
-    			if(fgbgType == Colorizer.COLOR_TYPE.BACKGROUND) {
-    				//if(bgColorSpanning) {
-    					//draw the rectangle, set to the new color, reset the indicator.
-    					//bgColorSpanning = false;
-    				//} else {
-    					//Log.e("WINDOW","GOT BGCOLOR: " + colormatch.group(0));
-
-    					
-    					bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-    				//	bgColorSpanning = true;
-    				//}
-    			} else {
-    			
-    			csegment.setLength(0);
-    			
-    			//sel_bright.setLength(0);
-    			//sel_color.setLength(0);
-    			//sel_bright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-    			//sel_color.append(colormatch.group(3));
-    			selectedBright = Integer.parseInt((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-    			selectedColor = Integer.parseInt(colormatch.group(3));
-    			//if(sel_color.toString().equalsIgnoreCase("0")) {
-    			if(selectedColor == 0) {
-    			//Log.e("SLICK","COLOLPARSE GOT 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
-    				//sel_color.setLength(0);
-    				//sel_color.append("37");
-    				selectedBright = 0;
-    				selectedColor = 37;
-    			}
-    			}
-    		}
-    		if(colorfound) {
-    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-    			//int color = Colorizer.getColorValue(sel_bright, sel_color);
-    			int color = Colorizer.getColorValue(selectedBright, selectedColor);
-    			opts.setColor(0xFF000000 | color); //always alpha
-    			colormatch.appendTail(csegment);
-    			
-    			if(bg_opts.getColor() != 0xFF000000) {
-    				
-    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
-    			} 
-    			
-    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
-    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
-    			csegment.setLength(0);
-    			
-    			bg_opts.setColor(0xFF000000);
-    		}
-    		
-    		if(!colorfound) {
-    			canvas.drawText(dlines.get(i), 0, y_position , opts);
-    		}
-        }
-        }
-        
-        /*while(toLines.find()) {
-        	toLines.appendReplacement(drawline, "");
-        	
-        	//Matcher lastcolor = lastcolordatainline.matcher(drawline.toString() + "\n");
-        	
-        	//if(lastcolor.find()) {
-        		
-        	//}
-        	
-        	if(currentline >= startDrawingAtLine-2 && currentline <= (startDrawingAtLine + maxlines)) {
-        		
-        		int screenpos = currentline - startDrawingAtLine + 1;
-        		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
-        		Matcher colormatch = colordata.matcher(drawline);
-        		
-        		
-        		float x_position = 0;
-        		
-        		boolean colorfound = false;
-        		
-        		while(colormatch.find()) {
-        			colorfound = true;
-        			colormatch.appendReplacement(csegment, "");
+			int remainder = (int) (canvas.getHeight() - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)) - 6 + (int)Math.floor(scrollback % PREF_LINESIZE);
+			if(remainder < 0) {
+				//Log.e("SLICK","WE HAVE A PROBLEM WITH WINDOW SIZE");
+			}
+			
+			//first clear the background
+			canvas.drawColor(0xFF0A0A0A); //fill with black
+			//canvas.drawColor(0xFF333333); //fill with grey
+	        
+	        opts.setAlpha(0);
+	        opts.setAntiAlias(true);
+	        //opts.setDither(true);
+	        opts.setARGB(255, 255, 255, 255);
+	        opts.setTextSize(PREF_FONTSIZE);
+	        
+	        //opts.setStyle(Style.)
+	        opts.setTypeface(PREF_FONT);
+	
+	        //Matcher toLines = newline.matcher(the_buffer.toString());
+	        //toLines.reset(the_buffer); 
+	        //StringBuffer line = new StringBuffer();
+	        //drawline.setLength(0);
+	        
+	        //linetrap = null;
+	        //linetrap = newline.split(the_buffer);
+	        //linetrap.clear();
+	        //linetrap.removeAllElements();
+	        //linetrap.
+	        //Log.e("SLICK","Buffer contains: " + lines.length + " lines.");
+	        //if(linetrap.length < 1) {
+	       // 	return;
+	        //}
+	        
+	       
+	        
+	        if(dlines.size() < 1) { return; }
+	        
+	        
+	        int currentline = 1;
+	        
+	        //count lines
+	       // int numlines = countLines();
+	        
+	        //
+	        
+	        int numlines = dlines.size();
+	        int maxlines = CALCULATED_LINESINWINDOW; 
+	        
+	        
+	        
+	        int startDrawingAtLine = 1;
+	        if(numlines > maxlines) {
+	        	startDrawingAtLine = numlines - maxlines - scrollbacklines + 1;
+	        } else {
+	        	startDrawingAtLine = 1;
+	        }
+	        
+	       
+	        boolean endonnewline = false;
+	        
+	        int startpos = startDrawingAtLine -2;
+	        if(startpos < 0) {
+	        	startpos = 0;
+	        }
+	        
+	        int endpos = startDrawingAtLine + maxlines;
+	        if(endpos > dlines.size()) {
+	        	endpos = dlines.size();
+	        }
+	        
+	        //start from startpos backwards, try and find a color tag in the line
+	        boolean notFound = true;
+	        int colorBleed = startpos - 1;
+	        //int bleedColor = 0;
+	        //StringBuffer bleed_bright = new StringBuffer();
+	        //StringBuffer bleed_color = new StringBuffer();
+	        while(notFound) {
+	        	if(colorBleed < 0) {
+	        		//we made it all the way here and couldn't find it, yikes.
+	        		//Log.e("SLICK","COULD NOT FIND A COLOR, DEFAULTING");
+	            	//sel_bright.append("0");
+	            	//sel_color.append("37");
+	            	selectedBright = 0;
+	            	selectedColor = 37;
+	        		notFound = false;
+	        	} else {
+	        		//get the matcher
+	        		
+	        		bleedfind.reset(dlines.get(colorBleed));
+	        		String line = dlines.get(colorBleed); //TODO: remove this line
+	        		int count = line.length(); //TODO: remove this line
+	        		while(bleedfind.find()) {
+	        			//sel_bright.setLength(0);
+	        			//sel_color.setLength(0);
+	        			//keep the current group. or transform it to a color here.
+	        			//sel_bright.append((bleedfind.group(2) == null) ? "0" : bleedfind.group(2));
+	        			//sel_color.append(bleedfind.group(3));
+	        			/*selectedBright = Integer.parseInt((bleedfind.group(2) == null) ? "0" : bleedfind.group(2));
+	        			selectedColor = Integer.parseInt(bleedfind.group(3));
+	        			
+	        			if(selectedColor >= 40) {
+	        				//we have a background color in the mix, skip it
+	        				selectedBright = 0;
+	        				selectedColor = 37;
+	        			} else {
+	        			//opts.setColor(0xFF000000 | Colorizer.getColorValue(sel_bright, sel_color));
+	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        				notFound = false;
+	        			}*/
+	        			
+	        			//better block
+	        			//Log.e("WINDOW","COLOR: " + bleedfind.group() + " | " + bleedfind.group(1) + " | " + bleedfind.group(2) + " | " + bleedfind.group(3) + " | " + bleedfind.group(4) + " | " + bleedfind.group(5) + " || ON LINE " + colorBleed);
+	        			
+	        			Integer brightVal = Integer.parseInt(((bleedfind.group(2) == null) ? "0" : bleedfind.group(2)));
+	        			Integer firstVal = Integer.parseInt((bleedfind.group(4) == null) ? "37" : bleedfind.group(4));
+	        			Integer secondVal = Integer.parseInt(bleedfind.group(5));
+	        			
+	        			
+	        			selectedBright = brightVal;
+	        			//test firstVal.
+	        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
+	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+	        				selectedColor = firstVal;
+	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        				if(bleedfind.group(4) != null) { 
+	        					notFound = false;
+	        				}
+	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+	        				selectedBackgroundColor = firstVal;
+	        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	        			}
+	        			
+	        			type = Colorizer.getColorType(secondVal);
+	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+	        				selectedColor = secondVal;
+	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        				notFound = false;
+	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+	        				selectedBackgroundColor = secondVal;
+	        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	        			}
+	        			
+	        			if(selectedColor == 0 || selectedColor == 39) {
+	        				selectedBright = 0;
+	        				selectedColor = 37;
+	        			}
+	        			//Log.e("SLICK","Found "+bleedfind.group(0)+" in: " +(startpos - colorBleed) + " steps.");
+	        			//Log.e("SLICK","On line:" + dlines.get(colorBleed));
+	        			
+	        		}
+	        		if(notFound) {
+	        			//if we got here than it means the line didnt have color data, decrement and try again
+	        			colorBleed = colorBleed - 1; //working backwards.
+	        		}
+	        	}
+	        	
+	        }
+	        
+	        //if(notFound) {
+	        	
+	        //}
+	        
+	        //get regexp matcher
+	        
+	        //while found, keep the color group. @ end, the keep will be the last color code in the line
+	        
+	        for(int i=startpos;i<endpos;i++) {
+	        	//Log.e("SLICK","Drawing line:" + i + ":" + lines[i]);
+	        	int screenpos = i - startDrawingAtLine + 2;
+	    		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
+	    		
+	    		colormatch.reset(dlines.get(i));
+	    		
+	    		
+	    		//Log.e("SLICK","Drawing line:" + i + ":" +":"+y_position +":" + lines[i]);
+	    		
+	    		float x_position = 0;
+	    		
+	    		boolean colorfound = false;
+	    		
+	    		while(colormatch.find()) {
+	    			colorfound = true;
+	    			colormatch.appendReplacement(csegment, "");
+	    			//colormatch.appendReplacement(csegment, colormatch.group());
+	    			
+	    			//get color data
+	
+	    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+	    			//int color = Colorizer.getColorValue(sel_bright, sel_color);
+	    			int color = Colorizer.getColorValue(selectedBright, selectedColor);
+	    			if(color == 0) {
+	    				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
+	    			}
+	    			
+	    			//Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(sel_color);
+	    			
+	    			opts.setColor(0xFF000000 | color);
+	    			
+	    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
+	    			if(bg_opts.getColor() != 0xFF000000) {
+	    				//Log.e("WINDOW","DRAWING BGCOLOR!!!!!");
+	    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
+	    				
+	    			} 
+	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+	    			//Log.e("WINDOW","WRITING: " + csegment + " TO SCREEN - MID LINE");
+	    			//x_position = x_position + opts.measureText(csegment.toString());
+	    			x_position = x_position + opts.measureText(csegment,0,csegment.length());
+	    			//opts.mea
+	    			
+					//sel_bgcolor.setLength(0);
+					//sel_bgbright.setLength(0);
+					//sel_bgcolor.append(colormatch.group(3));
+					//sel_bgbright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2)); 			
+					
+	    			/*************************
+	    			 * NEW BLOCK, THIS IS GOOD CODE
+	    			 */
+	    			//Log.e("WINDOW","COLOR: " + colormatch.group() + " | " + colormatch.group(1) + " | " + colormatch.group(2) + " | " + colormatch.group(3) + " | " + colormatch.group(4) + " | " + colormatch.group(5));
         			
-        			//get color data
-        			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-        			int color = Colorizer.getColorValue(sel_bright, sel_color);
-        			if(color == 0) {
-        				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
-        			}
-        			opts.setColor(0xFF000000 | color);
+	    			Integer brightVal = Integer.parseInt(((colormatch.group(2) == null) ? "0" : colormatch.group(2)));
+        			Integer firstVal = Integer.parseInt((colormatch.group(4) == null) ? "37" : colormatch.group(4));
+        			Integer secondVal = Integer.parseInt(colormatch.group(5));
         			
-        			canvas.drawText(csegment.toString(), x_position, y_position, opts);
-        			x_position = x_position + opts.measureText(csegment.toString());
+        			selectedBright = brightVal;
         			csegment.setLength(0);
-        			
-        			sel_bright.setLength(0);
-        			sel_color.setLength(0);
-        			sel_bright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-        			sel_color.append(colormatch.group(3));
-        			if(sel_color.toString().equalsIgnoreCase("0")) {
-        				//Log.e("SLICK","COLOLPARSE GOT 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
-        				sel_color.setLength(0);
-        				sel_color.append("37");
+        			//test firstVal.
+        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
+        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+        				selectedColor = firstVal;
+        				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+        				selectedBackgroundColor = firstVal;
+        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
         			}
-        		}
-        		if(colorfound) {
-        			int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-        			opts.setColor(0xFF000000 | color);
-        			colormatch.appendTail(csegment);
-        			canvas.drawText(csegment.toString(), x_position, y_position, opts);
-        			csegment.setLength(0);
-        		}
-        		
-        		if(!colorfound) {
-        			canvas.drawText(drawline.toString(), 0, y_position , opts);
-        		}
-        		
-        		
-        		
-         
-        	}
-        	
-        	//line = new StringBuffer();
-        	drawline.setLength(0);
-        	currentline++;
-        	if(toLines.end() == the_buffer.length()) {
-        		endonnewline = true;
-        	}
-        	
+        			
+        			type = Colorizer.getColorType(secondVal);
+        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+        				selectedColor = secondVal;
+        				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+        				selectedBackgroundColor = secondVal;
+        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+        			}
+	    			
+        			if(selectedColor == 0 || selectedColor == 39) {  //if the color lookup failed, or the selected color is the "default" specified by the protocol (a 39 code is "default") 
+
+	        				selectedBright = 0;
+	        				selectedColor = 37;
+	        		}
+        			if(selectedColor == 1) {
+        				selectedBright = 1;
+        				selectedColor = 37;
+        			}
+	    			/****************************
+	    			 * OLD BLOCK THIS IS BAD CODE
+	    			 */
+	    			
+	    			/*selectedBackgroundColor = Integer.parseInt(colormatch.group(3));
+					selectedBackgroundBright = Integer.parseInt((colormatch.group(2) == null) ? "0" : colormatch.group(2));
+					Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(selectedBackgroundColor);
+	    			if(fgbgType == Colorizer.COLOR_TYPE.BACKGROUND) {
+	    				//if(bgColorSpanning) {
+	    					//draw the rectangle, set to the new color, reset the indicator.
+	    					//bgColorSpanning = false;
+	    				//} else {
+	    					//Log.e("WINDOW","GOT BGCOLOR: " + colormatch.group(0));
+	
+	    					csegment.setLength(0);
+	    					bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	    				//	bgColorSpanning = true;
+	    				//}
+	    			} else {
+	    			
+	        			csegment.setLength(0);
+	        			
+	        			//sel_bright.setLength(0);
+	        			//sel_color.setLength(0);
+	        			//sel_bright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2));
+	        			//sel_color.append(colormatch.group(3));
+	        			selectedBright = Integer.parseInt((colormatch.group(2) == null) ? "0" : colormatch.group(2));
+	        			selectedColor = Integer.parseInt(colormatch.group(3));
+	        			
+	        			if(colormatch.groupCount() > 3) {
+		        			Integer extraColor = Integer.parseInt((colormatch.group(4) == null) ? "40" : colormatch.group(4));
+		        			
+		        			
+		        			//text the extraColor/selectedColor if they are foreground or background colors.
+		        			Colorizer.COLOR_TYPE testtype = Colorizer.getColorType(selectedColor);
+		        			if(testtype == Colorizer.COLOR_TYPE.FOREGROUND) {
+		        				selectedColor = selectedColor;
+		        			} else if(testtype == Colorizer.COLOR_TYPE.BACKGROUND) {
+		        				selectedBackgroundColor = selectedColor;
+		        			}
+		        			
+		        			//now test the extracolor
+		        			testtype = Colorizer.getColorType(extraColor);
+		        			if(testtype == Colorizer.COLOR_TYPE.FOREGROUND) {
+		        				selectedColor = extraColor;
+		        			} else if(testtype == Colorizer.COLOR_TYPE.BACKGROUND) {
+		        				selectedBackgroundColor = extraColor;
+		        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+		        			}
+	        			}
+	        			//if(sel_color.toString().equalsIgnoreCase("0")) {
+	        			if(selectedColor == 0 || selectedColor == 39) {  //if the color lookup failed, or the selected color is the "default" specified by the protocol (a 39 code is "default") 
+	        			//Log.e("SLICK","COLOLPARSE GOT 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
+	        				//sel_color.setLength(0);
+	        				//sel_color.append("37");
+	        				selectedBright = 0;
+	        				selectedColor = 37;
+	        			}
+	    			} */
+	    			/***************************
+	    			 *  END BAD CODE BLOCK
+	    			 */
+	    		}
+	    		//end of main loop.
+	    		if(colorfound) {
+	    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
+	    			//int color = Colorizer.getColorValue(sel_bright, sel_color);
+	    			int color = Colorizer.getColorValue(selectedBright, selectedColor);
+	    			opts.setColor(0xFF000000 | color); //always alpha
+	    			colormatch.appendTail(csegment);
+	    			
+	    			if(bg_opts.getColor() != 0xFF000000) {
+	    				
+	    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
+	    			} 
+	    			
+	    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
+	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+	    			//Log.e("WINDOW","WRITING: " + csegment + " TO SCREEN WITH COLOR!");
+	    			csegment.setLength(0);
+	    			
+	    			bg_opts.setColor(0xFF000000);
+	    		}
+	    		
+	    		if(!colorfound) {
+	    			canvas.drawText(dlines.get(i), 0, y_position , opts);
+	    			//Log.e("WINDOW","WRITING: " + dlines.get(i) + " TO SCREEN NO COLOR!");
+	    		}
+	        }
         }
-        if(!endonnewline) {
-        	
-        	toLines.appendTail(drawline);
-        	int screenpos = currentline - startDrawingAtLine + 1;
-    		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
-    		opts.setColor(0xFF00CCCC);
-    		Matcher colormatch = colordata.matcher(drawline);
-    		
-    		
-    		float x_position = 0;
-    		
-    		boolean colorfound = false;
-    		
-    		while(colormatch.find()) {
-    			colorfound = true;
-    			colormatch.appendReplacement(csegment, "");
-    			
-    			//get color data
-    			int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-    			opts.setColor(0xFF000000 | color);
-    			
-    			canvas.drawText(csegment.toString(), x_position, y_position, opts);
-    			x_position = x_position + opts.measureText(csegment.toString());
-    			csegment.setLength(0);
-    			
-    			sel_bright.setLength(0);
-    			sel_color.setLength(0);
-    			sel_bright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-    			sel_color.append(colormatch.group(3));
-    		}
-    		if(colorfound) {
-    			int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-    			opts.setColor(0xFF000000 | color);
-    			colormatch.appendTail(csegment);
-    			canvas.drawText(csegment.toString(), x_position, y_position, opts);
-    			csegment.setLength(0);
-    		}
-    		
-    		if(!colorfound) {
-    			canvas.drawText(drawline.toString(), 0, y_position , opts);
-    		}
-    		drawline.setLength(0);
-        	currentline++;		
-        	
-        }*/
         
-        //release the lock
-        //drawn_buffer = canvas;
+        
 	}
 	
 	boolean finger_down = false;
