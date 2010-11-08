@@ -1447,10 +1447,15 @@ public class StellarService extends Service {
 	Pattern trigger_regex = Pattern.compile("");
 	Matcher trigger_matcher = trigger_regex.matcher("");
 	private StringBuffer trigger_string = new StringBuffer();
+	private Boolean has_triggers = false;
 	private void buildTriggerData() {
+	
 		synchronized(the_settings) {
 			
+			has_triggers = false; // let us determine if there are still triggers till after the processing is done.
+			
 			if(the_settings.getTriggers().keySet().size() < 1) {
+				has_triggers = false;
 				return;
 			}
 			
@@ -1458,6 +1463,7 @@ public class StellarService extends Service {
 			for(TriggerData trigger: the_settings.getTriggers().values()) {
 				if((trigger.isFireOnce() && !trigger.isFired()) || !trigger.isFireOnce()) {
 					//Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
+					has_triggers = true;
 					
 					if(trigger.isInterpretAsRegex()) {
 						trigger_string.append("(" + trigger.getPattern() + ")|");
@@ -1468,9 +1474,11 @@ public class StellarService extends Service {
 			}
 			
 		}
-		trigger_string.replace(trigger_string.length()-1, trigger_string.length(), ""); //kill the last |
-		trigger_regex = Pattern.compile(trigger_string.toString());
-		trigger_matcher = trigger_regex.matcher("");
+		if(has_triggers) {
+			trigger_string.replace(trigger_string.length()-1, trigger_string.length(), ""); //kill the last |
+			trigger_regex = Pattern.compile(trigger_string.toString(), Pattern.MULTILINE);
+			trigger_matcher = trigger_regex.matcher("");
+		} 
 		//Log.e("SERVICE","TRIGGER STRING NOW:" + trigger_string.toString());
 	}
 	
@@ -1543,30 +1551,55 @@ public class StellarService extends Service {
 		//Pattern triger_regex = Pattern.compile(trigger_string.toString());
 		//Matcher trigger_matcher = trigger_regex.matcher("");
 		//Log.e("SERVICE","ATTEMPTING TO MATCH" + trigger_matcher.pattern().toString() + " on " + regexp_test.toString());
-		trigger_matcher.reset(regexp_test);
 		
-		while(trigger_matcher.find()) {
-			//so if we found something here, we triggered.
-			//Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
-			TriggerData triggered = the_settings.getTriggers().get(trigger_matcher.group(0));
-			if(triggered != null) {
-				//shouldn't be
-				//Log.e("SERVICE","TRIGGERED:" + triggered.getName());
-				//iterate through the responders.
-				for(TriggerResponder responder : triggered.getResponders()) {
-					responder.doResponse(this, display, trigger_count++,hasListener,myhandler);
-				}
-				
-				if(triggered.isFireOnce()) {
-					triggered.setFired(true);
-					rebuildTriggers = true;
+		if(has_triggers) {
+			
+			trigger_matcher.reset(regexp_test);
+		
+			while(trigger_matcher.find()) {
+				//so if we found something here, we triggered.
+				//Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
+				TriggerData triggered = the_settings.getTriggers().get(trigger_matcher.group(0));
+				if(triggered != null) {
+					//shouldn't be
+					//Log.e("SERVICE","TRIGGERED:" + triggered.getName());
+					//iterate through the responders.
+					for(TriggerResponder responder : triggered.getResponders()) {
+						responder.doResponse(this, display, trigger_count++,hasListener,myhandler);
+					}
+					
+					if(triggered.isFireOnce()) {
+						triggered.setFired(true);
+						rebuildTriggers = true;
+					}
+				} else {
+					//the hash map lookup failed this could mean that we are looking at a regexp trigger
+					//pull out each trigger, if it is a regexp trigger, check if it matches the group, if it does,
+					//then we have our winnar and we should process that trigger.
+					for(TriggerData data : the_settings.getTriggers().values()) {
+						if(data.isInterpretAsRegex()) {
+							Pattern pattern = Pattern.compile(data.getPattern());
+							Matcher testmatch = pattern.matcher(trigger_matcher.group(0));
+							if(testmatch.matches()) {
+								//we have a wienner.
+								for(TriggerResponder responder : data.getResponders()) {
+									responder.doResponse(this, display, trigger_count++, hasListener, myhandler);
+								}
+								
+								if(data.isFireOnce()) {
+									data.setFired(true);
+									rebuildTriggers = true;
+								}
+							}
+						}
+					}
 				}
 			}
-		}
-		
-		if(rebuildTriggers) {
-			rebuildTriggers = false;
-			buildTriggerData();
+			
+			if(rebuildTriggers) {
+				rebuildTriggers = false;
+				buildTriggerData();
+			}
 		}
 		
 		/*Iterator<String> items = test_set.listIterator();
