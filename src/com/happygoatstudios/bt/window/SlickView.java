@@ -877,14 +877,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        			//test firstVal.
 	        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
 	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
-	        				selectedColor = firstVal;
-	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	        				if(bleedfind.group(4) != null) { 
+	        					selectedColor = firstVal;
+	        					opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	        					notFound = false;
 	        				}
 	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
 	        				selectedBackgroundColor = firstVal;
-	        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	        				//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
 	        			}
 	        			
 	        			type = Colorizer.getColorType(secondVal);
@@ -894,8 +894,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        				notFound = false;
 	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
 	        				selectedBackgroundColor = secondVal;
-	        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	        				//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
 	        			}
+	        			
 	        			
 	        			if(selectedColor == 0 || selectedColor == 39) {
 	        				selectedBright = 0;
@@ -982,16 +983,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         			selectedBright = brightVal;
         			csegment.setLength(0);
         			//test firstVal.
-        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
-        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
-        				selectedColor = firstVal;
-        				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
-        				selectedBackgroundColor = firstVal;
-        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+        			if(colormatch.group(4) != null) {
+	        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
+	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+	        				selectedColor = firstVal;
+	        				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+	        				selectedBackgroundColor = firstVal;
+	        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	        			}
         			}
         			
-        			type = Colorizer.getColorType(secondVal);
+        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(secondVal);
         			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
         				selectedColor = secondVal;
         				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
