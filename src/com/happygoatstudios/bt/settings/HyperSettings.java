@@ -33,6 +33,7 @@ public class HyperSettings {
 	private boolean SemiIsNewLine = true;
 	private boolean ProcessPeriod = true;
 	private boolean ThrottleBackground = false;
+	private boolean KeepWifiActive = true;
 	
 	
 	
@@ -173,6 +174,7 @@ public class HyperSettings {
 			//out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_THROTTLEBACKGROUND, (data.isThrottleBackground()) ? "true" : "false");
 			out.attribute("" , BaseParser.ATTR_PROCESSPERIOD, data.isProcessPeriod() ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_WIFIKEEPALIVE, data.isKeepWifiActive() ? "true" : "false");
 			
 			out.endTag("",BaseParser.TAG_SERVICE);
 			
@@ -392,6 +394,14 @@ public class HyperSettings {
 
 	public boolean isThrottleBackground() {
 		return ThrottleBackground;
+	}
+	
+	public void setKeepWifiActive(boolean keepAlive) {
+		KeepWifiActive = keepAlive;
+	}
+	
+	public boolean isKeepWifiActive() {
+		return KeepWifiActive;
 	}
 
 }

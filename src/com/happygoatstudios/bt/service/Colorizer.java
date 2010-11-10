@@ -340,7 +340,8 @@ public class Colorizer {
 				break;
 			case 4:
 				//blue
-				colorval = colorval | 0xFF0000BB;
+				//colorval = colorval | 0xFF0000BB; //BB is too dark, turning it up, this hsould be an option.
+				colorval = colorval | 0xFF0000EE;
 				break;
 			case 5:
 				//magenta
@@ -505,7 +506,8 @@ public class Colorizer {
 				break;
 			case 4:
 				//blue
-				colorval = colorval | 0x0000BB;
+				//colorval = colorval | 0x0000BB; //0x0000BB is a bit too dark on my screen, so i'm turning it up a bit. this should really be an option.
+				colorval = colorval | 0x0000EE;
 				break;
 			case 5:
 				//magenta
