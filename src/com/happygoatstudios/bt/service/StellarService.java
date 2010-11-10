@@ -1787,8 +1787,14 @@ public class StellarService extends Service {
 			return;
 		}
 		
+		//gotta do this before connecting apparently.
+		synchronized(the_settings) {
+			if(the_settings.isKeepWifiActive()) {
+				EnableWifiKeepAlive();
+			}
+		}
 		
-		//return; //TODO: WE WILL NEVER START UP;
+		
 		InetAddress addr = null;
 		try {
 			//InetAddress[] x = InetAddress.getAllByName(host);
@@ -1868,11 +1874,7 @@ public class StellarService extends Service {
 		the_buffer = new StringBuffer();
 		
 		//if we are here we should be connected.
-		synchronized(the_settings) {
-			if(the_settings.isKeepWifiActive()) {
-				EnableWifiKeepAlive();
-			}
-		}
+
 		
 	}
 	
