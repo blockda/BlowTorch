@@ -29,12 +29,18 @@ public class Processor {
 	}
 	
 	Pattern iac_cmd_reg = Pattern.compile("\\xFF([\\xFB-\\xFE])(.{1})");
+	Matcher iac_match = iac_cmd_reg.matcher("");
 	//Pattern iac_cmd_reg = Pattern.compile("\\xFF.*");
 	Pattern subnego_reg = Pattern.compile("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0");
+	Matcher sub_match = subnego_reg.matcher("");
 	
 	Pattern normal_reg = Pattern.compile("[\\x00-\\x7F]*"); //match any 7-bit ascii character, zero or more times
 	
 	Pattern goahead_reg = Pattern.compile("\\xFF\\xF9");
+	Matcher goahead_match = goahead_reg.matcher("");
+	
+	Pattern tab_reg = Pattern.compile("\\x09");
+	Matcher tab_match = tab_reg.matcher("");
 	
 	public Spannable DoProcess(byte[] data) throws UnsupportedEncodingException {
 		
@@ -44,7 +50,8 @@ public class Processor {
 		String tmp = new String(data,"ISO-8859-1");
 
 		
-		Matcher iac_match = iac_cmd_reg.matcher(tmp);
+		//Matcher iac_match = iac_cmd_reg.matcher(tmp);
+		iac_match.reset(tmp);
 		while(iac_match.find()) {
 			String action = iac_match.group(1);
 			String option = iac_match.group(2);
@@ -104,9 +111,10 @@ public class Processor {
 			
 		}
 		
-		String secondpass = iac_match.replaceAll("");
+		//String secondpass = iac_match.replaceAll("");
 		
-		Matcher sub_match = subnego_reg.matcher(secondpass);
+		//Matcher sub_match = subnego_reg.matcher(secondpass);
+		sub_match.reset(iac_match.replaceAll(""));
 		while(sub_match.find()) {
 			String subneg = sub_match.group(0);
 			
@@ -164,14 +172,17 @@ public class Processor {
 		//sigh. gotta avoid displaying the IAC GOAHEAD characters. So I'm gonna have a third pass, because I'm finding it hard to shoehorn it into the other regular expressions.
 		
 		
-		Matcher third_pass = goahead_reg.matcher(sub_match.replaceAll(""));
+		//Matcher third_pass = goahead_reg.matcher(sub_match.replaceAll(""));
+		goahead_match.reset(sub_match.replaceAll(""));
 		
-		while(third_pass.find()) {
-			Log.e("SERVICE","FOUND IAC GOAHEAD");
-		}
+		tab_match.reset(goahead_match.replaceAll(""));
+		
+		//while(third_pass.find()) {
+		//	Log.e("SERVICE","FOUND IAC GOAHEAD");
+		//}
 		
 		//String textdata = sub_match.replaceAll("");
-		String textdata = third_pass.replaceAll("");
+		String textdata = tab_match.replaceAll("");
 		
 		byte[] textbytes = textdata.getBytes("ISO-8859-1");
 		
@@ -188,7 +199,8 @@ public class Processor {
 		String tmp = new String(data,"ISO-8859-1");
 
 		
-		Matcher iac_match = iac_cmd_reg.matcher(tmp);
+		//Matcher iac_match = iac_cmd_reg.matcher(tmp);
+		iac_match.reset(tmp);
 		while(iac_match.find()) {
 			String action = iac_match.group(1);
 			String option = iac_match.group(2);
@@ -248,9 +260,10 @@ public class Processor {
 			
 		}
 		
-		String secondpass = iac_match.replaceAll("");
+		//String secondpass = iac_match.replaceAll("");
 		
-		Matcher sub_match = subnego_reg.matcher(secondpass);
+		//Matcher sub_match = subnego_reg.matcher(secondpass);
+		sub_match.reset(iac_match.replaceAll(""));
 		while(sub_match.find()) {
 			String subneg = sub_match.group(0);
 			
@@ -308,14 +321,31 @@ public class Processor {
 			}
 		}
 		
-		Matcher third_pass = goahead_reg.matcher(sub_match.replaceAll(""));
-		
+		//Matcher third_pass = goahead_reg.matcher(sub_match.replaceAll(""));
+		goahead_match.reset(sub_match.replaceAll(""));
 		//while(third_pass.find()) {
 		//	Log.e("SERVICE","FOUND IAC GOAHEAD");
 		//}
 		
 		//String textdata = sub_match.replaceAll("");
-		String textdata = third_pass.replaceAll("");
+		
+		//Matcher fourth_pass = tab_reg.matcher(third_pass.replaceAll(""));
+		tab_match.reset(goahead_match.replaceAll(""));
+		
+		String textdata = tab_match.replaceAll("    ");
+		
+		//if(textdata.contains(new Character((char)0x09).toString())) {
+		//	Log.e("SERVICE","FOUND TAB");
+		//	textdata.replaceAll("\\x09", "    ");
+		//}
+		//Integer i = new Integer(0);
+		//for(i=0;i<0x1F;i++) {
+			
+		//	if(textdata.contains(new Character((char) i.byteValue()).toString())) {
+		//		Log.e("SERVICE","FOUND SPECIAL CHAR: " + Integer.toHexString(i));
+		//	}
+		//}
+		
 		
 		byte[] textbytes = textdata.getBytes("ISO-8859-1");
 		
