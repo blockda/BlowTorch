@@ -38,6 +38,7 @@ public class BaseParser {
 	static final String ATTR_SEMINEWLINE = "processSemi";
 	static final String ATTR_THROTTLEBACKGROUND = "throttle";
 	static final String ATTR_PROCESSPERIOD = "processPeriod";
+	static final String ATTR_WIFIKEEPALIVE = "keepWifiActive";
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";
 	static final String ATTR_PRE = "pre";

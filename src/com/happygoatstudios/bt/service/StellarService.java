@@ -41,6 +41,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -117,6 +119,7 @@ public class StellarService extends Service {
 	private static final int MESSAGE_DOFINALDISPATCH = 121;
 	public static final int MESSAGE_COMPRESSIONREQUESTED = 131;
 	private static final int MESSAGE_THROTTLEEVENT = 197;
+	protected static final int MESSAGE_HANDLEWIFI = 496;
 
 	public boolean sending = false;
 	
@@ -153,6 +156,14 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_HANDLEWIFI:
+					Boolean state = (Boolean) msg.obj;
+					if(state) {
+						EnableWifiKeepAlive();
+					} else {
+						DisableWifiKeepAlive();
+					}
+					break;
 				case MESSAGE_THROTTLEEVENT:
 					doThrottleBackgroundImpl();
 					break;
@@ -1214,6 +1225,21 @@ public class StellarService extends Service {
 				return the_settings.isThrottleBackground();
 			}
 		}
+
+		public boolean isKeepWifiActive() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isKeepWifiActive();
+			}
+		}
+
+		public void setKeepWifiActive(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setKeepWifiActive(use);
+				Message keepalive = myhandler.obtainMessage(MESSAGE_HANDLEWIFI);
+				keepalive.obj = new Boolean(use);
+				myhandler.sendMessage(keepalive);
+			}
+		}
 		
 
 	};
@@ -1481,6 +1507,32 @@ public class StellarService extends Service {
 		} 
 		//Log.e("SERVICE","TRIGGER STRING NOW:" + trigger_string.toString());
 	}
+	
+	//private boolean isWifiLocked = false;
+	private WifiManager.WifiLock the_wifi_lock = null;
+	
+	private void EnableWifiKeepAlive() {
+		//get the wifi manager
+		WifiManager wifi = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		
+		//check if we are connected to a wifi network
+		WifiInfo info = wifi.getConnectionInfo();
+		if(info.getNetworkId() != -1) {
+			//if so, grab the lock
+			Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
+			the_wifi_lock = wifi.createWifiLock("BLOWTORCH_WIFI_LOCK");
+			the_wifi_lock.acquire();
+		}
+	}
+	
+	private void DisableWifiKeepAlive() {
+		//if we have a wifi lock, release it
+		if(the_wifi_lock != null) {
+			the_wifi_lock.release();
+			the_wifi_lock = null;
+		}
+	}
+	
 	
 	Colorizer colorer = new Colorizer();
 	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
@@ -1814,6 +1866,14 @@ public class StellarService extends Service {
 		
 		the_processor = new Processor(myhandler,mBinder);
 		the_buffer = new StringBuffer();
+		
+		//if we are here we should be connected.
+		synchronized(the_settings) {
+			if(the_settings.isKeepWifiActive()) {
+				EnableWifiKeepAlive();
+			}
+		}
+		
 	}
 	
 	private void showNotification() {

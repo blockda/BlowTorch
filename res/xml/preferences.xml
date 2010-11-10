@@ -60,6 +60,11 @@
 			android:defaultValue="true"
 			android:summary="Semicolons will be replaced with a newline character."
 			android:title="Process Semicolons"/>
+		<CheckBoxPreference
+			android:key="WIFI_KEEPALIVE"
+			android:defaultValue="true"
+			android:summary="Attempt to keep WiFi radio active while service is running."
+			android:title="Keep Wifi Radio Active?"/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Import/Export Settings">
 		<com.happygoatstudios.bt.settings.HyperDialogPreference

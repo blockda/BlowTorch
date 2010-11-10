@@ -474,6 +474,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean use_semi = prefs.getBoolean("PROCESS_SEMI", true);
 						boolean use_extractui = prefs.getBoolean("USE_EXTRACTUI", false);
 						boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
+						boolean wifi_keepalive = prefs.getBoolean("WIFI_KEEPALIVE", true);
 						try {
 							service.setFontSize(font_size);
 							service.setFontSpaceExtra(line_space);
@@ -483,6 +484,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setUseExtractUI(use_extractui);
 							service.setThrottleBackground(throttle_background);
 							service.setSemiOption(use_semi);
+							service.setKeepWifiActive(wifi_keepalive);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -1000,6 +1002,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("USE_EXTRACTUI", service.getUseExtractUI());
 				edit.putBoolean("PROCESS_PERIOD", service.isProcessPeriod());
 				edit.putBoolean("PROCESS_SEMI", service.isSemiNewline());
+				edit.putBoolean("WIFI_KEEPALIVE", service.isKeepWifiActive());
 				
 				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
 				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));

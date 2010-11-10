@@ -97,7 +97,7 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setProcessPeriod( (a.getValue("",ATTR_PROCESSPERIOD) == null) ? false : (a.getValue("",ATTR_PROCESSPERIOD).equals("true")) ? true : false);
 				tmp.setSemiIsNewLine( (a.getValue("",ATTR_SEMINEWLINE) == null) ? true : (a.getValue("",ATTR_SEMINEWLINE).equals("true")) ? true : false);
 				tmp.setThrottleBackground( (a.getValue("",ATTR_THROTTLEBACKGROUND) == null) ? false : (a.getValue("",ATTR_THROTTLEBACKGROUND).equals("true")) ? true : false);
-				
+				tmp.setKeepWifiActive( (a.getValue("",ATTR_WIFIKEEPALIVE) == null ? false : (a.getValue("",ATTR_WIFIKEEPALIVE).equals("true")) ? true : false));
 			}
 			
 		});
