@@ -137,7 +137,7 @@ public class StellarService extends Service {
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
 		
 		//set up the crash reporter
-		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		host = BAD_HOST;
