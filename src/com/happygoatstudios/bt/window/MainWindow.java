@@ -232,7 +232,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//Log.e("WINDOW","onCreate()");
 		
 		//set up the crash reporter
-		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this));
+		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this));
 		
 		setContentView(R.layout.window_layout);
 		
