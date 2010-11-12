@@ -482,7 +482,7 @@ public class StellarService extends Service {
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
 			ColorSetSettings def_colorset = new ColorSetSettings();
 			def_colorset.toDefautls();
-			def_colorset.setPrimaryColor(0xFFFFFFFF);
+			//def_colorset.setPrimaryColor(0xFFFFFFFF);
 			the_settings.getSetSettings().put("default", def_colorset);
 			
 			//TriggerData new_trigger = new TriggerData();
