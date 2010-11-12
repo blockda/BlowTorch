@@ -33,19 +33,36 @@ public class SlickButton extends View {
 	private SlickButtonData data = new SlickButtonData();
 	private Handler dispatcher = null;
 	private Handler deleter = null;
-	private int size = 80;
+	
+	//dip change
+	//was 80
+	private int size = 48;
 	
 	boolean moving = false;
 	
 	final static public int MSG_BEGINMOVE = 100;
 	final static public int MSG_DELETE = 101;
 	
+	private float density = 1;
+	
 	boolean dialog_launched = false;
+	
+	//the units of width, height and labelheight are now dips. react accordingly
+	/*
+	 * Plan. 
+	 * Constructors,
+	 * where the rectangle peices are
+	 * drawing routine.
+	 */
 	
 	public SlickButton(Context context,int px,int py) {
 		super(context);
 		//x = px;
 		//y = py;
+		
+		density = context.getResources().getDisplayMetrics().density;
+		
+		
 		data.setX(px);
 		data.setY(py);
 		this.setClickable(true);
@@ -84,7 +101,10 @@ public class SlickButton extends View {
 	public void setData(SlickButtonData in) {
 		data = in;
 		//Rect rect = new Rect();
-		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
+		//x and y are now dips.
+		//pull out density factor and multiply.
+		
+		rect.set(data.getX()-(int)((data.getWidth()*density)/2),data.getY()-(int)((data.getHeight()*density)/2),data.getX()+(int)((data.getWidth()*density)/2),data.getY()+(int)((data.getHeight()*density)/2));
 		
 	}
 	
@@ -196,7 +216,7 @@ public class SlickButton extends View {
 	Rect rect = new Rect();
 	
 	public void updateRect() {
-		rect.set(data.getX()-(data.getWidth()/2),data.getY()-(data.getHeight()/2),data.getX()+(data.getWidth()/2),data.getY()+(data.getHeight()/2));
+		rect.set(data.getX()-(int)((data.getWidth()/2)*density),data.getY()-(int)((data.getHeight()*density)/2),data.getX()+(int)((data.getWidth()*density)/2),data.getY()+(int)((data.getHeight()*density)/2));
 	}
 	
 	private enum DISPLAY_STATE {
@@ -307,7 +327,7 @@ public class SlickButton extends View {
 			int diff_x = touchx - start_x;
 			int diff_y = touchy - start_y;
 			double abs_length = Math.sqrt(Math.pow(diff_x,2) + Math.pow(diff_y, 2));
-			if(abs_length > 18.0) {
+			if(abs_length > 12.0*density) {
 				//Log.e("SLICK","Length: " + (new Double(abs_length)));
 				myhandler.removeMessages(MSG_DELETE);
 				myhandler.removeMessages(MSG_BEGINMOVE);
@@ -400,7 +420,7 @@ public class SlickButton extends View {
 		//get text size.
 		
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
-		opts.setTextSize(data.getLabelSize());
+		opts.setTextSize(data.getLabelSize()*density);
 		//opts.setF
 		
 		opts.setFlags(Paint.ANTI_ALIAS_FLAG);
@@ -409,18 +429,18 @@ public class SlickButton extends View {
 		if(doing_flip) {
 			opts.setColor(data.getFlipLabelColor());
 			tsize = opts.measureText( (data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel());
-			c.drawText((data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel(), data.getX()-tsize/2, data.getY()+data.getLabelSize()/2, opts);
+			c.drawText((data.getFlipLabel().equals("")) ? data.getLabel() : data.getFlipLabel(), data.getX()-tsize/2, data.getY()+(int)((data.getLabelSize()*density)/2), opts);
 		} else {
 			opts.setColor(data.getLabelColor());
 			tsize = opts.measureText(data.getLabel());
-			c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+data.getLabelSize()/2, opts);
+			c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+(int)((data.getLabelSize()*density)/2), opts);
 		}
 		//float tsize = opts.measureText(data.getLabel());
 		//c.drawText(data.getLabel(), data.getX()-tsize/2, data.getY()+12, opts);
 		
 		if(moving) {
 			Rect m_rect = new Rect();
-			m_rect.set(data.getX()-(data.getWidth()/2)+5,data.getY()-(data.getHeight()/2)+5,data.getX()+(data.getWidth()/2)-5,data.getY()+(data.getHeight()/2)-5);
+			m_rect.set(data.getX()-(int)((data.getWidth()*density)/2)+5,data.getY()-(int)((data.getHeight()*density)/2)+5,data.getX()+(int)((data.getWidth()*density)/2)-5,data.getY()+(int)((data.getHeight()*density)/2)-5);
 			Paint rpaint = new Paint();
 			rpaint.setColor(0xAAFF0000);
 			c.drawRect(m_rect, rpaint);

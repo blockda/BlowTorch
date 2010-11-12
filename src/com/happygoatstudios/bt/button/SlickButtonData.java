@@ -43,9 +43,9 @@ public class SlickButtonData implements Parcelable {
 	final static public int DEFAULT_LABEL_COLOR = 0x990000FF;
 	final static public int DEFAULT_FLIPLABEL_COLOR = 0x990000FF;
 	
-	final static public int DEFAULT_BUTTON_WDITH = 80;
-	final static public int DEFAULT_BUTTON_HEIGHT = 80;
-	final static public int DEFAULT_LABEL_SIZE = 24;
+	final static public int DEFAULT_BUTTON_WDITH = 48;
+	final static public int DEFAULT_BUTTON_HEIGHT = 48;
+	final static public int DEFAULT_LABEL_SIZE = 16;
 	
 	public int MOVE_STATE = MOVE_FREE;
 	
