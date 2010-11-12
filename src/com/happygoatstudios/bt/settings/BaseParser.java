@@ -34,6 +34,7 @@ public class BaseParser {
 	static final String TAG_DATASEMINEWLINE = "seminewline";
 	static final String ATTR_USEEXTRACTUI = "useExtractUI";
 	static final String ATTR_SUGGESTIONS = "useSuggest";
+	static final String ATTR_KEEPLAST = "keepLast";
 	
 	static final String TAG_SERVICE = "service";
 	static final String ATTR_SEMINEWLINE = "processSemi";
