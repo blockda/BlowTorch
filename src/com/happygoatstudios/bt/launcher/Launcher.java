@@ -159,6 +159,9 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		Button helpbutton = (Button)findViewById(R.id.help_button);
 		helpbutton.setOnClickListener(new helpClickedListener());
+		
+		Button donatebutton = (Button)findViewById(R.id.donate_button);
+		donatebutton.setOnClickListener(new helpClickedListener());
 		//start the initializeations
 		/*setContentView(R.layout.launcher_layout);
 		

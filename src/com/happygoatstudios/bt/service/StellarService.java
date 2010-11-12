@@ -1240,6 +1240,18 @@ public class StellarService extends Service {
 				myhandler.sendMessage(keepalive);
 			}
 		}
+
+		public boolean isAttemptSuggestions() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isAttemptSuggestions();
+			}
+		}
+
+		public void setAttemptSuggestions(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setAttemptSuggestions(use);
+			}
+		}
 		
 
 	};

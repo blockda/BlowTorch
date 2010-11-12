@@ -27,6 +27,7 @@ public class HyperSettings {
 	private String FontName = "monospace";
 	private String FontPath = "none";
 	private boolean UseExtractUI = false;
+	private boolean AttemptSuggestions = false;
 	
 	private String SaveLocation = "none";
 	
@@ -133,6 +134,7 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_FONTNAME, data.getFontName());
 			out.attribute("", BaseParser.ATTR_FONTPATH, data.getFontPath());
 			out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_SUGGESTIONS, (data.isAttemptSuggestions()) ? "true" : "false");
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -402,6 +404,14 @@ public class HyperSettings {
 	
 	public boolean isKeepWifiActive() {
 		return KeepWifiActive;
+	}
+
+	public void setAttemptSuggestions(boolean attemptSuggestions) {
+		AttemptSuggestions = attemptSuggestions;
+	}
+
+	public boolean isAttemptSuggestions() {
+		return AttemptSuggestions;
 	}
 
 }

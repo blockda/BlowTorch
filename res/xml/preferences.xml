@@ -43,6 +43,11 @@
 			android:defaultValue="false"
 			android:summary="Show the full screen editor when the input bar is clicked."
 			android:title="Use Full Screen Editor?"/>
+		<CheckBoxPreference
+			android:key="USE_SUGGESTIONS"
+			android:defaultValue="false"
+			android:summary="Attempt suggestions if the full screen editor is not used?"
+			android:title="Use Suggestions?"/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Service Settings:">
 		<CheckBoxPreference

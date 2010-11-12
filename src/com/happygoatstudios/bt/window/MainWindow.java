@@ -475,6 +475,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean use_extractui = prefs.getBoolean("USE_EXTRACTUI", false);
 						boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
 						boolean wifi_keepalive = prefs.getBoolean("WIFI_KEEPALIVE", true);
+						boolean use_suggestions = prefs.getBoolean("USE_SUGGESTIONS", true);
 						try {
 							service.setFontSize(font_size);
 							service.setFontSpaceExtra(line_space);
@@ -485,6 +486,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setThrottleBackground(throttle_background);
 							service.setSemiOption(use_semi);
 							service.setKeepWifiActive(wifi_keepalive);
+							service.setAttemptSuggestions(use_suggestions);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -625,7 +627,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
 							//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 							input_box.setImeOptions(wanted);
-							input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+							if(service.isAttemptSuggestions()) {
+								input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+							} else {
+								input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+									
+							}
 							BetterEditText better = (BetterEditText)input_box;
 							better.setUseFullScreen(false);
 							//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
@@ -662,7 +669,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					tmp.setX(msg.arg1);
 					tmp.setY(msg.arg2);
 					tmp.setText(input_box.getText().toString());
-					tmp.setLabel("NOTSET");
+					tmp.setLabel("LABEL");
 					
 					ColorSetSettings colorset = null;
 					try {
@@ -1003,6 +1010,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("PROCESS_PERIOD", service.isProcessPeriod());
 				edit.putBoolean("PROCESS_SEMI", service.isSemiNewline());
 				edit.putBoolean("WIFI_KEEPALIVE", service.isKeepWifiActive());
+				edit.putBoolean("USE_SUGGESTIONS", service.isAttemptSuggestions());
 				
 				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
 				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
