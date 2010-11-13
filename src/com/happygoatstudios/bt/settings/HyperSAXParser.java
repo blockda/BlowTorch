@@ -71,6 +71,8 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setFontPath(attributes.getValue("",ATTR_FONTPATH));
 				tmp.setUseExtractUI( (attributes.getValue("",ATTR_USEEXTRACTUI) == null) ? false : (attributes.getValue("",ATTR_USEEXTRACTUI).equals("true")) ? true : false);
 				tmp.setAttemptSuggestions( (attributes.getValue("",ATTR_SUGGESTIONS) == null) ? false : (attributes.getValue("",ATTR_SUGGESTIONS).equals("true")) ? true : false);
+				tmp.setKeepLast( (attributes.getValue("",ATTR_KEEPLAST) == null) ? false : (attributes.getValue("",ATTR_KEEPLAST).equals("true")) ? true : false);
+				tmp.setBackspaceBugFix( (attributes.getValue("",ATTR_BACKSPACEFIX) == null) ? false : (attributes.getValue("",ATTR_BACKSPACEFIX).equals("true")) ? true : false);
 				
 				int wmode = new Integer(attributes.getValue("",ATTR_WRAPMODE));
 				switch(wmode) {

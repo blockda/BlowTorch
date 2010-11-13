@@ -1252,8 +1252,30 @@ public class StellarService extends Service {
 				the_settings.setAttemptSuggestions(use);
 			}
 		}
-		
 
+		public boolean isKeepLast() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isKeepLast();
+			}
+		}
+
+		public void setKeepLast(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setKeepLast(use);
+			}
+		}
+
+		public boolean isBackSpaceBugFix() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isBackspaceBugFix();
+			}
+		}
+
+		public void setBackSpaceBugFix(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setBackspaceBugFix(use);
+			}
+		}
 	};
 	
 	Pattern newline = Pattern.compile("\n");
