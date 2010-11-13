@@ -68,4 +68,8 @@ interface IStellarService {
 	boolean isKeepWifiActive();
 	void setAttemptSuggestions(boolean use);
 	boolean isAttemptSuggestions();
+	void setKeepLast(boolean use);
+	boolean isKeepLast();
+	boolean isBackSpaceBugFix();
+	void setBackSpaceBugFix(boolean use);
 }

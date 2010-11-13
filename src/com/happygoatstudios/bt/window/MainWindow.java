@@ -143,6 +143,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	boolean isBound = false;
 	
+	boolean isKeepLast = false; //for keeping last
+	
 	
 	Boolean settingsLoaded = false; //synchronize or try to mitigate failures of writing button data, or failures to read data
 	Boolean serviceConnected = false;
@@ -476,6 +478,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
 						boolean wifi_keepalive = prefs.getBoolean("WIFI_KEEPALIVE", true);
 						boolean use_suggestions = prefs.getBoolean("USE_SUGGESTIONS", true);
+						boolean keeplast = prefs.getBoolean("KEEPLAST", false);
+						boolean bsbugfix = prefs.getBoolean("BACKSPACE_BUGFIX", false);
+						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
+						
 						try {
 							service.setFontSize(font_size);
 							service.setFontSpaceExtra(line_space);
@@ -487,6 +493,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setSemiOption(use_semi);
 							service.setKeepWifiActive(wifi_keepalive);
 							service.setAttemptSuggestions(use_suggestions);
+							service.setKeepLast(keeplast);
+							service.setBackSpaceBugFix(bsbugfix);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -637,6 +645,24 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							better.setUseFullScreen(false);
 							//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
 						}
+						
+						
+						if(service.isKeepLast()) {
+							isKeepLast = true;
+						} else {
+							isKeepLast = false;
+						}
+						
+						if(service.isBackSpaceBugFix()) {
+							//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
+							BetterEditText tmp_bar = (BetterEditText)input_box;
+							tmp_bar.setBackSpaceBugFix(true);
+						} else {
+							BetterEditText tmp_bar = (BetterEditText)input_box;
+							tmp_bar.setBackSpaceBugFix(false);
+							//Log.e("WINDOW","NOT APPLYING BACK SPACE BUG FIX");
+						}
+						
 						InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 						imm.restartInput(input_box);
 						//imm.
@@ -739,12 +765,22 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				case MESSAGE_RESETINPUTWINDOW:
 					//Log.e("WINDOW","Attempting to reset input bar.");
 					
+					try {
+						if(service.isKeepLast()) {
+							//Log.e("WINDOW","ATTEMPTING TO SET LAST TO SELECTED");
+							input_box.setSelection(0, input_box.getText().length());
+						} else {
+							//Log.e("WINDOW","NOT KEEPING LAST");
+							input_box.clearComposingText();
+							input_box.setText("");
+						}
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 					
-					input_box.clearComposingText();
-					input_box.setText("");
-					
-					InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-					imm.restartInput(input_box);
+					//InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+					//imm.restartInput(input_box);
 					break;
 				case MESSAGE_RAWINC:
 					screen2.addText((String)msg.obj,false);
@@ -1011,7 +1047,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("PROCESS_SEMI", service.isSemiNewline());
 				edit.putBoolean("WIFI_KEEPALIVE", service.isKeepWifiActive());
 				edit.putBoolean("USE_SUGGESTIONS", service.isAttemptSuggestions());
+				edit.putBoolean("BACKSPACE_BUGFIX", service.isBackSpaceBugFix());
 				
+				edit.putBoolean("KEEPLAST", service.isKeepLast());
 				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
 				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
 				edit.putString("MAX_LINES", Integer.toString(service.getMaxLines()));

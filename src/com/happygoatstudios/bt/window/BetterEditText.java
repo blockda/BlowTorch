@@ -15,6 +15,7 @@ import android.widget.EditText;
 public class BetterEditText extends EditText {
 
 	private Boolean useFullScreen = false;
+	private Boolean BackSpaceBugFix = false;
 	
 	public BetterEditText(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -58,7 +59,15 @@ public class BetterEditText extends EditText {
 		if(useFullScreen) {
 			return super.onCreateInputConnection(attrs);
 		} else {
-			return new BaseInputConnection(this,false);		
+			if(BackSpaceBugFix) {
+				//Log.e("WINDOW","USING INPUTCONNECTIONWRAPPER");
+				attrs.imeOptions |= EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+				InputConnection tmp = super.onCreateInputConnection(attrs);
+				return new InputConnectionWrapper(tmp,true);
+			} else {
+				//Log.e("WINDOW","USING BASEINPUTCONNECTION");
+				return new BaseInputConnection(this,false);	
+			}
 		}
 		//SlickConnection conn = new SlickConnection(this,usefullscreen);
 		//InputConnectionWrapper wrapper = new InputConnectionWrapper(conn, false) {
@@ -89,6 +98,14 @@ public class BetterEditText extends EditText {
 
 	public Boolean getUseFullScreen() {
 		return useFullScreen;
+	}
+
+	public void setBackSpaceBugFix(Boolean backSpaceBugFix) {
+		BackSpaceBugFix = backSpaceBugFix;
+	}
+
+	public Boolean getBackSpaceBugFix() {
+		return BackSpaceBugFix;
 	}
 	
 	//protected boolean getDefaultEditable() {

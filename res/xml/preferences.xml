@@ -48,6 +48,16 @@
 			android:defaultValue="false"
 			android:summary="Attempt suggestions if the full screen editor is not used?"
 			android:title="Use Suggestions?"/>
+		<CheckBoxPreference
+			android:key="KEEPLAST"
+			android:defaultValue="false"
+			android:summary="Keep the last text entered in the window and highlight after entering."
+			android:title="Keep Last Entered?"/>
+		<CheckBoxPreference
+			android:key="BACKSPACE_BUGFIX"
+			android:defaultValue="false"
+			android:summary="Enable this if you have problems with backspace not working in the non-full screen editor."
+			android:title="Backspace Fix?"/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Service Settings:">
 		<CheckBoxPreference

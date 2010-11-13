@@ -35,6 +35,8 @@ public class HyperSettings {
 	private boolean ProcessPeriod = true;
 	private boolean ThrottleBackground = false;
 	private boolean KeepWifiActive = true;
+	private boolean KeepLast = false;
+	private boolean backspaceBugFix = false;
 	
 	
 	
@@ -135,6 +137,8 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_FONTPATH, data.getFontPath());
 			out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_SUGGESTIONS, (data.isAttemptSuggestions()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_KEEPLAST, (data.isKeepLast()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_BACKSPACEFIX, (data.isBackspaceBugFix()) ? "true" : "false");
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -412,6 +416,22 @@ public class HyperSettings {
 
 	public boolean isAttemptSuggestions() {
 		return AttemptSuggestions;
+	}
+
+	public void setKeepLast(boolean keepLast) {
+		KeepLast = keepLast;
+	}
+
+	public boolean isKeepLast() {
+		return KeepLast;
+	}
+
+	public void setBackspaceBugFix(boolean backspaceBugFix) {
+		this.backspaceBugFix = backspaceBugFix;
+	}
+
+	public boolean isBackspaceBugFix() {
+		return backspaceBugFix;
 	}
 
 }

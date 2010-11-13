@@ -37,10 +37,10 @@ public class SlickButtonData implements Parcelable {
 	final static public int MOVE_NUDGE = 1;
 	final static public int MOVE_FREEZE = 2;
 	
-	final static public int DEFAULT_COLOR = 0x550000FF;
+	final static public int DEFAULT_COLOR = 0x880000FF;
 	final static public int DEFAULT_SELECTED_COLOR = 0x8800FF00;
 	final static public int DEFAULT_FLIP_COLOR = 0x88FF0000;
-	final static public int DEFAULT_LABEL_COLOR = 0x990000FF;
+	final static public int DEFAULT_LABEL_COLOR = 0xAAAAAAAA;
 	final static public int DEFAULT_FLIPLABEL_COLOR = 0x990000FF;
 	
 	final static public int DEFAULT_BUTTON_WDITH = 48;
