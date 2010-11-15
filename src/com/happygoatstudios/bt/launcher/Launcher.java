@@ -35,6 +35,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 //import android.util.Log;
 import android.util.Xml;
 import android.view.LayoutInflater;
@@ -291,7 +292,10 @@ public class Launcher extends Activity implements ReadyListener {
 	    	//write out the intent to the service so it can do some lookup work in advance of the connection, such as loading the settings wad
 	    	SharedPreferences prefs = Launcher.this.getSharedPreferences("SERVICE_INFO",0);
 	    	Editor edit = prefs.edit();
-	    	edit.putString("SETTINGS_PATH", muc.getDisplayName() + ".xml");
+	    	//Log.e("WINDOW","SETTING " + muc.getDisplayName());
+	    	
+	    	
+	    	edit.putString("SETTINGS_PATH", muc.getDisplayName());
 	    	edit.commit();
 	    	
 	    	//check to see if the service is actually running
