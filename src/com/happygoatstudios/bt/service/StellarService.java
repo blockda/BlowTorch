@@ -56,7 +56,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-//import android.util.Log;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -153,10 +153,11 @@ public class StellarService extends Service {
 		
 		Pattern invalidchars = Pattern.compile("\\W"); 
 		Matcher replacebadchars = invalidchars.matcher(settingslocation);
-		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		String prefsname = replacebadchars.replaceAll("");
 		prefsname = prefsname.replaceAll("/", "");
-		
-		loadXmlSettings(prefsname);
+		//Log.e("SERVICE","Attempting to load "+ prefsname);
+		settingslocation = prefsname + ".xml";
+		loadXmlSettings(prefsname +".xml");
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
