@@ -4,7 +4,7 @@ import android.inputmethodservice.ExtractEditText;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.method.KeyListener;
-import android.util.Log;
+//import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
@@ -60,7 +60,7 @@ public class SlickConnection extends BaseInputConnection {
 	    }
 	    
 	    public boolean commitCompletion(CompletionInfo text) {
-	        if (DEBUG) Log.v(TAG, "commitCompletion " + text);
+	        //if (DEBUG) Log.v(TAG, "commitCompletion " + text);
 	        mTextView.beginBatchEdit();
 	        mTextView.onCommitCompletion(text);
 	        mTextView.endBatchEdit();
@@ -68,13 +68,13 @@ public class SlickConnection extends BaseInputConnection {
 	    }
 
 	    public boolean performEditorAction(int actionCode) {
-	        if (DEBUG) Log.v(TAG, "performEditorAction " + actionCode);
+	        //if (DEBUG) Log.v(TAG, "performEditorAction " + actionCode);
 	        mTextView.onEditorAction(actionCode);
 	        return true;
 	    }
 	    
 	    public boolean performContextMenuAction(int id) {
-	        if (DEBUG) Log.v(TAG, "performContextMenuAction " + id);
+	        //if (DEBUG) Log.v(TAG, "performContextMenuAction " + id);
 	        mTextView.beginBatchEdit();
 	        mTextView.onTextContextMenuItem(id);
 	        mTextView.endBatchEdit();
@@ -86,7 +86,7 @@ public class SlickConnection extends BaseInputConnection {
 	            ExtractedText et = new ExtractedText();
 	            
 	            if (mTextView.extractText(request, et)) {
-	            	Log.e("CONNECTOIN","Extracted: " + et.text);
+	            	//Log.e("CONNECTOIN","Extracted: " + et.text);
 	                if ((flags&GET_EXTRACTED_TEXT_MONITOR) != 0) {
 	                    //mTextView.setExtractedText(et);
 	                	//mTextView.setExtracting(request);

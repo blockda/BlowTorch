@@ -4,14 +4,18 @@ import java.util.Map;
 
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.validator.Validator;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+//import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
 
 public class NewAliasDialog extends Dialog {
 
@@ -45,6 +49,17 @@ public class NewAliasDialog extends Dialog {
 				public void onClick(View arg0) {
 					EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
 					EditText post = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
+					
+					Validator checker = new Validator();
+					
+					checker.add(pre, checker.VALIDATE_NOT_BLANK, "Replace field");
+					checker.add(post, checker.VALIDATE_NOT_BLANK, "With field");
+					
+					String result = checker.validate();
+					if(result != null) {
+						checker.showMessage(NewAliasDialog.this.getContext(), result);
+						return;
+					} 
 					
 					if(pre != null && post != null) {
 						reportto.newAliasDialogDone(pre.getText().toString(), post.getText().toString());
@@ -97,6 +112,18 @@ public class NewAliasDialog extends Dialog {
 			public void onClick(View arg0) {
 				EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
 				EditText post = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
+				
+				Validator checker = new Validator();
+				
+				checker.add(pre, checker.VALIDATE_NOT_BLANK, "Replace field");
+				checker.add(post, checker.VALIDATE_NOT_BLANK, "With field");
+				
+				String result = checker.validate();
+				if(result != null) {
+					checker.showMessage(NewAliasDialog.this.getContext(), result);
+					return;
+				} 
+				
 				
 				if(pre != null && post != null) {
 					reportto.editAliasDialogDone(pre.getText().toString(), post.getText().toString(),old_pos,original_alias);

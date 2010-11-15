@@ -17,6 +17,7 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -77,9 +78,12 @@ public class SlickButton extends View {
 				case MSG_BEGINMOVE:
 					moving = true;
 					SlickButton.this.invalidate();
+					SlickButton.this.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
 					//SlickButton.this.invalidate(SlickButton.this.rect); //only invaldate my rect.
 					break;
 				case MSG_DELETE:
+					SlickButton.this.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+					
 					dialog_launched = true;
 					button_down = false;
 					moving = false;

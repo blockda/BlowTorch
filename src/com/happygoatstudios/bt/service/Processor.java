@@ -9,7 +9,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
 import android.text.Spannable;
-import android.util.Log;
+//import android.util.Log;
 
 import com.happygoatstudios.bt.service.*;
 
@@ -277,7 +277,7 @@ public class Processor {
 			byte[] compressresp = new byte[1];
 			compressresp[0] = TC.COMPRESS2;
 			if(sub_r[0] == compressresp[0]) {
-				Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
+				//Log.e("PROC","PROCESSOR ENCOUNTERED COMPRESSION START, STARTING COMPRESSION");
 				
 				//reportto.sendEmptyMessage(StellarService.MESSAGE_STARTCOMPRESS);
 				reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS));

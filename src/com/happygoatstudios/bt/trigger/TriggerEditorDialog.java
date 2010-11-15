@@ -15,7 +15,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.util.Log;
+//import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -40,6 +40,7 @@ import com.happygoatstudios.bt.responder.ack.*;
 import com.happygoatstudios.bt.responder.notification.*;
 import com.happygoatstudios.bt.responder.toast.*;
 import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.validator.Validator;
 
 public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener{
 
@@ -110,7 +111,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				// TODO Auto-generated method stub
 				boolean changed = hasTriggerChanged();
 				if(changed) {
-					Log.e("TEDITR","DATA CHANGED");
+					//Log.e("TEDITR","DATA CHANGED");
 					AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
 					builder.setTitle("Destroy Changes?");
 					builder.setMessage("You have changed the data of this trigger, are you sure you want to dismiss?");
@@ -140,7 +141,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 					AlertDialog dialog = builder.create();
 					dialog.show();
 				} else {
-					Log.e("TEDITR","DATA NOT CHANGED");
+					//Log.e("TEDITR","DATA NOT CHANGED");
 					TriggerEditorDialog.this.dismiss();
 				}
 				
@@ -174,6 +175,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	
 	
 	private boolean hasTriggerChanged() {
+		if(original_trigger == null) {
+			return false;
+		}
 		TriggerData test = original_trigger.copy();
 		
 		EditText title = (EditText)findViewById(R.id.trigger_editor_name);
@@ -217,6 +221,16 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			//responders should already be set up.
 			EditText title = (EditText)findViewById(R.id.trigger_editor_name);
 			EditText pattern = (EditText)findViewById(R.id.trigger_editor_pattern);
+			
+			Validator checker = new Validator();
+			checker.add(title, Validator.VALIDATE_NOT_BLANK, "Trigger name");
+			checker.add(pattern,Validator.VALIDATE_NOT_BLANK,"Pattern");
+			
+			String result = checker.validate();
+			if(result != null) {
+				checker.showMessage(TriggerEditorDialog.this.getContext(), result);
+				return;
+			}
 			
 			CheckBox literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
 			
@@ -512,7 +526,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 
 		public void onClick(DialogInterface arg0, int arg1) {
 			// TODO Auto-generated method stub
-			Log.e("TEDITOR","DELETE ALERT RETURNED " + arg1);
+			//Log.e("TEDITOR","DELETE ALERT RETURNED " + arg1);
 			if(arg1 == DialogInterface.BUTTON_POSITIVE) {
 				//really delete the button
 				the_trigger.getResponders().remove(position);
@@ -608,10 +622,10 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		the_trigger.getResponders().add(pos,edited);
 		refreshResponderTable();
 		
-		Log.e("TEDITOR","ATTEMPTING TO MODIFY RESPONDERS");
-		for(TriggerResponder responder : the_trigger.getResponders()) {
-			Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
-		}
+		//Log.e("TEDITOR","ATTEMPTING TO MODIFY RESPONDERS");
+		//for(TriggerResponder responder : the_trigger.getResponders()) {
+			//Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
+		//}
 	}
 
 	public void newTriggerResponder(TriggerResponder newresponder) {

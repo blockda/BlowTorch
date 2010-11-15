@@ -2,10 +2,12 @@ package com.happygoatstudios.bt.responder.toast;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.responder.TriggerResponderEditorDoneListener;
+import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+//import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -65,6 +67,18 @@ public class ToastResponderEditor extends Dialog {
 			
 			EditText message = (EditText)ToastResponderEditor.this.findViewById(R.id.responder_toast_message);
 			EditText delay = (EditText)ToastResponderEditor.this.findViewById(R.id.responder_toast_delay);
+			
+			Validator checker = new Validator();
+			checker.add(message,Validator.VALIDATE_NOT_BLANK,"Message field");
+			checker.add(delay, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER|Validator.VALIDATE_NUMBER_NOT_ZERO, "Delay field");
+			
+			String result = checker.validate();
+			if(result != null) {
+				checker.showMessage(ToastResponderEditor.this.getContext(), result);
+				return;
+			} else {
+				//Log.e("TOASTRESPONDER","VALID ENTRIES");
+			}
 			
 			the_responder.setDelay(Integer.parseInt(delay.getText().toString()));
 			the_responder.setMessage(message.getText().toString());

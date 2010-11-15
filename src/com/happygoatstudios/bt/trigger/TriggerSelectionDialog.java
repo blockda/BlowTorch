@@ -28,6 +28,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
@@ -44,6 +45,8 @@ public class TriggerSelectionDialog extends Dialog {
 		service = the_service;
 		entries = new ArrayList<TriggerItem>();
 	}
+	
+	private boolean noTriggers = false;
 	
 	public void onCreate(Bundle b) {
 		
@@ -86,6 +89,13 @@ public class TriggerSelectionDialog extends Dialog {
 		});
 		
 		
+	}
+	
+	public void onStart() {
+		if(noTriggers) {
+			Toast t = Toast.makeText(TriggerSelectionDialog.this.getContext(), "No triggers loaded. Click below to create new Triggers.", Toast.LENGTH_LONG);
+			t.show();
+		}
 	}
 	
 	private class EditTriggerListener implements AdapterView.OnItemClickListener {
@@ -197,6 +207,10 @@ public class TriggerSelectionDialog extends Dialog {
 				t.extra = data.getPattern();
 				entries.add(t);
 			}
+		}
+		
+		if(trigger_list.size() == 0) {
+			noTriggers = true;
 		}
 		
 		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);

@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.button;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.validator.Validator;
 import com.happygoatstudios.bt.window.SlickView;
 
 import android.app.Dialog;
@@ -10,7 +11,7 @@ import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
+//import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -296,6 +297,22 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				
 				//ColorPickerDialog cpd = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,0xFF00FF00,COLOR_FIELDS.COLOR_MAIN);
 				//cpd.show();
+				
+				//big ugly validation step.
+				//labels/commands can be empty or whatever I don't care.
+				//all numeric fields must be numbers and greater than 0.
+				Validator checker = new Validator();
+				checker.add(xPos, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "X Coordinate");
+				checker.add(yPos, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Y Coordinate");
+				checker.add(eWidth, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Width");
+				checker.add(eHeight, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Height");
+				checker.add(labelSize, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Label Size");
+				
+				String result = checker.validate();
+				if(result != null) {
+					checker.showMessage(ButtonEditorDialog.this.getContext(), result);
+					return;
+				}
 				
 				EditText label = (EditText)findViewById(R.id.button_text_et);
 				

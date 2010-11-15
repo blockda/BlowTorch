@@ -35,7 +35,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -48,6 +48,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AbsoluteLayout.LayoutParams;
 
 
@@ -146,11 +147,26 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		lv = (ListView)findViewById(R.id.connection_list);
 		apdapter = new ConnectionAdapter(lv.getContext(),R.layout.connection_row,connections);
+		
+		//TextView tmp1 = new TextView(this);
+		
+		//tmp1.setText("No Connections");
+		//tmp2.setText("Select NEW below to create.");
+		
+		//lv.setEmptyView(tmp1);
+		
 		lv.setAdapter(apdapter);
 		
 		lv.setTextFilterEnabled(true);
 		lv.setOnItemClickListener(new listItemClicked());
 		lv.setOnItemLongClickListener(new listItemLongClicked());
+		
+		//LayoutInflater li = (LayoutInflater) this.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		//View blankrow = li.inflate(R.layout.connection_row, null);
+		//TextView tmp1 = (TextView) blankrow.findViewById(R.id.displayname);
+		//TextView tmp2 = (TextView) blankrow.findViewById(R.id.hoststring);
+		
+
 		
 		getConnectionsFromDisk();
 		
@@ -184,6 +200,14 @@ public class Launcher extends Activity implements ReadyListener {
 		tv.setLongClickable(false);*/
 
 		
+	}
+	
+	public void onStart() {
+		super.onStart();
+		if(noConnections) {
+			Toast msg = Toast.makeText(this, "No connections specified, select NEW to create.", Toast.LENGTH_LONG);
+			msg.show();
+		}
 	}
 	
 	public void onDestroy() {
@@ -276,7 +300,7 @@ public class Launcher extends Activity implements ReadyListener {
 	    	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
 	    	boolean found = false;
 	    	for(RunningServiceInfo service : services) {
-	    		Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
+	    		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
 	    		//service.service.
 	    		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
 	    			//service is running, don't do anything.
@@ -290,9 +314,10 @@ public class Launcher extends Activity implements ReadyListener {
 	    	if(!found) {
     			//service is not running, reset the values in the shared prefs that the window uses to keep track of weather or not to finish init routines.
     			//kill all whitespace in the display name.
-	    		Pattern whitespace = Pattern.compile("\\s");
-    			Matcher nowhitespace = whitespace.matcher(muc.getDisplayName());
-    			String prefsname = nowhitespace.replaceAll("") + ".PREFS";
+	    		Pattern invalidchars = Pattern.compile("\\W"); 
+    			Matcher replacebadchars = invalidchars.matcher(muc.getDisplayName());
+    			String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+    			//prefsname = prefsname.replaceAll("/", "");
     			
     			SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
     			//servicestarted = prefs.getBoolean("CONNECTED", false);
@@ -301,7 +326,7 @@ public class Launcher extends Activity implements ReadyListener {
     			editor.putBoolean("CONNECTED", false);
     			editor.putBoolean("FINISHSTART", true);
     			editor.commit();
-    			Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
+    			//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
     			
 	    	}
 	    	
@@ -379,7 +404,7 @@ public class Launcher extends Activity implements ReadyListener {
 		SharedPreferences pref = this.getSharedPreferences(PREFS_NAME, 0);
 		
 		String thestring = pref.getString("STRINGS", "");
-		if(thestring == null || thestring == "") { return; }
+		if(thestring == null || thestring == "") { noConnections=true; return; }
 		
 		Pattern connection = Pattern.compile("([^\\|]+)");
 		Pattern breakout = Pattern.compile("(.+):(.+):(.+)");
@@ -403,7 +428,17 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 		}
 		
+		if(apdapter.isEmpty()) {
+			//Log.e("KSLFDJ","NO CONNECTIONS");
+			noConnections = true;
+		} else {
+			noConnections = false;
+			//Log.e("KSLFDJ","CONNECTIONS");
+		}
+		
 	}
+	
+	private boolean noConnections = false;
 	
 	private void saveConnectionsToDisk() {
 		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);

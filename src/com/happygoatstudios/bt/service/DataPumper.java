@@ -16,7 +16,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
+//import android.util.Log;
 
 public class DataPumper extends Thread {
 
@@ -56,11 +56,11 @@ public class DataPumper extends Thread {
 				public void handleMessage(Message msg) {
 					switch(msg.what) {
 					case MESSAGE_THROTTLE:
-						Log.e("PUMPER","DATA PUMP THROTTLING");
+						//Log.e("PUMPER","DATA PUMP THROTTLING");
 						throttle = true;
 						break;
 					case MESSAGE_NOTHROTTLE:
-						Log.e("PUMPER","DATA PUMP RESUMING NORMAL OPERATION");
+						//Log.e("PUMPER","DATA PUMP RESUMING NORMAL OPERATION");
 						this.removeMessages(MESSAGE_RETRIEVE);
 						throttle = false;
 						this.sendEmptyMessage(MESSAGE_RETRIEVE);
@@ -175,7 +175,7 @@ public class DataPumper extends Thread {
 									count = decompress.inflate(tmp,0,tmp.length);
 									//int remain = decompress.getRemaining();
 								} catch (DataFormatException e) {
-									Log.e("BTSERVICE","Encountered data format exception and must quit.");
+									//Log.e("BTSERVICE","Encountered data format exception and must quit.");
 									myhandler.sendEmptyMessage(MESSAGE_END);
 									return;
 								}
