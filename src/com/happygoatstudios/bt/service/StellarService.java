@@ -1668,7 +1668,7 @@ public class StellarService extends Service {
 			//so with the color debug mode set, we should probably dispatch a message to them.
 			String success = "\n" + Colorizer.colorRed + "Color Debug Mode " + iarg + " activated. ";
 			if(iarg == 0) {
-				success += "(default, color enabled, color codes not shown)";
+				success = "\n" + Colorizer.colorRed + "Normal color processing resumed." ;
 			} else if(iarg == 1) {
 				success += "(color enabled, color codes shown)";
 			} else if(iarg == 2) {
