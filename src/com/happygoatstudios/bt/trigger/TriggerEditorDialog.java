@@ -180,6 +180,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		}
 		TriggerData test = original_trigger.copy();
 		
+		
 		EditText title = (EditText)findViewById(R.id.trigger_editor_name);
 		EditText pattern = (EditText)findViewById(R.id.trigger_editor_pattern);
 		
