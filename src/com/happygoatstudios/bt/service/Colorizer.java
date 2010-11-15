@@ -13,6 +13,7 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+//import android.util.Log;
 
 public class Colorizer {
 	
@@ -22,6 +23,8 @@ public class Colorizer {
 	public static Character escape = new Character((char) 0x1B);
 	public static String colorRed = escape+"[1;31m";
 	public static String colorWhite = escape+"[0;37m";
+	public static String colorGreen = escape+"[1;34m";
+	public static String debugString = escape+"[39;49m" + escape + "[0;10m" + "this is the debug string" + colorGreen + "greentext" + escape + "[39;49m" + escape + "[0;10mbacktonormal\n";
 	Pattern newline = Pattern.compile("\\x0D");
 	Pattern carriage = Pattern.compile("\\x0A");
 	Pattern subnego_reg = Pattern.compile("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0");
@@ -426,6 +429,10 @@ public class Colorizer {
 		colormap.put("45", 45);
 		colormap.put("46", 46);
 		colormap.put("47", 47);
+		//defaults.
+		colormap.put("39", 39);
+		colormap.put("49", 49);
+		//colormap.put("10", 10);
 	}
 	public static int getColorValue(CharSequence bright, CharSequence value) {
 		
@@ -448,7 +455,8 @@ public class Colorizer {
 	
 	public enum COLOR_TYPE {
 		BACKGROUND,
-		FOREGROUND
+		FOREGROUND,
+		NOT_A_COLOR
 	}
 	
 	public static COLOR_TYPE getColorType(CharSequence value) {
@@ -464,11 +472,16 @@ public class Colorizer {
 
 	public static COLOR_TYPE getColorType(Integer value) {
 		
-		if(value < 40) {
-			return COLOR_TYPE.FOREGROUND;
-		} else {
-			return COLOR_TYPE.BACKGROUND;
+		COLOR_TYPE retval = COLOR_TYPE.NOT_A_COLOR;
+		if(value < 40 && value >=30) {
+			retval = COLOR_TYPE.FOREGROUND;
+		} else if(value >=40 && value < 50) {
+			retval = COLOR_TYPE.BACKGROUND;
 		}
+		
+		//Log.e("Colorizer","Returning " + retval + " for " + value);
+		
+		return retval;
 	}
 		
 	
@@ -477,6 +490,14 @@ public class Colorizer {
 		
 		int onespot = 0;
 		int tenspot = 0;
+		
+		if(value == 39) {
+			return 0xBBBBBB;
+		}
+		if(value == 49) {
+			return 0x000000;
+		}
+		
 		if(value >= 30 && value < 40) {
 			onespot = value - 30;
 			tenspot = 3;

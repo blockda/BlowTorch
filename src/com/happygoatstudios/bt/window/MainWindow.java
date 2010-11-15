@@ -109,6 +109,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_RELOADBUTTONSET = 208;
 	protected static final int MESSAGE_BUTTONREQUESTINGSETCHANGE = 207;
 	protected static final int MESSAGE_XMLERROR = 397;
+	protected static final int MESSAGE_COLORDEBUG = 675;
+	protected static final int MESSAGE_DIRTYEXITNOW = 943;
 	
 	protected boolean settingsDialogRun = false;
 	
@@ -353,6 +355,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_DIRTYEXITNOW:
+					//the service via an entered command ".closewindow" or something, to bypass the window asking if you want to close
+					dirtyExit();
+					MainWindow.this.finish();
+					break;
+				case MESSAGE_COLORDEBUG:
+					//execute color debug.
+					screen2.setColorDebugMode(msg.arg1);
+					break;
 				case MESSAGE_XMLERROR:
 					//got an xml error, need to display it.
 					String xmlerror = (String)msg.obj;
@@ -1006,7 +1017,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			}
 			message += "\nNew buttons can be made by long pressing the window.";
 			message += "\nButtons may be moved after press + hold.";
-			message += "\nButtons may be edited after pres + hold + hold.";
+			message += "\nButtons may be edited after press + hold + hold.";
 			Toast t = Toast.makeText(MainWindow.this, message, Toast.LENGTH_LONG);
 			t.show();
 		} catch (RemoteException e) {
@@ -1507,6 +1518,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			Message xmlerror = myhandler.obtainMessage(MESSAGE_XMLERROR);
 			xmlerror.obj = error;
 			myhandler.sendMessage(xmlerror);
+			
+		}
+
+		public void executeColorDebug(int arg) throws RemoteException {
+			Message colordebug = myhandler.obtainMessage(MESSAGE_COLORDEBUG);
+			colordebug.arg1 = arg;
+			myhandler.sendMessage(colordebug);
+		}
+
+		public void invokeDirtyExit() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_DIRTYEXITNOW);
 			
 		}
 	};

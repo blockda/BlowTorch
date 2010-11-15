@@ -143,6 +143,14 @@ public class StellarService extends Service {
 		host = BAD_HOST;
 		port = BAD_PORT;
 		
+		//load special commands.
+		ColorDebugCommand colordebug = new ColorDebugCommand();
+		//BrokenColor brokencolor = new BrokenColor();
+		DirtyExitCommand dirtyexit = new DirtyExitCommand();
+		specialcommands.put(colordebug.commandName, colordebug);
+		//specialcommands.put(brokencolor.commandName,brokencolor);
+		specialcommands.put(dirtyexit.commandName, dirtyexit);
+		
 		//Looper.prepare();
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
 		settingslocation = prefs.getString("SETTINGS_PATH", "");
@@ -1290,7 +1298,8 @@ public class StellarService extends Service {
 	Pattern newline = Pattern.compile("\n");
 	Pattern semicolon = Pattern.compile(";");
 
-	Pattern commandPattern = Pattern.compile("^.(\\w+)\\s+(.+)$");
+	//Pattern commandPattern = Pattern.compile("^.(\\w+)\\s+(.+)$");
+	Pattern commandPattern = Pattern.compile("^.(\\w+)\\s*(.*)$");
 	Matcher commandMatcher = commandPattern.matcher("");
 	
 	Character cr = new Character((char)13);
@@ -1351,8 +1360,23 @@ public class StellarService extends Service {
 								
 								if(the_settings.getAliases().containsKey(alias)) {
 									//real argument
-									the_settings.getAliases().remove(alias);
-									the_settings.getAliases().put(alias, argument);
+									if(!argument.equals("")) {
+										the_settings.getAliases().remove(alias);
+										the_settings.getAliases().put(alias, argument);
+									} else {
+										//display error message
+										String noarg_message = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"." + alias + " replacetext\"" + Colorizer.colorWhite +"\n";
+										try {
+											doDispatchNoProcess(noarg_message.getBytes());
+										} catch (RemoteException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
+									}
+								} else if(specialcommands.containsKey(alias)){
+									//Log.e("SERVICE","SERVICE FOUND SPECIAL COMMAND: " + alias);
+									SpecialCommand command = specialcommands.get(alias);
+									command.execute(argument);
 								} else {
 									//format error message.
 									
@@ -1575,6 +1599,138 @@ public class StellarService extends Service {
 			the_wifi_lock = null;
 		}
 	}
+	
+	private class SpecialCommand {
+		public String commandName;
+		public SpecialCommand() {
+			//nothing really to do here
+		}
+		public void execute(Object o) {
+			//this is to be overridden.
+		}
+	}
+	
+	private class ColorDebugCommand extends SpecialCommand{
+		public ColorDebugCommand() {
+			commandName = "colordebug";
+		}
+		public void execute(Object o) {
+			//Log.e("WINDOW","EXECUTING COLOR DEBUG COMMAND WITH STRING ARGUMENT: " + (String)o);
+			String arg = (String)o;
+			Integer iarg = 0;
+			boolean failed = false;
+			
+			try {
+				iarg = Integer.parseInt(arg);
+			} catch (NumberFormatException e) {
+				//invalid number
+				failed = true;
+				//errormessage += "\"colordebug\" special command is unable to use the argument: " + arg + "\n";
+				//errormessage += "Acceptable arguments are 0, 1, 2 or 3\n";
+			}
+			if(iarg < 0 || iarg > 3) {
+				//invalid number
+				failed = true;
+			}
+			
+			if(failed) {
+				String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
+				if(arg.equals("")) {
+					errormessage += "\"colordebug\" special command requires an argument.\n";
+				} else {
+					errormessage += "\"colordebug\" special command is unable to use the argument: " + arg + "\n";
+				}
+				errormessage += "Acceptable arguments are 0, 1, 2 or 3\n";
+				errormessage += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";
+				
+				try {
+					doDispatchNoProcess(errormessage.getBytes());
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				return;
+			}
+			//if we are here we are good to go.
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).executeColorDebug(iarg);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+			
+			//so with the color debug mode set, we should probably dispatch a message to them.
+			String success = "\n" + Colorizer.colorRed + "Color Debug Mode " + iarg + " activated. ";
+			if(iarg == 0) {
+				success += "(default, color enabled, color codes not shown)";
+			} else if(iarg == 1) {
+				success += "(color enabled, color codes shown)";
+			} else if(iarg == 2) {
+				success += "(color disabled, color codes shown)";
+			} else if(iarg == 3) {
+				success += "(color disabled, color codes not shown)";
+			} else {
+				success += "(this argument shouldn't happen, contact developer)";
+			}
+			
+			success += Colorizer.colorWhite +"\n";
+			
+			try {
+				doDispatchNoProcess(success.getBytes());
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+	}
+	
+	/*private class BrokenColor extends SpecialCommand {
+		public BrokenColor() {
+			this.commandName = "brokencolor";
+		}
+		
+		public void execute(Object o) {
+			String testmessage = Colorizer.debugString;
+			try {
+				doDispatchNoProcess(testmessage.getBytes());
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}*/
+	
+	private class DirtyExitCommand extends SpecialCommand {
+		public DirtyExitCommand() {
+			this.commandName = "closewindow";
+		}
+		public void execute(Object o) {
+			
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).invokeDirtyExit();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+			
+		}
+	}
+	
+	private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();
+	
 	
 	
 	Colorizer colorer = new Colorizer();
