@@ -1,8 +1,10 @@
 package com.happygoatstudios.bt.launcher;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -10,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.validator.Validator;
 
 
 public class NewConnectionDialog extends Dialog {
@@ -78,6 +81,22 @@ public class NewConnectionDialog extends Dialog {
 			EditText disp = (EditText)findViewById(R.id.dispinput);
 			EditText host = (EditText)findViewById(R.id.hostinput);
 			EditText port = (EditText)findViewById(R.id.portinput);
+			
+			
+			Validator checker = new Validator();
+			checker.add(disp, Validator.VALIDATE_NOT_BLANK, "Display Name");
+			checker.add(host, Validator.VALIDATE_NOT_BLANK, "Host name");
+			checker.add(host, Validator.VALIDATE_HOSTNAME, "Host name");
+			checker.add(port, Validator.VALIDATE_NOT_BLANK, "Port number");
+			checker.add(port, Validator.VALIDATE_NUMBER, "Port number");
+			checker.add(port, Validator.VALIDATE_PORT_NUMBER, "Port number");
+			
+			String result = checker.validate();
+			if(result != null) {
+				checker.showMessage(NewConnectionDialog.this.getContext(), result);
+				
+				return;
+			}
 			//String dispstr = disp.getText().toStri;
 			
 			if(isEditor) {

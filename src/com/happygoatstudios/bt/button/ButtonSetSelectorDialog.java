@@ -26,6 +26,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class ButtonSetSelectorDialog extends Dialog {
@@ -45,6 +46,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 		service = the_service;
 	}
 	
+	private boolean noSets = false;
+	
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
@@ -60,6 +63,10 @@ public class ButtonSetSelectorDialog extends Dialog {
 		//build list.
 		for(String key : data.keySet()) {
 			entries.add(new ButtonEntry(key,data.get(key)));
+		}
+		
+		if(data.size() == 0) {
+			noSets = true;
 		}
 		adapter = new ConnectionAdapter(lv.getContext(),R.layout.buttonset_selection_list_row,entries);
 		adapter.sort(new EntryCompare());
@@ -114,6 +121,14 @@ public class ButtonSetSelectorDialog extends Dialog {
 		
 		lv.setOnItemLongClickListener(new ButtonSetEditorOpener());
 		
+	}
+	
+	public void onStart() {
+		super.onStart();
+		if(noSets) {
+			Toast t = Toast.makeText(ButtonSetSelectorDialog.this.getContext(), "No butt sets loaded. Click below to create new Button Sets.", Toast.LENGTH_LONG);
+			t.show();
+		}
 	}
 	
 	public void onBackPressed() {

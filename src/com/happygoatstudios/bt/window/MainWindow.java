@@ -39,8 +39,9 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.method.KeyListener;
-import android.util.Log;
+//import android.util.Log;
 import android.view.GestureDetector;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -70,6 +71,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.happygoatstudios.bt.R;
 //import com.happygoatstudios.bt.service.BaardTERMService;
@@ -239,11 +241,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		setContentView(R.layout.window_layout);
 		
 		String display_name = this.getIntent().getStringExtra("DISPLAY");
-        Pattern nowhitespace = Pattern.compile("\\s");
-        Matcher m = nowhitespace.matcher(display_name + ".PREFS");
-        String tmpstr = m.replaceAll("");
+		Pattern invalidchars = Pattern.compile("\\W"); 
+		Matcher replacebadchars = invalidchars.matcher(display_name);
+		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		prefsname = prefsname.replaceAll("/", "");
         //Log.e("WINDOW","LAUNCHING WITH CONFIGURATION FILE NAME:" + tmpstr);
-        PREFS_NAME = tmpstr; //kill off all white space in the display name, use it as the preference file
+        PREFS_NAME = prefsname; //kill off all white space in the display name, use it as the preference file
         history = new CommandKeeper(10);
         
         screen2 = (SlickView)findViewById(R.id.slickview);
@@ -395,6 +398,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					//current_button_views.clear();
 					//make the fake button.
 					makeFakeButton();
+					showNoButtonMessage(true);
 					
 					break;
 				case MESSAGE_CHANGEBUTTONSET:
@@ -425,6 +429,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 								}
 							} else {
 								makeFakeButton();
+								showNoButtonMessage(false);
 							}
 						}
 					} catch (RemoteException e3) {
@@ -576,6 +581,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 								}
 							} else {
 								makeFakeButton();
+								//show that the loaded set has no buttons.
+								showNoButtonMessage(false);
 							}
 						}
 						
@@ -728,6 +735,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					RelativeLayout hold = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 					hold.addView(new_button);
+					
+					new_button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
 					//current_button_views.add(new_button);
 					
 					break;
@@ -960,7 +969,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		//the uglyest of ugly hacks.
 		RelativeLayout modb = (RelativeLayout)findViewById(R.id.slickholder);
-		Log.e("WINDOW","ADDING FAKE BUTTON!");
+		//Log.e("WINDOW","ADDING FAKE BUTTON!");
 		SlickButton fakey = new SlickButton(modb.getContext(),0,0);
 		SlickButtonData fakedatay = new SlickButtonData();
 		fakedatay.setPrimaryColor(0x00FFFFFF);
@@ -980,6 +989,30 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		fakey.setData(fakedatay);
 		
 		modb.addView(fakey);
+		
+
+		
+	}
+	
+	private void showNoButtonMessage(boolean newset) {
+		
+		//if we are here then we loaded a blank button set, show the button set info message
+		try {
+			String message = "";
+			if(newset) {
+				message = "Button set " + service.getLastSelectedSet() + " created!";
+			} else {
+				message = "No buttons loaded for " + service.getLastSelectedSet() + " set.";
+			}
+			message += "\nNew buttons can be made by long pressing the window.";
+			message += "\nButtons may be moved after press + hold.";
+			message += "\nButtons may be edited after pres + hold + hold.";
+			Toast t = Toast.makeText(MainWindow.this, message, Toast.LENGTH_LONG);
+			t.show();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean onCreateOptionsMenu(Menu menu) {

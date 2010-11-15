@@ -4,13 +4,14 @@ import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.button.ButtonEditorDialog.COLOR_FIELDS;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
+import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.util.Log;
+//import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -146,6 +147,17 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				// TODO Auto-generated method stub
 				//ColorSetSettings newset = new ColorSetSettings();
 				//newset.setPrimaryColor(normalColor.getB)
+				Validator checker = new Validator();
+				checker.add(buttonHeight, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER|Validator.VALIDATE_NUMBER_NOT_ZERO, "Button Height");
+				checker.add(buttonWidth, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER|Validator.VALIDATE_NUMBER_NOT_ZERO, "Button Width");
+				checker.add(labelSize, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER|Validator.VALIDATE_NUMBER_NOT_ZERO, "Label Size");
+				
+				String result = checker.validate();
+				if(result != null) {
+					checker.showMessage(ButtonSetEditor.this.getContext(), result);
+					return;
+				}
+				
 				newsettings.setButtonHeight(Integer.parseInt(buttonHeight.getText().toString()));
 				newsettings.setButtonWidth(Integer.parseInt(buttonWidth.getText().toString()));
 				newsettings.setLabelSize(Integer.parseInt(labelSize.getText().toString()));

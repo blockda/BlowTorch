@@ -56,7 +56,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.util.Log;
+//import android.util.Log;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -129,7 +129,7 @@ public class StellarService extends Service {
 	private boolean compressionStarting = false;
 	
 	public void onLowMemory() {
-		Log.e("SERVICE","The service has been requested to shore up memory usage, potentially going to be killed.");
+		//Log.e("SERVICE","The service has been requested to shore up memory usage, potentially going to be killed.");
 	}
 	
 	public void onCreate() {
@@ -151,7 +151,12 @@ public class StellarService extends Service {
 			return;
 		}
 		
-		loadXmlSettings(settingslocation);
+		Pattern invalidchars = Pattern.compile("\\W"); 
+		Matcher replacebadchars = invalidchars.matcher(settingslocation);
+		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		prefsname = prefsname.replaceAll("/", "");
+		
+		loadXmlSettings(prefsname);
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -172,12 +177,15 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_INIT:
 					//Log.e("BTSERVICE","INTIIALIZING");
+					
 					try {
 						doStartup();
-					} catch (SocketException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+					} catch (UnknownHostException e) {
+						throw new RuntimeException(e);
+					} catch (IOException e) {
+						throw new RuntimeException(e);
 					}
+					
 					break;
 				case MESSAGE_END:
 					//Log.e("BTSERVICE","ENDING");
@@ -1372,7 +1380,7 @@ public class StellarService extends Service {
 				//normal command
 				//Log.e("SERVICE", cmd+ "| UP FOR NORMAL PROCESSING" );
 				if(cmd.equals(".." + crlf) || cmd.equals("..")) {
-					Log.e("SERVICE",cmd + " == ..");
+					//Log.e("SERVICE",cmd + " == ..");
 					synchronized(the_settings) {
 						String outputmsg = "\n" + Colorizer.colorRed + "Dot command processing ";
 						if(the_settings.isProcessPeriod()) {
@@ -1553,7 +1561,7 @@ public class StellarService extends Service {
 		WifiInfo info = wifi.getConnectionInfo();
 		if(info.getNetworkId() != -1) {
 			//if so, grab the lock
-			Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
+			//Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
 			the_wifi_lock = wifi.createWifiLock("BLOWTORCH_WIFI_LOCK");
 			the_wifi_lock.acquire();
 		}
@@ -1812,7 +1820,7 @@ public class StellarService extends Service {
 	
 	boolean debug = false;
 	
-	public void doStartup() throws SocketException {
+	public void doStartup() throws UnknownHostException, IOException {
 		if(host == BAD_HOST || port == BAD_PORT) {
 			return; //dont' start 
 		}
@@ -1847,15 +1855,9 @@ public class StellarService extends Service {
 		
 
 		
-		try {
-			the_socket = new Socket(addr.getHostAddress(),port);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		the_socket = new Socket(addr.getHostAddress(),port);
+		
 		
 		the_socket.setSendBufferSize(1024);
 		int size = the_socket.getSendBufferSize();

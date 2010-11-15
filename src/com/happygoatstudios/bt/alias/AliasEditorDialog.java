@@ -21,7 +21,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
+//import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +53,8 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		
 	}
 	
+	private boolean noAliases = false;
+	
 	public void onCreate(Bundle b) {
 		
 		if(input != null) {
@@ -80,6 +82,10 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			
 			for(int i=0;i<keys.length;i++) {
 				aliases.add((String)keys[i] + "[||]" + (String)values[i]);
+			}
+			
+			if(keys.length == 0) {
+				noAliases = true;
 			}
 			
 			apdapter = new ConnectionAdapter(lv.getContext(),R.layout.alias_row,aliases);
@@ -118,6 +124,14 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			}
 		});
 
+	}
+	
+	public void onStart() {
+		super.onStart();
+		if(noAliases) {
+			Toast t = Toast.makeText(AliasEditorDialog.this.getContext(), "No aliases loaded. Click below to create new aliases.",Toast.LENGTH_LONG);
+			t.show();
+		}
 	}
 	
 	private class ConnectionAdapter extends ArrayAdapter<String> {
