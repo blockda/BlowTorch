@@ -9,4 +9,6 @@ oneway interface IStellarServiceCallback {
 	void rawBufferIncoming(String rawbuf);
 	void loadSettings();
 	void displayXMLError(String error);
+	void executeColorDebug(int arg);
+	void invokeDirtyExit();
 }
