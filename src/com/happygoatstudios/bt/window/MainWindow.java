@@ -39,6 +39,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.method.KeyListener;
+import android.util.Log;
 //import android.util.Log;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
@@ -111,8 +112,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_XMLERROR = 397;
 	protected static final int MESSAGE_COLORDEBUG = 675;
 	protected static final int MESSAGE_DIRTYEXITNOW = 943;
+	protected static final int MESSAGE_DOHAPTICFEEDBACK = 856;
+	public static final int MESSAGE_DELETEBUTTONSET = 867;
+	public static final int MESSAGE_CLEARBUTTONSET = 868;
+	protected static final int MESSAGE_SHOWTOAST = 869;
+	
 	
 	protected boolean settingsDialogRun = false;
+	
+	private boolean autoLaunch = true;
+	private boolean disableColor = false;
+	private String overrideHF = "auto";
 	
 	
 	String host;
@@ -148,6 +158,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	boolean isBound = false;
 	
 	boolean isKeepLast = false; //for keeping last
+	boolean historyWidgetKept = false;
 	
 	
 	Boolean settingsLoaded = false; //synchronize or try to mitigate failures of writing button data, or failures to read data
@@ -282,7 +293,22 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					
 					String cmd = history.getNext();
-					input_box.setText(cmd);
+					try {
+						if(service.isKeepLast()) {
+							if(historyWidgetKept) {
+								input_box.setText(history.getNext());
+								historyWidgetKept=false;
+							} else {
+								input_box.setText(cmd);
+							}
+						} else {
+							input_box.setText(cmd);
+							//Log.e("WINDOW","UNFREAKY");
+						}
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getPrev();
@@ -355,6 +381,64 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_SHOWTOAST:
+					Toast t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_SHORT);
+					t.show();
+					break;
+				case MESSAGE_DELETEBUTTONSET:
+					try {
+						int count = service.deleteButtonSet((String)msg.obj);
+						String message = "Deleted " + (String)msg.obj + " button set";
+						if(count > 0) {
+							message +=  "with " + count + " buttons.";
+						} else {
+							message += ".";
+						}
+						
+						Message reloadset = this.obtainMessage(MESSAGE_CHANGEBUTTONSET);
+						reloadset.obj = service.getAvailableSet();
+						reloadset.arg1 = 10;
+						
+						if(service.getLastSelectedSet().equals((String)msg.obj)) {
+							message += "\nLoaded default button set.";
+						}
+						Toast cleared = Toast.makeText(MainWindow.this,message, Toast.LENGTH_SHORT);
+						cleared.show();
+						
+						this.sendMessage(reloadset);
+						
+
+						
+					} catch (RemoteException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					}
+					break;
+				case MESSAGE_CLEARBUTTONSET:
+					try {
+						int count = service.clearButtonSet((String)msg.obj);
+						Toast cleared = Toast.makeText(MainWindow.this,"Cleared " + count+" buttons from " + (String)msg.obj + " button set.", Toast.LENGTH_SHORT);
+						cleared.show();
+						if(service.getLastSelectedSet().equals((String)msg.obj)) {
+							Message reloadset = this.obtainMessage(MESSAGE_CHANGEBUTTONSET);
+							reloadset.obj = msg.obj;
+							reloadset.arg1 = 10;
+							this.sendMessage(reloadset);
+						}
+						
+					} catch (RemoteException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					}
+					break;
+				case MESSAGE_DOHAPTICFEEDBACK:
+					/*int flags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
+					if(overrideHF) {
+						flags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
+					}
+					input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, flags);*/
+					DoHapticFeedback();
+					break;
 				case MESSAGE_DIRTYEXITNOW:
 					//the service via an entered command ".closewindow" or something, to bypass the window asking if you want to close
 					dirtyExit();
@@ -440,7 +524,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 								}
 							} else {
 								makeFakeButton();
-								showNoButtonMessage(false);
+								if(msg.arg1 != 10) showNoButtonMessage(false);
 							}
 						}
 					} catch (RemoteException e3) {
@@ -496,6 +580,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean use_suggestions = prefs.getBoolean("USE_SUGGESTIONS", true);
 						boolean keeplast = prefs.getBoolean("KEEPLAST", false);
 						boolean bsbugfix = prefs.getBoolean("BACKSPACE_BUGFIX", false);
+						boolean autolaunch = prefs.getBoolean("AUTOLAUNCH_EDITOR",true);
+						boolean disablecolor = prefs.getBoolean("DISABLE_COLOR", false);
+						String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
@@ -511,6 +598,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setAttemptSuggestions(use_suggestions);
 							service.setKeepLast(keeplast);
 							service.setBackSpaceBugFix(bsbugfix);
+							service.setAutoLaunchEditor(autolaunch);
+							service.setDisableColor(disablecolor);
+							service.setHapticFeedbackMode(overrideHF);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -671,6 +761,18 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							isKeepLast = false;
 						}
 						
+						//handle auto launch
+						autoLaunch = service.isAutoLaunchEditor();
+						//handle disable color
+						if(service.isDisableColor()) {
+							//set the slick view debug mode to 3.
+							screen2.setColorDebugMode(3);
+						} else {
+							screen2.setColorDebugMode(0);
+						}
+						//handle overridehf.
+						overrideHF = service.HapticFeedbackMode();
+						
 						if(service.isBackSpaceBugFix()) {
 							//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
 							BetterEditText tmp_bar = (BetterEditText)input_box;
@@ -747,7 +849,20 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					RelativeLayout hold = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 					hold.addView(new_button);
 					
-					new_button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+					/*int aflags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
+					if(overrideHF) {
+						aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
+					}
+					new_button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
+					*/
+					DoHapticFeedback();
+					
+					//this may look real funky, but MSG_DELETEBUTTON really means to launch the editor.
+					if(autoLaunch) {
+						Message launcheditor = this.obtainMessage(SlickView.MSG_DELETEBUTTON);
+						launcheditor.obj = new_button;
+						this.sendMessage(launcheditor);
+					}
 					//current_button_views.add(new_button);
 					
 					break;
@@ -789,6 +904,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						if(service.isKeepLast()) {
 							//Log.e("WINDOW","ATTEMPTING TO SET LAST TO SELECTED");
 							input_box.setSelection(0, input_box.getText().length());
+							historyWidgetKept = true;
 						} else {
 							//Log.e("WINDOW","NOT KEEPING LAST");
 							input_box.clearComposingText();
@@ -852,7 +968,22 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					public void onClick(View arg0) {
 						EditText input_box = (EditText)findViewById(R.id.textinput);
 						String cmd = history.getNext();
-						input_box.setText(cmd);
+						try {
+							if(service.isKeepLast()) {
+								if(historyWidgetKept) {
+									input_box.setText(history.getNext());
+									historyWidgetKept = true;
+								} else {
+									input_box.setText(cmd);
+								}
+							} else {
+								input_box.setText(cmd);
+								//Log.e("WINDOW","UNFREAKY");
+							}
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				});
 				
@@ -1092,6 +1223,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("WIFI_KEEPALIVE", service.isKeepWifiActive());
 				edit.putBoolean("USE_SUGGESTIONS", service.isAttemptSuggestions());
 				edit.putBoolean("BACKSPACE_BUGFIX", service.isBackSpaceBugFix());
+				edit.putBoolean("AUTOLAUNCH_EDITOR", service.isAutoLaunchEditor());
+				edit.putBoolean("DISABLE_COLOR",service.isDisableColor());
+				edit.putString("OVERRIDE_HAPTICFEEDBACK", service.HapticFeedbackMode());
 				
 				edit.putBoolean("KEEPLAST", service.isKeepLast());
 				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
@@ -1164,6 +1298,20 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//alert.show();
 		
 		//super.onBackPressed();
+	}
+	
+	private void DoHapticFeedback() {
+		if(overrideHF.equals("none")) {
+			return;
+		}
+		
+		int aflags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
+		if(overrideHF.equals("always")) {
+			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
+		}
+		
+		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
+		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
 	}
 	
 	public void cleanExit() {
@@ -1529,6 +1677,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 		public void invokeDirtyExit() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_DIRTYEXITNOW);
+			
+		}
+
+		public void showMessage(String message) throws RemoteException {
+			Message showmessage = myhandler.obtainMessage(MESSAGE_SHOWTOAST);
+			showmessage.obj = message;
+			myhandler.sendMessage(showmessage);
 			
 		}
 	};

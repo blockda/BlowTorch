@@ -23,6 +23,9 @@ public class BaseParser {
 	static final String WINDOW_FONTPATH = "fontpath";
 	static final String DATA_SEMINEWLINE = "seminewline";
 	static final String WINDOW_MAXLINES = "maxlines";
+	static final String ATTR_AUTOLAUNCHEDITOR = "launchEditor";
+	static final String ATTR_DISABLECOLOR = "disableColor";
+	static final String ATTR_OVERRIDEHF = "hapticFeedBack";
 	
 	static final String TAG_WINDOW = "window";
 	static final String ATTR_LINESIZE = "lineSize";
