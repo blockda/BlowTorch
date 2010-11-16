@@ -56,7 +56,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.util.Log;
+//import android.util.Log;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -958,23 +958,29 @@ public class StellarService extends Service {
 		}
 
 
-		public void clearButtonSet(String name) throws RemoteException {
+		public int clearButtonSet(String name) throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
+				int count = the_settings.getButtonSets().get(name).size();
 				the_settings.getButtonSets().get(name).removeAllElements();
+				return count;
 			}
 			
 		}
 
 
-		public void deleteButtonSet(String name) throws RemoteException {
+		public int deleteButtonSet(String name) throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
+				int count = the_settings.getButtonSets().get(name).size();
 				if(name.equals("default")) {
 					//cannot delete default button set, only clear it
 					the_settings.getButtonSets().get(name).removeAllElements();
+					return count;
 				} else {
+					
 					the_settings.getButtonSets().remove(name);
+					return count;
 				}
 			}
 		}
@@ -1048,15 +1054,33 @@ public class StellarService extends Service {
 				File root = Environment.getExternalStorageDirectory();
 				String state = Environment.getExternalStorageState();
 				if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-					File file = new File(root,path);
+					boolean added = false;
+					String updated = path;
+					if(!path.endsWith(".xml")) {
+						added = true;
+						updated = path + ".xml";
+					}
+					File file = new File(root,updated);
 					file.createNewFile();
 					//Log.e("SERVICE","ATTEMPTING TO WRITE TO FILE: " + file.getPath());
 					FileWriter writer = new FileWriter(file);
 					BufferedWriter tmp = new BufferedWriter(writer);
 					tmp.write(HyperSettings.writeXml2(the_settings));
 					tmp.close();
+					
+					String message = "Saved: " + updated;
+					if(added) {
+						message += "\nAppended .xml extension.";
+					}
+					
+					DispatchToast(message);
+					//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), message, Toast.LENGTH_SHORT);
+					//msg.show();
 				} else {
 					//Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
+					//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), "SD Card not available. File not written.", Toast.LENGTH_SHORT);
+					//msg.show();
+					DispatchToast("SD Card not available. File not written.");
 				}
 				} catch(Exception e) {
 					throw new RuntimeException(e);
@@ -1291,6 +1315,55 @@ public class StellarService extends Service {
 		public void setBackSpaceBugFix(boolean use) throws RemoteException {
 			synchronized(the_settings) {
 				the_settings.setBackspaceBugFix(use);
+			}
+		}
+
+		public boolean isAutoLaunchEditor() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isAutoLaunchButtonEdtior();
+			}
+		}
+
+		public boolean isDisableColor() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isDisableColor();
+			}
+		}
+
+		public void setAutoLaunchEditor(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setAutoLaunchButtonEdtior(use);
+			}
+		}
+
+		public void setDisableColor(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setDisableColor(use);
+			}
+		}
+
+		public String HapticFeedbackMode() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getHapticFeedbackMode();
+			}
+		}
+
+		public void setHapticFeedbackMode(String use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setHapticFeedbackMode(use);
+			}
+		}
+
+		public String getAvailableSet() throws RemoteException {
+			synchronized(the_settings) {
+				//String result = "";
+				Set<String> keyset = the_settings.getButtonSets().keySet();
+				if(keyset.contains("default")) {
+					//this should always be the case.
+					return "default";
+				} else {
+					return "";
+				}
 			}
 		}
 	};
@@ -1598,6 +1671,20 @@ public class StellarService extends Service {
 			the_wifi_lock.release();
 			the_wifi_lock = null;
 		}
+	}
+	
+	private void DispatchToast(String message) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).showMessage(message);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
 	}
 	
 	private class SpecialCommand {

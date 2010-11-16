@@ -23,6 +23,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.widget.Toast;
 
 public class HyperSettingsActivity extends PreferenceActivity {
 	
@@ -154,8 +155,10 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		export.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 
 			public boolean onPreferenceChange(Preference arg0, Object arg1) {
+				
 				//EditTextPreference pref = (EditTextPreference)arg0;
 				//arg1 = "/BaardTERM/" + pref.getText();
+				
 				importexport.sendEmptyMessageDelayed(0, 10);
 				return true;
 			}
