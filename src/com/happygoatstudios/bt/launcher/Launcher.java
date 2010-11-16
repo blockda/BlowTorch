@@ -388,6 +388,8 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		apdapter.add(muc);
 		apdapter.notifyDataSetChanged();
+		
+		noConnections = false;
     	
     }
     
