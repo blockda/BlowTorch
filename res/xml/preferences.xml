@@ -5,7 +5,21 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:key="first_screen">
 	
-	<PreferenceCategory android:title = "Window Settings">
+	<PreferenceCategory android:title = "Program Settings">
+		<PreferenceScreen
+			android:key="INPUT_SCREEN"
+			android:title="Window Options"
+			android:summary="Options involved with the display of text or interactions with the window.">
+		<CheckBoxPreference
+			android:key="AUTOLAUNCH_EDITOR"
+			android:title="Automatically Launch Editor?"
+			android:summary="When buttons are created, the editor will be launched."
+			android:defaultValue="true"/>
+		<CheckBoxPreference
+			android:key="DISABLE_COLOR"
+			android:title="Disable ANSI Color?"
+			android:summary="Turns off color processing (.colordebug 3)."
+			android:defaultValue="false"/>
 		<EditTextPreference
 			android:key="FONT_SIZE"
 			android:title="Font Size"
@@ -33,11 +47,25 @@
 			android:layout_height="wrap_content"
 			android:gravity = "right"
 			android:inputType="number"/>
+		
 		<ListPreference
 			android:key="FONT_NAME"
 			android:title="Font"
 			android:summary="The font used by the window to render text."
 			android:defaultValue="monospace"/>
+			
+		<ListPreference
+			android:key="OVERRIDE_HAPTICFEEDBACK"
+			android:title="Haptic Feedback Mode"
+			android:summary="Haptic feedback during button create/move/edit states."
+			android:defaultValue="auto"
+			android:entries="@array/hflongmessage"
+			android:entryValues="@array/hfmodes"/>
+		</PreferenceScreen>
+		<PreferenceScreen
+			android:key="INPUT_OPTIONS"
+			android:title="Input Options"
+			android:summary="Options that deal with the input box and editors.">
 		<CheckBoxPreference
 			android:key="USE_EXTRACTUI"
 			android:defaultValue="false"
@@ -57,9 +85,12 @@
 			android:key="BACKSPACE_BUGFIX"
 			android:defaultValue="false"
 			android:summary="Enable this if you have problems with backspace not working in the non-full screen editor."
-			android:title="Backspace Fix?"/>
-	</PreferenceCategory>
-	<PreferenceCategory android:title="Service Settings:">
+			android:title="Enable Compatibility Mode?"/>
+		</PreferenceScreen>
+		<PreferenceScreen
+			android:key="SERVICE_SETTINGS"
+			android:title="Service Settings"
+			android:summary="Options for the background service and data processing.">	
 		<CheckBoxPreference
 			android:key="PROCESS_PERIOD"
 			android:defaultValue="true"
@@ -80,6 +111,7 @@
 			android:defaultValue="true"
 			android:summary="Attempt to keep WiFi radio active while service is running."
 			android:title="Keep Wifi Radio Active?"/>
+		</PreferenceScreen>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Import/Export Settings">
 		<com.happygoatstudios.bt.settings.HyperDialogPreference

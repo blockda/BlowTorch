@@ -23,7 +23,7 @@ import android.sax.EndElementListener;
 import android.sax.EndTextElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
-import android.util.Log;
+//import android.util.Log;
 import android.util.Xml;
 
 public class HyperSAXParser extends BaseParser {
@@ -73,6 +73,11 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setAttemptSuggestions( (attributes.getValue("",ATTR_SUGGESTIONS) == null) ? false : (attributes.getValue("",ATTR_SUGGESTIONS).equals("true")) ? true : false);
 				tmp.setKeepLast( (attributes.getValue("",ATTR_KEEPLAST) == null) ? false : (attributes.getValue("",ATTR_KEEPLAST).equals("true")) ? true : false);
 				tmp.setBackspaceBugFix( (attributes.getValue("",ATTR_BACKSPACEFIX) == null) ? false : (attributes.getValue("",ATTR_BACKSPACEFIX).equals("true")) ? true : false);
+				tmp.setAutoLaunchButtonEdtior( (attributes.getValue("",ATTR_AUTOLAUNCHEDITOR) == null) ? true : (attributes.getValue("",ATTR_AUTOLAUNCHEDITOR).equals("true")) ? true : false);
+				tmp.setDisableColor( (attributes.getValue("",ATTR_DISABLECOLOR) == null) ? false : (attributes.getValue("",ATTR_DISABLECOLOR).equals("true")) ? true : false);
+				tmp.setHapticFeedbackMode( (attributes.getValue("",ATTR_OVERRIDEHF) == null) ? "auto" : (attributes.getValue("",ATTR_OVERRIDEHF).equals("")) ? "auto" : attributes.getValue("",ATTR_OVERRIDEHF));
+				
+				
 				
 				int wmode = new Integer(attributes.getValue("",ATTR_WRAPMODE));
 				switch(wmode) {
