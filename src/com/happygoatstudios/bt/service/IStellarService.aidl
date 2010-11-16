@@ -42,8 +42,8 @@ interface IStellarService {
 	void modifyButton(String targetset,in SlickButtonData orig, in SlickButtonData mod);
 	void addNewButtonSet(String name);
 	List<String> getButtonSets();
-	void deleteButtonSet(String name);
-	void clearButtonSet(String name);
+	int deleteButtonSet(String name);
+	int clearButtonSet(String name);
 	Map getButtonSetListInfo();
 	String getLastSelectedSet();
 	void LoadSettingsFromPath(String path);
@@ -72,4 +72,12 @@ interface IStellarService {
 	boolean isKeepLast();
 	boolean isBackSpaceBugFix();
 	void setBackSpaceBugFix(boolean use);
+	boolean isAutoLaunchEditor();
+	void setAutoLaunchEditor(boolean use);
+	boolean isDisableColor();
+	void setDisableColor(boolean use);
+	String HapticFeedbackMode();
+	void setHapticFeedbackMode(String use);
+	String getAvailableSet();
+
 }

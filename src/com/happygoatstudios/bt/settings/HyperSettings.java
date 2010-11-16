@@ -9,7 +9,7 @@ import java.util.Vector;
 
 import org.xmlpull.v1.XmlSerializer;
 
-import android.util.Log;
+//import android.util.Log;
 import android.util.Xml;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -26,6 +26,11 @@ public class HyperSettings {
 	private int MaxLines = 300;
 	private String FontName = "monospace";
 	private String FontPath = "none";
+	private boolean AutoLaunchButtonEdtior = true;
+	private boolean DisableColor = false;
+	//private boolean OverrideHapticFeedback = false;
+	private String hapticFeedbackMode = "auto";
+	
 	private boolean UseExtractUI = false;
 	private boolean AttemptSuggestions = false;
 	
@@ -37,6 +42,7 @@ public class HyperSettings {
 	private boolean KeepWifiActive = true;
 	private boolean KeepLast = false;
 	private boolean backspaceBugFix = false;
+	
 	
 	
 	
@@ -139,6 +145,9 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_SUGGESTIONS, (data.isAttemptSuggestions()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_KEEPLAST, (data.isKeepLast()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_BACKSPACEFIX, (data.isBackspaceBugFix()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_AUTOLAUNCHEDITOR, (data.isAutoLaunchButtonEdtior()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_DISABLECOLOR, (data.isDisableColor()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_OVERRIDEHF, (data.getHapticFeedbackMode().equals("")) ? "auto" : data.getHapticFeedbackMode());
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -432,6 +441,38 @@ public class HyperSettings {
 
 	public boolean isBackspaceBugFix() {
 		return backspaceBugFix;
+	}
+
+	public void setAutoLaunchButtonEdtior(boolean autoLaunchButtonEdtior) {
+		AutoLaunchButtonEdtior = autoLaunchButtonEdtior;
+	}
+
+	public boolean isAutoLaunchButtonEdtior() {
+		return AutoLaunchButtonEdtior;
+	}
+
+	public void setDisableColor(boolean disableColor) {
+		DisableColor = disableColor;
+	}
+
+	public boolean isDisableColor() {
+		return DisableColor;
+	}
+
+	/*public void setOverrideHapticFeedback(boolean overrideHapticFeedback) {
+		OverrideHapticFeedback = overrideHapticFeedback;
+	}
+
+	public boolean isOverrideHapticFeedback() {
+		return OverrideHapticFeedback;
+	}*/
+
+	public void setHapticFeedbackMode(String hapticFeedbackMode) {
+		this.hapticFeedbackMode = hapticFeedbackMode;
+	}
+
+	public String getHapticFeedbackMode() {
+		return hapticFeedbackMode;
 	}
 
 }

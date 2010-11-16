@@ -10,8 +10,11 @@ import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.window.MainWindow;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -111,10 +114,13 @@ public class ButtonSetSelectorDialog extends Dialog {
 
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
+
+				
 				ButtonEntry item = entries.get(arg2);
 				Message changebuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,item.name);
 				dispater.sendMessage(changebuttonset);
 				ButtonSetSelectorDialog.this.dismiss();
+				
 			}
 			
 		});
@@ -145,6 +151,100 @@ public class ButtonSetSelectorDialog extends Dialog {
 			dispater.sendMessage(reloadbuttonset);
 		}
 		this.dismiss();
+	}
+	
+	private class ModifySetDefaultsListener implements DialogInterface.OnClickListener {
+
+		Integer picked = null;
+		public ModifySetDefaultsListener(int input) {
+			picked = input;
+		}
+		
+		public void onClick(DialogInterface dialog, int which) {
+			ButtonEntry entry = adapter.getItem(picked);
+			ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
+			editor.show();
+		}
+		
+	}
+	
+	private class DeleteSetListener implements DialogInterface.OnClickListener {
+
+		Integer picked = null;
+		public DeleteSetListener(int input) {
+			picked = input;
+		}
+		
+		public void onClick(DialogInterface dialog, int which) {
+			AlertDialog.Builder confirm = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
+			
+			//default button set can not be deleted.
+			if(entries.get(picked).name.equals("default")) {
+				confirm.setTitle("Cannot Delete Default Set");			
+				confirm.setMessage("This set can not be removed. It can be cleared.");
+				//confirm.setPositiveButton("Yes, Delete.",new ReallyDeleteSetListener(picked));
+				confirm.setNeutralButton("Clear Buttons.", new ClearSetListener(picked));
+				confirm.setNegativeButton("Cancel.", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+				
+				AlertDialog dlg = confirm.create();
+				dlg.show();
+				dialog.dismiss();
+				ButtonSetSelectorDialog.this.dismiss();				
+			} else {
+			
+				confirm.setTitle("Really Delete Button Set?");			
+				confirm.setMessage("The set can be cleared of buttons if desired.");
+				confirm.setPositiveButton("Yes, Delete.",new ReallyDeleteSetListener(picked));
+				confirm.setNeutralButton("Clear Buttons.", new ClearSetListener(picked));
+				confirm.setNegativeButton("No way!", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+				
+				AlertDialog dlg = confirm.create();
+				dlg.show();
+				dialog.dismiss();
+				ButtonSetSelectorDialog.this.dismiss();
+			}
+		}
+		
+	}
+	
+	private class ReallyDeleteSetListener implements DialogInterface.OnClickListener {
+
+		Integer picked = null;
+		public ReallyDeleteSetListener(int input) {
+			picked = input;
+		}
+		
+		public void onClick(DialogInterface dialog, int which) {
+			Message delset = dispater.obtainMessage(MainWindow.MESSAGE_DELETEBUTTONSET);
+			delset.obj = (entries.get(picked)).name;
+			dispater.sendMessage(delset);
+		}
+		
+	}
+	
+	private class ClearSetListener implements DialogInterface.OnClickListener {
+
+		Integer picked = null;
+		public ClearSetListener(int input) {
+			picked = input;
+		}
+		
+		public void onClick(DialogInterface dialog, int which) {
+			Message delset = dispater.obtainMessage(MainWindow.MESSAGE_CLEARBUTTONSET);
+			delset.obj = (entries.get(picked)).name;
+			dispater.sendMessage(delset);
+		}
+		
 	}
 	
 	private class ConnectionAdapter extends ArrayAdapter<ButtonEntry> {
@@ -194,10 +294,30 @@ public class ButtonSetSelectorDialog extends Dialog {
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
 			// TODO Auto-generated method stub
-			ButtonEntry entry = adapter.getItem(arg2);
 			
-			ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
-			editor.show();
+			AlertDialog.Builder builder = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
+			builder.setTitle("Modify/Delete Button Set");
+			builder.setMessage("Attempting to modify or delete " + entries.get(arg2).name + " button set.");
+			builder.setPositiveButton("Modify", new ModifySetDefaultsListener(arg2));
+			
+			builder.setNeutralButton("Delete", new DeleteSetListener(arg2));
+			
+			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				
+				public void onClick(DialogInterface dialog, int which) {
+					// TODO Auto-generated method stub
+					dialog.dismiss();
+				}
+			});
+			
+			AlertDialog dialog = builder.create();
+			dialog.show();
+			
+			
+			
+			//ButtonEntry entry = adapter.getItem(arg2);
+			//ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
+			//editor.show();
 			
 			return false;
 		}
