@@ -24,12 +24,12 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:gravity = "right"
-			android:inputType="number"/>
+			android:inputType="numberDecimal"/>
 		<EditTextPreference
 			android:key="FONT_SIZE_EXTRA"
 			android:title="Line Spacing"
 			android:defaultValue="2"
-			android:summary="The extra space inbetween lines (in pixels)."
+			android:summary="The extra space in between lines (in pixels)."
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:gravity = "right"
