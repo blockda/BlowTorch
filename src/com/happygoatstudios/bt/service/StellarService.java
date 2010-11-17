@@ -1375,6 +1375,30 @@ public class StellarService extends Service {
 				}
 			}
 		}
+
+		public String getHFOnFlip() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getHapticFeedbackOnFlip();
+			}
+		}
+
+		public String getHFOnPress() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getHapticFeedbackOnPress();
+			}
+		}
+
+		public void setHFOnFlip(String use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setHapticFeedbackOnFlip(use);
+			}
+		}
+
+		public void setHFOnPress(String use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setHapticFeedbackOnPress(use);
+			}
+		}
 	};
 	
 	Pattern newline = Pattern.compile("\n");

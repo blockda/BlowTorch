@@ -63,8 +63,22 @@
 			android:defaultValue="true"/>
 		<ListPreference
 			android:key="OVERRIDE_HAPTICFEEDBACK"
-			android:title="Haptic Feedback Mode"
+			android:title="Haptic Feedback on Create/Modify"
 			android:summary="Haptic feedback during button create/move/edit states."
+			android:defaultValue="auto"
+			android:entries="@array/hflongmessage"
+			android:entryValues="@array/hfmodes"/>
+		<ListPreference
+			android:key="HAPTIC_PRESS"
+			android:title="Haptic Feedback on Press"
+			android:summary="Haptic feedback for button press action."
+			android:defaultValue="auto"
+			android:entries="@array/hflongmessage"
+			android:entryValues="@array/hfmodes"/>
+		<ListPreference
+			android:key="HAPTIC_FLIP"
+			android:title="Haptic Feedback on Flip"
+			android:summary="Haptic feedback for button gesture action."
 			android:defaultValue="auto"
 			android:entries="@array/hflongmessage"
 			android:entryValues="@array/hfmodes"/>

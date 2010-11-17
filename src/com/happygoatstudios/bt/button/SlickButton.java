@@ -265,6 +265,7 @@ public class SlickButton extends View {
 				//this.invalidate();
 				newstate = DISPLAY_STATE.SELECTED;
 				//this.invalidate(rect); //only invaldate my rect.
+				
 			}
 			
 		} else {
@@ -283,6 +284,7 @@ public class SlickButton extends View {
 						//this.invalidate();
 						newstate = DISPLAY_STATE.FLIPPED;
 						//this.invalidate(rect); //only invaldate my rect.
+						
 					}
 				} else {
 					doing_flip = false;
@@ -308,6 +310,7 @@ public class SlickButton extends View {
 			//this.invalidate();
 			newstate = DISPLAY_STATE.SELECTED;
 			this.bringToFront();
+			dispatcher.sendEmptyMessage(MainWindow.MESSAGE_HFPRESS);
 			//this.invalidate(rect);
 		}
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {
@@ -382,6 +385,13 @@ public class SlickButton extends View {
 			//Log.e("BUTTON","DRAWING BUTTON BECAUSE STATE CHANGED");
 			this.invalidate();
 			state = newstate;
+			
+			if(state == DISPLAY_STATE.FLIPPED) {
+				dispatcher.sendEmptyMessage(MainWindow.MESSAGE_HFFLIP);
+			}
+			if(state == DISPLAY_STATE.SELECTED) {
+				dispatcher.sendEmptyMessage(MainWindow.MESSAGE_HFPRESS);
+			}
 		} else {
 			//Log.e("BUTTON","NOT DRAWING BUTTON BECAUSE STATE DIDN'T CHANGE");
 		}
