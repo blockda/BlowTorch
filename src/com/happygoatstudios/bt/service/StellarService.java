@@ -2127,7 +2127,7 @@ public class StellarService extends Service {
 			
 			the_socket = new Socket();
 			SocketAddress adr = new InetSocketAddress(addr.getHostAddress(),port);
-			the_socket.connect(adr, 7000);
+			the_socket.connect(adr, 17000);
 			
 			
 			the_socket.setSendBufferSize(1024);
