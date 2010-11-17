@@ -310,7 +310,7 @@ public class SlickButton extends View {
 			//this.invalidate();
 			newstate = DISPLAY_STATE.SELECTED;
 			this.bringToFront();
-			dispatcher.sendEmptyMessage(MainWindow.MESSAGE_HFPRESS);
+			//dispatcher.sendEmptyMessage(MainWindow.MESSAGE_HFPRESS);
 			//this.invalidate(rect);
 		}
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {
