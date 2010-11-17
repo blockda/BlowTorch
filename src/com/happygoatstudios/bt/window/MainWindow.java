@@ -879,6 +879,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					//this may look real funky, but MSG_DELETEBUTTON really means to launch the editor.
 					if(autoLaunch) {
+						new_button.prepareToLaunchEditor();
+						
 						Message launcheditor = this.obtainMessage(SlickView.MSG_DELETEBUTTON);
 						launcheditor.obj = new_button;
 						this.sendMessage(launcheditor);
@@ -992,7 +994,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							if(service.isKeepLast()) {
 								if(historyWidgetKept) {
 									input_box.setText(history.getNext());
-									historyWidgetKept = true;
+									historyWidgetKept = false;
 								} else {
 									input_box.setText(cmd);
 								}
