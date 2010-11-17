@@ -39,7 +39,7 @@
   	<TableRow>
   		<TextView android:text="Send this command:"/>
   	</TableRow>
-  		<EditText android:id="@+id/responder_ack_ackwith"/>
+  		<EditText android:id="@+id/responder_ack_ackwith" android:singleLine="true"/>
   </TableLayout>
   </LinearLayout>
 

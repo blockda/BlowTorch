@@ -16,9 +16,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
+import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.PortUnreachableException;
+import java.net.ProtocolException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +62,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.util.Log;
 //import android.util.Log;
 import android.widget.Toast;
 
@@ -1687,6 +1694,20 @@ public class StellarService extends Service {
 		callbacks.finishBroadcast();
 	}
 	
+	
+	private void DispatchDialog(String message) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).showDialog(message);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
+	}
 	private class SpecialCommand {
 		public String commandName;
 		public SpecialCommand() {
@@ -2088,7 +2109,7 @@ public class StellarService extends Service {
 			//addr = x[0];
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			DispatchDialog("Unknown Host:" + e.getMessage());
 			return;
 		}
 		
@@ -2099,61 +2120,73 @@ public class StellarService extends Service {
 		
 
 		
-		
-		the_socket = new Socket(addr.getHostAddress(),port);
-		
-		
-		the_socket.setSendBufferSize(1024);
-		int size = the_socket.getSendBufferSize();
-		boolean shut = the_socket.isOutputShutdown();
-		if(shut) {
-			//Log.e("SERV","SOCKET OUTPUT IS SHUT DOWN");
-		} else {
-			//Log.e("SERV","SOCKET OUTPUT ACTIVE, BUFFER SIZE: " + size);
-		}
-		
 		try {
-			output_writer = new BufferedOutputStream(the_socket.getOutputStream());
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		//at this point we should have a valid socket
-		//start up the pump
-		//try {
-		//	outputter = new OutputWriter(the_socket.getOutputStream());
-		//} catch (IOException e1) {
-			// TODO Auto-generated catch block
-		//	e1.printStackTrace();
-		//}
-		//outputter.start();
-		try {
-			pump = new DataPumper(the_socket.getInputStream(),null,myhandler);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		pump.start();
-		
-		synchronized(this) {
+			
+			//the
+			//the_socket = new Socket(addr.getHostAddress(),port);
+			
+			the_socket = new Socket();
+			SocketAddress adr = new InetSocketAddress(addr.getHostAddress(),port);
+			the_socket.connect(adr, 7000);
+			
+			
+			the_socket.setSendBufferSize(1024);
+			int size = the_socket.getSendBufferSize();
+			boolean shut = the_socket.isOutputShutdown();
+			if(shut) {
+				//Log.e("SERV","SOCKET OUTPUT IS SHUT DOWN");
+			} else {
+				//Log.e("SERV","SOCKET OUTPUT ACTIVE, BUFFER SIZE: " + size);
+			}
+			
 			try {
-				this.wait(500);
-			} catch (InterruptedException e) {
+				output_writer = new BufferedOutputStream(the_socket.getOutputStream());
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			//at this point we should have a valid socket
+			//start up the pump
+			//try {
+			//	outputter = new OutputWriter(the_socket.getOutputStream());
+			//} catch (IOException e1) {
+				// TODO Auto-generated catch block
+			//	e1.printStackTrace();
+			//}
+			//outputter.start();
+			try {
+				pump = new DataPumper(the_socket.getInputStream(),null,myhandler);
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} //give the pump some time sto start up
+			}
+			
+			pump.start();
+			
+			synchronized(this) {
+				try {
+					this.wait(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} //give the pump some time sto start up
+			}
+			
+			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_INITXFER);
+			
+			//show notification
+			showNotification();
+			
+			the_processor = new Processor(myhandler,mBinder);
+			the_buffer = new StringBuffer();
+		} catch (SocketException e) {
+			DispatchDialog("Socket Exception: " + e.getMessage());
+			//Log.e("SERVICE","NET FAILURE:" + e.getMessage());
+		} catch (SocketTimeoutException e) {
+			DispatchDialog("Socket Timeout: " + e.getMessage() );
+		} catch (ProtocolException e) {
+			DispatchDialog("Protocol Exception: " + e.getMessage());
 		}
-		
-		pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_INITXFER);
-		
-		//show notification
-		showNotification();
-		
-		the_processor = new Processor(myhandler,mBinder);
-		the_buffer = new StringBuffer();
-		
-		//if we are here we should be connected.
 
 		
 	}

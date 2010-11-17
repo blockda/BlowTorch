@@ -10,7 +10,7 @@
 
 <string-array name="hfmodes"><item>auto</item>
 <item>always</item>
-<item>never</item>
+<item>none</item>
 </string-array>
 <string-array name="hflongmessage"><item>Auto. Obey System Setting</item>
 <item>Always. Override System Setting.</item>

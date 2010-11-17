@@ -54,6 +54,7 @@
   		<EditText
   			android:id = "@+id/new_alias_pre"
   			android:layout_width="300dip"
+  			android:singleLine = "true"
   			android:layout_height="wrap_content"
   			android:hint="Text to replace." />
   	

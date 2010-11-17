@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -116,6 +117,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_DELETEBUTTONSET = 867;
 	public static final int MESSAGE_CLEARBUTTONSET = 868;
 	protected static final int MESSAGE_SHOWTOAST = 869;
+	protected static final int MESSAGE_SHOWDIALOG = 870;
 	
 	
 	protected boolean settingsDialogRun = false;
@@ -381,6 +383,24 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_SHOWDIALOG:
+					AlertDialog.Builder dbuilder = new AlertDialog.Builder(MainWindow.this);
+					dbuilder.setTitle("ERROR");
+					dbuilder.setMessage((String)msg.obj);
+					dbuilder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
+						
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+							cleanExit();
+							MainWindow.this.finish();
+							
+						}
+					});
+					
+					AlertDialog dlg = dbuilder.create();
+					dlg.show();
+					
+					break;
 				case MESSAGE_SHOWTOAST:
 					Toast t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_SHORT);
 					t.show();
@@ -388,7 +408,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				case MESSAGE_DELETEBUTTONSET:
 					try {
 						int count = service.deleteButtonSet((String)msg.obj);
-						String message = "Deleted " + (String)msg.obj + " button set";
+						String message = "Deleted " + (String)msg.obj + " button set ";
 						if(count > 0) {
 							message +=  "with " + count + " buttons.";
 						} else {
@@ -1685,6 +1705,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			showmessage.obj = message;
 			myhandler.sendMessage(showmessage);
 			
+		}
+
+		public void showDialog(String message) throws RemoteException {
+			Message showdlg = myhandler.obtainMessage(MESSAGE_SHOWDIALOG);
+			showdlg.obj = message;
+			myhandler.sendMessage(showdlg);
 		}
 	};
 	
