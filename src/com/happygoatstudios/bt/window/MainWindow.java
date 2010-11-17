@@ -1366,7 +1366,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		if(overrideHFPress.equals("always")) {
 			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
 		}
-		
+		//Log.e("WINDOW","DISPATCHING HAPTIC FEEDBACK FOR PRESS!");
 		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
 		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
 	}
