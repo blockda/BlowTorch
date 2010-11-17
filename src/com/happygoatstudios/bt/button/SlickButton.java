@@ -522,6 +522,15 @@ public class SlickButton extends View {
 		
 		
 	}
+
+	public void prepareToLaunchEditor() {
+		orig_data = this.getData().copy();
+		dialog_launched = true;
+		button_down = false;
+		moving = false;
+		nudged = false;
+		hasfocus = false;
+	}
 	
 
 
