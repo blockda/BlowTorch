@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.R;
 
@@ -32,6 +34,8 @@ public class HyperSettingsActivity extends PreferenceActivity {
 	//public HyperSettingsActivity(IBaardTERMService serv) {
 	//	service = serv;
 	//}
+	private Pattern xmlinsensitive = Pattern.compile("^.+\\.[Xx][Mm][Ll]$");
+	private Matcher xmlimatcher = xmlinsensitive.matcher("");
 	
 	protected void onCreate(Bundle b) {
 		super.onCreate(b);
@@ -56,7 +60,13 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		FilenameFilter xml_only = new FilenameFilter() {
 
 			public boolean accept(File arg0, String arg1) {
-				return arg1.endsWith(".xml");
+				//return arg1.endsWith(".xml");
+				xmlimatcher.reset(arg1);
+				if(xmlimatcher.matches()) {
+					return true;
+				} else {
+					return false;
+				}
 			}
 			
 		};

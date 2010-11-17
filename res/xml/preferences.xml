@@ -137,6 +137,7 @@
 		<EditTextPreference
 			android:key="EXPORT_PATH"
 			android:defaultValue=""
+			android:singleLine = "true"
 			android:title="Export Settings to File"
 			android:summary="Export settings to an .xml file in /sdcard/BlowTorch/"
 			android:hint = "Please enter a file name."/>
