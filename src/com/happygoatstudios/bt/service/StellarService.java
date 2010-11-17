@@ -1063,7 +1063,9 @@ public class StellarService extends Service {
 				if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 					boolean added = false;
 					String updated = path;
-					if(!path.endsWith(".xml")) {
+					Pattern xmlend = Pattern.compile("^.+\\.[Xx][Mm][Ll]$");
+					Matcher xmlmatch = xmlend.matcher(updated);
+					if(!xmlmatch.matches()) {
 						added = true;
 						updated = path + ".xml";
 					}
