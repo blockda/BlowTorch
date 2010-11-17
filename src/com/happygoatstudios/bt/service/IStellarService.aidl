@@ -25,8 +25,10 @@ interface IStellarService {
 	void addAlias(String what, String to);
 	Map getAliases();
 	void setAliases(in Map map);
-	void setFontSize(int size);
-	int getFontSize();
+	//void setFontSize(int size);
+	void setFontSize(String size);
+	//int getFontSize();
+	String getFontSize();
 	void setFontSpaceExtra(int size);
 	int getFontSpaceExtra();
 	void setFontName(String name);

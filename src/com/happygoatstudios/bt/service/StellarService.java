@@ -5,6 +5,7 @@ package com.happygoatstudios.bt.service;
 
 import java.io.BufferedOutputStream;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -19,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.PortUnreachableException;
 import java.net.ProtocolException;
 import java.net.Socket;
@@ -200,6 +202,9 @@ public class StellarService extends Service {
 						throw new RuntimeException(e);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
+					} catch (RemoteException e) {
+						
+						e.printStackTrace();
 					}
 					
 					break;
@@ -859,10 +864,10 @@ public class StellarService extends Service {
 		}
 
 
-		public void setFontSize(int size) throws RemoteException {
+		public void setFontSize(String size) throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
-				the_settings.setLineSize(size);
+				the_settings.setLineSize(Float.parseFloat(size));
 			}
 		}
 
@@ -1028,10 +1033,11 @@ public class StellarService extends Service {
 		}
 
 
-		public int getFontSize() throws RemoteException {
+		public String getFontSize() throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
-				return the_settings.getLineSize();
+				//return the_settings.getLineSize();
+				return Float.toString(the_settings.getLineSize()).toString();
 			}
 		}
 
@@ -2111,7 +2117,7 @@ public class StellarService extends Service {
 	
 	boolean debug = false;
 	
-	public void doStartup() throws UnknownHostException, IOException {
+	public void doStartup() throws UnknownHostException, IOException, RemoteException {
 		if(host == BAD_HOST || port == BAD_PORT) {
 			return; //dont' start 
 		}
@@ -2120,23 +2126,27 @@ public class StellarService extends Service {
 			return;
 		}
 		
-		//gotta do this before connecting apparently.
-		synchronized(the_settings) {
-			if(the_settings.isKeepWifiActive()) {
-				EnableWifiKeepAlive();
-			}
-		}
 		
+
+		doDispatchNoProcess(new String(Colorizer.colorCyanBright+"Attempting connection to: "+ Colorizer.colorYeollowBright + host + ":"+port+"\n"+Colorizer.colorCyanBright+"Timeout set to 14 seconds."+Colorizer.colorWhite+"\n").getBytes());
+	
 		
 		InetAddress addr = null;
-		try {
+		
 			//InetAddress[] x = InetAddress.getAllByName(host);
+		try {
 			addr = InetAddress.getByName(host);
-			//addr = x[0];
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			DispatchDialog("Unknown Host:" + e.getMessage());
+			DispatchDialog("Unknown Host: " + e.getMessage());
 			return;
+		}
+			//addr = x[0];
+			
+		String ip = addr.getHostAddress();
+		if(ip.equals(host)) {
+			//it was an ip address, so don't display it.
+		} else {
+			doDispatchNoProcess(new String(Colorizer.colorCyanBright+"Looked up: "+Colorizer.colorYeollowBright + ip +Colorizer.colorCyanBright+ " for "+Colorizer.colorYeollowBright+host+Colorizer.colorWhite+"\n").getBytes());
 		}
 		
 		the_addr = addr;
@@ -2152,9 +2162,11 @@ public class StellarService extends Service {
 			//the_socket = new Socket(addr.getHostAddress(),port);
 			
 			the_socket = new Socket();
-			SocketAddress adr = new InetSocketAddress(addr.getHostAddress(),port);
-			the_socket.connect(adr, 17000);
+			SocketAddress adr = new InetSocketAddress(addr,port);
 			
+
+			the_socket.connect(adr, 14000);
+			doDispatchNoProcess(new String(Colorizer.colorCyanBright+"Connected to: "+Colorizer.colorYeollowBright+host+Colorizer.colorCyanBright+"!"+Colorizer.colorWhite+"\n").getBytes());
 			
 			the_socket.setSendBufferSize(1024);
 			int size = the_socket.getSendBufferSize();
@@ -2205,16 +2217,28 @@ public class StellarService extends Service {
 			
 			the_processor = new Processor(myhandler,mBinder);
 			the_buffer = new StringBuffer();
+			
+			
+			synchronized(the_settings) {
+				if(the_settings.isKeepWifiActive()) {
+					EnableWifiKeepAlive();
+				}
+			}
+			
+			
+			//BEGIN OPERATIONS!
+			
 		} catch (SocketException e) {
 			DispatchDialog("Socket Exception: " + e.getMessage());
 			//Log.e("SERVICE","NET FAILURE:" + e.getMessage());
 		} catch (SocketTimeoutException e) {
-			DispatchDialog("Socket Timeout: " + e.getMessage() );
+			DispatchDialog("Operation timed out.");
 		} catch (ProtocolException e) {
 			DispatchDialog("Protocol Exception: " + e.getMessage());
 		}
 
 		
+
 	}
 	
 	private void showNotification() {

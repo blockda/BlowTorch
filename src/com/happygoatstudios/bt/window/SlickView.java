@@ -70,8 +70,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private Typeface PREF_FONT = Typeface.MONOSPACE;
 	private int PREF_MAX_LINES = 300;
-	public int PREF_FONTSIZE = 18;
-	public int PREF_LINESIZE = 20;
+	public float PREF_FONTSIZE = 18;
+	public float PREF_LINESIZE = 20;
 	public String PREF_TYPEFACE = "monospace";
 	public int CALCULATED_LINESINWINDOW = 20;
 	public int CALCULATED_ROWSINWINDOW = 77;
@@ -300,7 +300,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		if(height == 0 && width == 0) {
 			return;
 		}
-		CALCULATED_LINESINWINDOW = (height / PREF_LINESIZE);
+		CALCULATED_LINESINWINDOW = (int) (height / PREF_LINESIZE);
 		Paint p = new Paint();
 		p.setTypeface(PREF_FONT);
 		p.setTextSize(PREF_FONTSIZE);
@@ -630,7 +630,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 	}
 	
-	public void setCharacterSizes(int size,int space) {
+	public void setCharacterSizes(float size,int space) {
 		synchronized(dlines) {
 			PREF_FONTSIZE = size;
 			PREF_LINESIZE = size+space;
@@ -934,7 +934,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        for(int i=startpos;i<endpos;i++) {
 	        	//Log.e("SLICK","Drawing line:" + i + ":" + lines[i]);
 	        	int screenpos = i - startDrawingAtLine + 2;
-	    		int y_position =  ((screenpos*PREF_LINESIZE)+remainder);
+	    		int y_position =  (int) ((screenpos*PREF_LINESIZE)+remainder);
 	    		
 	    		colormatch.reset(dlines.get(i));
 	    		

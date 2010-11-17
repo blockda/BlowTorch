@@ -597,7 +597,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						settingsDialogRun = false;
 						//Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
-						Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
+						//Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
+						Float font_size = Float.parseFloat(prefs.getString("FONT_SIZE", "18"));
 						Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
 						Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
 						String font_name = prefs.getString("FONT_NAME", "monospace");
@@ -613,12 +614,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean disablecolor = prefs.getBoolean("DISABLE_COLOR", false);
 						String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
 						String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
-						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "auto");
+						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
 						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
-							service.setFontSize(font_size);
+							service.setFontSize(font_size.toString());
 							service.setFontSpaceExtra(line_space);
 							service.setMaxLines(max_lines);
 							service.setFontName(font_name);
@@ -723,7 +724,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						
 						//screen2.setFontSize(service.getFontSize());
 						//screen2.setLineSpace(service.getFontSpaceExtra());
-						screen2.setCharacterSizes(service.getFontSize(), service.getFontSpaceExtra());
+						screen2.setCharacterSizes(Float.parseFloat(service.getFontSize()), service.getFontSpaceExtra());
 						screen2.setMaxLines(service.getMaxLines());
 						
 						//get the font name 
@@ -1270,7 +1271,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				
 				
 				edit.putBoolean("KEEPLAST", service.isKeepLast());
-				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
+				edit.putString("FONT_SIZE", (service.getFontSize()));
 				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
 				edit.putString("MAX_LINES", Integer.toString(service.getMaxLines()));
 				edit.putString("FONT_NAME", service.getFontName());

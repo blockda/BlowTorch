@@ -64,7 +64,8 @@ public class HyperSAXParser extends BaseParser {
 
 			public void start(Attributes attributes) {
 				//read in attribute values.
-				tmp.setLineSize(new Integer(attributes.getValue("",ATTR_LINESIZE)).intValue());
+				//tmp.setLineSize(new Integer(attributes.getValue("",ATTR_LINESIZE)).intValue());
+				tmp.setLineSize((attributes.getValue("",ATTR_LINESIZE) == null) ? 18 : Float.parseFloat((attributes.getValue("",ATTR_LINESIZE))));
 				tmp.setLineSpaceExtra(new Integer(attributes.getValue("",ATTR_SPACEEXTRA)).intValue());
 				tmp.setMaxLines(new Integer(attributes.getValue("",ATTR_MAXLINES)).intValue());
 				tmp.setFontName(attributes.getValue("",ATTR_FONTNAME));
@@ -77,7 +78,7 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setDisableColor( (attributes.getValue("",ATTR_DISABLECOLOR) == null) ? false : (attributes.getValue("",ATTR_DISABLECOLOR).equals("true")) ? true : false);
 				tmp.setHapticFeedbackMode( (attributes.getValue("",ATTR_OVERRIDEHF) == null) ? "auto" : (attributes.getValue("",ATTR_OVERRIDEHF).equals("")) ? "auto" : attributes.getValue("",ATTR_OVERRIDEHF));
 				tmp.setHapticFeedbackOnPress( (attributes.getValue("",ATTR_HFONPRESS) == null) ? "auto" : (attributes.getValue("",ATTR_HFONPRESS).equals("")) ? "auto" : attributes.getValue("",ATTR_HFONPRESS));
-				tmp.setHapticFeedbackOnFlip( (attributes.getValue("",ATTR_HFONFLIP) == null) ? "auto" : (attributes.getValue("",ATTR_HFONFLIP).equals("")) ? "auto" : attributes.getValue("",ATTR_HFONFLIP));
+				tmp.setHapticFeedbackOnFlip( (attributes.getValue("",ATTR_HFONFLIP) == null) ? "none" : (attributes.getValue("",ATTR_HFONFLIP).equals("")) ? "none" : attributes.getValue("",ATTR_HFONFLIP));
 				
 				
 				
