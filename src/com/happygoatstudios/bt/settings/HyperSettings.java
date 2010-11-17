@@ -30,6 +30,8 @@ public class HyperSettings {
 	private boolean DisableColor = false;
 	//private boolean OverrideHapticFeedback = false;
 	private String hapticFeedbackMode = "auto";
+	private String hapticFeedbackOnPress = "auto";
+	private String hapticFeedbackOnFlip = "auto";
 	
 	private boolean UseExtractUI = false;
 	private boolean AttemptSuggestions = false;
@@ -148,6 +150,10 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_AUTOLAUNCHEDITOR, (data.isAutoLaunchButtonEdtior()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_DISABLECOLOR, (data.isDisableColor()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_OVERRIDEHF, (data.getHapticFeedbackMode().equals("")) ? "auto" : data.getHapticFeedbackMode());
+			out.attribute("", BaseParser.ATTR_HFONPRESS, (data.getHapticFeedbackOnPress().equals("")) ? "auto" : data.getHapticFeedbackOnPress());
+			out.attribute("", BaseParser.ATTR_HFONFLIP, (data.getHapticFeedbackOnFlip().equals("")) ? "auto" : data.getHapticFeedbackOnFlip());
+			
+			
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -473,6 +479,22 @@ public class HyperSettings {
 
 	public String getHapticFeedbackMode() {
 		return hapticFeedbackMode;
+	}
+
+	public void setHapticFeedbackOnPress(String hapticFeedbackOnPress) {
+		this.hapticFeedbackOnPress = hapticFeedbackOnPress;
+	}
+
+	public String getHapticFeedbackOnPress() {
+		return hapticFeedbackOnPress;
+	}
+
+	public void setHapticFeedbackOnFlip(String hapticFeedbackOnFlip) {
+		this.hapticFeedbackOnFlip = hapticFeedbackOnFlip;
+	}
+
+	public String getHapticFeedbackOnFlip() {
+		return hapticFeedbackOnFlip;
 	}
 
 }

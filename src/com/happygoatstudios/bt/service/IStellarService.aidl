@@ -79,5 +79,8 @@ interface IStellarService {
 	String HapticFeedbackMode();
 	void setHapticFeedbackMode(String use);
 	String getAvailableSet();
-
+	String getHFOnPress();
+	String getHFOnFlip();
+	void setHFOnPress(String use);
+	void setHFOnFlip(String use);
 }

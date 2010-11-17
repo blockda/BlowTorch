@@ -76,6 +76,8 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setAutoLaunchButtonEdtior( (attributes.getValue("",ATTR_AUTOLAUNCHEDITOR) == null) ? true : (attributes.getValue("",ATTR_AUTOLAUNCHEDITOR).equals("true")) ? true : false);
 				tmp.setDisableColor( (attributes.getValue("",ATTR_DISABLECOLOR) == null) ? false : (attributes.getValue("",ATTR_DISABLECOLOR).equals("true")) ? true : false);
 				tmp.setHapticFeedbackMode( (attributes.getValue("",ATTR_OVERRIDEHF) == null) ? "auto" : (attributes.getValue("",ATTR_OVERRIDEHF).equals("")) ? "auto" : attributes.getValue("",ATTR_OVERRIDEHF));
+				tmp.setHapticFeedbackOnPress( (attributes.getValue("",ATTR_HFONPRESS) == null) ? "auto" : (attributes.getValue("",ATTR_HFONPRESS).equals("")) ? "auto" : attributes.getValue("",ATTR_HFONPRESS));
+				tmp.setHapticFeedbackOnFlip( (attributes.getValue("",ATTR_HFONFLIP) == null) ? "auto" : (attributes.getValue("",ATTR_HFONFLIP).equals("")) ? "auto" : attributes.getValue("",ATTR_HFONFLIP));
 				
 				
 				

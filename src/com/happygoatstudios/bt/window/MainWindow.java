@@ -118,6 +118,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_CLEARBUTTONSET = 868;
 	protected static final int MESSAGE_SHOWTOAST = 869;
 	protected static final int MESSAGE_SHOWDIALOG = 870;
+	public static final int MESSAGE_HFPRESS = 871;
+	public static final int MESSAGE_HFFLIP = 872;
 	
 	
 	protected boolean settingsDialogRun = false;
@@ -125,7 +127,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	private boolean autoLaunch = true;
 	private boolean disableColor = false;
 	private String overrideHF = "auto";
-	
+	private String overrideHFFlip = "auto";
+	private String overrideHFPress = "auto";
 	
 	String host;
 	int port;
@@ -383,6 +386,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_HFPRESS:
+					DoHapticFeedbackPress();
+					break;
+				case MESSAGE_HFFLIP:
+					DoHapticFeedbackFlip();
+					break;
 				case MESSAGE_SHOWDIALOG:
 					AlertDialog.Builder dbuilder = new AlertDialog.Builder(MainWindow.this);
 					dbuilder.setTitle("ERROR");
@@ -603,6 +612,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean autolaunch = prefs.getBoolean("AUTOLAUNCH_EDITOR",true);
 						boolean disablecolor = prefs.getBoolean("DISABLE_COLOR", false);
 						String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
+						String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
+						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "auto");
+						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
@@ -621,6 +633,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setAutoLaunchEditor(autolaunch);
 							service.setDisableColor(disablecolor);
 							service.setHapticFeedbackMode(overrideHF);
+							service.setHFOnPress(overrideHFPress);
+							service.setHFOnFlip(overrideHFFlip);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -792,6 +806,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						}
 						//handle overridehf.
 						overrideHF = service.HapticFeedbackMode();
+						
+						overrideHFPress = service.getHFOnPress();
+						overrideHFFlip = service.getHFOnFlip();
 						
 						if(service.isBackSpaceBugFix()) {
 							//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
@@ -1248,6 +1265,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("AUTOLAUNCH_EDITOR", service.isAutoLaunchEditor());
 				edit.putBoolean("DISABLE_COLOR",service.isDisableColor());
 				edit.putString("OVERRIDE_HAPTICFEEDBACK", service.HapticFeedbackMode());
+				edit.putString("HAPTIC_PRESS", service.getHFOnPress());
+				edit.putString("HAPTIC_FLIP", service.getHFOnFlip());
+				
 				
 				edit.putBoolean("KEEPLAST", service.isKeepLast());
 				edit.putString("FONT_SIZE", Integer.toString(service.getFontSize()));
@@ -1329,6 +1349,35 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		int aflags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
 		if(overrideHF.equals("always")) {
+			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
+		}
+		
+		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
+		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
+	}
+	
+	private void DoHapticFeedbackPress() {
+		if(overrideHFPress.equals("none")) {
+			return;
+		}
+		
+		//Log.e("WINDOW","D")
+		int aflags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
+		if(overrideHFPress.equals("always")) {
+			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
+		}
+		
+		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
+		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
+	}
+	
+	private void DoHapticFeedbackFlip() {
+		if(overrideHFFlip.equals("none")) {
+			return;
+		}
+		
+		int aflags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
+		if(overrideHFFlip.equals("always")) {
 			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
 		}
 		
