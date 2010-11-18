@@ -21,7 +21,7 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 
 public class HyperSettings {
 	
-	private float LineSize = 18;
+	private int LineSize = 18;
 	private int LineSpaceExtra = 2;
 	private int MaxLines = 300;
 	private String FontName = "monospace";
@@ -64,11 +64,11 @@ public class HyperSettings {
 	
 	private WRAP_MODE WrapMode = WRAP_MODE.BREAK;
 
-	public void setLineSize(float lineSize) {
+	public void setLineSize(int lineSize) {
 		LineSize = lineSize;
 	}
 
-	public float getLineSize() {
+	public int getLineSize() {
 		return LineSize;
 	}
 
@@ -138,7 +138,7 @@ public class HyperSettings {
 			out.startTag("", "root");
 			
 			out.startTag("", BaseParser.TAG_WINDOW);
-			out.attribute("", BaseParser.ATTR_LINESIZE, new Float(data.getLineSize()).toString());
+			out.attribute("", BaseParser.ATTR_LINESIZE, new Integer(data.getLineSize()).toString());
 			out.attribute("", BaseParser.ATTR_SPACEEXTRA, new Integer(data.getLineSpaceExtra()).toString());
 			out.attribute("", BaseParser.ATTR_MAXLINES, new Integer(data.getMaxLines()).toString());
 			out.attribute("", BaseParser.ATTR_FONTNAME, data.getFontName());

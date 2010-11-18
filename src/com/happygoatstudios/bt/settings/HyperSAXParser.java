@@ -65,7 +65,7 @@ public class HyperSAXParser extends BaseParser {
 			public void start(Attributes attributes) {
 				//read in attribute values.
 				//tmp.setLineSize(new Integer(attributes.getValue("",ATTR_LINESIZE)).intValue());
-				tmp.setLineSize((attributes.getValue("",ATTR_LINESIZE) == null) ? 18 : Float.parseFloat((attributes.getValue("",ATTR_LINESIZE))));
+				tmp.setLineSize((attributes.getValue("",ATTR_LINESIZE) == null) ? 18 : new Float(Float.parseFloat(attributes.getValue("",ATTR_LINESIZE))).intValue());
 				tmp.setLineSpaceExtra(new Integer(attributes.getValue("",ATTR_SPACEEXTRA)).intValue());
 				tmp.setMaxLines(new Integer(attributes.getValue("",ATTR_MAXLINES)).intValue());
 				tmp.setFontName(attributes.getValue("",ATTR_FONTNAME));
