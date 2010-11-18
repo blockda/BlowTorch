@@ -25,7 +25,7 @@
 		android:layout_alignParentLeft="true"
 		android:layout_height="wrap_content"
 		android:layout_width="146dip"
-		android:text="New Button Set!"/>
+		android:text="New Button Set"/>
 		
 	<Button
 		android:id="@+id/cancel_buttonset_button"
@@ -33,7 +33,7 @@
 		android:layout_alignParentRight="true"
 		android:layout_height="wrap_content"
 		android:layout_width="133dip"
-		android:text="Cancel"/>
+		android:text="Back"/>
 		
 	<!-- <ScrollView
 		android:id="@+id/buttonset_scroller"
