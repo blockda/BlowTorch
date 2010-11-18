@@ -1,5 +1,7 @@
 package com.happygoatstudios.bt.responder.toast;
 
+import java.util.HashMap;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Parcel;
@@ -80,7 +82,7 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 
 	@Override
 	public void doResponse(Context c, String displayname, int triggernumber,
-			boolean windowIsOpen,Handler dispatcher) {
+			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
 		//Handler ha;
 		// TODO Auto-generated method stub
 		if(windowIsOpen) {
@@ -92,7 +94,9 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 				return;
 			}
 		}
-		Toast t = Toast.makeText(c, message, delay*1000);
+		
+		String translated = ToastResponder.this.translate(message, captureMap);
+		Toast t = Toast.makeText(c, translated, delay*1000);
 		t.show();
 	}
 
