@@ -20,11 +20,11 @@
 			android:key="FONT_SIZE"
 			android:title="Font Size"
 			android:defaultValue="18"
-			android:summary="The height of a drawn character (in pixels)."
+			android:summary="The height of a drawn character."
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:gravity = "right"
-			android:inputType="numberDecimal"/>
+			android:inputType="number"/>
 		<EditTextPreference
 			android:key="FONT_SIZE_EXTRA"
 			android:title="Line Spacing"

@@ -864,10 +864,10 @@ public class StellarService extends Service {
 		}
 
 
-		public void setFontSize(String size) throws RemoteException {
+		public void setFontSize(int size) throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
-				the_settings.setLineSize(Float.parseFloat(size));
+				the_settings.setLineSize(size);
 			}
 		}
 
@@ -1033,11 +1033,11 @@ public class StellarService extends Service {
 		}
 
 
-		public String getFontSize() throws RemoteException {
+		public int getFontSize() throws RemoteException {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				//return the_settings.getLineSize();
-				return Float.toString(the_settings.getLineSize()).toString();
+				return the_settings.getLineSize();
 			}
 		}
 
