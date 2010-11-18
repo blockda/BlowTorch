@@ -21,8 +21,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.util.Log;
-//import android.util.Log;
+
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -771,7 +770,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				//check and see if we are above the upper limit.
 				//Log.e("WINDOW","CURRENT SCROLLBACK: " + scrollback + " MAX: " + ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)));
 				if(scrollback >= ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE))) {
-					Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
+					//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
 					scrollback = ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE));
 					fling_velocity = 0;
 					prev_draw_time = 0;
@@ -1231,9 +1230,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		int alpha_value = (int) ((255-70)*posPercent+70);
 		///Color color = new Color();
 		
-		int final_color = Color.argb(alpha_value, red_value, 0, blue_value);
-		String message = "COLOR: R=" + Integer.toHexString(red_value) + " G=" + Integer.toHexString(blue_value) + " A=" + Integer.toHexString(alpha_value) + " FINAL="+Integer.toHexString(final_color);
-		Log.e("WINDOW",message);
+		int final_color = Color.argb(alpha_value, red_value, 100, blue_value);
+		//String message = "COLOR: R=" + Integer.toHexString(red_value) + " G=" + Integer.toHexString(blue_value) + " A=" + Integer.toHexString(alpha_value) + " FINAL="+Integer.toHexString(final_color);
+		//Log.e("WINDOW",message);
 		p.setColor( final_color);
 		float density = this.getResources().getDisplayMetrics().density;
 		Rect r = new Rect(WINDOW_WIDTH-(int)(2*density),(int)(scrollerPos - scrollerSize/2),WINDOW_WIDTH,(int)(scrollerPos + scrollerSize/2));
