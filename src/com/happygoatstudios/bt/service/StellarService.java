@@ -129,7 +129,8 @@ public class StellarService extends Service {
 	public static final int MESSAGE_COMPRESSIONREQUESTED = 131;
 	private static final int MESSAGE_THROTTLEEVENT = 197;
 	protected static final int MESSAGE_HANDLEWIFI = 496;
-
+	protected static final int MESSAGE_SAVEXML = 497;
+	
 	public boolean sending = false;
 	
 	StringBuffer the_buffer = new StringBuffer();
@@ -179,6 +180,9 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_SAVEXML:
+					saveXmlSettings(settingslocation);
+					break;
 				case MESSAGE_HANDLEWIFI:
 					Boolean state = (Boolean) msg.obj;
 					if(state) {
@@ -784,6 +788,7 @@ public class StellarService extends Service {
 			//aliases.put(what, to);
 			the_settings.getAliases().put(what, to);
 			buildAliases();
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
@@ -799,6 +804,7 @@ public class StellarService extends Service {
 			the_settings.getAliases().clear();
 			the_settings.setAliases(new HashMap<String,String>(map));
 			buildAliases();
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
@@ -807,6 +813,7 @@ public class StellarService extends Service {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				the_settings.getButtonSets().get(targetset).add(newButton);
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 			
 			//Log.e("SERVICE","ADDING BUTTON " + newButton.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
@@ -833,6 +840,7 @@ public class StellarService extends Service {
 				//for(SlickButtonData tmp : testset) {
 					//if(tmp.equals(buttonToNuke)) {
 						the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
+						myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 					//}
 				//}
 				
@@ -937,7 +945,7 @@ public class StellarService extends Service {
 				the_settings.getButtonSets().get(targetset).remove(loc); //remove original
 				the_settings.getButtonSets().get(targetset).add(loc,mod); //insert mod in its place
 				//the_settings.getButtonSets().get(targetset).
-				
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 			
 			//Log.e("SERVICE","MODIFYING BUTTON " + orig.toString() + " FROM BUTTONSET: " + targetset + " with " + mod.toString() + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
@@ -956,6 +964,7 @@ public class StellarService extends Service {
 				ColorSetSettings def_colorset = new ColorSetSettings();
 				def_colorset.toDefautls();
 				the_settings.getSetSettings().put(name, def_colorset);
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 			
 		}
@@ -975,6 +984,7 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				int count = the_settings.getButtonSets().get(name).size();
 				the_settings.getButtonSets().get(name).removeAllElements();
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 				return count;
 			}
 			
@@ -988,12 +998,15 @@ public class StellarService extends Service {
 				if(name.equals("default")) {
 					//cannot delete default button set, only clear it
 					the_settings.getButtonSets().get(name).removeAllElements();
+					myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 					return count;
 				} else {
 					
 					the_settings.getButtonSets().remove(name);
+					myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 					return count;
 				}
+				
 			}
 		}
 
@@ -1167,7 +1180,7 @@ public class StellarService extends Service {
 				for(SlickButtonData button : edited_set) {
 					button.setFromSetSettings(input, oldsettings);
 				}
-				
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 				//need to go through all the button in the set and update the values.
 			}
 			
@@ -1198,6 +1211,7 @@ public class StellarService extends Service {
 				
 			}
 			buildTriggerData();
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			
 		}
 
@@ -1209,6 +1223,7 @@ public class StellarService extends Service {
 				
 			}
 			buildTriggerData();
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
@@ -1223,6 +1238,7 @@ public class StellarService extends Service {
 				//}
 			}
 			buildTriggerData();
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
