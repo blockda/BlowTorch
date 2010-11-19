@@ -119,12 +119,16 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 			//Log.e("ACKRESPONDER","defaulting to both");
 			setFireType(FIRE_WHEN.WINDOW_BOTH);
 		}
+		
+		//Log.e("ACKRESPONDER","Completed reading parcel.");
 	}
 
 	public void writeToParcel(Parcel out, int flags) {
 		// TODO Auto-generated method stub
 		out.writeString(ackWith);
+		//Log.e("PARCEL","OUT: ACK RESPONDER: " + ackWith + " fires when " + this.getFireType().getString());
 		out.writeString(this.getFireType().getString());
+		
 		//Log.e("ACKRESPONDER","WRITING OUT TO PARCEL, FIRETYPE IS:" + this.getFireType().getString());
 	}
 

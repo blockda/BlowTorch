@@ -76,6 +76,7 @@ import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
+import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
 
@@ -1419,6 +1420,67 @@ public class StellarService extends Service {
 		public void setHFOnPress(String use) throws RemoteException {
 			synchronized(the_settings) {
 				the_settings.setHapticFeedbackOnPress(use);
+			}
+		}
+
+		public TimerData getTimer(String ordinal) throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getTimers().get(ordinal);
+			}
+		}
+
+		public Map getTimers() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getTimers();
+			}
+		}
+
+		public void pauseTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void resetTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void startTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void stopTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addTimer(TimerData newtimer) throws RemoteException {
+			synchronized(the_settings) {
+				Log.e("SERVICE","SERVICE GOT NEW TIMER");
+				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
+			}
+		}
+
+		public void removeTimer(TimerData deltimer) throws RemoteException {
+			synchronized(the_settings) {
+				//remove this from the clock manager / stop it before removing it.
+				the_settings.getTimers().remove(deltimer.getOrdinal().toString());
+			}
+		}
+
+		public void updateTimer(TimerData old, TimerData newtimer)
+				throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.getTimers().remove(old.getOrdinal().toString());
+				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
+			}
+		}
+
+		public int getNextTimerOrdinal() throws RemoteException {
+			synchronized(the_settings) {
+				//list should always be sorted.
+				return the_settings.getTimers().size();
 			}
 		}
 	};
