@@ -92,6 +92,8 @@ public class TimerSelectionDialog extends Dialog {
 		for(TimerData timer : timer_list.values()) {
 			TimerItem i = new TimerItem();
 			i.name = timer.getName();
+			i.ordinal = timer.getOrdinal();
+			
 			entries.add(i);
 		}
 		
@@ -99,7 +101,7 @@ public class TimerSelectionDialog extends Dialog {
 			noTimers = true;
 		}
 		
-		adapter = new TimerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
+		adapter = new TimerListAdapter(list.getContext(),R.layout.timer_selection_list_row,entries);
 		list.setAdapter(adapter);
 		adapter.sort(new TimerSorter());
 	}
@@ -118,17 +120,18 @@ public class TimerSelectionDialog extends Dialog {
 			View v = convertView;
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				v = li.inflate(R.layout.trigger_selection_list_row,null);
+				v = li.inflate(R.layout.timer_selection_list_row,null);
 			}
 			
 			TimerItem e = entries.get(pos);
 			
 			if(e != null) {
-				TextView label = (TextView)v.findViewById(R.id.trigger_title);
-				TextView extra = (TextView)v.findViewById(R.id.trigger_extra);
-				
+				TextView label = (TextView)v.findViewById(R.id.timer_title);
+				TextView extra = (TextView)v.findViewById(R.id.timer_display);
+				TextView ordinal = (TextView)v.findViewById(R.id.timer_ordinal);
 				label.setText(e.name);
-				//extra.setText(e.extra);
+				extra.setText("08:54:32");
+				ordinal.setText(Integer.toString(e.ordinal));
 				
 			}
 			
