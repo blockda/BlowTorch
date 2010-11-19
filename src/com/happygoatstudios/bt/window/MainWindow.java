@@ -87,6 +87,8 @@ import com.happygoatstudios.bt.legacy.FixedViewFlipper;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
+import com.happygoatstudios.bt.timer.TimerEditorDialog;
+import com.happygoatstudios.bt.timer.TimerSelectionDialog;
 import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
 public class MainWindow extends Activity implements AliasDialogDoneListener {
@@ -1201,6 +1203,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		menu.add(0,99,0,"Aliases");
 		menu.add(0,100,0,"Triggers");
+		menu.add(0,105,0,"Timers");
 		menu.add(0,103,0,"Options");
 		menu.add(0,102,0,"Button Sets");
 		
@@ -1216,6 +1219,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
+		case 105:
+			TimerSelectionDialog tsel = null;
+			tsel = new TimerSelectionDialog(MainWindow.this,service);
+			tsel.show();
+			
+			break;
 		case 99:
 			AliasEditorDialog d = null;
 			try {

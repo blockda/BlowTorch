@@ -7,7 +7,7 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
-
+import com.happygoatstudios.bt.timer.TimerData;
 
 interface IStellarService {
 	void registerCallback(IStellarServiceCallback c);
@@ -85,4 +85,15 @@ interface IStellarService {
 	String getHFOnFlip();
 	void setHFOnPress(String use);
 	void setHFOnFlip(String use);
+	
+	Map getTimers();
+	TimerData getTimer(String ordinal);
+	void startTimer(String ordinal);
+	void pauseTimer(String ordinal);
+	void stopTimer(String ordinal);
+	void resetTimer(String ordinal);
+	void updateTimer(in TimerData old,in TimerData newtimer);
+	void addTimer(in TimerData newtimer);
+	void removeTimer(in TimerData deltimer);
+	int getNextTimerOrdinal();
 }
