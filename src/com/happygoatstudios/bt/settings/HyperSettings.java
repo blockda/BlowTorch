@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.settings;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,6 +18,7 @@ import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
+import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
 public class HyperSettings {
@@ -54,6 +56,7 @@ public class HyperSettings {
 	private HashMap<String,Vector<SlickButtonData>> ButtonSets = new HashMap<String,Vector<SlickButtonData>>();
 	private HashMap<String,ColorSetSettings> SetSettings = new HashMap<String,ColorSetSettings>();
 	private HashMap<String,TriggerData> Triggers = new HashMap<String,TriggerData>();
+	private HashMap<String,TimerData> Timers = new HashMap<String,TimerData>();
 	
 	private String lastSelected = "default";
 	enum WRAP_MODE {
@@ -276,7 +279,8 @@ public class HyperSettings {
 				out.attribute("", BaseParser.ATTR_TRIGGERONCE, trigger.isFireOnce() ? "true" : "false");
 				if(trigger.isHidden())  out.attribute("", BaseParser.ATTR_TRIGGERHIDDEN, "true");
 				
-				for(TriggerResponder responder : trigger.getResponders()) {
+				OutputResponders(out,trigger.getResponders());
+				/*for(TriggerResponder responder : trigger.getResponders()) {
 					switch(responder.getType()) {
 					case NOTIFICATION:
 						NotificationResponder notify = (NotificationResponder)responder;
@@ -328,13 +332,29 @@ public class HyperSettings {
 						break;
 					}
 					
-				}
+				}*/
 				
 				
 				out.endTag("", BaseParser.TAG_TRIGGER);
 			}
 			
 			out.endTag("",BaseParser.TAG_TRIGGERS);
+			
+			//start timer output.
+			out.startTag("", BaseParser.TAG_TIMERS);
+			
+			for(TimerData timer : data.getTimers().values()) {
+				out.startTag("", BaseParser.TAG_TIMER);
+				out.attribute("", BaseParser.ATTR_TIMERNAME, timer.getName());
+				out.attribute("", BaseParser.ATTR_ORDINAL, timer.getOrdinal().toString());
+				out.attribute("", BaseParser.ATTR_SECONDS, timer.getSeconds().toString());
+				out.attribute("", BaseParser.ATTR_REPEAT, (timer.isRepeat()) ? "true" : "false");
+				out.attribute("", BaseParser.ATTR_PLAYING, (timer.isPlaying()) ? "true" : "false");
+				OutputResponders(out,timer.getResponders());
+				out.endTag("", BaseParser.TAG_TIMER);
+			}
+			
+			out.endTag("", BaseParser.TAG_TIMERS);
 			
 			out.endTag("", "root");
 			
@@ -346,6 +366,61 @@ public class HyperSettings {
 			throw new RuntimeException(e);
 		}
 		//return writer.toString();
+	}
+	
+	private static void OutputResponders(XmlSerializer out, List<TriggerResponder> responders) throws IllegalArgumentException, IllegalStateException, IOException {
+		for(TriggerResponder responder : responders) {
+			switch(responder.getType()) {
+			case NOTIFICATION:
+				NotificationResponder notify = (NotificationResponder)responder;
+				out.startTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
+				out.attribute("", BaseParser.ATTR_NOTIFICATIONTITLE,notify.getTitle());
+				out.attribute("", BaseParser.ATTR_NOTIFICATIONMESSAGE, notify.getMessage());
+				out.attribute("", BaseParser.ATTR_FIRETYPE, notify.getFireType().getString() );
+				if(notify.isUseDefaultSound()) {
+					out.attribute("", BaseParser.ATTR_USEDEFAULTSOUND, "true");
+					out.attribute("", BaseParser.ATTR_SOUNDPATH, notify.getSoundPath());
+				} else {
+					out.attribute("", BaseParser.ATTR_USEDEFAULTSOUND, "false");
+				}
+				
+				if(notify.isUseDefaultLight()) {
+					out.attribute("", BaseParser.ATTR_USEDEFAULTLIGHT, "true");
+					out.attribute("", BaseParser.ATTR_LIGHTCOLOR, Integer.toHexString(notify.getColorToUse()));
+				} else {
+					out.attribute("", BaseParser.ATTR_USEDEFAULTLIGHT, "false");
+				}
+				
+				if(notify.isUseDefaultVibrate()) {
+					out.attribute("", BaseParser.ATTR_USEDEFAULTVIBRATE, "true");
+					out.attribute("", BaseParser.ATTR_VIBRATELENGTH, Integer.toString(notify.getVibrateLength()));
+				} else {
+					out.attribute("", BaseParser.ATTR_USEDEFAULTVIBRATE, "false");
+				}
+				
+				out.attribute("", BaseParser.ATTR_NEWNOTIFICATION, (notify.isSpawnNewNotification()) ? "true" : "false");
+				out.attribute("", BaseParser.ATTR_USEONGOING, (notify.isUseOnGoingNotification()) ? "true" : "false");
+				out.endTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
+				break;
+			case TOAST:
+				ToastResponder toasty = (ToastResponder)responder;
+				out.startTag("", BaseParser.TAG_TOASTRESPONDER);
+				out.attribute("", BaseParser.ATTR_TOASTMESSAGE, toasty.getMessage());
+				out.attribute("", BaseParser.ATTR_TOASTDELAY, new Integer(toasty.getDelay()).toString());
+				out.attribute("", BaseParser.ATTR_FIRETYPE, toasty.getFireType().getString());
+				out.endTag("", BaseParser.TAG_TOASTRESPONDER);
+				break;
+			case ACK:
+				AckResponder ack = (AckResponder)responder;
+				out.startTag("", BaseParser.TAG_ACKRESPONDER);
+				out.attribute("", BaseParser.ATTR_ACKWITH, ack.getAckWith());
+				out.attribute("", BaseParser.ATTR_FIRETYPE, ack.getFireType().getString());
+				out.endTag("", BaseParser.TAG_ACKRESPONDER);
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	
 
@@ -495,6 +570,14 @@ public class HyperSettings {
 
 	public String getHapticFeedbackOnFlip() {
 		return hapticFeedbackOnFlip;
+	}
+
+	public void setTimers(HashMap<String,TimerData> timers) {
+		Timers = timers;
+	}
+
+	public HashMap<String,TimerData> getTimers() {
+		return Timers;
 	}
 
 }
