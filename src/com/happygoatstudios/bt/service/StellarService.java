@@ -1907,7 +1907,7 @@ public class StellarService extends Service {
 	}
 	
 
-	
+	HashMap<String,String> captureMap = new HashMap<String,String>();
 	public void dispatchFinish(String rawData) {
 		
 		//String htmlText = colorer.htmlColorize(data);
@@ -1968,11 +1968,13 @@ public class StellarService extends Service {
 				//Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
 				TriggerData triggered = the_settings.getTriggers().get(trigger_matcher.group(0));
 				if(triggered != null) {
-					//shouldn't be
-					//Log.e("SERVICE","TRIGGERED:" + triggered.getName());
+					//build hash map, if we are here we have a literal match.
+					captureMap.clear();
+					captureMap.put("0", trigger_matcher.group(0)); //it is only ever going to have 1 group.
+					
 					//iterate through the responders.
 					for(TriggerResponder responder : triggered.getResponders()) {
-						responder.doResponse(this, display, trigger_count++,hasListener,myhandler);
+						responder.doResponse(this, display, trigger_count++,hasListener,myhandler,captureMap);
 					}
 					
 					if(triggered.isFireOnce()) {
@@ -1989,8 +1991,13 @@ public class StellarService extends Service {
 							Matcher testmatch = pattern.matcher(trigger_matcher.group(0));
 							if(testmatch.matches()) {
 								//we have a wienner.
+								//build the capture map so the responders can respond.
+								captureMap.clear();
+								for(int i=0;i<=testmatch.groupCount();i++) {
+									captureMap.put(Integer.toString(i), testmatch.group(i));
+								}
 								for(TriggerResponder responder : data.getResponders()) {
-									responder.doResponse(this, display, trigger_count++, hasListener, myhandler);
+									responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap);
 								}
 								
 								if(data.isFireOnce()) {

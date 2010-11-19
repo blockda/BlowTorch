@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.responder.notification;
 
 import java.io.File;
+import java.util.HashMap;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -180,7 +181,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	//vp[3] = 200;
 	
 	@Override
-	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher) {
+	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {
@@ -202,6 +203,10 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 			}
 		}
 		
+		String xformedtitle = this.translate(title, captureMap);
+		String xformedmessage = this.translate(message, captureMap);
+		
+		
 
 		NotificationManager NM = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
 		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"Trigger Fired!",System.currentTimeMillis());
@@ -211,7 +216,8 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		
 		PendingIntent contentIntent = PendingIntent.getActivity(c, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
-		note.setLatestEventInfo(c, title, message, contentIntent);
+		//note.setLatestEventInfo(c, title, message, contentIntent);
+		note.setLatestEventInfo(c, xformedtitle, xformedmessage, contentIntent);
 		
 		int defaults = 0;
 		if(useDefaultSound && soundPath.equals("")) {
