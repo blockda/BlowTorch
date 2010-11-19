@@ -18,9 +18,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-//import android.util.Log;
+
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -550,6 +551,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			synchronized(scrollback) {
 			scrollback = scrollback + (size_after-size_before)*PREF_LINESIZE;
 			}
+			
+			if(scrollback >= ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE))) {
+				scrollback = ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE));
+			}
 			//EditText filler2 = (EditText) parent_layout.findViewById(R.id.filler2);
 			//Animation a = new AlphaAnimation(1.0f,0.0f);
 			//Interpolator i = new CycleInterpolator(1);
@@ -668,6 +673,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	Matcher bleedfind = colordata.matcher("");
 	Matcher colormatch = colordata.matcher("");
 	@Override
+
 	public void onDraw(Canvas canvas) {
 		
 		if(!optsInitialized) {
@@ -679,6 +685,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		//dlines.addAll(Arrays.asList(linetrap));
 		//dlines.get = "foo";
 		
+		
+		
 		int scrollbacklines = (int)Math.floor(scrollback / (float)PREF_LINESIZE);
 		
 		synchronized(scrollback) {
@@ -688,6 +696,17 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				scrollback = (float)Math.floor(scrollback + diff_amount);
 				if(scrollback < 0) {
 					scrollback = 0.0f;
+				} else {
+					//Log.e("WINDOW","CURRENT SCROLLBACK: " + scrollback + " MAX: " + ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)));
+					if(scrollback >= ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE))) {
+						//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
+						scrollback = ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE));
+						//fling_velocity = 0;
+						//prev_draw_time = 0;
+						//Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+						//buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
+						
+					}
 				}
 				diff_amount = 0;
 				
@@ -746,6 +765,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 					buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
 
 					buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+				}
+				
+				//check and see if we are above the upper limit.
+				//Log.e("WINDOW","CURRENT SCROLLBACK: " + scrollback + " MAX: " + ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE)));
+				if(scrollback >= ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE))) {
+					//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
+					scrollback = ((dlines.size() * PREF_LINESIZE) - (CALCULATED_LINESINWINDOW*PREF_LINESIZE));
+					fling_velocity = 0;
+					prev_draw_time = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
+					
 				}
 			
 			
@@ -1136,9 +1167,78 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			//Log.e("WINDOW","WRITING: " + dlines.get(i) + " TO SCREEN NO COLOR!");
 	    		}
 	        }
+	        
+	        //draw scroller here.
+	        //if(scrollback > PREF_LINESIZE) {
+	        	showScroller(canvas);
+	        //}
         }
         
         
+	}
+	
+	public void showScroller(Canvas c) {
+		//i am not sure this is going to work, so we are just going to fake something for now.
+		
+		Paint p = new Paint();
+		
+		p.setColor(0xFFFF0000);
+		
+		//need to calculate the percentage that this takes up.
+		if(dlines.size() < 1) {
+			return; //no scroller to show.
+		}
+		
+		//lots to do for coloring
+		
+		Float scrollerSize = 0.0f;
+		Float scrollerPos = 0.0f;
+		Float scrollerTop = 0.0f;
+		Float scrollerBottom = 0.0f;
+		float range = 0.0f;
+		float posPercent = 0.0f;
+		Float windowPercent = WINDOW_HEIGHT / (dlines.size()*PREF_LINESIZE);
+		if(windowPercent > 1) {
+			//then we have but 1 page to show
+			return;
+		} else {
+			scrollerSize = windowPercent*WINDOW_HEIGHT;
+			
+			//range = WINDOW_HEIGHT - (scrollerSize);
+			
+			//float topPercent = (scrollback+WINDOW_HEIGHT)/(dlines.size()*PREF_LINESIZE);
+			//float bottomPercent = (scrollback+WINDOW_HEIGHT)/(dlines.size()*PREF_LINESIZE);
+			//scrollerTop = WINDOW_HEIGHT * topPercent;
+			//scrollerBottom = WINDOW_HEIGHT * bottomPercent;
+			posPercent = (scrollback + (WINDOW_HEIGHT/2))/(dlines.size()*PREF_LINESIZE);
+			
+			scrollerPos = WINDOW_HEIGHT*posPercent;
+			
+			//scrollerPos = range*posPercent;
+			//real position, since inverted
+			scrollerPos = WINDOW_HEIGHT-scrollerPos;
+			//real position is also offset because of the "useable range"
+			//scrollerPos = scrollerPos;
+			
+			//Log.e("WINDOW","SCROLLER PARAMS: size: " + scrollerSize + " range: " + range + " positioin: " + scrollerPos);
+		}
+		
+		//rect = left top right bottom, need to offset for the "useable range.
+		//scroller colors, that's right, this is gonna be sick.
+		int blue_value = (int) (-1*255*posPercent + 255);
+		int red_value = (int) (255*posPercent);
+		int alpha_value = (int) ((255-70)*posPercent+70);
+		///Color color = new Color();
+		
+		int final_color = Color.argb(alpha_value, red_value, 100, blue_value);
+		//String message = "COLOR: R=" + Integer.toHexString(red_value) + " G=" + Integer.toHexString(blue_value) + " A=" + Integer.toHexString(alpha_value) + " FINAL="+Integer.toHexString(final_color);
+		//Log.e("WINDOW",message);
+		p.setColor( final_color);
+		float density = this.getResources().getDisplayMetrics().density;
+		Rect r = new Rect(WINDOW_WIDTH-(int)(2*density),(int)(scrollerPos - scrollerSize/2),WINDOW_WIDTH,(int)(scrollerPos + scrollerSize/2));
+		
+		c.drawRect(r, p);
+		
 	}
 	
 	boolean finger_down = false;
