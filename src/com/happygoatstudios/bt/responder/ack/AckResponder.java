@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.responder.ack;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 
 import android.content.Context;
 import android.os.Handler;
@@ -52,7 +53,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 
 	@Override
 	public void doResponse(Context c, String displayname, int triggernumber,
-			boolean windowIsOpen,Handler dispatcher) {
+			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
 		} else {
@@ -62,7 +63,9 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 		Message msg = null;
 		try {
 			//Log.e("ACKRESPONDER","RESPONDING WITH: " + this.getAckWith());
-			msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
+			String xformed = AckResponder.this.translate(this.getAckWith(), captureMap);
+			//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
+			msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

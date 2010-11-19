@@ -1,5 +1,9 @@
 package com.happygoatstudios.bt.responder;
 
+import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Parcel;
@@ -115,7 +119,7 @@ public abstract class TriggerResponder implements Parcelable {
 		//Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
-	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher);
+	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap);
 	public abstract TriggerResponder copy();
 	//public abstract void writeToParcel(Parcel in,int args);
 
@@ -125,6 +129,61 @@ public abstract class TriggerResponder implements Parcelable {
 
 	public FIRE_WHEN getFireType() {
 		return fireType;
+	}
+	
+	Pattern replace = Pattern.compile("\\$(\\d+)"); // a $ followed by at least 1 digit.
+	Matcher replacer = replace.matcher("");
+	StringBuffer output = new StringBuffer("");
+	
+	protected String translate(String input,HashMap<String,String> map) {
+		if(input == null) {
+			return "";
+		}
+		
+		if( input.equals("") || map == null || map.size() < 1) {
+			return input;
+		}
+		
+		
+		output.setLength(0);
+		
+		replacer.reset(input);
+		
+		
+		boolean found = false;
+		while(replacer.find()) {
+			found = true;
+			//found a match. extract it's group
+			//if(replacer.groupCount() < 1) {
+			//	Log.e("TRIGGER","NO MATCH GROUPS");
+			//} else {
+			//	for(int i = 0;i<=replacer.groupCount();i++) {
+					//Log.e("TRIGGER",i+":"+replacer.group(i));
+				//}
+			//}
+			String desired = replacer.group(1);
+			//Log.e("TRIGGER","ATTEMPTING GROUP LOOKUP FOR " + desired);
+			String replacetext = "";
+			if(map.containsKey(desired)) {
+				replacetext = map.get(desired);
+				//Log.e("TRIGGER","GOT REPLACEMENT " + replacetext);
+			} else {
+				replacetext = "\\" + replacer.group(0);
+				//Log.e("TRIGGER","NO REP: " + replacetext);
+			}
+			replacer.appendReplacement(output, replacetext); //append with map data if exists, use the group count if not.
+			
+		}
+		
+		if(found) {
+			replacer.appendTail(output);
+			return output.toString();
+		} else {
+			return input;
+		}
+		
+		
+		//return "";
 	}
 	
 	//public int describeContents() {
