@@ -105,6 +105,15 @@ public class BaseParser {
 	static final String TAG_ACKRESPONDER = "ack";
 	static final String ATTR_ACKWITH = "with";
 	
+	
+	//haven't had a new settings group in a real long time.
+	static final String TAG_TIMERS = "timers";
+	static final String TAG_TIMER = "timer";
+	static final String ATTR_TIMERNAME = "name";
+	static final String ATTR_ORDINAL = "ordinal";
+	static final String ATTR_SECONDS = "seconds";
+	static final String ATTR_REPEAT = "repeat";
+	static final String ATTR_PLAYING = "playing";
 
 	
 	final String path;
