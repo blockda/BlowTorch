@@ -413,7 +413,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					break;
 				case MESSAGE_SHOWTOAST:
-					Toast t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_SHORT);
+					Toast t = null;
+					if(msg.arg1 == 1) {
+						t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_LONG);
+					} else {
+						t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_SHORT);		
+					}
 					t.show();
 					break;
 				case MESSAGE_DELETEBUTTONSET:
@@ -1761,9 +1766,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 		}
 
-		public void showMessage(String message) throws RemoteException {
+		public void showMessage(String message,boolean longtime) throws RemoteException {
 			Message showmessage = myhandler.obtainMessage(MESSAGE_SHOWTOAST);
 			showmessage.obj = message;
+			if(longtime) {
+				showmessage.arg1 = 1;
+			} else {
+				showmessage.arg1 = 0;
+			}
 			myhandler.sendMessage(showmessage);
 			
 		}
