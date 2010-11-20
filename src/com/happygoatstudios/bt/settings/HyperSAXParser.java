@@ -25,6 +25,7 @@ import android.sax.EndTextElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
 //import android.util.Log;
+//import android.util.Log;
 import android.util.Xml;
 
 public class HyperSAXParser extends BaseParser {
@@ -404,7 +405,13 @@ public class HyperSAXParser extends BaseParser {
 			public void start(Attributes a) {
 				current_timer.setName((a.getValue("",ATTR_TIMERNAME)==null) ? "" : a.getValue("",ATTR_TIMERNAME));
 				current_timer.setOrdinal((a.getValue("",ATTR_ORDINAL)==null) ? 0 : Integer.parseInt(a.getValue("",ATTR_ORDINAL)));
+				//if(a.getValue("",ATTR_SECONDS) == null) {
+					//Log.e("PARSER","SECONDS ATTRIBUTE NOT FOUND, DEFAULTING");
+				//} else {
+					//Log.e("PARSER","SECONDS ATTRIBUTE CONTAINS " + a.getValue("",ATTR_SECONDS));
+				//}
 				current_timer.setSeconds((a.getValue("",ATTR_SECONDS) == null) ? 30 : Integer.parseInt(a.getValue("",ATTR_SECONDS)));
+				//Log.e("PARSER","SECONDS IN CONTAINER IS NOW " + current_timer.getSeconds().toString());
 				current_timer.setRepeat((a.getValue("",ATTR_REPEAT) == null) ? false : a.getValue("",ATTR_REPEAT).equals("true") ? true : false);
 				current_timer.setPlaying((a.getValue("",ATTR_PLAYING) == null) ? false : a.getValue("",ATTR_PLAYING).equals("true") ? true : false);
 				current_timer.setResponders(new ArrayList<TriggerResponder>());
