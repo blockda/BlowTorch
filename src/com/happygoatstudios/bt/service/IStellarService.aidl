@@ -8,6 +8,7 @@ import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.timer.TimerData;
+import com.happygoatstudios.bt.timer.TimerProgress;
 
 interface IStellarService {
 	void registerCallback(IStellarServiceCallback c);
@@ -96,4 +97,5 @@ interface IStellarService {
 	void addTimer(in TimerData newtimer);
 	void removeTimer(in TimerData deltimer);
 	int getNextTimerOrdinal();
+	Map getTimerProgressWad();
 }

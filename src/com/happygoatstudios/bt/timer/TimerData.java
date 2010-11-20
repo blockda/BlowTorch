@@ -11,7 +11,7 @@ import com.happygoatstudios.bt.responder.toast.ToastResponder;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
+//import android.util.Log;
 
 public class TimerData implements Parcelable {
 	
@@ -21,6 +21,11 @@ public class TimerData implements Parcelable {
 	private boolean repeat;
 	private boolean playing;
 	
+	
+	//data that is not serialized, but should still be parcelable.
+	private long ttf;
+	private Long pauseLocation;
+	
 	private List<TriggerResponder> responders;
 	
 	public TimerData() {
@@ -29,9 +34,14 @@ public class TimerData implements Parcelable {
 		seconds=30;
 		repeat=true;
 		playing = false;
-		
+		ttf = seconds*1000;
 		responders = new ArrayList<TriggerResponder>();
 		
+	}
+	
+	public void reset() {
+		ttf = seconds*1000;
+		pauseLocation = 0l;
 	}
 	
 	public TimerData copy() {
@@ -42,6 +52,7 @@ public class TimerData implements Parcelable {
 		tmp.seconds = this.seconds;
 		tmp.repeat = this.repeat;
 		tmp.playing = this.playing;
+		tmp.ttf =  this.ttf;
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
@@ -59,6 +70,7 @@ public class TimerData implements Parcelable {
 		if(test.seconds != this.seconds) return false;
 		if(test.repeat != this.repeat) return false;
 		if(test.playing != this.playing) return false;
+		//ttf shouldn't be considered for equality. it seems wrong.
 		Iterator<TriggerResponder> test_responders = test.responders.iterator();
 		Iterator<TriggerResponder> my_responders = this.responders.iterator();
 		while(test_responders.hasNext()) {
@@ -93,6 +105,7 @@ public class TimerData implements Parcelable {
 		setSeconds(in.readInt());
 		setRepeat( (in.readInt() == 1) ? true : false);
 		setPlaying( (in.readInt() == 1) ? true : false);
+		setTTF( in.readLong());
 		int numresponders = in.readInt();
 		responders = new ArrayList<TriggerResponder>();
 		//Log.e("PARCLE","IN: name=" + name);
@@ -146,6 +159,7 @@ public class TimerData implements Parcelable {
 		o.writeInt(seconds);
 		o.writeInt((repeat) ? 1 : 0);
 		o.writeInt((playing) ? 1 : 0);
+		o.writeLong(ttf);
 		o.writeInt(responders.size());
 		//Log.e("PARCLE","OUT: " + responders.size() + " responders.");
 		
@@ -175,6 +189,7 @@ public class TimerData implements Parcelable {
 
 	public void setSeconds(Integer seconds) {
 		this.seconds = seconds;
+		//ttf = seconds*1000;
 	}
 
 	public Integer getSeconds() {
@@ -203,6 +218,22 @@ public class TimerData implements Parcelable {
 
 	public boolean isPlaying() {
 		return playing;
+	}
+
+	public void setTTF(long ttf) {
+		this.ttf = ttf;
+	}
+
+	public long getTTF() {
+		return ttf;
+	}
+
+	public void setPauseLocation(Long pauseLocation) {
+		this.pauseLocation = pauseLocation;
+	}
+
+	public Long getPauseLocation() {
+		return pauseLocation;
 	}
 	
 }

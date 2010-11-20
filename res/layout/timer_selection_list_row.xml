@@ -17,13 +17,16 @@
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:textSize="45dip"
-  		android:padding="10dip"
+  		android:paddingRight="15dip"
+  		android:paddingLeft="15dip"
+  		android:paddingTop="0dip"
+  		android:paddingBottom="0dip"
   		android:textStyle="bold"
   		
   		/>
   		
   	<ImageButton
-  		android:id="@+id/timer_play"
+  		android:id="@+id/timer_playpause"
   		android:layout_alignParentRight="true"
   		android:layout_alignParentTop="true"
   		android:layout_width="wrap_content"
@@ -35,13 +38,13 @@
   		/>
   		
   	 <ImageButton
-  		android:id="@+id/timer_pause"
-  		android:layout_toLeftOf="@id/timer_play"
+  		android:id="@+id/timer_reset"
+  		android:layout_toLeftOf="@id/timer_playpause"
   		android:layout_alignParentTop="true"
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_margin="10dip"
-  		android:src="@android:drawable/ic_media_pause"
+  		android:src="@android:drawable/ic_media_ff"
   		
   		/>
   		"
@@ -51,7 +54,7 @@
   		android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
   		android:layout_alignParentTop = "true"
-  		android:layout_toLeftOf="@id/timer_pause"
+  		android:layout_toLeftOf="@id/timer_reset"
   		android:layout_toRightOf="@id/timer_ordinal"
   		android:gravity = "center"
   		android:textSize = "24sp"
@@ -65,7 +68,7 @@
   		android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
   		android:layout_below="@id/timer_title"
-  		android:layout_toLeftOf="@id/timer_pause"
+  		android:layout_toLeftOf="@id/timer_reset"
   		android:layout_toRightOf="@id/timer_ordinal"
   		android:gravity = "center"
   		android:textSize = "16sp"
@@ -75,19 +78,14 @@
   		
   		android:text="00:05:35"/>
   		
-  	  <TextView
+  	  <com.happygoatstudios.bt.timer.ProgressMeter
   		android:id="@+id/timer_progress"
   		android:layout_width="fill_parent"
-  		android:layout_height="wrap_content"
+  		android:layout_height="fill_parent"
   		android:layout_below="@id/timer_display"
   		android:layout_alignParentRight="true"
+  		android:layout_alignBottom="@id/timer_ordinal"
   		android:layout_toRightOf="@id/timer_ordinal"
-  		android:gravity = "left"
-  		android:textSize = "19dip"
-  		android:textStyle = "bold"
-  		android:text="-----------------"
-  		android:typeface="monospace"
-  		android:background="#AA333333"
   		/>
   <!-- <TextView
   		android:id="@+id/trigger_extra"

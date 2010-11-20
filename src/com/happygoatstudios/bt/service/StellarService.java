@@ -35,6 +35,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -64,7 +66,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 import android.widget.Toast;
 
@@ -77,6 +79,8 @@ import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.timer.TimerData;
+import com.happygoatstudios.bt.timer.TimerExtraTask;
+import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
 
@@ -131,6 +135,10 @@ public class StellarService extends Service {
 	private static final int MESSAGE_THROTTLEEVENT = 197;
 	protected static final int MESSAGE_HANDLEWIFI = 496;
 	protected static final int MESSAGE_SAVEXML = 497;
+	public static final int MESSAGE_TIMERFIRED = 498;
+	protected static final int MESSAGE_TIMERSTART = 499;
+	protected static final int MESSAGE_TIMERPAUSE = 500;
+	protected static final int MESSAGE_TIMERRESET = 501;
 	
 	public boolean sending = false;
 	
@@ -138,6 +146,10 @@ public class StellarService extends Service {
 	String settingslocation = "test_settings2.xml";
 	
 	private boolean compressionStarting = false;
+	
+	//need some goodies to track running timers.
+	Timer the_timer = new Timer("BLOWTORCH_TIMER",true);
+	HashMap<String,TimerExtraTask> timerTasks = new HashMap<String,TimerExtraTask>();
 	
 	public void onLowMemory() {
 		//Log.e("SERVICE","The service has been requested to shore up memory usage, potentially going to be killed.");
@@ -181,6 +193,74 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_TIMERRESET:
+					if(timerTasks.containsKey((String)msg.obj)) {
+						TimerExtraTask t = timerTasks.get((String)msg.obj);
+						t.cancel();
+						the_timer.purge();
+						//reset the timer
+						
+						timerTasks.remove((String)msg.obj);
+						TimerData timer = the_settings.getTimers().get((String)msg.obj);
+						timer.reset();
+						//schedule for playing.
+						TimerExtraTask newt = new TimerExtraTask(Integer.parseInt((String)msg.obj),System.currentTimeMillis(),myhandler);
+						timer.setTTF(timer.getSeconds()*1000);
+						newt.setStarttime(System.currentTimeMillis());
+						timer.setPauseLocation(0l);
+						the_timer.scheduleAtFixedRate(newt, timer.getTTF(), timer.getSeconds()*1000);
+						timer.setPlaying(true);
+						timerTasks.put(timer.getOrdinal().toString(), newt);
+						
+					} else {
+						TimerData timer = the_settings.getTimers().get((String)msg.obj);
+						timer.reset();
+						timer.setPlaying(false);
+					}
+					break;
+				case MESSAGE_TIMERPAUSE:
+					
+					//check to see if the timer exists in the timertasks.
+					if(timerTasks.containsKey((String)msg.obj)) {
+						TimerExtraTask t = timerTasks.get((String)msg.obj);
+						long current = System.currentTimeMillis();
+						long start = t.getStarttime();
+						timerTasks.remove((String)msg.obj);
+						t.cancel();
+						the_timer.purge();
+						//update the timer data to reflect that it is not running
+						//however does need to have the ttl set, so if resumed,
+						//will pick up where it left off.
+						TimerData timer = the_settings.getTimers().get((String)msg.obj);
+						timer.setTTF((timer.getSeconds()*1000)-(current-start));
+						timer.setPauseLocation(current-start);
+						//Log.e("SERVICE","PAUSING TIMER " + (String)msg.obj + " WITH " + timer.getTTF()/1000);
+						timer.setPlaying(false);
+					}
+					break;
+				case MESSAGE_TIMERSTART:
+					
+					TimerData data = the_settings.getTimers().get((String)msg.obj);
+					if(data == null) {
+						//no timer with that ordinal
+					} else {
+						TimerExtraTask t = new TimerExtraTask(Integer.parseInt((String)msg.obj),System.currentTimeMillis(),myhandler);
+						if(data.getPauseLocation() == 0) {
+							t.setStarttime(System.currentTimeMillis());
+						} else {
+							t.setStarttime(System.currentTimeMillis() - data.getPauseLocation());
+						}
+						timerTasks.put((String)msg.obj, t);
+						//data.reset();
+						//Log.e("SERVICE","STARTING TIMER " + (String)msg.obj + " WITH " + data.getTTF()/1000 + " seconds.");
+						the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
+					}
+					break;
+				case MESSAGE_TIMERFIRED:
+					//Log.e("SERVICE","TIMER " + msg.arg1 + " FIRED!");
+					String ordinal = Integer.toString(msg.arg1);
+					DoTimerResponders(ordinal);
+					break;
 				case MESSAGE_SAVEXML:
 					saveXmlSettings(settingslocation);
 					break;
@@ -511,6 +591,13 @@ public class StellarService extends Service {
 			the_settings = parser.load();
 			buildAliases();
 			buildTriggerData();
+			
+			//temporarily output the timers.
+			for(TimerData timer : the_settings.getTimers().values()) {
+				timer.reset();
+				//Log.e("SERVICE","LOADED SETTINGS, TIMER" + timer.getOrdinal() + ", DURATION " + timer.getSeconds());
+			}
+			
 		} catch (FileNotFoundException e) {
 			//if the file does not exist, then we need to load the default settings
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
@@ -1425,29 +1512,55 @@ public class StellarService extends Service {
 
 		public TimerData getTimer(String ordinal) throws RemoteException {
 			synchronized(the_settings) {
-				return the_settings.getTimers().get(ordinal);
+				//set up the timer before actually passing it, as it might have a playing item in the queue.
+				TimerData the_timer = the_settings.getTimers().get(ordinal);
+				TimerExtraTask t = null;
+				if(timerTasks.containsKey(ordinal)) {
+					t = timerTasks.get(ordinal);
+					//harvest info.
+					long started_at = t.getStarttime();
+					long current = System.currentTimeMillis();
+					
+					the_timer.setTTF(the_timer.getSeconds()*1000 - (current-started_at));
+					the_timer.setPlaying(true);
+				} else {
+					the_timer.setPlaying(false);
+				}
+				return the_timer;
 			}
 		}
 
 		public Map getTimers() throws RemoteException {
 			synchronized(the_settings) {
+				//updat the timer table
+				for(TimerData timer : the_settings.getTimers().values()) {
+					if(timerTasks.containsKey(timer.getOrdinal().toString())) {
+						//get the timer data and update ttf values
+						TimerExtraTask t = timerTasks.get(timer.getOrdinal().toString());
+						long started = t.getStarttime();
+						long now = System.currentTimeMillis();
+						
+						timer.setPlaying(true);
+					
+						timer.setTTF(timer.getSeconds()*1000 - (now - started));
+					}
+					//Log.e("SERVICE","SERVICE SENDING TIMER WITH " + timer.getSeconds().toString() + " SECONDS.");
+				}
+				
 				return the_settings.getTimers();
 			}
 		}
 
 		public void pauseTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERPAUSE,ordinal));
 		}
 
 		public void resetTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERRESET,ordinal));
 		}
 
 		public void startTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERSTART, ordinal));
 		}
 
 		public void stopTimer(String ordinal) throws RemoteException {
@@ -1457,7 +1570,8 @@ public class StellarService extends Service {
 
 		public void addTimer(TimerData newtimer) throws RemoteException {
 			synchronized(the_settings) {
-				Log.e("SERVICE","SERVICE GOT NEW TIMER");
+				//Log.e("SERVICE","SERVICE GOT NEW TIMER");
+				newtimer.reset();
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
 			}
 		}
@@ -1483,6 +1597,36 @@ public class StellarService extends Service {
 				return the_settings.getTimers().size();
 			}
 		}
+
+		public Map getTimerProgressWad() throws RemoteException {
+			HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
+			
+			for(TimerData timer : the_settings.getTimers().values()) {
+				if(timerTasks.containsKey(timer.getOrdinal().toString())) {
+					//get the timer data and update ttf values
+					TimerExtraTask t = timerTasks.get(timer.getOrdinal().toString());
+					long started = t.getStarttime();
+					long now = System.currentTimeMillis();
+					
+					timer.setPlaying(true);
+				
+					timer.setTTF(timer.getSeconds()*1000 - (now - started));
+					
+					//what we are lookin for is the progress and time left.
+					TimerProgress p = new TimerProgress();
+					p.setTimeleft(timer.getTTF());
+					p.setPercentage((float)timer.getTTF()/((float)timer.getSeconds())*1000);
+					tmp.put(timer.getOrdinal().toString(), p);
+					
+				} else {
+					
+				}
+				//Log.e("SERVICE","SERVICE SENDING TIMER WITH " + timer.getSeconds().toString() + " SECONDS.");
+			}
+			
+			return tmp;
+		}
+		
 	};
 	
 	Pattern newline = Pattern.compile("\n");
@@ -2200,6 +2344,23 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private void DoTimerResponders(String ordinal) {
+		synchronized(the_settings) {
+			if(!the_settings.getTimers().containsKey(ordinal)) {
+				return; // no ordinal
+			}
+			
+			TimerData data = the_settings.getTimers().get(ordinal);
+			if(data == null) {
+				return; //this shoudn't happen. means there is a null entry in the map.
+			}
+			
+			for(TriggerResponder responder : data.getResponders()) {
+				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null);
+			}
+		}
+	}
+	
 	boolean debug = false;
 	
 	public void doStartup() throws UnknownHostException, IOException, RemoteException {
@@ -2357,6 +2518,8 @@ public class StellarService extends Service {
 	
 	public void doShutdown() {
 		//pump.stop();
+		the_timer.cancel();
+		
 		if(pump != null) {
 			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
 			pump = null;
