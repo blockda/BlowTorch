@@ -68,6 +68,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -139,6 +140,7 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_TIMERSTART = 499;
 	protected static final int MESSAGE_TIMERPAUSE = 500;
 	protected static final int MESSAGE_TIMERRESET = 501;
+	public static final int MESSAGE_TIMERINFO = 502;
 	
 	public boolean sending = false;
 	
@@ -170,9 +172,12 @@ public class StellarService extends Service {
 		ColorDebugCommand colordebug = new ColorDebugCommand();
 		//BrokenColor brokencolor = new BrokenColor();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
+		TimerCommand timercmd = new TimerCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
+		specialcommands.put(timercmd.commandName, timercmd);
+		
 		
 		//Looper.prepare();
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
@@ -193,6 +198,18 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_TIMERINFO:
+					if(timerTasks.containsKey((String)msg.obj)) {
+						TimerExtraTask t = timerTasks.get((String)msg.obj);
+						//calculate time, ugh, can't we do this somewhere else.
+						long then = t.getStarttime();
+						long now = System.currentTimeMillis();
+						long secleft = ((the_settings.getTimers().get((String)msg.obj).getSeconds()*1000)-(now - then))/1000;
+						DispatchToast("Timer " + (String)msg.obj + ": " + Long.toString(secleft) + " seconds left.",false);
+					} else {
+						DispatchToast("Timer " + (String)msg.obj + " not running.",false);
+					}
+					break;
 				case MESSAGE_TIMERRESET:
 					if(timerTasks.containsKey((String)msg.obj)) {
 						TimerExtraTask t = timerTasks.get((String)msg.obj);
@@ -204,18 +221,31 @@ public class StellarService extends Service {
 						TimerData timer = the_settings.getTimers().get((String)msg.obj);
 						timer.reset();
 						//schedule for playing.
+						
 						TimerExtraTask newt = new TimerExtraTask(Integer.parseInt((String)msg.obj),System.currentTimeMillis(),myhandler);
+						
 						timer.setTTF(timer.getSeconds()*1000);
 						newt.setStarttime(System.currentTimeMillis());
 						timer.setPauseLocation(0l);
-						the_timer.scheduleAtFixedRate(newt, timer.getTTF(), timer.getSeconds()*1000);
+						if(timer.isRepeat()) {
+							the_timer.scheduleAtFixedRate(newt, timer.getTTF(), timer.getSeconds()*1000);
+						} else {
+							the_timer.schedule(newt, timer.getTTF());
+						}
 						timer.setPlaying(true);
 						timerTasks.put(timer.getOrdinal().toString(), newt);
+						
+						
 						
 					} else {
 						TimerData timer = the_settings.getTimers().get((String)msg.obj);
 						timer.reset();
 						timer.setPlaying(false);
+					}
+					
+					if(msg.arg2 == 50) {
+						//send message.
+						DispatchToast("Timer " + (String)msg.obj + " reset.",false);
 					}
 					break;
 				case MESSAGE_TIMERPAUSE:
@@ -237,12 +267,17 @@ public class StellarService extends Service {
 						//Log.e("SERVICE","PAUSING TIMER " + (String)msg.obj + " WITH " + timer.getTTF()/1000);
 						timer.setPlaying(false);
 					}
+					
+					if(msg.arg2 == 50) {
+						//send message.
+						DispatchToast("Timer " + (String)msg.obj + " paused.",false);
+					}
 					break;
 				case MESSAGE_TIMERSTART:
 					
 					TimerData data = the_settings.getTimers().get((String)msg.obj);
-					if(data == null) {
-						//no timer with that ordinal
+					if(data == null || timerTasks.containsKey((String)msg.obj)) {
+						//no timer with that ordinal,or it is already started
 					} else {
 						TimerExtraTask t = new TimerExtraTask(Integer.parseInt((String)msg.obj),System.currentTimeMillis(),myhandler);
 						if(data.getPauseLocation() == 0) {
@@ -253,13 +288,34 @@ public class StellarService extends Service {
 						timerTasks.put((String)msg.obj, t);
 						//data.reset();
 						//Log.e("SERVICE","STARTING TIMER " + (String)msg.obj + " WITH " + data.getTTF()/1000 + " seconds.");
-						the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
+						if(data.isRepeat()) {
+							the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
+						} else {
+							//do once
+							//the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
+							the_timer.schedule(t, data.getTTF());
+						}
+						if(msg.arg2 == 50) {
+							//send message.
+							DispatchToast("Timer " + (String)msg.obj + " started.",false);
+						}
 					}
+					
+					
 					break;
 				case MESSAGE_TIMERFIRED:
 					//Log.e("SERVICE","TIMER " + msg.arg1 + " FIRED!");
 					String ordinal = Integer.toString(msg.arg1);
 					DoTimerResponders(ordinal);
+					TimerData td = the_settings.getTimers().get(ordinal);
+					if(!td.isRepeat()) {
+						//need to make sure the timerTask is cancelled
+						TimerExtraTask tt = timerTasks.remove(ordinal);
+						tt.cancel();
+						the_timer.purge();
+						td.reset();
+					}
+					
 					break;
 				case MESSAGE_SAVEXML:
 					saveXmlSettings(settingslocation);
@@ -543,20 +599,12 @@ public class StellarService extends Service {
 			}
 		};
 		
-		//Log.e("SERV","REACHED THE END OF THE STARTUP METHOD");
-		//Looper.loop();
-		//myhandler.sendEmptyMessageDelayed(StellarService.MESSAGE_CHECKIFALIVE, 3000);
-		//REGISTER TRIGGER PATTERS.
-		//test_set.add("Your eyes glaze over.");
-		//test_set.add("QUEST: You may now quest again.");
-		//test_set.add("i love kurt");
-		//aliases.put("REPLACE", "gulp");
-		//aliases.put("TESTREP", "enter");
-		
-		//read in aliases from disk.
-		
-		//test_set.add("TICK");
-		//test_set.add("--> TICK <--");
+		//populate the timer_actions hash so we can parse arguments.
+		timer_actions = new ArrayList<String>();
+		timer_actions.add("play");
+		timer_actions.add("pause");
+		timer_actions.add("reset");
+		timer_actions.add("info");
 	}
 	
 	public void onDestroy() {
@@ -1189,14 +1237,14 @@ public class StellarService extends Service {
 						message += "\nAppended .xml extension.";
 					}
 					
-					DispatchToast(message);
+					DispatchToast(message,true);
 					//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), message, Toast.LENGTH_SHORT);
 					//msg.show();
 				} else {
 					//Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
 					//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), "SD Card not available. File not written.", Toast.LENGTH_SHORT);
 					//msg.show();
-					DispatchToast("SD Card not available. File not written.");
+					DispatchToast("SD Card not available. File not written.",true);
 				}
 				} catch(Exception e) {
 					throw new RuntimeException(e);
@@ -1578,16 +1626,51 @@ public class StellarService extends Service {
 
 		public void removeTimer(TimerData deltimer) throws RemoteException {
 			synchronized(the_settings) {
-				//remove this from the clock manager / stop it before removing it.
+				if(timerTasks.containsKey(deltimer.getOrdinal().toString())) {
+					TimerExtraTask t = timerTasks.get(deltimer.getOrdinal().toString());
+					t.cancel();
+					timerTasks.remove(deltimer.getOrdinal().toString());
+				}
+				//delete timer.
 				the_settings.getTimers().remove(deltimer.getOrdinal().toString());
+				
+				//re-ordinal.
+				int ordinal = deltimer.getOrdinal() + 1;
+				boolean ended = false;
+				while(!ended) {
+					if(the_settings.getTimers().containsKey(Integer.toString(ordinal))) {
+						TimerData tmp = the_settings.getTimers().remove(Integer.toString(ordinal));
+						tmp.setOrdinal(ordinal -1);
+						the_settings.getTimers().put(Integer.toString(ordinal-1),tmp);
+						
+					} else {
+						ended = true;
+					}
+					ordinal = ordinal+1;
+				}
+				
+				//remove this from the clock manager / stop it before removing it.
+				//the_settings.getTimers().remove(deltimer.getOrdinal().toString());
 			}
 		}
 
 		public void updateTimer(TimerData old, TimerData newtimer)
 				throws RemoteException {
 			synchronized(the_settings) {
-				the_settings.getTimers().remove(old.getOrdinal().toString());
+				//make sure that any running timers are stopped.
+				if(timerTasks.containsKey(old.getOrdinal().toString())) {
+					TimerExtraTask t = timerTasks.get(old.getOrdinal().toString());
+					t.cancel();
+					the_timer.purge();
+					timerTasks.remove(old.getOrdinal().toString());
+				}
+				
+				TimerData r = the_settings.getTimers().remove(old.getOrdinal().toString());
+				//Log.e("SERVICE","OLD TIMER HAD" + r.getSeconds());
+				newtimer.reset();
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
+				//Log.e("SERVICE","OLD TIMER HAD" + newtimer.getSeconds());
+				//Log.e("SERVICE","UPDATING TIMER");
 			}
 		}
 
@@ -1615,7 +1698,7 @@ public class StellarService extends Service {
 					//what we are lookin for is the progress and time left.
 					TimerProgress p = new TimerProgress();
 					p.setTimeleft(timer.getTTF());
-					p.setPercentage((float)timer.getTTF()/((float)timer.getSeconds())*1000);
+					p.setPercentage(((float)timer.getTTF()/1000)/((float)timer.getSeconds()));
 					tmp.put(timer.getOrdinal().toString(), p);
 					
 				} else {
@@ -1934,11 +2017,11 @@ public class StellarService extends Service {
 		}
 	}
 	
-	private void DispatchToast(String message) {
+	private void DispatchToast(String message,boolean longtime) {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			try {
-				callbacks.getBroadcastItem(i).showMessage(message);
+				callbacks.getBroadcastItem(i).showMessage(message,longtime);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -2089,6 +2172,118 @@ public class StellarService extends Service {
 			callbacks.finishBroadcast();
 			
 		}
+	}
+	
+	ArrayList<String> timer_actions;
+	
+	private class TimerCommand extends SpecialCommand {
+		
+		public TimerCommand() {
+			this.commandName = "timer";
+		}
+		public void execute(Object o)  {
+			//example argument " info 0"
+			//regex = "^\s+(\S+)\s+(\d+)";
+			Pattern p = Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s*(\\S*)");
+			
+			Matcher m = p.matcher((String)o);
+			
+			int pOrdinal = -1;
+			
+			if(m.matches()) {
+				//extract arguments
+				String action = m.group(1).toLowerCase();
+				String ordinal = m.group(2);
+				String silent = "";
+				if(m.groupCount() > 2) {
+					silent = m.group(3);
+				} else {
+					//do nothing
+				}
+				if(timer_actions.contains(action)) {
+					//we have a valid action.
+				} else {
+					//error with bad action.
+					try {
+						doDispatchNoProcess(getErrorMessage("Timer action arguemnt " + action + " is invalid.","Acceptable arguments are \"play\",\"pause\",\"reset\" and \"info\".").getBytes());
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					return;
+				}
+				
+				try {
+					pOrdinal = Integer.parseInt(ordinal);
+				} catch (NumberFormatException e) {
+					try {
+						doDispatchNoProcess(getErrorMessage("Timer index argument " + ordinal + " is not a number.","Acceptable argument is an integer.").getBytes());
+						return;
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+				
+				if(the_settings.getTimers().containsKey(ordinal)) {
+					//valid timer.
+					int domsg = 50;
+					//Log.e("SERVICE","SILENT IS " + silent);
+					if(!silent.equals("")) {
+						domsg = 0;
+					}
+					
+					if(action.equals("info")) {
+						myhandler.sendMessage(myhandler.obtainMessage(StellarService.MESSAGE_TIMERINFO, ordinal));
+						return;
+					}
+					if(action.equals("reset")) {
+						myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERRESET, 0, domsg, ordinal));
+						return;
+					}
+					if(action.equals("play")) {
+						//play
+						myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERSTART,0,domsg,ordinal));
+						return;
+					}
+					if(action.equals("pause")) {
+						myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERPAUSE, 0, domsg, ordinal));
+						return;
+					}
+					
+					
+				} else {
+					//invalid timer
+					try {
+						doDispatchNoProcess(getErrorMessage("Timer at index " + ordinal + " does not exist.","The timer index is the number displayed next to the timer the timer selection screen.").getBytes());
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+				
+				
+			} else {
+				try {
+					doDispatchNoProcess(getErrorMessage("Timer command: \".timer" + (String)o + "\" is invalid.","Timer function format \".timer action index [silent]\"\nWhere action is \"play\",\"pause\",\"reset\" or \"info\".\nIndex is the timer index displayed in the timer selection list.").getBytes());
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		}
+	}
+	
+	private String getErrorMessage(String arg1,String arg2) {
+		
+		String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
+		errormessage += arg1 + "\n";
+		errormessage += arg2 + "\n";
+		//errormessage += "Acceptable arguments are 0, 1, 2 or 3\n";
+		errormessage += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";
+		return errormessage;
 	}
 	
 	private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();

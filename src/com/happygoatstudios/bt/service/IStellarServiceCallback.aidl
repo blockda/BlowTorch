@@ -11,6 +11,6 @@ oneway interface IStellarServiceCallback {
 	void displayXMLError(String error);
 	void executeColorDebug(int arg);
 	void invokeDirtyExit();
-	void showMessage(String message);
+	void showMessage(String message,boolean longtime);
 	void showDialog(String message);
 }

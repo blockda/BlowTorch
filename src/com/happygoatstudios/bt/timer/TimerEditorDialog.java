@@ -90,11 +90,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 		
 		repeat = (CheckBox)findViewById(R.id.timer_repeat_checkbox);
 		
-		if(isEditor) {
-			name.setText(orig_timer.getName());
-			seconds.setText(orig_timer.getSeconds().toString());
-			repeat.setChecked(orig_timer.isRepeat());
-		}
+
 		legend= (TableRow)findViewById(R.id.timer_notification_legend);
 		responderTable = (TableLayout)findViewById(R.id.timer_notification_table);
 		
@@ -117,6 +113,15 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 		
 		Button donebutton = (Button)findViewById(R.id.timer_editor_done_button);
 		donebutton.setOnClickListener(new TimerEditerDoneListener());
+		
+		
+		if(isEditor) {
+			name.setText(orig_timer.getName());
+			seconds.setText(orig_timer.getSeconds().toString());
+			repeat.setChecked(orig_timer.isRepeat());
+			donebutton.setText("Modify Timer");
+			
+		}
 	}
 	
 	private class TimerEditerDoneListener implements View.OnClickListener {
@@ -151,6 +156,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
+				finish_with.sendMessage(finish_with.obtainMessage(99, the_timer.getOrdinal().toString()));
 			} else {
 				the_timer.setName(theName);
 				the_timer.setSeconds(Integer.parseInt(theSeconds));
@@ -162,9 +168,10 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
+				finish_with.sendMessage(finish_with.obtainMessage(100,the_timer.getOrdinal().toString()));
 			}
 			
-			finish_with.sendEmptyMessage(100);
+			
 			TimerEditorDialog.this.dismiss();
 		}
 		
