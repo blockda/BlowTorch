@@ -2,7 +2,7 @@
 
 <RelativeLayout
   	xmlns:android="http://schemas.android.com/apk/res/android"
-  	android:layout_width="420px"
+  	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
   	android:background="#FF333333">
   	
@@ -55,7 +55,9 @@
   		android:layout_alignParentRight="true"
   		android:layout_alignParentTop="true"
   		android:layout_toRightOf="@id/timer_ordinal"
-  		android:stretchColumns="*">
+  		android:stretchColumns="*"
+  		android:paddingRight="0dip"
+  		android:paddingLeft="0dip">
   		
   		
   	<TableRow

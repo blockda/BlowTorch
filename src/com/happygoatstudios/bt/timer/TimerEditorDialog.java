@@ -119,7 +119,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 			name.setText(orig_timer.getName());
 			seconds.setText(orig_timer.getSeconds().toString());
 			repeat.setChecked(orig_timer.isRepeat());
-			donebutton.setText("Modify Timer");
+			donebutton.setText("Done");
 			
 		}
 	}

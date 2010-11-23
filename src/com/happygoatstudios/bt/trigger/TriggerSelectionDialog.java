@@ -63,7 +63,9 @@ public class TriggerSelectionDialog extends Dialog {
 		list.setOnItemClickListener(new EditTriggerListener());
 		list.setOnItemLongClickListener(new DeleteTriggerListener());
 		//list.setOnI
-		//attempt to fish out the trigger list.		
+		//attempt to fish out the trigger list.	
+		
+		list.setEmptyView(findViewById(R.id.trigger_empty));
 		buildList();
 		
 		Button newbutton = (Button)findViewById(R.id.trigger_new_button);
@@ -92,10 +94,10 @@ public class TriggerSelectionDialog extends Dialog {
 	}
 	
 	public void onStart() {
-		if(noTriggers) {
+		/*if(noTriggers) {
 			Toast t = Toast.makeText(TriggerSelectionDialog.this.getContext(), "No triggers loaded. Click below to create new Triggers.", Toast.LENGTH_LONG);
 			t.show();
-		}
+		}*/
 	}
 	
 	private class EditTriggerListener implements AdapterView.OnItemClickListener {
@@ -131,11 +133,11 @@ public class TriggerSelectionDialog extends Dialog {
 			//TriggerItem item = entries.get(arg2);
 			
 			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerSelectionDialog.this.getContext());
-			builder.setTitle("Delete Trigger?");
+			builder.setTitle("Edit Trigger?");
 			DeleteTriggerFinishListener delete_me = new DeleteTriggerFinishListener(arg2);
-			builder.setPositiveButton("Delete.",delete_me);
-			builder.setNegativeButton("Cancel.", delete_me);
-			builder.setNeutralButton("Modify", delete_me);
+			builder.setNeutralButton("Delete",delete_me);
+			builder.setNegativeButton("Cancel", delete_me);
+			builder.setPositiveButton("Edit", delete_me);
 			AlertDialog dialog = builder.create();
 			dialog.show();
 			
@@ -154,7 +156,7 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		public void onClick(DialogInterface arg0, int arg1) {
 			switch(arg1) {
-			case DialogInterface.BUTTON_POSITIVE:
+			case DialogInterface.BUTTON_NEUTRAL:
 				//attempt delete
 				try {
 					service.deleteTrigger(entries.get(position).extra);
@@ -169,7 +171,7 @@ public class TriggerSelectionDialog extends Dialog {
 			case DialogInterface.BUTTON_NEGATIVE:
 				arg0.dismiss();
 				break;
-			case DialogInterface.BUTTON_NEUTRAL:
+			case DialogInterface.BUTTON_POSITIVE:
 				TriggerItem entry = adapter.getItem(position);
 				//launch the trigger editor with this item.
 				try {

@@ -64,18 +64,37 @@
 			</TableRow>
 			
 		</TableLayout>
-			
+		<FrameLayout
+			android:id="@+id/timer_frame"
+			android:layout_width = "300dip"
+			android:layout_height="fill_parent"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_alignParentRight="true"
+			android:layout_above="@id/table_container"
+			android:layout_below="@id/c_label">	
 		<ListView
 			android:id = "@+id/connection_list"
 			android:layout_alignParentRight = "true"
-			android:layout_above="@id/table_container"
-			android:layout_below="@id/c_label"
+
 			android:layout_height = "fill_parent"
 			android:layout_width = "300dip"
 			android:divider= "#00000000">
 			
 		</ListView>
-		
+		<TextView
+			android:id="@+id/launcher_empty"
+			android:layout_width="300dip"
+			android:layout_height="fill_parent"
+			android:text="No connections.\nNew connections can be made with the button below."
+			android:textColor="#AA222222"
+			android:background="#AAAAAAAA"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:textStyle="bold"
+			android:textSize="18dip"
+			android:gravity="center"/>
+		</FrameLayout>
 
 	
 	</RelativeLayout>

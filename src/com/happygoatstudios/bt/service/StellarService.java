@@ -66,6 +66,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -1610,6 +1611,7 @@ public class StellarService extends Service {
 				//Log.e("SERVICE","SERVICE GOT NEW TIMER");
 				newtimer.reset();
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 		}
 
@@ -1637,7 +1639,7 @@ public class StellarService extends Service {
 					}
 					ordinal = ordinal+1;
 				}
-				
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 				//remove this from the clock manager / stop it before removing it.
 				//the_settings.getTimers().remove(deltimer.getOrdinal().toString());
 			}
@@ -1660,6 +1662,7 @@ public class StellarService extends Service {
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
 				//Log.e("SERVICE","OLD TIMER HAD" + newtimer.getSeconds());
 				//Log.e("SERVICE","UPDATING TIMER");
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 		}
 
@@ -2008,7 +2011,7 @@ public class StellarService extends Service {
 		WifiInfo info = wifi.getConnectionInfo();
 		if(info.getNetworkId() != -1) {
 			//if so, grab the lock
-			//Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
+			Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
 			the_wifi_lock = wifi.createWifiLock("BLOWTORCH_WIFI_LOCK");
 			the_wifi_lock.acquire();
 		}

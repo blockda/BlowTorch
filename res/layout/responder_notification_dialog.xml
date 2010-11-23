@@ -24,12 +24,12 @@
   		android:id="@+id/responder_notification_cancel"
   		android:layout_alignParentBottom="true"
   		android:layout_alignParentRight="true"
-  		android:text="Dismiss." />
+  		android:text="Cancel" />
   
   <Button
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:text="Done."
+  	android:text="Done"
   	android:id="@+id/responder_notification_done_button"
   	android:layout_toLeftOf="@id/responder_notification_cancel"
   	android:layout_alignParentBottom="true"/>

@@ -24,7 +24,7 @@
 		android:layout_alignParentLeft="true"
 		android:layout_height="wrap_content"
 		android:layout_width="146dip"
-		android:text="New Trigger!"/>
+		android:text="New Trigger"/>
 		
 	<Button
 		android:id="@+id/trigger_cancel_button"
@@ -32,7 +32,7 @@
 		android:layout_alignParentRight="true"
 		android:layout_height="wrap_content"
 		android:layout_width="133dip"
-		android:text="Cancel"/>
+		android:text="Done"/>
 		
 	<!-- <ScrollView
 		android:id="@+id/buttonset_scroller"
@@ -40,14 +40,31 @@
 		android:layout_width="420px"
 		android:layout_height="fill_parent"
 		android:layout_above="@id/new_buttonset_button"> -->
-		
+		<FrameLayout
+			android:id="@+id/timer_frame"
+			android:layout_width = "fill_parent"
+			android:layout_height="fill_parent"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_above="@id/trigger_new_button"
+			android:layout_below="@id/titlebar">
 		<ListView
 			android:id="@+id/trigger_list"
 			android:layout_height="fill_parent"
-			android:layout_above="@id/trigger_new_button"
-			android:layout_below="@id/titlebar"
 			android:layout_width="280dip"/>
-		
+		<TextView
+			android:id="@+id/trigger_empty"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:text="No triggers to display.\nNew triggers can be made with the button below."
+			android:textColor="#FFFFFFFF"
+			android:background="#FF000000"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:textStyle="bold"
+			android:textSize="18dip"
+			android:gravity="center"/>
+		</FrameLayout>
 	<!-- </ScrollView> -->
 		
 </RelativeLayout>

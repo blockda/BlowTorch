@@ -15,12 +15,15 @@ import java.util.regex.Pattern;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -40,7 +43,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.method.KeyListener;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
@@ -52,6 +55,8 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.MotionEvent;
@@ -122,6 +127,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_SHOWDIALOG = 870;
 	public static final int MESSAGE_HFPRESS = 871;
 	public static final int MESSAGE_HFFLIP = 872;
+	public static final int MESSAGE_LOCKUNDONE = 873;
 	
 	
 	protected boolean settingsDialogRun = false;
@@ -257,6 +263,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		//set up the crash reporter
 		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this));
+		        // requestWindowFeature(Window.FEATURE_NO_TITLE);  
+		        // getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,   
+		                          //       WindowManager.LayoutParams.FLAG_FULLSCREEN);  
+		
 		
 		setContentView(R.layout.window_layout);
 		
@@ -388,6 +398,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_LOCKUNDONE:
+					//MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+					//screen2.forceDraw();
+					//screen2.invalidate();
+					//Log.e("WINDOW","ATTEMPTING TO FORCE REDRAW THE SCREEN");
+					break;
 				case MESSAGE_HFPRESS:
 					DoHapticFeedbackPress();
 					break;
@@ -600,6 +616,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					//the service is connected at this point, so the service is alive and settings are loaded
 					//TODO: HERE!
 					//attemppt to load button sets.
+					boolean fontSizeChanged = false;
 					if(settingsDialogRun) {
 						//so, if we a are here, then the dialog screen has been run.
 						//we need to read in the values and supply them to the service
@@ -625,9 +642,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
 						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
 						
+						
+						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
+							if(font_size != service.getFontSize()) {
+								fontSizeChanged = true;
+							}
+							
 							service.setFontSize(font_size);
 							service.setFontSpaceExtra(line_space);
 							service.setMaxLines(max_lines);
@@ -769,6 +792,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						}
 						
 						screen2.setFont(font);
+						
+						if(fontSizeChanged) {
+							screen2.reBreakBuffer();
+						}
 						
 						
 						if(service.getUseExtractUI()) {
@@ -1126,6 +1153,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			servicestarted = true;
 		}
+		
+		//register screenlock thingie.
+		//IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+		//filter.addAction(Intent.ACTION_SCREEN_OFF);
+		///filter.addAction(Intent.ACTION_USER_PRESENT);
+		//BroadcastReceiver mReceiver = new ScreenState(myhandler);
+		//registerReceiver(mReceiver, filter);
 		
 		
 		//give it some time to launch

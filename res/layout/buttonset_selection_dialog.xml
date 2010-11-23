@@ -33,7 +33,7 @@
 		android:layout_alignParentRight="true"
 		android:layout_height="wrap_content"
 		android:layout_width="133dip"
-		android:text="Back"/>
+		android:text="Done"/>
 		
 	<!-- <ScrollView
 		android:id="@+id/buttonset_scroller"

@@ -24,7 +24,7 @@
 		android:layout_alignParentLeft="true"
 		android:layout_height="wrap_content"
 		android:layout_width="146dip"
-		android:text="New Timer!"/>
+		android:text="New Timer"/>
 		
 	<Button
 		android:id="@+id/timer_cancel_button"
@@ -78,15 +78,36 @@
 		android:layout_width="420px"
 		android:layout_height="fill_parent"
 		android:layout_above="@id/new_buttonset_button"> -->
-		
+		<FrameLayout
+			android:id="@+id/timer_frame"
+			android:layout_width = "fill_parent"
+			android:layout_height="fill_parent"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_above="@id/button_table"
+			android:layout_below="@id/titlebar">
 		<ListView
 			android:id="@+id/timer_list"
 			android:layout_height="fill_parent"
-			android:layout_above="@id/button_table"
-			android:layout_below="@id/titlebar"
-			android:layout_width="280dip"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_width="fill_parent"
 			android:listSelector="@drawable/timer_list_item_selector"
 			android:drawSelectorOnTop="true"/>
+		<TextView
+			android:id="@+id/timer_empty"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:text="No timers to display.\nNew timers can be made with the button below."
+			android:textColor="#FFFFFFFF"
+			android:background="#FF000000"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:textStyle="bold"
+			android:textSize="18dip"
+			android:gravity="center"/>
+			
+		</FrameLayout>
 		
 	<!-- </ScrollView> -->
 		
