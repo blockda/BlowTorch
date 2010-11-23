@@ -122,6 +122,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_SHOWDIALOG = 870;
 	public static final int MESSAGE_HFPRESS = 871;
 	public static final int MESSAGE_HFFLIP = 872;
+	public static final int MESSAGE_BUTTONFIT = 873;
 	
 	
 	protected boolean settingsDialogRun = false;

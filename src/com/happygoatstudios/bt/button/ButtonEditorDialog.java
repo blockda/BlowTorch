@@ -2,16 +2,23 @@ package com.happygoatstudios.bt.button;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.validator.Validator;
+import com.happygoatstudios.bt.window.MainWindow;
 import com.happygoatstudios.bt.window.SlickView;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -347,6 +354,52 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				if(tfreeze.isChecked()) {
 					the_button.setMoveMethod(SlickButtonData.MOVE_FREEZE);
 				}
+				
+				//do the check for the button height/width.
+				Paint opts = new Paint();
+				opts.setTypeface(Typeface.DEFAULT_BOLD);
+				opts.setTextSize(the_button.getData().getLabelSize()*ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density);
+				//opts.setF
+				
+				opts.setFlags(Paint.ANTI_ALIAS_FLAG);
+				
+				float length = opts.measureText(the_button.getData().getLabel());
+				float height = the_button.getData().getLabelSize();
+				
+				boolean needsfit = false;
+				
+				Log.e("BUTTONEDITOR","LENGTH CALC: " + length/ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density + " width:" + the_button.getData().getWidth());
+				if(length/ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density > the_button.getData().getWidth()) {
+					needsfit = true;
+				}
+				
+				Log.e("BUTTONEDITOR","HEIGHT CALC: " + height + " height:" + the_button.getData().getHeight());
+				if(height > the_button.getHeight()) {
+					needsfit = true;
+				}
+				
+				if(needsfit) {
+					AlertDialog.Builder b = new AlertDialog.Builder(ButtonEditorDialog.this.getContext());
+					b.setMessage("The button label has exceeded the bounds of the button. Fit button to label?");
+					b.setTitle("Label too big.");
+					float density = ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density;
+					b.setPositiveButton("Fit please.", new FitClickListener((int)(height+10*density),(int)((length/density)+(int)10*density)));
+					b.setNegativeButton("No thanks.", new DialogInterface.OnClickListener() {
+
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+						
+					});
+					
+					AlertDialog dialog = b.create();
+					dialog.show();
+					
+				}
+				
+				
+				
+				
 				the_button.dialog_launched = false;
 				the_button.iHaveChanged(the_button.orig_data);
 				the_button.invalidate();
@@ -366,6 +419,31 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		//the_button.
 		the_button.invalidate();
 		this.dismiss();
+	}
+	
+	private class FitClickListener implements DialogInterface.OnClickListener {
+
+		private int height;
+		private int width;
+		
+		public FitClickListener(int pHeight,int pWidth) {
+			height = pHeight;
+			width = pWidth;
+		}
+		
+		public void onClick(DialogInterface dialog, int which) {
+			SlickButtonData fitbutton = the_button.getData().copy();
+			fitbutton.setWidth(width);
+			fitbutton.setHeight(height);
+			
+			Message msg = deleter.obtainMessage(MainWindow.MESSAGE_MODIFYBUTTON);
+			Bundle b = msg.getData();
+			b.putParcelable("ORIG_DATA", the_button.getData());
+			b.putParcelable("MOD_DATA", fitbutton);
+			msg.setData(b);
+			deleter.sendMessage(msg);
+		}
+		
 	}
 	
 	public enum COLOR_FIELDS {
