@@ -398,7 +398,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					AlertDialog.Builder dbuilder = new AlertDialog.Builder(MainWindow.this);
 					dbuilder.setTitle("ERROR");
 					dbuilder.setMessage((String)msg.obj);
-					dbuilder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
+					dbuilder.setCancelable(true);
+					//dbuilder.set
+					dbuilder.setPositiveButton("Close Window", new DialogInterface.OnClickListener() {
 						
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.dismiss();
