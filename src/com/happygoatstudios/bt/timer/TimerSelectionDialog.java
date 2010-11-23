@@ -18,7 +18,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
 //import android.util.Log;
+import android.text.TextUtils.TruncateAt;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,9 +46,11 @@ public class TimerSelectionDialog extends Dialog {
 	private HashMap<String,PlayPauseListener> playpause_listeners;
 	private HashMap<String,ResetListener> reset_listeners;
 	
+	private Button edit;
+	
 	private Window the_window;
 	
-	private int selected = -1;
+	public int selected = -1;
 	
 	private TableLayout button_row;
 	
@@ -66,6 +70,9 @@ public class TimerSelectionDialog extends Dialog {
 		
 		the_window = this.getWindow();
 		//the_window.
+		
+		//selected = -1;
+		
 		setContentView(R.layout.timer_selection_dialog);
 		
 		list = (ListView)findViewById(R.id.timer_list);
@@ -83,7 +90,8 @@ public class TimerSelectionDialog extends Dialog {
 					long arg3) {
 				//arg2 is the selected item.
 				//list.setSelection(arg2);
-				selected = arg2;
+				TimerSelectionDialog.this.selected = arg2;
+				//Log.e("CLICKER","SELECTED IS " + selected);
 				//i.selected = true;
 				//button_row.setVisibility(View.VISIBLE);
 				
@@ -120,7 +128,8 @@ public class TimerSelectionDialog extends Dialog {
 					ListView tmp = (ListView) TimerSelectionDialog.this.findViewById(R.id.timer_list);
 					tmp.invalidate();
 					adapter.notifyDataSetInvalidated();
-					updateTimers();
+					//updateTimers();
+					buildList();
 					break;
 					//this.sendEmptyMessageDelayed(101, 1000);
 				case 100:
@@ -169,7 +178,7 @@ public class TimerSelectionDialog extends Dialog {
 		ImageButton play = (ImageButton)findViewById(R.id.timer_play);
 		ImageButton pause = (ImageButton)findViewById(R.id.timer_pause);
 		ImageButton reset = (ImageButton)findViewById(R.id.timer_reset);
-		Button edit = (Button)findViewById(R.id.timer_edit);
+		edit = (Button)findViewById(R.id.timer_edit);
 
 		play.setOnClickListener(new View.OnClickListener() {
 			
@@ -185,7 +194,7 @@ public class TimerSelectionDialog extends Dialog {
 					e.printStackTrace();
 				}
 				buildList();
-				updateTimers();
+				//updateTimers();
 			}
 		});
 		
@@ -204,7 +213,7 @@ public class TimerSelectionDialog extends Dialog {
 					e.printStackTrace();
 				}
 				buildList();
-				updateTimers();
+				//updateTimers();
 			}
 		});
 		
@@ -222,62 +231,80 @@ public class TimerSelectionDialog extends Dialog {
 					e.printStackTrace();
 				}
 				buildList();
-				updateTimers();
+				//updateTimers();
 			}
 		});
 		
 		edit.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
-				if(selected == -1) {
-					return;
-				}
-				
-				//else, give the option for editing.
-				AlertDialog.Builder b = new AlertDialog.Builder(TimerSelectionDialog.this.getContext());
-				b.setTitle("Modify Timer");
-				b.setMessage(("Do you want to modify, or delete this timer?"));
-				b.setPositiveButton("Modify", new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						//attempt to launch the editor.
-						TimerEditorDialog editor = null;
-						try {
-							editor = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),service.getTimer(Integer.toString(selected)),service,doneHandler);
-						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						editor.show();
-					}
-				});
-				b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-				b.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						//attempt to delete the timer
-						try {
-							service.removeTimer(service.getTimer(Integer.toString(selected)));
-						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						dialog.dismiss();
-						buildList();
-					}
-				});
-				
-				AlertDialog alert = b.create();
-				alert.show();
+				DispatchEdit();
 			}
 		});
 		
 		buildList();
+		
+		list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				//edit.dispatchKeyEvent(new KeyEvent(KeyEvent.KEYCODE_ENTER));
+				DispatchEdit();
+				return true;
+			}
+		});
+		
+		if(adapter.getCount() > 0) {
+			selected = 0;
+		}
+	}
+	
+	private void DispatchEdit() {
+		if(selected == -1) {
+			return;
+		}
+		
+		//else, give the option for editing.
+		AlertDialog.Builder b = new AlertDialog.Builder(TimerSelectionDialog.this.getContext());
+		b.setTitle("Modify Timer");
+		b.setMessage(("Do you want to modify, or delete this timer?"));
+		b.setPositiveButton("Modify", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				//attempt to launch the editor.
+				TimerEditorDialog editor = null;
+				try {
+					editor = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),service.getTimer(Integer.toString(selected)),service,doneHandler);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				editor.show();
+			}
+		});
+		b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		b.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				//attempt to delete the timer
+				try {
+					service.removeTimer(service.getTimer(Integer.toString(selected)));
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				dialog.dismiss();
+				buildList();
+			}
+		});
+		
+		AlertDialog alert = b.create();
+		alert.show();
 	}
 	
 	public void onBackPressed() {
@@ -316,6 +343,8 @@ public class TimerSelectionDialog extends Dialog {
 			//reset_listeners.put(timer.getOrdinal().toString(), new ResetListener(timer.getOrdinal().intValue()));
 			if(i.playing) {
 				anyplaying = true;
+				Log.e("SELECTOR","ORDINAL " + i.ordinal + " IS PLAYING");
+				
 			}
 			//Log.e("SELECTOR","LOADED BUTTON:" + i.timeLeft + " : " + timer.getSeconds());
 			entries.add(i);
@@ -327,19 +356,34 @@ public class TimerSelectionDialog extends Dialog {
 		}
 		
 		if(anyplaying) {
-			doneHandler.sendEmptyMessageDelayed(101,500); //start the draw cycle.
-			//updateTimers();
+			if(doneHandler.hasMessages(101)) {
+				
+			} else {
+				doneHandler.sendEmptyMessageDelayed(101,1000);
+				Log.e("SELECTOR","STARTING A NEW DRAW SEQUENCE!");
+				
+			}
 		} else {
-			//doneHandler.removeMessages(100);
+			Log.e("SELECTOR","STOPPING DRAWING");
+			doneHandler.removeMessages(101);
 		}
 		
 		adapter = new TimerListAdapter(list.getContext(),R.layout.timer_selection_list_row,entries);
 		list.setAdapter(adapter);
 		adapter.sort(new TimerSorter());
+		
+		if(selected != 1) {
+			list.setSelection(selected);
+		}
 	}
 	HashMap<String,TimerProgress> wad = new HashMap<String,TimerProgress>();
 	private void updateTimers() {
 		//Log.e("SELECTOR","UPDATING TIMER VIEWS");
+		//reset status indicators.
+		//for(String ord : wad.keySet()) {
+			//views.get(ord).progress.setProgress(100);
+			//views.get(ord).
+		//}
 		
 		try {
 			 wad.clear();
@@ -410,7 +454,7 @@ public class TimerSelectionDialog extends Dialog {
 			
 			if(e != null) {
 				//pull out the timer data from the service.
-				TimerData timer = null;
+				/*TimerData timer = null;
 				try {
 					timer = service.getTimer(Integer.toString(e.ordinal));
 				} catch (RemoteException e1) {
@@ -419,7 +463,7 @@ public class TimerSelectionDialog extends Dialog {
 				}
 				if(timer == null) {
 					//still null, uh oh. means that the timer ordinal does not exist.
-				}
+				}*/
 				
 				
 				
@@ -428,35 +472,91 @@ public class TimerSelectionDialog extends Dialog {
 				TextView extra = (TextView)v.findViewById(R.id.timer_display);
 				TextView ordinal = (TextView)v.findViewById(R.id.timer_ordinal);
 				ProgressMeter p = (ProgressMeter)v.findViewById(R.id.timer_progress);
+				TextView status = (TextView)v.findViewById(R.id.timer_status);
+				TextView total = (TextView)v.findViewById(R.id.timer_total);
 				
-				
-				if(e.ordinal == selected) {
-					//Log.e("SELECTOR","SELCTED " + e.ordinal);
-					label.setTextColor(0xFFFF0000);
-					extra.setTextColor(0xFFFF0000);
+				int text_color = 0xFF888888;
+				int non_selected = 0xFF333333;
+				int selected = 0xFF888888;
+				if(e.ordinal == TimerSelectionDialog.this.selected) {
+					//Log.e("SELECTOR","SELCTED " + e.ordinal + " SELECTOR IS " + TimerSelectionDialog.this.selected);
+					label.setTextColor(0xFF888888);
+					extra.setTextColor(0xFF888888);
+					label.setBackgroundColor(0xFF555555);
+					extra.setBackgroundColor(0xFF555555);
+					
+					
+					ordinal.setTextColor(0xFF888888);
+					ordinal.setBackgroundColor(0xFF333333);
+					
+					total.setTextColor(0xFF888888);
+					total.setBackgroundColor(0xFF555555);
+					status.setTextColor(0xFF888888);
+					status.setBackgroundColor(0xFF555555);
+					
+					label.setEllipsize(TruncateAt.END);
+					//v.setBackgroundColor(0xFF333333);
 				} else {
-					label.setTextColor(0xAAFFFFFF);
-					extra.setTextColor(0xAAFFFFFF);
+					//Log.e("SELECTOR","NOT SELECTED " + e.ordinal + " SELECTOR IS " + TimerSelectionDialog.this.selected);
+					label.setTextColor(0xFF888888);
+					extra.setTextColor(0xFF888888);
+					label.setBackgroundColor(0xFF333333);
+					extra.setBackgroundColor(0xFF333333);
+					ordinal.setTextColor(0xFF888888);
+					ordinal.setBackgroundColor(0xFF111111);
+					//v.setBackgroundColor(0xFF111111);
+					
+					total.setTextColor(0xFF888888);
+					total.setBackgroundColor(0xFF333333);
+					status.setTextColor(0xFF888888);
+					status.setBackgroundColor(0xFF333333);
+					label.setEllipsize(TruncateAt.END);
 				}
-				if(views.containsKey(Integer.toString(e.ordinal))) {
+				
+				//if(!e.playing) {
+				//	p.setProgress(100);
+				//	p.setRange(100);
+				//}
+				
+				/*if(views.containsKey(Integer.toString(e.ordinal))) {
 					views.remove(Integer.toString(e.ordinal));
 				}
-				views.put(Integer.toString(e.ordinal), new wad(extra,p));
+				views.put(Integer.toString(e.ordinal), new wad(extra,p));*/
 				label.setText(e.name); label.setClickable(false); label.setFocusable(false);
 				
-				float progress = ((float)(e.timeLeft*1000)/((float)e.seconds*1000))*100;
+				float progress = ((float)(e.timeLeft)/((float)e.seconds))*100;
+				//Log.e("SELECTOR","PROGRESS " + e.timeLeft + " total " + e.seconds + " calc " + progress);
 				
-				if(wad.containsKey(Integer.toString(e.ordinal))) {
+				/*if(wad.containsKey(Integer.toString(e.ordinal))) {
 					extra.setText(Long.toString(wad.get(Integer.toString(e.ordinal)).getTimeleft()/1000));
 					p.setProgress(wad.get(Integer.toString(e.ordinal)).getPercentage()*100);
 					p.setRange(100);
 				} else {
+					//
 					extra.setText(Long.toString(e.timeLeft));
 					p.setProgress(progress);
 					p.setRange(100); p.setClickable(false); p.setFocusable(false);
-				}
+				}*/
 				//extra.setText(Long.toString(e.timeLeft)); extra.setClickable(false); label.setFocusable(false);
 				ordinal.setText(Integer.toString(e.ordinal));
+				extra.setText(Long.toString(e.timeLeft) + "s left.");
+				p.setProgress(progress);
+				p.setRange(100);
+				
+				total.setText(e.seconds + "sec.");
+				
+				
+				if(e.playing) {
+					status.setText("(playing)");
+				} else {
+					if(e.timeLeft == e.seconds) {
+						//Log.e("SELECTOR","STATUS STOPPED " + e.timeLeft);
+						status.setText("(stopped)");
+					} else {
+						//Log.e("SELECTOR","STATUS PAUSED " + e.timeLeft);
+						status.setText("(paused)");
+					}
+				}
 				//if(wad != null) {
 				//	if(wad.containsKey(Integer.toString(e.ordinal))) {
 				//		extra.setText(Long.toString(wad.get(Integer.toString(e.ordinal)).getTimeleft()));
@@ -560,7 +660,7 @@ public class TimerSelectionDialog extends Dialog {
 					//pause
 					service.pauseTimer(Integer.toString(ordinal));
 					//turn into a pause button
-					Log.e("CLICKER","CHANGING TO PLAY");
+					//Log.e("CLICKER","CHANGING TO PLAY");
 					
 					iv.setImageResource(android.R.drawable.ic_media_play);
 					playing = false;
@@ -568,12 +668,13 @@ public class TimerSelectionDialog extends Dialog {
 					service.startTimer(Integer.toString(ordinal));
 					iv.setImageResource(android.R.drawable.ic_media_pause);
 					playing = true;
-					Log.e("CLICKER","CHANGING TO PAUSE");
+					//Log.e("CLICKER","CHANGING TO PAUSE");
 				}
 				//buildList();
-				v.invalidate();
-				adapter.notifyDataSetInvalidated();
+				//v.invalidate();
+				//adapter.notifyDataSetInvalidated();
 				//updateTimers();
+				buildList();
 			} catch (RemoteException e) {
 				
 				e.printStackTrace();
@@ -608,7 +709,7 @@ public class TimerSelectionDialog extends Dialog {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			//buildList();
+			buildList();
 			//updateTimers();
 		}
 		

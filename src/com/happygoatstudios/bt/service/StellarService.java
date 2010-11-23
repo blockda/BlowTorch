@@ -275,31 +275,7 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_TIMERSTART:
 					
-					TimerData data = the_settings.getTimers().get((String)msg.obj);
-					if(data == null || timerTasks.containsKey((String)msg.obj)) {
-						//no timer with that ordinal,or it is already started
-					} else {
-						TimerExtraTask t = new TimerExtraTask(Integer.parseInt((String)msg.obj),System.currentTimeMillis(),myhandler);
-						if(data.getPauseLocation() == 0) {
-							t.setStarttime(System.currentTimeMillis());
-						} else {
-							t.setStarttime(System.currentTimeMillis() - data.getPauseLocation());
-						}
-						timerTasks.put((String)msg.obj, t);
-						//data.reset();
-						//Log.e("SERVICE","STARTING TIMER " + (String)msg.obj + " WITH " + data.getTTF()/1000 + " seconds.");
-						if(data.isRepeat()) {
-							the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
-						} else {
-							//do once
-							//the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
-							the_timer.schedule(t, data.getTTF());
-						}
-						if(msg.arg2 == 50) {
-							//send message.
-							DispatchToast("Timer " + (String)msg.obj + " started.",false);
-						}
-					}
+					DoTimerStart((String)msg.obj,msg.arg2);
 					
 					
 					break;
@@ -314,6 +290,7 @@ public class StellarService extends Service {
 						tt.cancel();
 						the_timer.purge();
 						td.reset();
+						td.setPlaying(false);
 					}
 					
 					break;
@@ -605,6 +582,13 @@ public class StellarService extends Service {
 		timer_actions.add("pause");
 		timer_actions.add("reset");
 		timer_actions.add("info");
+		
+		//start any timers that might be "playing"
+		for(TimerData t : the_settings.getTimers().values()) {
+			if(t.isPlaying()) {
+				DoTimerStart(t.getOrdinal().toString(),0);
+			}
+		}
 	}
 	
 	public void onDestroy() {
@@ -643,6 +627,11 @@ public class StellarService extends Service {
 			//temporarily output the timers.
 			for(TimerData timer : the_settings.getTimers().values()) {
 				timer.reset();
+				//timer.setPlaying(false);
+				if(timer.isPlaying()) {
+					//
+					//myhandler.sendMessageDelayed(myhandler.obtainMessage(MESSAGE_TIMERSTART,timer.getOrdinal().toString()),1000); //start this timer in 1 second.
+				}
 				//Log.e("SERVICE","LOADED SETTINGS, TIMER" + timer.getOrdinal() + ", DURATION " + timer.getSeconds());
 			}
 			
@@ -1698,10 +1687,26 @@ public class StellarService extends Service {
 					//what we are lookin for is the progress and time left.
 					TimerProgress p = new TimerProgress();
 					p.setTimeleft(timer.getTTF());
+					//p.set
+					p.setState(TimerProgress.STATE.PLAYING);
 					p.setPercentage(((float)timer.getTTF()/1000)/((float)timer.getSeconds()));
 					tmp.put(timer.getOrdinal().toString(), p);
 					
 				} else {
+					/*if(timer.getTTF() != timer.getSeconds()*1000) {
+						TimerProgress paused = new TimerProgress();
+						paused.setState(TimerProgress.STATE.PAUSED);
+						paused.setPercentage(((float)timer.getTTF()/1000)/((float)timer.getSeconds()));
+						paused.setTimeleft(timer.getTTF());
+						tmp.put(timer.getOrdinal().toString(), paused);
+						
+					} else {
+						TimerProgress stopped = new TimerProgress();
+						stopped.setState(TimerProgress.STATE.STOPPED);
+						stopped.setTimeleft(timer.getSeconds()*1000);
+						stopped.setPercentage(100);
+						tmp.put(timer.getOrdinal().toString(), stopped);
+					}*/
 					
 				}
 				//Log.e("SERVICE","SERVICE SENDING TIMER WITH " + timer.getSeconds().toString() + " SECONDS.");
@@ -2541,6 +2546,12 @@ public class StellarService extends Service {
 	
 	private void DoTimerResponders(String ordinal) {
 		synchronized(the_settings) {
+			
+			//just a precaution, 
+			if(myhandler == null) {
+				return; //responders need the handler, and will choke on null.
+			}
+			
 			if(!the_settings.getTimers().containsKey(ordinal)) {
 				return; // no ordinal
 			}
@@ -2552,6 +2563,34 @@ public class StellarService extends Service {
 			
 			for(TriggerResponder responder : data.getResponders()) {
 				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null);
+			}
+		}
+	}
+	
+	private void DoTimerStart(String timer,Integer loud) {
+		TimerData data = the_settings.getTimers().get(timer);
+		if(data == null || timerTasks.containsKey(timer)) {
+			//no timer with that ordinal,or it is already started
+		} else {
+			TimerExtraTask t = new TimerExtraTask(Integer.parseInt(timer),System.currentTimeMillis(),myhandler);
+			if(data.getPauseLocation() == 0) {
+				t.setStarttime(System.currentTimeMillis());
+			} else {
+				t.setStarttime(System.currentTimeMillis() - data.getPauseLocation());
+			}
+			timerTasks.put(timer, t);
+			//data.reset();
+			//Log.e("SERVICE","STARTING TIMER " + (String)msg.obj + " WITH " + data.getTTF()/1000 + " seconds.");
+			if(data.isRepeat()) {
+				the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
+			} else {
+				//do once
+				//the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
+				the_timer.schedule(t, data.getTTF());
+			}
+			if(loud == 50) {
+				//send message.
+				DispatchToast("Timer " + timer + " started.",false);
 			}
 		}
 	}
