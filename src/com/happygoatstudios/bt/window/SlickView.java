@@ -21,6 +21,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+//import android.util.Log;
 
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -505,6 +506,16 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				//dlines.removeAllElements();
 				//dlines.addAll(Arrays.asList(newline.split(the_buffer)));
 				//dlines.
+				
+				//split the line into newlines and add it to the unbroken buffer.
+				/*int was = dlines_unbroken.size();
+				dlines_unbroken.addAll(Arrays.asList(newline.split(input)));
+				if(dlines_unbroken.size() > PREF_MAX_LINES) {
+					dlines_unbroken.removeRange(0, dlines_unbroken.size()-PREF_MAX_LINES);
+					
+				}
+				Log.e("WINDOW","UNBROKEN WAS: " + was + " now " + dlines_unbroken.size());
+				*/
 				size_before = dlines.size();
 				if(!endedonnewline) {
 
@@ -658,6 +669,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	StringBuffer last_color = null;
 	String[] linetrap = new String[0];
 	BufferVector<String> dlines = new BufferVector<String>();
+	StringBuffer dlines_unbroken = new StringBuffer();
 	
 	boolean optsInitialized = false;
 	Paint opts;
@@ -1597,6 +1609,30 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		return found;
 	}*/
 	
+	public void reBreakBuffer() {
+		/*BufferVector<String> tmp = (BufferVector<String>) dlines_unbroken.clone();
+		dlines_unbroken.clear();
+		dlines.clear();
+		
+		for(String s : tmp) {
+			if(s.endsWith("\n")) {
+				addText(s+"\n",true);
+			} else {
+				addText(s+"\n",true);
+			}
+		}*/
+		
+	}
+	
+	public void forceDraw() {
+		//Log.e("SLICK","ATTEMPTING FORCE DRAW");
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+		} else {
+			//Log.e("SLICK","VIEW ALREADY HAS DRAW MESSAGES");
+		}
+	}
+	
 	public void setColorDebugMode(int colorDebugMode) {
 		this.colorDebugMode = colorDebugMode;
 	}
@@ -1657,6 +1693,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 							synchronized(_surfaceHolder) {
 								_sv.onDraw(c);
 								_surfaceHolder.notify();
+								//Log.e("DRAW","DRAWING THE SCREEEEEEN!!!!");
 							}
 						} finally { 
 							if(c != null) {

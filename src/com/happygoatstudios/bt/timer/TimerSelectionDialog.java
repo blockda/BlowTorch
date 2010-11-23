@@ -19,12 +19,13 @@ import android.os.Message;
 import android.os.RemoteException;
 //import android.util.Log;
 import android.text.TextUtils.TruncateAt;
-import android.util.Log;
+//import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -82,6 +83,18 @@ public class TimerSelectionDialog extends Dialog {
 		
 		button_row = (TableLayout)findViewById(R.id.button_table);
 		//button_row.set
+		
+		TextView empty = new TextView(this.getContext());
+		empty.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+		empty.setText("EMPTY VIEW");
+		
+		empty.setTextColor(0xFFFFFFFF);
+		empty.setBackgroundColor(0xFF0000FF);
+		empty.setVisibility(View.GONE);
+		((ViewGroup)list.getParent()).addView(empty);
+		//list.addView(empty);
+		list.setEmptyView(findViewById(R.id.timer_empty));
+		
 		
 		
 		list.setOnItemClickListener(new OnItemClickListener() {
@@ -243,6 +256,7 @@ public class TimerSelectionDialog extends Dialog {
 		});
 		
 		buildList();
+		adapter.notifyDataSetChanged();
 		
 		list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
@@ -266,9 +280,9 @@ public class TimerSelectionDialog extends Dialog {
 		
 		//else, give the option for editing.
 		AlertDialog.Builder b = new AlertDialog.Builder(TimerSelectionDialog.this.getContext());
-		b.setTitle("Modify Timer");
-		b.setMessage(("Do you want to modify, or delete this timer?"));
-		b.setPositiveButton("Modify", new DialogInterface.OnClickListener() {
+		b.setTitle("Edit Timer?");
+		b.setMessage(("Do you want to edit or delete this timer?"));
+		b.setPositiveButton("Edit", new DialogInterface.OnClickListener() {
 			
 			public void onClick(DialogInterface dialog, int which) {
 				//attempt to launch the editor.
@@ -343,7 +357,7 @@ public class TimerSelectionDialog extends Dialog {
 			//reset_listeners.put(timer.getOrdinal().toString(), new ResetListener(timer.getOrdinal().intValue()));
 			if(i.playing) {
 				anyplaying = true;
-				Log.e("SELECTOR","ORDINAL " + i.ordinal + " IS PLAYING");
+				//Log.e("SELECTOR","ORDINAL " + i.ordinal + " IS PLAYING");
 				
 			}
 			//Log.e("SELECTOR","LOADED BUTTON:" + i.timeLeft + " : " + timer.getSeconds());
@@ -360,11 +374,11 @@ public class TimerSelectionDialog extends Dialog {
 				
 			} else {
 				doneHandler.sendEmptyMessageDelayed(101,1000);
-				Log.e("SELECTOR","STARTING A NEW DRAW SEQUENCE!");
+				//Log.e("SELECTOR","STARTING A NEW DRAW SEQUENCE!");
 				
 			}
 		} else {
-			Log.e("SELECTOR","STOPPING DRAWING");
+			//Log.e("SELECTOR","STOPPING DRAWING");
 			doneHandler.removeMessages(101);
 		}
 		
@@ -538,7 +552,7 @@ public class TimerSelectionDialog extends Dialog {
 					p.setRange(100); p.setClickable(false); p.setFocusable(false);
 				}*/
 				//extra.setText(Long.toString(e.timeLeft)); extra.setClickable(false); label.setFocusable(false);
-				ordinal.setText(Integer.toString(e.ordinal));
+				ordinal.setText( Integer.toString(e.ordinal));
 				extra.setText(Long.toString(e.timeLeft) + "s left.");
 				p.setProgress(progress);
 				p.setRange(100);

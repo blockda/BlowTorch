@@ -162,6 +162,8 @@ public class Launcher extends Activity implements ReadyListener {
 		lv.setOnItemClickListener(new listItemClicked());
 		lv.setOnItemLongClickListener(new listItemLongClicked());
 		
+		
+		lv.setEmptyView(findViewById(R.id.launcher_empty));
 		//LayoutInflater li = (LayoutInflater) this.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		//View blankrow = li.inflate(R.layout.connection_row, null);
 		//TextView tmp1 = (TextView) blankrow.findViewById(R.id.displayname);
@@ -205,10 +207,10 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	public void onStart() {
 		super.onStart();
-		if(noConnections) {
-			Toast msg = Toast.makeText(this, "No connections specified, select NEW to create.", Toast.LENGTH_LONG);
-			msg.show();
-		}
+		//if(noConnections) {
+		//	Toast msg = Toast.makeText(this, "No connections specified, select NEW to create.", Toast.LENGTH_LONG);
+		//	msg.show();
+		//}
 	}
 	
 	public void onDestroy() {
@@ -251,7 +253,7 @@ public class Launcher extends Activity implements ReadyListener {
 			AlertDialog.Builder build = new AlertDialog.Builder(Launcher.this)
 				.setMessage("Which operation to perform on: " + muc.getDisplayName());
 			AlertDialog dialog = build.create();
-			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Modify", modmsg);
+			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Edit", modmsg);
 			dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete",delmsg);
 			dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
 				

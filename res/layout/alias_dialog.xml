@@ -67,13 +67,32 @@
   	android:layout_alignParentBottom="true"/>
   
 
-  	
+  <FrameLayout
+		android:id="@+id/alias_frame"
+		android:layout_width = "fill_parent"
+		android:layout_height="fill_parent"
+		android:layout_margin="0dip"
+		android:padding="0dip"
+		android:layout_above="@id/new_alias_button"
+  		android:layout_below="@id/alias_label">
   <ListView
   	android:layout_width="330dip"
   	android:layout_height="fill_parent"
   	android:id="@+id/alias_list"
-  	android:layout_above="@id/new_alias_button"
-  	android:layout_below="@id/alias_label"/>
+  	/>
   	
+  	<TextView
+			android:id="@+id/alias_empty"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:text="No aliases to display.\nNew aliases can be made with the button below."
+			android:textColor="#FFFFFFFF"
+			android:background="#FF000000"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:textStyle="bold"
+			android:textSize="18dip"
+			android:gravity="center"/>
+  	</FrameLayout>
   
 </RelativeLayout>

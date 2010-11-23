@@ -69,6 +69,8 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			lv.setScrollbarFadingEnabled(false);
 			
 			lv.setOnItemLongClickListener(new listItemLongClicked());
+			
+			lv.setEmptyView(findViewById(R.id.alias_empty));
 			//Object[] pres = input.keySet().toArray();
 			//Object[] posts = input.
 			//Set<Entry<String,String>> list = input.entrySet();
@@ -101,7 +103,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			public void onClick(View arg0) {
 				
 				NewAliasDialog diag = new NewAliasDialog(AliasEditorDialog.this.getContext(),AliasEditorDialog.this);
-				diag.setTitle("New Alias:");
+				diag.setTitle("NEW ALIAS");
 				diag.show();
 			}
 		});
@@ -128,10 +130,10 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	
 	public void onStart() {
 		super.onStart();
-		if(noAliases) {
-			Toast t = Toast.makeText(AliasEditorDialog.this.getContext(), "No aliases loaded. Click below to create new aliases.",Toast.LENGTH_LONG);
-			t.show();
-		}
+		//if(noAliases) {
+		//	Toast t = Toast.makeText(AliasEditorDialog.this.getContext(), "No aliases loaded. Click below to create new aliases.",Toast.LENGTH_LONG);
+		//	t.show();
+		//}
 	}
 	
 	private class ConnectionAdapter extends ArrayAdapter<String> {
@@ -216,9 +218,9 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			modmsg.arg1 = arg2; //add position
 			
 			AlertDialog.Builder build = new AlertDialog.Builder(AliasEditorDialog.this.getContext())
-				.setMessage("Modify alias settings....");
+				.setMessage("Edit alias?");
 			AlertDialog dialog = build.create();
-			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Modify", modmsg);
+			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Edit", modmsg);
 			dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete",delmsg);
 			dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
 				

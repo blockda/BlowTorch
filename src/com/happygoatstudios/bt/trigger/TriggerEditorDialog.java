@@ -135,9 +135,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 							}
 						}
 					};
-					builder.setPositiveButton("Destroy changes", listner);
-					builder.setNegativeButton("Cancel.", listner);
-					builder.setNeutralButton("Save and quit.", listner);
+					builder.setPositiveButton("Destroy", listner);
+					builder.setNegativeButton("Cancel", listner);
+					builder.setNeutralButton("Save", listner);
 					AlertDialog dialog = builder.create();
 					dialog.show();
 				} else {
@@ -165,7 +165,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		
 		if(isEditor) {
 			Button editdone = (Button)findViewById(R.id.trigger_editor_done_button);
-			editdone.setText("Modify this trigger.");
+			editdone.setText("Done");
 		}	
 		//}
 		

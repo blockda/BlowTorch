@@ -26,12 +26,14 @@
   	android:id="@+id/new_trigger_cancel"
   	android:layout_alignParentBottom="true"
   	android:layout_alignParentRight="true"
-  	android:text="Back" />
+  	android:paddingLeft="30dip"
+  	android:paddingRight="30dip"
+  	android:text="Cancel" />
   
   <Button
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:text="Add this trigger."
+  	android:text="Done"
   	android:id="@+id/trigger_editor_done_button"
   	android:layout_toLeftOf="@id/new_trigger_cancel"
   	android:layout_alignParentBottom="true"/>
@@ -42,7 +44,8 @@
   		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="1" android:shrinkColumns="0">
   			<TableRow>
   				<TextView
-  					android:text="Name:"/>
+  					android:text="Name:"
+  					android:paddingLeft="10dip"/>
   				<EditText
   					android:id="@+id/trigger_editor_name"
   					android:hint=""
@@ -53,7 +56,8 @@
   			</TableRow>
   			<TableRow>
   				<TextView
-  					android:text="Pattern:"/>
+  					android:text="Pattern:"
+  					android:paddingLeft="10dip"/>
   				<EditText
   					android:id="@+id/trigger_editor_pattern"
   					android:hint=""
@@ -84,7 +88,7 @@
   		</TableLayout>
   		<TextView android:layout_width="fill_parent"
   					android:layout_height="wrap_content"
-  					android:text="RESPONDERS"
+  					android:text="EXECUTE ACTIONS"
   					android:layout_marginLeft="10dip"
   					android:layout_marginRight="10dip"
   					android:background="#FF999999"
@@ -113,7 +117,7 @@
   					android:layout_marginRight="5dip" android:layout_marginLeft="5dip"/>
   			</TableRow>
   			<TableRow android:id="@+id/trigger_new_responder_row">
-  				<Button android:id="@+id/trigger_new_notification" android:text="Add new responder."/>
+  				<Button android:id="@+id/trigger_new_notification" android:text="New Action" android:paddingLeft="30dip" android:paddingRight="30dip"/>
   				<TextView android:text=""/>
   				<TextView android:text=""/>
   			</TableRow>

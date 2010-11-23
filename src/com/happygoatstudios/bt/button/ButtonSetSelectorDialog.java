@@ -183,7 +183,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 				confirm.setTitle("Cannot Delete Default Set");			
 				confirm.setMessage("This set can not be removed. It can be cleared.");
 				//confirm.setPositiveButton("Yes, Delete.",new ReallyDeleteSetListener(picked));
-				confirm.setNeutralButton("Clear Buttons.", new ClearSetListener(picked));
+				confirm.setNeutralButton("Clear Buttons", new ClearSetListener(picked));
 				confirm.setNegativeButton("Cancel.", new DialogInterface.OnClickListener() {
 					
 					public void onClick(DialogInterface dialog, int which) {
@@ -199,9 +199,9 @@ public class ButtonSetSelectorDialog extends Dialog {
 			
 				confirm.setTitle("Really Delete Button Set?");			
 				confirm.setMessage("The set can be cleared of buttons if desired.");
-				confirm.setPositiveButton("Yes, Delete.",new ReallyDeleteSetListener(picked));
-				confirm.setNeutralButton("Clear Buttons.", new ClearSetListener(picked));
-				confirm.setNegativeButton("No way!", new DialogInterface.OnClickListener() {
+				confirm.setPositiveButton("Delete",new ReallyDeleteSetListener(picked));
+				confirm.setNeutralButton("Clear", new ClearSetListener(picked));
+				confirm.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 					
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
@@ -296,9 +296,9 @@ public class ButtonSetSelectorDialog extends Dialog {
 			// TODO Auto-generated method stub
 			
 			AlertDialog.Builder builder = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
-			builder.setTitle("Modify/Delete Button Set");
+			builder.setTitle("Edit/Delete Button Set");
 			builder.setMessage("Attempting to modify or delete " + entries.get(arg2).name + " button set.");
-			builder.setPositiveButton("Modify", new ModifySetDefaultsListener(arg2));
+			builder.setPositiveButton("Edit", new ModifySetDefaultsListener(arg2));
 			
 			builder.setNeutralButton("Delete", new DeleteSetListener(arg2));
 			
