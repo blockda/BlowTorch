@@ -520,6 +520,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					builder.setMessage("XML Error: " + xmlerror + "\nSettings have not been loaded.");
 					builder.setTitle("Problem with XML File.");
 					
+					TextView tvtmp = new TextView(MainWindow.this);
+					tvtmp.setText("TESTING");
+					builder.setView(tvtmp);
+					
 					AlertDialog error = builder.create();
 					error.show();
 					break;
