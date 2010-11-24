@@ -12,6 +12,7 @@ import android.app.Dialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
@@ -265,11 +266,15 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 							}
 						});
 						
-						builder.setMessage("Pattern Error: " + e.getMessage());
+						builder.setMessage(e.getMessage());
 						builder.setTitle("Problem with pattern syntax.");
 						
 						AlertDialog error = builder.create();
 						error.show();
+						//AlertDialog error = builder.create();
+						//error.show();
+						TextView tvtmp = (TextView)error.findViewById(android.R.id.message);
+						tvtmp.setTypeface(Typeface.MONOSPACE);
 						
 						return;
 					}
