@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
+//import android.util.Log;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -364,16 +365,23 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				opts.setFlags(Paint.ANTI_ALIAS_FLAG);
 				
 				float length = opts.measureText(the_button.getData().getLabel());
+				float length2 = opts.measureText(the_button.getData().getFlipLabel());
 				float height = the_button.getData().getLabelSize();
 				
 				boolean needsfit = false;
 				
-				Log.e("BUTTONEDITOR","LENGTH CALC: " + length/ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density + " width:" + the_button.getData().getWidth());
-				if(length/ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density > the_button.getData().getWidth()) {
+				float density = ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density;
+				float lengthtofit = the_button.getData().getWidth()*density;
+				//Log.e("BUTTONEDITOR","LENGTH CALC: " + length2 + " width:" + the_button.getData().getWidth());
+				if(length/density > the_button.getData().getWidth() || length2/density > the_button.getData().getWidth()) {
 					needsfit = true;
 				}
-				
-				Log.e("BUTTONEDITOR","HEIGHT CALC: " + height + " height:" + the_button.getData().getHeight());
+				if(length > length2) {
+					lengthtofit = length;
+				} else {
+					lengthtofit = length2;
+				}
+				//Log.e("BUTTONEDITOR","HEIGHT CALC: " + height + " height:" + the_button.getData().getHeight());
 				if(height > the_button.getHeight()) {
 					needsfit = true;
 				}
@@ -382,8 +390,8 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 					AlertDialog.Builder b = new AlertDialog.Builder(ButtonEditorDialog.this.getContext());
 					b.setMessage("The button label has exceeded the bounds of the button. Fit button to label?");
 					b.setTitle("Label too big.");
-					float density = ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density;
-					b.setPositiveButton("Fit please.", new FitClickListener((int)(height+10*density),(int)((length/density)+(int)10*density)));
+					//float density = ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density;
+					b.setPositiveButton("Fit please.", new FitClickListener((int)(height+20*density),(int)((lengthtofit/density)+(int)20*density)));
 					b.setNegativeButton("No thanks.", new DialogInterface.OnClickListener() {
 
 						public void onClick(DialogInterface dialog, int which) {

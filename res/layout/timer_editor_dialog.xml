@@ -43,28 +43,38 @@
   			<TableRow>
   				<TextView
   					android:text="Name:"
-  					android:layout_marginLeft="10dip"/>
+  					android:layout_marginLeft="10dip"
+  					android:layout_marginRight="5dip"
+  					android:layout_width="40dip"
+  					android:gravity="right"/>
   				<EditText
   					android:id="@+id/timer_editor_name"
-  					android:hint=""
+  					
   					android:layout_marginRight="10dip"
   					android:width="300dip"
   					android:singleLine="true"
-  					
+  					android:hint="Timer Function"
   					android:inputType="text"/>
   			</TableRow>
   		</TableLayout>
-  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content"  android:shrinkColumns="1,2" android:stretchColumns="3">
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content"  android:shrinkColumns="1,2" android:stretchColumns="0,3">
   			<TableRow>
   				<TextView
-  					android:text="# of seconds"
-  					android:layout_marginLeft="10dip"/>
+  					android:text="Seconds:"
+  					android:layout_marginLeft="10dip"
+  					android:layout_marginRight="5dip"
+  					android:layout_width="40dip"
+  					android:gravity="right"
+  					
+  					/>
   				<EditText
   					android:id="@+id/timer_editor_seconds"
-  					android:hint=""
+  					
   					android:layout_marginRight="10dip"
-  					android:layout_width="100dip"
+  					android:layout_width="60dip"
   					android:singleLine="true"
+  					android:hint="30"
+  					
   					android:inputType="number"/>
   				<CheckBox
   						android:id="@+id/timer_repeat_checkbox"
@@ -72,7 +82,7 @@
   						android:textSize="13sp"
   						android:layout_marginRight="10dip"
   						android:layout_marginLeft="30dip"
-  						android:layout_width="fill_parent" android:layout_height="wrap_content"/>
+  						android:layout_width="215dip" android:layout_height="wrap_content"/>
   			</TableRow>
   		</TableLayout>
   		<!-- <TableLayout android:layout_width="390dip" android:layout_height="wrap_content" android:stretchColumns="*"> -->

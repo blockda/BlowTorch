@@ -58,9 +58,12 @@ public class ProgressMeter extends View {
 		r.left = this.getLeft();
 		r.right = this.getRight();
 		
-		c.drawLine(0, 0, indicator_pos, 0, p);
 		Paint alt = new Paint();
-		alt.setColor(0xFFFF0000);
+		alt.setColor(0xFF030303);
+		c.drawRect(r, alt);
+		c.drawLine(0, 0, indicator_pos, 0, p);
+		
+		
 		
 		//Log.e("PROGRESS","RECT: l=" + r.left + " r=" + r.right + " t=" + r.top + " b="+r.bottom);
 		//c.drawRect(r,alt);
