@@ -557,7 +557,7 @@ public class TimerSelectionDialog extends Dialog {
 				p.setProgress(progress);
 				p.setRange(100);
 				
-				total.setText(e.seconds + "sec.");
+				total.setText(e.seconds + "s");
 				
 				
 				if(e.playing) {
