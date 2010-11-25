@@ -5,6 +5,18 @@ public class MudConnection {
 	private String displayname;
 	private String hostname;
 	private String port;
+	private String lastPlayed = "never";
+	
+	public MudConnection copy() {
+		MudConnection tmp = new MudConnection();
+		
+		tmp.displayname = this.displayname;
+		tmp.hostname = this.hostname;
+		tmp.port = this.port;
+		tmp.lastPlayed = this.lastPlayed;
+		
+		return tmp;
+	}
 	
 	public String getDisplayName() {
 		return displayname;
@@ -39,6 +51,15 @@ public class MudConnection {
 		if(!test.getDisplayName().equals(this.getDisplayName())) return false;
 		if(!test.getHostName().equals(this.getHostName())) return false;
 		if(!test.getPortString().equals(this.getPortString())) return false;
+		if(!test.getLastPlayed().equals(this.getLastPlayed())) return false;
 		return true;
+	}
+
+	public void setLastPlayed(String lastPlayed) {
+		this.lastPlayed = lastPlayed;
+	}
+
+	public String getLastPlayed() {
+		return lastPlayed;
 	}
 }

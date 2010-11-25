@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.launcher;
 
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,6 +28,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -67,94 +70,22 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	ListView lv = null;
 	
+	LauncherSettings launcher_settings;
+	
 	//make this save a change
+	boolean dowhatsnew = false;
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		
 		setContentView(R.layout.new_launcher_layout);
 		
+		launcher_settings = new LauncherSettings();
 		connections = new ArrayList<MudConnection>();
-		
-		//attempt to read the file.
-		/*com.happygoatstudios.bt.settings.HyperSettings settings = new com.happygoatstudios.bt.settings.HyperSettings();
-		
-		String filename = "test_settings3.xml";
-		try {
-			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
-			settings.setMaxLines(5000);
-			HashMap<String,String> test_alias = new HashMap<String,String>();
-			test_alias.put("FOO", "BAR");
-			test_alias.put("SEMI", "semicolon;test");
-			test_alias.put("newline", "This\nHas\nNewlines");
-			
-			HashMap<String,Vector<SlickButtonData>> test_btnholder = new HashMap<String,Vector<SlickButtonData>>();
-			HashMap<String,ColorSetSettings> test_settings = new HashMap<String,ColorSetSettings>();
-			ColorSetSettings colorsettings = new ColorSetSettings();
-			colorsettings.toDefautls();
-			Vector<SlickButtonData> test_set = new Vector<SlickButtonData>();
-			Vector<SlickButtonData> test_set2 = new Vector<SlickButtonData>();
-			SlickButtonData test1 = new SlickButtonData();
-			SlickButtonData test2 = new SlickButtonData();
-			SlickButtonData test3 = new SlickButtonData();
-			SlickButtonData test4 = new SlickButtonData();
-			SlickButtonData test5 = new SlickButtonData();
-			
-			//test1.setDataFromString("40||40||east||EAST||open e||1");
-			//test2.setDataFromString("40||125||west||WEST||open w||1");
-			//test3.setDataFromString("40||210||north||NORTH||open n||0");
-			//test4.setDataFromString("40||295||south||SOUTH||open s||1");
-			//test5.setDataFromString("40||380||scan||SCAN||look||2");
-			
-			test_set.add(test1);
-			test_set.add(test2);
-			test_set.add(test3);
-			
-			test_set2.add(test4);
-			test_set2.add(test5);
-			
-			test_btnholder.put("TEST_SET_1", test_set);
-			test_btnholder.put("TEST_SET_2", test_set2);
-			
-			test_settings.put("TEST_SET_1", colorsettings.copy());
-			test_settings.put("TEST_SET_2", colorsettings.copy());
-			
-			
-			settings.setSetSettings(test_settings);
-			settings.setButtonSets(test_btnholder);
-			settings.setAliases(test_alias);
-			
-			fos.write(com.happygoatstudios.bt.settings.HyperSettings.writeXml2(settings).getBytes());
-			fos.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		com.happygoatstudios.bt.settings.HyperSAXParser parser = new com.happygoatstudios.bt.settings.HyperSAXParser(filename,this);
-		com.happygoatstudios.bt.settings.HyperSettings newSettings = parser.load();
-		
-		
-		*/
-		
-		//EasySAXParser parse = new EasySAXParser(filename,this);
-		
-		//List<com.happygoatstudios.bt.settings.HyperSettings> list = parse.parse();
-		
-		//com.happygoatstudios.bt.settings.HyperSettings new_settings = list.get(0);
 		
 		lv = (ListView)findViewById(R.id.connection_list);
 		apdapter = new ConnectionAdapter(lv.getContext(),R.layout.connection_row,connections);
 		
-		//TextView tmp1 = new TextView(this);
-		
-		//tmp1.setText("No Connections");
-		//tmp2.setText("Select NEW below to create.");
-		
-		//lv.setEmptyView(tmp1);
 		
 		lv.setAdapter(apdapter);
 		
@@ -164,14 +95,102 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		
 		lv.setEmptyView(findViewById(R.id.launcher_empty));
-		//LayoutInflater li = (LayoutInflater) this.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		//View blankrow = li.inflate(R.layout.connection_row, null);
-		//TextView tmp1 = (TextView) blankrow.findViewById(R.id.displayname);
-		//TextView tmp2 = (TextView) blankrow.findViewById(R.id.hoststring);
 		
-
+		try { 
+			FileInputStream fos = this.openFileInput("blowtorch_launcher_list.xml");
+			fos.close();
+			LauncherSAXParser parser = new LauncherSAXParser("blowtorch_launcher_list.xml",this);
+			launcher_settings = parser.load();
+			
+			buildList();
+			Log.e("LAUNCHER","LOADING XML LAUNCHER");
+		} catch (FileNotFoundException e) {
+			//attempt to read the connections from disk.
+			Log.e("LAUNCHER","LOADING CRAPPY LAUNCHER");
+			getConnectionsFromDisk();
+			//fill the new settings
+			int size = apdapter.getCount();
+			for(int i=0;i<size;i++) {
+				MudConnection tmp = apdapter.getItem(i);
+				launcher_settings.getList().put(tmp.getDisplayName(), tmp.copy());
+			}
+			
+			//get the version information.
+			PackageManager m = this.getPackageManager();
+			String versionString = null;
+			try {
+				versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+			} catch (NameNotFoundException e1) {
+				//can't execute on our package aye?
+				throw new RuntimeException(e);
+			}
+			
+			Log.e("LAUNCHER","LOADING OLD SETTINGS AND MARKING VERSION: " + versionString);
+			launcher_settings.setCurrentVersion(versionString);
+			
+			//TODO: save the settings/
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		getConnectionsFromDisk();
+		//by here we should have a completly populated list and settings
+		//check version code.
+		PackageManager m = this.getPackageManager();
+		String versionString = null;
+		try {
+			versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+		} catch (NameNotFoundException e) {
+			//can't execute on our package aye?
+			throw new RuntimeException(e);
+		}
+		
+		int now_major = 1;
+		int now_minor = 0;
+		int now_rev = 0;
+		
+		int prev_major = 1;
+		int prev_minor = 0;
+		int prev_rev = 0;
+		//compare version codes.
+		Pattern version = Pattern.compile("^v(\\d+)\\.(\\d+)\\.(\\d+)$");
+		Matcher vmatch = version.matcher(versionString);
+		if(vmatch.matches()) {
+			now_major = Integer.parseInt(vmatch.group(1));
+			now_minor = Integer.parseInt(vmatch.group(2));
+			now_rev = Integer.parseInt(vmatch.group(3));
+		} else {
+			//shouldn't really happen.
+		}
+		
+		vmatch.reset(launcher_settings.getCurrentVersion());
+		if(vmatch.matches()) {
+			prev_major = Integer.parseInt(vmatch.group(1));
+			prev_minor = Integer.parseInt(vmatch.group(2));
+			prev_rev = Integer.parseInt(vmatch.group(3));
+		} else {
+			//shouldn't really happen, unless xml modification went haywire
+		}
+		
+		boolean isoutdated = false;
+		
+		if(now_major > prev_major) {
+			isoutdated = true;
+		} else if (now_minor > prev_minor) {
+			isoutdated = true;
+		} else if (now_rev > prev_rev) {
+			isoutdated = true;
+		}
+		
+		if(isoutdated) {
+			dowhatsnew = true;
+			Log.e("LAUNCHER","DOING OUTATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
+		} else {
+			Log.e("LAUNCHER","NOT OUTDATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
+		}
+		
+		
+		//getConnectionsFromDisk();
 		
 		Button newbutton = (Button)findViewById(R.id.new_connection);
 		newbutton.setOnClickListener(new newClickedListener());
@@ -181,26 +200,6 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		Button donatebutton = (Button)findViewById(R.id.donate_button);
 		donatebutton.setOnClickListener(new helpClickedListener());
-		//start the initializeations
-		/*setContentView(R.layout.launcher_layout);
-		
-		
-		
-		//get the button
-		TextView tv = (TextView)findViewById(R.id.welcometext);
-		Button b = (Button)findViewById(com.happygoatstudios.bt.R.id.startbutton);
-		
-		//make an appropriate listener to launch the connection picker dialog.
-		b.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
-				ConnectionPickerDialog dialog = new ConnectionPickerDialog(BaardTERMLauncher.this,BaardTERMLauncher.this);
-				dialog.show();
-			}
-		});
-		
-		tv.setLongClickable(false);*/
 
 		
 	}
@@ -214,7 +213,8 @@ public class Launcher extends Activity implements ReadyListener {
 	}
 	
 	public void onDestroy() {
-		saveConnectionsToDisk();
+		//saveConnectionsToDisk();
+		saveXML();
 		super.onDestroy();
 	}
 	
@@ -273,15 +273,7 @@ public class Launcher extends Activity implements ReadyListener {
 		//@Override
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 				long arg3) {
-			// TODO Auto-generated method stub
-			//ListView lv = (ListView)findViewById(R.id.connectionlist);
-			//MudConnection muc = (MudConnection)lv.getSelectedItem();
-			//ConnectionAdapter adp = (ConnectionAdapter)arg0.getAdapter();
-			//int pos = lv.getSelectedItemPosition();
-			//Log.e("LAUNCHER","List Item Clicked");
-			
-			//make the item the first in the list.
-			
+			//TODO: need to modify the timestamp of the clicked item and save the list to disk.
 			
 			MudConnection muc = apdapter.getItem(arg2);		
 			
@@ -336,12 +328,9 @@ public class Launcher extends Activity implements ReadyListener {
     			
 	    	}
 	    	
-	    	Launcher.this.startActivity(the_intent);
+	    	saveXML();
 	    	
-			//call ready listener
-			//saveConnectionsToDisk();
-			//reportto.ready(muc.getDisplayName(), muc.getHostName(), muc.getPortString());	
-			//ConnectionPickerDialog.this.dismiss();
+	    	Launcher.this.startActivity(the_intent);
 	    	
 	    	
 		}
@@ -354,12 +343,15 @@ public class Launcher extends Activity implements ReadyListener {
 			switch(msg.what) {
 			case MSG_DELETECONNECTION:
 				MudConnection todelete = (MudConnection)msg.obj;
-				apdapter.remove(todelete);
-				apdapter.notifyDataSetChanged();
+				launcher_settings.getList().remove(todelete.getDisplayName());
+				buildList();
+				//MudConnection todelete = (MudConnection)msg.obj;
+				//apdapter.remove(todelete);
+				//apdapter.notifyDataSetChanged();
 				break;
 			case MSG_MODIFYCONNECTION:
 				MudConnection tomodify = (MudConnection)msg.obj;
-				NewConnectionDialog diag = new NewConnectionDialog(Launcher.this,Launcher.this,tomodify.getDisplayName(),tomodify.getHostName(),Integer.parseInt(tomodify.getPortString()),tomodify);
+				NewConnectionDialog diag = new NewConnectionDialog(Launcher.this,Launcher.this,tomodify);
 				diag.show();
 				break;
 			default:
@@ -367,52 +359,57 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 		}
 	};
+	
+	public void ready(MudConnection newData) {
+		launcher_settings.getList().put(newData.getDisplayName(), newData);
+		buildList();
+		saveXML();
+	}
 
-    public void ready(String displayname,String host,String port) {
-
+    /*public void ready(String displayname,String host,String port) {
     	
-    	//start window activity.
-    	/*Intent the_intent = new Intent(com.happygoatstudios.bt.window.BaardTERMWindow.class.getName());
     	
-    	the_intent.putExtra("DISPLAY",displayname);
-    	the_intent.putExtra("HOST", host);
-    	the_intent.putExtra("PORT", port);
-    	
-    	this.startActivity(the_intent);*/
-    	
-    	//dont start, add new
 		MudConnection muc = new MudConnection();
 		muc.setDisplayName(displayname);
 		muc.setHostName(host);
 		muc.setPortString(port);
 		
-		//apdapter.
-		
-		apdapter.add(muc);
-		apdapter.notifyDataSetChanged();
-		
-		noConnections = false;
+		launcher_settings.getList().put(muc.getDisplayName(), muc.copy());
+		buildList();
+
+
     	
+    }*/
+    
+    public void modify(MudConnection old, MudConnection newData) {
+    	launcher_settings.getList().remove(old.getDisplayName());
+    	launcher_settings.getList().put(newData.getDisplayName(), newData);
+    	buildList();
+    	saveXML();
     }
     
-	public void modify(String displayname, String host, String port,MudConnection old) {
-		// TODO Auto-generated method stub
+	/*public void modify(String displayname, String host, String port,MudConnection old) {
+
 		MudConnection muc = new MudConnection();
 		muc.setDisplayName(displayname);
 		muc.setHostName(host);
 		muc.setPortString(port);
+		
+		//TODO: modify is here.
 		
 		apdapter.remove(old);
 		
 		apdapter.add(muc);
 		apdapter.notifyDataSetChanged();
-	}
+	}*/
     
 	private void getConnectionsFromDisk() {
+		//TODO: original connection loading routine here.
+		
 		SharedPreferences pref = this.getSharedPreferences(PREFS_NAME, 0);
 		
 		String thestring = pref.getString("STRINGS", "");
-		if(thestring == null || thestring == "") { noConnections=true; return; }
+		if(thestring == null || thestring == "") { return; }
 		
 		Pattern connection = Pattern.compile("([^\\|]+)");
 		Pattern breakout = Pattern.compile("(.+):(.+):(.+)");
@@ -436,19 +433,35 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 		}
 		
-		if(apdapter.isEmpty()) {
-			//Log.e("KSLFDJ","NO CONNECTIONS");
-			noConnections = true;
-		} else {
-			noConnections = false;
-			//Log.e("KSLFDJ","CONNECTIONS");
-		}
-		
 	}
 	
-	private boolean noConnections = false;
+	private void buildList() {
+		apdapter.clear();
+		for(MudConnection m : launcher_settings.getList().values()) {
+			apdapter.add(m);
+		}
+		
+		apdapter.notifyDataSetChanged();
+	}
+	
+	private void saveXML() {
+		try {
+			FileOutputStream fos = this.openFileOutput("blowtorch_launcher_list.xml",Context.MODE_PRIVATE);
+			fos.write(LauncherSettings.writeXml(launcher_settings).getBytes("UTF-8"));
+			fos.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	//private boolean noConnections = false;
 	
 	private void saveConnectionsToDisk() {
+		//TODO: this shouldn't be used in the future.
 		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
 		
 		SharedPreferences.Editor editor = prefs.edit();
@@ -474,7 +487,7 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		public ConnectionAdapter(Context context, int txtviewresid, ArrayList<MudConnection> objects) {
 			super(context, txtviewresid, objects);
-			// TODO Auto-generated constructor stub
+			
 			this.items = objects;
 		}
 		
