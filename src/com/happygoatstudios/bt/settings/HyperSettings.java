@@ -140,7 +140,7 @@ public class HyperSettings {
 		try {
 			out.setOutput(writer);
 			//out.startDocument("UTF-8", true);
-			out.startDocument(data.getEncoding(), true);
+			out.startDocument("UTF-8", true);
 			out.startTag("", "root");
 			
 			out.startTag("", BaseParser.TAG_WINDOW);
