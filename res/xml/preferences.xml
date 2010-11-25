@@ -54,7 +54,7 @@
 			android:key="ENCODING"
 			android:title="Encoding"
 			android:summary="The encoding used for this session."
-			android:defaultValue="UTF-8"/>	
+			android:defaultValue="ISO-8859-1"/>	
 
 		</PreferenceScreen>
 		<PreferenceScreen

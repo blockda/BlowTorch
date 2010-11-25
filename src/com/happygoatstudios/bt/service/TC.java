@@ -98,18 +98,22 @@ public class TC {
 		return output;
 	}
 	
-	public static String decodeInt(String in) {
+	public static String decodeInt(String in,String encoding) {
 		StringBuffer retval = new StringBuffer();
 		
 		byte[] letters = new byte[0];
+		
 		try {
-			letters = in.getBytes("ISO-8859-1");
+			letters = in.getBytes(encoding);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		for(int i=0;i<letters.length;i++) {
-			retval.append(Byte.toString(letters[i]));
+			int ival = (int)letters[i];
+			String str = Integer.toHexString(0x000000FF&ival)+"|";
+			retval.append(str);
 		}
 		
 		if(retval == null) {

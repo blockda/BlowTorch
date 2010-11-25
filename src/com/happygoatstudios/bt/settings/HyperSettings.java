@@ -38,7 +38,7 @@ public class HyperSettings {
 	private boolean UseExtractUI = false;
 	private boolean AttemptSuggestions = false;
 	
-	private String encoding = "UTF-8";
+	private String encoding = "ISO-8859-1";
 	
 	private String SaveLocation = "none";
 	
@@ -139,7 +139,8 @@ public class HyperSettings {
 		StringWriter writer = new StringWriter();
 		try {
 			out.setOutput(writer);
-			out.startDocument("UTF-8", true);
+			//out.startDocument("UTF-8", true);
+			out.startDocument(data.getEncoding(), true);
 			out.startTag("", "root");
 			
 			out.startTag("", BaseParser.TAG_WINDOW);
