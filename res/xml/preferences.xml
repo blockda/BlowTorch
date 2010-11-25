@@ -6,6 +6,11 @@
 	android:key="first_screen">
 	
 	<PreferenceCategory android:title = "Program Settings">
+		<ListPreference
+			android:key="ENCODING"
+			android:title="Encoding"
+			android:summary="The encoding used to draw and process text."
+			android:defaultValue="ISO-8859-1"/>	
 		<PreferenceScreen
 			android:key="INPUT_SCREEN"
 			android:title="Window Options"
@@ -134,11 +139,7 @@
 			android:summary="Attempt to keep WiFi radio active while service is running."
 			android:title="Keep Wifi Radio Active?"/>
 		</PreferenceScreen>
-		<ListPreference
-			android:key="ENCODING"
-			android:title="Encoding"
-			android:summary="The encoding used for this session."
-			android:defaultValue="ISO-8859-1"/>	
+		
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Import/Export Settings">
 		<com.happygoatstudios.bt.settings.HyperDialogPreference
