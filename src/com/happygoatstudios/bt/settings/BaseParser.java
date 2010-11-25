@@ -28,6 +28,7 @@ public class BaseParser {
 	static final String ATTR_OVERRIDEHF = "hapticFeedBackOnModify";
 	static final String ATTR_HFONPRESS = "hapticFeedBackOnPress";
 	static final String ATTR_HFONFLIP = "hapticFeedBackOnFlip";
+	static final String ATTR_ENCODING = "encoding";
 	
 	static final String TAG_WINDOW = "window";
 	static final String ATTR_LINESIZE = "lineSize";

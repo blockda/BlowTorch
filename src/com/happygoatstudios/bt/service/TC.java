@@ -1,5 +1,7 @@
 package com.happygoatstudios.bt.service;
 
+import java.io.UnsupportedEncodingException;
+
 public class TC {
 	final static byte IAC = (byte)0xFF; //255
 	
@@ -94,6 +96,27 @@ public class TC {
 			break;
 		}
 		return output;
+	}
+	
+	public static String decodeInt(String in) {
+		StringBuffer retval = new StringBuffer();
+		
+		byte[] letters = new byte[0];
+		try {
+			letters = in.getBytes("ISO-8859-1");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		for(int i=0;i<letters.length;i++) {
+			retval.append(Byte.toString(letters[i]));
+		}
+		
+		if(retval == null) {
+			return null;
+		} else {
+			return retval.toString();
+		}
 	}
 
 }

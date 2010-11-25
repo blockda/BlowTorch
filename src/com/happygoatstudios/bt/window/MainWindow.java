@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.window;
 import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -71,6 +72,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebSettings.TextSize;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -129,6 +131,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_HFFLIP = 872;
 	public static final int MESSAGE_LOCKUNDONE = 873;
 	public static final int MESSAGE_BUTTONFIT = 874;
+	protected static final int MESSAGE_DEBUGLANGUAGE = 875;
 
 	
 	
@@ -400,6 +403,27 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_DEBUGLANGUAGE:
+					AlertDialog.Builder ebuilder = new AlertDialog.Builder(MainWindow.this);
+					ebuilder.setTitle("Select Encoding:");
+					//builder.setPositiveButton, arg1)
+					Vector<String> items = new Vector<String>();
+					for(Charset set : Charset.availableCharsets().values()) {
+						items.add(set.displayName());
+					}
+					
+					String[] array_actual = null;
+					if(items.size() > 0) {
+						array_actual = new String[items.size()];
+						for(int z=0;z<items.size();z++) {
+							array_actual[z] = items.get(z);
+						}
+					}
+					ebuilder.setSingleChoiceItems(array_actual,0, null);
+					AlertDialog enc = ebuilder.create();
+					enc.show();
+					
+					break;
 				case MESSAGE_LOCKUNDONE:
 					//MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 					//screen2.forceDraw();
@@ -643,7 +667,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
 						String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
 						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
-						
+						String sel_encoding = prefs.getString("ENCODING", "UTF-8");
 						
 						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
@@ -670,6 +694,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setHapticFeedbackMode(overrideHF);
 							service.setHFOnPress(overrideHFPress);
 							service.setHFOnFlip(overrideHFFlip);
+							service.setEncoding(sel_encoding);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -724,6 +749,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					
 					try {
+						
+						screen2.setEncoding(service.getEncoding());
 						//current_button_views.clear();
 						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
 						
@@ -1320,7 +1347,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putString("OVERRIDE_HAPTICFEEDBACK", service.HapticFeedbackMode());
 				edit.putString("HAPTIC_PRESS", service.getHFOnPress());
 				edit.putString("HAPTIC_FLIP", service.getHFOnFlip());
-				
+				edit.putString("ENCODING", service.getEncoding());
 				
 				edit.putBoolean("KEEPLAST", service.isKeepLast());
 				edit.putString("FONT_SIZE", Integer.toString((service.getFontSize())));
@@ -1820,6 +1847,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			Message showdlg = myhandler.obtainMessage(MESSAGE_SHOWDIALOG);
 			showdlg.obj = message;
 			myhandler.sendMessage(showdlg);
+		}
+
+		public void doLanguageDebug() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_DEBUGLANGUAGE);
 		}
 	};
 	

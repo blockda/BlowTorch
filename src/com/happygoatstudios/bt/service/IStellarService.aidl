@@ -98,4 +98,6 @@ interface IStellarService {
 	void removeTimer(in TimerData deltimer);
 	int getNextTimerOrdinal();
 	Map getTimerProgressWad();
+	String getEncoding();
+	void setEncoding(String input);
 }

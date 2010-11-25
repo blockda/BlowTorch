@@ -38,6 +38,8 @@ public class HyperSettings {
 	private boolean UseExtractUI = false;
 	private boolean AttemptSuggestions = false;
 	
+	private String encoding = "UTF-8";
+	
 	private String SaveLocation = "none";
 	
 	private boolean SemiIsNewLine = true;
@@ -155,7 +157,7 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_OVERRIDEHF, (data.getHapticFeedbackMode().equals("")) ? "auto" : data.getHapticFeedbackMode());
 			out.attribute("", BaseParser.ATTR_HFONPRESS, (data.getHapticFeedbackOnPress().equals("")) ? "auto" : data.getHapticFeedbackOnPress());
 			out.attribute("", BaseParser.ATTR_HFONFLIP, (data.getHapticFeedbackOnFlip().equals("")) ? "auto" : data.getHapticFeedbackOnFlip());
-			
+			out.attribute("", BaseParser.ATTR_ENCODING, data.getEncoding());
 			
 			
 			switch(data.getWrapMode()) {
@@ -578,6 +580,14 @@ public class HyperSettings {
 
 	public HashMap<String,TimerData> getTimers() {
 		return Timers;
+	}
+
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
+
+	public String getEncoding() {
+		return encoding;
 	}
 
 }

@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
 import android.text.Spannable;
+import android.util.Log;
 //import android.util.Log;
 
 import com.happygoatstudios.bt.service.*;
@@ -20,12 +21,16 @@ public class Processor {
 	OptionNegotiator opthandler;
 	IStellarService.Stub service = null;
 	
-	public Processor(Handler useme,IStellarService.Stub theserv) {
+	private String encoding = null;
+	
+	public Processor(Handler useme,IStellarService.Stub theserv,String pEncoding) {
 		//not really much to do here, this will be a static class thing
 		reportto = useme;
 		service = theserv;
 		
 		opthandler = new OptionNegotiator(reportto);
+		
+		setEncoding(pEncoding);
 	}
 	
 	Pattern iac_cmd_reg = Pattern.compile("\\xFF([\\xFB-\\xFE])(.{1})");
@@ -205,7 +210,7 @@ public class Processor {
 		if(data == null) {
 			return "";
 		}
-		String tmp = new String(data,"ISO-8859-1");
+		String tmp = new String(data,encoding);
 		
 		//StringBuffer holder = new StringBuffer("");
 		holder.setLength(0);
@@ -222,12 +227,15 @@ public class Processor {
 				//String action = iac_match.group(1);
 				//String option = iac_match.group(2);
 				dispatchIAC(iac_match.group(1),iac_match.group(2));
+				Log.e("PROCESSOR","GOT IAC " + TC.decodeInt(iac_match.group(1)) + " " + TC.decodeInt(iac_match.group(2)));
 			} else {
 				sub_match.reset(matched);
 				if(sub_match.matches()) {
 					//dispatch sub
 					//String subneg = sub_match.group(0);
 					dispatchSUB(sub_match.group(0));
+					Log.e("PROCESSOR","GOT SUB " + TC.decodeInt(sub_match.group(0)));
+					
 				} else {
 					goahead_match.reset(matched);
 					if(goahead_match.matches()) {
@@ -374,6 +382,14 @@ public class Processor {
 			reportto.sendMessage(sbm);
 
 		}
+	}
+
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
+
+	public String getEncoding() {
+		return encoding;
 	}
 	
 
