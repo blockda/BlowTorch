@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,26 +32,46 @@ public class Processor {
 		opthandler = new OptionNegotiator(reportto);
 		
 		setEncoding(pEncoding);
+		try {
+			iac_cmd_reg = Pattern.compile(new String("\\xFF([\\xFB-\\xFE])(.{1})".getBytes(encoding),encoding));
+			subnego_reg = Pattern.compile(new String("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0".getBytes(encoding),encoding));
+			goahead_reg = Pattern.compile(new String("\\xFF\\xF9".getBytes(encoding),encoding));
+			tab_reg  = Pattern.compile(new String("\\x09".getBytes(encoding),encoding));
+			
+			iac_match = iac_cmd_reg.matcher("");
+			sub_match = subnego_reg.matcher("");
+			goahead_match = goahead_reg.matcher("");
+			tab_match = tab_reg.matcher("");
+			
+			massive_match = Pattern.compile("("+iac_cmd_reg.pattern()+")|" + "("+subnego_reg.pattern()+")|" + "("+goahead_reg.pattern()+")|" + "("+tab_reg.pattern()+")");
+			ma_matcher = massive_match.matcher("");
+		} catch (PatternSyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
-	Pattern iac_cmd_reg = Pattern.compile("\\xFF([\\xFB-\\xFE])(.{1})");
-	Matcher iac_match = iac_cmd_reg.matcher("");
+	Pattern iac_cmd_reg;
+	Matcher iac_match;
 	//Pattern iac_cmd_reg = Pattern.compile("\\xFF.*");
-	Pattern subnego_reg = Pattern.compile("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0");
-	Matcher sub_match = subnego_reg.matcher("");
+	Pattern subnego_reg;
+	Matcher sub_match;
 	
 	Pattern normal_reg = Pattern.compile("[\\x00-\\x7F]*"); //match any 7-bit ascii character, zero or more times
 	
-	Pattern goahead_reg = Pattern.compile("\\xFF\\xF9");
-	Matcher goahead_match = goahead_reg.matcher("");
+	Pattern goahead_reg;
+	Matcher goahead_match;
 	
-	Pattern tab_reg = Pattern.compile("\\x09");
+	Pattern tab_reg;
 	
 	
-	Matcher tab_match = tab_reg.matcher("");
+	Matcher tab_match;
 	
-	Pattern massive_match = Pattern.compile("("+iac_cmd_reg.pattern()+")|" + "("+subnego_reg.pattern()+")|" + "("+goahead_reg.pattern()+")|" + "("+tab_reg.pattern()+")");
-	Matcher ma_matcher = massive_match.matcher("");
+	Pattern massive_match;
+	Matcher ma_matcher;
 	/*public Spannable DoProcess(byte[] data) throws UnsupportedEncodingException {
 		
 
@@ -216,6 +237,9 @@ public class Processor {
 		holder.setLength(0);
 		
 		ma_matcher.reset(tmp);
+		
+		//Log.e("PROCESSOR","DEC:" + TC.decodeInt(tmp.substring(0,tmp.length()),encoding) + " encoded in " + encoding);
+		
 		boolean hasmatched = false;
 		while(ma_matcher.find()) {
 			hasmatched = true;
@@ -227,14 +251,14 @@ public class Processor {
 				//String action = iac_match.group(1);
 				//String option = iac_match.group(2);
 				dispatchIAC(iac_match.group(1),iac_match.group(2));
-				Log.e("PROCESSOR","GOT IAC " + TC.decodeInt(iac_match.group(1)) + " " + TC.decodeInt(iac_match.group(2)));
+				//Log.e("PROCESSOR","GOT IAC " + TC.decodeInt(iac_match.group(1),encoding) + " " + TC.decodeInt(iac_match.group(2),encoding));
 			} else {
 				sub_match.reset(matched);
 				if(sub_match.matches()) {
 					//dispatch sub
 					//String subneg = sub_match.group(0);
 					dispatchSUB(sub_match.group(0));
-					Log.e("PROCESSOR","GOT SUB " + TC.decodeInt(sub_match.group(0)));
+					//Log.e("PROCESSOR","GOT SUB " + TC.decodeInt(sub_match.group(0),encoding));
 					
 				} else {
 					goahead_match.reset(matched);

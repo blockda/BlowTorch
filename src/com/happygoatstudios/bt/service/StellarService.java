@@ -66,7 +66,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -409,7 +409,12 @@ public class StellarService extends Service {
 					byte[] bytes = (byte[]) msg.obj;
 					
 					//dispatch this for command processing
-					String retval = ProcessCommands(new String(bytes));
+					String retval = null;
+					try {
+						retval = ProcessCommands(new String(bytes,the_settings.getEncoding()));
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
 					if(retval == null || retval.equals("")) {
 						//command was intercepted. do nothing for now and return
 						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
@@ -1774,8 +1779,11 @@ public class StellarService extends Service {
 							}
 							outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
 							try {
-								doDispatchNoProcess(outputmsg.getBytes());
+								doDispatchNoProcess(outputmsg.getBytes(the_settings.getEncoding()));
 							} catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (UnsupportedEncodingException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
@@ -1806,8 +1814,11 @@ public class StellarService extends Service {
 										//display error message
 										String noarg_message = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"." + alias + " replacetext\"" + Colorizer.colorWhite +"\n";
 										try {
-											doDispatchNoProcess(noarg_message.getBytes());
+											doDispatchNoProcess(noarg_message.getBytes(the_settings.getEncoding()));
 										} catch (RemoteException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										} catch (UnsupportedEncodingException e) {
 											// TODO Auto-generated catch block
 											e.printStackTrace();
 										}
@@ -1827,8 +1838,11 @@ public class StellarService extends Service {
 									error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";  
 									
 									try {
-										doDispatchNoProcess(error.getBytes());
+										doDispatchNoProcess(error.getBytes(the_settings.getEncoding()));
 									} catch (RemoteException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									} catch (UnsupportedEncodingException e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();
 									}
@@ -1858,8 +1872,11 @@ public class StellarService extends Service {
 						}
 						outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
 						try {
-							doDispatchNoProcess(outputmsg.getBytes());
+							doDispatchNoProcess(outputmsg.getBytes(the_settings.getEncoding()));
 						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (UnsupportedEncodingException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
@@ -2025,7 +2042,7 @@ public class StellarService extends Service {
 		WifiInfo info = wifi.getConnectionInfo();
 		if(info.getNetworkId() != -1) {
 			//if so, grab the lock
-			Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
+			//Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
 			the_wifi_lock = wifi.createWifiLock("BLOWTORCH_WIFI_LOCK");
 			the_wifi_lock.acquire();
 		}
@@ -2111,8 +2128,11 @@ public class StellarService extends Service {
 				errormessage += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";
 				
 				try {
-					doDispatchNoProcess(errormessage.getBytes());
+					doDispatchNoProcess(errormessage.getBytes(the_settings.getEncoding()));
 				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnsupportedEncodingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -2149,8 +2169,11 @@ public class StellarService extends Service {
 			success += Colorizer.colorWhite +"\n";
 			
 			try {
-				doDispatchNoProcess(success.getBytes());
+				doDispatchNoProcess(success.getBytes(the_settings.getEncoding()));
 			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -2558,7 +2581,7 @@ public class StellarService extends Service {
 		int final_count = N;
 		
 
-		
+		//Log.e("SERVICE","SENDING TO WINDOW: " + rawData);
 		for(int i = 0;i<N;i++) {
 			//callbacks.getBroadcastItem(i).dataIncoming(data);
 			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);

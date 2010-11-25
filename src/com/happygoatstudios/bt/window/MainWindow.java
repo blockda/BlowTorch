@@ -46,6 +46,7 @@ import android.text.TextWatcher;
 import android.text.method.KeyListener;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -667,7 +668,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
 						String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
 						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
-						String sel_encoding = prefs.getString("ENCODING", "UTF-8");
+						String sel_encoding = prefs.getString("ENCODING", "ISO-8859-1");
 						
 						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
@@ -981,12 +982,25 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					Character lf = new Character((char)10);
 					String crlf = cr.toString() + lf.toString();
 					pdata = pdata.concat(crlf);
-					ByteBuffer buf = ByteBuffer.allocate(pdata.length());
-		
+					//ByteBuffer buf = ByteBuffer.allocate(pdata.length());
+					ByteBuffer buf = null;
+					try {
+						buf = ByteBuffer.allocate(pdata.getBytes(service.getEncoding()).length);
+					} catch (UnsupportedEncodingException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					} catch (RemoteException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					
 					
 					try {
-						buf.put(pdata.getBytes("UTF-8"));
+						buf.put(pdata.getBytes(service.getEncoding()));
 					} catch (UnsupportedEncodingException e) {
+						
+						e.printStackTrace();
+					} catch (RemoteException e) {
 						
 						e.printStackTrace();
 					}
@@ -997,6 +1011,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 					try {
 						service.sendData(buffbytes);
+						//try {
+							//Log.e("WINDOW","SENDING TO SERVICE: " + new String(buffbytes,service.getEncoding()));
+						//} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+						//	e.printStackTrace();
+						//}
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
