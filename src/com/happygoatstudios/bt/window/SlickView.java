@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.window;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -85,10 +86,20 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	int bx = 0;
 	int by = 0;
 	
+	private String encoding = "UTF-8";
+	
+	public String getEncoding() {
+		return encoding;
+	}
+
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
+
 	final static public int MSG_BUTTONDROPSTART = 100;
 	final static public int MSG_DELETEBUTTON = 666;
 	final static public int MSG_CREATEBUTTON = 102;
-
+	
 	public static final int MSG_REALLYDELETEBUTTON = 667;
 
 	protected static final int MSG_CREATEBUTTONWITHDATA = 103;
@@ -1020,7 +1031,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
 	    				
 	    			} 
-	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+	    			//try {
+					canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+					//} catch (UnsupportedEncodingException e) {
+					//	throw new RuntimeException(e);
+					//}
 	    			//Log.e("WINDOW","WRITING: " + csegment + " TO SCREEN - MID LINE");
 	    			//x_position = x_position + opts.measureText(csegment.toString());
 	    			x_position = x_position + opts.measureText(csegment,0,csegment.length());
@@ -1164,7 +1179,14 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			} 
 	    			
 	    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
-	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+	    			//csegment.
+	    			//String str = new String();
+	    			
+	    			//try {
+					canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+					//} catch (UnsupportedEncodingException e) {
+					//	throw new RuntimeException(e);
+					//}
 	    			//Log.e("WINDOW","WRITING: " + csegment + " TO SCREEN WITH COLOR!");
 	    			csegment.setLength(0);
 	    			
@@ -1175,7 +1197,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			if(colorDebugMode == 2 || colorDebugMode == 3) {
 	    				opts.setColor(0xFFBBBBBB);
 	    			}
-	    			canvas.drawText(dlines.get(i), 0, y_position , opts);
+	    			//try {
+					canvas.drawText(dlines.get(i), 0, y_position , opts);
+					//} catch (UnsupportedEncodingException e) {
+					//	throw new RuntimeException(e);
+					//}
 	    			//Log.e("WINDOW","WRITING: " + dlines.get(i) + " TO SCREEN NO COLOR!");
 	    		}
 	        }

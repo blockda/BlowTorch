@@ -3,12 +3,14 @@ package com.happygoatstudios.bt.settings;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +43,26 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		super.onCreate(b);
 		
 		this.addPreferencesFromResource(R.xml.preferences);
+		
+		ListPreference encoding = (ListPreference)findPreference("ENCODING");
+		
+		Vector<String> items = new Vector<String>();
+		for(Charset set : Charset.availableCharsets().values()) {
+			items.add(set.displayName());
+		}
+		
+		String[] array_actual = null;
+		if(items.size() > 0) {
+			array_actual = new String[items.size()];
+			for(int z=0;z<items.size();z++) {
+				array_actual[z] = items.get(z);
+			}
+		}
+		
+		encoding.setEntries(array_actual);
+		encoding.setEntryValues(array_actual);
+		
+		
 		
 		ListPreference fonts = (ListPreference)findPreference("FONT_NAME");
 		//List<String> fontnames = new ArrayList<String>();

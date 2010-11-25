@@ -49,7 +49,12 @@
 			android:title="Font"
 			android:summary="The font used by the window to render text."
 			android:defaultValue="monospace"/>
-			
+		
+		<ListPreference
+			android:key="ENCODING"
+			android:title="Encoding"
+			android:summary="The encoding used for this session."
+			android:defaultValue="UTF-8"/>	
 
 		</PreferenceScreen>
 		<PreferenceScreen

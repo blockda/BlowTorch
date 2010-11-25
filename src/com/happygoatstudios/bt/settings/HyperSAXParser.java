@@ -91,7 +91,7 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setHapticFeedbackMode( (attributes.getValue("",ATTR_OVERRIDEHF) == null) ? "auto" : (attributes.getValue("",ATTR_OVERRIDEHF).equals("")) ? "auto" : attributes.getValue("",ATTR_OVERRIDEHF));
 				tmp.setHapticFeedbackOnPress( (attributes.getValue("",ATTR_HFONPRESS) == null) ? "auto" : (attributes.getValue("",ATTR_HFONPRESS).equals("")) ? "auto" : attributes.getValue("",ATTR_HFONPRESS));
 				tmp.setHapticFeedbackOnFlip( (attributes.getValue("",ATTR_HFONFLIP) == null) ? "none" : (attributes.getValue("",ATTR_HFONFLIP).equals("")) ? "none" : attributes.getValue("",ATTR_HFONFLIP));
-				
+				tmp.setEncoding( (attributes.getValue("",ATTR_ENCODING) == null) ? "UTF-8" : attributes.getValue("",ATTR_ENCODING));
 				
 				
 				int wmode = new Integer(attributes.getValue("",ATTR_WRAPMODE));

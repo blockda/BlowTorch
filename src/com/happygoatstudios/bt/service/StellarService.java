@@ -174,10 +174,12 @@ public class StellarService extends Service {
 		//BrokenColor brokencolor = new BrokenColor();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
 		TimerCommand timercmd = new TimerCommand();
+		EncCommand enccmd = new EncCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
+		specialcommands.put(enccmd.commandName, enccmd);
 		
 		
 		//Looper.prepare();
@@ -381,13 +383,13 @@ public class StellarService extends Service {
 					//Log.e("BTSERVICE","SENDING OPTION DATA");
 					//byte[] obytes = msg.getData().getByteArray("THEDATA");
 					byte[] obytes = (byte[])(msg.obj);
-					String odbgmsg = null;
-					try {
-						odbgmsg = new String(obytes,"ISO-8859-1");
-					} catch (UnsupportedEncodingException e2) {
+					//String odbgmsg = null;
+					//try {
+					//	odbgmsg = new String(obytes,"ISO-8859-1");
+					//} catch (UnsupportedEncodingException e2) {
 						// TODO Auto-generated catch block
-						e2.printStackTrace();
-					}
+					//	e2.printStackTrace();
+					//}
 					//Log.e("SERV","SENDING STRING " + odbgmsg + "|size: " + obytes.length);
 					try {
 						output_writer.write(obytes);
@@ -417,7 +419,7 @@ public class StellarService extends Service {
 						try {
 							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
 							if(retval.equals("")) { return; }
-							bytes = retval.getBytes("ISO-8859-1");
+							bytes = retval.getBytes(the_settings.getEncoding());
 						} catch (UnsupportedEncodingException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -445,7 +447,7 @@ public class StellarService extends Service {
 						
 						Matcher replacer = null;
 						try {
-							replacer = to_replace.matcher(new String(bytes,"ISO-8859-1"));
+							replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
 						} catch (UnsupportedEncodingException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -484,7 +486,7 @@ public class StellarService extends Service {
 						//so replacer should contain the transformed string now.
 						//pull the bytes back out.
 						try {
-							bytes = replaced.toString().getBytes("ISO-8859-1");
+							bytes = replaced.toString().getBytes(the_settings.getEncoding());
 							//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
 							//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
 						} catch (UnsupportedEncodingException e1) {
@@ -502,7 +504,7 @@ public class StellarService extends Service {
 					byte[] preserve = bytes;
 					String tostripsemi = null;
 					try {
-						tostripsemi = new String(bytes,"ISO-8859-1");
+						tostripsemi = new String(bytes,the_settings.getEncoding());
 					} catch (UnsupportedEncodingException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -519,12 +521,12 @@ public class StellarService extends Service {
 					//nosemidata = nosemidata.concat(crlf);
 					
 					try {
-						String dbgmsg = new String(bytes,"ISO-8859-1");
+						String dbgmsg = new String(bytes,the_settings.getEncoding());
 						
 						
 						//Log.e("SERV","SENDING STRING " + dbgmsg + "|size: " + bytes.length);
 						
-						output_writer.write(nosemidata.getBytes("ISO-8859-1"));
+						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
 
 						output_writer.flush();
 						
@@ -1717,6 +1719,18 @@ public class StellarService extends Service {
 			
 			return tmp;
 		}
+
+		public String getEncoding() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getEncoding();
+			}
+		}
+
+		public void setEncoding(String input) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setEncoding(input);
+			}
+		}
 		
 	};
 	
@@ -2284,6 +2298,27 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private class EncCommand extends SpecialCommand {
+		
+		public EncCommand() {
+			this.commandName = "enc";
+		}
+		
+		public void execute(Object o) {
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).doLanguageDebug();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+		}
+	}
+	
 	private String getErrorMessage(String arg1,String arg2) {
 		
 		String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
@@ -2513,7 +2548,7 @@ public class StellarService extends Service {
 		
 		String rawData = null;
 		try {
-			rawData = new String(data,"ISO-8859-1");
+			rawData = new String(data,the_settings.getEncoding());
 		} catch (UnsupportedEncodingException e1) {
 			
 			e1.printStackTrace();
@@ -2698,7 +2733,7 @@ public class StellarService extends Service {
 			//show notification
 			showNotification();
 			
-			the_processor = new Processor(myhandler,mBinder);
+			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
 			the_buffer = new StringBuffer();
 			
 			
