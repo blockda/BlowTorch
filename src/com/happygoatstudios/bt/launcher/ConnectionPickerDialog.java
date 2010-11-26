@@ -23,7 +23,7 @@ import android.widget.SimpleAdapter.ViewBinder;
 import com.happygoatstudios.bt.launcher.MudConnection;
 import com.happygoatstudios.bt.R;
 
-public class ConnectionPickerDialog extends Dialog implements ReadyListener {
+public class ConnectionPickerDialog extends Dialog  {
 	ListView lv = null;
 	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	
@@ -189,7 +189,7 @@ public class ConnectionPickerDialog extends Dialog implements ReadyListener {
 			MudConnection muc = apdapter.getItem(arg2);
 			//call ready listener
 			saveConnectionsToDisk();
-			reportto.ready(muc.getDisplayName(), muc.getHostName(), muc.getPortString());	
+			//reportto.ready(muc.getDisplayName(), muc.getHostName(), muc.getPortString());	
 			ConnectionPickerDialog.this.dismiss();
 		}
 	}
@@ -198,8 +198,8 @@ public class ConnectionPickerDialog extends Dialog implements ReadyListener {
 		public void onClick(View v) {
 			//close the dialog for now
 			//ConnectionPickerDialog.this.dismiss();
-			NewConnectionDialog diag = new NewConnectionDialog(ConnectionPickerDialog.this.getContext(),ConnectionPickerDialog.this);
-			diag.show();
+			//NewConnectionDialog diag = new NewConnectionDialog(ConnectionPickerDialog.this.getContext(),ConnectionPickerDialog.this);
+			//diag.show();
 		}
 	}
 	
