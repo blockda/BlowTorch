@@ -46,7 +46,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.text.format.Time;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
 import android.util.Xml;
@@ -105,13 +105,35 @@ public class Launcher extends Activity implements ReadyListener {
 				case MESSAGE_WHATSNEW:
 					break;
 				case MESSAGE_IMPORT:
-					Log.e("LAUNCHER","ASKED TO IMPORT:" + (String)msg.obj);
-					//FileInputStream fos = Launcher.this.openFileInput((String)msg.obj);
-					//fos.close();
-					
+
 					//if the file exists, we will get here, if not, it will go to file not found.
-					LauncherSAXParser parser = new LauncherSAXParser((String)msg.obj,Launcher.this);
-					launcher_settings = parser.load();
+					try {
+						LauncherSAXParser parser = new LauncherSAXParser((String)msg.obj,Launcher.this);
+						launcher_settings = parser.load();
+					} catch (RuntimeException e) {
+						AlertDialog.Builder error = new AlertDialog.Builder(Launcher.this);
+						error.setTitle("Error loading XML");
+						error.setMessage(e.getMessage());
+						error.setPositiveButton("Acknowledge.",new DialogInterface.OnClickListener() {
+							
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+						});
+						AlertDialog errordialog = error.create();
+						errordialog.show();
+						return;
+					}
+					//update this list to the new version.
+					PackageManager m = Launcher.this.getPackageManager();
+					String versionString = null;
+					try {
+						versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+					} catch (NameNotFoundException e) {
+						//can't execute on our package aye?
+						throw new RuntimeException(e);
+					}
+					launcher_settings.setCurrentVersion(versionString);
 					buildList();
 					saveXML();
 					break;
@@ -149,16 +171,23 @@ public class Launcher extends Activity implements ReadyListener {
 			launcher_settings = parser.load();
 			
 			buildList();
-			Log.e("LAUNCHER","LOADING XML LAUNCHER");
+			//Log.e("LAUNCHER","LOADING XML LAUNCHER");
 		} catch (FileNotFoundException e) {
 			//attempt to read the connections from disk.
-			Log.e("LAUNCHER","LOADING CRAPPY LAUNCHER");
+			//Log.e("LAUNCHER","LOADING CRAPPY LAUNCHER");
 			getConnectionsFromDisk();
 			//fill the new settings
 			int size = apdapter.getCount();
+			Time t = new Time();
+			t.set(System.currentTimeMillis());
+			long starttime = System.currentTimeMillis();
 			for(int i=0;i<size;i++) {
 				MudConnection tmp = apdapter.getItem(i);
+				Time oldertime = new Time();
+				oldertime.set(starttime - 1000*i);
+				tmp.setLastPlayed(oldertime.format2445());
 				launcher_settings.getList().put(tmp.getDisplayName(), tmp.copy());
+				
 			}
 			
 			//get the version information.
@@ -171,7 +200,7 @@ public class Launcher extends Activity implements ReadyListener {
 				throw new RuntimeException(e);
 			}
 			
-			Log.e("LAUNCHER","LOADING OLD SETTINGS AND MARKING VERSION: " + versionString);
+			//Log.e("LAUNCHER","LOADING OLD SETTINGS AND MARKING VERSION: " + versionString);
 			launcher_settings.setCurrentVersion(versionString);
 			
 			saveXML();
@@ -229,9 +258,9 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		if(isoutdated) {
 			dowhatsnew = true;
-			Log.e("LAUNCHER","DOING OUTATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
+			//Log.e("LAUNCHER","DOING OUTATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
 		} else {
-			Log.e("LAUNCHER","NOT OUTDATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
+			//Log.e("LAUNCHER","NOT OUTDATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
 		}
 		
 		
@@ -255,6 +284,9 @@ public class Launcher extends Activity implements ReadyListener {
 		//	Toast msg = Toast.makeText(this, "No connections specified, select NEW to create.", Toast.LENGTH_LONG);
 		//	msg.show();
 		//}
+		if(dowhatsnew) {
+			DoWhatsNew();
+		}
 	}
 	
 	public void onDestroy() {
@@ -511,7 +543,7 @@ public class Launcher extends Activity implements ReadyListener {
 			String[] names = new String[xmlfiles.keySet().size()];
 			
 			if(xmlfiles.size() == 0) {
-				Toast t = Toast.makeText(this, "no files", Toast.LENGTH_LONG);
+				Toast t = Toast.makeText(this, "No XML files in /BlowTorch/launcher/", Toast.LENGTH_LONG);
 				t.show();
 				return;
 			}
@@ -619,6 +651,39 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 	}
 	
+	private void DoWhatsNew() { 
+		
+		//get the version information.
+		PackageManager m = this.getPackageManager();
+		String versionString = null;
+		try {
+			versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+		} catch (NameNotFoundException e) {
+			//can't execute on our package aye?
+			throw new RuntimeException(e);
+		}
+		
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Version " + versionString + " details!");
+		builder.setMessage("This will be a rather\n" +
+				"well, average sized message\n" +
+				"the market gives me 350 characters\n" +
+				"so that is what I will try and do.\n" +
+				"\nOh pimpcake mcgee, how you are\n" +
+				"the pimpyest pimp of pimptown.");
+		
+		builder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		
+		AlertDialog diag = builder.create();
+		diag.show();
+		
+	}
+	
 	private ConnectionComparator ccmp = new ConnectionComparator();
 	
 	private void buildList() {
@@ -667,33 +732,13 @@ public class Launcher extends Activity implements ReadyListener {
 			} catch (TimeFormatException e) {
 				return 0;
 			}
-			Log.e("LAUNCHER","COMPARING A TO B: " + at.format2445() +" to " + bt.format2445());
+			//Log.e("LAUNCHER","COMPARING A TO B: " + at.format2445() +" to " + bt.format2445());
 			int retval = Time.compare(bt,at);
-			Log.e("LAUNCHER","RETURNING " + retval);
+			//Log.e("LAUNCHER","RETURNING " + retval);
 			return Time.compare(bt, at);
 		}
 		
 	}
-	
-	/*private void saveConnectionsToDisk() {
-		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
-		
-		SharedPreferences.Editor editor = prefs.edit();
-		
-		//build string
-		StringBuffer buf = new StringBuffer();
-		for(int i=0;i<apdapter.getCount();i++) {
-			MudConnection tmp = apdapter.getItem(i);
-			buf.append(tmp.getDisplayName() + ":" +tmp.getHostName()+":"+tmp.getPortString());
-				buf.append("|");
-		}
-		
-		editor.putString("STRINGS", buf.toString());
-		
-		editor.commit();
-		
-	}*/
-	
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		
@@ -709,6 +754,7 @@ public class Launcher extends Activity implements ReadyListener {
 		switch(item.getItemId()) {
 		case 99:
 			//dowhatsnew
+			DoWhatsNew();
 			break;
 		case 100:
 			//start import
