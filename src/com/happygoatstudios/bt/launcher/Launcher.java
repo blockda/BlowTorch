@@ -665,12 +665,7 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Version " + versionString + " details!");
-		builder.setMessage("This will be a rather\n" +
-				"well, average sized message\n" +
-				"the market gives me 350 characters\n" +
-				"so that is what I will try and do.\n" +
-				"\nOh pimpcake mcgee, how you are\n" +
-				"the pimpyest pimp of pimptown.");
+		builder.setMessage(Launcher.this.getResources().getString(R.string.whatisnew));
 		
 		builder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
 			
