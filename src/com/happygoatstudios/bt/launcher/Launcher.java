@@ -1,11 +1,16 @@
 package com.happygoatstudios.bt.launcher;
 
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -21,6 +26,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog.Builder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -34,14 +40,19 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.text.format.Time;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TimeFormatException;
 //import android.util.Log;
 import android.util.Xml;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,6 +60,7 @@ import android.widget.AbsoluteLayout;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -65,10 +77,19 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	
+	private Pattern xmlinsensitive = Pattern.compile("^.+\\.[Xx][Mm][Ll]$");
+	private Matcher xmlimatcher = xmlinsensitive.matcher("");
+
+	protected static final int MESSAGE_WHATSNEW = 1;
+	protected static final int MESSAGE_IMPORT = 2;
+	protected static final int MESSAGE_EXPORT = 3;
+	
 	private ArrayList<MudConnection> connections;
 	private Launcher.ConnectionAdapter apdapter;
 	
 	ListView lv = null;
+	
+	Handler actionHandler;
 	
 	LauncherSettings launcher_settings;
 	
@@ -77,6 +98,31 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		
+		actionHandler = new Handler() {
+			public void handleMessage(Message msg) {
+				switch(msg.what) {
+				case MESSAGE_WHATSNEW:
+					break;
+				case MESSAGE_IMPORT:
+					Log.e("LAUNCHER","ASKED TO IMPORT:" + (String)msg.obj);
+					//FileInputStream fos = Launcher.this.openFileInput((String)msg.obj);
+					//fos.close();
+					
+					//if the file exists, we will get here, if not, it will go to file not found.
+					LauncherSAXParser parser = new LauncherSAXParser((String)msg.obj,Launcher.this);
+					launcher_settings = parser.load();
+					buildList();
+					saveXML();
+					break;
+				case MESSAGE_EXPORT:
+					DoExport((String)msg.obj);
+					break;
+				default:
+					break;
+				}
+			}
+		};
 		
 		setContentView(R.layout.new_launcher_layout);
 		
@@ -128,10 +174,9 @@ public class Launcher extends Activity implements ReadyListener {
 			Log.e("LAUNCHER","LOADING OLD SETTINGS AND MARKING VERSION: " + versionString);
 			launcher_settings.setCurrentVersion(versionString);
 			
-			//TODO: save the settings/
+			saveXML();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 		//by here we should have a completly populated list and settings
@@ -267,15 +312,24 @@ public class Launcher extends Activity implements ReadyListener {
 		}
 		
 	}
-	
+	boolean debug = true;
 	private class listItemClicked implements ListView.OnItemClickListener {
-
+		
 		//@Override
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 				long arg3) {
-			//TODO: need to modify the timestamp of the clicked item and save the list to disk.
 			
 			MudConnection muc = apdapter.getItem(arg2);		
+			
+			Time the_time = new Time();
+			the_time.set(System.currentTimeMillis());
+			muc.setLastPlayed(the_time.format2445());
+			
+			saveXML();
+			
+			buildList();
+			
+			if(debug) return;
 			
 			Intent the_intent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.getName());
 	    	
@@ -328,7 +382,7 @@ public class Launcher extends Activity implements ReadyListener {
     			
 	    	}
 	    	
-	    	saveXML();
+	    	
 	    	
 	    	Launcher.this.startActivity(the_intent);
 	    	
@@ -361,6 +415,10 @@ public class Launcher extends Activity implements ReadyListener {
 	};
 	
 	public void ready(MudConnection newData) {
+		//promote this one to the head of the class.
+		Time t = new Time();
+		t.set(System.currentTimeMillis());
+		newData.setLastPlayed(t.format2445());
 		launcher_settings.getList().put(newData.getDisplayName(), newData);
 		buildList();
 		saveXML();
@@ -395,8 +453,6 @@ public class Launcher extends Activity implements ReadyListener {
 		muc.setHostName(host);
 		muc.setPortString(port);
 		
-		//TODO: modify is here.
-		
 		apdapter.remove(old);
 		
 		apdapter.add(muc);
@@ -404,7 +460,7 @@ public class Launcher extends Activity implements ReadyListener {
 	}*/
     
 	private void getConnectionsFromDisk() {
-		//TODO: original connection loading routine here.
+		//This is here for posterity. It will only be used to fallback.
 		
 		SharedPreferences pref = this.getSharedPreferences(PREFS_NAME, 0);
 		
@@ -435,11 +491,143 @@ public class Launcher extends Activity implements ReadyListener {
 		
 	}
 	
+	private void DoImportMenu() {
+		
+		File tmp = Environment.getExternalStorageDirectory();
+		
+		File btermdir = new File(tmp,"/BlowTorch/launcher/");
+		
+		String sdstate = Environment.getExternalStorageState();
+		HashMap<String,String> efonts = new HashMap<String,String>();
+		HashMap<String,String> xmlfiles = new HashMap<String,String>();
+		if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
+			btermdir.mkdirs();
+			
+			for(File xml : btermdir.listFiles(xml_only)) {
+				xmlfiles.put(xml.getName(), xml.getPath());
+			}
+			
+			final String[] entries = new String[xmlfiles.keySet().size()];
+			String[] names = new String[xmlfiles.keySet().size()];
+			
+			if(xmlfiles.size() == 0) {
+				Toast t = Toast.makeText(this, "no files", Toast.LENGTH_LONG);
+				t.show();
+				return;
+			}
+			
+			int i=0;
+			for(String name : xmlfiles.keySet()) {
+				names[i] = name;
+				entries[i] = xmlfiles.get(name);
+				i++;
+			}
+			
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle("Select List");
+			builder.setSingleChoiceItems(names, -1,new DialogInterface.OnClickListener() {
+				
+				public void onClick(DialogInterface dialog, int which) {
+					actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_IMPORT, entries[which]));
+					dialog.dismiss();
+				}
+			});
+			
+			//builder.setI
+			
+			AlertDialog dialog = builder.create();
+			dialog.show();
+			
+		} else {
+			Toast t = Toast.makeText(this, "SD card not available.", Toast.LENGTH_LONG);
+		}
+		
+		
+	}
+	
+	FilenameFilter xml_only = new FilenameFilter() {
+
+		public boolean accept(File arg0, String arg1) {
+			//return arg1.endsWith(".xml");
+			xmlimatcher.reset(arg1);
+			if(xmlimatcher.matches()) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
+	};
+	
+	private void DoExport(String filename) {
+		
+		String dir = "/BlowTorch";
+		String launcher = "/launcher";
+		String path = launcher + dir + filename;
+		
+		try {
+			//tmp = BaardTERMService.this.openFileOutput(path, Context.MODE_WORLD_READABLE|Context.MODE_WORLD_WRITEABLE);
+			//BaardTERMService.this.openF
+			File root = Environment.getExternalStorageDirectory();
+			String state = Environment.getExternalStorageState();
+			if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+				boolean added = false;
+				String updated = path;
+				Pattern xmlend = Pattern.compile("^.+\\.[Xx][Mm][Ll]$");
+				Matcher xmlmatch = xmlend.matcher(updated);
+				String updatedname = filename;
+				if(!xmlmatch.matches()) {
+					added = true;
+					updated = path + ".xml";
+					updatedname = filename + ".xml";
+				}
+				
+				File blowtorchdir = new File(root,dir);
+				blowtorchdir.mkdirs();
+				
+				
+				File launcherdir = new File(blowtorchdir,launcher);
+				launcherdir.mkdirs();
+				
+				File file = new File(launcherdir,updatedname);
+				
+				file.createNewFile();
+				
+				FileWriter writer = new FileWriter(file);
+				BufferedWriter tmp = new BufferedWriter(writer);
+				tmp.write(LauncherSettings.writeXml(launcher_settings));
+				tmp.close();
+				
+				String message = "Saved: " + file.getPath();
+				if(added) {
+					message += "\nAppended .xml extension.";
+				}
+				
+				Toast msg = Toast.makeText(this,message,Toast.LENGTH_LONG);
+				//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), message, Toast.LENGTH_SHORT);
+				msg.show();
+			} else {
+				//Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
+				//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), "SD Card not available. File not written.", Toast.LENGTH_SHORT);
+				//msg.show();
+				Toast msg = Toast.makeText(this,"SD Card not available. File not written.",Toast.LENGTH_LONG);
+				msg.show();
+			}
+			} catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+	}
+	
+	private ConnectionComparator ccmp = new ConnectionComparator();
+	
 	private void buildList() {
 		apdapter.clear();
 		for(MudConnection m : launcher_settings.getList().values()) {
 			apdapter.add(m);
 		}
+		
+		apdapter.sort(ccmp);
 		
 		apdapter.notifyDataSetChanged();
 	}
@@ -450,18 +638,44 @@ public class Launcher extends Activity implements ReadyListener {
 			fos.write(LauncherSettings.writeXml(launcher_settings).getBytes("UTF-8"));
 			fos.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
-	//private boolean noConnections = false;
+	private class ConnectionComparator implements Comparator<MudConnection> {
+
+		public int compare(MudConnection a, MudConnection b) {
+			//pos it above, negative if below
+			Time at = new Time();
+			Time bt = new Time();
+			
+			//check if either have haver been played.
+			if(a.getLastPlayed().equals("never")) {
+				return 1;
+			} else if(b.getLastPlayed().equals("never")) {
+				return -1;
+			} else if(b.getLastPlayed().equals("never") && a.getLastPlayed().equals("never")){
+				return 0; //they are both never, so they are equal.
+			}
+			
+			try{
+				
+				at.parse(a.getLastPlayed());
+				bt.parse(b.getLastPlayed());
+			} catch (TimeFormatException e) {
+				return 0;
+			}
+			Log.e("LAUNCHER","COMPARING A TO B: " + at.format2445() +" to " + bt.format2445());
+			int retval = Time.compare(bt,at);
+			Log.e("LAUNCHER","RETURNING " + retval);
+			return Time.compare(bt, at);
+		}
+		
+	}
 	
-	private void saveConnectionsToDisk() {
-		//TODO: this shouldn't be used in the future.
+	/*private void saveConnectionsToDisk() {
 		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
 		
 		SharedPreferences.Editor editor = prefs.edit();
@@ -478,6 +692,61 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		editor.commit();
 		
+	}*/
+	
+	
+	public boolean onCreateOptionsMenu(Menu menu) {
+		
+		menu.add(0,99,0,"What's New");
+		menu.add(0,100,0,"Import List");
+		menu.add(0,105,0,"Export List");
+		
+		return true;
+		
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+		case 99:
+			//dowhatsnew
+			break;
+		case 100:
+			//start import
+			DoImportMenu();
+			break;
+		case 105:
+			//start export
+            LayoutInflater factory = LayoutInflater.from(this);
+            final View textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
+            final EditText entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
+        
+            AlertDialog exporter = new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle("Export List")
+                .setView(textEntryView)
+                .setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                        actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_EXPORT,entry.getText().toString()));
+                    }
+                })
+                
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                        dialog.dismiss();
+                    }
+                })
+                .create();
+            
+            exporter.show();
+
+			break;
+		default:
+			break;
+		}
+		
+		return true;
 	}
 	
     

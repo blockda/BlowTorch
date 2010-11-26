@@ -882,9 +882,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					}
 					RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.slickholder);
 					layout.removeView((SlickButton)msg.obj);
-					//current_button_views.remove((SlickView)msg.obj);
-					//remove from the service.
 					
+					if(layout.getChildCount() == 1) {
+						//if the last button was removed manually, we need to make the fake button to properly draw the screen.
+						makeFakeButton();
+					}
 					break;
 				case MESSAGE_ADDBUTTON:
 					SlickButtonData tmp = new SlickButtonData();
