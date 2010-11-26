@@ -44,8 +44,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.RemoteException;
 import android.text.format.Time;
 import android.util.AttributeSet;
+import android.util.Log;
 //import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
@@ -71,6 +73,7 @@ import android.widget.AbsoluteLayout.LayoutParams;
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.*;
 
 public class Launcher extends Activity implements ReadyListener {
@@ -92,6 +95,8 @@ public class Launcher extends Activity implements ReadyListener {
 	Handler actionHandler;
 	
 	LauncherSettings launcher_settings;
+	
+	IStellarService service;
 	
 	//make this save a change
 	boolean dowhatsnew = false;
@@ -361,22 +366,22 @@ public class Launcher extends Activity implements ReadyListener {
 			
 			buildList();
 			
-			if(debug) return;
+			//if(debug) return;
 			
-			Intent the_intent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.getName());
+			//Intent the_intent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.getName());
 	    	
-	    	the_intent.putExtra("DISPLAY",muc.getDisplayName());
-	    	the_intent.putExtra("HOST", muc.getHostName());
-	    	the_intent.putExtra("PORT", muc.getPortString());
+	    	//the_intent.putExtra("DISPLAY",muc.getDisplayName());
+	    	//the_intent.putExtra("HOST", muc.getHostName());
+	    	//the_intent.putExtra("PORT", muc.getPortString());
 	    	
 	    	//write out the intent to the service so it can do some lookup work in advance of the connection, such as loading the settings wad
-	    	SharedPreferences prefs = Launcher.this.getSharedPreferences("SERVICE_INFO",0);
-	    	Editor edit = prefs.edit();
+	    	//SharedPreferences prefs = Launcher.this.getSharedPreferences("SERVICE_INFO",0);
+	    	//Editor edit = prefs.edit();
 	    	//Log.e("WINDOW","SETTING " + muc.getDisplayName());
 	    	
 	    	
-	    	edit.putString("SETTINGS_PATH", muc.getDisplayName());
-	    	edit.commit();
+	    	//edit.putString("SETTINGS_PATH", muc.getDisplayName());
+	    	//edit.commit();
 	    	
 	    	//check to see if the service is actually running
 	    	
@@ -398,29 +403,81 @@ public class Launcher extends Activity implements ReadyListener {
 	    	if(!found) {
     			//service is not running, reset the values in the shared prefs that the window uses to keep track of weather or not to finish init routines.
     			//kill all whitespace in the display name.
-	    		Pattern invalidchars = Pattern.compile("\\W"); 
-    			Matcher replacebadchars = invalidchars.matcher(muc.getDisplayName());
-    			String prefsname = replacebadchars.replaceAll("") + ".PREFS";
-    			//prefsname = prefsname.replaceAll("/", "");
-    			
-    			SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
-    			//servicestarted = prefs.getBoolean("CONNECTED", false);
-    			//finishStart = prefs.getBoolean("FINISHSTART", true);
-    			SharedPreferences.Editor editor = sprefs.edit();
-    			editor.putBoolean("CONNECTED", false);
-    			editor.putBoolean("FINISHSTART", true);
-    			editor.commit();
-    			//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
-    			
+	    		launch = muc.copy();
+	    		DoNewStartup();
+	    	} else {
+	    		//service exists, we should figure out the name of what it is playing.
+	    		Log.e("LAUNCHER","SERVICE IS RUNNING");
+	    		launch = muc.copy();
+	    		bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
+				
 	    	}
 	    	
 	    	
 	    	
-	    	Launcher.this.startActivity(the_intent);
+	    	
 	    	
 	    	
 		}
 	}
+	private MudConnection launch;
+	private Intent launchIntent;
+	
+	private ServiceConnection mConnection = new ServiceConnection() {
+
+		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
+			
+			service = IStellarService.Stub.asInterface(arg1); //turn the binder into something useful
+			
+			String test = "";
+			String against = launch.getHostName() +":"+ launch.getPortString();
+			try {
+				test = service.getConnectedTo();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			if(!test.equals(against)) {
+				//does not equal, show the warning.
+				AlertDialog.Builder builder = new AlertDialog.Builder(Launcher.this);
+				builder.setMessage("Service already connected to " + test + "\nDisconnect and launch " + launch.getDisplayName() + "?");
+				builder.setTitle("Currently Connected");
+				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						Launcher.this.unbindService(mConnection);
+						stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
+						DoNewStartup();
+					}
+				});
+				
+				builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						Launcher.this.unbindService(mConnection);
+						dialog.dismiss();
+					}
+				});
+				AlertDialog connected = builder.create();
+				connected.show();
+			} else {
+				//are equal, proceed with normal startup.
+				Launcher.this.unbindService(mConnection);
+				DoFinalStartup();
+			}
+			
+		}
+
+	
+
+		public void onServiceDisconnected(ComponentName arg0) {
+			
+		}
+		
+	};
+	
+	
 	
 	public final int MSG_DELETECONNECTION = 101;
 	public final int MSG_MODIFYCONNECTION = 102;
@@ -677,6 +734,67 @@ public class Launcher extends Activity implements ReadyListener {
 		AlertDialog diag = builder.create();
 		diag.show();
 		
+	}
+	
+	private void DoNewStartup() {
+		Pattern invalidchars = Pattern.compile("\\W"); 
+		Matcher replacebadchars = invalidchars.matcher(launch.getDisplayName());
+		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		//prefsname = prefsname.replaceAll("/", "");
+		
+		SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
+		//servicestarted = prefs.getBoolean("CONNECTED", false);
+		//finishStart = prefs.getBoolean("FINISHSTART", true);
+		SharedPreferences.Editor editor = sprefs.edit();
+		editor.putBoolean("CONNECTED", false);
+		editor.putBoolean("FINISHSTART", true);
+		editor.commit();
+		//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
+		
+		//Launcher.this.startActivity(the_intent);
+		//SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
+		//SharedPreferences.Editor editor = sprefs.edit();
+		//editor.putBoolean("CONNECTED", false);
+		//editor.putBoolean("FINISHSTART", true);
+		editor.commit();
+		
+		
+		//launch = muc;
+		DoFinalStartup();
+	}
+	
+	private void DoFinalStartup() {
+		Intent the_intent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.getName());
+    	
+    	the_intent.putExtra("DISPLAY",launch.getDisplayName());
+    	the_intent.putExtra("HOST", launch.getHostName());
+    	the_intent.putExtra("PORT", launch.getPortString());
+    	
+    	//write out the intent to the service so it can do some lookup work in advance of the connection, such as loading the settings wad
+    	//SharedPreferences prefs = Launcher.this.getSharedPreferences("SERVICE_INFO",0);
+    	//Editor edit = prefs.edit();
+    	//Log.e("WINDOW","SETTING " + muc.getDisplayName());
+    	
+    	
+    	//edit.putString("SETTINGS_PATH", launch.getDisplayName());
+    	//edit.commit();
+		//Pattern invalidchars = Pattern.compile("\\W"); 
+		//Matcher replacebadchars = invalidchars.matcher(launch.getDisplayName());
+		//String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		///prefsname = prefsname.replaceAll("/", "");
+		
+		
+		//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
+		
+    	
+    	SharedPreferences prefs = Launcher.this.getSharedPreferences("SERVICE_INFO",0);
+    	Editor edit = prefs.edit();
+    	
+    	
+    	edit.putString("SETTINGS_PATH", launch.getDisplayName());
+    	edit.commit();
+    	
+		Launcher.this.startActivity(the_intent);
 	}
 	
 	private ConnectionComparator ccmp = new ConnectionComparator();
