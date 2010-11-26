@@ -1737,6 +1737,11 @@ public class StellarService extends Service {
 			}
 		}
 		
+		public String getConnectedTo() throws RemoteException {
+			return host + ":" + Integer.toString(port);
+
+		}
+		
 	};
 	
 	Pattern newline = Pattern.compile("\n");

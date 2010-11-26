@@ -34,13 +34,14 @@ public class NewConnectionDialog extends Dialog {
 		isEditor = false;
 	}
 	
-	public NewConnectionDialog(Context context,ReadyListener useme,String display,String host,int port,MudConnection old) {
+	public NewConnectionDialog(Context context,ReadyListener useme,MudConnection old) {
 		super(context);
 		
 		reportto = useme;
-		m_display = display;
-		m_host = host;
-		m_port = port;
+		m_display = old.getDisplayName();
+		m_host = old.getHostName();
+		m_port = Integer.parseInt(old.getPortString());
+		
 		
 		
 		isEditor = true;
@@ -100,9 +101,18 @@ public class NewConnectionDialog extends Dialog {
 			//String dispstr = disp.getText().toStri;
 			
 			if(isEditor) {
-				reportto.modify(disp.getText().toString(), host.getText().toString(), port.getText().toString(),m_prev);
+				MudConnection m = m_prev.copy();
+				m.setDisplayName(disp.getText().toString());
+				m.setHostName(host.getText().toString());
+				m.setPortString(port.getText().toString());
+				
+				reportto.modify(m_prev,m);
 			} else {
-				reportto.ready(disp.getText().toString(), host.getText().toString(), port.getText().toString());
+				MudConnection m = new MudConnection();
+				m.setDisplayName(disp.getText().toString());
+				m.setHostName(host.getText().toString());
+				m.setPortString(port.getText().toString());
+				reportto.ready(m);
 			}
 			
 			NewConnectionDialog.this.dismiss();

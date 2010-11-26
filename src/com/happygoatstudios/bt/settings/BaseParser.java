@@ -115,12 +115,22 @@ public class BaseParser {
 	static final String ATTR_SECONDS = "seconds";
 	static final String ATTR_REPEAT = "repeat";
 	static final String ATTR_PLAYING = "playing";
+	
+	//these are the tags for the launcher list.
+	//the parser and object will be heavily derived from the settings one, so there is no reason why the constants 
+	public static final String TAG_LAUNCHER = "launcher";
+	public static final String ATTR_VERSION = "version";
+	public static final String TAG_ITEM = "item";
+	public static final String ATTR_NAME = "name";
+	public static final String ATTR_HOST = "host";
+	public static final String ATTR_PORT = "port";
+	public static final String ATTR_DATEPLAYED = "lastPlayed";
 
 	
 	final String path;
 	Context window;
 	
-	BaseParser(String location,Context context) {
+	protected BaseParser(String location,Context context) {
 			
 			window = context;
 			this.path = location;

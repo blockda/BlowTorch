@@ -100,4 +100,6 @@ interface IStellarService {
 	Map getTimerProgressWad();
 	String getEncoding();
 	void setEncoding(String input);
+	String getConnectedTo();
+
 }
