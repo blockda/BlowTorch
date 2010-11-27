@@ -5,23 +5,18 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.responder.TriggerResponderEditorDoneListener;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
-import com.happygoatstudios.bt.responder.notification.*;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.media.MediaPlayer;
-import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -55,7 +50,6 @@ public class NotificationResponderEditor extends Dialog {
 	
 	public NotificationResponderEditor(Context context,NotificationResponder input,TriggerResponderEditorDoneListener listener) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		finish_with = listener;
 		if(input == null) {
 			the_responder = new NotificationResponder();
@@ -180,7 +174,6 @@ public class NotificationResponderEditor extends Dialog {
 		cancel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				NotificationResponderEditor.this.dismiss();
 			}
 		});
@@ -278,7 +271,6 @@ public class NotificationResponderEditor extends Dialog {
 		}
 		
 		public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
-			// TODO Auto-generated method stub
 			switch(type) {
 			case LIGHTS:
 				if(arg1) {
@@ -452,7 +444,7 @@ public class NotificationResponderEditor extends Dialog {
 		private class LightListReturnListener implements DialogInterface.OnClickListener {
 
 			public void onClick(DialogInterface arg0, int arg1) {
-				CharSequence[] light_types = {"Default","Blue","Green","Red","Magenta","Cyan","White"};
+				//CharSequence[] light_types = {"Default","Blue","Green","Red","Magenta","Cyan","White"};
 				switch(arg1) {
 				case 0:
 					//default;
@@ -505,7 +497,7 @@ public class NotificationResponderEditor extends Dialog {
 		
 		private class VibrateListReturnListener implements DialogInterface.OnClickListener {
 			public void onClick(DialogInterface arg0, int arg1) {
-				CharSequence[] vibrate_types = {"Default","Very Short","Short","Long","Suuuper Long"};
+				//CharSequence[] vibrate_types = {"Default","Very Short","Short","Long","Suuuper Long"};
 				//CharSequence type = vibrate_types[arg1];
 				switch(arg1) {
 				case 0:
@@ -583,14 +575,11 @@ public class NotificationResponderEditor extends Dialog {
 						mp.prepare();
 						mp.start();
 					} catch (IllegalArgumentException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					} catch (IllegalStateException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 				
 				}

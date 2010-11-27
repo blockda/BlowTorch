@@ -12,12 +12,9 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
-import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.responder.TriggerResponder;
-import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
-import com.happygoatstudios.bt.responder.TriggerResponder.RESPONDER_TYPE;
+
 
 public class NotificationResponder extends TriggerResponder implements Parcelable {
 

@@ -24,7 +24,6 @@ public class ToastResponderEditor extends Dialog {
 	
 	public ToastResponderEditor(Context context,ToastResponder input,TriggerResponderEditorDoneListener doneListener) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		finish_with = doneListener;
 		if(input != null) {
 			original = input.copy();
@@ -53,7 +52,6 @@ public class ToastResponderEditor extends Dialog {
 		cancel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ToastResponderEditor.this.dismiss();
 			}
 		});
