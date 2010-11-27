@@ -807,6 +807,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 						MainWindow.this.findViewById(R.id.window_container).requestLayout();
 						isFullScreen = service.isFullScreen();
+						
+						input_box.setKeepScreenOn(service.isKeepScreenOn());
 					
 						
 						screen2.setEncoding(service.getEncoding());
