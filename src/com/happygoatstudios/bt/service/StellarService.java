@@ -67,6 +67,7 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -179,12 +180,15 @@ public class StellarService extends Service {
 		//EncCommand enccmd = new EncCommand();
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
+		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
 		specialcommands.put(bellcmd.commandName, bellcmd);
 		specialcommands.put(fscmd.commandName, fscmd);
+		specialcommands.put(kbcmd.commandName, kbcmd);
+		specialcommands.put("kb", kbcmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -2485,6 +2489,114 @@ public class StellarService extends Service {
 			for(int i = 0;i<N;i++) {
 				try {
 					callbacks.getBroadcastItem(i).setScreenMode(!the_settings.isFullScreen());
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+			
+		}
+	}
+	
+	private class KeyBoardCommand extends SpecialCommand {
+		public KeyBoardCommand() {
+			this.commandName = ".keyboard";
+			//alternate short form, kb.
+		}
+		public void execute(Object o) {
+			
+			//DO ALIAS/VARIABLE TRANSFORMATIONS!!!
+			//ACTUALLY, I THINK THE TRANSFORM STEP
+			//IS DONE BEFORE SPECIAL COMMAND PARSING.
+			
+			//command format.
+			//.kb message - set keyboard text.
+			//.kb add message - append message to current keyboard.
+			//.kb popup message - set keyboard text and popup.
+			//.kb add popop message - append message and popup.
+			//.kb popup add message - same as prev, but with syntax swapped.
+			//.kb flush message - send the keyboard.
+			//.kb - print the kb help message.
+			boolean failed = false;
+			if(o==null) {
+				//fail, print kb
+				failed = true;
+			} else if(((String)o).equals("")) {
+				//fail, print kb.
+				failed = true;
+			}
+			
+			if(failed) {
+				try {
+					doDispatchNoProcess(getErrorMessage("keyboard (kb) special command usage:",".kb [add]|[popup] message\nadd and popup are optional flags that will append text or popup the window when supplied.\nExample:\n\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\nThe cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return;
+			}
+			
+			Pattern p = Pattern.compile("^\\s*(add|popup|flush){0,1}\\s*(add\\s+|popup\\s+|flush\\s+){0,1}(.*)$");
+			Matcher m = p.matcher((String)o);
+			String operation1 = "";
+			String operation2 = "";
+			String text = "";
+			if(m.matches()) {
+				//match
+				operation1 = m.group(1);
+				operation2 = m.group(2);
+				text = m.group(3);
+			} else {
+				//shouldn't ever not match.
+			}
+			boolean doadd = false;
+			boolean dopopup = false;
+			boolean doflush = false;
+			
+			if(operation1 != null && !operation1.equals("")) {
+				operation1 = operation1.replaceAll("\\s", "");
+				Log.e("SERVICE","OPERATION 1:"+operation1 + "|");
+				if(operation1.equalsIgnoreCase("add")) {
+					Log.e("SERVICE","SETTING ADD");
+					doadd = true;
+				}
+				if(operation1.equalsIgnoreCase("popup")) {
+					Log.e("SERVICE","SETTING POPUP");
+					dopopup = true;
+				}
+			}
+			if(operation2 != null && !operation2.equals("")) {
+				operation2 = operation2.replaceAll("\\s", "");
+				
+				Log.e("SERVICE","OPERATION 2:"+operation2 + "|");
+				
+				if(operation2.equalsIgnoreCase("add")) {
+					Log.e("SERVICE","SETTING ADD");
+					doadd = true;
+				}
+				if(operation2.equalsIgnoreCase("popup")) {
+					Log.e("SERVICE","SETTING POPUP");
+					dopopup = true;
+				}
+			}
+			
+			if(operation1 != null && !operation1.equals("")) {
+				
+				if(operation1.equalsIgnoreCase("flush")) {
+					Log.e("SERVICE","FLUSHING!");
+					doflush = true;
+				}
+			}
+			
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush);
 				} catch (RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

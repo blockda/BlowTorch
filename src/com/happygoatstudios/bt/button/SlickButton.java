@@ -17,7 +17,7 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 //import android.util.Log;
-import android.util.Log;
+//import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -246,9 +246,9 @@ public class SlickButton extends View {
 		//	save_y = data.y;
 		//}
 		if(fullScreenShift > 0) {
-			Log.e("BUTTON","START SHIFT TRANSLATION: " + e.getX(e.getPointerId(0)) + " " + e.getY(e.getPointerId(0)));
+			//Log.e("BUTTON","START SHIFT TRANSLATION: " + e.getX(e.getPointerId(0)) + " " + e.getY(e.getPointerId(0)));
 			e.setLocation(e.getX(e.getPointerId(0)), e.getY(e.getPointerId(0)) - fullScreenShift);
-			Log.e("BUTTON","FINISH SHIFT TRANSLATION: " + e.getX(e.getPointerId(0)) + " " + e.getY(e.getPointerId(0)));
+			//Log.e("BUTTON","FINISH SHIFT TRANSLATION: " + e.getX(e.getPointerId(0)) + " " + e.getY(e.getPointerId(0)));
 			
 		}
 		
