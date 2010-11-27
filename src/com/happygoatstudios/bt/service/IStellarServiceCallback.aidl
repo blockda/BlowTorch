@@ -14,4 +14,5 @@ oneway interface IStellarServiceCallback {
 	void showMessage(String message,boolean longtime);
 	void showDialog(String message);
 	void doVisualBell();
+	void setScreenMode(boolean fullscreen);
 }

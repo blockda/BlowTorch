@@ -169,7 +169,7 @@ public class Validator {
 
 		//Toast t = new Toast(c);
 		
-		Toast t = Toast.makeText(c, message, 4000);
+		Toast t = Toast.makeText(c, message, Toast.LENGTH_LONG);
 		//t.setView(view);
 		
 		
