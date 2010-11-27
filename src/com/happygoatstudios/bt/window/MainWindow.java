@@ -134,7 +134,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_HFFLIP = 872;
 	public static final int MESSAGE_LOCKUNDONE = 873;
 	public static final int MESSAGE_BUTTONFIT = 874;
-	protected static final int MESSAGE_DEBUGLANGUAGE = 875;
+	protected static final int MESSAGE_BELLTOAST = 876;
 
 	
 	
@@ -420,26 +420,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
-				case MESSAGE_DEBUGLANGUAGE:
-					AlertDialog.Builder ebuilder = new AlertDialog.Builder(MainWindow.this);
-					ebuilder.setTitle("Select Encoding:");
-					//builder.setPositiveButton, arg1)
-					Vector<String> items = new Vector<String>();
-					for(Charset set : Charset.availableCharsets().values()) {
-						items.add(set.displayName());
-					}
-					
-					String[] array_actual = null;
-					if(items.size() > 0) {
-						array_actual = new String[items.size()];
-						for(int z=0;z<items.size();z++) {
-							array_actual[z] = items.get(z);
-						}
-					}
-					ebuilder.setSingleChoiceItems(array_actual,0, null);
-					AlertDialog enc = ebuilder.create();
-					enc.show();
-					
+				case MESSAGE_BELLTOAST:
+					Toast belltoast = Toast.makeText(MainWindow.this, "Visual Bell Here", Toast.LENGTH_SHORT);
+					belltoast.show();
 					break;
 				case MESSAGE_LOCKUNDONE:
 					//MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -1957,8 +1940,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			myhandler.sendMessage(showdlg);
 		}
 
-		public void doLanguageDebug() throws RemoteException {
-			myhandler.sendEmptyMessage(MESSAGE_DEBUGLANGUAGE);
+		public void doVisualBell() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_BELLTOAST);
 		}
 	};
 	
