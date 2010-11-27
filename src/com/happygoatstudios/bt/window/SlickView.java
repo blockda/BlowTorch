@@ -22,6 +22,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.util.Log;
 //import android.util.Log;
 
 import android.view.MotionEvent;
@@ -125,6 +126,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		createhandler();
 		//this.setZOrderOnTop(true);
 	} 
+	
+	//protected void onSizeChanged(int w, int h, int oldw, int oldh) { 
+	//	statusBarHeight = h - windowHeight; 
+	//	Log.e("WINDOW","STATUS BAR HEIGHT NOW:" + statusBarHeight);
+	//} 
 	
 	private void createhandler() {
 		buttonaddhandler = new Handler() {
@@ -290,12 +296,21 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		dataDispatch = h;
 	}
 
+	int prev_height = -1;
+	int statusBarHeight = 1;
+	
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int width, int height) {
 		
 		WINDOW_HEIGHT = height;
 		WINDOW_WIDTH = width;
 		
 		calculateCharacterFeatures(WINDOW_WIDTH,WINDOW_HEIGHT);
+		
+		//if(prev_height < 0) {
+		//	Log.e("SURFACE","SURFACE HEIGHT NOT SET");
+			
+		//} 
+		//Log.e("SURFACE","SURFACE CHANGED: H="+WINDOW_HEIGHT);
 		
 		//calculate the number of rows and columns in this window.
 		/*CALCULATED_LINESINWINDOW = (height / PREF_LINESIZE);
@@ -871,7 +886,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	       
 	        boolean endonnewline = false;
 	        
-	        int startpos = startDrawingAtLine -2;
+	        int startpos = startDrawingAtLine -3;
 	        if(startpos < 0) {
 	        	startpos = 0;
 	        }

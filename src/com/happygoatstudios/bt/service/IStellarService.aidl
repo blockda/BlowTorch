@@ -101,5 +101,16 @@ interface IStellarService {
 	String getEncoding();
 	void setEncoding(String input);
 	String getConnectedTo();
-
+	boolean isKeepScreenOn();
+	void setKeepScreenOn(boolean use);
+	boolean isLocalEcho();
+	void setLocalEcho(boolean use);
+	boolean isVibrateOnBell();
+	void setVibrateOnBell(boolean use);
+	boolean isNotifyOnBell();
+	void setNotifyOnBell(boolean use);
+	boolean isDisplayOnBell();
+	void setDisplayOnBell(boolean use);	
+	boolean isFullScreen();
+	void setFullScreen(boolean use);	
 }

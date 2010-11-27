@@ -92,7 +92,8 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setHapticFeedbackOnPress( (attributes.getValue("",ATTR_HFONPRESS) == null) ? "auto" : (attributes.getValue("",ATTR_HFONPRESS).equals("")) ? "auto" : attributes.getValue("",ATTR_HFONPRESS));
 				tmp.setHapticFeedbackOnFlip( (attributes.getValue("",ATTR_HFONFLIP) == null) ? "none" : (attributes.getValue("",ATTR_HFONFLIP).equals("")) ? "none" : attributes.getValue("",ATTR_HFONFLIP));
 				tmp.setEncoding( (attributes.getValue("",ATTR_ENCODING) == null) ? "ISO-8859-1" : attributes.getValue("",ATTR_ENCODING));
-				
+				tmp.setKeepScreenOn( (attributes.getValue("",ATTR_KEEPSCREENON) == null) ? true : (attributes.getValue("",ATTR_KEEPSCREENON).equals("true")) ? true : false);
+				tmp.setFullScreen( (attributes.getValue("",ATTR_FULLSCREEN) == null) ? false : (attributes.getValue("",ATTR_FULLSCREEN).equals("true")) ? true : false);
 				
 				int wmode = new Integer(attributes.getValue("",ATTR_WRAPMODE));
 				switch(wmode) {
@@ -121,6 +122,12 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setSemiIsNewLine( (a.getValue("",ATTR_SEMINEWLINE) == null) ? true : (a.getValue("",ATTR_SEMINEWLINE).equals("true")) ? true : false);
 				tmp.setThrottleBackground( (a.getValue("",ATTR_THROTTLEBACKGROUND) == null) ? false : (a.getValue("",ATTR_THROTTLEBACKGROUND).equals("true")) ? true : false);
 				tmp.setKeepWifiActive( (a.getValue("",ATTR_WIFIKEEPALIVE) == null ? true : (a.getValue("",ATTR_WIFIKEEPALIVE).equals("true")) ? true : false)); //if not available, default to true
+				tmp.setLocalEcho( (a.getValue("",ATTR_LOCALECHO) == null) ? true : (a.getValue("",ATTR_LOCALECHO).equals("true")) ? true : false);
+				tmp.setVibrateOnBell( (a.getValue("",ATTR_BELLVIBRATE) == null) ? true : (a.getValue("",ATTR_BELLVIBRATE).equals("true")) ? true : false);
+				tmp.setNotifyOnBell( (a.getValue("",ATTR_BELLNOTIFY) == null) ? false : (a.getValue("",ATTR_BELLNOTIFY).equals("true")) ? true : false);
+				tmp.setDisplayOnBell( (a.getValue("",ATTR_BELLDISPLAY) == null) ? false : (a.getValue("",ATTR_BELLDISPLAY).equals("true")) ? true : false);
+				
+			
 			}
 			
 		});

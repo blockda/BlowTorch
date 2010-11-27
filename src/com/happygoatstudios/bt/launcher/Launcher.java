@@ -38,6 +38,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -58,6 +59,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AbsoluteLayout;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -75,6 +77,7 @@ import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.*;
+import com.happygoatstudios.bt.window.MainWindow;
 
 public class Launcher extends Activity implements ReadyListener {
 	
@@ -355,6 +358,19 @@ public class Launcher extends Activity implements ReadyListener {
 		//@Override
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 				long arg3) {
+			
+			Rect rect = new Rect();
+		    Window win = Launcher.this.getWindow();
+		    win.getDecorView().getWindowVisibleDisplayFrame(rect);
+		    int statusBarHeight = rect.top;
+		    int contentViewTop = win.findViewById(Window.ID_ANDROID_CONTENT).getTop();
+		    int titleBarHeight = statusBarHeight - contentViewTop ;
+		    Log.d("ID-ANDROID-CONTENT", "titleBarHeight = " + titleBarHeight );
+		    
+		    SharedPreferences pref = Launcher.this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
+			Editor e = pref.edit();
+			e.putInt("STATUS_BAR_HEIGHT", titleBarHeight);
+		    e.commit();
 			
 			MudConnection muc = apdapter.getItem(arg2);		
 			
