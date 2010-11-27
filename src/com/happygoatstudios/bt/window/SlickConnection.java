@@ -1,23 +1,19 @@
 package com.happygoatstudios.bt.window;
 
-import android.inputmethodservice.ExtractEditText;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.method.KeyListener;
 //import android.util.Log;
-import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
-import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputConnectionWrapper;
 import android.widget.TextView;
 
 public class SlickConnection extends BaseInputConnection {
 
-	  private static final boolean DEBUG = false;
-	    private static final String TAG = "EditableInputConnection";
+	  ///private static final boolean DEBUG = false;
+	    //private static final String TAG = "EditableInputConnection";
 
 	    private final TextView mTextView;
 

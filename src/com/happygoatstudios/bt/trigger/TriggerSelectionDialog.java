@@ -6,19 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.IStellarService;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,8 +25,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
 public class TriggerSelectionDialog extends Dialog {
@@ -41,12 +36,11 @@ public class TriggerSelectionDialog extends Dialog {
 	
 	public TriggerSelectionDialog(Context context,IStellarService the_service) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		service = the_service;
 		entries = new ArrayList<TriggerItem>();
 	}
 	
-	private boolean noTriggers = false;
+	//private boolean noTriggers = false;
 	
 	public void onCreate(Bundle b) {
 		
@@ -73,7 +67,6 @@ public class TriggerSelectionDialog extends Dialog {
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler);
 				editor.show();
 			}
@@ -104,22 +97,15 @@ public class TriggerSelectionDialog extends Dialog {
 
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 				long arg3) {
-			// TODO Auto-generated method stub
 			TriggerItem entry = adapter.getItem(arg2);
 			//launch the trigger editor with this item.
 			try {
 				//TriggerData data = (TriggerData) (service.getTriggerData()).get(entry.extra);
 				TriggerData data = service.getTrigger(entry.extra);
-				//Log.e("TSELECTOR","ABOUT TO HAND OFF A TRIGGER TO THE EDITOR, THIS ONE HAS RESPONDERS");
-				//for(TriggerResponder responder: data.getResponders() ) {
-				//	Log.e("TSELECTOR","has responder " + responder.getType() + " fires " + responder.getFireType());
-				//}
-				//launch the editor
 				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
 				editor.show();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		
@@ -129,9 +115,6 @@ public class TriggerSelectionDialog extends Dialog {
 
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
-			// TODO Auto-generated method stub
-			//TriggerItem item = entries.get(arg2);
-			
 			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerSelectionDialog.this.getContext());
 			builder.setTitle("Edit Trigger?");
 			DeleteTriggerFinishListener delete_me = new DeleteTriggerFinishListener(arg2);
@@ -161,8 +144,7 @@ public class TriggerSelectionDialog extends Dialog {
 				try {
 					service.deleteTrigger(entries.get(position).extra);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				buildList();
 				arg0.dismiss();
@@ -180,7 +162,6 @@ public class TriggerSelectionDialog extends Dialog {
 					TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
 					editor.show();
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				break;
@@ -190,6 +171,7 @@ public class TriggerSelectionDialog extends Dialog {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	private void buildList() {
 		if(adapter != null) {
 			adapter.clear();
@@ -198,8 +180,7 @@ public class TriggerSelectionDialog extends Dialog {
 		try {
 			trigger_list = (HashMap<String, TriggerData>) service.getTriggerData();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 		for(TriggerData data : trigger_list.values()) {
@@ -209,10 +190,6 @@ public class TriggerSelectionDialog extends Dialog {
 				t.extra = data.getPattern();
 				entries.add(t);
 			}
-		}
-		
-		if(trigger_list.size() == 0) {
-			noTriggers = true;
 		}
 		
 		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
@@ -234,7 +211,6 @@ public class TriggerSelectionDialog extends Dialog {
 		public TriggerListAdapter(Context context,
 				int textViewResourceId, List<TriggerItem> objects) {
 			super(context, textViewResourceId, objects);
-			// TODO Auto-generated constructor stub
 			entries = objects;
 		}
 		
@@ -266,7 +242,6 @@ public class TriggerSelectionDialog extends Dialog {
 	public class ItemSorter implements Comparator<TriggerItem>{
 
 		public int compare(TriggerItem a, TriggerItem b) {
-			// TODO Auto-generated method stub
 			return a.name.compareToIgnoreCase(b.name);
 		}
 		
@@ -290,7 +265,6 @@ public class TriggerSelectionDialog extends Dialog {
 				try {
 					service.newTrigger(tmp);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				break;
@@ -301,8 +275,7 @@ public class TriggerSelectionDialog extends Dialog {
 				try {
 					service.updateTrigger(from, to);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				break;
 			case MESSAGE_DELETE_TRIGGER:
@@ -310,8 +283,7 @@ public class TriggerSelectionDialog extends Dialog {
 				try {
 					service.deleteTrigger(which);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				break;
 			}

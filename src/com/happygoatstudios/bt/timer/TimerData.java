@@ -85,12 +85,10 @@ public class TimerData implements Parcelable {
 	public static final Parcelable.Creator<TimerData> CREATOR = new Parcelable.Creator<TimerData>() {
 
 		public TimerData createFromParcel(Parcel arg0) {
-			// TODO Auto-generated method stub
 			return new TimerData(arg0);
 		}
 
 		public TimerData[] newArray(int arg0) {
-			// TODO Auto-generated method stub
 			return new TimerData[arg0];
 		}
 	};
@@ -143,17 +141,10 @@ public class TimerData implements Parcelable {
 		//Log.e("PARCEL","PARCLE COMPLETE!");
 	}
 	public int describeContents() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	public void writeToParcel(Parcel o, int flags) {
-		//Log.e("PARCLE","OUT: name=" + name);
-		//Log.e("PARCLE","OUT: ordinal=" + ordinal);
-		//Log.e("PARCLE","OUT: seconds=" + seconds);
-		//Log.e("PARCLE","OUT: repeat" + repeat);
-		//Log.e("PARCLE","OUT: playing=" + playing);
-		
 		o.writeString(name);
 		o.writeInt(ordinal);
 		o.writeInt(seconds);
@@ -161,11 +152,8 @@ public class TimerData implements Parcelable {
 		o.writeInt((playing) ? 1 : 0);
 		o.writeLong(ttf);
 		o.writeInt(responders.size());
-		//Log.e("PARCLE","OUT: " + responders.size() + " responders.");
-		
 		for(TriggerResponder responder : responders) {
 			o.writeInt(responder.getType().getIntVal());
-			//Log.e("PARCLE","OUT: RESPONDER TYPE " + responder.getType().getIntVal() + " ADDED.");
 			o.writeParcelable(responder, 0);
 		}
 		

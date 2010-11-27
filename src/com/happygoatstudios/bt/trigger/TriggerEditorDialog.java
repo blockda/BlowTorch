@@ -9,7 +9,6 @@ import com.happygoatstudios.bt.R;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -30,7 +29,6 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.RelativeLayout.LayoutParams;
-import android.widget.SimpleAdapter.ViewBinder;
 
 
 import com.happygoatstudios.bt.responder.*;
@@ -55,7 +53,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	
 	private Handler finish_with;
 	
-	private CheckBox literal;
+	//private CheckBox literal;
 	private CheckBox once;
 	
 	HashMap<Integer,Integer> checkopens;
@@ -108,7 +106,6 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		cancel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				boolean changed = hasTriggerChanged();
 				if(changed) {
 					//Log.e("TEDITR","DATA CHANGED");
@@ -148,7 +145,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			}
 		});
 		
-		literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
+		//literal = (CheckBox)findViewById(R.id.trigger_literal_checkbox);
 		once = (CheckBox)findViewById(R.id.trigger_once_checkbox);
 		
 		//if(isEditor) {
@@ -240,7 +237,6 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
 				builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface arg0, int arg1) {
-						// TODO Auto-generated method stub
 						arg0.dismiss();
 					}
 				});
@@ -256,6 +252,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				if(the_trigger.isInterpretAsRegex()) {
 					try {
 						Pattern p = Pattern.compile(pattern.getText().toString());
+						p.pattern();
 					} catch (PatternSyntaxException e) {
 						AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
 						builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
@@ -309,8 +306,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				try {
 					service.updateTrigger(original_trigger,the_trigger);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			} else {	
 				the_trigger.setName(title.getText().toString());
@@ -319,8 +315,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				try {
 					service.newTrigger(the_trigger);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			}
 			finish_with.sendEmptyMessage(100);
@@ -337,7 +332,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		//responderTable.removeView(newbutton);
 		responderTable.removeViews(1, responderTable.getChildCount()-1);
 		
-		RelativeLayout p = (RelativeLayout)findViewById(R.id.newtriggerlayout);
+		//RelativeLayout p = (RelativeLayout)findViewById(R.id.newtriggerlayout);
 		LayoutParams params = new LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
 		int margin =  (int) (0*this.getContext().getResources().getDisplayMetrics().density);
 		params.rightMargin = margin;
@@ -350,7 +345,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		checkopens.clear();
 		checkclosed.clear();
 		int count = 0;
-		boolean legendAdded = false;
+		//boolean legendAdded = false;
 		for(TriggerResponder responder : the_trigger.getResponders()) {
 			//if(!legendAdded) {
 			//	responderTable.addView(legend);
@@ -436,7 +431,6 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		}
 		
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
 			TriggerResponder responder = the_trigger.getResponders().get(position);
 			switch(responder.getType()) {
 			case NOTIFICATION:
@@ -526,8 +520,6 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		}
 
 		public void onClick(DialogInterface arg0, int arg1) {
-			// TODO Auto-generated method stub
-			//Log.e("TEDITOR","DELETE ALERT RETURNED " + arg1);
 			if(arg1 == DialogInterface.BUTTON_POSITIVE) {
 				//really delete the button
 				the_trigger.getResponders().remove(position);
@@ -591,9 +583,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	}
 
 	public void onClick(DialogInterface arg0, int arg1) {
-		// TODO Auto-generated method stub
 		arg0.dismiss();
-		//Log.e("TEDITOR","DISMISSED WITH BUTTON:" + arg1);
 		switch(arg1) {
 		case 0: //notificaiton
 			NotificationResponderEditor notifyEditor = new NotificationResponderEditor(this.getContext(),null,this);

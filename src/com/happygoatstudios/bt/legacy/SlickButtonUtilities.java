@@ -2,7 +2,6 @@ package com.happygoatstudios.bt.legacy;
 
 import java.util.Vector;
 
-import com.happygoatstudios.bt.R.id;
 import com.happygoatstudios.bt.button.SlickButton;
 
 public class SlickButtonUtilities {
@@ -43,8 +42,6 @@ public class SlickButtonUtilities {
 	
 	private class ButtonSet {
 		public Vector<SlickButton> buttons = new Vector<SlickButton>();
-		public String name = new String("NAME NOT SET");
-		
 		public ButtonSet() {
 			
 		}
@@ -55,7 +52,6 @@ public class SlickButtonUtilities {
 					buttons.add(input[i]);
 				}
 			}
-			name = usethisname;
 		}
 		
 		public void addButton(SlickButton b) {
@@ -64,10 +60,6 @@ public class SlickButtonUtilities {
 		
 		public void remobeButton(SlickButton b) {
 			buttons.remove(b);
-		}
-		
-		public void clearAllButtons() {
-			buttons.removeAllElements();
 		}
 	}
 }

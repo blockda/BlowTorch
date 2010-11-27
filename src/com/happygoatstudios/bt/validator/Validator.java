@@ -1,23 +1,9 @@
 package com.happygoatstudios.bt.validator;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.launcher.NewConnectionDialog;
-
-
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.Typeface;
 //import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -105,6 +91,7 @@ public class Validator {
 				if(!tmp.field.getText().toString().equals("")) {
 					try {
 						Integer i = Integer.parseInt(tmp.field.getText().toString());
+						i=i+1;
 					} catch (NumberFormatException e) {
 						validated = false;
 						message += field + " does not contain a valid number.\n";
@@ -136,13 +123,6 @@ public class Validator {
 	
 	public void showMessage(Context c,String result) {
 		
-		
-		//TextView view = new TextView(c);
-		//view.setText(result);
-		//view.setTextSize(35);
-		//view.setTextColor(0xFF000000);
-		//view.setBackgroundColor(0xFFFF3333);
-		///LayoutParams.
 		String[] parts = result.split("\n");
 		int longest = 0;
 		for(String peice : parts) {
@@ -162,38 +142,18 @@ public class Validator {
 		//lop off the end message.
 		if(message.endsWith("\n")) {
 			message = message.substring(0, message.length()-1);
-		//	Pattern nukelastline = Pattern.compile("(.*?)(\n)$",Pattern.DOTALL);
-		//	Matcher m = nukelastline.matcher(message);
-		//	message = m.replaceAll("");
 		}
-
-		//Toast t = new Toast(c);
 		
 		Toast t = Toast.makeText(c, message, Toast.LENGTH_LONG);
-		//t.setView(view);
-		
-		
 		LayoutInflater li = (LayoutInflater) c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View v = li.inflate(R.layout.toast_override, null);
 		TextView tv = (TextView) v.findViewById(R.id.message);
 		tv.setText(message);
-		//TextView v = (TextView)t.getView();
-		//v.setTypeface(Typeface.MONOSPACE);
+		
 		t.setView(v);
 		t.setDuration(Toast.LENGTH_LONG);
 		t.show();
-		/*AlertDialog.Builder builder = new AlertDialog.Builder(c);
-		builder.setTitle("Invalid Input Detected");
-		builder.setMessage(result);
-		builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
-			
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
 		
-		AlertDialog dialog = builder.create();
-		dialog.show();*/
 	}
 	
 	private class ValidationItem {

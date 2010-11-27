@@ -7,9 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
 public class ProgressMeter extends View {
 
@@ -31,19 +29,19 @@ public class ProgressMeter extends View {
 		range = 100;
 	}
 	
-	private int indicatorWidth = 10;
+	//private int indicatorWidth = 10;
 	
 	public void onDraw(Canvas c) {
 		//Log.e("PROGRESS","DRAWING THE PROGRESS BAR");
 		
-		float center_x = (this.getRight() - this.getLeft())/2;
-		float center_y = (this.getBottom() - this.getTop())/2;
+		//float center_x = (this.getRight() - this.getLeft())/2;
+		//float center_y = (this.getBottom() - this.getTop())/2;
 		int indicator_pos = (int) (this.getWidth()*(progress/range));
 		//c.translate(center_x, center_y);
 		//this.getP
 		Paint p = new Paint();
 		int yellow = 0xFFEDBF24;
-		int orange = 0xFFED6124;
+		//int orange = 0xFFED6124;
 		int[] colors = { 0xFFFF0000, yellow, 0xFF00FF00 };
 		float[] pos = { 0f , 0.3f , 1f };
 		Shader s = new LinearGradient(0,0,this.getRight(),0,colors,pos,Shader.TileMode.REPEAT);
@@ -63,22 +61,6 @@ public class ProgressMeter extends View {
 		c.drawRect(r, alt);
 		c.drawLine(0, 0, indicator_pos, 0, p);
 		
-		
-		
-		//Log.e("PROGRESS","RECT: l=" + r.left + " r=" + r.right + " t=" + r.top + " b="+r.bottom);
-		//c.drawRect(r,alt);
-		//c.drawText("FLSDFS", 0, 0, alt);
-		
-		//c.drawCircle(0, 0, 120, alt);
-		//begin drawing indicator.
-		
-		//Rect ir = new Rect();
-		//ir.left = -1*indicatorWidth/2;
-		//ir.right = -1*indicatorWidth/2;
-		//ir.top = this.getTop();
-		//ir.bottom = this.getBottom();
-		//c.translate(indicator_pos, 0);
-		//c.drawRect(ir, alt);
 		
 	}
 	public void setProgress(float progress) {

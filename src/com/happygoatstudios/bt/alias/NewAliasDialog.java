@@ -1,8 +1,5 @@
 package com.happygoatstudios.bt.alias;
 
-import java.util.Map;
-
-
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.validator.Validator;
 
@@ -26,7 +23,6 @@ public class NewAliasDialog extends Dialog {
 	
 	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		reportto = useme;
 		
 	}
@@ -52,8 +48,8 @@ public class NewAliasDialog extends Dialog {
 					
 					Validator checker = new Validator();
 					
-					checker.add(pre, checker.VALIDATE_NOT_BLANK, "Replace field");
-					checker.add(post, checker.VALIDATE_NOT_BLANK, "With field");
+					checker.add(pre, Validator.VALIDATE_NOT_BLANK, "Replace field");
+					checker.add(post, Validator.VALIDATE_NOT_BLANK, "With field");
 					
 					String result = checker.validate();
 					if(result != null) {
@@ -115,8 +111,8 @@ public class NewAliasDialog extends Dialog {
 				
 				Validator checker = new Validator();
 				
-				checker.add(pre, checker.VALIDATE_NOT_BLANK, "Replace field");
-				checker.add(post, checker.VALIDATE_NOT_BLANK, "With field");
+				checker.add(pre, Validator.VALIDATE_NOT_BLANK, "Replace field");
+				checker.add(post, Validator.VALIDATE_NOT_BLANK, "With field");
 				
 				String result = checker.validate();
 				if(result != null) {
@@ -137,7 +133,6 @@ public class NewAliasDialog extends Dialog {
 	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,String old_alias) {
 		super(context);
 		isEditor=true;
-		// TODO Auto-generated constructor stub
 		reportto = useme;
 		original_alias = old_alias;
 		old_pos = position;

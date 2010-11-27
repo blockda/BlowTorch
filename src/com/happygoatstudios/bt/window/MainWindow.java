@@ -31,7 +31,6 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
 //import android.util.Log;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;

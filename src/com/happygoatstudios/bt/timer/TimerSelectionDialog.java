@@ -10,7 +10,6 @@ import com.happygoatstudios.bt.service.IStellarService;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -19,8 +18,6 @@ import android.os.Message;
 import android.os.RemoteException;
 //import android.util.Log;
 import android.text.TextUtils.TruncateAt;
-//import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,9 +27,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -44,22 +39,18 @@ public class TimerSelectionDialog extends Dialog {
 	private TimerListAdapter adapter;
 	
 	private Handler doneHandler;
-	private HashMap<String,PlayPauseListener> playpause_listeners;
-	private HashMap<String,ResetListener> reset_listeners;
+	//private HashMap<String,PlayPauseListener> playpause_listeners;
+	//private HashMap<String,ResetListener> reset_listeners;
 	
 	private Button edit;
 	
-	private Window the_window;
+	//private Window the_window;
 	
 	public int selected = -1;
 	
-	private TableLayout button_row;
-	
-	private HashMap<String,wad> views = new HashMap<String,wad>();
-	
+	//private TableLayout button_row;
 	public TimerSelectionDialog(Context context,IStellarService the_service) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		service = the_service;
 		entries = new ArrayList<TimerItem>();
 	}
@@ -69,7 +60,7 @@ public class TimerSelectionDialog extends Dialog {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
-		the_window = this.getWindow();
+		//the_window = this.getWindow();
 		//the_window.
 		
 		//selected = -1;
@@ -81,7 +72,7 @@ public class TimerSelectionDialog extends Dialog {
 		list.setFocusable(true);
 		list.setClickable(true);
 		
-		button_row = (TableLayout)findViewById(R.id.button_table);
+		//button_row = (TableLayout)findViewById(R.id.button_table);
 		//button_row.set
 		
 		TextView empty = new TextView(this.getContext());
@@ -133,7 +124,7 @@ public class TimerSelectionDialog extends Dialog {
 				switch(msg.what) {
 				case 99:
 					//special editor non new exit, means we need to clear the progress wad of the ordinal.
-					wad.remove((String)msg.obj);
+					//wad.remove((String)msg.obj);
 					buildList();
 					break;
 				case 101: 
@@ -185,8 +176,8 @@ public class TimerSelectionDialog extends Dialog {
 			}
 		});
 		
-		reset_listeners = new HashMap<String,ResetListener>();
-		playpause_listeners = new HashMap<String,PlayPauseListener>();
+		//reset_listeners = new HashMap<String,ResetListener>();
+		//playpause_listeners = new HashMap<String,PlayPauseListener>();
 		
 		ImageButton play = (ImageButton)findViewById(R.id.timer_play);
 		ImageButton pause = (ImageButton)findViewById(R.id.timer_pause);
@@ -203,8 +194,7 @@ public class TimerSelectionDialog extends Dialog {
 				try {
 					service.startTimer(Integer.toString(selected));
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				buildList();
 				//updateTimers();
@@ -222,11 +212,9 @@ public class TimerSelectionDialog extends Dialog {
 				try {
 					service.pauseTimer(Integer.toString(selected));
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				buildList();
-				//updateTimers();
 			}
 		});
 		
@@ -240,11 +228,9 @@ public class TimerSelectionDialog extends Dialog {
 				try {
 					service.resetTimer(Integer.toString(selected));
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				buildList();
-				//updateTimers();
 			}
 		});
 		
@@ -290,8 +276,7 @@ public class TimerSelectionDialog extends Dialog {
 				try {
 					editor = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),service.getTimer(Integer.toString(selected)),service,doneHandler);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				editor.show();
 			}
@@ -309,8 +294,7 @@ public class TimerSelectionDialog extends Dialog {
 				try {
 					service.removeTimer(service.getTimer(Integer.toString(selected)));
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				dialog.dismiss();
 				buildList();
@@ -326,8 +310,9 @@ public class TimerSelectionDialog extends Dialog {
 		this.dismiss();
 	}
 	
-	private boolean noTimers = false;
+	//private boolean noTimers = false;
 	
+	@SuppressWarnings("unchecked")
 	private void buildList() {
 		if(adapter != null) {
 			adapter.clear();
@@ -341,8 +326,8 @@ public class TimerSelectionDialog extends Dialog {
 		}catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		playpause_listeners.clear();
-		reset_listeners.clear();
+		//playpause_listeners.clear();
+		//reset_listeners.clear();
 		boolean anyplaying = false;
 		for(TimerData timer : timer_list.values()) {
 			TimerItem i = new TimerItem();
@@ -364,10 +349,7 @@ public class TimerSelectionDialog extends Dialog {
 			entries.add(i);
 		}
 		
-		if(timer_list.size() == 0) {
-			noTimers = true;
-			//doneHandler.removeMessages(100);
-		}
+		
 		
 		if(anyplaying) {
 			if(doneHandler.hasMessages(101)) {
@@ -390,62 +372,7 @@ public class TimerSelectionDialog extends Dialog {
 			list.setSelection(selected);
 		}
 	}
-	HashMap<String,TimerProgress> wad = new HashMap<String,TimerProgress>();
-	private void updateTimers() {
-		//Log.e("SELECTOR","UPDATING TIMER VIEWS");
-		//reset status indicators.
-		//for(String ord : wad.keySet()) {
-			//views.get(ord).progress.setProgress(100);
-			//views.get(ord).
-		//}
-		
-		try {
-			 wad.clear();
-			 wad = (HashMap<String, TimerProgress>) service.getTimerProgressWad();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if(wad == null) {
-			//Log.e("SELECTOR","GOT NO VIEWS");
-			return;
-		}
-		
-		for(String ord : wad.keySet()) {
-			wad the_wad = views.get(ord);
-			//Log.e("SELECTOR","WORKING ON ORDINAL " + ord);
-			if(the_wad != null) {
-				//Log.e("SELECTOR","UPDATING WAD TO: " + wad.get(ord).getTimeleft()/1000 + " | " + wad.get(ord).getPercentage()*100 + " THE_WAD.DISPLAY" + the_wad.display.toString());
-				the_wad.display.setText(Long.toString(wad.get(ord).getTimeleft()/1000));
-				//the_wad.display.setText("WIZ");
-				//Log.e("SELECTOR","UPDATED WAD TO: " + the_wad.display.getText().toString());
-				
-				the_wad.progress.setProgress(wad.get(ord).getPercentage()*100);
-				the_wad.progress.setRange(100);
-				//the_wad.display.invalidate();
-				//the_wad.progress.invalidate();
-				//list.invalidate();
-				//TimerSelectionDialog.this.
-				//adapter.notifyDataSetInvalidated();
-				//adapter.
-				
-			}
-			
-		}
-		
-		if(wad.size() > 0) {
-			if(doneHandler.hasMessages(101)) {
-				
-			} else {
-				doneHandler.sendEmptyMessageDelayed(101,1000);
-				//Log.e("SELECTOR","STARTING A NEW DRAW SEQUENCE!");
-				
-			}
-		} else {
-			//Log.e("SELECTOR","STOPPING DRAWING");
-			doneHandler.removeMessages(101);
-		}
-	}
+	//HashMap<String,TimerProgress> wad = new HashMap<String,TimerProgress>();
 	
 	public class TimerListAdapter extends ArrayAdapter<TimerItem> {
 		List<TimerItem> entries;
@@ -453,7 +380,6 @@ public class TimerSelectionDialog extends Dialog {
 		public TimerListAdapter(Context context,
 				int textViewResourceId, List<TimerItem> objects) {
 			super(context, textViewResourceId, objects);
-			// TODO Auto-generated constructor stub
 			entries = objects;
 		}
 		
@@ -467,21 +393,6 @@ public class TimerSelectionDialog extends Dialog {
 			TimerItem e = entries.get(pos);
 			
 			if(e != null) {
-				//pull out the timer data from the service.
-				/*TimerData timer = null;
-				try {
-					timer = service.getTimer(Integer.toString(e.ordinal));
-				} catch (RemoteException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				if(timer == null) {
-					//still null, uh oh. means that the timer ordinal does not exist.
-				}*/
-				
-				
-				
-				
 				TextView label = (TextView)v.findViewById(R.id.timer_title);
 				TextView extra = (TextView)v.findViewById(R.id.timer_display);
 				TextView ordinal = (TextView)v.findViewById(R.id.timer_ordinal);
@@ -489,9 +400,9 @@ public class TimerSelectionDialog extends Dialog {
 				TextView status = (TextView)v.findViewById(R.id.timer_status);
 				TextView total = (TextView)v.findViewById(R.id.timer_total);
 				
-				int text_color = 0xFF888888;
-				int non_selected = 0xFF333333;
-				int selected = 0xFF888888;
+				//int text_color = 0xFF888888;
+				//int non_selected = 0xFF333333;
+				//int selected = 0xFF888888;
 				if(e.ordinal == TimerSelectionDialog.this.selected) {
 					//Log.e("SELECTOR","SELCTED " + e.ordinal + " SELECTOR IS " + TimerSelectionDialog.this.selected);
 					label.setTextColor(0xFF888888);
@@ -623,16 +534,6 @@ public class TimerSelectionDialog extends Dialog {
 		}
 	}
 	
-	private class wad {
-		TextView display;
-		ProgressMeter progress;
-		public wad(TextView pDisplay,ProgressMeter pMeter) {
-			display = pDisplay;
-			//display.setText("WAD");
-			progress = pMeter;
-		}
-	}
-	
 	public class TimerSorter implements Comparator<TimerItem> {
 
 		public int compare(TimerItem a,TimerItem b) {
@@ -656,7 +557,7 @@ public class TimerSelectionDialog extends Dialog {
 		boolean selected;
 	}
 	
-	private class PlayPauseListener implements View.OnClickListener {
+	/*private class PlayPauseListener implements View.OnClickListener {
 
 		private int ordinal;
 		private boolean playing;
@@ -666,28 +567,18 @@ public class TimerSelectionDialog extends Dialog {
 		}
 		
 		public void onClick(View v) {
-			//Log.e("PLAY","PLAYPAUSE FOR ORDINAL: " + ordinal);
-			//doneHandler.sendEmptyMessageDelayed(100, 100);
 			ImageView iv = (ImageView)v;
 			try {
 				if(playing) {
 					//pause
 					service.pauseTimer(Integer.toString(ordinal));
-					//turn into a pause button
-					//Log.e("CLICKER","CHANGING TO PLAY");
-					
 					iv.setImageResource(android.R.drawable.ic_media_play);
 					playing = false;
 				} else {
 					service.startTimer(Integer.toString(ordinal));
 					iv.setImageResource(android.R.drawable.ic_media_pause);
 					playing = true;
-					//Log.e("CLICKER","CHANGING TO PAUSE");
 				}
-				//buildList();
-				//v.invalidate();
-				//adapter.notifyDataSetInvalidated();
-				//updateTimers();
 				buildList();
 			} catch (RemoteException e) {
 				
@@ -700,13 +591,12 @@ public class TimerSelectionDialog extends Dialog {
 		}
 
 		public void setPlaying(boolean playing) {
-			//Log.e("SOMETHING","IS RESETTING " + ordinal + " PLAY STATUS TO " + playing);
 			this.playing = playing;
 		}
 		
-	}
+	}*/
 	
-	private class ResetListener implements View.OnClickListener {
+	/*private class ResetListener implements View.OnClickListener {
 
 		private int ordinal;
 		public ResetListener(int pOrdinal) {
@@ -715,17 +605,13 @@ public class TimerSelectionDialog extends Dialog {
 		}
 		
 		public void onClick(View v) {
-			//Log.e("PAUSE","PAUSE FOR ORDINAL: " + ordinal);
-			//doneHandler.sendEmptyMessageDelayed(100, 0);
 			try {
 				service.resetTimer(Integer.toString(ordinal));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			buildList();
-			//updateTimers();
 		}
 		
-	}
+	}*/
 }
