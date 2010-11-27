@@ -1,14 +1,8 @@
 package com.happygoatstudios.bt.button;
 
-import org.xml.sax.Attributes;
-
 import com.happygoatstudios.bt.settings.ColorSetSettings;
-
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.sax.EndTextElementListener;
-import android.sax.StartElementListener;
-import android.util.Log;
 
 public class SlickButtonData implements Parcelable {
 	

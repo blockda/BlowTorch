@@ -15,21 +15,17 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.text.format.Time;
-import android.util.Log;
 
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
 	private Thread.UncaughtExceptionHandler defaultUEH;
-	private Context app = null;
+	//private Context app = null;
 	
 	public CrashReporter(Context crash_watch) {
 		defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
-		app = crash_watch;
+		//app = crash_watch;
 	}
 	
 	public void uncaughtException(Thread t, Throwable e) {
@@ -45,32 +41,14 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 		
 		String reportmeat = result.toString();
 		printWriter.close();
-		
-		//so we have the basic stack trace info.
-		//send it to the server
+
 		
 		DefaultHttpClient httpClient = new DefaultHttpClient();
 		
-		//InetAddress addr = null;
-		//try{
-		//	addr = InetAddress.getByName("bt.happygoatstudios.com");
-		//} catch(UnknownHostException urlerror) {
-		//	urlerror.printStackTrace();
-		//}
 		HttpPost httpPost = new HttpPost("http://bt.happygoatstudios.com/upload_crash_report.php");
 				
 		
 		List<NameValuePair> pairs = new ArrayList<NameValuePair>();
-		
-		//create information
-		PackageInfo pi;
-		Context context = (Context)app;
-		try {
-			pi = context.getPackageManager().getPackageInfo(context.getPackageName(),0);
-		} catch (NameNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		
 		//versionname
 		//packagename
