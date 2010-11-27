@@ -537,7 +537,9 @@ public class StellarService extends Service {
 						
 						//send the transformed data back to the window
 						try {
-							doDispatchNoProcess(preserve);
+							if(the_settings.isLocalEcho()) {
+								doDispatchNoProcess(preserve);
+							}
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
