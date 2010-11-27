@@ -22,14 +22,14 @@ public class OptionNegotiator {
 			byte IAC_DO = (byte)0xFD; //253
 			byte IAC_DONT = (byte)0xFE; //254
 			
-			byte SB = (byte)0xFA; //250 - subnegotiation start
-			byte SE = (byte)0xF0; //240 - subnegotiation start
+			//byte SB = (byte)0xFA; //250 - subnegotiation start
+			//byte SE = (byte)0xF0; //240 - subnegotiation start
 			
 			final byte COMPRESS2 = (byte)0x56; //86
-			final byte COMPRESS1 = (byte)0x55; //85
-			final byte ATCP_CUSTOM = (byte)0xC8; //200 -- ATCP protocol, http://www.ironrealms.com/rapture/manual/files/FeatATCP-txt.html
-			final byte AARD_CUSTOM = (byte)0x66; //102 -- Aardwolf custom, http://www.aardwolf.com/blog/2008/07/10/telnet-negotiation-control-mud-client-interaction/
-			final byte TERM_TYPE = (byte)0x18; //24
+			//final byte COMPRESS1 = (byte)0x55; //85
+			//final byte ATCP_CUSTOM = (byte)0xC8; //200 -- ATCP protocol, http://www.ironrealms.com/rapture/manual/files/FeatATCP-txt.html
+			//final byte AARD_CUSTOM = (byte)0x66; //102 -- Aardwolf custom, http://www.aardwolf.com/blog/2008/07/10/telnet-negotiation-control-mud-client-interaction/
+			//final byte TERM_TYPE = (byte)0x18; //24
 			final byte NAWS_TYPE = (byte)0x1F; //31 -- NAWS, negotiate window size
 			
 	    	byte[] ret = new byte[3];
@@ -118,8 +118,7 @@ public class OptionNegotiator {
     		try {
 				responsedata = termtype.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
     		ByteBuffer buf = ByteBuffer.allocate(sequence.length + responsedata.length);
     		buf.put(sequence,0,sequence.length-3);

@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 
 public class OutputWriter extends Thread {
 	BufferedOutputStream the_stream = null;
@@ -39,15 +38,14 @@ public class OutputWriter extends Thread {
 					//get data.
 					byte[] data = msg.getData().getByteArray("THEDATA");
 					
-					String dbgmsg = new String(data);
+					//String dbgmsg = new String(data);
 					//Log.e("OUTPUT","Attempting to write:" +dbgmsg);
 					
 					try {
 						the_stream.write(data);
 						the_stream.flush();
 					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new RuntimeException(e1);
 					}
 					
 					break;
@@ -55,8 +53,7 @@ public class OutputWriter extends Thread {
 					try {
 						the_stream.close();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					
 					this.getLooper().quit();
