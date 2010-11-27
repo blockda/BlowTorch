@@ -177,10 +177,14 @@ public class StellarService extends Service {
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
 		TimerCommand timercmd = new TimerCommand();
 		//EncCommand enccmd = new EncCommand();
+		BellCommand bellcmd = new BellCommand();
+		FullScreenCommand fscmd = new FullScreenCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
+		specialcommands.put(bellcmd.commandName, bellcmd);
+		specialcommands.put(fscmd.commandName, fscmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -2455,6 +2459,39 @@ public class StellarService extends Service {
 					e.printStackTrace();
 				}
 			}
+			
+		}
+	}
+	
+	private class BellCommand extends SpecialCommand {
+		public BellCommand() {
+			this.commandName = "bell";
+		}
+		public void execute(Object o) {
+			
+			myhandler.sendEmptyMessage(MESSAGE_BELLINC);
+			
+		}
+	}
+	
+	private class FullScreenCommand extends SpecialCommand {
+		public FullScreenCommand() {
+			this.commandName = "togglefullscreen";
+		}
+		public void execute(Object o) {
+			
+			
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).setScreenMode(!the_settings.isFullScreen());
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
 			
 		}
 	}

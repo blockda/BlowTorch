@@ -1806,4 +1806,13 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 	}
 
+
+	public void doDelayedDraw(int i) {
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessageDelayed(DrawRunner.MSG_DRAW,i);
+		} else {
+			//Log.e("SLICK","VIEW ALREADY HAS DRAW MESSAGES");
+		}
+	}
+
 }

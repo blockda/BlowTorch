@@ -50,6 +50,7 @@ import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -135,6 +136,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_LOCKUNDONE = 873;
 	public static final int MESSAGE_BUTTONFIT = 874;
 	protected static final int MESSAGE_BELLTOAST = 876;
+	protected static final int MESSAGE_DOSCREENMODE = 877;
 
 	
 	
@@ -420,8 +422,81 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_DOSCREENMODE:
+					boolean fullscreen = false;
+					if(msg.arg1 == 1) {
+						fullscreen = true;
+					}
+					boolean needschange = false;
+					if(fullscreen && !isFullScreen) {
+						//switch to fullscreen.
+						try {
+							service.setFullScreen(true);
+							isFullScreen = true;
+						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+						    //MainWindow.this.findViewById(R.id.window_container).requestLayout();
+							needschange = true;
+						} catch (RemoteException e) {
+							throw new RuntimeException(e);
+						}
+					}
+					
+					if(!fullscreen && isFullScreen) {
+						//switch to non full screen.
+						try {
+							service.setFullScreen(false);
+							isFullScreen = false;
+							MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+							MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+						
+							//MainWindow.this.findViewById(R.id.window_container).requestLayout();
+							needschange = true;
+						} catch (RemoteException e) {
+							throw new RuntimeException(e);
+						}
+					}
+					
+					if(needschange) {
+						RelativeLayout modb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
+						//modb is the slickview/button container.
+						for(int i=0;i<modb.getChildCount();i++) {
+							View tmp = modb.getChildAt(i);
+							if(tmp instanceof SlickButton) {
+								if(isFullScreen) {
+									((SlickButton)tmp).setFullScreenShift(statusBarHeight); 
+								} else {
+									((SlickButton)tmp).setFullScreenShift(0); 
+								}	
+							}
+							
+						}
+						MainWindow.this.findViewById(R.id.window_container).requestLayout();
+						screen2.doDelayedDraw(100);
+					}
+					
+					try {
+						this.sendMessage(this.obtainMessage(MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet()));
+					} catch (RemoteException e5) {
+						throw new RuntimeException(e5);
+					}
+					
+					//if we got here then we just pass through.
+					break;
 				case MESSAGE_BELLTOAST:
-					Toast belltoast = Toast.makeText(MainWindow.this, "Visual Bell Here", Toast.LENGTH_SHORT);
+					Toast belltoast = Toast.makeText(MainWindow.this, "No actual message.", Toast.LENGTH_LONG);
+					//t.setView(view);
+					
+					
+					LayoutInflater li = (LayoutInflater) MainWindow.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+					View v = li.inflate(R.layout.bell_toast, null);
+					//TextView tv = (TextView) v.findViewById(R.id.message);
+					//tv.setText(message);
+					
+					belltoast.setView(v);
+					float density = MainWindow.this.getResources().getDisplayMetrics().density;
+					belltoast.setGravity(Gravity.TOP|Gravity.RIGHT, (int)(40*density), (int)(30*density));
+					belltoast.setDuration(Toast.LENGTH_SHORT);
 					belltoast.show();
 					break;
 				case MESSAGE_LOCKUNDONE:
@@ -1942,6 +2017,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 		public void doVisualBell() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_BELLTOAST);
+		}
+
+		public void setScreenMode(boolean fullscreen) throws RemoteException {
+			Message doScreenMode = myhandler.obtainMessage(MESSAGE_DOSCREENMODE);
+			if(fullscreen) {
+				doScreenMode.arg1 = 1;
+			} else {
+				doScreenMode.arg1 = 0;
+			}
+			
+			myhandler.sendMessage(doScreenMode);
 		}
 	};
 	
