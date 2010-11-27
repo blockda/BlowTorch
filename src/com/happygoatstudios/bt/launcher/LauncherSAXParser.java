@@ -19,7 +19,7 @@ public class LauncherSAXParser extends BaseParser {
 	
 	public LauncherSAXParser(String location, Context context) {
 		super(location, context);
-		// TODO Auto-generated constructor stub
+		
 	}
 	
 	public LauncherSettings load() {
