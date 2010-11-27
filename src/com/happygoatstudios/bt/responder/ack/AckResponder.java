@@ -8,11 +8,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
-import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
-import com.happygoatstudios.bt.responder.TriggerResponder.RESPONDER_TYPE;
 import com.happygoatstudios.bt.service.StellarService;
 
 public class AckResponder extends TriggerResponder implements Parcelable {
@@ -67,8 +64,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 			//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
 			msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 		dispatcher.sendMessage(msg);
@@ -83,19 +79,16 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	public static Parcelable.Creator<AckResponder> CREATOR = new Parcelable.Creator<AckResponder>() {
 
 		public AckResponder createFromParcel(Parcel source) {
-			// TODO Auto-generated method stub
 			return new AckResponder(source);
 		}
 
 		public AckResponder[] newArray(int size) {
-			// TODO Auto-generated method stub
 			return new AckResponder[size];
 		}
 		
 	};
 
 	public int describeContents() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 	
@@ -119,17 +112,11 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 			//Log.e("ACKRESPONDER","defaulting to both");
 			setFireType(FIRE_WHEN.WINDOW_BOTH);
 		}
-		
-		//Log.e("ACKRESPONDER","Completed reading parcel.");
 	}
 
 	public void writeToParcel(Parcel out, int flags) {
-		// TODO Auto-generated method stub
 		out.writeString(ackWith);
-		//Log.e("PARCEL","OUT: ACK RESPONDER: " + ackWith + " fires when " + this.getFireType().getString());
 		out.writeString(this.getFireType().getString());
-		
-		//Log.e("ACKRESPONDER","WRITING OUT TO PARCEL, FIRETYPE IS:" + this.getFireType().getString());
 	}
 
 	public void setAckWith(String ackWith) {

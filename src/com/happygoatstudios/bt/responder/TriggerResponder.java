@@ -6,9 +6,8 @@ import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.os.Handler;
-import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
+
 
 public abstract class TriggerResponder implements Parcelable {
 
@@ -153,23 +152,13 @@ public abstract class TriggerResponder implements Parcelable {
 		boolean found = false;
 		while(replacer.find()) {
 			found = true;
-			//found a match. extract it's group
-			//if(replacer.groupCount() < 1) {
-			//	Log.e("TRIGGER","NO MATCH GROUPS");
-			//} else {
-			//	for(int i = 0;i<=replacer.groupCount();i++) {
-					//Log.e("TRIGGER",i+":"+replacer.group(i));
-				//}
-			//}
 			String desired = replacer.group(1);
-			//Log.e("TRIGGER","ATTEMPTING GROUP LOOKUP FOR " + desired);
+			
 			String replacetext = "";
 			if(map.containsKey(desired)) {
 				replacetext = map.get(desired);
-				//Log.e("TRIGGER","GOT REPLACEMENT " + replacetext);
 			} else {
 				replacetext = "\\" + replacer.group(0);
-				//Log.e("TRIGGER","NO REP: " + replacetext);
 			}
 			replacer.appendReplacement(output, replacetext); //append with map data if exists, use the group count if not.
 			
@@ -182,14 +171,8 @@ public abstract class TriggerResponder implements Parcelable {
 			return input;
 		}
 		
-		
-		//return "";
 	}
 	
-	//public int describeContents() {
-		// TODO Auto-generated method stub
-	//	return 0;
-	//}
 	
 	
 }

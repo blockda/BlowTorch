@@ -22,7 +22,6 @@ public class AckResponderEditor extends Dialog {
 	
 	public AckResponderEditor(Context context,AckResponder input,TriggerResponderEditorDoneListener listener) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		finish_with = listener;
 		if(input == null) {
 			the_responder = new AckResponder();
@@ -49,7 +48,6 @@ public class AckResponderEditor extends Dialog {
 		cancel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				AckResponderEditor.this.dismiss();
 			}
 		});
