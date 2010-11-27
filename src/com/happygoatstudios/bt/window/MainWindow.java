@@ -137,6 +137,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_BUTTONFIT = 874;
 	protected static final int MESSAGE_BELLTOAST = 876;
 	protected static final int MESSAGE_DOSCREENMODE = 877;
+	protected static final int MESSAGE_KEYBOARD = 878;
 
 	
 	
@@ -422,6 +423,31 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_KEYBOARD:
+					boolean add = (msg.arg2 > 0) ? true : false;
+					boolean popup = (msg.arg1 > 0) ? true : false;
+					String text = (String)msg.obj;
+					
+					if(!add) {
+						//reset text
+						Log.e("WINDOW","KEYBOARD REPLACE" + text);
+						input_box.setText(text);
+						input_box.setSelection(input_box.getText().toString().length());
+					} else {
+						//append text
+						Log.e("WINDOW","KEYBOARD APPEND:" + text);
+						input_box.setText(input_box.getText().toString() + text);
+						input_box.setSelection(input_box.getText().toString().length());
+					}
+					
+					if(popup) {
+						Log.e("WINDOW","POPING UP KEYBOARD");
+						InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+						// only will trigger it if no physical keyboard is open
+						mgr.showSoftInput(input_box, InputMethodManager.SHOW_FORCED);
+					}
+				
+					break;
 				case MESSAGE_DOSCREENMODE:
 					boolean fullscreen = false;
 					if(msg.arg1 == 1) {
@@ -2028,6 +2054,16 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			}
 			
 			myhandler.sendMessage(doScreenMode);
+		}
+
+		public void showKeyBoard(String txt,boolean popup,boolean add,boolean flush) throws RemoteException {
+			if(flush) {
+				myhandler.sendEmptyMessage(MESSAGE_PROCESSINPUTWINDOW);
+				return;
+			}
+			int p = (popup) ? 1 : 0;
+			int a = (add) ? 1 : 0;
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_KEYBOARD,p,a,txt));
 		}
 	};
 	
