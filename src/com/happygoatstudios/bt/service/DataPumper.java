@@ -1,18 +1,14 @@
 package com.happygoatstudios.bt.service;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -79,7 +75,7 @@ public class DataPumper extends Thread {
 						this.getLooper().quit();
 						break;
 					case MESSAGE_INITXFER:
-						Message tmp = myhandler.obtainMessage(MESSAGE_RETRIEVE);
+						//Message tmp = myhandler.obtainMessage(MESSAGE_RETRIEVE);
 						//myhandler.sendMessageDelayed(tmp, 50);
 						break;
 					case MESSAGE_ENDXFER:
@@ -123,15 +119,11 @@ public class DataPumper extends Thread {
 		
 		private void getData() {
 				//MAIN LOOP
-				
-				//get all the data in the stream.
 				int numtoread = 0;
 				try {
 					numtoread = reader.available();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					//Log.e("PUMP","PUMP QUIT UNEXPECTEDLY!");
+					throw new RuntimeException(e);
 				}
 				if(numtoread < 1) {
 					//no data to read
@@ -143,8 +135,7 @@ public class DataPumper extends Thread {
 						retval = reader.read(data,0,numtoread);
 					
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					if(retval != numtoread) {
 						//we have a problem, if we get here we overran the buffer.
@@ -152,7 +143,6 @@ public class DataPumper extends Thread {
 					
 					if(retval == -1) {
 						//end of stream has been reached. need to abort the who dealio.
-						//Log.e("PUMPER","END OF STREAM REACHED");
 					}
 					
 					if(compressed) {
@@ -193,103 +183,30 @@ public class DataPumper extends Thread {
 										decompressed_data = tmpbuf.array();
 										}
 									}
-								
-								/*ByteBuffer output = ByteBuffer.allocate(count); //capture output
-								output.put(tmp,0,count);	
-								output.rewind();
-								data = new byte[count];
-								output.get(data,0,count);*/
-								//decompress.reset();
 							} //end while
 							data = decompressed_data;
-					} //end compressed if
-							/*String testtring = null;
-							try {
-								testtring= new String(data,"UTF-8");
-								Log.e("WHA","DECOMP:"+testtring);
-							} catch (UnsupportedEncodingException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}*/
-							//decompress.reset(); //????
-						
-					//}
+					} 
 					//report to our superior
 					if(reportto != null) {
 						Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,data); //get a send data message.
-						//Bundle bundle = new Bundle();
-						//bundle.putByteArray("THEBYTES", data);
-						//msg.setData(bundle);
-						
-						//only send if they are ready
-						//synchronized(reportto) {
-						//	while(reportto.hasMessages(StellarService.MESSAGE_PROCESS)) {
-						//		try {
-						//			reportto.wait();
-						//		} catch (InterruptedException e) {
-						///			// TODO Auto-generated catch block
-						//			e.printStackTrace();
-						//		}
-						//	}
-						//}
 						//either we woke up or the processor was ready.
 						synchronized(reportto) {
 							reportto.sendMessage(msg); //report to mom and dad.
 						}
-						//Log.e("PUMP","SENDING DATA FROM PUMP TO SERVICE");
-						//sleep until they wake us
-						//waitme(); //pause till processor is done.
-
-						//Log.i("DR","READER SHUTTING DOWN!");
-						//waitme(); //wait for recovery from data processing
-
-						//Log.i("DR","READER RESUMING!");
-						
 					} 
 
 					data = null; //free data to the garbage collector.
 				}
-				
-				/*synchronized(this) {
-					try {
-						this.wait(50); //throttle the connection to 50 miliseconds == 20 times per second.
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}*/
 		}
 		
 		Pattern newline = Pattern.compile("\\w*");
 		
 		private void sendData(byte[] data) {
-			//byte[] data = msg.getData().getByteArray("THEDATA");
-			String debugmsg = null;
-			//try {
-			debugmsg = new String(data);
-			//} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-			//	e.printStackTrace();
-			//}
-			
-			//Matcher crlf = newline.matcher(debugmsg);
-			
-			//String matches = "(no newline)";
-			//if(crlf.matches()) {
-			//	matches = "(newline)";
-			//}
-				
-			int size = data.length;
-			int sec_byte = (int)data[data.length -2];
-			int last_byte = (int)data[data.length -1];
-			
-			//Log.e("PUMP","PUMP SENDING: "+ debugmsg + " | stlb: " + sec_byte + " lasb: " +last_byte + " size: " + size);
 			try {
 				writer.write(data);
 				writer.flush();
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				throw new RuntimeException(e1);
 			}
 			
 			

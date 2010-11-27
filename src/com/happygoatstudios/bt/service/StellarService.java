@@ -4,10 +4,7 @@ package com.happygoatstudios.bt.service;
 
 
 import java.io.BufferedOutputStream;
-
-import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -16,12 +13,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-
-import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.PortUnreachableException;
 import java.net.ProtocolException;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -29,20 +22,16 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import android.R;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -56,7 +45,6 @@ import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.os.RemoteCallbackList;
@@ -64,15 +52,10 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.provider.Contacts.Settings;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
 //import android.util.Log;
-import android.widget.Toast;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
-import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -504,7 +487,6 @@ public class StellarService extends Service {
 					//nosemidata = nosemidata.concat(crlf);
 					
 					try {
-						String dbgmsg = new String(bytes,the_settings.getEncoding());
 						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
 
 						output_writer.flush();
@@ -866,6 +848,7 @@ public class StellarService extends Service {
 		}
 
 
+		@SuppressWarnings("unchecked")
 		public void setAliases(Map map) throws RemoteException {
 			
 			the_settings.getAliases().clear();
@@ -1053,6 +1036,7 @@ public class StellarService extends Service {
 		}
 
 
+		@SuppressWarnings("unchecked")
 		public Map getButtonSetListInfo() throws RemoteException {
 			
 			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
@@ -1238,6 +1222,7 @@ public class StellarService extends Service {
 		}
 
 
+		@SuppressWarnings("unchecked")
 		public Map getTriggerData() throws RemoteException {
 			
 			synchronized(the_settings) {
@@ -1480,6 +1465,7 @@ public class StellarService extends Service {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
 		public Map getTimers() throws RemoteException {
 			synchronized(the_settings) {
 				//updat the timer table
@@ -1567,12 +1553,8 @@ public class StellarService extends Service {
 					timerTasks.remove(old.getOrdinal().toString());
 				}
 				
-				TimerData r = the_settings.getTimers().remove(old.getOrdinal().toString());
-				//Log.e("SERVICE","OLD TIMER HAD" + r.getSeconds());
 				newtimer.reset();
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
-				//Log.e("SERVICE","OLD TIMER HAD" + newtimer.getSeconds());
-				//Log.e("SERVICE","UPDATING TIMER");
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 		}
@@ -1584,6 +1566,7 @@ public class StellarService extends Service {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
 		public Map getTimerProgressWad() throws RemoteException {
 			HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
 			
@@ -2223,6 +2206,7 @@ public class StellarService extends Service {
 				
 				try {
 					pOrdinal = Integer.parseInt(ordinal);
+					pOrdinal = pOrdinal + 1;
 				} catch (NumberFormatException e) {
 					try {
 						doDispatchNoProcess(getErrorMessage("Timer index argument " + ordinal + " is not a number.","Acceptable argument is an integer.").getBytes());
@@ -2686,8 +2670,6 @@ public class StellarService extends Service {
 			doDispatchNoProcess(new String(Colorizer.colorCyanBright+"Connected to: "+Colorizer.colorYeollowBright+host+Colorizer.colorCyanBright+"!"+Colorizer.colorWhite+"\n").getBytes());
 			
 			the_socket.setSendBufferSize(1024);
-			int size = the_socket.getSendBufferSize();
-			
 			
 			try {
 				output_writer = new BufferedOutputStream(the_socket.getOutputStream());
