@@ -9,29 +9,20 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcel;
-import android.os.Parcelable;
 //import android.util.Log;
 //import android.util.Log;
-import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 
 public class SlickButton extends View {
 
-	//int x;
-	//int y;
 	boolean hasfocus = false;
 	private Listener the_listener = new Listener();
 	private Handler myhandler = null;
-	//private String the_text = null;
-	//private String the_label = null;
 	private SlickButtonData data = new SlickButtonData();
 	private Handler dispatcher = null;
 	private Handler deleter = null;
@@ -40,7 +31,7 @@ public class SlickButton extends View {
 	
 	//dip change
 	//was 80
-	private int size = 48;
+	//private int size = 48;
 	
 	boolean moving = false;
 	
@@ -325,13 +316,13 @@ public class SlickButton extends View {
 		}
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {
 			if(moving) {
-				if(data.MOVE_STATE == data.MOVE_FREE) {
+				if(data.MOVE_STATE == SlickButtonData.MOVE_FREE) {
 					data.setX(touchx);
 					data.setY(touchy);
 					updateRect();
 					//this.invalidate();
 					newstate = DISPLAY_STATE.MOVING;
-				} else if (data.MOVE_STATE == data.MOVE_NUDGE) {
+				} else if (data.MOVE_STATE == SlickButtonData.MOVE_NUDGE) {
 					//compute nudge
 					int tmpx = touchx - start_x;
 					int tmpy = touchy - start_y;

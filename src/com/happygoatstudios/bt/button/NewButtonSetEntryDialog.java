@@ -19,11 +19,7 @@ public class NewButtonSetEntryDialog extends Dialog {
 	
 	public NewButtonSetEntryDialog(Context context,Handler reportto) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		dispatcher = reportto;
-		
-
-		
 	}
 	
 	public void onCreate(Bundle b) {

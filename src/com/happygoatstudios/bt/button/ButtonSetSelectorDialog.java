@@ -12,14 +12,12 @@ import com.happygoatstudios.bt.window.MainWindow;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
-import android.provider.Contacts.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +40,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 	IStellarService service;
 	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IStellarService the_service) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		dispater = reportto;
 		selected_set = selectedset;
 		data = datai;
@@ -101,8 +98,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 					try {
 						reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					dispater.sendMessage(reloadbuttonset);
 				}
@@ -145,8 +141,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 			try {
 				reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			dispater.sendMessage(reloadbuttonset);
 		}
@@ -254,7 +249,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 		public ConnectionAdapter(Context context, int textViewResourceId,
 				List<ButtonEntry> objects) {
 			super(context, textViewResourceId, objects);
-			// TODO Auto-generated constructor stub
 			this.items = objects;
 		}
 		
@@ -293,8 +287,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
-			// TODO Auto-generated method stub
-			
 			AlertDialog.Builder builder = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
 			builder.setTitle("Edit/Delete Button Set");
 			builder.setMessage("Attempting to modify or delete " + entries.get(arg2).name + " button set.");
@@ -305,19 +297,12 @@ public class ButtonSetSelectorDialog extends Dialog {
 			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 				
 				public void onClick(DialogInterface dialog, int which) {
-					// TODO Auto-generated method stub
 					dialog.dismiss();
 				}
 			});
 			
 			AlertDialog dialog = builder.create();
 			dialog.show();
-			
-			
-			
-			//ButtonEntry entry = adapter.getItem(arg2);
-			//ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
-			//editor.show();
 			
 			return false;
 		}
@@ -336,7 +321,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 	private class EntryCompare implements Comparator<ButtonEntry> {
 
 		public int compare(ButtonEntry a, ButtonEntry b) {
-			// TODO Auto-generated method stub
 			return a.name.compareToIgnoreCase(b.name);
 		}
 
@@ -348,10 +332,10 @@ public class ButtonSetSelectorDialog extends Dialog {
 		public String name;
 		public Integer entries;
 		
-		public ButtonEntry() {
-			name = "";
-			entries = 0;
-		}
+		//public ButtonEntry() {
+		//	name = "";
+		//	entries = 0;
+		//}
 		
 		public ButtonEntry(String n,Integer e) {
 			name = n;

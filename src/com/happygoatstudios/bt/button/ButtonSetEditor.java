@@ -39,7 +39,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 	String set;
 	public ButtonSetEditor(Context context,IStellarService the_service,String selected_set,Handler use_this_handler) {
 		super(context);
-		// TODO Auto-generated constructor stub
 		service = the_service;
 		set = selected_set;
 		notifychanged = use_this_handler;
@@ -59,8 +58,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		try {
 			newsettings = service.getColorSetDefaultsForSet(set);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 		oldsettings = newsettings.copy();
@@ -80,7 +78,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		normalColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getPrimaryColor(),COLOR_FIELDS.COLOR_MAIN);
 				diag.show();
 			}
@@ -89,7 +86,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		focusColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getSelectedColor(),COLOR_FIELDS.COLOR_SELECTED);
 				diag.show();
 			}
@@ -98,7 +94,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		labelColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getLabelColor(),COLOR_FIELDS.COLOR_LABEL);
 				diag.show();
 			}
@@ -107,7 +102,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		flipColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getFlipColor(),COLOR_FIELDS.COLOR_FLIPPED);
 				diag.show();
 			}
@@ -136,7 +130,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		cancel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ButtonSetEditor.this.dismiss();
 			}
 		});
@@ -144,9 +137,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		done.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
-				//ColorSetSettings newset = new ColorSetSettings();
-				//newset.setPrimaryColor(normalColor.getB)
 				Validator checker = new Validator();
 				checker.add(buttonHeight, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER|Validator.VALIDATE_NUMBER_NOT_ZERO, "Button Height");
 				checker.add(buttonWidth, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER|Validator.VALIDATE_NUMBER_NOT_ZERO, "Button Width");
@@ -163,20 +153,15 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				newsettings.setLabelSize(Integer.parseInt(labelSize.getText().toString()));
 				
 				if(newsettings.equals(oldsettings)) {
-					//no changes made, do nothing
-					//Log.e("SETEDITOR","NOT MODIFYING SET DEFAULTS FOR:" +set);
+
 				} else {
 					//changes made, notify the service that the change has been made, and notify the settings dialog that when it exits it needs to reload whatever button set changed.
 					try {
 						service.setColorSetDefaultsForSet(set, newsettings);
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
-					//Log.e("SETEDITOR","NOT MODIFYING SET DEFAULTS FOR:" +set);
 					notifychanged.sendEmptyMessage(100);
-					
-					
 				}
 				ButtonSetEditor.this.dismiss();
 			}
@@ -185,8 +170,6 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 	}
 
 	public void colorChanged(int color, COLOR_FIELDS which) {
-		// TODO Auto-generated method stub
-		
 		switch(which) {
 		case COLOR_MAIN:
 			newsettings.setPrimaryColor(color);

@@ -7,27 +7,20 @@ import com.happygoatstudios.bt.window.SlickView;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
-//import android.util.Log;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.ScrollView;
 import android.widget.TabHost;
 import android.widget.TextView;
@@ -230,7 +223,6 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		normalColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getPrimaryColor(),COLOR_FIELDS.COLOR_MAIN);
 				diag.show();
 			}
@@ -239,7 +231,6 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		focusColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getSelectedColor(),COLOR_FIELDS.COLOR_SELECTED);
 				diag.show();
 			}
@@ -248,7 +239,6 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		labelColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getLabelColor(),COLOR_FIELDS.COLOR_LABEL);
 				diag.show();
 			}
@@ -257,7 +247,6 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		flipColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
 				ColorPickerDialog diag = new ColorPickerDialog(ButtonEditorDialog.this.getContext(),ButtonEditorDialog.this,the_button.getData().getFlipColor(),COLOR_FIELDS.COLOR_FLIPPED);
 				diag.show();
 			}
@@ -462,14 +451,8 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		COLOR_FLIPLABEL
 	}
 
-	//Button normalColor = null;
-	//Button focusColor = null;
-	//Button flipColor = null;
-	//Button labelColor = null;
-	//Button flipLabelColor = null;
+	
 	public void colorChanged(int color,COLOR_FIELDS which) {
-		// TODO Auto-generated method stub
-		//Log.e("BTNEDITOR","GOT NEW COLOR FOR" + which + " returned " + color);
 		switch(which) {
 		case COLOR_MAIN:
 			the_button.getData().setPrimaryColor(color);
