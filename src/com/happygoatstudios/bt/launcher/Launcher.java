@@ -13,20 +13,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.TreeMap;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ActivityManager.RunningServiceInfo;
-import android.app.AlertDialog.Builder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -36,8 +28,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -47,37 +37,27 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.text.format.Time;
-import android.util.AttributeSet;
 import android.util.Log;
-//import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
-import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AbsoluteLayout;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AbsoluteLayout.LayoutParams;
 
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.button.SlickButton;
-import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.service.IStellarService;
-import com.happygoatstudios.bt.settings.*;
-import com.happygoatstudios.bt.window.MainWindow;
+
 
 public class Launcher extends Activity implements ReadyListener {
 	
@@ -437,7 +417,6 @@ public class Launcher extends Activity implements ReadyListener {
 		}
 	}
 	private MudConnection launch;
-	private Intent launchIntent;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -450,8 +429,7 @@ public class Launcher extends Activity implements ReadyListener {
 			try {
 				test = service.getConnectedTo();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 			if(!test.equals(against)) {
@@ -603,7 +581,6 @@ public class Launcher extends Activity implements ReadyListener {
 		File btermdir = new File(tmp,"/BlowTorch/launcher/");
 		
 		String sdstate = Environment.getExternalStorageState();
-		HashMap<String,String> efonts = new HashMap<String,String>();
 		HashMap<String,String> xmlfiles = new HashMap<String,String>();
 		if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
 			btermdir.mkdirs();
@@ -646,6 +623,7 @@ public class Launcher extends Activity implements ReadyListener {
 			
 		} else {
 			Toast t = Toast.makeText(this, "SD card not available.", Toast.LENGTH_LONG);
+			t.show();
 		}
 		
 		
@@ -861,9 +839,6 @@ public class Launcher extends Activity implements ReadyListener {
 			} catch (TimeFormatException e) {
 				return 0;
 			}
-			//Log.e("LAUNCHER","COMPARING A TO B: " + at.format2445() +" to " + bt.format2445());
-			int retval = Time.compare(bt,at);
-			//Log.e("LAUNCHER","RETURNING " + retval);
 			return Time.compare(bt, at);
 		}
 		

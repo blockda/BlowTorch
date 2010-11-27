@@ -1,10 +1,8 @@
 package com.happygoatstudios.bt.launcher;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -29,7 +27,7 @@ public class NewConnectionDialog extends Dialog {
 	
 	public NewConnectionDialog(Context context,ReadyListener useme) {
 		super(context);
-		// TODO Auto-generated constructor stub
+		
 		reportto = useme;
 		isEditor = false;
 	}
