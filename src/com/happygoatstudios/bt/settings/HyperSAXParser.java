@@ -3,7 +3,6 @@ package com.happygoatstudios.bt.settings;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Vector;
 
 import org.xml.sax.Attributes;
@@ -35,7 +34,6 @@ public class HyperSAXParser extends BaseParser {
 	
 	public HyperSAXParser(String location, Context context) {
 		super(location, context);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public HyperSettings load() {
@@ -67,10 +65,6 @@ public class HyperSAXParser extends BaseParser {
 		final StringBuffer button_set_name = new StringBuffer("default");
 		final ColorSetSettings setinfo =  new ColorSetSettings();
 		final HashMap<String,ColorSetSettings> colorsets = new HashMap<String,ColorSetSettings>();
-		final HashMap<String,TriggerData> triggerSet = new HashMap<String,TriggerData>();
-		
-		final HashMap<String,TimerData> timerSet = new HashMap<String,TimerData>();
-		
 		
 		window.setStartElementListener(new StartElementListener() {
 
@@ -155,6 +149,7 @@ public class HyperSAXParser extends BaseParser {
 		
 		aliases.setEndElementListener(new EndElementListener() {
 
+			@SuppressWarnings("unchecked")
 			public void end() {
 				tmp.setAliases((HashMap<String,String>)aliases_read.clone());
 			}
@@ -454,7 +449,6 @@ public class HyperSAXParser extends BaseParser {
 			type = addto;
 		}
 		public void start(Attributes a) {
-			// TODO Auto-generated method stub
 			ToastResponder toast = new ToastResponder();
 			toast.setDelay( (a.getValue("",ATTR_TOASTDELAY) == null) ? 1500 : Integer.parseInt(a.getValue("",ATTR_TOASTDELAY)));
 			toast.setMessage(a.getValue("",ATTR_TOASTMESSAGE));

@@ -3,13 +3,11 @@ package com.happygoatstudios.bt.settings;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 import android.content.Context;
 import android.os.Environment;
-import android.os.Message;
+
 
 public class BaseParser {
 
