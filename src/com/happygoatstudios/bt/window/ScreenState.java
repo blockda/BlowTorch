@@ -8,23 +8,22 @@ import android.os.Handler;
 
 public class ScreenState extends BroadcastReceiver {
 
-	public enum STATE {
-		WAS_ON,
-		WAS_OFF
-	}
+	//public enum STATE {
+	//	WAS_ON,
+	//	WAS_OFF
+	//}
 	
-	private STATE status = STATE.WAS_ON;
+	//private STATE status = STATE.WAS_ON;
 	
-	private Handler dispatcher;
+	//private Handler dispatcher;
 	
 	public ScreenState(Handler useme) {
-		status = STATE.WAS_ON;
-		dispatcher = useme;
+		//status = STATE.WAS_ON;
+		//dispatcher = useme;
 	}
 	
 	@Override
 	public void onReceive(Context arg0, Intent i) {
-		// TODO Auto-generated method stub
 		if(i.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 			//Log.e("STATEWATCH","WINDOW STATE IS ON!!!!!!!");
 		}

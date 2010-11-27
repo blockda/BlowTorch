@@ -1,18 +1,11 @@
 package com.happygoatstudios.bt.alias;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.launcher.Launcher;
-import com.happygoatstudios.bt.launcher.MudConnection;
-
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -31,7 +24,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListener {
 	
@@ -52,8 +44,6 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		
 		
 	}
-	
-	private boolean noAliases = false;
 	
 	public void onCreate(Bundle b) {
 		
@@ -84,10 +74,6 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			
 			for(int i=0;i<keys.length;i++) {
 				aliases.add((String)keys[i] + "[||]" + (String)values[i]);
-			}
-			
-			if(keys.length == 0) {
-				noAliases = true;
 			}
 			
 			apdapter = new ConnectionAdapter(lv.getContext(),R.layout.alias_row,aliases);
@@ -141,7 +127,6 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		
 		public ConnectionAdapter(Context context, int txtviewresid, ArrayList<String> objects) {
 			super(context, txtviewresid, objects);
-			// TODO Auto-generated constructor stub
 			this.items = objects;
 		}
 		

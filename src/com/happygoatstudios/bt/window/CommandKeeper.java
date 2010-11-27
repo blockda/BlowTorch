@@ -82,13 +82,6 @@ public class CommandKeeper {
 		}
 		
 		String get_current = commands.get(selected);
-		//if(selected == commands.size()-1) {
-		//	selected = 0;
-		//} else {
-		//	selected = selected + 1;
-		//}
-		
-		
 		return get_current;
 		
 	}
@@ -98,8 +91,6 @@ public class CommandKeeper {
 		if(commands.size() ==0) {
 			return "";
 		}
-		
-		boolean nowrap = false;
 		
 		switch(direction) {
 		case FORWARD:

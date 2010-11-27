@@ -14,7 +14,6 @@ import com.happygoatstudios.bt.responder.notification.NotificationResponderEdito
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponderEditor;
 import com.happygoatstudios.bt.service.IStellarService;
-import com.happygoatstudios.bt.trigger.TriggerEditorDialog;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.AlertDialog;
@@ -185,7 +184,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 		//responderTable.removeView(newbutton);
 		responderTable.removeViews(1, responderTable.getChildCount()-1);
 		
-		RelativeLayout p = (RelativeLayout)findViewById(R.id.newtriggerlayout);
+		//RelativeLayout p = (RelativeLayout)findViewById(R.id.newtriggerlayout);
 		LayoutParams params = new LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
 		int margin =  (int) (0*this.getContext().getResources().getDisplayMetrics().density);
 		params.rightMargin = margin;
@@ -198,7 +197,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 		checkopens.clear();
 		checkclosed.clear();
 		int count = 0;
-		boolean legendAdded = false;
+		//boolean legendAdded = false;
 		for(TriggerResponder responder : the_timer.getResponders()) {
 			//if(!legendAdded) {
 			//	responderTable.addView(legend);
@@ -293,8 +292,6 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 		}
 
 		public void onClick(DialogInterface arg0, int arg1) {
-			// TODO Auto-generated method stub
-			//Log.e("TEDITOR","DELETE ALERT RETURNED " + arg1);
 			if(arg1 == DialogInterface.BUTTON_POSITIVE) {
 				//really delete the button
 				the_timer.getResponders().remove(position);
@@ -320,9 +317,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 	}
 	
 	public void onClick(DialogInterface arg0, int arg1) {
-		// TODO Auto-generated method stub
 		arg0.dismiss();
-		//Log.e("TEDITOR","DISMISSED WITH BUTTON:" + arg1);
 		switch(arg1) {
 		case 0: //notificaiton
 			NotificationResponderEditor notifyEditor = new NotificationResponderEditor(this.getContext(),null,this);
@@ -351,7 +346,6 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 		}
 		
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
 			TriggerResponder responder = the_timer.getResponders().get(position);
 			switch(responder.getType()) {
 			case NOTIFICATION:

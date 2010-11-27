@@ -1,34 +1,25 @@
 package com.happygoatstudios.bt.window;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.happygoatstudios.bt.R;
-//import com.happygoatstudios.bt.launcher.SlickButton;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.legacy.SlickButtonUtilities;
 import com.happygoatstudios.bt.service.Colorizer;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.util.Log;
 //import android.util.Log;
 
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.CycleInterpolator;
@@ -50,28 +41,16 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private int WINDOW_WIDTH = 0;
 	private int WINDOW_HEIGHT = 0;
-	
 	private int colorDebugMode = 0;
-	
-	
 	RelativeLayout parent_layout = null; //for adding buttons.
 	EditText input = null; //for supporting buttons.
 	Handler dataDispatch = null;
-	
 	SlickButtonUtilities sbu = new SlickButtonUtilities();
-	
 	TextView new_text_in_buffer_indicator = null;
-	
 	private Pattern newline = Pattern.compile("\n");
 	private Pattern carriage = Pattern.compile("\\x0D");
-	
 	private Float scrollback = new Float(0);
-	
 	private Boolean touchLock = new Boolean(false);
-	
-	private Boolean drawn = false;
-	private Boolean isdrawn = true;
-	
 	private Typeface PREF_FONT = Typeface.MONOSPACE;
 	private int PREF_MAX_LINES = 300;
 	public float PREF_FONTSIZE = 18;
@@ -79,14 +58,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	public String PREF_TYPEFACE = "monospace";
 	public int CALCULATED_LINESINWINDOW = 20;
 	public int CALCULATED_ROWSINWINDOW = 77;
-	
 	boolean buttondropstarted = false;
-	
 	public Vector<SlickButton> buttons = new Vector<SlickButton>();
-	
 	int bx = 0;
 	int by = 0;
-	
 	private String encoding = "UTF-8";
 	
 	public String getEncoding() {
@@ -394,29 +369,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	public void jumpToZero() {
-		//call this to scroll back to 0.
-		//synchronized(drawn) {
-		//	while(!drawn) {
-		//		try {
-		//			drawn.wait();
-		//		} catch (InterruptedException e) {
-		//			// TODO Auto-generated catch block
-		//			e.printStackTrace();
-		//		}
-		//	}
-		//}
 		
 		/*--------- set scrollBack to 0--------*/
 		synchronized(scrollback) {
 			scrollback = (float)0.0;
 			fling_velocity = 0.0f;
 		}
-		/*synchronized(drawn) {
-			if(drawn) {
-				drawn.notify();
-				drawn = false;
-			}
-		}*/
 		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
@@ -427,12 +385,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		if(_runner != null) {
 			_runner.setRunning(true);
 			_runner.start();
-			//wasRunning = true;
 		}
-		
-		//synchronized(drawn) {
-		//	drawn.notify();
-		//}
 		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
@@ -440,7 +393,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	public void stopDrawing() {
-		//Log.e("SLICK","Attempted to kill/stop thread at stopDrawing()");
 		boolean retry = true;
 		_runner.setRunning(false);
 		while(retry) {
@@ -459,21 +411,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		while(retry) {
 			try{
 				_runner.setRunning(false);
-				//synchronized(drawn) {
-				//	drawn.notify();
-				//	drawn = false;
-				//	_runner.setRunning(false);
-				//}
-				//_runner.setRunning(false);
-				
-				
-				//synchronized(touchLock) {
-
-				//	if(touchLock) {
-				//		touchLock.notify();
-				//		touchLock = false;
-				//	}
-				//}
 				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_SHUTDOWN);
 				
 				_runner.join();
@@ -833,58 +770,23 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			//first clear the background
 			canvas.drawColor(0xFF0A0A0A); //fill with black
-			//canvas.drawColor(0xFF333333); //fill with grey
-	        
-	        opts.setAlpha(0);
+			opts.setAlpha(0);
 	        opts.setAntiAlias(true);
-	        //opts.setDither(true);
 	        opts.setARGB(255, 255, 255, 255);
 	        opts.setTextSize(PREF_FONTSIZE);
-	        
-	        //opts.setStyle(Style.)
 	        opts.setTypeface(PREF_FONT);
-	
-	        //Matcher toLines = newline.matcher(the_buffer.toString());
-	        //toLines.reset(the_buffer); 
-	        //StringBuffer line = new StringBuffer();
-	        //drawline.setLength(0);
-	        
-	        //linetrap = null;
-	        //linetrap = newline.split(the_buffer);
-	        //linetrap.clear();
-	        //linetrap.removeAllElements();
-	        //linetrap.
-	        //Log.e("SLICK","Buffer contains: " + lines.length + " lines.");
-	        //if(linetrap.length < 1) {
-	       // 	return;
-	        //}
-	        
-	       
 	        
 	        if(dlines.size() < 1) { return; }
 	        
-	        
-	        int currentline = 1;
-	        
-	        //count lines
-	       // int numlines = countLines();
-	        
-	        //
-	        
 	        int numlines = dlines.size();
 	        int maxlines = CALCULATED_LINESINWINDOW; 
-	        
-	        
-	        
 	        int startDrawingAtLine = 1;
+	        
 	        if(numlines > maxlines) {
 	        	startDrawingAtLine = numlines - maxlines - scrollbacklines + 1;
 	        } else {
 	        	startDrawingAtLine = 1;
 	        }
-	        
-	       
-	        boolean endonnewline = false;
 	        
 	        int startpos = startDrawingAtLine -3;
 	        if(startpos < 0) {
@@ -915,30 +817,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        		//get the matcher
 	        		
 	        		bleedfind.reset(dlines.get(colorBleed));
-	        		String line = dlines.get(colorBleed); //TODO: remove this line
-	        		int count = line.length(); //TODO: remove this line
 	        		while(bleedfind.find()) {
-	        			//sel_bright.setLength(0);
-	        			//sel_color.setLength(0);
-	        			//keep the current group. or transform it to a color here.
-	        			//sel_bright.append((bleedfind.group(2) == null) ? "0" : bleedfind.group(2));
-	        			//sel_color.append(bleedfind.group(3));
-	        			/*selectedBright = Integer.parseInt((bleedfind.group(2) == null) ? "0" : bleedfind.group(2));
-	        			selectedColor = Integer.parseInt(bleedfind.group(3));
-	        			
-	        			if(selectedColor >= 40) {
-	        				//we have a background color in the mix, skip it
-	        				selectedBright = 0;
-	        				selectedColor = 37;
-	        			} else {
-	        			//opts.setColor(0xFF000000 | Colorizer.getColorValue(sel_bright, sel_color));
-	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-	        				notFound = false;
-	        			}*/
-	        			
-	        			//better block
-	        			//Log.e("WINDOW","BLEED COLOR: " + bleedfind.group() + " | " + bleedfind.group(1) + " | " + bleedfind.group(2) + " | " + bleedfind.group(3) + " | " + bleedfind.group(4) + " | " + bleedfind.group(5) + " || ON LINE " + colorBleed);
-	        			
 	        			Integer brightVal = Integer.parseInt(((bleedfind.group(2) == null) ? "0" : bleedfind.group(2)));
 	        			Integer firstVal = Integer.parseInt((bleedfind.group(4) == null) ? "37" : bleedfind.group(4));
 	        			Integer secondVal = Integer.parseInt(bleedfind.group(5));
@@ -950,6 +829,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        			} else {
 	        				selectedBright = brightVal;
 	        			}
+	        			
 	        			//test firstVal.
 	        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
 	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
@@ -992,26 +872,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        	
 	        }
 	        
-	        //if(notFound) {
-	        	
-	        //}
-	        
-	        //get regexp matcher
-	        
-	        //while found, keep the color group. @ end, the keep will be the last color code in the line
-	        
 	        for(int i=startpos;i<endpos;i++) {
-	        	//Log.e("SLICK","Drawing line:" + i + ":" + lines[i]);
 	        	int screenpos = i - startDrawingAtLine + 2;
 	    		int y_position =  (int) ((screenpos*PREF_LINESIZE)+remainder);
 	    		
 	    		colormatch.reset(dlines.get(i));
-	    		
-	    		
-	    		//Log.e("SLICK","Drawing line:" + i + ":" +":"+y_position +":" + lines[i]);
-	    		
 	    		float x_position = 0;
-	    		
 	    		boolean colorfound = false;
 	    		
 	    		while(colormatch.find()) {
@@ -1022,50 +888,24 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    				colormatch.appendReplacement(csegment, "");
 	    			}
 	    			
-	    			//colormatch.appendReplacement(csegment, colormatch.group());
-	    			
-	    			//get color data
-	
-	    			//int color = Colorizer.getColorValue(new Integer(sel_bright.toString()), new Integer(sel_color.toString()));
-	    			//int color = Colorizer.getColorValue(sel_bright, sel_color);
 	    			int color = Colorizer.getColorValue(selectedBright, selectedColor);
-	    			if(color == 0) {
-	    				//Log.e("SLICK","COLORLOOKUP RETURNED 0 for:" + colormatch.group() + " bright:" + selectedBright + " val: " + selectedColor);
-	    			}
 	    			
-	    			//Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(sel_color);
 	    			if(colorDebugMode == 2 || colorDebugMode == 3) {
 	    				opts.setColor(0xFFBBBBBB);
 	    			} else {
 	    				opts.setColor(0xFF000000 | color);
 	    			}
 	    			
-	    			//canvas.drawText(csegment.toString(), x_position, y_position, opts);
 	    			if(bg_opts.getColor() != 0xFF000000) {
-	    				//Log.e("WINDOW","DRAWING BGCOLOR!!!!!");
 	    				canvas.drawRect(x_position, y_position - opts.getTextSize(), x_position + opts.measureText(csegment,0,csegment.length()), y_position+5, bg_opts);
 	    				
 	    			} 
-	    			//try {
-					canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
-					//} catch (UnsupportedEncodingException e) {
-					//	throw new RuntimeException(e);
-					//}
-	    			//Log.e("WINDOW","WRITING: " + csegment + " TO SCREEN - MID LINE");
-	    			//x_position = x_position + opts.measureText(csegment.toString());
-	    			x_position = x_position + opts.measureText(csegment,0,csegment.length());
-	    			//opts.mea
 	    			
-					//sel_bgcolor.setLength(0);
-					//sel_bgbright.setLength(0);
-					//sel_bgcolor.append(colormatch.group(3));
-					//sel_bgbright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2)); 			
-					
+	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
+					x_position = x_position + opts.measureText(csegment,0,csegment.length());
 	    			/*************************
 	    			 * NEW BLOCK, THIS IS GOOD CODE
 	    			 */
-	    			//Log.e("WINDOW","COLOR: " + colormatch.group() + " | " + colormatch.group(1) + " | " + colormatch.group(2) + " | " + colormatch.group(3) + " | " + colormatch.group(4) + " | " + colormatch.group(5));
-        			
 	    			Integer brightVal = Integer.parseInt(((colormatch.group(2) == null) ? "0" : colormatch.group(2)));
         			Integer firstVal = Integer.parseInt((colormatch.group(4) == null) ? "37" : colormatch.group(4));
         			Integer secondVal = Integer.parseInt(colormatch.group(5));
@@ -1113,68 +953,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         				selectedBright = 1;
         				selectedColor = 37;
         			}
-	    			/****************************
-	    			 * OLD BLOCK THIS IS BAD CODE
-	    			 */
-	    			
-	    			/*selectedBackgroundColor = Integer.parseInt(colormatch.group(3));
-					selectedBackgroundBright = Integer.parseInt((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-					Colorizer.COLOR_TYPE fgbgType = Colorizer.getColorType(selectedBackgroundColor);
-	    			if(fgbgType == Colorizer.COLOR_TYPE.BACKGROUND) {
-	    				//if(bgColorSpanning) {
-	    					//draw the rectangle, set to the new color, reset the indicator.
-	    					//bgColorSpanning = false;
-	    				//} else {
-	    					//Log.e("WINDOW","GOT BGCOLOR: " + colormatch.group(0));
-	
-	    					csegment.setLength(0);
-	    					bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-	    				//	bgColorSpanning = true;
-	    				//}
-	    			} else {
-	    			
-	        			csegment.setLength(0);
-	        			
-	        			//sel_bright.setLength(0);
-	        			//sel_color.setLength(0);
-	        			//sel_bright.append((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-	        			//sel_color.append(colormatch.group(3));
-	        			selectedBright = Integer.parseInt((colormatch.group(2) == null) ? "0" : colormatch.group(2));
-	        			selectedColor = Integer.parseInt(colormatch.group(3));
-	        			
-	        			if(colormatch.groupCount() > 3) {
-		        			Integer extraColor = Integer.parseInt((colormatch.group(4) == null) ? "40" : colormatch.group(4));
-		        			
-		        			
-		        			//text the extraColor/selectedColor if they are foreground or background colors.
-		        			Colorizer.COLOR_TYPE testtype = Colorizer.getColorType(selectedColor);
-		        			if(testtype == Colorizer.COLOR_TYPE.FOREGROUND) {
-		        				selectedColor = selectedColor;
-		        			} else if(testtype == Colorizer.COLOR_TYPE.BACKGROUND) {
-		        				selectedBackgroundColor = selectedColor;
-		        			}
-		        			
-		        			//now test the extracolor
-		        			testtype = Colorizer.getColorType(extraColor);
-		        			if(testtype == Colorizer.COLOR_TYPE.FOREGROUND) {
-		        				selectedColor = extraColor;
-		        			} else if(testtype == Colorizer.COLOR_TYPE.BACKGROUND) {
-		        				selectedBackgroundColor = extraColor;
-		        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-		        			}
-	        			}
-	        			//if(sel_color.toString().equalsIgnoreCase("0")) {
-	        			if(selectedColor == 0 || selectedColor == 39) {  //if the color lookup failed, or the selected color is the "default" specified by the protocol (a 39 code is "default") 
-	        			//Log.e("SLICK","COLOLPARSE GOT 0 for:" + colormatch.group() + " bright:" + sel_bright + " val: " + sel_color);
-	        				//sel_color.setLength(0);
-	        				//sel_color.append("37");
-	        				selectedBright = 0;
-	        				selectedColor = 37;
-	        			}
-	    			} */
-	    			/***************************
-	    			 *  END BAD CODE BLOCK
-	    			 */
 	    		}
 	    		//end of main loop.
 	    		if(colorfound) {
@@ -1246,9 +1024,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		Float scrollerSize = 0.0f;
 		Float scrollerPos = 0.0f;
-		Float scrollerTop = 0.0f;
-		Float scrollerBottom = 0.0f;
-		float range = 0.0f;
+		//Float scrollerTop = 0.0f;
+		//Float scrollerBottom = 0.0f;
+		//float range = 0.0f;
 		float posPercent = 0.0f;
 		Float windowPercent = WINDOW_HEIGHT / (dlines.size()*PREF_LINESIZE);
 		if(windowPercent > 1) {
@@ -1363,20 +1141,18 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		int pointers = t.getPointerCount();
 		//int the_last_pointer = t.getPointerId(0);
-		float diff = 0;
+		//float diff = 0;
 		for(int i=0;i<pointers;i++) {
 			
 			Float y_val = new Float(t.getY(t.getPointerId(i)));
 			Float x_val = new Float(t.getX(t.getPointerId(i)));
 			bx = x_val.intValue();
 			by = y_val.intValue();
-			if(pre_event == null) {
-				diff = 0;
-			} else {
-				diff = y_val - prev_y;	
-			}
-			
-			//Log.e("SLICK","SLICK TOUCH AT PY:" + prev_y + " Y:" + y_val + " P:" + i + " DIF:" + diff);
+			//if(pre_event == null) {
+				//diff = 0;
+			//} else {
+				//diff = y_val - prev_y;	
+			//}
 			prev_y = y_val;
 		}
 		
@@ -1398,12 +1174,6 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        
 		}
 		
-        /*synchronized(drawn) {
-        	if(drawn.booleanValue()) {
-        		drawn.notify();
-        		drawn = false;
-        	} 
-		}*/
 		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
@@ -1437,7 +1207,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 				break;
 			default:
 				break;
+				
 		}
+		provided_x += 1;
+		provided_y += 1;
 		
 		switch(MeasureSpec.getMode(hSpec)) {
 		case MeasureSpec.AT_MOST:
@@ -1686,9 +1459,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	public class DrawRunner extends Thread {
 		private SurfaceHolder _surfaceHolder;
 		private SlickView _sv;
-		private boolean running = false;
-		private boolean paused = false;
-		private Boolean lock = null;
+		//private boolean running = false;
+		//private boolean paused = false;
+		//private Boolean lock = null;
 		
 		public static final int MSG_DRAW = 100;
 		public static final int MSG_SHUTDOWN = 101;
@@ -1698,7 +1471,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		public DrawRunner(SurfaceHolder parent,SlickView view,Boolean drawlock) {
 			_surfaceHolder = parent;
 			_sv = view;
-			lock = drawlock;
+			//lock = drawlock;
 		}
 		
 		
@@ -1709,15 +1482,15 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		public void setRunning(boolean val) {
 			//Log.e("SLICK","THREAD ATTEMPTED TO SET THE RUNNING VALUE");
-			running = val;
+			//running = val;
 		}
 		
 		public void setPause() {
-			paused = true;
+			//paused = true;
 		}
 		
 		public void setResume() {
-			paused = false;
+			//paused = false;
 		}
 		
 		@Override

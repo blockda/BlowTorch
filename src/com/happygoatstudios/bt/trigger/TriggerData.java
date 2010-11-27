@@ -5,12 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
-import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
-
-import android.app.Application;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -75,12 +72,10 @@ public class TriggerData implements Parcelable {
 	public static final Parcelable.Creator<TriggerData> CREATOR = new Parcelable.Creator<TriggerData>() {
 
 		public TriggerData createFromParcel(Parcel arg0) {
-			// TODO Auto-generated method stub
 			return new TriggerData(arg0);
 		}
 
 		public TriggerData[] newArray(int arg0) {
-			// TODO Auto-generated method stub
 			return new TriggerData[arg0];
 		}
 	};
@@ -90,7 +85,6 @@ public class TriggerData implements Parcelable {
 	}
 	
 	public void readFromParcel(Parcel in) {
-		//TODO: NEED TO ACTUALLY READ DATA.
 		setName(in.readString());
 		setPattern(in.readString());
 		setResponders(new ArrayList<TriggerResponder>());
@@ -122,7 +116,6 @@ public class TriggerData implements Parcelable {
 	
 	//save these for later.
 	public int describeContents() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
