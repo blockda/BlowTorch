@@ -12,7 +12,6 @@ public class HyperDialogPreference extends DialogPreference {
 	
 	public HyperDialogPreference(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public void setHandler(Handler in) {

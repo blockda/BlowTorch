@@ -3,7 +3,6 @@ package com.happygoatstudios.bt.settings;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -238,10 +237,6 @@ public class HyperSettings {
 			for(String key : buttonsets) {
 				out.startTag("", BaseParser.TAG_BUTTONSET);
 				ColorSetSettings setdefaults = data.getSetSettings().get(key);
-				//Log.e("OUTPUT","ATTEMPTING TO WRITE SOME COLOR INFO FOR:" + key);
-				for(String color : data.getSetSettings().keySet()) {
-					//Log.e("OUTPUT","SET SETTINGS MAP CONTAINS ENTRY: " + color);
-				}
 				out.attribute("", BaseParser.ATTR_SETNAME, key);
 				if(setdefaults.getPrimaryColor() != SlickButtonData.DEFAULT_COLOR) out.attribute("", BaseParser.ATTR_PRIMARYCOLOR, Integer.toHexString(setdefaults.getPrimaryColor()));
 				if(setdefaults.getSelectedColor() != SlickButtonData.DEFAULT_SELECTED_COLOR) out.attribute("", BaseParser.ATTR_SELECTEDCOLOR, Integer.toHexString(setdefaults.getSelectedColor()));
