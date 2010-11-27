@@ -42,7 +42,12 @@ public class BaseParser {
 	static final String ATTR_SUGGESTIONS = "useSuggest";
 	static final String ATTR_KEEPLAST = "keepLast";
 	static final String ATTR_BACKSPACEFIX = "backspaceBugFix";
-	
+	static final String ATTR_KEEPSCREENON = "keepScreenOn";
+	static final String ATTR_BELLVIBRATE = "vibrateOnBell";
+	static final String ATTR_BELLNOTIFY = "notifyOnBell";
+	static final String ATTR_BELLDISPLAY = "displayOnBell";
+	static final String ATTR_LOCALECHO = "localEcho";
+	static final String ATTR_FULLSCREEN = "fullScreen";
 	static final String TAG_SERVICE = "service";
 	static final String ATTR_SEMINEWLINE = "processSemi";
 	static final String ATTR_THROTTLEBACKGROUND = "throttle";

@@ -17,6 +17,7 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 //import android.util.Log;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,6 +35,8 @@ public class SlickButton extends View {
 	private SlickButtonData data = new SlickButtonData();
 	private Handler dispatcher = null;
 	private Handler deleter = null;
+	
+	private int fullScreenShift = 0;
 	
 	//dip change
 	//was 80
@@ -242,6 +245,13 @@ public class SlickButton extends View {
 		//	save_x = data.x;
 		//	save_y = data.y;
 		//}
+		if(fullScreenShift > 0) {
+			Log.e("BUTTON","START SHIFT TRANSLATION: " + e.getX(e.getPointerId(0)) + " " + e.getY(e.getPointerId(0)));
+			e.setLocation(e.getX(e.getPointerId(0)), e.getY(e.getPointerId(0)) - fullScreenShift);
+			Log.e("BUTTON","FINISH SHIFT TRANSLATION: " + e.getX(e.getPointerId(0)) + " " + e.getY(e.getPointerId(0)));
+			
+		}
+		
 		DISPLAY_STATE newstate = state;
 		
 		if(dialog_launched) {
@@ -421,6 +431,10 @@ public class SlickButton extends View {
 		//c.drawColor(0xFF0FF000);
 		//c.
 		
+		if(fullScreenShift > 0) {
+			c.translate(0, fullScreenShift);
+		}
+		
 		
 		if(hasfocus) {
 			if(doing_flip) {
@@ -544,6 +558,14 @@ public class SlickButton extends View {
 		moving = false;
 		nudged = false;
 		hasfocus = false;
+	}
+
+	public void setFullScreenShift(int fullScreenShift) {
+		this.fullScreenShift = fullScreenShift;
+	}
+
+	public int getFullScreenShift() {
+		return fullScreenShift;
 	}
 	
 

@@ -1741,6 +1741,78 @@ public class StellarService extends Service {
 			return host + ":" + Integer.toString(port);
 
 		}
+
+		public boolean isDisplayOnBell() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isDisplayOnBell();
+			}
+		}
+
+		public boolean isKeepScreenOn() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isKeepScreenOn();
+			}
+		}
+
+		public boolean isLocalEcho() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isLocalEcho();
+			}
+		}
+
+		public boolean isNotifyOnBell() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isNotifyOnBell();
+			}
+		}
+
+		public boolean isVibrateOnBell() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isVibrateOnBell();
+			}
+		}
+
+		public void setDisplayOnBell(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setDisplayOnBell(use);
+			}
+		}
+
+		public void setKeepScreenOn(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setKeepScreenOn(use);
+			}
+		}
+
+		public void setLocalEcho(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setLocalEcho(use);
+			}
+		}
+
+		public void setNotifyOnBell(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setNotifyOnBell(use);
+			}
+		}
+
+		public void setVibrateOnBell(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setVibrateOnBell(use);
+			}
+		}
+
+		public boolean isFullScreen() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isFullScreen();
+			}
+		}
+
+		public void setFullScreen(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setFullScreen(use);
+			}
+		}
 		
 	};
 	

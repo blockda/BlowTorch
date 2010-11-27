@@ -27,6 +27,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
@@ -44,6 +45,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.method.KeyListener;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -144,6 +146,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	private String overrideHFFlip = "auto";
 	private String overrideHFPress = "auto";
 	
+	private boolean isFullScreen = false;
+	
 	String host;
 	int port;
 	
@@ -154,7 +158,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	//Object ctrl_tag = new Object();
 	Processor the_processor = null;
 	
-
+	private int windowHeight = 1;
+	private int statusBarHeight = 1;
 	
 	GestureDetector gestureDetector = null;
 	OnTouchListener gestureListener = null;
@@ -263,16 +268,27 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	String html_buffer = new String();
 	Vector<SlickButton> current_button_views = new Vector<SlickButton>();
 	
+	//private int statusBarHeight = 1;
+	
+	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		//Log.e("WINDOW","onCreate()");
 		
 		//set up the crash reporter
 		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this));
-		        // requestWindowFeature(Window.FEATURE_NO_TITLE);  
-		        // getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,   
-		                          //       WindowManager.LayoutParams.FLAG_FULLSCREEN);  
-		
+		/*SharedPreferences wprefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
+		if(wprefs.getBoolean("WINDOW_FULLSCREEN", false)) {
+			requestWindowFeature(Window.FEATURE_NO_TITLE);  
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,   
+			WindowManager.LayoutParams.FLAG_FULLSCREEN);  
+			isFullScreen = true;
+		} else {
+			isFullScreen = false;
+		}*/
+		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
+		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
+		Log.e("WINDOW","READING IN STATUS BAR HEIGHT FROM LAUNCHER:" + statusBarHeight);
 		
 		setContentView(R.layout.window_layout);
 		
@@ -601,6 +617,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 									new_button.setData(tmp);
 									new_button.setDispatcher(this);
 									new_button.setDeleter(this);
+									
+									if(isFullScreen) {
+										Log.e("WINDOW","CHANGE BUTTON SET, IN FULL SCREEN, STATUS BAR HEIGHT: "+ statusBarHeight);
+										new_button.setFullScreenShift(statusBarHeight);
+									} else {
+										new_button.setFullScreenShift(0);
+										Log.e("WINDOW","CHANGE BUTTON SET, IN NON FULL SCREEN");
+									}
 									modb.addView(new_button);
 								}
 							} else {
@@ -644,6 +668,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					//TODO: HERE!
 					//attemppt to load button sets.
 					boolean fontSizeChanged = false;
+					//boolean fullscreen_now = false;
 					if(settingsDialogRun) {
 						//so, if we a are here, then the dialog screen has been run.
 						//we need to read in the values and supply them to the service
@@ -670,6 +695,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
 						String sel_encoding = prefs.getString("ENCODING", "ISO-8859-1");
 						
+						boolean keepscreen = prefs.getBoolean("KEEP_SCREEN_ON",true);
+						boolean localecho = prefs.getBoolean("LOCAL_ECHO",true);
+						boolean bellvibrate = prefs.getBoolean("BELL_VIBRATE",true);
+						boolean bellnotify = prefs.getBoolean("BELL_NOTIFY",false);
+						boolean belldisplay = prefs.getBoolean("BELL_DISPLAY",false);
+						boolean fullscreen_now = prefs.getBoolean("WINDOW_FULLSCREEN", false);
 						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
@@ -696,6 +727,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setHFOnPress(overrideHFPress);
 							service.setHFOnFlip(overrideHFFlip);
 							service.setEncoding(sel_encoding);
+							service.setKeepScreenOn(keepscreen);
+							service.setLocalEcho(localecho);
+							service.setVibrateOnBell(bellvibrate);
+							service.setNotifyOnBell(bellnotify);
+							service.setDisplayOnBell(belldisplay);
+							service.setFullScreen(fullscreen_now);
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -751,6 +788,27 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					try {
 						
+						//Rect rect = new Rect();
+					    //Window win = MainWindow.this.getWindow();
+					    //win.getDecorView().getWindowVisibleDisplayFrame(rect);
+					    //int statusBarHeight = rect.top;
+					   // int contentViewTop = win.findViewById(Window.ID_ANDROID_CONTENT).getTop();
+					   // int titleBarHeight = contentViewTop - statusBarHeight;
+					   // Log.d("ID-ANDROID-CONTENT", "titleBarHeight = " + titleBarHeight );
+
+						
+						if(service.isFullScreen()) {
+						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+						} else {
+							MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+							MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+						}
+
+						MainWindow.this.findViewById(R.id.window_container).requestLayout();
+						isFullScreen = service.isFullScreen();
+					
+						
 						screen2.setEncoding(service.getEncoding());
 						//current_button_views.clear();
 						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
@@ -774,6 +832,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 									tmp.setData(button);
 									tmp.setDispatcher(this);
 									tmp.setDeleter(this);
+									//adjust for full screen.
+									if(isFullScreen) {
+										Log.e("WINDOW","INITIAL BUTTON SET LOAD IN FULL SCREEN, STATUS BAR HEIGHT: "+ statusBarHeight);
+										tmp.setFullScreenShift(statusBarHeight);
+									} else {
+										tmp.setFullScreenShift(0);
+										Log.e("WINDOW","INITIAL BUTTON SET LOAD, NOT IN FULL SCREEN");
+									}
 									button_layout.addView(tmp);
 									//current_button_views.add(tmp);
 								}
@@ -920,6 +986,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					SlickButtonData tmp = new SlickButtonData();
 					tmp.setX(msg.arg1);
 					tmp.setY(msg.arg2);
+					
+					
+					
 					tmp.setText(input_box.getText().toString());
 					tmp.setLabel("LABEL");
 					
@@ -941,6 +1010,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					tmp.setHeight(colorset.getButtonHeight());
 					
 					SlickButton new_button = new SlickButton(MainWindow.this,0,0);
+					if(isFullScreen) {
+						tmp.setY(msg.arg2 - statusBarHeight);
+						new_button.setFullScreenShift(statusBarHeight);
+					} 
 					new_button.setData(tmp);
 					new_button.setDeleter(this);
 					new_button.setDispatcher(this);
@@ -1377,6 +1450,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putString("MAX_LINES", Integer.toString(service.getMaxLines()));
 				edit.putString("FONT_NAME", service.getFontName());
 				
+				edit.putBoolean("KEEP_SCREEN_ON",service.isKeepScreenOn());
+				edit.putBoolean("LOCAL_ECHO", service.isLocalEcho());
+				edit.putBoolean("BELL_VIBRATE", service.isVibrateOnBell());
+				edit.putBoolean("BELL_NOTIFY", service.isNotifyOnBell());
+				edit.putBoolean("BELL_DISPLAY", service.isDisplayOnBell());
+				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
+				
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1633,10 +1713,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 	
 	
-	public void onStart() {
+	//public void onWindowFocusChanged() {
 		//Log.e("WINDOW","onStart()");
-		super.onStart();
-	}
+	//	super.onStart();
+	//	windowHeight = this.getWindowManager().getDefaultDisplay().getHeight();
+	//	int full_height = findViewById(R.id.window_container).getHeight();
+	//	Log.e("WINDOW","STATUS BAR HEIGHT IS: " + (windowHeight - full_height) + " = WH:" + windowHeight + " - FH:" + full_height );
+		
+	//}
 	
 
 	

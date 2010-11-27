@@ -35,6 +35,14 @@ public class HyperSettings {
 	private String hapticFeedbackOnPress = "auto";
 	private String hapticFeedbackOnFlip = "none";
 	
+	private boolean keepScreenOn = true;
+	private boolean vibrateOnBell = true;
+	private boolean notifyOnBell = false;
+	private boolean displayOnBell = false;
+	private boolean localEcho = true;
+	private boolean fullScreen = true;
+	
+	
 	private boolean UseExtractUI = false;
 	private boolean AttemptSuggestions = false;
 	
@@ -159,7 +167,8 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_HFONPRESS, (data.getHapticFeedbackOnPress().equals("")) ? "auto" : data.getHapticFeedbackOnPress());
 			out.attribute("", BaseParser.ATTR_HFONFLIP, (data.getHapticFeedbackOnFlip().equals("")) ? "auto" : data.getHapticFeedbackOnFlip());
 			out.attribute("", BaseParser.ATTR_ENCODING, data.getEncoding());
-			
+			out.attribute("", BaseParser.ATTR_KEEPSCREENON, (data.isKeepScreenOn()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_FULLSCREEN, (data.isFullScreen()) ? "true" : "false");
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -202,6 +211,10 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_THROTTLEBACKGROUND, (data.isThrottleBackground()) ? "true" : "false");
 			out.attribute("" , BaseParser.ATTR_PROCESSPERIOD, data.isProcessPeriod() ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_WIFIKEEPALIVE, data.isKeepWifiActive() ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_LOCALECHO, (data.isLocalEcho()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_BELLVIBRATE, (data.isVibrateOnBell()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_BELLNOTIFY, (data.isNotifyOnBell()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_BELLDISPLAY, (data.isDisplayOnBell()) ? "true" : "false");
 			
 			out.endTag("",BaseParser.TAG_SERVICE);
 			
@@ -589,6 +602,54 @@ public class HyperSettings {
 
 	public String getEncoding() {
 		return encoding;
+	}
+
+	public void setKeepScreenOn(boolean keepScreenOn) {
+		this.keepScreenOn = keepScreenOn;
+	}
+
+	public boolean isKeepScreenOn() {
+		return keepScreenOn;
+	}
+
+	public void setVibrateOnBell(boolean vibrateOnBell) {
+		this.vibrateOnBell = vibrateOnBell;
+	}
+
+	public boolean isVibrateOnBell() {
+		return vibrateOnBell;
+	}
+
+	public void setNotifyOnBell(boolean notifyOnBell) {
+		this.notifyOnBell = notifyOnBell;
+	}
+
+	public boolean isNotifyOnBell() {
+		return notifyOnBell;
+	}
+
+	public void setDisplayOnBell(boolean displayOnBell) {
+		this.displayOnBell = displayOnBell;
+	}
+
+	public boolean isDisplayOnBell() {
+		return displayOnBell;
+	}
+
+	public void setLocalEcho(boolean localEcho) {
+		this.localEcho = localEcho;
+	}
+
+	public boolean isLocalEcho() {
+		return localEcho;
+	}
+
+	public void setFullScreen(boolean fullScreen) {
+		this.fullScreen = fullScreen;
+	}
+
+	public boolean isFullScreen() {
+		return fullScreen;
 	}
 
 }

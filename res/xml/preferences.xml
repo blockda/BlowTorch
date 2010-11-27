@@ -21,6 +21,11 @@
 			android:title="Disable ANSI Color?"
 			android:summary="Turns off color processing (.colordebug 3)."
 			android:defaultValue="false"/>
+		<CheckBoxPreference
+			android:key="KEEP_SCREEN_ON"
+			android:title="Keep Screen On?"
+			android:summary="Keep the screen on while the window is active."
+			android:defaultValue="true"/>
 		<EditTextPreference
 			android:key="FONT_SIZE"
 			android:title="Font Size"
@@ -39,6 +44,11 @@
 			android:layout_height="wrap_content"
 			android:gravity = "right"
 			android:inputType="number"/>
+		<CheckBoxPreference
+			android:key="WINDOW_FULLSCREEN"
+			android:title="Use Fullscreen Window?"
+			android:summary="Hides the notification bar. This setting is for all connections."
+			android:defaultValue="false"/>
 		<EditTextPreference
 			android:key="MAX_LINES"
 			android:title="Text Buffer Size"
@@ -48,6 +58,7 @@
 			android:layout_height="wrap_content"
 			android:gravity = "right"
 			android:inputType="number"/>
+		
 		
 		<ListPreference
 			android:key="FONT_NAME"
@@ -119,6 +130,11 @@
 			android:title="Service Settings"
 			android:summary="Options for the background service and data processing.">	
 		<CheckBoxPreference
+			android:key="LOCAL_ECHO"
+			android:title="Local Echo?"
+			android:summary="Will the service echo data sent to the server?"
+			android:defaultValue="true"/>
+		<CheckBoxPreference
 			android:key="PROCESS_PERIOD"
 			android:defaultValue="true"
 			android:summary="Perform internal functions using input starting with a period."
@@ -139,7 +155,26 @@
 			android:summary="Attempt to keep WiFi radio active while service is running."
 			android:title="Keep Wifi Radio Active?"/>
 		</PreferenceScreen>
-		
+		<PreferenceScreen
+			android:key="BELL_SETTINGS"
+			android:title="Bell Settings"
+			android:summary="Options for what happens when the bell is received.">	
+		<CheckBoxPreference
+			android:key="BELL_VIBRATE"
+			android:title="Vibrate?"
+			android:summary="Plays a short vibrate pattern when the bell is received."
+			android:defaultValue="false"/>
+		<CheckBoxPreference
+			android:key="BELL_NOTIFY"
+			android:title="Generate Notification?"
+			android:summary="Spawns a new notification when bell is received."
+			android:defaultValue="false"/>
+		<CheckBoxPreference
+			android:key="BELL_DISPLAY"
+			android:title="Display Bell?"
+			android:summary="Displays a bell on the screen when bell is received."
+			android:defaultValue="false"/>
+		</PreferenceScreen>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Import/Export Settings">
 		<com.happygoatstudios.bt.settings.HyperDialogPreference
