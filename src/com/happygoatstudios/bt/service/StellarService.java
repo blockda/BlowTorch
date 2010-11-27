@@ -67,10 +67,6 @@ import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
 //import android.util.Log;
 import android.widget.Toast;
 
@@ -364,11 +360,9 @@ public class StellarService extends Service {
 					try {
 						dispatch((byte[])msg.obj);
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					break;
 				case MESSAGE_DOFINALDISPATCH:
@@ -384,14 +378,6 @@ public class StellarService extends Service {
 					host = msg.getData().getString("HOST");
 					port = msg.getData().getInt("PORT");
 					display = msg.getData().getString("DISPLAY");					
-					//
-					//try {
-					//	sendInitOk();
-					//} catch (RemoteException e3) {
-					//	// TODO Auto-generated catch block
-					//	e3.printStackTrace();
-					//}
-					//loadAliases();
 					showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
@@ -403,25 +389,13 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_SENDOPTIONDATA:
 					//Log.e("BTSERVICE","SENDING OPTION DATA");
-					//byte[] obytes = msg.getData().getByteArray("THEDATA");
 					byte[] obytes = (byte[])(msg.obj);
-					//String odbgmsg = null;
-					//try {
-					//	odbgmsg = new String(obytes,"ISO-8859-1");
-					//} catch (UnsupportedEncodingException e2) {
-						// TODO Auto-generated catch block
-					//	e2.printStackTrace();
-					//}
-					//Log.e("SERV","SENDING STRING " + odbgmsg + "|size: " + obytes.length);
+					
 					try {
 						output_writer.write(obytes);
 						output_writer.flush();
-						
-						//end a "enter" to make sure that the options are recieved.
-						//output_writer.write(crlf.getBytes());
-						//output_writer.flush();
 					} catch (IOException e2) {
-						e2.printStackTrace();
+						throw new RuntimeException(e2);
 					}
 					
 					break;
@@ -448,36 +422,20 @@ public class StellarService extends Service {
 							if(retval.equals("")) { return; }
 							bytes = retval.getBytes(the_settings.getEncoding());
 						} catch (UnsupportedEncodingException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 					//do search and replace with aliases.
 					
-					
-					//convert all alias keys to the big match string.
-					//Object[] a = aliases.keySet().toArray();
-					
-					//StringBuffer joined_alias = new StringBuffer();
 					if(joined_alias.length() > 0) {
-						/*joined_alias.append("("+(String)a[0]+")");
-						for(int i=1;i<a.length;i++) {
-							joined_alias.append("|");
-							joined_alias.append("("+(String)a[i]+")");
-						}
-						*/
-						
-					
-						
-						
+
 						Pattern to_replace = Pattern.compile(joined_alias.toString());
 						
 						Matcher replacer = null;
 						try {
 							replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
 						} catch (UnsupportedEncodingException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
+							throw new RuntimeException(e1);
 						}
 						
 						StringBuffer replaced = new StringBuffer();
@@ -517,8 +475,7 @@ public class StellarService extends Service {
 							//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
 							//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
 						} catch (UnsupportedEncodingException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
+							throw new RuntimeException(e1);
 						}
 						
 						replaced.setLength(0);
@@ -533,8 +490,7 @@ public class StellarService extends Service {
 					try {
 						tostripsemi = new String(bytes,the_settings.getEncoding());
 					} catch (UnsupportedEncodingException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new RuntimeException(e1);
 					}
 					
 					String nosemidata = null;
@@ -549,10 +505,6 @@ public class StellarService extends Service {
 					
 					try {
 						String dbgmsg = new String(bytes,the_settings.getEncoding());
-						
-						
-						//Log.e("SERV","SENDING STRING " + dbgmsg + "|size: " + bytes.length);
-						
 						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
 
 						output_writer.flush();
@@ -563,44 +515,24 @@ public class StellarService extends Service {
 								doDispatchNoProcess(preserve);
 							}
 						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
-						
-						//Log.e("SERV","calling notify.");
-
-						//output_writer.
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						//e.printStackTrace();
-					//}
-					
+						throw new RuntimeException(e);
 					}
 					break;
 				case MESSAGE_REQUESTBUFFER:
 					//Log.e("BTSERVICE","SENDING REQUESTED BUFFER");
-					//dispatch();
 					try {
 						sendBuffer();
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					break;
 				case MESSAGE_SAVEBUFFER:
 					//Log.e("BTSERVICE","SAVING TARGET BUFFER");
 					the_buffer = new StringBuffer(msg.getData().getString("BUFFER") + the_buffer);
 					break;
-				//case MESSAGE_CHECKIFALIVE:
-				//	if(the_socket != null) {
-						//the_socket.
-						/*if(!the_socket.isConnected() || the_socket.isClosed()) {
-						//do shutdown, except now, attempt to launch a dialog.
-							Toast.makeText(BaardTERMService.this, "CONNECTION DEAD", 3000);
-						}*/
-				//	}
-				//	this.sendEmptyMessageDelayed(StellarService.MESSAGE_CHECKIFALIVE, 3000);
-				//	break;
 				default:
 					break;	
 				}
@@ -636,11 +568,9 @@ public class StellarService extends Service {
 			fos.write(HyperSettings.writeXml2(the_settings).getBytes());
 			fos.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -672,33 +602,10 @@ public class StellarService extends Service {
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
 			ColorSetSettings def_colorset = new ColorSetSettings();
 			def_colorset.toDefautls();
-			//def_colorset.setPrimaryColor(0xFFFFFFFF);
 			the_settings.getSetSettings().put("default", def_colorset);
-			
-			//TriggerData new_trigger = new TriggerData();
-			//new_trigger.setName("testtrigger");
-			//new_trigger.setPattern("FOOOCHANGROO!");
-			//new_trigger.setInterpretAsRegex(true);
-			//NotificationResponder responder = new NotificationResponder();
-			//responder.setTitle("You have triggered the beast");
-			//responder.setMessage("Mud output for you");
-			//new_trigger.getResponders().add(responder);
-			//the_settings.getTriggers().put(new_trigger.getName(), new_trigger);
-			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-
-		
-		
-		//Log.e("SERVICE","SETTINGS LOADED");
-		//Log.e("SEERVICE","Contains " + the_settings.getButtonSets().size() + " button sets");
-		//Set<String> keys = the_settings.getButtonSets().keySet();
-		//for(String key : keys) {
-			//Log.e("SERVICE","Found ButtonSet:" + key + " , it contains " + the_settings.getButtonSets().get(key).size() + " buttons.");
-		//}
-		//omg. look at how clean that is.
 		
 	}
 	
@@ -796,8 +703,7 @@ public class StellarService extends Service {
 			try {
 				callbacks.getBroadcastItem(i).doVisualBell();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			//notify listeners that data can be read
 		}
@@ -844,11 +750,8 @@ public class StellarService extends Service {
 					callbacks.register(m);
 					hasListener = true;
 				}
-				
 			}
-			
 			sendInitOk();
-			
 			doThrottleBackground();
 		}
 		
@@ -865,11 +768,7 @@ public class StellarService extends Service {
 					hasListener = false;
 				}
 			}
-			
-			//if(hasListener) {
-				doThrottleBackground();
-			//}
-	
+			doThrottleBackground();
 		}
 		
 		
@@ -897,54 +796,21 @@ public class StellarService extends Service {
 		}
 
 		public void sendData(byte[] seq) throws RemoteException {
-			//String str = (String)seq;
-			
-			//byte[] bytes = str.getBytes();
-			
-			//TODO: instead of sending the message from the binder object, send myself a message, then dispatch to pump
-			/*Message msg = pump.getHandler().obtainMessage(DataPumper.MESSAGE_SEND);
-			
-			Bundle b = new Bundle();
-			
-			b.putByteArray("THEDATA", seq);
-			
-			msg.setData(b);
-			
-			pump.getHandler().sendMessage(msg);*/
 			
 			//ENTER GIANT SYNCHRONIZATION STEP
 			if(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
-			
-				//Log.e("SERV","GOING TO SLEEP");
-			
 				synchronized(sendlock) {
-				
 					while(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
-						
 						try {
 							sendlock.wait();
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 				}
-				
-				//Log.e("SERV","WAKING BACK UP AFTER NOTIFY CALLED");
-			
 			}
-			
 			Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SENDDATA,seq);
-			
-			//Bundle b = new Bundle();
-			
-			//b.putByteArray("THEDATA",seq);
-			
-			//msg.setData(b);
-			
 			myhandler.sendMessage(msg);
-		
-			
 		}
 		
 		public void setConnectionData(String ihost,int iport,String display) {
@@ -987,7 +853,7 @@ public class StellarService extends Service {
 
 
 		public void addAlias(String what, String to) throws RemoteException {
-			//aliases.put(what, to);
+			
 			the_settings.getAliases().put(what, to);
 			buildAliases();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
@@ -995,14 +861,13 @@ public class StellarService extends Service {
 
 
 		public Map<String, String> getAliases() throws RemoteException {
-			//return aliases;
+			
 			return the_settings.getAliases();
 		}
 
 
 		public void setAliases(Map map) throws RemoteException {
-			//aliases.clear();
-			//aliases = new TreeMap<String, String>(map);
+			
 			the_settings.getAliases().clear();
 			the_settings.setAliases(new HashMap<String,String>(map));
 			buildAliases();
@@ -1012,54 +877,29 @@ public class StellarService extends Service {
 
 		public void addButton(String targetset, SlickButtonData newButton)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.getButtonSets().get(targetset).add(newButton);
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 			
-			//Log.e("SERVICE","ADDING BUTTON " + newButton.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
-			//Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
-			//for(SlickButtonData data : buttons) {
-			//	Log.e("SERVICE",data.toString());
-			//}
+	
 		}
 
-
-		/*public List<SlickButtonData> getSelectedButtonSet()
-				throws RemoteException {
-			// TODO Auto-generated method stub
-			return null;
-		}*/
 
 
 		public void removeButton(String targetset, SlickButtonData buttonToNuke)
 				throws RemoteException {
-			// TODO Auto-generated method stub
 			
 			synchronized(the_settings) {
-				//Vector<SlickButtonData> testset = the_settings.getButtonSets().get(targetset);
-				//for(SlickButtonData tmp : testset) {
-					//if(tmp.equals(buttonToNuke)) {
-						the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
-						myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-					//}
-				//}
-				
-				
-			}
-			
-			//Log.e("SERVICE","REMOVING BUTTON " + buttonToNuke.toString() + " FROM BUTTONSET: " + targetset + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
-			//Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
-			//for(SlickButtonData data : buttons) {
-			//	Log.e("SERVICE",data.toString());
-			//}
-			
+				the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			}	
 		}
 
 
 		public void setFontName(String name) throws RemoteException {
-			// TODO Auto-generated method stub
+		
 			synchronized(the_settings) {
 				the_settings.setFontName(name);
 			}
@@ -1067,7 +907,7 @@ public class StellarService extends Service {
 
 
 		public void setFontPath(String path) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.setFontPath(path);
 			}
@@ -1075,7 +915,7 @@ public class StellarService extends Service {
 
 
 		public void setFontSize(int size) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.setLineSize(size);
 			}
@@ -1083,7 +923,7 @@ public class StellarService extends Service {
 
 
 		public void setFontSpaceExtra(int size) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.setLineSpaceExtra(size);
 			}
@@ -1091,7 +931,7 @@ public class StellarService extends Service {
 
 
 		/*public void setSelectedButtonSet(String setname) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			
 		}*/
 
@@ -1122,7 +962,7 @@ public class StellarService extends Service {
 
 
 		public List<String> getButtonSetNames() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			
 			synchronized(the_settings) {
 				ArrayList<String> keys = new ArrayList<String>();
@@ -1138,7 +978,7 @@ public class StellarService extends Service {
 
 		public void modifyButton(String targetset, SlickButtonData orig,
 				SlickButtonData mod) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				
 				int loc = the_settings.getButtonSets().get(targetset).indexOf(orig);
@@ -1159,7 +999,7 @@ public class StellarService extends Service {
 
 
 		public void addNewButtonSet(String name) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.setLastSelected(name);
 				the_settings.getButtonSets().put(name, new Vector<SlickButtonData>());
@@ -1173,7 +1013,7 @@ public class StellarService extends Service {
 
 
 		public List<String> getButtonSets() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				Set<String> keys = the_settings.getAliases().keySet();
 				return new ArrayList<String>(keys);
@@ -1182,7 +1022,7 @@ public class StellarService extends Service {
 
 
 		public int clearButtonSet(String name) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				int count = the_settings.getButtonSets().get(name).size();
 				the_settings.getButtonSets().get(name).removeAllElements();
@@ -1194,7 +1034,7 @@ public class StellarService extends Service {
 
 
 		public int deleteButtonSet(String name) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				int count = the_settings.getButtonSets().get(name).size();
 				if(name.equals("default")) {
@@ -1214,7 +1054,7 @@ public class StellarService extends Service {
 
 
 		public Map getButtonSetListInfo() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
 			
 			synchronized(the_settings) {
@@ -1234,7 +1074,7 @@ public class StellarService extends Service {
 
 
 		public void setMaxLines(int keepcount) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.setMaxLines(keepcount);
 			}
@@ -1249,16 +1089,16 @@ public class StellarService extends Service {
 
 
 		public int getFontSize() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
-				//return the_settings.getLineSize();
+				
 				return the_settings.getLineSize();
 			}
 		}
 
 
 		public int getFontSpaceExtra() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				return the_settings.getLineSpaceExtra();
 			}
@@ -1350,7 +1190,7 @@ public class StellarService extends Service {
 
 		public ColorSetSettings getCurrentColorSetDefaults()
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				return the_settings.getSetSettings().get(the_settings.getLastSelected());
 			}
@@ -1359,7 +1199,7 @@ public class StellarService extends Service {
 
 		public ColorSetSettings getColorSetDefaultsForSet(String theSet)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				return the_settings.getSetSettings().get(theSet);
 			}
@@ -1368,7 +1208,7 @@ public class StellarService extends Service {
 
 		public void setColorSetDefaultsForSet(String theSet,ColorSetSettings input)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				//back up old set to use for the button update.
 				ColorSetSettings oldsettings = the_settings.getSetSettings().get(theSet);
@@ -1390,7 +1230,7 @@ public class StellarService extends Service {
 
 
 		public void setProcessPeriod(boolean value) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.setProcessPeriod(value);
 			}
@@ -1399,7 +1239,7 @@ public class StellarService extends Service {
 
 
 		public Map getTriggerData() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				return the_settings.getTriggers();
 			}
@@ -1407,7 +1247,7 @@ public class StellarService extends Service {
 
 
 		public void deleteTrigger(String which) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.getTriggers().remove(which);
 				
@@ -1419,7 +1259,7 @@ public class StellarService extends Service {
 
 
 		public void newTrigger(TriggerData data) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.getTriggers().put(data.getPattern(), data);
 				
@@ -1431,7 +1271,7 @@ public class StellarService extends Service {
 
 		public void updateTrigger(TriggerData from, TriggerData to)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				the_settings.getTriggers().remove(from.getPattern());
 				the_settings.getTriggers().put(to.getPattern(), to);
@@ -1445,12 +1285,8 @@ public class StellarService extends Service {
 
 
 		public TriggerData getTrigger(String pattern) throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
-				//Log.e("SERVICE","REQUESTED TRIGGER " + pattern);
-				//for(TriggerResponder responder : the_settings.getTriggers().get(pattern).getResponders()) {
-				//	Log.e("SERVICE","REQUESTED TRIGGER RESPONDER " + responder.getType() + " fires " + responder.getFireType());
-				//}
 				
 				return the_settings.getTriggers().get(pattern);
 			}
@@ -1458,7 +1294,7 @@ public class StellarService extends Service {
 
 
 		public boolean getUseExtractUI() throws RemoteException {
-			// TODO Auto-generated method stub
+			
 			synchronized(the_settings) {
 				return the_settings.isUseExtractUI();
 				
@@ -1678,8 +1514,7 @@ public class StellarService extends Service {
 		}
 
 		public void stopTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			//not actually needed.
 		}
 
 		public void addTimer(TimerData newtimer) throws RemoteException {
@@ -1927,11 +1762,9 @@ public class StellarService extends Service {
 							try {
 								doDispatchNoProcess(outputmsg.getBytes(the_settings.getEncoding()));
 							} catch (RemoteException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							} catch (UnsupportedEncodingException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							}
 						}
 					} else {
@@ -1962,11 +1795,9 @@ public class StellarService extends Service {
 										try {
 											doDispatchNoProcess(noarg_message.getBytes(the_settings.getEncoding()));
 										} catch (RemoteException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
+											throw new RuntimeException(e);
 										} catch (UnsupportedEncodingException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
+											throw new RuntimeException(e);
 										}
 									}
 								} else if(specialcommands.containsKey(alias)){
@@ -1986,11 +1817,9 @@ public class StellarService extends Service {
 									try {
 										doDispatchNoProcess(error.getBytes(the_settings.getEncoding()));
 									} catch (RemoteException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
+										throw new RuntimeException(e);
 									} catch (UnsupportedEncodingException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
+										throw new RuntimeException(e);
 									}
 								}
 							}
@@ -2020,11 +1849,9 @@ public class StellarService extends Service {
 						try {
 							doDispatchNoProcess(outputmsg.getBytes(the_settings.getEncoding()));
 						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						} catch (UnsupportedEncodingException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 				} else {
@@ -2208,8 +2035,7 @@ public class StellarService extends Service {
 			try {
 				callbacks.getBroadcastItem(i).showMessage(message,longtime);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			//notify listeners that data can be read
 		}
@@ -2223,8 +2049,7 @@ public class StellarService extends Service {
 			try {
 				callbacks.getBroadcastItem(i).showDialog(message);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			//notify listeners that data can be read
 		}
@@ -2276,11 +2101,9 @@ public class StellarService extends Service {
 				try {
 					doDispatchNoProcess(errormessage.getBytes(the_settings.getEncoding()));
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				
 				return;
@@ -2291,8 +2114,7 @@ public class StellarService extends Service {
 				try {
 					callbacks.getBroadcastItem(i).executeColorDebug(iarg);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				//notify listeners that data can be read
 			}
@@ -2317,11 +2139,9 @@ public class StellarService extends Service {
 			try {
 				doDispatchNoProcess(success.getBytes(the_settings.getEncoding()));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 		}
@@ -2338,8 +2158,7 @@ public class StellarService extends Service {
 			try {
 				doDispatchNoProcess(testmessage.getBytes());
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 	}*/
@@ -2355,8 +2174,7 @@ public class StellarService extends Service {
 				try {
 					callbacks.getBroadcastItem(i).invokeDirtyExit();
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				//notify listeners that data can be read
 			}
@@ -2398,8 +2216,7 @@ public class StellarService extends Service {
 					try {
 						doDispatchNoProcess(getErrorMessage("Timer action arguemnt " + action + " is invalid.","Acceptable arguments are \"play\",\"pause\",\"reset\" and \"info\".").getBytes());
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					return;
 				}
@@ -2411,8 +2228,7 @@ public class StellarService extends Service {
 						doDispatchNoProcess(getErrorMessage("Timer index argument " + ordinal + " is not a number.","Acceptable argument is an integer.").getBytes());
 						return;
 					} catch (RemoteException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new RuntimeException(e);
 					}
 				}
 				
@@ -2448,8 +2264,7 @@ public class StellarService extends Service {
 					try {
 						doDispatchNoProcess(getErrorMessage("Timer at index " + ordinal + " does not exist.","The timer index is the number displayed next to the timer the timer selection screen.").getBytes());
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 				}
 				
@@ -2459,8 +2274,7 @@ public class StellarService extends Service {
 				try {
 					doDispatchNoProcess(getErrorMessage("Timer command: \".timer" + (String)o + "\" is invalid.","Timer function format \".timer action index [silent]\"\nWhere action is \"play\",\"pause\",\"reset\" or \"info\".\nIndex is the timer index displayed in the timer selection list.").getBytes());
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			}
 			
@@ -2490,8 +2304,7 @@ public class StellarService extends Service {
 				try {
 					callbacks.getBroadcastItem(i).setScreenMode(!the_settings.isFullScreen());
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				//notify listeners that data can be read
 			}
@@ -2532,11 +2345,9 @@ public class StellarService extends Service {
 				try {
 					doDispatchNoProcess(getErrorMessage("keyboard (kb) special command usage:",".kb [add]|[popup] message\nadd and popup are optional flags that will append text or popup the window when supplied.\nExample:\n\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\nThe cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				return;
 			}
@@ -2560,27 +2371,19 @@ public class StellarService extends Service {
 			
 			if(operation1 != null && !operation1.equals("")) {
 				operation1 = operation1.replaceAll("\\s", "");
-				Log.e("SERVICE","OPERATION 1:"+operation1 + "|");
 				if(operation1.equalsIgnoreCase("add")) {
-					Log.e("SERVICE","SETTING ADD");
 					doadd = true;
 				}
 				if(operation1.equalsIgnoreCase("popup")) {
-					Log.e("SERVICE","SETTING POPUP");
 					dopopup = true;
 				}
 			}
 			if(operation2 != null && !operation2.equals("")) {
 				operation2 = operation2.replaceAll("\\s", "");
-				
-				Log.e("SERVICE","OPERATION 2:"+operation2 + "|");
-				
 				if(operation2.equalsIgnoreCase("add")) {
-					Log.e("SERVICE","SETTING ADD");
 					doadd = true;
 				}
 				if(operation2.equalsIgnoreCase("popup")) {
-					Log.e("SERVICE","SETTING POPUP");
 					dopopup = true;
 				}
 			}
@@ -2588,7 +2391,6 @@ public class StellarService extends Service {
 			if(operation1 != null && !operation1.equals("")) {
 				
 				if(operation1.equalsIgnoreCase("flush")) {
-					Log.e("SERVICE","FLUSHING!");
 					doflush = true;
 				}
 			}
@@ -2598,8 +2400,7 @@ public class StellarService extends Service {
 				try {
 					callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush);
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				//notify listeners that data can be read
 			}
@@ -2652,9 +2453,6 @@ public class StellarService extends Service {
 		int final_count = N;
 	
 		for(int i = 0;i<N;i++) {
-			//callbacks.getBroadcastItem(i).dataIncoming(data);
-			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
-			//callbacks.getBroadcastItem(i).htmlDataIncoming(htmlText);
 			try {
 			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
 			} catch (RemoteException e) {
@@ -2688,9 +2486,6 @@ public class StellarService extends Service {
 		boolean rebuildTriggers = false;
 		//test the de-colorized data against registered patterns.
 		
-		//Pattern triger_regex = Pattern.compile(trigger_string.toString());
-		//Matcher trigger_matcher = trigger_regex.matcher("");
-		//Log.e("SERVICE","ATTEMPTING TO MATCH" + trigger_matcher.pattern().toString() + " on " + regexp_test.toString());
 		
 		if(has_triggers) {
 			
@@ -2749,87 +2544,7 @@ public class StellarService extends Service {
 			}
 		}
 		
-		/*Iterator<String> items = test_set.listIterator();
-		while(items.hasNext()) {
-			
-			String test_for = (String)items.next();
-			
-			
-			//Log.e("SERVICE","TESTING FOR:" + test_for + "| agaist:" + regexp_test);
-			//test_for.replaceAll(".", "\\.");
-			//test_for.replaceAll("\"", "\\\""); //yea bitch
-			//test_for.replaceAll("[", substitute)
-			//String regex = "^.*"+Pattern.quote(test_for)+".*$";
-			//String regex = Pattern.quote(test_for);
-			Pattern p = Pattern.compile("^.*"+Pattern.quote(test_for)+".*$",Pattern.DOTALL);
-			
-			//Boolean matched = Pattern.matches(regex, new String(regexp_test.toString().getBytes("ISO-8859-1"),"ISO-8859-1"));
-			//Log.e("SLICK","MATCH: "+regexp_test+"\nAGAINST: " + regex + "\nRETURNED:" + matched);
-			Matcher results = p.matcher(regexp_test);
-			//Matcher results = p.matcher(regexp_test);
-			//results.
-			if(results.matches()) {
-				//NOTIFICATION: 
-				//Log.e("SERVICE","SERVICE MATCHED: " + test_for);
-				//build a new notification.
-				Notification note = new Notification(R.drawable.btn_plus,"BaardTERM-Pattern Matched",System.currentTimeMillis());
-				//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
-				
-				Context context = getApplicationContext();
-				CharSequence contentTitle = "BaardTERM";
-				//CharSequence contentText = "Hello World!";
-				CharSequence contentText = "Triggerd on: " + test_for;
-				Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.BaardTERMWindow.class);
-				notificationIntent.putExtra("DISPLAY", display);
-				notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			
-				PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-				
-				
-				note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-				
-				note.flags = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL;
-				note.defaults = Notification.DEFAULT_SOUND;
-				note.ledARGB = 0xFFFF00FF;
-				note.ledOnMS = 300;
-				note.ledOffMS = 300;
-				
-				long[] vp = new long[4];
-				vp[0] = 0;
-				vp[1] = 200;
-				vp[2] = 50;
-				vp[3] = 200;
-				
-				note.vibrate = vp;
-				
-				mNM.notify(trigger_count++,note);
-				
-			}
-		}*/
-		
 		regexp_test.setLength(0);
-		//the_buffer.append(sstr);
-		/*Bundle datal = CountNewLine(new String(the_buffer.toString().getBytes("ISO-8859-1"),"ISO-8859-1"),100);
-		if(datal.getInt("TOTAL") > 100) {
-			//Log.e("SERV","TIME TO PRUNE ");
-			Object[] unusedspans = the_buffer.getSpans(0, datal.getInt("PRUNELOC"), Object.class);
-			for(int i=0;i<unusedspans.length;i++) {
-				the_buffer.removeSpan(unusedspans[i]);
-			}
-			Object[] array = the_buffer.getSpans(0,the_buffer.length(),Object.class);
-			int size = array.length;
-			//Log.e("SERV","FOUND: " + size + " spans.\n");
-			the_buffer.replace(0, datal.getInt("PRUNELOC"), "");
-			
-		}*/
-		
-		
-		
-		
-		
-
-		
-		//callbacks.finishBroadcast();
 		
 	}
 	
@@ -2849,9 +2564,6 @@ public class StellarService extends Service {
 
 		//Log.e("SERVICE","SENDING TO WINDOW: " + rawData);
 		for(int i = 0;i<N;i++) {
-			//callbacks.getBroadcastItem(i).dataIncoming(data);
-			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
-			//callbacks.getBroadcastItem(i).htmlDataIncoming(htmlText);
 			try {
 			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
 			} catch (RemoteException e) {
@@ -2906,8 +2618,6 @@ public class StellarService extends Service {
 				t.setStarttime(System.currentTimeMillis() - data.getPauseLocation());
 			}
 			timerTasks.put(timer, t);
-			//data.reset();
-			//Log.e("SERVICE","STARTING TIMER " + (String)msg.obj + " WITH " + data.getTTF()/1000 + " seconds.");
 			if(data.isRepeat()) {
 				the_timer.scheduleAtFixedRate(t, data.getTTF() , data.getSeconds()*1000);
 			} else {
@@ -2977,33 +2687,18 @@ public class StellarService extends Service {
 			
 			the_socket.setSendBufferSize(1024);
 			int size = the_socket.getSendBufferSize();
-			boolean shut = the_socket.isOutputShutdown();
-			if(shut) {
-				//Log.e("SERV","SOCKET OUTPUT IS SHUT DOWN");
-			} else {
-				//Log.e("SERV","SOCKET OUTPUT ACTIVE, BUFFER SIZE: " + size);
-			}
+			
 			
 			try {
 				output_writer = new BufferedOutputStream(the_socket.getOutputStream());
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				throw new RuntimeException(e1);
 			}
-			//at this point we should have a valid socket
-			//start up the pump
-			//try {
-			//	outputter = new OutputWriter(the_socket.getOutputStream());
-			//} catch (IOException e1) {
-				// TODO Auto-generated catch block
-			//	e1.printStackTrace();
-			//}
-			//outputter.start();
+			
 			try {
 				pump = new DataPumper(the_socket.getInputStream(),null,myhandler);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 			pump.start();
@@ -3011,10 +2706,10 @@ public class StellarService extends Service {
 			synchronized(this) {
 				try {
 					this.wait(500);
+					//give the pump some time sto start up
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} //give the pump some time sto start up
+					throw new RuntimeException(e);
+				} 
 			}
 			
 			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_INITXFER);
@@ -3090,8 +2785,7 @@ public class StellarService extends Service {
 			try {
 				output_writer.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}	
 		}
 		
@@ -3099,8 +2793,7 @@ public class StellarService extends Service {
 			try {
 				the_socket.close();
 			} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			the_socket = null;
 		}
