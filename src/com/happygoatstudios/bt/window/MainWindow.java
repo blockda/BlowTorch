@@ -3,7 +3,6 @@ package com.happygoatstudios.bt.window;
 import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,19 +14,12 @@ import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
@@ -35,19 +27,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcel;
-import android.os.Parcelable;
-import android.os.Process;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.text.Editable;
 import android.text.InputType;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.TextWatcher;
-import android.text.method.KeyListener;
-import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
 //import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -56,49 +38,34 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.view.Window;
+
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup.LayoutParams;
-import android.view.MotionEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
-import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.WebView;
-import android.webkit.WebSettings.TextSize;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.R;
-//import com.happygoatstudios.bt.service.BaardTERMService;
 import com.happygoatstudios.bt.alias.AliasDialogDoneListener;
 import com.happygoatstudios.bt.alias.AliasEditorDialog;
 import com.happygoatstudios.bt.button.ButtonEditorDialog;
 import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.legacy.FixedViewFlipper;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
-import com.happygoatstudios.bt.timer.TimerEditorDialog;
 import com.happygoatstudios.bt.timer.TimerSelectionDialog;
 import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
@@ -144,7 +111,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected boolean settingsDialogRun = false;
 	
 	private boolean autoLaunch = true;
-	private boolean disableColor = false;
 	private String overrideHF = "auto";
 	private String overrideHFFlip = "auto";
 	private String overrideHFPress = "auto";
@@ -158,36 +124,20 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	boolean servicestarted = false;
 	
 	IStellarService service = null;
-	//Object ctrl_tag = new Object();
 	Processor the_processor = null;
-	
-	private int windowHeight = 1;
 	private int statusBarHeight = 1;
-	
-	GestureDetector gestureDetector = null;
+	//GestureDetector gestureDetector = null;
 	OnTouchListener gestureListener = null;
-	
-	
-	//ScrollView screen2 = null;
 	SlickView screen2 = null;
-	
-	//EditText input_box = null;
 	CommandKeeper history = null;
-	
-
 	ImageButton test_button = null;
-	
 	ImageButton up_button_c = null;
 	ImageButton down_button_c = null;
 	ImageButton enter_button_c  = null;
 	boolean input_controls_expanded = false;
-	
 	boolean isBound = false;
-	
 	boolean isKeepLast = false; //for keeping last
 	boolean historyWidgetKept = false;
-	
-	
 	Boolean settingsLoaded = false; //synchronize or try to mitigate failures of writing button data, or failures to read data
 	Boolean serviceConnected = false;
 	Boolean isResumed = false;
@@ -276,22 +226,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		//Log.e("WINDOW","onCreate()");
 		
-		//set up the crash reporter
-		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this));
-		/*SharedPreferences wprefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
-		if(wprefs.getBoolean("WINDOW_FULLSCREEN", false)) {
-			requestWindowFeature(Window.FEATURE_NO_TITLE);  
-			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,   
-			WindowManager.LayoutParams.FLAG_FULLSCREEN);  
-			isFullScreen = true;
-		} else {
-			isFullScreen = false;
-		}*/
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
-		Log.e("WINDOW","READING IN STATUS BAR HEIGHT FROM LAUNCHER:" + statusBarHeight);
 		
 		setContentView(R.layout.window_layout);
 		
@@ -318,11 +255,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
         alphaout.setFillAfter(true);
         fill2.startAnimation(alphaout);
         
-        //RelativeLayout input_bar = (RelativeLayout)findViewById(R.id.input_bar);
-        //ViewParent parent = input_bar.getParent();
-        //parent.bringChildToFront(input_bar);
-        //input_bar.set
-        
         screen2.setZOrderOnTop(false);
         screen2.setOnTouchListener(gestureListener);
 		
@@ -345,11 +277,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							}
 						} else {
 							input_box.setText(cmd);
-							//Log.e("WINDOW","UNFREAKY");
 						}
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && event.getAction() == KeyEvent.ACTION_UP) {
@@ -357,17 +287,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					input_box.setText(cmd);
 					return true;
 				}
-				//Log.e("WINDOW","Key event happened, invalidating view.");
-				//input_box.invalidate();
+				
 				return false;
 			}
    
         });
         
         input_box.setDrawingCacheEnabled(true);
-        //input_box.addTextChangedListener()
-        
-        
         input_box.setVisibility(View.VISIBLE);
         input_box.setEnabled(true);
         TextView filler = (TextView)findViewById(R.id.filler);
@@ -430,20 +356,16 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					if(!add) {
 						//reset text
-						Log.e("WINDOW","KEYBOARD REPLACE" + text);
 						input_box.setText(text);
 						input_box.setSelection(input_box.getText().toString().length());
 					} else {
 						//append text
-						Log.e("WINDOW","KEYBOARD APPEND:" + text);
 						input_box.setText(input_box.getText().toString() + text);
 						input_box.setSelection(input_box.getText().toString().length());
 					}
 					
 					if(popup) {
-						Log.e("WINDOW","POPING UP KEYBOARD");
 						InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-						// only will trigger it if no physical keyboard is open
 						mgr.showSoftInput(input_box, InputMethodManager.SHOW_FORCED);
 					}
 				
@@ -461,8 +383,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							isFullScreen = true;
 						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-						    //MainWindow.this.findViewById(R.id.window_container).requestLayout();
-							needschange = true;
+						    needschange = true;
 						} catch (RemoteException e) {
 							throw new RuntimeException(e);
 						}
@@ -591,8 +512,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 						
 					} catch (RemoteException e4) {
-						// TODO Auto-generated catch block
-						e4.printStackTrace();
+						throw new RuntimeException(e4);
 					}
 					break;
 				case MESSAGE_CLEARBUTTONSET:
@@ -608,16 +528,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						}
 						
 					} catch (RemoteException e4) {
-						// TODO Auto-generated catch block
-						e4.printStackTrace();
+						throw new RuntimeException(e4);
 					}
 					break;
 				case MESSAGE_DOHAPTICFEEDBACK:
-					/*int flags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
-					if(overrideHF) {
-						flags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
-					}
-					input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, flags);*/
 					DoHapticFeedback();
 					break;
 				case MESSAGE_DIRTYEXITNOW:
@@ -632,8 +546,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				case MESSAGE_XMLERROR:
 					//got an xml error, need to display it.
 					String xmlerror = (String)msg.obj;
-					
-					//display it
 					AlertDialog.Builder builder = new AlertDialog.Builder(MainWindow.this);
 					builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
 						
@@ -655,14 +567,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						service.addNewButtonSet((String)msg.obj);
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					}
 					RelativeLayout clearb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-					//for(SlickButton b : current_button_views) {
-					//	clearb.removeView(b);
-					//	clearb.removeV
-					//}
 					int pos = clearb.indexOfChild(screen2);
 					int count = clearb.getChildCount();
 					if(pos == 0) {
@@ -671,8 +578,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						clearb.removeViews(0,pos);
 						clearb.removeViews(pos+1,count - pos);
 					}
-					//current_button_views.clear();
-					//make the fake button.
 					makeFakeButton();
 					showNoButtonMessage(true);
 					
@@ -703,11 +608,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 									new_button.setDeleter(this);
 									
 									if(isFullScreen) {
-										Log.e("WINDOW","CHANGE BUTTON SET, IN FULL SCREEN, STATUS BAR HEIGHT: "+ statusBarHeight);
 										new_button.setFullScreenShift(statusBarHeight);
 									} else {
 										new_button.setFullScreenShift(0);
-										Log.e("WINDOW","CHANGE BUTTON SET, IN NON FULL SCREEN");
 									}
 									modb.addView(new_button);
 								}
@@ -717,8 +620,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							}
 						}
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					}
 					break;
 				case MESSAGE_MODIFYBUTTON:
@@ -733,8 +635,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							//Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
 						}
 					} catch (RemoteException e2) {
-						// TODO Auto-generated catch block
-						e2.printStackTrace();
+						throw new RuntimeException(e2);
 					}
 					
 					//we modified the button, now load the set again to make the changes appear on the screen.
@@ -742,14 +643,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						reloadset.obj = service.getLastSelectedSet();
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					}
 					myhandler.sendMessage(reloadset);
 					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
-					//TODO: HERE!
+					//TODO: SETTINGS LOAD PLACE
 					//attemppt to load button sets.
 					boolean fontSizeChanged = false;
 					//boolean fullscreen_now = false;
@@ -818,8 +718,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setDisplayOnBell(belldisplay);
 							service.setFullScreen(fullscreen_now);
 						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 						
 						String importPath = prefs.getString("IMPORT_PATH","");
@@ -835,19 +734,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							try {
 								service.resetSettings();
 							} catch (RemoteException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							}
 						}
 						
 						if(!importPath.equals("")) {
-							//import needed
-							//Log.e("WINDOW","WINDOW SENDING IMPORT REQUEST FOR " + importPath);
 							try {
 								service.LoadSettingsFromPath(importPath);
 							} catch (RemoteException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							}
 							editor.putString("IMPORT_PATH", "");
 						}
@@ -855,12 +750,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						if(!exportPath.equals("")) {
 							//export needed
 							String fullPath = "/BlowTorch/" + exportPath;
-							//Log.e("WINDOW","WINDOW SENDING EXPORT REQUEST TO PATH: " + fullPath);
 							try {
 								service.ExportSettingsToPath(fullPath);
 							} catch (RemoteException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							}
 							editor.putString("EXPORT_PATH","");
 						}
@@ -871,16 +764,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					
 					try {
-						
-						//Rect rect = new Rect();
-					    //Window win = MainWindow.this.getWindow();
-					    //win.getDecorView().getWindowVisibleDisplayFrame(rect);
-					    //int statusBarHeight = rect.top;
-					   // int contentViewTop = win.findViewById(Window.ID_ANDROID_CONTENT).getTop();
-					   // int titleBarHeight = contentViewTop - statusBarHeight;
-					   // Log.d("ID-ANDROID-CONTENT", "titleBarHeight = " + titleBarHeight );
-
-						
 						if(service.isFullScreen()) {
 						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
@@ -909,7 +792,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							button_layout.removeViews(0,posl);
 							button_layout.removeViews(posl+1,countl - posl);
 						}
-						//current_button_views.clear();
 						
 						if(buttons != null) {
 							if(buttons.size() > 0) {
@@ -920,11 +802,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 									tmp.setDeleter(this);
 									//adjust for full screen.
 									if(isFullScreen) {
-										Log.e("WINDOW","INITIAL BUTTON SET LOAD IN FULL SCREEN, STATUS BAR HEIGHT: "+ statusBarHeight);
 										tmp.setFullScreenShift(statusBarHeight);
 									} else {
 										tmp.setFullScreenShift(0);
-										Log.e("WINDOW","INITIAL BUTTON SET LOAD, NOT IN FULL SCREEN");
 									}
 									button_layout.addView(tmp);
 									//current_button_views.add(tmp);
@@ -948,18 +828,16 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						if(tmpname.contains("/")) {
 							//string is a path
 							if(tmpname.contains(Environment.getExternalStorageDirectory().getPath())) {
-								//Log.e("WINDOW","Loading font from SDCARD!");
-								boolean available = false;
+								
 								String sdstate = Environment.getExternalStorageState();
 								if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
 									font = Typeface.createFromFile(tmpname);
 								} else {
 									font = Typeface.MONOSPACE;
 								}
-								//path is an sdcard path
+								
 							} else {
 								//path is a system path
-								//Log.e("WINDOW","Loading font from path!");
 								font = Typeface.createFromFile(tmpname);
 							}
 							
@@ -1046,8 +924,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						//get the rest of the window options that are necessary to function
 						
 					} catch (RemoteException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new RuntimeException(e1);
 					}
 					break;
 				case SlickView.MSG_DELETEBUTTON:
@@ -1082,8 +959,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						colorset = service.getCurrentColorSetDefaults();
 					} catch (RemoteException e2) {
-						// TODO Auto-generated catch block
-						e2.printStackTrace();
+						throw new RuntimeException(e2);
 					}
 					
 					tmp.setLabelColor(colorset.getLabelColor());
@@ -1107,8 +983,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						service.addButton(service.getLastSelectedSet(), tmp);
 					} catch (RemoteException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new RuntimeException(e1);
 					}
 					
 					RelativeLayout hold = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
@@ -1148,11 +1023,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						buf = ByteBuffer.allocate(pdata.getBytes(service.getEncoding()).length);
 					} catch (UnsupportedEncodingException e2) {
-						// TODO Auto-generated catch block
-						e2.printStackTrace();
+						throw new RuntimeException(e2);
 					} catch (RemoteException e2) {
-						// TODO Auto-generated catch block
-						e2.printStackTrace();
+						throw new RuntimeException(e2);
 					}
 					
 					
@@ -1172,12 +1045,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 					try {
 						service.sendData(buffbytes);
-						//try {
-							//Log.e("WINDOW","SENDING TO SERVICE: " + new String(buffbytes,service.getEncoding()));
-						//} catch (UnsupportedEncodingException e) {
-							// TODO Auto-generated catch block
-						//	e.printStackTrace();
-						//}
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -1188,21 +1055,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					try {
 						if(service.isKeepLast()) {
-							//Log.e("WINDOW","ATTEMPTING TO SET LAST TO SELECTED");
 							input_box.setSelection(0, input_box.getText().length());
 							historyWidgetKept = true;
 						} else {
-							//Log.e("WINDOW","NOT KEEPING LAST");
 							input_box.clearComposingText();
 							input_box.setText("");
 						}
 					} catch (RemoteException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						throw new RuntimeException(e1);
 					}
-					
-					//InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-					//imm.restartInput(input_box);
 					break;
 				case MESSAGE_RAWINC:
 					screen2.addText((String)msg.obj,false);
@@ -1233,8 +1094,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 			public void onClick(View v) {
 				//change my layout parameters and add a new button.
-				
-				
 				RelativeLayout rl = (RelativeLayout)findViewById(R.id.input_bar);
 				LinearLayout l = (LinearLayout)findViewById(R.id.ctrl_target);
 				if(l == null) {
@@ -1264,11 +1123,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 								}
 							} else {
 								input_box.setText(cmd);
-								//Log.e("WINDOW","UNFREAKY");
 							}
 						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 				});
@@ -1445,8 +1302,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			Toast t = Toast.makeText(MainWindow.this, message, Toast.LENGTH_LONG);
 			t.show();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -1462,12 +1318,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 	}
 	
-	public void onOptionMenuClose(Menu menu) {
-		//if(showsettingsoptions) {
-		//	showsettingsoptions = false;
-		//}
-	}
-	
+	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		case 105:
@@ -1481,8 +1332,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				d = new AliasEditorDialog(this,service.getAliases(),this);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			d.setTitle("Edit Aliases:");
 			d.show();
@@ -1544,8 +1394,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
 				
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 			edit.commit();
@@ -1576,8 +1425,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				//Log.e("WINDOW","TRYING TO GET SERVICE TO WRITE A FILE FOR ME!");
 				service.ExportSettingsToPath(filename);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 	};
@@ -1945,21 +1793,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 	}
 	
-	/*public void flingLeft() {
-    	FixedViewFlipper tmp = (FixedViewFlipper)findViewById(R.id.flippdipper);
-    	tmp.setInAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_left_in));
-    	tmp.setOutAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_left_out));
-    	tmp.showPrevious();
-	}
-	    
-	public void flingRight() {
-    	FixedViewFlipper tmp = (FixedViewFlipper)findViewById(R.id.flippdipper);
-    	tmp.setOutAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_right_out));
-    	tmp.setInAnimation(AnimationUtils.loadAnimation(tmp.getContext(), R.anim.slide_right_in));
-    	tmp.showNext();
-	}*/
-	
-	
 	private IStellarServiceCallback.Stub the_callback = new IStellarServiceCallback.Stub() {
 
 		public void dataIncoming(byte[] seq) throws RemoteException {
@@ -2000,12 +1833,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 
 		public void loadSettings() throws RemoteException {
-			// TODO Auto-generated method stub
 			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
 		}
 
 		public void displayXMLError(String error) throws RemoteException {
-			// TODO Auto-generated method stub
 			Message xmlerror = myhandler.obtainMessage(MESSAGE_XMLERROR);
 			xmlerror.obj = error;
 			myhandler.sendMessage(xmlerror);
@@ -2084,8 +1915,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				service.setAliases(map);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 	}	
