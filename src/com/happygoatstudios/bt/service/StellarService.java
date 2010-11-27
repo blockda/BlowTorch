@@ -62,6 +62,7 @@ import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.provider.Contacts.Settings;
 import android.text.Spannable;
@@ -142,6 +143,7 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_TIMERPAUSE = 500;
 	protected static final int MESSAGE_TIMERRESET = 501;
 	public static final int MESSAGE_TIMERINFO = 502;
+	public static final int MESSAGE_BELLINC = 503;
 	
 	public boolean sending = false;
 	
@@ -174,12 +176,12 @@ public class StellarService extends Service {
 		//BrokenColor brokencolor = new BrokenColor();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
 		TimerCommand timercmd = new TimerCommand();
-		EncCommand enccmd = new EncCommand();
+		//EncCommand enccmd = new EncCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
-		specialcommands.put(enccmd.commandName, enccmd);
+		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
 		//Looper.prepare();
@@ -201,6 +203,18 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_BELLINC:
+					//bell recieved.
+					if(the_settings.isVibrateOnBell()) {
+						doVibrateBell();
+					}
+					if(the_settings.isNotifyOnBell()) {
+						doNotifyBell();
+					}
+					if(the_settings.isDisplayOnBell()) {
+						doDisplayBell();
+					}
+					break;
 				case MESSAGE_TIMERINFO:
 					if(timerTasks.containsKey((String)msg.obj)) {
 						TimerExtraTask t = timerTasks.get((String)msg.obj);
@@ -735,6 +749,51 @@ public class StellarService extends Service {
 		
 		ed.commit();
 		
+	}
+	
+	private void doVibrateBell() {
+		Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(300);
+	}
+	
+	private int bellcount = 3344;
+	private void doNotifyBell() { 
+		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"Alert!",System.currentTimeMillis());
+		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
+		
+		Context context = getApplicationContext();
+		CharSequence contentTitle = "BlowTorch - Alert!";
+		//CharSequence contentText = "Hello World!";
+		CharSequence contentText = "The server is notifying you with the bell character, 0x07.";
+		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
+		notificationIntent.putExtra("DISPLAY", display);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		
+		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		note.flags = Notification.DEFAULT_ALL;
+		
+		//startForeground to avoid being killed off.
+		//this.startForeground(5545, note);
+		
+		mNM.notify(bellcount,note);
+	}
+	
+	private void doDisplayBell() {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).doVisualBell();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
 	}
 	
 
@@ -2397,27 +2456,6 @@ public class StellarService extends Service {
 				}
 			}
 			
-		}
-	}
-	
-	private class EncCommand extends SpecialCommand {
-		
-		public EncCommand() {
-			this.commandName = "enc";
-		}
-		
-		public void execute(Object o) {
-			final int N = callbacks.beginBroadcast();
-			for(int i = 0;i<N;i++) {
-				try {
-					callbacks.getBroadcastItem(i).doLanguageDebug();
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//notify listeners that data can be read
-			}
-			callbacks.finishBroadcast();
 		}
 	}
 	

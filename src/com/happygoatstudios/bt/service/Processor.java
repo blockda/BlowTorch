@@ -37,13 +37,15 @@ public class Processor {
 			subnego_reg = Pattern.compile(new String("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0".getBytes(encoding),encoding));
 			goahead_reg = Pattern.compile(new String("\\xFF\\xF9".getBytes(encoding),encoding));
 			tab_reg  = Pattern.compile(new String("\\x09".getBytes(encoding),encoding));
+			bell_reg = Pattern.compile(new String("\\x07".getBytes(encoding),encoding));
 			
 			iac_match = iac_cmd_reg.matcher("");
 			sub_match = subnego_reg.matcher("");
 			goahead_match = goahead_reg.matcher("");
 			tab_match = tab_reg.matcher("");
+			bell_match = bell_reg.matcher("");
 			
-			massive_match = Pattern.compile("("+iac_cmd_reg.pattern()+")|" + "("+subnego_reg.pattern()+")|" + "("+goahead_reg.pattern()+")|" + "("+tab_reg.pattern()+")");
+			massive_match = Pattern.compile("("+iac_cmd_reg.pattern()+")|" + "("+subnego_reg.pattern()+")|" + "("+goahead_reg.pattern()+")|" + "("+tab_reg.pattern()+")|(" + bell_reg.pattern() + ")");
 			ma_matcher = massive_match.matcher("");
 		} catch (PatternSyntaxException e) {
 			// TODO Auto-generated catch block
@@ -69,6 +71,9 @@ public class Processor {
 	
 	
 	Matcher tab_match;
+	
+	Pattern bell_reg;
+	Matcher bell_match;
 	
 	Pattern massive_match;
 	Matcher ma_matcher;
@@ -245,6 +250,7 @@ public class Processor {
 			hasmatched = true;
 			String matched = ma_matcher.group(0);
 			boolean tabreplace = false;
+			boolean bellreplace= false;
 			iac_match.reset(matched);
 			if(iac_match.matches()) {
 				//dispatch IAC
@@ -270,13 +276,23 @@ public class Processor {
 							//replace tab
 							tabreplace = true;
 						} else {
-							//unknown, copy through.
+							bell_match.reset(matched);
+							if(bell_match.matches()) {
+								//replace bell
+								bellreplace = true;
+							} else {
+								//unknown.
+							}
 						}
 					}
 				}
 			}
 			if(tabreplace) {
 				ma_matcher.appendReplacement(holder, "    ");
+			} else if(bellreplace) {
+				ma_matcher.appendReplacement(holder, "");
+				//and do bell.
+				reportto.sendEmptyMessage(StellarService.MESSAGE_BELLINC);
 			} else {
 				ma_matcher.appendReplacement(holder, ""); //remove it from the stream
 			}
