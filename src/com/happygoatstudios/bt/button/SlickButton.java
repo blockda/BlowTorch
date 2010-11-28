@@ -164,7 +164,9 @@ public class SlickButton extends View {
 		byte[] buffbytes = buf.array();
 		
 		Message msg = dispatcher.obtainMessage(MainWindow.MESSAGE_SENDDATAOUT,buffbytes);
-		dispatcher.sendMessage(msg);
+		if(!dispatcher.hasMessages(MainWindow.MESSAGE_SENDDATAOUT)) {
+			dispatcher.sendMessage(msg);
+		}
 	}
 	
 	public void setText(String t) {
