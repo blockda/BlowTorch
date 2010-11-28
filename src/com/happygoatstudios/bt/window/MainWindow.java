@@ -718,6 +718,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setNotifyOnBell(bellnotify);
 							service.setDisplayOnBell(belldisplay);
 							service.setFullScreen(fullscreen_now);
+							service.saveSettings();
 						} catch (RemoteException e) {
 							throw new RuntimeException(e);
 						}

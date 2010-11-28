@@ -1711,6 +1711,10 @@ public class StellarService extends Service {
 			}
 			return names;
 		}
+
+		public void saveSettings() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+		}
 		
 	};
 	

@@ -15,6 +15,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.util.Log;
 //import android.util.Log;
 
 import android.view.MotionEvent;
@@ -642,8 +643,8 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	int bgColorSpanStart = 0;
 	//StringBuffer sel_bgcolor = new StringBuffer(new Integer(0xFF000000).toString());
 	//StringBuffer sel_bgbright = new StringBuffer(new Integer(0).toString());
-	int selectedBackgroundColor = 0;
-	int selectedBackgroundBright = 0;
+	int selectedBackgroundColor = 40;
+	//int selectedBackgroundBright = 0;
 	//Matcher bleedfind = lastcolordatainline.matcher("");
 	Matcher bleedfind = colordata.matcher("");
 	Matcher colormatch = colordata.matcher("");
@@ -819,11 +820,22 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        		bleedfind.reset(dlines.get(colorBleed));
 	        		//Log.e("WINDOW","BLEED ANALYSIS: " + dlines.get(colorBleed));
 	        		while(bleedfind.find()) {
-	        			Integer brightVal = Integer.parseInt(((bleedfind.group(2) == null) ? "0" : bleedfind.group(2)));
-	        			Integer firstVal = Integer.parseInt((bleedfind.group(4) == null) ? "37" : bleedfind.group(4));
-	        			Integer secondVal = Integer.parseInt(bleedfind.group(5));
+	        			//Integer brightVal = Integer.parseInt(((bleedfind.group(2) == null) ? "0" : bleedfind.group(2)));
+	        			//Integer firstVal = Integer.parseInt((bleedfind.group(4) == null) ? "37" : bleedfind.group(4));
+	        			//Integer secondVal = Integer.parseInt(bleedfind.group(5));
 	        			//Log.e("WINDOW","WORKING ON: " + bleedfind.group(0));
-	        			boolean brightiscolor = false;
+	        			Integer prev_sel = selectedColor;
+	        			Integer prev_bri = selectedBright;
+	        			Log.e("SLICK","USING BLEED:" + bleedfind.group(0));
+	        			Colorizer.COLOR_TYPE first = updateColorRegisters((bleedfind.group(2) == null) ? null : Integer.parseInt(bleedfind.group(2)));
+	        			Colorizer.COLOR_TYPE second = updateColorRegisters((bleedfind.group(4) == null) ? null : Integer.parseInt(bleedfind.group(4)));
+	        			Colorizer.COLOR_TYPE third = updateColorRegisters((bleedfind.group(5) == null) ? null : Integer.parseInt(bleedfind.group(5)));
+	        			
+	        			opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        			if((first != Colorizer.COLOR_TYPE.NOT_A_COLOR && first != Colorizer.COLOR_TYPE.BACKGROUND)|| (second != Colorizer.COLOR_TYPE.NOT_A_COLOR && second != Colorizer.COLOR_TYPE.BACKGROUND) || (third != Colorizer.COLOR_TYPE.NOT_A_COLOR && third != Colorizer.COLOR_TYPE.BACKGROUND)) {
+	        				notFound=false;
+	        			}
+	        			/*boolean brightiscolor = false;
 	        			if(brightVal > 2) {
 	        				brightiscolor = true;
 	        				firstVal = brightVal;
@@ -893,8 +905,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        				break;
 	        			default:
 	        				break;
-	        			}
-	        			opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        			}*/
 	        			//Log.e("WINDOW","SELECTED FG:" + selectedColor + " BG: " + selectedBackgroundColor + " B:" + selectedBright);
 	        			
 	        			//if(selectedColor == 0 || selectedColor == 39) {
@@ -922,6 +933,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    		colormatch.reset(dlines.get(i));
 	    		float x_position = 0;
 	    		boolean colorfound = false;
+	    		//selectedBackgroundColor = 40;
 	    		
 	    		while(colormatch.find()) {
 	    			colorfound = true;
@@ -947,11 +959,19 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
 					x_position = x_position + opts.measureText(csegment,0,csegment.length());
 	    			
-	    			Integer brightVal = Integer.parseInt(((colormatch.group(2) == null) ? "0" : colormatch.group(2)));
-        			Integer firstVal = Integer.parseInt((colormatch.group(4) == null) ? "37" : colormatch.group(4));
-        			Integer secondVal = Integer.parseInt(colormatch.group(5));
+	    			//Integer brightVal = Integer.parseInt(((colormatch.group(2) == null) ? "0" : colormatch.group(2)));
+        			//Integer firstVal = Integer.parseInt((colormatch.group(4) == null) ? "37" : colormatch.group(4));
+        			//Integer secondVal = Integer.parseInt(colormatch.group(5));
         			
-        			boolean brightiscolor = false;
+					Colorizer.COLOR_TYPE first = updateColorRegisters((colormatch.group(2) == null) ? null : Integer.parseInt(colormatch.group(2)));
+        			Colorizer.COLOR_TYPE second = updateColorRegisters((colormatch.group(4) == null) ? null : Integer.parseInt(colormatch.group(4)));
+        			Colorizer.COLOR_TYPE third = updateColorRegisters((colormatch.group(5) == null) ? null : Integer.parseInt(colormatch.group(5)));
+        			csegment.setLength(0);
+        			
+        			
+        			bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackgroundColor));
+        			
+        			/*boolean brightiscolor = false;
         			if(brightVal > 2) {
         				//bright is color
         				brightiscolor = true;
@@ -1009,7 +1029,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         				break;
         			default:
         				break;
-        			}
+        			}*/
 	    		}
 	    		//end of main loop.
 	    		if(colorfound) {
@@ -1040,7 +1060,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			//Log.e("WINDOW","WRITING: " + csegment + " TO SCREEN WITH COLOR!");
 	    			csegment.setLength(0);
 	    			
-	    			bg_opts.setColor(0xFF000000);
+	    			//bg_opts.setColor(0xFF000000);
 	    		}
 	    		
 	    		if(!colorfound) {
@@ -1063,6 +1083,39 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         }
         
         
+	}
+	
+	private Colorizer.COLOR_TYPE updateColorRegisters(Integer i) {
+		if(i == null) return Colorizer.COLOR_TYPE.NOT_A_COLOR;
+		
+		Colorizer.COLOR_TYPE type = Colorizer.getColorType(i);
+		switch(type) {
+		case FOREGROUND:
+			selectedColor = i;
+			//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+			//notFound = false;
+			break;
+		case BACKGROUND:
+			Log.e("SLICK","BACKGROUND COLOR ENCOUNTERED: " + i);
+			selectedBackgroundColor = i;
+			//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+			break;
+		case ZERO_CODE:
+			//Log.e("WINDOW","ZERO CODE ENCOUNTERED");
+			selectedBright = 0;
+			selectedColor = 37;
+			selectedBackgroundColor = 40;
+			break;
+		case BRIGHT_CODE:
+			selectedBright = 1;
+			break;
+		default:
+			return Colorizer.COLOR_TYPE.NOT_A_COLOR;
+		}
+		
+		return type;
+		//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	
 	}
 	
 	public void showScroller(Canvas c) {

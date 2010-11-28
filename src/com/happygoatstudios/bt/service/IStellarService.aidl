@@ -18,6 +18,7 @@ interface IStellarService {
 	void initXfer();
 	void endXfer();
 	void sendData(in byte[] seq);
+	void saveSettings();
 	void setNotificationText(CharSequence seq);
 	void setConnectionData(String host,int port,String display);
 	void beginCompression();
