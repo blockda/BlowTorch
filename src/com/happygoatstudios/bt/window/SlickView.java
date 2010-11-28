@@ -817,11 +817,12 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        		//get the matcher
 	        		
 	        		bleedfind.reset(dlines.get(colorBleed));
+	        		//Log.e("WINDOW","BLEED ANALYSIS: " + dlines.get(colorBleed));
 	        		while(bleedfind.find()) {
 	        			Integer brightVal = Integer.parseInt(((bleedfind.group(2) == null) ? "0" : bleedfind.group(2)));
 	        			Integer firstVal = Integer.parseInt((bleedfind.group(4) == null) ? "37" : bleedfind.group(4));
 	        			Integer secondVal = Integer.parseInt(bleedfind.group(5));
-	        			
+	        			//Log.e("WINDOW","WORKING ON: " + bleedfind.group(0));
 	        			boolean brightiscolor = false;
 	        			if(brightVal > 2) {
 	        				brightiscolor = true;
@@ -832,34 +833,76 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        			
 	        			//test firstVal.
 	        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
-	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+	        			switch(type) {
+	        			case FOREGROUND:
 	        				if(bleedfind.group(4) != null || brightiscolor) { 
 	        					selectedColor = firstVal;
 	        					opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	        					notFound = false;
 	        				}
-	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+	        				break;
+	        			case BACKGROUND:
 	        				selectedBackgroundColor = firstVal;
 	        				//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+	        				break;
+	        			case ZERO_CODE:
+	        				selectedBright = 0;
+	        				selectedColor = 37;
+	        				notFound = false;
+	        				break;
+	        			case DEFAULT_BACKGROUND:
+	        				selectedBackgroundColor = firstVal;
+	        				break;
+	        			case DEFAULT_FOREGROUND:
+	        				selectedColor = 37;
+	        				selectedBright = 0;
+	        				notFound = false;
+	        				break;
+	        			case BRIGHT_CODE:
+	        				selectedBright = 1;
+	        				break;	
+	        			default:
+	        				break;
 	        			}
-	        			
 	        			type = Colorizer.getColorType(secondVal);
-	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+	        			switch(type) {
+	        			case FOREGROUND:
 	        				selectedColor = secondVal;
 	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	        				notFound = false;
-	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+	        				break;
+	        			case BACKGROUND:
 	        				selectedBackgroundColor = secondVal;
 	        				//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-	        			}
-	        			
-	        			
-	        			if(selectedColor == 0 || selectedColor == 39) {
+	        				break;
+	        			case ZERO_CODE:
 	        				selectedBright = 0;
 	        				selectedColor = 37;
-	        				opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	        				notFound = false;
+	        				break;
+	        			case DEFAULT_BACKGROUND:
+	        				selectedBackgroundColor = secondVal;
+	        				break;
+	        			case DEFAULT_FOREGROUND:
+	        				selectedColor = 37;
+	        				selectedBright = 0;
+	        				notFound = false;
+	        				break;
+	        			case BRIGHT_CODE:
+	        				selectedBright = 1;
+	        				break;
+	        			default:
+	        				break;
 	        			}
+	        			opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        			//Log.e("WINDOW","SELECTED FG:" + selectedColor + " BG: " + selectedBackgroundColor + " B:" + selectedBright);
+	        			
+	        			//if(selectedColor == 0 || selectedColor == 39) {
+	        			//	selectedBright = 0;
+	        			//	selectedColor = 37;
+	        			//	opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+	        			//	notFound = false;
+	        			//}
 	        			//Log.e("SLICK","Found "+bleedfind.group(0)+" in: " +(startpos - colorBleed) + " steps.");
 	        			//Log.e("SLICK","On line:" + dlines.get(colorBleed));
 	        			
@@ -871,7 +914,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        	}
 	        	
 	        }
-	        
+	        //Log.e("WINDOW","USING FG:" + selectedColor + " BG: " + selectedBackgroundColor + " B:" + selectedBright);
 	        for(int i=startpos;i<endpos;i++) {
 	        	int screenpos = i - startDrawingAtLine + 2;
 	    		int y_position =  (int) ((screenpos*PREF_LINESIZE)+remainder);
@@ -903,9 +946,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			
 	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
 					x_position = x_position + opts.measureText(csegment,0,csegment.length());
-	    			/*************************
-	    			 * NEW BLOCK, THIS IS GOOD CODE
-	    			 */
+	    			
 	    			Integer brightVal = Integer.parseInt(((colormatch.group(2) == null) ? "0" : colormatch.group(2)));
         			Integer firstVal = Integer.parseInt((colormatch.group(4) == null) ? "37" : colormatch.group(4));
         			Integer secondVal = Integer.parseInt(colormatch.group(5));
@@ -924,34 +965,50 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
         			//test firstVal.
         			if(colormatch.group(4) != null || brightiscolor) {
 	        			Colorizer.COLOR_TYPE type = Colorizer.getColorType(firstVal);
-	        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
-	        				selectedColor = firstVal;
-	        				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-	        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
-	        				selectedBackgroundColor = firstVal;
-	        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-	        			}
+		        		switch(type) {
+		        			case FOREGROUND:
+		        				selectedColor = firstVal;
+		        				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+		        				break;
+		        			case BACKGROUND:
+		        				selectedBackgroundColor = firstVal;
+		        				//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+		        				break;
+		        			case ZERO_CODE:
+		        				//Log.e("WINDOW","ZERO CODE ENCOUNTERED");
+		        				selectedBright = 0;
+		        				selectedColor = 37;
+		        				break;
+		        			case BRIGHT_CODE:
+		        				selectedBright = 1;
+		        				break;
+		        			default:
+		        				break;
+		        			
+		        		}
         			}
         			
         			Colorizer.COLOR_TYPE type = Colorizer.getColorType(secondVal);
-        			if(type == Colorizer.COLOR_TYPE.FOREGROUND) {
+        			switch(type) {
+        			case FOREGROUND:
         				selectedColor = secondVal;
         				//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-        			} else if(type == Colorizer.COLOR_TYPE.BACKGROUND) {
+        				//notFound = false;
+        				//break;
+        			case BACKGROUND:
         				selectedBackgroundColor = secondVal;
-        				bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-        			}
-        			
-        			//Log.e("WINDOW","PROCESSING COLOR: " + selectedColor + " BRIGHT: " + selectedBright);
-	    			
-        			if(selectedColor == 0 || selectedColor == 39) {  //if the color lookup failed, or the selected color is the "default" specified by the protocol (a 39 code is "default") 
-
-	        				selectedBright = 0;
-	        				selectedColor = 37;
-	        		}
-        			if(selectedColor == 1) {
-        				selectedBright = 1;
+        				//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
+        				break;
+        			case ZERO_CODE:
+        				//Log.e("WINDOW","ZERO CODE ENCOUNTERED");
+        				selectedBright = 0;
         				selectedColor = 37;
+        				break;
+        			case BRIGHT_CODE:
+        				selectedBright = 1;
+        				break;
+        			default:
+        				break;
         			}
 	    		}
 	    		//end of main loop.
