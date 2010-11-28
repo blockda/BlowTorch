@@ -811,9 +811,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	        		bleedfind.reset(dlines.get(colorBleed));
 	        		//Log.e("WINDOW","BLEED ANALYSIS: " + dlines.get(colorBleed));
 	        		while(bleedfind.find()) {
-	        			Colorizer.COLOR_TYPE first = updateColorRegisters((bleedfind.group(2) == null) ? null : Integer.parseInt(bleedfind.group(2)));
-	        			Colorizer.COLOR_TYPE second = updateColorRegisters((bleedfind.group(4) == null) ? null : Integer.parseInt(bleedfind.group(4)));
-	        			Colorizer.COLOR_TYPE third = updateColorRegisters((bleedfind.group(5) == null) ? null : Integer.parseInt(bleedfind.group(5)));
+	        			Colorizer.COLOR_TYPE first = updateColorRegisters(Colorizer.colormap.get(bleedfind.group(2)));
+	        			Colorizer.COLOR_TYPE second = updateColorRegisters(Colorizer.colormap.get(bleedfind.group(4)));
+	        			Colorizer.COLOR_TYPE third = updateColorRegisters(Colorizer.colormap.get(bleedfind.group(5)));
 	        			
 	        			opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	        			if((first != Colorizer.COLOR_TYPE.NOT_A_COLOR && first != Colorizer.COLOR_TYPE.BACKGROUND)|| (second != Colorizer.COLOR_TYPE.NOT_A_COLOR && second != Colorizer.COLOR_TYPE.BACKGROUND) || (third != Colorizer.COLOR_TYPE.NOT_A_COLOR && third != Colorizer.COLOR_TYPE.BACKGROUND)) {
@@ -861,9 +861,9 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
 					x_position = x_position + opts.measureText(csegment,0,csegment.length());
 	    			
-					updateColorRegisters((colormatch.group(2) == null) ? null : Integer.parseInt(colormatch.group(2)));
-        			updateColorRegisters((colormatch.group(4) == null) ? null : Integer.parseInt(colormatch.group(4)));
-        			updateColorRegisters((colormatch.group(5) == null) ? null : Integer.parseInt(colormatch.group(5)));
+					updateColorRegisters(Colorizer.colormap.get(colormatch.group(2)));
+        			updateColorRegisters(Colorizer.colormap.get(colormatch.group(4)));
+        			updateColorRegisters(Colorizer.colormap.get(colormatch.group(5)));
         			csegment.setLength(0);
         			
         			
@@ -935,12 +935,13 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	}
 	
+	private Paint scroller_paint = new Paint();
 	public void showScroller(Canvas c) {
 		//i am not sure this is going to work, so we are just going to fake something for now.
 		
-		Paint p = new Paint();
+		//Paint p = new Paint();
 		
-		p.setColor(0xFFFF0000);
+		scroller_paint.setColor(0xFFFF0000);
 		
 		//need to calculate the percentage that this takes up.
 		if(dlines.size() < 1) {
@@ -970,11 +971,11 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		int red_value = (int) (255*posPercent);
 		int alpha_value = (int) ((255-70)*posPercent+70);
 		int final_color = Color.argb(alpha_value, red_value, 100, blue_value);
-		p.setColor( final_color);
+		scroller_paint.setColor( final_color);
 		float density = this.getResources().getDisplayMetrics().density;
 		Rect r = new Rect(WINDOW_WIDTH-(int)(2*density),(int)(scrollerPos - scrollerSize/2),WINDOW_WIDTH,(int)(scrollerPos + scrollerSize/2));
 		
-		c.drawRect(r, p);
+		c.drawRect(r, scroller_paint);
 		
 	}
 	
