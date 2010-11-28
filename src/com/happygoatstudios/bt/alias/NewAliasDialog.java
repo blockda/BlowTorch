@@ -1,11 +1,15 @@
 package com.happygoatstudios.bt.alias;
 
+import java.util.List;
+
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.RemoteException;
 //import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -17,14 +21,16 @@ import android.widget.TextView;
 public class NewAliasDialog extends Dialog {
 
 	NewAliasDialogDoneListener reportto = null;
-	String original_alias = null;
+	AliasData original_alias = null;
 	int old_pos = 0;
+	IStellarService service;
+	List<String> cant_name;
 	
-	
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme) {
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,IStellarService pService,List<String> invalid_names) {
 		super(context);
 		reportto = useme;
-		
+		service = pService;
+		cant_name = invalid_names;
 	}
 	
 	public void onCreate(Bundle instanceData) {
@@ -56,6 +62,10 @@ public class NewAliasDialog extends Dialog {
 						checker.showMessage(NewAliasDialog.this.getContext(), result);
 						return;
 					} 
+					
+					if(!validatePhaseTwo(pre.getText().toString(),post.getText().toString(),checker)) {
+						return;
+					}
 					
 					if(pre != null && post != null) {
 						reportto.newAliasDialogDone(pre.getText().toString(), post.getText().toString());
@@ -93,7 +103,7 @@ public class NewAliasDialog extends Dialog {
 		tpre.setText(mPre);
 		tpost.setText(mPost);
 		
-		tpre.setEnabled(false);
+		//tpre.setEnabled(false);
 		
 		Button cancel = (Button)findViewById(R.id.new_alias_cancel);
 		cancel.setOnClickListener(new View.OnClickListener() {
@@ -120,6 +130,13 @@ public class NewAliasDialog extends Dialog {
 					return;
 				} 
 				
+				//STAGE TWO VALIDATION!
+				//must not be: 1) special command.
+				//			   2) existing alias.
+				if(!validatePhaseTwo(pre.getText().toString(),post.getText().toString(),checker)) {
+					return;
+				}
+				
 				
 				if(pre != null && post != null) {
 					reportto.editAliasDialogDone(pre.getText().toString(), post.getText().toString(),old_pos,original_alias);
@@ -129,8 +146,48 @@ public class NewAliasDialog extends Dialog {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
+	private boolean validatePhaseTwo(String pre, String post, Validator checker) {
+		String invalid_name = "";
+		boolean is_invalid = false;
+		//Log.e("FLIIP","CHECK EXISTING:");
+		for(String name : cant_name) {
+			//Log.e("FLIIP","EXISTING ALIAS: " + name);
+			if(pre.equals(name)) {
+				is_invalid = true;
+				invalid_name = name;
+			}
+		}
+		if(is_invalid) {
+			String already = "Alias: \""+invalid_name+"\" exists already.";
+			checker.showMessage(NewAliasDialog.this.getContext(), already);
+			return false;
+		}
+		
+		try {
+			//Log.e("FLIIP","TRYING SYSTEM COMMANDS");
+			for(String name : (List<String>)service.getSystemCommands()) {
+				//Log.e("FLIIP","SYSTEM COMMAND: " + name);
+				if(pre.equals(name)) {
+					is_invalid = true;
+					invalid_name = name;
+				}
+			}
+		} catch (RemoteException e) {
+			throw new RuntimeException(e);
+		}
+		
+		if(is_invalid) {
+			String system = "\""+invalid_name+"\" is reserved for a system command.";
+			checker.showMessage(NewAliasDialog.this.getContext(), system);
+			return false;
+		}
+		
+		return true;
+	}
+	
 	boolean isEditor = false;
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,String old_alias) {
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,AliasData old_alias,IStellarService pService,List<String> invalid_names) {
 		super(context);
 		isEditor=true;
 		reportto = useme;
@@ -138,6 +195,8 @@ public class NewAliasDialog extends Dialog {
 		old_pos = position;
 		mPre = pre;
 		mPost = post;
+		service = pService;
+		cant_name = invalid_names;
 	}
 
 		//load in the array adapter to hook up the list view

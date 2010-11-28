@@ -54,6 +54,7 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 //import android.util.Log;
 
+import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
@@ -427,8 +428,8 @@ public class StellarService extends Service {
 						while(replacer.find()) {
 							//String matched = replacer.group(0);
 							found = true;
-							String replace_with = the_settings.getAliases().get(replacer.group(0));
-							replacer.appendReplacement(replaced, replace_with);
+							AliasData replace_with = the_settings.getAliases().get(replacer.group(0));
+							replacer.appendReplacement(replaced, replace_with.getPost());
 						}
 						
 						replacer.appendTail(replaced);
@@ -441,8 +442,8 @@ public class StellarService extends Service {
 								Matcher recursivematch = to_replace.matcher(replaced.toString());
 								while(recursivematch.find()) {
 									recursivefound = true;
-									String replace_with = the_settings.getAliases().get(recursivematch.group(0));
-									recursivematch.appendReplacement(buffertemp, replace_with);
+									AliasData replace_with = the_settings.getAliases().get(recursivematch.group(0));
+									recursivematch.appendReplacement(buffertemp, replace_with.getPost());
 								}
 								if(recursivefound) {
 									recursivematch.appendTail(buffertemp);
@@ -834,15 +835,15 @@ public class StellarService extends Service {
 		}
 
 
-		public void addAlias(String what, String to) throws RemoteException {
+		public void addAlias(AliasData d) throws RemoteException {
 			
-			the_settings.getAliases().put(what, to);
+			the_settings.getAliases().put(d.getPre(), d);
 			buildAliases();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
-		public Map<String, String> getAliases() throws RemoteException {
+		public Map<String, AliasData> getAliases() throws RemoteException {
 			
 			return the_settings.getAliases();
 		}
@@ -852,7 +853,7 @@ public class StellarService extends Service {
 		public void setAliases(Map map) throws RemoteException {
 			
 			the_settings.getAliases().clear();
-			the_settings.setAliases(new HashMap<String,String>(map));
+			the_settings.setAliases(new HashMap<String,AliasData>(map));
 			buildAliases();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
@@ -1621,6 +1622,7 @@ public class StellarService extends Service {
 		public void setEncoding(String input) throws RemoteException {
 			synchronized(the_settings) {
 				the_settings.setEncoding(input);
+				the_processor.setEncoding(input);
 			}
 		}
 		
@@ -1700,6 +1702,15 @@ public class StellarService extends Service {
 				the_settings.setFullScreen(use);
 			}
 		}
+
+		@SuppressWarnings("unchecked")
+		public List getSystemCommands() throws RemoteException {
+			ArrayList<String> names = new ArrayList<String>();
+			for(String name : specialcommands.keySet()) {
+				names.add(name);
+			}
+			return names;
+		}
 		
 	};
 	
@@ -1770,8 +1781,9 @@ public class StellarService extends Service {
 								if(the_settings.getAliases().containsKey(alias)) {
 									//real argument
 									if(!argument.equals("")) {
-										the_settings.getAliases().remove(alias);
-										the_settings.getAliases().put(alias, argument);
+										AliasData mod = the_settings.getAliases().remove(alias);
+										mod.setPost(argument);
+										the_settings.getAliases().put(alias, mod);
 									} else {
 										//display error message
 										String noarg_message = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"." + alias + " replacetext\"" + Colorizer.colorWhite +"\n";
@@ -1902,10 +1914,10 @@ public class StellarService extends Service {
 		
 		//StringBuffer joined_alias = new StringBuffer();
 		if(a.length > 0) {
-			joined_alias.append("("+(String)a[0]+")");
+			joined_alias.append("(\\b"+(String)a[0]+"\\b)");
 			for(int i=1;i<a.length;i++) {
 				joined_alias.append("|");
-				joined_alias.append("("+(String)a[i]+")");
+				joined_alias.append("(\\b"+(String)a[i]+"\\b)");
 			}
 			
 		}

@@ -156,6 +156,21 @@ public class Validator {
 		
 	}
 	
+public void showMessageNoDecoration(Context c,String result) {
+		
+		
+		Toast t = Toast.makeText(c, result, Toast.LENGTH_LONG);
+		LayoutInflater li = (LayoutInflater) c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View v = li.inflate(R.layout.toast_override, null);
+		TextView tv = (TextView) v.findViewById(R.id.message);
+		tv.setText(result);
+		
+		t.setView(v);
+		t.setDuration(Toast.LENGTH_LONG);
+		t.show();
+		
+	}
+	
 	private class ValidationItem {
 		public int What;
 		public EditText field;

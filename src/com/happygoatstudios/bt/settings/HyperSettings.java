@@ -12,6 +12,7 @@ import org.xmlpull.v1.XmlSerializer;
 //import android.util.Log;
 import android.util.Xml;
 
+import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
@@ -61,7 +62,7 @@ public class HyperSettings {
 	
 
 	
-	private HashMap<String,String> Aliases = new HashMap<String,String>();
+	private HashMap<String,AliasData> Aliases = new HashMap<String,AliasData>();
 	private HashMap<String,Vector<SlickButtonData>> ButtonSets = new HashMap<String,Vector<SlickButtonData>>();
 	private HashMap<String,ColorSetSettings> SetSettings = new HashMap<String,ColorSetSettings>();
 	private HashMap<String,TriggerData> Triggers = new HashMap<String,TriggerData>();
@@ -223,9 +224,10 @@ public class HyperSettings {
 			//for each alias, dump the data.
 			Set<String> keys = data.getAliases().keySet();
 			for(String key : keys) {
+				AliasData tmpalias = data.getAliases().get(key);
 				out.startTag("", BaseParser.TAG_ALIAS);
-				out.attribute("", BaseParser.ATTR_PRE, key);
-				out.attribute("", BaseParser.ATTR_POST, data.getAliases().get(key));
+				out.attribute("", BaseParser.ATTR_PRE, tmpalias.getPre());
+				out.attribute("", BaseParser.ATTR_POST, tmpalias.getPost());
 				out.endTag("", BaseParser.TAG_ALIAS);
 			}
 			
@@ -437,11 +439,11 @@ public class HyperSettings {
 
 	//getters and setters under nya.
 
-	public void setAliases(HashMap<String,String> aliases) {
+	public void setAliases(HashMap<String,AliasData> aliases) {
 		Aliases = aliases;
 	}
 
-	public HashMap<String,String> getAliases() {
+	public HashMap<String,AliasData> getAliases() {
 		return Aliases;
 	}
 

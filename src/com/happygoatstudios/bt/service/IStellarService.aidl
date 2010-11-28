@@ -9,6 +9,7 @@ import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerProgress;
+import com.happygoatstudios.bt.alias.AliasData;
 
 interface IStellarService {
 	void registerCallback(IStellarServiceCallback c);
@@ -23,7 +24,8 @@ interface IStellarService {
 	void stopCompression();
 	void requestBuffer();
 	void saveBuffer(String buffer);
-	void addAlias(String what, String to);
+	void addAlias(in AliasData a);
+	List getSystemCommands();
 	Map getAliases();
 	void setAliases(in Map map);
 	void setFontSize(int size);
