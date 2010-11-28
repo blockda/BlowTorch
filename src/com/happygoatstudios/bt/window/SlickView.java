@@ -858,6 +858,7 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 	    				
 	    			} 
 	    			
+	    			
 	    			canvas.drawText(csegment, 0, csegment.length(), x_position, y_position, opts);
 					x_position = x_position + opts.measureText(csegment,0,csegment.length());
 	    			
