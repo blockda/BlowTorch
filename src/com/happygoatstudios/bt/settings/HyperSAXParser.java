@@ -8,6 +8,7 @@ import java.util.Vector;
 import org.xml.sax.Attributes;
 
 
+import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
@@ -31,6 +32,7 @@ public class HyperSAXParser extends BaseParser {
 
 	final TimerData current_timer = new TimerData();
 	final TriggerData current_trigger = new TriggerData();
+	final AliasData current_alias = new AliasData();
 	
 	public HyperSAXParser(String location, Context context) {
 		super(location, context);
@@ -59,7 +61,7 @@ public class HyperSAXParser extends BaseParser {
 		Element timerToastResponder = timer.getChild(TAG_TOASTRESPONDER);
 		Element timerAckResponder = timer.getChild(TAG_ACKRESPONDER);
 		
-		final HashMap<String,String> aliases_read = new HashMap<String,String>();
+		final HashMap<String,AliasData> aliases_read = new HashMap<String,AliasData>();
 		final HashMap<String,Vector<SlickButtonData>> buttons = new HashMap<String,Vector<SlickButtonData>>();
 		final Vector<SlickButtonData> current_button_set = new Vector<SlickButtonData>();
 		final StringBuffer button_set_name = new StringBuffer("default");
@@ -142,7 +144,11 @@ public class HyperSAXParser extends BaseParser {
 		alias.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes attributes) {
-				aliases_read.put(attributes.getValue("",ATTR_PRE), attributes.getValue("",ATTR_POST));
+				current_alias.setPre(attributes.getValue("",ATTR_PRE));
+				current_alias.setPost(attributes.getValue("",ATTR_POST));
+				aliases_read.put(attributes.getValue("",ATTR_PRE), current_alias.copy());
+				//aliases_read.put(attributes.getValue("",ATTR_PRE), attributes.getValue("",ATTR_POST));
+				
 			}
 			
 		});
@@ -151,7 +157,7 @@ public class HyperSAXParser extends BaseParser {
 
 			@SuppressWarnings("unchecked")
 			public void end() {
-				tmp.setAliases((HashMap<String,String>)aliases_read.clone());
+				tmp.setAliases((HashMap<String,AliasData>)aliases_read.clone());
 			}
 			
 		});

@@ -1,11 +1,17 @@
 package com.happygoatstudios.bt.alias;
 
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -27,22 +33,22 @@ import android.widget.TextView;
 
 public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListener {
 	
-	private ArrayList<String> aliases;
+	//private ArrayList<String> aliases;
+	private ArrayList<AliasEntry> entries;
 	private ConnectionAdapter apdapter;
 	
 	ListView lv = null;
 	
 	AliasDialogDoneListener reporto = null;
-	Map<String,String> input;
+	HashMap<String,AliasData> input;
+	
+	IStellarService service;
 
-	public AliasEditorDialog(Context context,Map<String,String> pinput,AliasDialogDoneListener useme) {
+	public AliasEditorDialog(Context context,HashMap<String,AliasData> pinput,AliasDialogDoneListener useme,IStellarService pService) {
 		super(context);
 		reporto = useme;
 		input = pinput;
-		
-		
-		
-		
+		service = pService;
 	}
 	
 	public void onCreate(Bundle b) {
@@ -53,7 +59,10 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 			
 			setContentView(R.layout.alias_dialog);
-			aliases = new ArrayList<String>();
+			
+			//aliases = new ArrayList<String>();
+			entries = new ArrayList<AliasEntry>();
+			
 			
 			lv = (ListView)findViewById(R.id.alias_list);
 			lv.setScrollbarFadingEnabled(false);
@@ -61,25 +70,23 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			lv.setOnItemLongClickListener(new listItemLongClicked());
 			
 			lv.setEmptyView(findViewById(R.id.alias_empty));
-			//Object[] pres = input.keySet().toArray();
-			//Object[] posts = input.
-			//Set<Entry<String,String>> list = input.entrySet();
 			
-			Object[] keys = input.keySet().toArray();
+			/*Object[] keys = input.keySet().toArray();
 			Object[] values = input.values().toArray();
-			
-			if(keys.length != values.length) {
-				//Log.e("ALIAS","UNEQUAL ALIAS TARGETS");
-			}
 			
 			for(int i=0;i<keys.length;i++) {
 				aliases.add((String)keys[i] + "[||]" + (String)values[i]);
+			}*/
+			for(AliasData a : input.values()) {
+				entries.add(new AliasEntry(a.getPre(),a.getPost()));
 			}
 			
-			apdapter = new ConnectionAdapter(lv.getContext(),R.layout.alias_row,aliases);
+			apdapter = new ConnectionAdapter(lv.getContext(),R.layout.alias_row,entries);
 			lv.setAdapter(apdapter);
 			lv.setTextFilterEnabled(true);
-			apdapter.sort(String.CASE_INSENSITIVE_ORDER);
+			
+			apdapter.sort(new AliasComparator());
+			//apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 		}
 		
 		Button butt = (Button)findViewById(R.id.new_alias_button);
@@ -88,7 +95,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			
 			public void onClick(View arg0) {
 				
-				NewAliasDialog diag = new NewAliasDialog(AliasEditorDialog.this.getContext(),AliasEditorDialog.this);
+				NewAliasDialog diag = new NewAliasDialog(AliasEditorDialog.this.getContext(),AliasEditorDialog.this,service,computeNames(""));
 				diag.setTitle("NEW ALIAS");
 				diag.show();
 			}
@@ -99,7 +106,21 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		done.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				reporto.aliasDialogDone(AliasEditorDialog.this.aliases);
+				
+				if(offenders.size() > 0) {
+					String message = "Cannot save alias list with circular dependencies.";
+					Validator v = new Validator();
+					v.showMessageNoDecoration(AliasEditorDialog.this.getContext(), message);
+					return;
+				}
+				//make new list.
+				ArrayList<AliasData> tmp = new ArrayList<AliasData>();
+				for(int i = 0;i<apdapter.getCount();i++) {
+					AliasEntry e = apdapter.getItem(i);
+					tmp.add(new AliasData(e.pre,e.post));
+				}
+				reporto.aliasDialogDone(tmp);
+				//reporto.aliasDialogDone(AliasEditorDialog.this.aliases);
 				AliasEditorDialog.this.dismiss();
 			}
 		});
@@ -114,18 +135,10 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 
 	}
 	
-	public void onStart() {
-		super.onStart();
-		//if(noAliases) {
-		//	Toast t = Toast.makeText(AliasEditorDialog.this.getContext(), "No aliases loaded. Click below to create new aliases.",Toast.LENGTH_LONG);
-		//	t.show();
-		//}
-	}
-	
-	private class ConnectionAdapter extends ArrayAdapter<String> {
-		private ArrayList<String> items;
+	private class ConnectionAdapter extends ArrayAdapter<AliasEntry> {
+		private ArrayList<AliasEntry> items;
 		
-		public ConnectionAdapter(Context context, int txtviewresid, ArrayList<String> objects) {
+		public ConnectionAdapter(Context context, int txtviewresid, ArrayList<AliasEntry> objects) {
 			super(context, txtviewresid, objects);
 			this.items = objects;
 		}
@@ -137,21 +150,22 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				v = li.inflate(R.layout.alias_row, null);
 			}
 			
-			String m = items.get(position);
+			//String m = items.get(position);
 			
-			String[] parts = m.split("\\Q[||]\\E");
+			//String[] parts = m.split("\\Q[||]\\E");
+			AliasEntry a = items.get(position);
 			
-			if(m != null) {
+			if(a != null) {
 				TextView pre = (TextView)v.findViewById(R.id.alias_pre);
 				TextView post = (TextView)v.findViewById(R.id.alias_post);
 				//TextView port = (TextView)v.findViewById(R.id.port);
 				if(pre != null) {
 					//title.setText(" " + m.getDisplayName());
-					pre.setText(parts[0] + " ");
+					pre.setText(a.pre + " ");
 				}
 				if(post != null) {
 					//host.setText("\t"  + m.getHostName() + ":" + m.getPortString());
-					post.setText(" " + parts[1]);
+					post.setText(" " + a.post);
 				}
 				//if(port != null) {
 				//	port.setText(" Port: " + m.getPortString());
@@ -191,15 +205,15 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
 			//Log.e("LAUNCHER","List item long clicked!");
-			String muc = apdapter.getItem(arg2);
+			AliasEntry muc = apdapter.getItem(arg2);
 			
 			
 			Message delmsg = aliasModifier.obtainMessage(MSG_DELETEALIAS);
-			delmsg.obj = muc;
+			delmsg.obj = new AliasData(muc.pre,muc.post);
 			delmsg.arg1 = arg2; //add position
 			
 			Message modmsg = aliasModifier.obtainMessage(MSG_MODIFYALIAS);
-			modmsg.obj = muc;
+			modmsg.obj = new AliasData(muc.pre,muc.post);
 			modmsg.arg1 = arg2; //add position
 			
 			AlertDialog.Builder build = new AlertDialog.Builder(AliasEditorDialog.this.getContext())
@@ -226,15 +240,23 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
 			case MSG_DELETEALIAS:
-				String todelete = (String)msg.obj;
-				apdapter.remove(todelete);
+				
+				apdapter.remove(apdapter.getItem(msg.arg1));
+				//check to see if this is an offender
+				for(int i=0;i<apdapter.getCount();i++) {
+					//AliasEntry e = apdapter.getItem(i);
+					validateList();
+				}
+				
 				apdapter.notifyDataSetChanged();
+				apdapter.sort(new AliasComparator());
+				//Log.e("ALIASED","DELETING ALIAS");
 				break;
 			case MSG_MODIFYALIAS:
-				String tomodify = (String)msg.obj;
-				String[] parts = tomodify.split("\\Q[||]\\E");
+				//String tomodify = (String)msg.obj;
+				//String[] parts = tomodify.split("\\Q[||]\\E");
 				int position = msg.arg1;
-				NewAliasDialog diag = new NewAliasDialog(AliasEditorDialog.this.getContext(),AliasEditorDialog.this,parts[0],parts[1],position,tomodify);
+				NewAliasDialog diag = new NewAliasDialog(AliasEditorDialog.this.getContext(),AliasEditorDialog.this,((AliasData)msg.obj).getPre(),((AliasData)msg.obj).getPost(),position,(AliasData)msg.obj,service,computeNames(((AliasData)msg.obj).getPre()));
 				diag.setTitle("Modify Alias:");
 				diag.show();
 				break;
@@ -243,6 +265,20 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			}
 		}
 	};
+	
+	ArrayList<String> names = new ArrayList<String>();
+	
+	private List<String> computeNames(String name) {
+		names.clear(); 
+		for(int i=0;i<apdapter.getCount();i++) {
+			if(!apdapter.getItem(i).pre.equals(name)) {
+				//Log.e("FLOOP","COMPUTED " + apdapter.getItem(i).pre + " AS INVALID");
+				names.add(apdapter.getItem(i).pre);
+			}
+		}
+		
+		return names;
+	}
 
 	public void newAliasDialogDone(String pre, String post) {
 
@@ -254,78 +290,122 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		 */
 
 
-		
-		apdapter.add(pre + "[||]" + post);
+		AliasEntry tmp = new AliasEntry(pre,post);
+		apdapter.add(tmp);
 		apdapter.notifyDataSetChanged();
-		
-		boolean validated = validateEntry(pre,post);
+		apdapter.sort(new AliasComparator());
+		//int pos = apdapter.getPosition(tmp);
+		boolean validated = validateList();
 		if(!validated) {
 			//do some stuff to make the dialog better.
 			apdapter.notifyDataSetChanged();
+			apdapter.sort(new AliasComparator());
 		} else {
 			//Log.e("ALIASEDITOR","NEW ALIAS VALID!");
 			offenders.removeAllElements();
 			offenders.clear();
 			apdapter.notifyDataSetChanged();
+			apdapter.sort(new AliasComparator());
 			//apdapter.
 		}
-		apdapter.sort(String.CASE_INSENSITIVE_ORDER);
+		//apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 
 	}
 	
-	public void editAliasDialogDone(String pre,String post,int pos,String orig) {
-		apdapter.remove(orig);
-		apdapter.insert(pre + "[||]" + post,pos);
+	public void editAliasDialogDone(String pre,String post,int pos,AliasData orig) {
+		apdapter.remove(apdapter.getItem(pos));
+		AliasEntry tmp = new AliasEntry(pre,post);
+		apdapter.insert(tmp,pos);
 		apdapter.notifyDataSetChanged();
-		
-		boolean validated = validateEntry(pre,post);
+		apdapter.sort(new AliasComparator());
+		pos = apdapter.getPosition(tmp);
+		boolean validated = validateList();
 		if(!validated) {
 			//do some stuff to make the dialog better.
 			apdapter.notifyDataSetChanged();
+			//apdapter.sort(new AliasComparator());
 		} else {
 			//Log.e("ALIASEDITOR","EDITED ALIAS VALID!");
 			offenders.removeAllElements();
 			offenders.clear();
 			apdapter.notifyDataSetChanged();
-			
+			//apdapter.sort(new AliasComparator());
 		}
-		apdapter.sort(String.CASE_INSENSITIVE_ORDER);
+		//apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 	}
 	
 	Vector<Integer> offenders = new Vector<Integer>();
 	
-	public boolean validateEntry(String pre,String post) {
+	public boolean validateList() {
 		Boolean retval = true;
 		int count = apdapter.getCount();
 		
 		offenders.removeAllElements();
 		offenders.clear();
 		
-		Integer offendingpos = apdapter.getPosition(pre + "[||]" + post);
 		
-		for(int i=0;i<count;i++) {
-			String test = apdapter.getItem(i);
-			String[] parts = test.split("\\Q[||]\\E");
-			String test_pre = parts[0];
-			String test_post = parts[1];
-			
-			//test to see if the test post matches the new pre, afterstep test
-			if(test_post.contains(pre)) {
-				//it is circuluar only if the old pre is contained in the new pre.
-				if(post.contains(test_pre)) {
-					//circular reference. flag accordingly.
-					//Toast.makeText(this.getContext(), "CIRCULAR REFERENCES DETECTED", 2000);
-					//Log.e("ALIASEDITOR","CIRCULAR ALIAS DETECTED!");
-					offenders.add(new Integer(i));
-					retval = false;
-					
-					if(!offenders.contains(offendingpos)) {
-						offenders.add(offendingpos);
+		
+		for(int j=0;j<count;j++) {
+			Integer offendingpos = j;
+			AliasEntry test = apdapter.getItem(j);
+			Pattern wb_post = Pattern.compile("\\b"+apdapter.getItem(j).post+"\\b");
+			Matcher inc_post = wb_post.matcher("");
+			for(int i=0;i<count;i++) {
+				AliasEntry a = apdapter.getItem(i);
+				//String[] parts = test.split("\\Q[||]\\E");
+				//String test_pre = parts[0];
+				//String test_post = parts[1];
+				
+				//test to see if the test post matches the new pre, afterstep test
+				//Pattern wb_pre = Pattern.compile("\\b"+a.pre+"\\b");
+				Pattern test_post = Pattern.compile("\\b" + a.post + "\\b");
+				Matcher ma_post = test_post.matcher(test.pre);
+				//Matcher ma_pre = wb_pre.matcher(input)
+				if(ma_post.find()) {
+					//it is circuluar only if the old pre is contained in the new pre.
+					inc_post.reset(a.pre);
+					if(inc_post.find()) {
+						//circular reference. flag accordingly.
+						//Toast.makeText(this.getContext(), "CIRCULAR REFERENCES DETECTED", 2000);
+						//Log.e("ALIASEDITOR","CIRCULAR ALIAS DETECTED!");
+						offenders.add(new Integer(i));
+						retval = false;
+						
+						if(!offenders.contains(offendingpos)) {
+							offenders.add(offendingpos);
+						}
 					}
 				}
 			}
 		}
 		return retval;
+	}
+	
+	private class AliasComparator implements Comparator<AliasEntry> {
+
+		public int compare(AliasEntry a, AliasEntry b) {
+			return a.pre.compareToIgnoreCase(b.pre);
+		}
+		
+	}
+	
+	private class AliasEntry { 
+		public String pre;
+		public String post;
+		/*public AliasEntry() {
+			pre = "";
+			post = "";
+		}*/
+		
+		public AliasEntry(String pPre,String pPost) {
+			pre = pPre;
+			post = pPost;
+		}
+		
+		/*public AliasEntry(AliasData i) {
+			pre = i.getPre();
+			post = i.getPost();
+		}*/
 	}
 
 }

@@ -56,6 +56,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.alias.AliasDialogDoneListener;
 import com.happygoatstudios.bt.alias.AliasEditorDialog;
 import com.happygoatstudios.bt.button.ButtonEditorDialog;
@@ -650,6 +651,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					//the service is connected at this point, so the service is alive and settings are loaded
 					//TODO: SETTINGS LOAD PLACE
 					//attemppt to load button sets.
+					@SuppressWarnings("unused")
 					boolean fontSizeChanged = false;
 					//boolean fullscreen_now = false;
 					if(settingsDialogRun) {
@@ -852,9 +854,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						
 						screen2.setFont(font);
 						
-						if(fontSizeChanged) {
-							screen2.reBreakBuffer();
-						}
+						//if(fontSizeChanged) {
+						//	screen2.reBreakBuffer();
+						//}
 						
 						
 						if(service.getUseExtractUI()) {
@@ -1329,7 +1331,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		case 99:
 			AliasEditorDialog d = null;
 			try {
-				d = new AliasEditorDialog(this,service.getAliases(),this);
+				d = new AliasEditorDialog(this,(HashMap<String,AliasData>)service.getAliases(),this,service);
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
@@ -1897,13 +1899,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 	};
 	
-	public void aliasDialogDone(ArrayList<String> items) {
-		HashMap<String,String> map = new HashMap<String,String>();
+	public void aliasDialogDone(ArrayList<AliasData> items) {
+		HashMap<String,AliasData> map = new HashMap<String,AliasData>();
 		
 		if(items.size() > 0) {
-			for(int i=0;i<items.size();i++) {
-				String[] parts = items.get(i).split("\\Q[||]\\E");
-				map.put(parts[0], parts[1]);
+			for(AliasData d : items) {
+				map.put(d.getPre(), d);
 			}
 			try {
 				service.setAliases(map);
