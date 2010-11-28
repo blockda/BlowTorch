@@ -2283,7 +2283,7 @@ public class StellarService extends Service {
 	
 	private class BellCommand extends SpecialCommand {
 		public BellCommand() {
-			this.commandName = "bell";
+			this.commandName = "dobell";
 		}
 		public void execute(Object o) {
 			
