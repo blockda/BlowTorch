@@ -135,6 +135,7 @@ public class Colorizer {
 	{
 		colormap.put("0", 0);
 		colormap.put("1", 1);
+		colormap.put("2",2);
 		colormap.put("30", 30);
 		colormap.put("31", 31);
 		colormap.put("32", 32);
@@ -176,6 +177,11 @@ public class Colorizer {
 	}
 	
 	public enum COLOR_TYPE {
+		ZERO_CODE,
+		BRIGHT_CODE,
+		DEFAULT_FOREGROUND,
+		DEFAULT_BACKGROUND,
+		DIM_CODE,
 		BACKGROUND,
 		FOREGROUND,
 		NOT_A_COLOR
@@ -186,13 +192,32 @@ public class Colorizer {
 		Integer c = colormap.get(value.toString());
 		
 		if(c == null) {
-			c = 40;
+			return COLOR_TYPE.NOT_A_COLOR;
 		}
 		
 		return getColorType(c);
 	}
 
 	public static COLOR_TYPE getColorType(Integer value) {
+		if(value == 0) {
+			return COLOR_TYPE.ZERO_CODE;
+		}
+		
+		if(value == 1) {
+			return COLOR_TYPE.BRIGHT_CODE;
+		}
+		
+		if(value == 2) {
+			return COLOR_TYPE.DIM_CODE;
+		}
+		
+		if(value == 39) {
+			return COLOR_TYPE.DEFAULT_FOREGROUND;
+		}
+		
+		if(value == 49) {
+			return COLOR_TYPE.DEFAULT_BACKGROUND;
+		}
 		
 		COLOR_TYPE retval = COLOR_TYPE.NOT_A_COLOR;
 		if(value < 40 && value >=30) {
