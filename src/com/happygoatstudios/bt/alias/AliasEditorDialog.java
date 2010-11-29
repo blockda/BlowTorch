@@ -348,8 +348,8 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		for(int j=0;j<count;j++) {
 			Integer offendingpos = j;
 			AliasEntry test = apdapter.getItem(j);
-			Pattern wb_post = Pattern.compile("\\b"+apdapter.getItem(j).post+"\\b");
-			Matcher inc_post = wb_post.matcher("");
+			Pattern wb_pre = Pattern.compile("\\b"+apdapter.getItem(j).pre+"\\b");
+			Matcher inc_pre = wb_pre.matcher("");
 			for(int i=0;i<count;i++) {
 				AliasEntry a = apdapter.getItem(i);
 				//String[] parts = test.split("\\Q[||]\\E");
@@ -358,13 +358,13 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				
 				//test to see if the test post matches the new pre, afterstep test
 				//Pattern wb_pre = Pattern.compile("\\b"+a.pre+"\\b");
-				Pattern test_post = Pattern.compile("\\b" + a.post + "\\b");
-				Matcher ma_post = test_post.matcher(test.pre);
+				Pattern test_pre = Pattern.compile("\\b" + a.pre + "\\b");
+				Matcher ma_pre = test_pre.matcher(test.post);
 				//Matcher ma_pre = wb_pre.matcher(input)
-				if(ma_post.find()) {
+				if(ma_pre.find()) {
 					//it is circuluar only if the old pre is contained in the new pre.
-					inc_post.reset(a.pre);
-					if(inc_post.find()) {
+					inc_pre.reset(a.post);
+					if(inc_pre.find()) {
 						//circular reference. flag accordingly.
 						//Toast.makeText(this.getContext(), "CIRCULAR REFERENCES DETECTED", 2000);
 						//Log.e("ALIASEDITOR","CIRCULAR ALIAS DETECTED!");
