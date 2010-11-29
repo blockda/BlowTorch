@@ -37,7 +37,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.text.format.Time;
-import android.util.Log;
+//import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
 import android.view.LayoutInflater;
@@ -189,7 +189,7 @@ public class Launcher extends Activity implements ReadyListener {
 			//}
 			
 			//Log.e("LAUNCHER","LOADING OLD SETTINGS AND MARKING VERSION: " + versionString);
-			launcher_settings.setCurrentVersion("v1.0.4");
+			launcher_settings.setCurrentVersion("1.0.4");
 			
 			saveXML();
 		} catch (IOException e) {
@@ -215,7 +215,7 @@ public class Launcher extends Activity implements ReadyListener {
 		int prev_minor = 0;
 		int prev_rev = 0;
 		//compare version codes.
-		Pattern version = Pattern.compile("^v(\\d+)\\.(\\d+)\\.(\\d+)$");
+		Pattern version = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)$");
 		Matcher vmatch = version.matcher(versionString);
 		if(vmatch.matches()) {
 			now_major = Integer.parseInt(vmatch.group(1));
@@ -237,15 +237,20 @@ public class Launcher extends Activity implements ReadyListener {
 		boolean isoutdated = false;
 		
 		if(now_major > prev_major) {
+			//Log.e("LAUNCHER","MAJOR NOW:" + now_major + " MAJOR PREV:" + prev_major);
 			isoutdated = true;
 		} else if (now_minor > prev_minor) {
+			//Log.e("LAUNCHER","MINOR NOW:" + now_minor + " MINOR PREV:" + prev_minor);
 			isoutdated = true;
 		} else if (now_rev > prev_rev) {
+			//Log.e("LAUNCHER","REV NOW:" + now_rev + " REV PREV:" + prev_rev);
 			isoutdated = true;
 		}
 		
 		if(isoutdated) {
 			dowhatsnew = true;
+			launcher_settings.setCurrentVersion(versionString);
+			saveXML();
 			//Log.e("LAUNCHER","DOING OUTATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
 		} else {
 			//Log.e("LAUNCHER","NOT OUTDATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
@@ -345,7 +350,7 @@ public class Launcher extends Activity implements ReadyListener {
 		    int statusBarHeight = rect.top;
 		    int contentViewTop = win.findViewById(Window.ID_ANDROID_CONTENT).getTop();
 		    int titleBarHeight = statusBarHeight - contentViewTop ;
-		    Log.d("ID-ANDROID-CONTENT", "titleBarHeight = " + titleBarHeight );
+		    //Log.d("ID-ANDROID-CONTENT", "titleBarHeight = " + titleBarHeight );
 		    
 		    SharedPreferences pref = Launcher.this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 			Editor e = pref.edit();
@@ -403,16 +408,11 @@ public class Launcher extends Activity implements ReadyListener {
 	    		DoNewStartup();
 	    	} else {
 	    		//service exists, we should figure out the name of what it is playing.
-	    		Log.e("LAUNCHER","SERVICE IS RUNNING");
+	    		//Log.e("LAUNCHER","SERVICE IS RUNNING");
 	    		launch = muc.copy();
 	    		bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
 				
 	    	}
-	    	
-	    	
-	    	
-	    	
-	    	
 	    	
 		}
 	}
