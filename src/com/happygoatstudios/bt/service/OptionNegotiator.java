@@ -136,7 +136,9 @@ public class OptionNegotiator {
     		buf.put(responsedata,0,responsedata.length);
     		buf.put(sequence,sequence.length-2,2);
     		
-    		attempt++;
+    		if(attempt < 2) {
+    			attempt++;
+    		} //else return UNKNOWN every time
     		return buf.array();
     		
     		//break;
