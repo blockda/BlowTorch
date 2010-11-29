@@ -557,8 +557,16 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					builder.setMessage("XML Error: " + xmlerror + "\nSettings have not been loaded.");
 					builder.setTitle("Problem with XML File.");
 					
+					
+					//tvtmp.setText("TESTING");
+					//builder.setView(tvtmp);
+					
+					
 					AlertDialog error = builder.create();
 					error.show();
+					TextView tvtmp = (TextView)error.findViewById(android.R.id.message);
+					tvtmp.setTypeface(Typeface.MONOSPACE);
+					
 					break;
 				case MESSAGE_RELOADBUTTONSET:
 					
