@@ -11,7 +11,7 @@ import android.util.Xml;
 
 public class LauncherSettings {
 
-	private String currentVersion = "v1.0.4";
+	private String currentVersion = "1.0.4";
 	
 	private HashMap<String,MudConnection> list = new HashMap<String,MudConnection>();
 	
