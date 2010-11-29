@@ -179,17 +179,17 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 			
 			//get the version information.
-			PackageManager m = this.getPackageManager();
-			String versionString = null;
-			try {
-				versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
-			} catch (NameNotFoundException e1) {
+			//PackageManager m = this.getPackageManager();
+			//String versionString = null;
+			//try {
+			//	versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+			//} catch (NameNotFoundException e1) {
 				//can't execute on our package aye?
-				throw new RuntimeException(e);
-			}
+			//	throw new RuntimeException(e);
+			//}
 			
 			//Log.e("LAUNCHER","LOADING OLD SETTINGS AND MARKING VERSION: " + versionString);
-			launcher_settings.setCurrentVersion(versionString);
+			launcher_settings.setCurrentVersion("v1.0.4");
 			
 			saveXML();
 		} catch (IOException e) {
