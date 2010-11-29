@@ -3,7 +3,8 @@
 <PreferenceScreen
 
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:key="first_screen">
+	android:key="first_screen"
+	>
 	
 	<PreferenceCategory android:title = "Program Settings">
 		<ListPreference
@@ -13,9 +14,8 @@
 			android:defaultValue="ISO-8859-1"/>	
 		<PreferenceScreen
 			android:key="INPUT_SCREEN"
-			android:title="Window Options"
+			android:title="Window"
 			android:summary="Options involved with the display of text or interactions with the window.">
-
 		<CheckBoxPreference
 			android:key="DISABLE_COLOR"
 			android:title="Disable ANSI Color?"
@@ -47,7 +47,7 @@
 		<CheckBoxPreference
 			android:key="WINDOW_FULLSCREEN"
 			android:title="Use Fullscreen Window?"
-			android:summary="Hides the notification bar. This setting is for all connections."
+			android:summary="Hides the notification bar. This can be toggled by typing .togglefullscreen."
 			android:defaultValue="false"/>
 		<EditTextPreference
 			android:key="MAX_LINES"
@@ -71,7 +71,7 @@
 		</PreferenceScreen>
 		<PreferenceScreen
 			android:key="BUTTON_SCREEN"
-			android:title="Button Options"
+			android:title="Button"
 			android:summary="Options for custom buttons.">
 		<CheckBoxPreference
 			android:key="AUTOLAUNCH_EDITOR"
@@ -102,7 +102,7 @@
 		</PreferenceScreen>
 		<PreferenceScreen
 			android:key="INPUT_OPTIONS"
-			android:title="Input Options"
+			android:title="Input"
 			android:summary="Options that deal with the input box and editors.">
 		<CheckBoxPreference
 			android:key="USE_EXTRACTUI"
@@ -127,7 +127,7 @@
 		</PreferenceScreen>
 		<PreferenceScreen
 			android:key="SERVICE_SETTINGS"
-			android:title="Service Settings"
+			android:title="Service"
 			android:summary="Options for the background service and data processing.">	
 		<CheckBoxPreference
 			android:key="LOCAL_ECHO"
@@ -157,7 +157,7 @@
 		</PreferenceScreen>
 		<PreferenceScreen
 			android:key="BELL_SETTINGS"
-			android:title="Bell Settings"
+			android:title="Bell"
 			android:summary="Options for what happens when the bell is received.">	
 		<CheckBoxPreference
 			android:key="BELL_VIBRATE"
@@ -172,7 +172,7 @@
 		<CheckBoxPreference
 			android:key="BELL_DISPLAY"
 			android:title="Display Bell?"
-			android:summary="Displays a bell on the screen when bell is received."
+			android:summary="Displays a small alert dialog on the screen when bell is received."
 			android:defaultValue="false"/>
 		</PreferenceScreen>
 	</PreferenceCategory>

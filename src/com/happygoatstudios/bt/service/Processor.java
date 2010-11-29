@@ -8,6 +8,7 @@ import java.util.regex.PatternSyntaxException;
 import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
+//import android.util.Log;
 
 public class Processor {
 	
@@ -152,26 +153,34 @@ public class Processor {
 	
 	public void dispatchIAC(String action,String option) throws UnsupportedEncodingException {
 		byte[] snd = new byte[3];
-		snd[0] = TC.IAC;
+		snd[0] = (byte)TC.IAC;
 		byte[] atmp = action.getBytes("ISO-8859-1");
 		snd[1] = atmp[0];
 		atmp = option.getBytes("ISO-8859-1");
 		snd[2] = atmp[0];
 		
-
+		//Log.e("PROCESSOR","GOT COMMAND:" + "IAC|" + TC.decodeInt(action,encoding) + "|"+ TC.decodeInt(option, encoding));
 		byte[] resp = opthandler.processCommand(snd[0], snd[1], snd[2]);
 		Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
-
+		//Log.e("PROCESSOR","SENDING RESPONSE:" + TC.decodeInt(new String(resp,encoding), encoding));
+		
 		reportto.sendMessage(sb);
 	}
 	
 	public void dispatchSUB(String negotiation) throws UnsupportedEncodingException {
 		byte[] stmp = negotiation.getBytes("ISO-8859-1");
-		
+		//Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(negotiation, encoding));
 
 		byte[] sub_r = opthandler.getSubnegotiationResponse(stmp);
 		//String sub_resp = new String(opthandler.getSubnegotiationResponse(stmp));
 		
+		if(sub_r == null) {
+			//Log.e("PROCESSOR","SUBNEGOTIATION RESPONSE NULL");
+			return;
+		} else {
+			//Log.e("PROCESSOR","RESPONSE:" + TC.decodeInt(new String(sub_r,encoding), encoding));
+		}
+
 		//special handling for the compression marker.
 		byte[] compressresp = new byte[1];
 		compressresp[0] = TC.COMPRESS2;
@@ -191,6 +200,17 @@ public class Processor {
 
 	public String getEncoding() {
 		return encoding;
+	}
+	
+	public void setDisplayDimensions(int rows,int cols) {
+		opthandler.setColumns(cols);
+		opthandler.setRows(rows);
+	}
+	
+	public void disaptchNawsString() {
+		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,opthandler.getNawsString());
+		reportto.sendMessage(sbm);
+		return;
 	}
 	
 

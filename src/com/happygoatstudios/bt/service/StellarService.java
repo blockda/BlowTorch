@@ -125,6 +125,7 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_TIMERRESET = 501;
 	public static final int MESSAGE_TIMERINFO = 502;
 	public static final int MESSAGE_BELLINC = 503;
+	protected static final int MESSAGE_DISPLAYPARAMS = 504;
 	
 	public boolean sending = false;
 	
@@ -191,6 +192,10 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_DISPLAYPARAMS:
+					the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
+					the_processor.disaptchNawsString();
+					break;
 				case MESSAGE_BELLINC:
 					//bell recieved.
 					if(the_settings.isVibrateOnBell()) {
@@ -1714,6 +1719,11 @@ public class StellarService extends Service {
 
 		public void saveSettings() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+		}
+
+		public void setDisplayDimensions(int rows, int cols)
+				throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DISPLAYPARAMS,rows,cols));
 		}
 		
 	};

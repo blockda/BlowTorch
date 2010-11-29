@@ -863,6 +863,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						
 						screen2.setFont(font);
 						
+						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
+						
 						//if(fontSizeChanged) {
 						//	screen2.reBreakBuffer();
 						//}

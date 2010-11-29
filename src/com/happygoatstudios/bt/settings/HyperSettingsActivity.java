@@ -25,6 +25,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.widget.ListView;
 
 public class HyperSettingsActivity extends PreferenceActivity {
 	
@@ -40,6 +41,10 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		super.onCreate(b);
 		
 		this.addPreferencesFromResource(R.xml.preferences);
+		
+		ListView the_list = (ListView) this.findViewById(android.R.id.list);
+		the_list.setScrollbarFadingEnabled(false);
+		
 		
 		ListPreference encoding = (ListPreference)findPreference("ENCODING");
 		
