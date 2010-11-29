@@ -278,6 +278,7 @@ public class Launcher extends Activity implements ReadyListener {
 		//	msg.show();
 		//}
 		if(dowhatsnew) {
+			dowhatsnew = false;
 			DoWhatsNew();
 		}
 	}
