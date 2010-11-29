@@ -4,12 +4,19 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import android.os.Handler;
+//import android.util.Log;
 
 
 public class OptionNegotiator {
 	
+	private int columns = 80;
+	private int rows = 21;
+	
 	private Handler dispatcher;
 
+	private String[] termtypes = {"BlowTorch","ansi","UNKNOWN"};
+	private int attempt = 0;
+	
 	public OptionNegotiator(Handler idispatcher) {
 		//not really much to initialize, this class just returns a response to an option
 		dispatcher = idispatcher;
@@ -103,7 +110,7 @@ public class OptionNegotiator {
 	
 	public byte[] getSubnegotiationResponse(byte[] sequence) {
     	//first some asserts
-    	if(sequence[0] != TC.IAC || sequence[1] != TC.SB || sequence[sequence.length-2] != TC.IAC || sequence[sequence.length-1] != TC.SE) {
+    	if(sequence[0] != (byte)TC.IAC || sequence[1] != (byte)TC.SB || sequence[sequence.length-2] != (byte)TC.IAC || sequence[sequence.length-1] != (byte)TC.SE) {
     		//return null, not a valid suboption negotiation starting sequence.
     		return null;
     	}
@@ -114,7 +121,10 @@ public class OptionNegotiator {
     	case TC.TERM:
     		//get terminal response.
     		//String termtype = "UNKNOWN";
-    		String termtype = "BlowTorch";
+    		
+    		
+    		String termtype = termtypes[attempt];
+    		//Log.e("PROCESSOR","Sending terminal type: " + termtype);
     		try {
 				responsedata = termtype.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
@@ -126,7 +136,9 @@ public class OptionNegotiator {
     		buf.put(responsedata,0,responsedata.length);
     		buf.put(sequence,sequence.length-2,2);
     		
+    		attempt++;
     		return buf.array();
+    		
     		//break;
     	case TC.COMPRESS2:
     		//holy shit we have the compressor subnegotiation sequence start
@@ -154,15 +166,22 @@ public class OptionNegotiator {
     		case 31: //NAWS
     			//send naws subnegotiation sequence;
     			//construct sequence
-    			ByteBuffer buf = ByteBuffer.allocate(10);
+    			ByteBuffer buf = ByteBuffer.allocate(9);
     			buf.put((byte)0xFF); //IAC
     			buf.put((byte)0xFA); //SB
     			buf.put((byte)0x1F); //NAWS
-    			buf.put((byte)0x00); //IS
-    			buf.put((byte)0x00); //columns, high byte
-    			buf.put((byte)0x80); //columns, low byte
-    			buf.put((byte)0x00); //lines, high byte
-    			buf.put((byte)0x24); //lines, low byte
+    			//buf.put((byte)0x00); //IS
+    			//extract high byte from column
+    			byte highCol = (byte)((0x0000FF00&columns)>>2);
+    			byte lowCol = (byte)((0x000000FF&columns));
+    			buf.put(highCol); //columns, high byte
+    			buf.put(lowCol); //columns, low byte
+    			
+    			byte highRow = (byte)((0x0000FF00&rows)>>2);
+    			byte lowRow = (byte)((0x000000FF&rows));
+    			buf.put(highRow); //lines, high byte
+    			buf.put(lowRow); //lines, low byte
+    			
     			buf.put((byte)0xFF); //IAC
     			buf.put((byte)0xF0); //SE
     			
@@ -181,4 +200,47 @@ public class OptionNegotiator {
     	}
     	return null;
     }
+
+	public void setColumns(int columns) {
+		this.columns = columns;
+	}
+
+	public int getColumns() {
+		return columns;
+	}
+
+	public void setRows(int rows) {
+		this.rows = rows;
+	}
+
+	public int getRows() {
+		return rows;
+	}
+	
+	public byte[] getNawsString() {
+		ByteBuffer buf = ByteBuffer.allocate(9);
+		buf.put((byte)0xFF); //IAC
+		buf.put((byte)0xFA); //SB
+		buf.put((byte)0x1F); //NAWS
+		//buf.put((byte)0x00); //IS
+		//extract high byte from column
+		byte highCol = (byte)((0x0000FF00&columns)>>2);
+		byte lowCol = (byte)((0x000000FF&columns));
+		buf.put(highCol); //columns, high byte
+		buf.put(lowCol); //columns, low byte
+		
+		byte highRow = (byte)((0x0000FF00&rows)>>2);
+		byte lowRow = (byte)((0x000000FF&rows));
+		buf.put(highRow); //lines, high byte
+		buf.put(lowRow); //lines, low byte
+		
+		buf.put((byte)0xFF); //IAC
+		buf.put((byte)0xF0); //SE
+		
+		buf.rewind();
+		byte[] suboption = buf.array();
+		
+		//send the data back.
+		return suboption;
+	}
 }
