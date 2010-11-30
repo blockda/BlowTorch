@@ -9,12 +9,14 @@ import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 //import android.util.Log;
 //import android.util.Log;
+import android.util.Log;
 
 public class DataPumper extends Thread {
 
@@ -23,6 +25,7 @@ public class DataPumper extends Thread {
 		private Handler reportto = null;
 		private boolean compressed = false;
 		private Handler myhandler = null;
+		private InflaterInputStream decomp_stream = null;
 		
 		private Inflater decompress = null;
 		
@@ -113,6 +116,7 @@ public class DataPumper extends Thread {
 		public void useCompression() {
 			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
 			compressed = true;
+			//compress
 		}
 		
 		public void stopCompression() {
@@ -176,16 +180,20 @@ public class DataPumper extends Thread {
 								} catch (DataFormatException e) {
 									//Log.e("BTSERVICE","Encountered data format exception and must quit.");
 									//myhandler.sendEmptyMessage(MESSAGE_END);
-									if(reportto != null) {
+									//if(reportto != null) {
 										//Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,tmp); //get a send data message.
 										//either we woke up or the processor was ready.
 										decompress = new Inflater(false);
 										//synchronized(reportto) {
 											//reportto.sendMessage(msg); //report to mom and dad.
 										//}
-									} 
+									//} 
 									compressed = false;
 									return;
+								}
+								
+								if(decompress.finished()) {
+									Log.e("PUMP","COMPRESSION ENDING");
 								}
 								
 								if(decompressed_data == null && count > 0) {
