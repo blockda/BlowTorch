@@ -10,6 +10,7 @@ import android.os.Message;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 
 public class Processor {
 	
@@ -107,8 +108,9 @@ public class Processor {
 					//dispatch sub
 					//String subneg = sub_match.group(0);
 					//Log.e("PROCESSOR","GOT SUB " + TC.decodeInt(sub_match.group(0),encoding));
-					
-					dispatchSUB(sub_match.group(0));
+					//Log.e("PROCESSOR","IN:" +tmp );
+					boolean skip = dispatchSUB(sub_match.group(0),data);
+					if(skip) return holder.toString(); //subnegotiation had compress, we shoudl return what we have, but not the rest because it is compressed.
 					
 				} else {
 					goahead_match.reset(matched);
@@ -172,7 +174,7 @@ public class Processor {
 		reportto.sendMessage(sb);
 	}
 	
-	public void dispatchSUB(String negotiation) throws UnsupportedEncodingException {
+	public boolean dispatchSUB(String negotiation,byte[] in) throws UnsupportedEncodingException {
 		byte[] stmp = negotiation.getBytes("ISO-8859-1");
 		//Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(negotiation, encoding));
 
@@ -181,7 +183,7 @@ public class Processor {
 		
 		if(sub_r == null) {
 			//Log.e("PROCESSOR","SUBNEGOTIATION RESPONSE NULL");
-			return;
+			return false;
 		} else {
 			//Log.e("PROCESSOR","RESPONSE:" + TC.decodeInt(new String(sub_r,encoding), encoding));
 		}
@@ -190,12 +192,29 @@ public class Processor {
 		byte[] compressresp = new byte[1];
 		compressresp[0] = TC.COMPRESS2;
 		if(sub_r[0] == compressresp[0]) {
-			reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS));
-
+			StringBuffer b = new StringBuffer();
+			sub_match.reset(new String(in,"ISO-8859-1"));
+			boolean found = false;
+			while(sub_match.find()) {
+				found = true;
+				sub_match.appendReplacement(b, "");
+			}
+			byte[] rest = null;
+			if(found) {
+				b.setLength(0);
+				sub_match.appendTail(b);
+				//b now contains the rest of the data.
+				if(b.length() > 0) {
+					rest = b.toString().getBytes("ISO-8859-1");
+				}
+			}
+			
+			reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS,rest));
+			return true;
 		} else {
 			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,sub_r);
 			reportto.sendMessage(sbm);
-
+			return false;
 		}
 	}
 

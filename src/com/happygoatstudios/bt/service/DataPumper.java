@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
@@ -15,8 +16,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 //import android.util.Log;
-//import android.util.Log;
-import android.util.Log;
+
 
 public class DataPumper extends Thread {
 
@@ -28,6 +28,7 @@ public class DataPumper extends Thread {
 		private InflaterInputStream decomp_stream = null;
 		
 		private Inflater decompress = null;
+		//private ZStream decomp  = null;
 		
 		final static public int MESSAGE_RETRIEVE = 100;
 		final static public int MESSAGE_SEND = 101;
@@ -47,6 +48,7 @@ public class DataPumper extends Thread {
 			writer = ostream;
 			reportto = useme;
 			decompress = new Inflater(false);
+			//decomp = new ZStream();
 			this.setName("DataPumper");
 		}
 	
@@ -69,7 +71,11 @@ public class DataPumper extends Thread {
 						break;
 					case MESSAGE_RETRIEVE:
 						//Log.e("PUMP","PUMP CHECKING FOR NEW DATA!");
-						getData();
+						try {
+							getData();
+						} catch (UnsupportedEncodingException e1) {
+							throw new RuntimeException(e1);
+						}
 						//keep the pump flowing.
 						break;
 					case MESSAGE_SEND:
@@ -87,7 +93,11 @@ public class DataPumper extends Thread {
 						myhandler.removeMessages(MESSAGE_RETRIEVE);
 						break;
 					case MESSAGE_COMPRESS:
-						useCompression();
+						try {
+							useCompression((byte[])msg.obj);
+						} catch (UnsupportedEncodingException e) {
+							throw new RuntimeException(e);
+						}
 						break;
 					case MESSAGE_NOCOMPRESS:
 						stopCompression();
@@ -113,13 +123,34 @@ public class DataPumper extends Thread {
 			return myhandler;
 		}
 		
-		public void useCompression() {
+		private void useCompression(byte[] input) throws UnsupportedEncodingException {
 			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
 			compressed = true;
-			//compress
+			
+			if(input == null) return;
+			if(input.length > 0) {
+				//try {
+				//	Log.e("PUMP","STARTING COMPRESSION WITH:" +new String(input,"ISO-8859-1"));
+				//} catch (UnsupportedEncodingException e) {
+				//	throw new RuntimeException(e);
+				//}
+				byte[] data = DoDecompress(input);
+				if(data == null) return;
+				Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,data); //get a send data message.
+				//either we woke up or the processor was ready.
+				synchronized(reportto) {
+					reportto.sendMessage(msg); //report to mom and dad.
+				}
+				//try {
+				//	Log.e("PROCESSOR","STARTING COMPRESSION, INITIALLY DECOMPRESSED:" + new String(data,"ISO-8859-1"));
+				//} catch (UnsupportedEncodingException e) {
+				//	
+				//	e.printStackTrace();
+				//}
+			}
 		}
 		
-		public void stopCompression() {
+		private void stopCompression() {
 			compressed = false;
 		}
 		
@@ -128,7 +159,7 @@ public class DataPumper extends Thread {
 		    return String.format("%0" + (bytes.length << 1) + "X", bi);
 		}
 
-		private void getData() {
+		private void getData() throws UnsupportedEncodingException {
 				//MAIN LOOP
 				int numtoread = 0;
 				try {
@@ -159,60 +190,12 @@ public class DataPumper extends Thread {
 					}
 					
 					if(compressed) {
-						//uncompress data first
-						//Inflater decompress = new Inflater();
-						//decompress.setInput(data,0,data.length);
-						//byte[] newdata = 
-						//according to http://java.sun.com/j2se/1.4.2/docs/api/java/util/zip/Inflater.html#Inflater%28boolean%29
-						//i need to provide a dummy byte to start with because i don't use headers
-						byte[] decompressed_data = null;
-						
-						decompress.setInput(data,0,data.length);
-						
-						byte[] tmp = new byte[256];
-						//while(!decompress.finished()) {
-							int count = 0;
-							
-							while(!decompress.needsInput()) {
-								try {
-									count = decompress.inflate(tmp,0,tmp.length);
-									//int remain = decompress.getRemaining();
-								} catch (DataFormatException e) {
-									//Log.e("BTSERVICE","Encountered data format exception and must quit.");
-									//myhandler.sendEmptyMessage(MESSAGE_END);
-									//if(reportto != null) {
-										//Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,tmp); //get a send data message.
-										//either we woke up or the processor was ready.
-										decompress = new Inflater(false);
-										//synchronized(reportto) {
-											//reportto.sendMessage(msg); //report to mom and dad.
-										//}
-									//} 
-									compressed = false;
-									return;
-								}
-								
-								if(decompress.finished()) {
-									Log.e("PUMP","COMPRESSION ENDING");
-								}
-								
-								if(decompressed_data == null && count > 0) {
-									ByteBuffer dc_start = ByteBuffer.allocate(count);
-									dc_start.put(tmp,0,count);
-									decompressed_data = dc_start.array();
-								} else { //already have data, append tmp to us
-									if(count > 0) { //only perform this step if the inflation yielded results.
-									ByteBuffer tmpbuf = ByteBuffer.allocate(decompressed_data.length + count);
-									tmpbuf.put(decompressed_data,0,decompressed_data.length);
-									tmpbuf.put(tmp,0,count);
-									tmpbuf.rewind();
-									decompressed_data = tmpbuf.array();
-									}
-								}
-							} //end while
-							data = decompressed_data;
+
+						data = DoDecompress(data);
+						if(data == null) return;
 					} 
-					//report to our superior
+					
+
 					if(reportto != null) {
 						Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,data); //get a send data message.
 						//either we woke up or the processor was ready.
@@ -236,6 +219,73 @@ public class DataPumper extends Thread {
 			}
 			
 			
+		}
+		
+		private byte[] DoDecompress(byte[] data) throws UnsupportedEncodingException {
+			int count = 0;
+			
+			byte[] decompressed_data = null;
+			
+			decompress.setInput(data,0,data.length);
+			
+			byte[] tmp = new byte[256];
+			
+			while(!decompress.needsInput()) {
+				try {
+					count = decompress.inflate(tmp,0,tmp.length);
+					//int remain = decompress.getRemaining();
+				} catch (DataFormatException e) {
+					//Log.e("BTSERVICE","Encountered data format exception and must quit.");
+					//myhandler.sendEmptyMessage(MESSAGE_END);
+					if(reportto != null) {
+						//Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,tmp); //get a send data message.
+						//either we woke up or the processor was ready.
+						decompress = new Inflater(false);
+						//synchronized(reportto) {
+							//reportto.sendMessage(msg); //report to mom and dad.
+						//}
+					} 
+					compressed = false;
+					return null;
+				}
+				if(decompress.finished()) {
+					//Log.e("PUMP","ENDING COMPRESSION:" + count + " byes uncompressed." + decompress.getRemaining() + " remaining bytes. As string: " + new String(data,"ISO-8859-1"));
+					//decompress.
+					//get any remaining datas.
+					int pos = data.length - decompress.getRemaining();
+					int length = decompress.getRemaining();
+					ByteBuffer b = ByteBuffer.allocate(length);
+					b.put(data, pos, length);
+					b.rewind();
+					//String remains = new String(b.array(),"ISO-8859-1");
+					//Log.e("PUMP","REMAINS: " + remains);
+					if(reportto != null) {
+						Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,b.array()); //get a send data message.
+						//either we woke up or the processor was ready.
+						synchronized(reportto) {
+							reportto.sendMessage(msg); //report to mom and dad.
+						}
+					} 
+					compressed = false;
+					decompress = new Inflater(false);
+					return null;
+				}
+				if(decompressed_data == null && count > 0) {
+					ByteBuffer dc_start = ByteBuffer.allocate(count);
+					dc_start.put(tmp,0,count);
+					decompressed_data = dc_start.array();
+				} else { //already have data, append tmp to us
+					if(count > 0) { //only perform this step if the inflation yielded results.
+					ByteBuffer tmpbuf = ByteBuffer.allocate(decompressed_data.length + count);
+					tmpbuf.put(decompressed_data,0,decompressed_data.length);
+					tmpbuf.put(tmp,0,count);
+					tmpbuf.rewind();
+					decompressed_data = tmpbuf.array();
+					}
+				}
+			} //end while
+			
+			return decompressed_data;
 		}
 		
 }
