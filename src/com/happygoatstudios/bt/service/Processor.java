@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 
 public class Processor {
 	
@@ -16,6 +17,8 @@ public class Processor {
 	Colorizer colormebad = new Colorizer();
 	OptionNegotiator opthandler;
 	IStellarService.Stub service = null;
+	
+	
 	
 	private String encoding = null;
 	
@@ -103,8 +106,9 @@ public class Processor {
 				if(sub_match.matches()) {
 					//dispatch sub
 					//String subneg = sub_match.group(0);
-					dispatchSUB(sub_match.group(0));
 					//Log.e("PROCESSOR","GOT SUB " + TC.decodeInt(sub_match.group(0),encoding));
+					
+					dispatchSUB(sub_match.group(0));
 					
 				} else {
 					goahead_match.reset(matched);
@@ -122,6 +126,7 @@ public class Processor {
 								bellreplace = true;
 							} else {
 								//unknown.
+								//Log.e("PROCESSOR","UNKNOWN:" + matched);
 							}
 						}
 					}
@@ -208,6 +213,7 @@ public class Processor {
 	}
 	
 	public void disaptchNawsString() {
+		if(opthandler.getNawsString() == null) return;
 		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,opthandler.getNawsString());
 		reportto.sendMessage(sbm);
 		return;

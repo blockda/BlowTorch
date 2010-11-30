@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 
 import android.os.Handler;
 //import android.util.Log;
+//import android.util.Log;
 
 
 public class OptionNegotiator {
@@ -13,6 +14,8 @@ public class OptionNegotiator {
 	private int rows = 21;
 	
 	private Handler dispatcher;
+	
+	boolean isNAWS=false;
 
 	private String[] termtypes = {"BlowTorch","ansi","UNKNOWN"};
 	private int attempt = 0;
@@ -21,18 +24,19 @@ public class OptionNegotiator {
 		//not really much to initialize, this class just returns a response to an option
 		dispatcher = idispatcher;
 	}
-	
-	 public byte[] processCommand(byte first,byte second,byte third) {
+	byte IAC_WILL = (byte)0xFB; //251
+	byte IAC_WONT = (byte)0xFC; //252
+	byte IAC_DO = (byte)0xFD; //253
+	byte IAC_DONT = (byte)0xFE; //254
+	final byte COMPRESS2 = (byte)0x56; //86
+	public byte[] processCommand(byte first,byte second,byte third) {
 	    	
-			byte IAC_WILL = (byte)0xFB; //251
-			byte IAC_WONT = (byte)0xFC; //252
-			byte IAC_DO = (byte)0xFD; //253
-			byte IAC_DONT = (byte)0xFE; //254
+			
 			
 			//byte SB = (byte)0xFA; //250 - subnegotiation start
 			//byte SE = (byte)0xF0; //240 - subnegotiation start
 			
-			final byte COMPRESS2 = (byte)0x56; //86
+			
 			//final byte COMPRESS1 = (byte)0x55; //85
 			//final byte ATCP_CUSTOM = (byte)0xC8; //200 -- ATCP protocol, http://www.ironrealms.com/rapture/manual/files/FeatATCP-txt.html
 			//final byte AARD_CUSTOM = (byte)0x66; //102 -- Aardwolf custom, http://www.aardwolf.com/blog/2008/07/10/telnet-negotiation-control-mud-client-interaction/
@@ -142,9 +146,11 @@ public class OptionNegotiator {
     		return buf.array();
     		
     		//break;
-    	case TC.COMPRESS2:
+    	case COMPRESS2:
     		//holy shit we have the compressor subnegotiation sequence start
     		//construct special return value to notify handler to switch to compression
+    		//Log.e("PROCESSOR","COMPRESS2 ENCOUNTERED");
+    		
     		byte[] compressstart = new byte[1];
     		compressstart[0] = TC.COMPRESS2;
     		return compressstart;
@@ -189,7 +195,7 @@ public class OptionNegotiator {
     			
     			buf.rewind();
     			byte[] suboption = buf.array();
-    			
+    			isNAWS = true;
     			//send the data back.
     			return suboption;
     		default:
@@ -220,6 +226,7 @@ public class OptionNegotiator {
 	}
 	
 	public byte[] getNawsString() {
+		if(!isNAWS) return null;
 		ByteBuffer buf = ByteBuffer.allocate(9);
 		buf.put((byte)0xFF); //IAC
 		buf.put((byte)0xFA); //SB

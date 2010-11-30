@@ -53,6 +53,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 //import android.util.Log;
+//import android.util.Log;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -132,7 +133,7 @@ public class StellarService extends Service {
 	StringBuffer the_buffer = new StringBuffer();
 	String settingslocation = "test_settings2.xml";
 	
-	private boolean compressionStarting = false;
+	//private boolean compressionStarting = false;
 	
 	//need some goodies to track running timers.
 	Timer the_timer = new Timer("BLOWTORCH_TIMER",true);
@@ -319,7 +320,7 @@ public class StellarService extends Service {
 					doThrottleBackgroundImpl();
 					break;
 				case MESSAGE_COMPRESSIONREQUESTED:
-					compressionStarting = true;
+					//compressionStarting = true;
 					break;
 				case MESSAGE_INIT:
 					//Log.e("BTSERVICE","INTIIALIZING");
@@ -356,11 +357,11 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_DOFINALDISPATCH:
 					//Log.e("BTSERVICE","FINAL DISPATCH");
-					if(compressionStarting) {
-						this.sendMessageDelayed(Message.obtain(msg), 10); //re-send this message for processing until compress is turned on.
-					} else {
+					//if(compressionStarting) {
+					//	this.sendMessageDelayed(Message.obtain(msg), 10); //re-send this message for processing until compress is turned on.
+					//} else {
 						dispatchFinish((String)msg.obj);
-					}
+					//}
 					break;
 				case MESSAGE_SETDATA:
 					//Log.e("BTSERVICE","SETTING DISPLAY DATA!");
@@ -371,13 +372,13 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_STARTCOMPRESS:
 					//Log.e("BTSERVICE","STARTING COMPRESSION!");
-					compressionStarting = false;
+					//compressionStarting = false;
 					pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_COMPRESS);
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
 				case MESSAGE_SENDOPTIONDATA:
-					//Log.e("BTSERVICE","SENDING OPTION DATA");
+					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex((byte[])msg.obj));
 					byte[] obytes = (byte[])(msg.obj);
 					
 					try {
@@ -516,6 +517,7 @@ public class StellarService extends Service {
 					//nosemidata = nosemidata.concat(crlf);
 					
 					try {
+						//Log.e("SERVICE","WRITE: "+nosemidata);
 						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
 
 						output_writer.flush();
