@@ -373,7 +373,7 @@ public class StellarService extends Service {
 				case MESSAGE_STARTCOMPRESS:
 					//Log.e("BTSERVICE","STARTING COMPRESSION!");
 					//compressionStarting = false;
-					pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_COMPRESS);
+					pump.getHandler().sendMessage(pump.getHandler().obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
