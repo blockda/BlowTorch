@@ -2380,7 +2380,7 @@ public class StellarService extends Service {
 			
 			if(failed) {
 				try {
-					doDispatchNoProcess(getErrorMessage("keyboard (kb) special command usage:",".kb [add]|[popup] message\nadd and popup are optional flags that will append text or popup the window when supplied.\nExample:\n\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\nThe cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
+					doDispatchNoProcess(getErrorMessage("Keyboard (kb) special command usage:",".kb [add]|[popup]|[flush] message\nadd and popup are optional flags that will append text or popup the window when supplied.\nExample:\n\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\n\".kb flush\" will transmit the text currently in the box.\nThe cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				} catch (UnsupportedEncodingException e) {
