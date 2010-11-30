@@ -416,7 +416,7 @@ public class StellarService extends Service {
 					}
 					//do search and replace with aliases.
 					
-					if(joined_alias.length() > 0) {
+					/*if(joined_alias.length() > 0) {
 
 						Pattern to_replace = Pattern.compile(joined_alias.toString());
 						
@@ -469,6 +469,29 @@ public class StellarService extends Service {
 						
 						replaced.setLength(0);
 					}
+					*/
+					bytes = DoAliasReplacement(bytes);
+					//do command processing after alias processing.
+					/*String retval = null;
+					try {
+						retval = ProcessCommands(new String(bytes,the_settings.getEncoding()));
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+					if(retval == null || retval.equals("")) {
+						//command was intercepted. do nothing for now and return
+						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
+						return;
+					} else {
+						//not a command data.
+						try {
+							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
+							if(retval.equals("")) { return; }
+							bytes = retval.getBytes(the_settings.getEncoding());
+						} catch (UnsupportedEncodingException e) {
+							throw new RuntimeException(e);
+						}
+					}*/
 					
 					//strip semi
 					Character cr = new Character((char)13);
@@ -1921,7 +1944,7 @@ public class StellarService extends Service {
 	}
 	
 	StringBuffer joined_alias = new StringBuffer();
-	public void buildAliases() {
+	private void buildAliases() {
 		joined_alias.setLength(0);
 		
 		Object[] a = the_settings.getAliases().keySet().toArray();
@@ -1935,6 +1958,10 @@ public class StellarService extends Service {
 			}
 			
 		}
+		
+		alias_replace = Pattern.compile(joined_alias.toString());
+		alias_replacer = alias_replace.matcher("");
+		alias_recursive = alias_replace.matcher("");
 		//Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
 	}
 	
@@ -2405,6 +2432,12 @@ public class StellarService extends Service {
 				}
 			}
 			
+			try {
+				text = new String(DoAliasReplacement(text.getBytes(the_settings.getEncoding())),the_settings.getEncoding());
+			} catch (UnsupportedEncodingException e1) {
+				throw new RuntimeException(e1);
+			}
+			
 			final int N = callbacks.beginBroadcast();
 			for(int i = 0;i<N;i++) {
 				try {
@@ -2590,6 +2623,71 @@ public class StellarService extends Service {
 			the_buffer.setLength(0);
 			//the_buffer.clearSpans();
 			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
+		}
+	}
+	
+	Pattern alias_replace = Pattern.compile(joined_alias.toString());
+	Matcher alias_replacer = alias_replace.matcher("");
+	Matcher alias_recursive = alias_replace.matcher("");
+	
+	private byte[] DoAliasReplacement(byte[] input) {
+		if(joined_alias.length() > 0) {
+
+			//Pattern to_replace = Pattern.compile(joined_alias.toString());
+			byte[] retval = null;
+			//Matcher replacer = null;
+			try {
+				alias_replacer.reset(new String(input,the_settings.getEncoding()));//replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
+			} catch (UnsupportedEncodingException e1) {
+				throw new RuntimeException(e1);
+			}
+			
+			StringBuffer replaced = new StringBuffer();
+			
+			boolean found = false;
+			while(alias_replacer.find()) {
+				//String matched = replacer.group(0);
+				found = true;
+				AliasData replace_with = the_settings.getAliases().get(alias_replacer.group(0));
+				alias_replacer.appendReplacement(replaced, replace_with.getPost());
+			}
+			
+			alias_replacer.appendTail(replaced);
+			
+			StringBuffer buffertemp = new StringBuffer();
+			if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
+				boolean recursivefound = false;
+				do {
+					recursivefound = false;
+					//Matcher recursivematch = to_replace.matcher(replaced.toString());
+					alias_recursive.reset(replaced.toString());
+					while(alias_recursive.find()) {
+						recursivefound = true;
+						AliasData replace_with = the_settings.getAliases().get(alias_recursive.group(0));
+						alias_recursive.appendReplacement(buffertemp, replace_with.getPost());
+					}
+					if(recursivefound) {
+						alias_recursive.appendTail(buffertemp);
+						replaced.setLength(0);
+						replaced.append(buffertemp);
+					}
+				} while(recursivefound == true);
+			}
+			//so replacer should contain the transformed string now.
+			//pull the bytes back out.
+			try {
+				retval = replaced.toString().getBytes(the_settings.getEncoding());
+				//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
+				//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
+			} catch (UnsupportedEncodingException e1) {
+				throw new RuntimeException(e1);
+			}
+			
+			replaced.setLength(0);
+			
+			return retval;
+		} else {
+			return input;
 		}
 	}
 	
