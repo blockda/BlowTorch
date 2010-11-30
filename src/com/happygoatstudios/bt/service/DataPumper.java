@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
@@ -12,6 +13,7 @@ import java.util.zip.Inflater;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+//import android.util.Log;
 //import android.util.Log;
 
 public class DataPumper extends Thread {
@@ -117,6 +119,11 @@ public class DataPumper extends Thread {
 			compressed = false;
 		}
 		
+		public static String toHex(byte[] bytes) {
+		    BigInteger bi = new BigInteger(1, bytes);
+		    return String.format("%0" + (bytes.length << 1) + "X", bi);
+		}
+
 		private void getData() {
 				//MAIN LOOP
 				int numtoread = 0;
@@ -137,6 +144,8 @@ public class DataPumper extends Thread {
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
+					//Log.e("PUMP","READ (string): " + new String(data));
+					//Log.e("PUMP","READ (hex): " + toHex(data));
 					if(retval != numtoread) {
 						//we have a problem, if we get here we overran the buffer.
 					}
@@ -166,23 +175,32 @@ public class DataPumper extends Thread {
 									//int remain = decompress.getRemaining();
 								} catch (DataFormatException e) {
 									//Log.e("BTSERVICE","Encountered data format exception and must quit.");
-									myhandler.sendEmptyMessage(MESSAGE_END);
+									//myhandler.sendEmptyMessage(MESSAGE_END);
+									if(reportto != null) {
+										//Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,tmp); //get a send data message.
+										//either we woke up or the processor was ready.
+										decompress = new Inflater(false);
+										//synchronized(reportto) {
+											//reportto.sendMessage(msg); //report to mom and dad.
+										//}
+									} 
+									compressed = false;
 									return;
 								}
 								
-									if(decompressed_data == null && count > 0) {
-										ByteBuffer dc_start = ByteBuffer.allocate(count);
-										dc_start.put(tmp,0,count);
-										decompressed_data = dc_start.array();
-									} else { //already have data, append tmp to us
-										if(count > 0) { //only perform this step if the inflation yielded results.
-										ByteBuffer tmpbuf = ByteBuffer.allocate(decompressed_data.length + count);
-										tmpbuf.put(decompressed_data,0,decompressed_data.length);
-										tmpbuf.put(tmp,0,count);
-										tmpbuf.rewind();
-										decompressed_data = tmpbuf.array();
-										}
+								if(decompressed_data == null && count > 0) {
+									ByteBuffer dc_start = ByteBuffer.allocate(count);
+									dc_start.put(tmp,0,count);
+									decompressed_data = dc_start.array();
+								} else { //already have data, append tmp to us
+									if(count > 0) { //only perform this step if the inflation yielded results.
+									ByteBuffer tmpbuf = ByteBuffer.allocate(decompressed_data.length + count);
+									tmpbuf.put(decompressed_data,0,decompressed_data.length);
+									tmpbuf.put(tmp,0,count);
+									tmpbuf.rewind();
+									decompressed_data = tmpbuf.array();
 									}
+								}
 							} //end while
 							data = decompressed_data;
 					} 
