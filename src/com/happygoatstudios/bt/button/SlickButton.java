@@ -150,21 +150,21 @@ public class SlickButton extends View {
 		Character lf = new Character((char)10);
 		String crlf = cr.toString() + lf.toString();
 		tmp = tmp.concat(crlf);
-		ByteBuffer buf = ByteBuffer.allocate(tmp.length());
+		//ByteBuffer buf = ByteBuffer.allocate(tmp.length());
 	
-		try {
-			buf.put(tmp.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			
-			e.printStackTrace();
-		}
+		//try {
+		//	buf.put(tmp.getBytes("UTF-8"));
+		//} catch (UnsupportedEncodingException e) {
+		//	
+		//	e.printStackTrace();
+		//}
+	//
+		//buf.rewind();
 	
-		buf.rewind();
-	
-		byte[] buffbytes = buf.array();
+		//byte[] buffbytes = buf.array();
 		
-		Message msg = dispatcher.obtainMessage(MainWindow.MESSAGE_SENDDATAOUT,buffbytes);
-		if(!dispatcher.hasMessages(MainWindow.MESSAGE_SENDDATAOUT)) {
+		Message msg = dispatcher.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,tmp);
+		if(!dispatcher.hasMessages(MainWindow.MESSAGE_SENDBUTTONDATA)) {
 			dispatcher.sendMessage(msg);
 		}
 	}

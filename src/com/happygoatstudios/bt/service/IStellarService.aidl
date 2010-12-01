@@ -90,6 +90,7 @@ interface IStellarService {
 	void setHFOnPress(String use);
 	void setHFOnFlip(String use);
 	void setDisplayDimensions(int rows,int cols);
+	void reconnect();
 	Map getTimers();
 	TimerData getTimer(String ordinal);
 	void startTimer(String ordinal);

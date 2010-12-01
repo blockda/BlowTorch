@@ -52,6 +52,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 
@@ -127,6 +128,9 @@ public class StellarService extends Service {
 	public static final int MESSAGE_TIMERINFO = 502;
 	public static final int MESSAGE_BELLINC = 503;
 	protected static final int MESSAGE_DISPLAYPARAMS = 504;
+	public static final int MESSAGE_DISCONNECTED = 505;
+	protected static final int MESSAGE_RECONNECT = 506;
+	public static final int MESSAGE_DODISCONNECT = 507;
 	
 	public boolean sending = false;
 	
@@ -148,7 +152,8 @@ public class StellarService extends Service {
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
 		
 		//set up the crash reporter
-		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
+		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		host = BAD_HOST;
@@ -163,6 +168,8 @@ public class StellarService extends Service {
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
+		DisconnectCommand dccmd = new DisconnectCommand();
+		ReconnectCommand rccmd = new ReconnectCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
@@ -171,6 +178,8 @@ public class StellarService extends Service {
 		specialcommands.put(fscmd.commandName, fscmd);
 		specialcommands.put(kbcmd.commandName, kbcmd);
 		specialcommands.put("kb", kbcmd);
+		specialcommands.put(dccmd.commandName, dccmd);
+		specialcommands.put(rccmd.commandName, rccmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -193,6 +202,30 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_DODISCONNECT:
+					killNetThreads();
+					DoDisconnect();
+					break;
+				case MESSAGE_RECONNECT:
+					try {
+						doStartup();
+					} catch (UnknownHostException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					} catch (IOException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					break;
+				case MESSAGE_DISCONNECTED:
+					//the pump has reported the connection closed.
+					//Log.e("SERV","ACTIVATING DISCONNECT");
+					killNetThreads();
+					DoDisconnect();
+					break;
 				case MESSAGE_DISPLAYPARAMS:
 					the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
 					the_processor.disaptchNawsString();
@@ -551,6 +584,8 @@ public class StellarService extends Service {
 				}
 				
 			}
+
+			
 		};
 		
 		//populate the timer_actions hash so we can parse arguments.
@@ -575,6 +610,28 @@ public class StellarService extends Service {
 		doShutdown();
 	}
 	
+	private void DoDisconnect() {
+		//attempt to display the disconnection dialog.
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).doDisconnectNotice();
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
+		
+		if(N < 1) {
+			//no listeneres, just shutdown and put up a new notification.
+			ShowDisconnectedNotification();
+		}
+		
+	}
+	
+	
+
 	public void saveXmlSettings(String filename) {
 		try {
 			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
@@ -1750,6 +1807,10 @@ public class StellarService extends Service {
 				throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DISPLAYPARAMS,rows,cols));
 		}
+
+		public void reconnect() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+		}
 		
 	};
 	
@@ -2454,6 +2515,51 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private class DisconnectCommand extends SpecialCommand {
+		
+		public DisconnectCommand() {
+			this.commandName = "disconnect";
+		}
+		public void execute(Object o) {
+			
+			
+			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+			String msg = "\n" + Colorizer.colorRed + "Disconnected." + Colorizer.colorWhite + "\n";
+			try {
+				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	private class ReconnectCommand extends SpecialCommand {
+		public ReconnectCommand() {
+			this.commandName = "reconnect";
+		}
+		public void execute(Object o) {
+			
+			
+			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+			String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
+			try {
+				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
 	private String getErrorMessage(String arg1,String arg2) {
 		
 		String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
@@ -2851,6 +2957,31 @@ public class StellarService extends Service {
 
 	}
 	
+	private void ShowDisconnectedNotification() {
+		
+		mNM.cancel(5545);
+		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Disconnected",System.currentTimeMillis());
+		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
+		
+		Context context = getApplicationContext();
+		CharSequence contentTitle = "BlowTorch Disconnected";
+		//CharSequence contentText = "Hello World!";
+		CharSequence contentText = "DISCONNECTED: "+ host +":"+ port;
+		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
+		notificationIntent.putExtra("DISPLAY", display);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		
+		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		note.flags = Notification.FLAG_ONGOING_EVENT;
+		
+		//startForeground to avoid being killed off.
+		mNM.notify(5546,note);
+	}
+	
 	private void showNotification() {
 		
 		
@@ -2880,10 +3011,7 @@ public class StellarService extends Service {
 		
 	}
 	
-	public void doShutdown() {
-		//pump.stop();
-		the_timer.cancel();
-		
+	public void killNetThreads() {
 		if(pump != null) {
 			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
 			pump = null;
@@ -2905,6 +3033,13 @@ public class StellarService extends Service {
 			}
 			the_socket = null;
 		}
+	}
+	
+	public void doShutdown() {
+		//pump.stop();
+		the_timer.cancel();
+		
+		killNetThreads();
 		//kill the notification.
 		mNM.cancel(5545);
 		mNM.cancelAll();

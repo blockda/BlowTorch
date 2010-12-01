@@ -16,4 +16,5 @@ oneway interface IStellarServiceCallback {
 	void doVisualBell();
 	void setScreenMode(boolean fullscreen);
 	void showKeyBoard(String txt,boolean popup,boolean add,boolean flush);
+	void doDisconnectNotice();
 }

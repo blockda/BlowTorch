@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 //import android.util.Log;
+import android.util.Log;
 
 
 public class DataPumper extends Thread {
@@ -75,6 +76,9 @@ public class DataPumper extends Thread {
 							getData();
 						} catch (UnsupportedEncodingException e1) {
 							throw new RuntimeException(e1);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
 						//keep the pump flowing.
 						break;
@@ -159,7 +163,7 @@ public class DataPumper extends Thread {
 		    return String.format("%0" + (bytes.length << 1) + "X", bi);
 		}
 
-		private void getData() throws UnsupportedEncodingException {
+		private void getData() throws IOException {
 				//MAIN LOOP
 				int numtoread = 0;
 				try {
@@ -169,10 +173,19 @@ public class DataPumper extends Thread {
 				}
 				if(numtoread < 1) {
 					//no data to read
+					//Log.e("PUMP","NO DATA TO READ");
+					reader.mark(1);
+					if(reader.read() == -1) {
+						//Log.e("PUMP","END OF STREAM");
+						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+					} else {
+						reader.reset();
+					}
+					
 				} else {
 					//data to read, do it
 					byte[] data = new byte[numtoread];
-					int retval = -1;
+					int retval = -2;
 					try {
 						retval = reader.read(data,0,numtoread);
 					
@@ -187,6 +200,7 @@ public class DataPumper extends Thread {
 					
 					if(retval == -1) {
 						//end of stream has been reached. need to abort the who dealio.
+						//Log.e("PUMP","END OF INPUT FROM SERVER");
 					}
 					
 					if(compressed) {
