@@ -68,6 +68,7 @@ import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
 import com.happygoatstudios.bt.timer.TimerSelectionDialog;
 import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
+import com.happygoatstudios.bt.window.ttree.TextTree;
 
 public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
@@ -107,7 +108,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_KEYBOARD = 878;
 
 	
-	
+	private TextTree tree = new TextTree();
 	protected boolean settingsDialogRun = false;
 	
 	private boolean autoLaunch = true;
@@ -1079,6 +1080,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					break;
 				case MESSAGE_RAWINC:
 					screen2.addText((String)msg.obj,false);
+					tree.addText((String)msg.obj);
 					break;
 				case MESSAGE_BUFFINC:
 					screen2.addText((String)msg.obj,false);
