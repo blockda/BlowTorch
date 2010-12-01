@@ -30,6 +30,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.util.Log;
 //import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -105,6 +106,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_BELLTOAST = 876;
 	protected static final int MESSAGE_DOSCREENMODE = 877;
 	protected static final int MESSAGE_KEYBOARD = 878;
+	protected static final int MESSAGE_DODISCONNECT = 879;
+	public static final int MESSAGE_SENDBUTTONDATA = 880;
 
 	
 	
@@ -226,6 +229,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		
+		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
+		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
@@ -349,6 +355,44 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				
+				case MESSAGE_SENDBUTTONDATA:
+					ByteBuffer bbuf = null;
+					try {
+						bbuf = ByteBuffer.allocate(((String)msg.obj).getBytes(service.getEncoding()).length);
+					} catch (UnsupportedEncodingException e6) {
+						// TODO Auto-generated catch block
+						e6.printStackTrace();
+					} catch (RemoteException e6) {
+						// TODO Auto-generated catch block
+						e6.printStackTrace();
+					}
+					
+					try {
+						bbuf.put(((String)msg.obj).getBytes(service.getEncoding()));
+					} catch (UnsupportedEncodingException e) {
+						
+						e.printStackTrace();
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				
+					bbuf.rewind();
+				
+					byte[] bbuffbytes = bbuf.array();
+					try {
+						service.sendData(bbuffbytes);
+						
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+					screen2.jumpToZero();
+					break;
+				case MESSAGE_DODISCONNECT:
+					//Log.e("WINDOW","SHOW MESSAGE");
+					DoDisconnectMessage();
+					break;
 				case MESSAGE_KEYBOARD:
 					boolean add = (msg.arg2 > 0) ? true : false;
 					boolean popup = (msg.arg1 > 0) ? true : false;
@@ -1098,6 +1142,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					break;
 				}
 			}
+
+			
 		};
 		
 		test_button = (ImageButton)findViewById(R.id.test_btn);
@@ -1268,6 +1314,35 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		return true;
 	}*/
+	
+	private void DoDisconnectMessage() {
+		AlertDialog.Builder err = new AlertDialog.Builder(this);
+		err.setTitle("Disconnected");
+		err.setMessage("The connection has closed. Reconnect?");
+		err.setPositiveButton("Reconnect", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				try {
+					service.reconnect();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		err.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				cleanExit();
+				dialog.dismiss();
+				MainWindow.this.finish();
+			}
+		});
+		
+		AlertDialog d = err.create();
+		d.show();
+	}
 	
 	private void makeFakeButton() {
 		
@@ -1907,6 +1982,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			int p = (popup) ? 1 : 0;
 			int a = (add) ? 1 : 0;
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_KEYBOARD,p,a,txt));
+		}
+
+		public void doDisconnectNotice() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+			
 		}
 	};
 	
