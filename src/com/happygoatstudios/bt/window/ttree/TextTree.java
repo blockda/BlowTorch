@@ -113,7 +113,11 @@ public class TextTree {
 				Line tmp = null;
 				if(appendLast) {
 					//Log.e("TEXTREEDATAINPUT","APPENDING:" + linebuf.toString());
-					tmp  = mLines.remove(0);
+					if(mLines.size() > 0) {
+						tmp  = mLines.remove(0);	
+					} else {
+						tmp = new Line();
+					}
 					tmp.getData().add(tmp.getData().size(),new Text("|"));
 					tmp.getData().addAll(tmp.getData().size(),ColorizeText(linebuf.toString()));
 					lines.add(tmp);
@@ -288,6 +292,7 @@ public class TextTree {
 			}
 			if(u instanceof Color) {
 				//Log.e("TEXTCOLOR","color encountered" + ((Color)u).data);
+				buf.append(((Color)u).data);
 			}
 		}
 		
