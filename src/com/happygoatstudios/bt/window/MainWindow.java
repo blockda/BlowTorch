@@ -32,7 +32,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -1285,14 +1285,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//settingsLoaded.notify();
 		//settingsLoaded = true;
 		} 
-		if(icicle != null) {
-			CharSequence seq = icicle.getCharSequence("BUFFER");
-			if(seq != null) {
-				screen2.setBuffer((new StringBuffer(seq).toString()));
-			} else {
-			}
-		} else {
-		}
+		//if(icicle != null) {
+		//	CharSequence seq = icicle.getCharSequence("BUFFER");
+		//	if(seq != null) {
+		//		screen2.setBuffer((new StringBuffer(seq).toString()));
+		//	} else {
+		//	}
+		//} else {
+		//}
 		
 		if(!isServiceRunning()) {
 			//start the service
@@ -1679,6 +1679,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
 				SlickView sv = (SlickView)findViewById(R.id.slickview);
+				//Log.e("WINDOW","SAVING BUFFER:" + sv.getBuffer().length());
 				service.saveBuffer(sv.getBuffer());
 				service.unregisterCallback(the_callback);
 			} catch (RemoteException e) {
@@ -1698,14 +1699,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 	
 	public void onSaveInstanceState(Bundle data) {
-		SlickView sv = (SlickView)findViewById(R.id.slickview);
-		data.putCharSequence("BUFFER", sv.getBuffer());
+		//SlickView sv = (SlickView)findViewById(R.id.slickview);
+		//data.putCharSequence("BUFFER", sv.getBuffer());
 	}
 	
 	public void onRestoreInstanceState(Bundle data) {
 
-		SlickView sv = (SlickView)findViewById(R.id.slickview);
-		sv.setBuffer((new StringBuffer(data.getCharSequence("BUFFER")).toString()));
+		//SlickView sv = (SlickView)findViewById(R.id.slickview);
+		//sv.setBuffer((new StringBuffer(data.getCharSequence("BUFFER")).toString()));
 
 
 	}
@@ -1906,7 +1907,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		finishStart = false;*/
 		try {
 			if(service.hasBuffer()) {
+				//Log.e("WINDOW","REQUESTING BUFFER");
 				service.requestBuffer();
+			} else {
+				//Log.e("WINDOW","SERVICE RESPONDED THAT IT HAS NO BUFFER");
 			}
 		} catch (RemoteException e2) {
 			// TODO Auto-generated catch block
@@ -1977,13 +1981,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		public void rawDataIncoming(String raw) throws RemoteException {
 			
 			Message msg = myhandler.obtainMessage(MESSAGE_RAWINC,raw);
+			//Log.e("WINDOW","RECIEVING RAW");
 			myhandler.sendMessage(msg);
 			
 		}
 		
 		public void rawBufferIncoming(String rawbuf) throws RemoteException {
 			Message msg = myhandler.obtainMessage(MESSAGE_BUFFINC,rawbuf);
-			myhandler.sendMessage(msg);
+			myhandler.sendMessageDelayed(msg,10);
+			//Log.e("WINDOW","RECEIVING BUFFER: " + rawbuf.length());
 		}
 
 		public void loadSettings() throws RemoteException {
