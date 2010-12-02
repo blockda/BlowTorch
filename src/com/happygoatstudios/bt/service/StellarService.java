@@ -52,7 +52,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 
@@ -580,8 +580,11 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_SAVEBUFFER:
-					//Log.e("BTSERVICE","SAVING TARGET BUFFER");
-					the_buffer = new StringBuffer(msg.getData().getString("BUFFER") + the_buffer);
+					
+					the_buffer = new StringBuffer((String)msg.obj + the_buffer);
+					bufferLineCount = 0;
+					bufferLineCount = the_buffer.toString().split("\n").length;
+					//Log.e("BTSERVICE","SAVING TARGET BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
 					break;
 				default:
 					break;	
@@ -919,11 +922,11 @@ public class StellarService extends Service {
 		}
 
 		public void saveBuffer(String buffer) throws RemoteException {
-			Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SAVEBUFFER);
-			Bundle b = msg.getData();
-			b.putString("BUFFER",buffer);
-			msg.setData(b);
-			myhandler.sendMessage(msg);
+			//Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SAVEBUFFER);
+			//Bundle b = msg.getData();
+			//b.putString("BUFFER",buffer);
+			//msg.setData(b);
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_SAVEBUFFER, buffer));
 			
 		}
 
@@ -2082,16 +2085,22 @@ public class StellarService extends Service {
 		for(int i = 0;i<N;i++) {
 			//callbacks.getBroadcastItem(i).dataIncoming(data);
 			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
+			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivered and cleared. Size: " + the_buffer.toString().length());
 			callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
 		}
 		
 		callbacks.finishBroadcast();
 		
 		//Log.e("SERV","BUFFERED DATA REQUESTED. Delivered and cleared.");
-		
-		if(the_buffer != null) {
-			the_buffer.setLength(0);
-			//the_buffer.clearSpans();
+		if( N < 1) {
+			//has no listeners
+			//Log.e("SERV","CANNOT SEND BUFFER, NO LISTENERS, TRYING AGAIN");
+			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,300);
+		} else {
+			if(the_buffer != null) {
+				the_buffer.setLength(0);
+				//the_buffer.clearSpans();
+			}
 		}
 	}
 	
@@ -2623,6 +2632,10 @@ public class StellarService extends Service {
 	
 
 	HashMap<String,String> captureMap = new HashMap<String,String>();
+	private int bufferLineCount = 0;
+	private Pattern bufferLine = Pattern.compile(".*\n");
+	Matcher bufferLineMatch = bufferLine.matcher("");
+	StringBuffer tempBuffer = new StringBuffer();
 	public void dispatchFinish(String rawData) {
 		
 		//String htmlText = colorer.htmlColorize(data);
@@ -2646,8 +2659,35 @@ public class StellarService extends Service {
 		//if(callbacks.)
 		if(final_count == 0) {
 			//someone isnt listening so save the buffer
+			bufferLineCount += rawData.split("\n").length;
+			//Log.e("SERVICE","FOUND:" + bufferLineCount);
 			the_buffer.append(rawData);
 			//Log.e("SERV","No listeners, buffering data.");
+			//appended data, trim the buffer.
+			if(bufferLineCount > the_settings.getMaxLines()) {
+				//trim from the front.
+				bufferLineMatch.reset(the_buffer);
+				//the_buffer.setLength(0);
+				tempBuffer.setLength(0);
+				int trimmed =0;
+				while(bufferLineMatch.find()) {
+					
+					if((bufferLineCount - trimmed) > the_settings.getMaxLines()) {
+						bufferLineMatch.appendReplacement(tempBuffer, "");
+						//Log.e("SERVICE","TRIMMING: " + bufferLineMatch.group(0).length());
+						trimmed++;
+						//Log.e("SERVICE","TRIMMING LINE FROM BUFFER");
+					} else {
+						bufferLineMatch.appendReplacement(tempBuffer, bufferLineMatch.group(0));
+					}
+				}
+				bufferLineMatch.appendTail(tempBuffer);
+				the_buffer.setLength(0);
+				the_buffer.append(tempBuffer);
+				//Log.e("SERVICE","TRIMMED " + trimmed + " FROM BUFFER NOW " + the_buffer.toString().length() + " bytes.");
+				bufferLineCount = the_settings.getMaxLines();
+			}
+			
 		} else {
 			//someone is listening so save the buffer.
 			the_buffer.setLength(0);
@@ -2753,15 +2793,15 @@ public class StellarService extends Service {
 			}
 		}
 		callbacks.finishBroadcast();
-		if(final_count == 0) {
+		//if(final_count == 0) {
 			//someone is listening so don't save the buffer
 			//Log.e("SERV","No listeners, buffering data.");
-		} else {
+		//} else {
 			
-			the_buffer.setLength(0);
+		//	the_buffer.setLength(0);
 			//the_buffer.clearSpans();
 			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
-		}
+		//}
 	}
 	
 	Pattern alias_replace = Pattern.compile(joined_alias.toString());
@@ -2962,8 +3002,9 @@ public class StellarService extends Service {
 			showNotification();
 			
 			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
-			the_buffer = new StringBuffer();
-			
+			if(the_buffer == null) {
+				the_buffer = new StringBuffer();
+			}
 			
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {

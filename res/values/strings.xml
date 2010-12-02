@@ -4,5 +4,5 @@
     <string name="app_name">BaardTERM</string>
 <string name="thewelcometext">Welcome to BaardTERM version AWESOME!111!one!!!@1NOWWITHLINEBREAKSOMGWTFBBQOHANDYOUMADEITTAKEFOURTYPERCENTLESSBATTERY?!?!?!!??!!?OMGWTFBBQXIXORRRSSS!OMGDANISSOCOOL</string>
 <string name="hello2">This is the debug screen. However this text will dissapear when data arrives from the server.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n</string>
-<string name="whatisnew">--- NEW FEATURES\n*bell character options\n*fullscreen mode toggle\n*local echo toggle\n*launcher improvements\n*selectable encoding\n*pipe to/popup keyboard command\n\n--- BUG FIXES\n*aliases match on word boundaries\n*keep screen awake is now optional\n*rapid button press causing freeze\n*minor ui issues\n*better ansi color parsing</string>
+<string name="whatisnew">--- BUG FIXES\n*proper connection termination handleing\n*force close issue when returning from notification\n\n--- NEW FEATURES\n*optional rounded buttons</string>
 </resources>
