@@ -78,6 +78,11 @@
 			android:title="Automatically Launch Editor?"
 			android:summary="When buttons are created, the editor will be launched."
 			android:defaultValue="true"/>
+		<CheckBoxPreference
+			android:key="ROUND_BUTTONS"
+			android:title="Round Buttons?"
+			android:summary="Buttons are drawn with round corners."
+			android:defaultValue="true"/>
 		<ListPreference
 			android:key="OVERRIDE_HAPTICFEEDBACK"
 			android:title="Haptic Feedback on Create/Modify"

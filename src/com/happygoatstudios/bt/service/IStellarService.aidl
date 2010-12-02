@@ -17,6 +17,8 @@ interface IStellarService {
 	int getPid();
 	void initXfer();
 	void endXfer();
+	boolean hasBuffer();
+	boolean isConnected();
 	void sendData(in byte[] seq);
 	void saveSettings();
 	void setNotificationText(CharSequence seq);
@@ -117,4 +119,6 @@ interface IStellarService {
 	void setDisplayOnBell(boolean use);	
 	boolean isFullScreen();
 	void setFullScreen(boolean use);	
+	boolean isRoundButtons();
+	void setRoundButtons(boolean use);
 }
