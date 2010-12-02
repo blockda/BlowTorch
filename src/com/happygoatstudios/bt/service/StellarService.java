@@ -206,6 +206,7 @@ public class StellarService extends Service {
 				case MESSAGE_DODISCONNECT:
 					killNetThreads();
 					DoDisconnect();
+					isConnected = false;
 					break;
 				case MESSAGE_RECONNECT:
 					killNetThreads();
@@ -227,6 +228,7 @@ public class StellarService extends Service {
 					//Log.e("SERV","ACTIVATING DISCONNECT");
 					killNetThreads();
 					DoDisconnect();
+					isConnected = false;
 					break;
 				case MESSAGE_DISPLAYPARAMS:
 					the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
@@ -806,6 +808,7 @@ public class StellarService extends Service {
 	
 	Object binderCookie = new Object();
 	Boolean hasListener = false;
+	protected boolean isConnected = false;
 	private final IStellarService.Stub mBinder = new IStellarService.Stub() {
 		public void registerCallback(IStellarServiceCallback m) throws RemoteException {
 			if(m != null && !hasListener) {
@@ -1813,6 +1816,30 @@ public class StellarService extends Service {
 
 		public void reconnect() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+		}
+
+		public boolean hasBuffer() throws RemoteException {
+			if(the_buffer.length() > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		public boolean isConnected() throws RemoteException {
+			return isConnected ;
+		}
+
+		public boolean isRoundButtons() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isRoundButtons();
+			}
+		}
+
+		public void setRoundButtons(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setRoundButtons(use);
+			}
 		}
 		
 	};
@@ -2943,6 +2970,8 @@ public class StellarService extends Service {
 					EnableWifiKeepAlive();
 				}
 			}
+			
+			isConnected = true;
 			
 			
 			//BEGIN OPERATIONS!
