@@ -112,8 +112,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_DODISCONNECT = 879;
 	public static final int MESSAGE_SENDBUTTONDATA = 880;
 
-	
-	
 	protected boolean settingsDialogRun = false;
 	
 	private boolean autoLaunch = true;
