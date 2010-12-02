@@ -156,6 +156,7 @@ public class StellarService extends Service {
 		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		mNM.cancel(5546);
 		host = BAD_HOST;
 		port = BAD_PORT;
 		
@@ -207,6 +208,7 @@ public class StellarService extends Service {
 					DoDisconnect();
 					break;
 				case MESSAGE_RECONNECT:
+					killNetThreads();
 					try {
 						doStartup();
 					} catch (UnknownHostException e3) {
@@ -626,6 +628,7 @@ public class StellarService extends Service {
 		if(N < 1) {
 			//no listeneres, just shutdown and put up a new notification.
 			ShowDisconnectedNotification();
+			//doShutdown();
 		}
 		
 	}
@@ -2959,27 +2962,65 @@ public class StellarService extends Service {
 	
 	private void ShowDisconnectedNotification() {
 		
-		mNM.cancel(5545);
+		//mNM.cancel(5545);
+		
 		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Disconnected",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
+		
+		//Intent the_intent = new Intent();
+		//the_intent.putExtra("DISPLAY",launch.getDisplayName());
+    	//the_intent.putExtra("HOST", launch.getHostName());
+    	//the_intent.putExtra("PORT", launch.getPortString());
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "BlowTorch Disconnected";
 		//CharSequence contentText = "Hello World!";
-		CharSequence contentText = "DISCONNECTED: "+ host +":"+ port;
+		CharSequence contentText = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
 		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
-		notificationIntent.putExtra("DISPLAY", display);
+		notificationIntent.putExtra("DISPLAY",display);
+		notificationIntent.putExtra("HOST", host);
+		notificationIntent.putExtra("PORT", Integer.toString(port));
+		
+		//notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
+		
 		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
-		note.flags = Notification.FLAG_ONGOING_EVENT;
 		
+		
+		Pattern invalidchars = Pattern.compile("\\W"); 
+		Matcher replacebadchars = invalidchars.matcher(display);
+		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		//prefsname = prefsname.replaceAll("/", "");
+		//Log.e("WINDOW","CHECKING SETTINGS FROM: " + prefsname);
+		SharedPreferences sprefs = this.getSharedPreferences(prefsname,0);
+		//servicestarted = prefs.getBoolean("CONNECTED", false);
+		//finishStart = prefs.getBoolean("FINISHSTART", true);
+		SharedPreferences.Editor editor = sprefs.edit();
+		editor.putBoolean("CONNECTED", false);
+		editor.putBoolean("FINISHSTART", true);
+		editor.commit();
+		//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
+		
+		//Launcher.this.startActivity(the_intent);
+		//SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
+		//SharedPreferences.Editor editor = sprefs.edit();
+		//editor.putBoolean("CONNECTED", false);
+		//editor.putBoolean("FINISHSTART", true);
+		editor.commit();
+		//mNM.cancelAll();
+		this.stopForeground(true);
 		//startForeground to avoid being killed off.
 		mNM.notify(5546,note);
+		showdcmessage = true;
+		this.stopSelf();
+		
+		//mNM.cancel(5545);
+		//this.stop
+		//mNM.cancelAll();
 	}
 	
 	private void showNotification() {
@@ -3034,7 +3075,7 @@ public class StellarService extends Service {
 			the_socket = null;
 		}
 	}
-	
+	boolean showdcmessage = false;
 	public void doShutdown() {
 		//pump.stop();
 		the_timer.cancel();
@@ -3042,7 +3083,10 @@ public class StellarService extends Service {
 		killNetThreads();
 		//kill the notification.
 		mNM.cancel(5545);
-		mNM.cancelAll();
+		if(!showdcmessage) {
+			mNM.cancelAll();
+		}
+		
 		
 	}
 	
