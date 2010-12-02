@@ -1243,6 +1243,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//icicile is out, prefs are in
 		
 		synchronized(settingsLoaded) {
+		//Log.e("WINDOW","CHECKING SETTINGS FROM: " + PREFS_NAME);
 		SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
 		
 		servicestarted = prefs.getBoolean("CONNECTED",false);
