@@ -233,7 +233,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		super.onCreate(icicle);
 		
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
-		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
