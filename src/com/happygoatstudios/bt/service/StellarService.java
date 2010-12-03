@@ -55,6 +55,7 @@ import android.preference.PreferenceManager;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -584,7 +585,7 @@ public class StellarService extends Service {
 					the_buffer = new StringBuffer((String)msg.obj + the_buffer);
 					bufferLineCount = 0;
 					bufferLineCount = the_buffer.toString().split("\n").length;
-					//Log.e("BTSERVICE","SAVING TARGET BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
+					//Log.e("SERVICE","SAVING BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
 					break;
 				default:
 					break;	
@@ -2085,7 +2086,7 @@ public class StellarService extends Service {
 		for(int i = 0;i<N;i++) {
 			//callbacks.getBroadcastItem(i).dataIncoming(data);
 			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
-			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivered and cleared. Size: " + the_buffer.toString().length());
+			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivering: " + the_buffer.toString().length() + " characters.");
 			callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
 		}
 		

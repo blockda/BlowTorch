@@ -34,6 +34,7 @@ import android.preference.PreferenceManager;
 import android.text.InputType;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -1145,7 +1146,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					screen2.addText((String)msg.obj,false);
 					break;
 				case MESSAGE_BUFFINC:
-					screen2.addText((String)msg.obj,false);
+					//String message = "\n" + Colorizer.colorCyanBright + "Buffer received: " +  ((String)msg.obj).getBytes().length + Colorizer.colorWhite + "\n";
+					screen2.addText((String)msg.obj,true);
 					break;
 				case MESSAGE_SENDDATAOUT:
 					try {
@@ -1678,10 +1680,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 			try {
 				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
-				SlickView sv = (SlickView)findViewById(R.id.slickview);
-				//Log.e("WINDOW","SAVING BUFFER:" + sv.getBuffer().length());
-				service.saveBuffer(sv.getBuffer());
-				service.unregisterCallback(the_callback);
+				saveBuffer();
 			} catch (RemoteException e) {
 				//e.printStackTrace();
 			}
@@ -1696,6 +1695,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//servicestarted = true;
 		//this.onPause();
 		saveSettings();
+	}
+
+	private void saveBuffer() throws RemoteException {
+		SlickView sv = (SlickView)findViewById(R.id.slickview);
+		//Log.e("WINDOW","SAVING BUFFER:" + sv.getBuffer().length());
+		//String message = "\n" + Colorizer.colorYeollowBright + "Saving buffer: " + sv.getBuffer().getBytes().length + Colorizer.colorWhite + "\n";
+		service.saveBuffer(sv.getBuffer());
+		service.unregisterCallback(the_callback);
+		sv.clearBuffer();
 	}
 	
 	public void onSaveInstanceState(Bundle data) {
@@ -1805,13 +1813,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		if(isBound) {
 			
 			try {
-				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
+				//Log.e("WINDOW","SAVING BUFFER IN SERVICE");
+				
 				if(service != null) {
+					saveBuffer();
+					
+					service.unregisterCallback(the_callback);
 					service.unregisterCallback(the_callback);
 					
 					unbindService(mConnection);
 					
-					saveSettings();
+					//saveSettings();
 				} else {
 					//uh oh, pausing with a null service, this should not happen
 					
