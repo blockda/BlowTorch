@@ -1385,4 +1385,10 @@ public class SlickView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 	}
 
+	public void clearBuffer() {
+		synchronized(dlines) {
+			dlines.clear();
+		}
+	}
+
 }

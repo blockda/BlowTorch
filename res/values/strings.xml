@@ -4,5 +4,5 @@
     <string name="app_name">BaardTERM</string>
 <string name="thewelcometext">Welcome to BaardTERM version AWESOME!111!one!!!@1NOWWITHLINEBREAKSOMGWTFBBQOHANDYOUMADEITTAKEFOURTYPERCENTLESSBATTERY?!?!?!!??!!?OMGWTFBBQXIXORRRSSS!OMGDANISSOCOOL</string>
 <string name="hello2">This is the debug screen. However this text will dissapear when data arrives from the server.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n</string>
-<string name="whatisnew">--- BUG FIXES\n*proper connection termination handleing\n*force close issue when returning from notification\n\n--- NEW FEATURES\n*optional rounded buttons</string>
+<string name="whatisnew">--- BUG FIXES\n*Proper connection termination handling\n*Force close issues while afk\n*Using cyrillic/non-ascii characters as button commands.\n\n--- NEW FEATURES\n*optional rounded buttons</string>
 </resources>

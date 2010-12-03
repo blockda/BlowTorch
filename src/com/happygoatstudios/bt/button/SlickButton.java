@@ -437,8 +437,7 @@ public class SlickButton extends View {
 		if(fullScreenShift > 0) {
 			c.translate(0, fullScreenShift);
 		}
-		p.setAntiAlias(true);
-		//TODO: MOVE THIS LINE SO ANTIALIAS ONLY HAPPENS WHEN ROUND IS ON"
+		
 		if(hasfocus) {
 			if(doing_flip) {
 				p.setColor(data.getFlipColor());
@@ -452,9 +451,14 @@ public class SlickButton extends View {
 		float radius = 8 * this.getResources().getDisplayMetrics().density;
 		
 		if(drawRound) {
+			p.setAntiAlias(true);
+	
 			RectF frect = new RectF(rect);
 			c.drawRoundRect(frect, radius,radius, p);
+			
 		} else {
+			p.setAntiAlias(false);
+			
 			c.drawRect(rect, p);
 		}
 		//get text size.
