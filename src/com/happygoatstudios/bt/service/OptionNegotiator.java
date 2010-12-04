@@ -29,6 +29,7 @@ public class OptionNegotiator {
 	byte IAC_DO = (byte)0xFD; //253
 	byte IAC_DONT = (byte)0xFE; //254
 	final byte COMPRESS2 = (byte)0x56; //86
+	final byte SUPPRESS_GOAHEAD = (byte)0x03;
 	public byte[] processCommand(byte first,byte second,byte third) {
 	    	
 			
@@ -60,7 +61,9 @@ public class OptionNegotiator {
 	    			dispatcher.sendEmptyMessage(StellarService.MESSAGE_COMPRESSIONREQUESTED);
 	    			//response = IAC_DONT;
 	    			break;
-	   			
+	    		case SUPPRESS_GOAHEAD:
+	    			response = IAC_DO;
+	    			break;
 	    		default:
 	    			response = IAC_DONT;
 	    		}
