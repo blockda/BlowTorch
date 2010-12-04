@@ -21,6 +21,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +53,6 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -84,7 +84,7 @@ public class StellarService extends Service {
 	
 	OutputStream output_writer = null;
 	
-	OutputWriter outputter = null;
+	//OutputWriter outputter = null;
 	
 	Processor the_processor = null;
 	
@@ -133,6 +133,7 @@ public class StellarService extends Service {
 	public static final int MESSAGE_DISCONNECTED = 505;
 	protected static final int MESSAGE_RECONNECT = 506;
 	public static final int MESSAGE_DODISCONNECT = 507;
+	public static final int MESSAGE_PROCESSORWARNING = 508;
 	
 	public boolean sending = false;
 	
@@ -205,6 +206,14 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_PROCESSORWARNING:
+					try {
+						doDispatchNoProcess(((String)msg.obj).getBytes(the_settings.getEncoding()));
+					} catch (RemoteException e4) {
+						throw new RuntimeException(e4);
+					} catch (UnsupportedEncodingException e4) {
+						throw new RuntimeException(e4);
+					}
 				case MESSAGE_DODISCONNECT:
 					killNetThreads();
 					DoDisconnect();
@@ -215,15 +224,14 @@ public class StellarService extends Service {
 					try {
 						doStartup();
 					} catch (UnknownHostException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					} catch (IOException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					}
+					buildTriggerData();
+					the_processor.reset();
 					break;
 				case MESSAGE_DISCONNECTED:
 					//the pump has reported the connection closed.
@@ -382,16 +390,6 @@ public class StellarService extends Service {
 					doShutdown();
 					break;
 				case MESSAGE_PROCESS:
-					//try {
-						////String message = new String(TC.decodeInt(new String(((byte[])msg.obj), the_settings.getEncoding()),the_settings.getEncoding()));
-						//Log.e("SERVICE","PROCESSING:" + message.substring(message.length()-60, message.length()));
-					//} catch (UnsupportedEncodingException e3) {
-						// TODO Auto-generated catch block
-					//	e3.printStackTrace();
-					//}
-					//byte[] data = msg.getData().getByteArray("THEBYTES");
-					
-					//need to throttle this somehow to avoid sending messages too fast.
 					try {
 						dispatch((byte[])msg.obj);
 					} catch (RemoteException e) {
@@ -461,83 +459,7 @@ public class StellarService extends Service {
 						}
 					}
 					//do search and replace with aliases.
-					
-					/*if(joined_alias.length() > 0) {
-
-						Pattern to_replace = Pattern.compile(joined_alias.toString());
-						
-						Matcher replacer = null;
-						try {
-							replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						}
-						
-						StringBuffer replaced = new StringBuffer();
-						
-						boolean found = false;
-						while(replacer.find()) {
-							//String matched = replacer.group(0);
-							found = true;
-							AliasData replace_with = the_settings.getAliases().get(replacer.group(0));
-							replacer.appendReplacement(replaced, replace_with.getPost());
-						}
-						
-						replacer.appendTail(replaced);
-						
-						StringBuffer buffertemp = new StringBuffer();
-						if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
-							boolean recursivefound = false;
-							do {
-								recursivefound = false;
-								Matcher recursivematch = to_replace.matcher(replaced.toString());
-								while(recursivematch.find()) {
-									recursivefound = true;
-									AliasData replace_with = the_settings.getAliases().get(recursivematch.group(0));
-									recursivematch.appendReplacement(buffertemp, replace_with.getPost());
-								}
-								if(recursivefound) {
-									recursivematch.appendTail(buffertemp);
-									replaced.setLength(0);
-									replaced.append(buffertemp);
-								}
-							} while(recursivefound == true);
-						}
-						//so replacer should contain the transformed string now.
-						//pull the bytes back out.
-						try {
-							bytes = replaced.toString().getBytes(the_settings.getEncoding());
-							//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
-							//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						}
-						
-						replaced.setLength(0);
-					}
-					*/
 					bytes = DoAliasReplacement(bytes);
-					//do command processing after alias processing.
-					/*String retval = null;
-					try {
-						retval = ProcessCommands(new String(bytes,the_settings.getEncoding()));
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-					}
-					if(retval == null || retval.equals("")) {
-						//command was intercepted. do nothing for now and return
-						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
-						return;
-					} else {
-						//not a command data.
-						try {
-							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
-							if(retval.equals("")) { return; }
-							bytes = retval.getBytes(the_settings.getEncoding());
-						} catch (UnsupportedEncodingException e) {
-							throw new RuntimeException(e);
-						}
-					}*/
 					
 					//strip semi
 					Character cr = new Character((char)13);
@@ -561,12 +483,37 @@ public class StellarService extends Service {
 					}
 					//nosemidata = nosemidata.concat(crlf);
 					
+					//now we have an extra step, we have to police all outbound data for the IAC character.
+					//if it appears, we must double it.
+					
 					try {
-						//Log.e("SERVICE","WRITE: "+nosemidata);
-						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
-
-						output_writer.flush();
+						byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
+						ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
+						//int found = 0;
+						int count = 0;
+						for(int i=0;i<sendtest.length;i++) {
+							if(sendtest[i] == (byte)0xFF) {
+								//buf = ByteBuffer.wrap(buf.array());
+								buf.put((byte)0xFF);
+								buf.put((byte)0xFF);
+								count += 2;
+							} else {
+								buf.put(sendtest[i]);
+								count++;
+							}
+						}
 						
+						byte[] tosend = new byte[count];
+						buf.rewind();
+						buf.get(tosend,0,count);
+						
+						//Log.e("SERVICE","WRITE: "+nosemidata);
+						if(output_writer != null) {
+							output_writer.write(tosend);
+							output_writer.flush();
+						} else {
+							doDispatchNoProcess(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+						}
 						//send the transformed data back to the window
 						try {
 							if(the_settings.isLocalEcho()) {
@@ -576,6 +523,8 @@ public class StellarService extends Service {
 							throw new RuntimeException(e);
 						}
 					} catch (IOException e) {
+						throw new RuntimeException(e);
+					} catch (RemoteException e) {
 						throw new RuntimeException(e);
 					}
 					break;
@@ -954,7 +903,7 @@ public class StellarService extends Service {
 
 
 		@SuppressWarnings("unchecked")
-		public void setAliases(Map map) throws RemoteException {
+		public void setAliases(@SuppressWarnings("rawtypes") Map map) throws RemoteException {
 			
 			the_settings.getAliases().clear();
 			the_settings.setAliases(new HashMap<String,AliasData>(map));
@@ -1141,7 +1090,7 @@ public class StellarService extends Service {
 		}
 
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getButtonSetListInfo() throws RemoteException {
 			
 			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
@@ -1327,7 +1276,7 @@ public class StellarService extends Service {
 		}
 
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTriggerData() throws RemoteException {
 			
 			synchronized(the_settings) {
@@ -1570,7 +1519,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTimers() throws RemoteException {
 			synchronized(the_settings) {
 				//updat the timer table
@@ -1671,7 +1620,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTimerProgressWad() throws RemoteException {
 			HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
 			
@@ -1807,7 +1756,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public List getSystemCommands() throws RemoteException {
 			ArrayList<String> names = new ArrayList<String>();
 			for(String name : specialcommands.keySet()) {
@@ -2575,11 +2524,9 @@ public class StellarService extends Service {
 			try {
 				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 		}
@@ -2597,11 +2544,9 @@ public class StellarService extends Service {
 			try {
 				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 		}
@@ -3142,6 +3087,7 @@ public class StellarService extends Service {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
+			output_writer = null;
 		}
 		
 		if(the_socket != null) {
