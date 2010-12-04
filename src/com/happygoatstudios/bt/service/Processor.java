@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -113,11 +114,13 @@ public class Processor {
 		boolean skipgoahead = false;
 		
 		ByteBuffer buff = ByteBuffer.allocate(data.length);
-		ByteBuffer opbuf = ByteBuffer.allocate(10);
+		ByteBuffer opbuf = ByteBuffer.allocate(30);
 		//buff.rewind();
 		//buff.reset();
+		int count = 0; //count of the number of bytes in the buffer;
 		for(int i=0;i<data.length;i++) {
-			opbuf = ByteBuffer.allocate(255);
+			//opbuf = ByteBuffer.allocate(30);
+			//opbuf.clear();
 			switch(data[i]) {
 			case IAC:
 				//if the next byte is
@@ -127,6 +130,9 @@ public class Processor {
 					//if iac
 					if(data[i+1] == SB) {
 						//subnegotiation
+						//opbuf.clear();
+						//Vector<Byte> opbuf = new Vector<Byte>();
+						//opbuf.rewind();
 						opbuf.put(IAC);
 						opbuf.put(data[i+1]);
 						opbuf.put(data[i+2]);
@@ -135,21 +141,59 @@ public class Processor {
 						int j = i+3;
 						while(!done) {
 							if(data[j] == IAC) {
+								//Log.e("SERVICE","IAC SUBNEGOTIOAION END IN CORRECT PLACE");
 								if(data[j+1] == SE) {
+									//Log.e("SERVICE","SE SUBNEGOTIOAION END IN CORRECT PLACE");
 									done = true;
+									//opbuf.put(IAC).put(SE);
 								}
 							} else {
 								opbuf.put(data[j]);
 								j++;
 							}
 						}
-						dispatchSub()
-						i = i + 2 + j + 1; // (original pos, plus the 2 mandatory bytes, plus the optional data length, plus the 2 bytes at the end (one is included in the loop).
-						
-					} else {
+						//so if we are here, than j - (i+3)  is the number of optional bytes.
+						opbuf = ByteBuffer.allocate(j-(i+3) + 5);
 						opbuf.put(IAC);
 						opbuf.put(data[i+1]);
 						opbuf.put(data[i+2]);
+						if(j-(i+3) > 0) {
+							for(int q=i+3;q<j;q++) {
+								opbuf.put(data[q]);
+							}
+						}
+						opbuf.put(IAC);
+						opbuf.put(SE);
+						
+						
+						opbuf.rewind();
+						boolean compress = dispatchSUB(opbuf.array());
+						if(compress) {
+							ByteBuffer b = ByteBuffer.allocate(data.length - 5 - i);
+							//if(in[0] == IAC && in[1] == SB && in[2] == compressresp[0] && in[3] == IAC && in[4] == SE) {
+								Log.e("PROCESSOR","ENCOUNTERED START OF COMPRESSION EVENT");
+								//get rest
+								
+							for(int z=i+5;z<data.length;z++) {
+								b.put(data[z]);
+							}
+								
+							
+							b.rewind();
+							reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS,b.array()));
+							byte[] trunc = new byte[count];
+							buff.rewind();
+							buff.get(trunc,0,count);
+							return new String(trunc,encoding);
+						
+						} else {
+							i = i + 2 + (j-(i+3)) + 2; // (original pos, plus the 2 mandatory bytes, plus the optional data length, plus the 2 bytes at the end (one is included in the loop).
+						}
+					} else {
+						//opbuf.put(IAC);
+						//opbuf.put(data[i+1]);
+						//opbuf.put(data[i+2]);
+						//opbuf.limit(3);
 						byte[] tmp1 = { data[i+1] };
 						byte[] tmp2 = { data[i+2] };
 						//dispatch
@@ -158,11 +202,12 @@ public class Processor {
 					}
 				} else if(data[i+1] == GOAHEAD) {
 				
-					skipgoahead = true;
+					i++;
 					Log.e("SERVICE","DO GOAHEAD");
 				} else if(data[i+1] == IAC) {
 					Log.e("SERVICE","FOUND DOUBLE R");
 					buff.put(data[i]);
+					count++;
 					i++;
 				}
 				break;
@@ -175,6 +220,7 @@ public class Processor {
 				break;
 			default:
 				buff.put(data[i]);	
+				count++;
 				break;
 			}
 			/*if(doiac) {
@@ -223,8 +269,12 @@ public class Processor {
 				buff.put(data[i]);
 			}*/
 		}
+		//buff.rewind();
+		//count should reflect an accurate amount of bytes written to the buffer.
 		buff.rewind();
-		return new String(buff.array(),encoding);
+		byte[] tmp = new byte[count];
+		buff.get(tmp,0,count);
+		return new String(tmp,encoding);
 	}
 		/*String tmp = new String(data,encoding);
 		
@@ -339,11 +389,11 @@ public class Processor {
 		reportto.sendMessage(sb);
 	}
 	
-	public boolean dispatchSUB(String negotiation,byte[] in) throws UnsupportedEncodingException {
-		byte[] stmp = negotiation.getBytes("ISO-8859-1");
-		Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(negotiation, encoding));
+	public boolean dispatchSUB(byte[] negotiation) throws UnsupportedEncodingException {
+		//byte[] stmp = negotiation.getBytes("ISO-8859-1");
+		Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(new String(negotiation,encoding), encoding));
 
-		byte[] sub_r = opthandler.getSubnegotiationResponse(stmp);
+		byte[] sub_r = opthandler.getSubnegotiationResponse(negotiation);
 		//String sub_resp = new String(opthandler.getSubnegotiationResponse(stmp));
 		
 		if(sub_r == null) {
@@ -357,8 +407,25 @@ public class Processor {
 		//special handling for the compression marker.
 		byte[] compressresp = new byte[1];
 		compressresp[0] = TC.COMPRESS2;
+		
 		if(sub_r[0] == compressresp[0]) {
-			StringBuffer b = new StringBuffer();
+			/*ByteBuffer b = ByteBuffer.allocate(in.length - 5);
+			if(in[0] == IAC && in[1] == SB && in[2] == compressresp[0] && in[3] == IAC && in[4] == SE) {
+				Log.e("PROCESSOR","ENCOUNTERED START OF COMPRESSION EVENT");
+				//get rest
+				
+				for(int i=5;i<in.length;i++) {
+					b.put(in[i]);
+				}
+				
+			}
+			b.rewind();
+			reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS,b.array()));
+			*/
+			return true;
+			/*StringBuffer b = new StringBuffer();
+			
+			//IAC SB COMPRESS2 IAC SE
 			sub_match.reset(new String(in,"ISO-8859-1"));
 			boolean found = false;
 			while(sub_match.find()) {
@@ -373,10 +440,10 @@ public class Processor {
 				if(b.length() > 0) {
 					rest = b.toString().getBytes("ISO-8859-1");
 				}
-			}
+			}*/
 			
-			reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS,rest));
-			return true;
+			//reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS,rest));
+			//return true;
 		} else {
 			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,sub_r);
 			reportto.sendMessage(sbm);
