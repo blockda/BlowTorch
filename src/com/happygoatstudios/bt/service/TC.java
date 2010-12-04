@@ -140,13 +140,14 @@ public class TC {
 		for(int i=0;i<letters.length;i++) {
 			int ival = (int)letters[i];
 			String lookup = getByteName((byte) ((byte)0x000000FF&ival));
-			if(lookup.equals("")) {
+			//if(lookup.equals("")) {
 				//append the normal
-				String str = Integer.toHexString(0x000000FF&ival)+"|";
+				//String str = Integer.toHexString(0x000000FF&ival)+"|";
+				String str = Integer.toString(0x000000FF&ival)+"|";
 				retval.append(str);
-			} else {
-				retval.append(lookup + "|");
-			}
+			//} else {
+				//retval.append(lookup + "|");
+			//}
 			
 		}
 		
