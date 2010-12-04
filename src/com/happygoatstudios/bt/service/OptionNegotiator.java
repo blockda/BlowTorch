@@ -3,7 +3,6 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import android.os.Handler;
 //import android.util.Log;
 //import android.util.Log;
 
@@ -13,16 +12,16 @@ public class OptionNegotiator {
 	private int columns = 80;
 	private int rows = 21;
 	
-	private Handler dispatcher;
+	//private Handler dispatcher;
 	
 	boolean isNAWS=false;
 
 	private String[] termtypes = {"BlowTorch","ansi","UNKNOWN"};
 	private int attempt = 0;
 	
-	public OptionNegotiator(Handler idispatcher) {
+	public OptionNegotiator() {
 		//not really much to initialize, this class just returns a response to an option
-		dispatcher = idispatcher;
+		//dispatcher = idispatcher;
 	}
 	byte IAC_WILL = (byte)0xFB; //251
 	byte IAC_WONT = (byte)0xFC; //252
@@ -57,9 +56,6 @@ public class OptionNegotiator {
 	    		switch(third) {
 	    		case COMPRESS2:
 	    			response = IAC_DO;
-	    			//TODO: turn compression back on.
-	    			dispatcher.sendEmptyMessage(StellarService.MESSAGE_COMPRESSIONREQUESTED);
-	    			//response = IAC_DONT;
 	    			break;
 	    		case SUPPRESS_GOAHEAD:
 	    			response = IAC_DO;
@@ -254,5 +250,10 @@ public class OptionNegotiator {
 		
 		//send the data back.
 		return suboption;
+	}
+
+
+	public void reset() {
+		attempt = 0;		
 	}
 }
