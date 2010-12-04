@@ -44,6 +44,8 @@ public class Processor {
 	
 	private final byte GOAHEAD = (byte)0xF9;
 	
+	private final byte IP = (byte)0xF4;
+	
 	private final byte TAB = (byte)0x09;
 	private final byte BELL = (byte)0x07;
 	//private byte
@@ -128,6 +130,10 @@ public class Processor {
 					Log.e("SERVICE","FOUND DOUBLE R");
 					buff.put(data[i]);
 					count++;
+					i++;
+				} else if(data[i+1] == IP)  {
+					//we handle disconnections on our own.
+					Log.e("SERVICE","GOT IP");
 					i++;
 				}
 				break;
