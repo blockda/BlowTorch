@@ -52,6 +52,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -381,7 +382,13 @@ public class StellarService extends Service {
 					doShutdown();
 					break;
 				case MESSAGE_PROCESS:
-					//Log.e("BTSERVICE","PROCESSING");
+					//try {
+						////String message = new String(TC.decodeInt(new String(((byte[])msg.obj), the_settings.getEncoding()),the_settings.getEncoding()));
+						//Log.e("SERVICE","PROCESSING:" + message.substring(message.length()-60, message.length()));
+					//} catch (UnsupportedEncodingException e3) {
+						// TODO Auto-generated catch block
+					//	e3.printStackTrace();
+					//}
 					//byte[] data = msg.getData().getByteArray("THEBYTES");
 					
 					//need to throttle this somehow to avoid sending messages too fast.
