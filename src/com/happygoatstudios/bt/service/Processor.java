@@ -280,7 +280,7 @@ public class Processor {
 			String message = null;
 			if(debugTelnet) {
 				message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + " ";
-				message += Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(sub_r) + Colorizer.telOptColorEnd + "\n";
+				message += Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(sub_r) + "]" + Colorizer.telOptColorEnd + "\n";
 				//reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message));
 			}
 			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
