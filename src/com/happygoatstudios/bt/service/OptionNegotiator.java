@@ -72,6 +72,7 @@ public class OptionNegotiator {
 	    			break;
 	    		case NAWS_TYPE:
 	    			response = IAC_WILL;
+	    			isNAWS=true;
 	    			break; 
 	    		case TC.TERM:
 	    			response = IAC_WILL;
@@ -94,16 +95,16 @@ public class OptionNegotiator {
 	    	ret[1] = response;
 	    	ret[2] = third;
 	    	
-	    	byte[] additionalcmd = getCommandSubneg(ret[1],ret[2]);
+	    	//byte[] additionalcmd = getCommandSubneg(ret[1],ret[2]);
 	    	
-	    	if(additionalcmd != null) {
+	    	/*if(additionalcmd != null) {
 	    		//append subnegotiation onto stream.
 	    		ByteBuffer buf = ByteBuffer.allocate(ret.length + additionalcmd.length);
 	    		buf.put(ret,0,ret.length);
 	    		buf.put(additionalcmd,0,additionalcmd.length);
 	    		byte[] altret = buf.array();
 	    		return altret;
-	    	}
+	    	}*/
 	    	
 	    	return ret;
 	    	
@@ -162,7 +163,7 @@ public class OptionNegotiator {
     	return null;
 	}
 	
-    public byte[] getCommandSubneg(byte action,byte option) {
+    /*public byte[] getCommandSubneg(byte action,byte option) {
     	//get intval of action
     	Integer w = new Integer((int)(0xFF &action));
     	
@@ -195,6 +196,7 @@ public class OptionNegotiator {
     			buf.rewind();
     			byte[] suboption = buf.array();
     			isNAWS = true;
+    			
     			//send the data back.
     			return suboption;
     		default:
@@ -206,7 +208,7 @@ public class OptionNegotiator {
     	
     	}
     	return null;
-    }
+    }*/
 
 	public void setColumns(int columns) {
 		this.columns = columns;

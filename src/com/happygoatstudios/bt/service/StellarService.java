@@ -53,6 +53,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -153,7 +154,7 @@ public class StellarService extends Service {
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
-		
+		this.
 		//set up the crash reporter
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
 		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
@@ -214,6 +215,7 @@ public class StellarService extends Service {
 					} catch (UnsupportedEncodingException e4) {
 						throw new RuntimeException(e4);
 					}
+					break;
 				case MESSAGE_DODISCONNECT:
 					killNetThreads();
 					DoDisconnect();
@@ -241,8 +243,10 @@ public class StellarService extends Service {
 					isConnected = false;
 					break;
 				case MESSAGE_DISPLAYPARAMS:
-					the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
-					the_processor.disaptchNawsString();
+					if(the_processor != null) {
+						the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
+						the_processor.disaptchNawsString();
+					}
 					break;
 				case MESSAGE_BELLINC:
 					//bell recieved.
@@ -422,14 +426,31 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_SENDOPTIONDATA:
 					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex((byte[])msg.obj));
-					byte[] obytes = (byte[])(msg.obj);
+					Bundle b = msg.getData();
+					byte[] obytes = b.getByteArray("THE_DATA");
+					Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex(obytes));
+					String message = b.getString("DEBUG_MESSAGE");
+					if(message != null) {
+						try {
+							doDispatchNoProcess(message.getBytes(the_settings.getEncoding()));
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 					
 					try {
+						if(obytes == null) Log.e("SERVICE","NULL BYTES");
+						if(output_writer == null) Log.e("SERVICE","NULL WRITER");
 						output_writer.write(obytes);
 						output_writer.flush();
 					} catch (IOException e2) {
 						throw new RuntimeException(e2);
 					}
+					Log.e("BTSERVICE","DONE SENDING");
 					
 					break;
 				case MESSAGE_SENDDATA:
@@ -3087,6 +3108,7 @@ public class StellarService extends Service {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
+			Log.e("SERVICE","OUTPUT WRITER KILLED");
 			output_writer = null;
 		}
 		
