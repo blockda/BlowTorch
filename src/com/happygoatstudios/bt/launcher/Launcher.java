@@ -387,20 +387,7 @@ public class Launcher extends Activity implements ReadyListener {
 	    	
 	    	//check to see if the service is actually running
 	    	
-	    	ActivityManager activityManager = (ActivityManager)Launcher.this.getSystemService(Context.ACTIVITY_SERVICE);
-	    	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
-	    	boolean found = false;
-	    	for(RunningServiceInfo service : services) {
-	    		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
-	    		//service.service.
-	    		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
-	    			//service is running, don't do anything.
-	    			found = true;
-	    		} else {
-
-	    			
-	    		}
-	    	}
+	    	boolean found = isServiceRunning();
 	    	
 	    	if(!found) {
     			//service is not running, reset the values in the shared prefs that the window uses to keep track of weather or not to finish init routines.
@@ -416,6 +403,8 @@ public class Launcher extends Activity implements ReadyListener {
 	    	}
 	    	
 		}
+
+		
 	}
 	private MudConnection launch;
 	
@@ -643,6 +632,24 @@ public class Launcher extends Activity implements ReadyListener {
 		}
 		
 	};
+	
+	private boolean isServiceRunning() {
+		ActivityManager activityManager = (ActivityManager)Launcher.this.getSystemService(Context.ACTIVITY_SERVICE);
+    	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+    	boolean found = false;
+    	for(RunningServiceInfo service : services) {
+    		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
+    		//service.service.
+    		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
+    			//service is running, don't do anything.
+    			found = true;
+    		} else {
+
+    			
+    		}
+    	}
+		return found;
+	}
 	
 	private void DoExport(String filename) {
 		

@@ -3,7 +3,6 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import android.os.Handler;
 //import android.util.Log;
 //import android.util.Log;
 
@@ -13,22 +12,23 @@ public class OptionNegotiator {
 	private int columns = 80;
 	private int rows = 21;
 	
-	private Handler dispatcher;
+	//private Handler dispatcher;
 	
 	boolean isNAWS=false;
 
 	private String[] termtypes = {"BlowTorch","ansi","UNKNOWN"};
 	private int attempt = 0;
 	
-	public OptionNegotiator(Handler idispatcher) {
+	public OptionNegotiator() {
 		//not really much to initialize, this class just returns a response to an option
-		dispatcher = idispatcher;
+		//dispatcher = idispatcher;
 	}
 	byte IAC_WILL = (byte)0xFB; //251
 	byte IAC_WONT = (byte)0xFC; //252
 	byte IAC_DO = (byte)0xFD; //253
 	byte IAC_DONT = (byte)0xFE; //254
 	final byte COMPRESS2 = (byte)0x56; //86
+	final byte SUPPRESS_GOAHEAD = (byte)0x03;
 	public byte[] processCommand(byte first,byte second,byte third) {
 	    	
 			
@@ -56,11 +56,10 @@ public class OptionNegotiator {
 	    		switch(third) {
 	    		case COMPRESS2:
 	    			response = IAC_DO;
-	    			//TODO: turn compression back on.
-	    			dispatcher.sendEmptyMessage(StellarService.MESSAGE_COMPRESSIONREQUESTED);
-	    			//response = IAC_DONT;
 	    			break;
-	   			
+	    		case SUPPRESS_GOAHEAD:
+	    			response = IAC_DO;
+	    			break;
 	    		default:
 	    			response = IAC_DONT;
 	    		}
@@ -73,6 +72,7 @@ public class OptionNegotiator {
 	    			break;
 	    		case NAWS_TYPE:
 	    			response = IAC_WILL;
+	    			isNAWS=true;
 	    			break; 
 	    		case TC.TERM:
 	    			response = IAC_WILL;
@@ -95,16 +95,16 @@ public class OptionNegotiator {
 	    	ret[1] = response;
 	    	ret[2] = third;
 	    	
-	    	byte[] additionalcmd = getCommandSubneg(ret[1],ret[2]);
+	    	//byte[] additionalcmd = getCommandSubneg(ret[1],ret[2]);
 	    	
-	    	if(additionalcmd != null) {
+	    	/*if(additionalcmd != null) {
 	    		//append subnegotiation onto stream.
 	    		ByteBuffer buf = ByteBuffer.allocate(ret.length + additionalcmd.length);
 	    		buf.put(ret,0,ret.length);
 	    		buf.put(additionalcmd,0,additionalcmd.length);
 	    		byte[] altret = buf.array();
 	    		return altret;
-	    	}
+	    	}*/
 	    	
 	    	return ret;
 	    	
@@ -163,7 +163,7 @@ public class OptionNegotiator {
     	return null;
 	}
 	
-    public byte[] getCommandSubneg(byte action,byte option) {
+    /*public byte[] getCommandSubneg(byte action,byte option) {
     	//get intval of action
     	Integer w = new Integer((int)(0xFF &action));
     	
@@ -196,6 +196,7 @@ public class OptionNegotiator {
     			buf.rewind();
     			byte[] suboption = buf.array();
     			isNAWS = true;
+    			
     			//send the data back.
     			return suboption;
     		default:
@@ -207,7 +208,7 @@ public class OptionNegotiator {
     	
     	}
     	return null;
-    }
+    }*/
 
 	public void setColumns(int columns) {
 		this.columns = columns;
@@ -251,5 +252,10 @@ public class OptionNegotiator {
 		
 		//send the data back.
 		return suboption;
+	}
+
+
+	public void reset() {
+		attempt = 0;		
 	}
 }

@@ -90,6 +90,7 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setEncoding( (attributes.getValue("",ATTR_ENCODING) == null) ? "ISO-8859-1" : attributes.getValue("",ATTR_ENCODING));
 				tmp.setKeepScreenOn( (attributes.getValue("",ATTR_KEEPSCREENON) == null) ? true : (attributes.getValue("",ATTR_KEEPSCREENON).equals("true")) ? true : false);
 				tmp.setFullScreen( (attributes.getValue("",ATTR_FULLSCREEN) == null) ? false : (attributes.getValue("",ATTR_FULLSCREEN).equals("true")) ? true : false);
+				tmp.setRoundButtons( (attributes.getValue("",ATTR_ROUNDBUTTONS) == null) ? false : (attributes.getValue("",ATTR_ROUNDBUTTONS).equals("true")) ? true:false);
 				
 				int wmode = new Integer(attributes.getValue("",ATTR_WRAPMODE));
 				switch(wmode) {
