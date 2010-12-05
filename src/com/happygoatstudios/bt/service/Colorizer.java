@@ -18,6 +18,8 @@ public class Colorizer {
 	public static String colorGreen = escape+"[1;34m";
 	public static String colorCyanBright = escape+"[1;36m";
 	public static String colorYeollowBright = escape+"[1;33m";
+	public static String telOptColorBegin = escape + "[1;43;30m";
+	public static String telOptColorEnd = escape + "[0m";
 	public static String debugString = escape+"[39;49m" + escape + "[0;10m" + "this is the debug string" + colorGreen + "greentext" + escape + "[39;49m" + escape + "[0;10mbacktonormal\n";
 	Pattern newline = Pattern.compile("\\x0D");
 	Pattern carriage = Pattern.compile("\\x0A");

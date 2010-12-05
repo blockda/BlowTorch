@@ -21,6 +21,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,9 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
+//import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 
@@ -81,7 +85,7 @@ public class StellarService extends Service {
 	
 	OutputStream output_writer = null;
 	
-	OutputWriter outputter = null;
+	//OutputWriter outputter = null;
 	
 	Processor the_processor = null;
 	
@@ -127,6 +131,10 @@ public class StellarService extends Service {
 	public static final int MESSAGE_TIMERINFO = 502;
 	public static final int MESSAGE_BELLINC = 503;
 	protected static final int MESSAGE_DISPLAYPARAMS = 504;
+	public static final int MESSAGE_DISCONNECTED = 505;
+	protected static final int MESSAGE_RECONNECT = 506;
+	public static final int MESSAGE_DODISCONNECT = 507;
+	public static final int MESSAGE_PROCESSORWARNING = 508;
 	
 	public boolean sending = false;
 	
@@ -146,11 +154,13 @@ public class StellarService extends Service {
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
-		
+		this.
 		//set up the crash reporter
+		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
 		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		mNM.cancel(5546);
 		host = BAD_HOST;
 		port = BAD_PORT;
 		
@@ -163,6 +173,8 @@ public class StellarService extends Service {
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
+		DisconnectCommand dccmd = new DisconnectCommand();
+		ReconnectCommand rccmd = new ReconnectCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
@@ -171,6 +183,8 @@ public class StellarService extends Service {
 		specialcommands.put(fscmd.commandName, fscmd);
 		specialcommands.put(kbcmd.commandName, kbcmd);
 		specialcommands.put("kb", kbcmd);
+		specialcommands.put(dccmd.commandName, dccmd);
+		specialcommands.put(rccmd.commandName, rccmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -193,9 +207,46 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_PROCESSORWARNING:
+					try {
+						doDispatchNoProcess(((String)msg.obj).getBytes(the_settings.getEncoding()));
+					} catch (RemoteException e4) {
+						throw new RuntimeException(e4);
+					} catch (UnsupportedEncodingException e4) {
+						throw new RuntimeException(e4);
+					}
+					break;
+				case MESSAGE_DODISCONNECT:
+					killNetThreads();
+					DoDisconnect();
+					isConnected = false;
+					break;
+				case MESSAGE_RECONNECT:
+					killNetThreads();
+					try {
+						doStartup();
+					} catch (UnknownHostException e3) {
+						throw new RuntimeException(e3);
+					} catch (RemoteException e3) {
+						throw new RuntimeException(e3);
+					} catch (IOException e3) {
+						throw new RuntimeException(e3);
+					}
+					buildTriggerData();
+					the_processor.reset();
+					break;
+				case MESSAGE_DISCONNECTED:
+					//the pump has reported the connection closed.
+					//Log.e("SERV","ACTIVATING DISCONNECT");
+					killNetThreads();
+					DoDisconnect();
+					isConnected = false;
+					break;
 				case MESSAGE_DISPLAYPARAMS:
-					the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
-					the_processor.disaptchNawsString();
+					if(the_processor != null) {
+						the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
+						the_processor.disaptchNawsString();
+					}
 					break;
 				case MESSAGE_BELLINC:
 					//bell recieved.
@@ -343,10 +394,6 @@ public class StellarService extends Service {
 					doShutdown();
 					break;
 				case MESSAGE_PROCESS:
-					//Log.e("BTSERVICE","PROCESSING");
-					//byte[] data = msg.getData().getByteArray("THEBYTES");
-					
-					//need to throttle this somehow to avoid sending messages too fast.
 					try {
 						dispatch((byte[])msg.obj);
 					} catch (RemoteException e) {
@@ -379,14 +426,31 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_SENDOPTIONDATA:
 					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex((byte[])msg.obj));
-					byte[] obytes = (byte[])(msg.obj);
+					Bundle b = msg.getData();
+					byte[] obytes = b.getByteArray("THE_DATA");
+					Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex(obytes));
+					String message = b.getString("DEBUG_MESSAGE");
+					if(message != null) {
+						try {
+							doDispatchNoProcess(message.getBytes(the_settings.getEncoding()));
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 					
 					try {
+						if(obytes == null) Log.e("SERVICE","NULL BYTES");
+						if(output_writer == null) Log.e("SERVICE","NULL WRITER");
 						output_writer.write(obytes);
 						output_writer.flush();
 					} catch (IOException e2) {
 						throw new RuntimeException(e2);
 					}
+					Log.e("BTSERVICE","DONE SENDING");
 					
 					break;
 				case MESSAGE_SENDDATA:
@@ -416,83 +480,7 @@ public class StellarService extends Service {
 						}
 					}
 					//do search and replace with aliases.
-					
-					/*if(joined_alias.length() > 0) {
-
-						Pattern to_replace = Pattern.compile(joined_alias.toString());
-						
-						Matcher replacer = null;
-						try {
-							replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						}
-						
-						StringBuffer replaced = new StringBuffer();
-						
-						boolean found = false;
-						while(replacer.find()) {
-							//String matched = replacer.group(0);
-							found = true;
-							AliasData replace_with = the_settings.getAliases().get(replacer.group(0));
-							replacer.appendReplacement(replaced, replace_with.getPost());
-						}
-						
-						replacer.appendTail(replaced);
-						
-						StringBuffer buffertemp = new StringBuffer();
-						if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
-							boolean recursivefound = false;
-							do {
-								recursivefound = false;
-								Matcher recursivematch = to_replace.matcher(replaced.toString());
-								while(recursivematch.find()) {
-									recursivefound = true;
-									AliasData replace_with = the_settings.getAliases().get(recursivematch.group(0));
-									recursivematch.appendReplacement(buffertemp, replace_with.getPost());
-								}
-								if(recursivefound) {
-									recursivematch.appendTail(buffertemp);
-									replaced.setLength(0);
-									replaced.append(buffertemp);
-								}
-							} while(recursivefound == true);
-						}
-						//so replacer should contain the transformed string now.
-						//pull the bytes back out.
-						try {
-							bytes = replaced.toString().getBytes(the_settings.getEncoding());
-							//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
-							//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						}
-						
-						replaced.setLength(0);
-					}
-					*/
 					bytes = DoAliasReplacement(bytes);
-					//do command processing after alias processing.
-					/*String retval = null;
-					try {
-						retval = ProcessCommands(new String(bytes,the_settings.getEncoding()));
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-					}
-					if(retval == null || retval.equals("")) {
-						//command was intercepted. do nothing for now and return
-						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
-						return;
-					} else {
-						//not a command data.
-						try {
-							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
-							if(retval.equals("")) { return; }
-							bytes = retval.getBytes(the_settings.getEncoding());
-						} catch (UnsupportedEncodingException e) {
-							throw new RuntimeException(e);
-						}
-					}*/
 					
 					//strip semi
 					Character cr = new Character((char)13);
@@ -516,12 +504,37 @@ public class StellarService extends Service {
 					}
 					//nosemidata = nosemidata.concat(crlf);
 					
+					//now we have an extra step, we have to police all outbound data for the IAC character.
+					//if it appears, we must double it.
+					
 					try {
-						//Log.e("SERVICE","WRITE: "+nosemidata);
-						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
-
-						output_writer.flush();
+						byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
+						ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
+						//int found = 0;
+						int count = 0;
+						for(int i=0;i<sendtest.length;i++) {
+							if(sendtest[i] == (byte)0xFF) {
+								//buf = ByteBuffer.wrap(buf.array());
+								buf.put((byte)0xFF);
+								buf.put((byte)0xFF);
+								count += 2;
+							} else {
+								buf.put(sendtest[i]);
+								count++;
+							}
+						}
 						
+						byte[] tosend = new byte[count];
+						buf.rewind();
+						buf.get(tosend,0,count);
+						
+						//Log.e("SERVICE","WRITE: "+nosemidata);
+						if(output_writer != null) {
+							output_writer.write(tosend);
+							output_writer.flush();
+						} else {
+							doDispatchNoProcess(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+						}
 						//send the transformed data back to the window
 						try {
 							if(the_settings.isLocalEcho()) {
@@ -531,6 +544,8 @@ public class StellarService extends Service {
 							throw new RuntimeException(e);
 						}
 					} catch (IOException e) {
+						throw new RuntimeException(e);
+					} catch (RemoteException e) {
 						throw new RuntimeException(e);
 					}
 					break;
@@ -543,14 +558,19 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_SAVEBUFFER:
-					//Log.e("BTSERVICE","SAVING TARGET BUFFER");
-					the_buffer = new StringBuffer(msg.getData().getString("BUFFER") + the_buffer);
+					
+					the_buffer = new StringBuffer((String)msg.obj + the_buffer);
+					bufferLineCount = 0;
+					bufferLineCount = the_buffer.toString().split("\n").length;
+					//Log.e("SERVICE","SAVING BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
 					break;
 				default:
 					break;	
 				}
 				
 			}
+
+			
 		};
 		
 		//populate the timer_actions hash so we can parse arguments.
@@ -575,6 +595,29 @@ public class StellarService extends Service {
 		doShutdown();
 	}
 	
+	private void DoDisconnect() {
+		//attempt to display the disconnection dialog.
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).doDisconnectNotice();
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
+		
+		if(N < 1) {
+			//no listeneres, just shutdown and put up a new notification.
+			ShowDisconnectedNotification();
+			//doShutdown();
+		}
+		
+	}
+	
+	
+
 	public void saveXmlSettings(String filename) {
 		try {
 			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
@@ -746,6 +789,7 @@ public class StellarService extends Service {
 	
 	Object binderCookie = new Object();
 	Boolean hasListener = false;
+	protected boolean isConnected = false;
 	private final IStellarService.Stub mBinder = new IStellarService.Stub() {
 		public void registerCallback(IStellarServiceCallback m) throws RemoteException {
 			if(m != null && !hasListener) {
@@ -856,11 +900,11 @@ public class StellarService extends Service {
 		}
 
 		public void saveBuffer(String buffer) throws RemoteException {
-			Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SAVEBUFFER);
-			Bundle b = msg.getData();
-			b.putString("BUFFER",buffer);
-			msg.setData(b);
-			myhandler.sendMessage(msg);
+			//Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SAVEBUFFER);
+			//Bundle b = msg.getData();
+			//b.putString("BUFFER",buffer);
+			//msg.setData(b);
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_SAVEBUFFER, buffer));
 			
 		}
 
@@ -880,7 +924,7 @@ public class StellarService extends Service {
 
 
 		@SuppressWarnings("unchecked")
-		public void setAliases(Map map) throws RemoteException {
+		public void setAliases(@SuppressWarnings("rawtypes") Map map) throws RemoteException {
 			
 			the_settings.getAliases().clear();
 			the_settings.setAliases(new HashMap<String,AliasData>(map));
@@ -1067,7 +1111,7 @@ public class StellarService extends Service {
 		}
 
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getButtonSetListInfo() throws RemoteException {
 			
 			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
@@ -1253,7 +1297,7 @@ public class StellarService extends Service {
 		}
 
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTriggerData() throws RemoteException {
 			
 			synchronized(the_settings) {
@@ -1496,7 +1540,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTimers() throws RemoteException {
 			synchronized(the_settings) {
 				//updat the timer table
@@ -1597,7 +1641,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTimerProgressWad() throws RemoteException {
 			HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
 			
@@ -1733,7 +1777,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public List getSystemCommands() throws RemoteException {
 			ArrayList<String> names = new ArrayList<String>();
 			for(String name : specialcommands.keySet()) {
@@ -1749,6 +1793,34 @@ public class StellarService extends Service {
 		public void setDisplayDimensions(int rows, int cols)
 				throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DISPLAYPARAMS,rows,cols));
+		}
+
+		public void reconnect() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+		}
+
+		public boolean hasBuffer() throws RemoteException {
+			if(the_buffer.length() > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		public boolean isConnected() throws RemoteException {
+			return isConnected ;
+		}
+
+		public boolean isRoundButtons() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isRoundButtons();
+			}
+		}
+
+		public void setRoundButtons(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setRoundButtons(use);
+			}
 		}
 		
 	};
@@ -1991,16 +2063,22 @@ public class StellarService extends Service {
 		for(int i = 0;i<N;i++) {
 			//callbacks.getBroadcastItem(i).dataIncoming(data);
 			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
+			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivering: " + the_buffer.toString().length() + " characters.");
 			callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
 		}
 		
 		callbacks.finishBroadcast();
 		
 		//Log.e("SERV","BUFFERED DATA REQUESTED. Delivered and cleared.");
-		
-		if(the_buffer != null) {
-			the_buffer.setLength(0);
-			//the_buffer.clearSpans();
+		if( N < 1) {
+			//has no listeners
+			//Log.e("SERV","CANNOT SEND BUFFER, NO LISTENERS, TRYING AGAIN");
+			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,300);
+		} else {
+			if(the_buffer != null) {
+				the_buffer.setLength(0);
+				//the_buffer.clearSpans();
+			}
 		}
 	}
 	
@@ -2454,6 +2532,47 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private class DisconnectCommand extends SpecialCommand {
+		
+		public DisconnectCommand() {
+			this.commandName = "disconnect";
+		}
+		public void execute(Object o) {
+			
+			
+			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+			String msg = "\n" + Colorizer.colorRed + "Disconnected." + Colorizer.colorWhite + "\n";
+			try {
+				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+			
+		}
+	}
+	
+	private class ReconnectCommand extends SpecialCommand {
+		public ReconnectCommand() {
+			this.commandName = "reconnect";
+		}
+		public void execute(Object o) {
+			
+			
+			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+			String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
+			try {
+				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+			
+		}
+	}
+	
 	private String getErrorMessage(String arg1,String arg2) {
 		
 		String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
@@ -2487,6 +2606,10 @@ public class StellarService extends Service {
 	
 
 	HashMap<String,String> captureMap = new HashMap<String,String>();
+	private int bufferLineCount = 0;
+	private Pattern bufferLine = Pattern.compile(".*\n");
+	Matcher bufferLineMatch = bufferLine.matcher("");
+	StringBuffer tempBuffer = new StringBuffer();
 	public void dispatchFinish(String rawData) {
 		
 		//String htmlText = colorer.htmlColorize(data);
@@ -2510,8 +2633,35 @@ public class StellarService extends Service {
 		//if(callbacks.)
 		if(final_count == 0) {
 			//someone isnt listening so save the buffer
+			bufferLineCount += rawData.split("\n").length;
+			//Log.e("SERVICE","FOUND:" + bufferLineCount);
 			the_buffer.append(rawData);
 			//Log.e("SERV","No listeners, buffering data.");
+			//appended data, trim the buffer.
+			if(bufferLineCount > the_settings.getMaxLines()) {
+				//trim from the front.
+				bufferLineMatch.reset(the_buffer);
+				//the_buffer.setLength(0);
+				tempBuffer.setLength(0);
+				int trimmed =0;
+				while(bufferLineMatch.find()) {
+					
+					if((bufferLineCount - trimmed) > the_settings.getMaxLines()) {
+						bufferLineMatch.appendReplacement(tempBuffer, "");
+						//Log.e("SERVICE","TRIMMING: " + bufferLineMatch.group(0).length());
+						trimmed++;
+						//Log.e("SERVICE","TRIMMING LINE FROM BUFFER");
+					} else {
+						bufferLineMatch.appendReplacement(tempBuffer, bufferLineMatch.group(0));
+					}
+				}
+				bufferLineMatch.appendTail(tempBuffer);
+				the_buffer.setLength(0);
+				the_buffer.append(tempBuffer);
+				//Log.e("SERVICE","TRIMMED " + trimmed + " FROM BUFFER NOW " + the_buffer.toString().length() + " bytes.");
+				bufferLineCount = the_settings.getMaxLines();
+			}
+			
 		} else {
 			//someone is listening so save the buffer.
 			the_buffer.setLength(0);
@@ -2617,15 +2767,15 @@ public class StellarService extends Service {
 			}
 		}
 		callbacks.finishBroadcast();
-		if(final_count == 0) {
+		//if(final_count == 0) {
 			//someone is listening so don't save the buffer
 			//Log.e("SERV","No listeners, buffering data.");
-		} else {
+		//} else {
 			
-			the_buffer.setLength(0);
+		//	the_buffer.setLength(0);
 			//the_buffer.clearSpans();
 			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
-		}
+		//}
 	}
 	
 	Pattern alias_replace = Pattern.compile(joined_alias.toString());
@@ -2826,14 +2976,17 @@ public class StellarService extends Service {
 			showNotification();
 			
 			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
-			the_buffer = new StringBuffer();
-			
+			if(the_buffer == null) {
+				the_buffer = new StringBuffer();
+			}
 			
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();
 				}
 			}
+			
+			isConnected = true;
 			
 			
 			//BEGIN OPERATIONS!
@@ -2849,6 +3002,69 @@ public class StellarService extends Service {
 
 		
 
+	}
+	
+	private void ShowDisconnectedNotification() {
+		
+		//mNM.cancel(5545);
+		
+		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Disconnected",System.currentTimeMillis());
+		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
+		
+		//Intent the_intent = new Intent();
+		//the_intent.putExtra("DISPLAY",launch.getDisplayName());
+    	//the_intent.putExtra("HOST", launch.getHostName());
+    	//the_intent.putExtra("PORT", launch.getPortString());
+		
+		Context context = getApplicationContext();
+		CharSequence contentTitle = "BlowTorch Disconnected";
+		//CharSequence contentText = "Hello World!";
+		CharSequence contentText = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
+		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
+		notificationIntent.putExtra("DISPLAY",display);
+		notificationIntent.putExtra("HOST", host);
+		notificationIntent.putExtra("PORT", Integer.toString(port));
+		
+		//notificationIntent.putExtra("DISPLAY", display);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		
+		
+		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		
+		
+		Pattern invalidchars = Pattern.compile("\\W"); 
+		Matcher replacebadchars = invalidchars.matcher(display);
+		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		//prefsname = prefsname.replaceAll("/", "");
+		//Log.e("WINDOW","CHECKING SETTINGS FROM: " + prefsname);
+		SharedPreferences sprefs = this.getSharedPreferences(prefsname,0);
+		//servicestarted = prefs.getBoolean("CONNECTED", false);
+		//finishStart = prefs.getBoolean("FINISHSTART", true);
+		SharedPreferences.Editor editor = sprefs.edit();
+		editor.putBoolean("CONNECTED", false);
+		editor.putBoolean("FINISHSTART", true);
+		editor.commit();
+		//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
+		
+		//Launcher.this.startActivity(the_intent);
+		//SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
+		//SharedPreferences.Editor editor = sprefs.edit();
+		//editor.putBoolean("CONNECTED", false);
+		//editor.putBoolean("FINISHSTART", true);
+		editor.commit();
+		//mNM.cancelAll();
+		this.stopForeground(true);
+		//startForeground to avoid being killed off.
+		mNM.notify(5546,note);
+		showdcmessage = true;
+		this.stopSelf();
+		
+		//mNM.cancel(5545);
+		//this.stop
+		//mNM.cancelAll();
 	}
 	
 	private void showNotification() {
@@ -2880,10 +3096,7 @@ public class StellarService extends Service {
 		
 	}
 	
-	public void doShutdown() {
-		//pump.stop();
-		the_timer.cancel();
-		
+	public void killNetThreads() {
 		if(pump != null) {
 			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
 			pump = null;
@@ -2895,6 +3108,8 @@ public class StellarService extends Service {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
+			Log.e("SERVICE","OUTPUT WRITER KILLED");
+			output_writer = null;
 		}
 		
 		if(the_socket != null) {
@@ -2905,9 +3120,19 @@ public class StellarService extends Service {
 			}
 			the_socket = null;
 		}
+	}
+	boolean showdcmessage = false;
+	public void doShutdown() {
+		//pump.stop();
+		the_timer.cancel();
+		
+		killNetThreads();
 		//kill the notification.
 		mNM.cancel(5545);
-		mNM.cancelAll();
+		if(!showdcmessage) {
+			mNM.cancelAll();
+		}
+		
 		
 	}
 	

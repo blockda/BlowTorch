@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
+
 
 import android.os.Handler;
 import android.os.Looper;
@@ -25,7 +25,7 @@ public class DataPumper extends Thread {
 		private Handler reportto = null;
 		private boolean compressed = false;
 		private Handler myhandler = null;
-		private InflaterInputStream decomp_stream = null;
+		//private InflaterInputStream decomp_stream = null;
 		
 		private Inflater decompress = null;
 		//private ZStream decomp  = null;
@@ -73,8 +73,8 @@ public class DataPumper extends Thread {
 						//Log.e("PUMP","PUMP CHECKING FOR NEW DATA!");
 						try {
 							getData();
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
+						}  catch (IOException e) {
+							throw new RuntimeException(e);
 						}
 						//keep the pump flowing.
 						break;
@@ -159,7 +159,7 @@ public class DataPumper extends Thread {
 		    return String.format("%0" + (bytes.length << 1) + "X", bi);
 		}
 
-		private void getData() throws UnsupportedEncodingException {
+		private void getData() throws IOException {
 				//MAIN LOOP
 				int numtoread = 0;
 				try {
@@ -169,10 +169,19 @@ public class DataPumper extends Thread {
 				}
 				if(numtoread < 1) {
 					//no data to read
+					//Log.e("PUMP","NO DATA TO READ");
+					reader.mark(1);
+					if(reader.read() == -1) {
+						//Log.e("PUMP","END OF STREAM");
+						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+					} else {
+						reader.reset();
+					}
+					
 				} else {
 					//data to read, do it
 					byte[] data = new byte[numtoread];
-					int retval = -1;
+					int retval = -2;
 					try {
 						retval = reader.read(data,0,numtoread);
 					
@@ -187,6 +196,7 @@ public class DataPumper extends Thread {
 					
 					if(retval == -1) {
 						//end of stream has been reached. need to abort the who dealio.
+						//Log.e("PUMP","END OF INPUT FROM SERVER");
 					}
 					
 					if(compressed) {

@@ -34,6 +34,7 @@ public class HyperSettings {
 	private String hapticFeedbackMode = "auto";
 	private String hapticFeedbackOnPress = "auto";
 	private String hapticFeedbackOnFlip = "none";
+	private boolean roundButtons = true;
 	
 	private boolean keepScreenOn = true;
 	private boolean vibrateOnBell = true;
@@ -169,6 +170,7 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_ENCODING, data.getEncoding());
 			out.attribute("", BaseParser.ATTR_KEEPSCREENON, (data.isKeepScreenOn()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_FULLSCREEN, (data.isFullScreen()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_ROUNDBUTTONS, (data.isRoundButtons()) ? "true" : "false");
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -647,6 +649,14 @@ public class HyperSettings {
 
 	public boolean isFullScreen() {
 		return fullScreen;
+	}
+
+	public void setRoundButtons(boolean roundButtons) {
+		this.roundButtons = roundButtons;
+	}
+
+	public boolean isRoundButtons() {
+		return roundButtons;
 	}
 
 }

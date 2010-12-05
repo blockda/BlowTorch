@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,11 +29,20 @@ public class SlickButton extends View {
 	private Handler deleter = null;
 	
 	private int fullScreenShift = 0;
+	private boolean drawRound = true;
 	
 	//dip change
 	//was 80
 	//private int size = 48;
 	
+	public boolean isDrawRound() {
+		return drawRound;
+	}
+
+	public void setDrawRound(boolean drawRound) {
+		this.drawRound = drawRound;
+	}
+
 	boolean moving = false;
 	
 	final static public int MSG_BEGINMOVE = 100;
@@ -150,21 +160,21 @@ public class SlickButton extends View {
 		Character lf = new Character((char)10);
 		String crlf = cr.toString() + lf.toString();
 		tmp = tmp.concat(crlf);
-		ByteBuffer buf = ByteBuffer.allocate(tmp.length());
+		//ByteBuffer buf = ByteBuffer.allocate(tmp.length());
 	
-		try {
-			buf.put(tmp.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			
-			e.printStackTrace();
-		}
+		//try {
+		//	buf.put(tmp.getBytes("UTF-8"));
+		//} catch (UnsupportedEncodingException e) {
+		//	
+		//	e.printStackTrace();
+		//}
+	//
+		//buf.rewind();
 	
-		buf.rewind();
-	
-		byte[] buffbytes = buf.array();
+		//byte[] buffbytes = buf.array();
 		
-		Message msg = dispatcher.obtainMessage(MainWindow.MESSAGE_SENDDATAOUT,buffbytes);
-		if(!dispatcher.hasMessages(MainWindow.MESSAGE_SENDDATAOUT)) {
+		Message msg = dispatcher.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,tmp);
+		if(!dispatcher.hasMessages(MainWindow.MESSAGE_SENDBUTTONDATA)) {
 			dispatcher.sendMessage(msg);
 		}
 	}
@@ -428,7 +438,6 @@ public class SlickButton extends View {
 			c.translate(0, fullScreenShift);
 		}
 		
-		
 		if(hasfocus) {
 			if(doing_flip) {
 				p.setColor(data.getFlipColor());
@@ -439,8 +448,19 @@ public class SlickButton extends View {
 			p.setColor(data.getPrimaryColor());
 		}
 		//c.drawRoundRect(f_rect, 8,8, p);
-		c.drawRect(rect, p);
+		float radius = 8 * this.getResources().getDisplayMetrics().density;
 		
+		if(drawRound) {
+			p.setAntiAlias(true);
+	
+			RectF frect = new RectF(rect);
+			c.drawRoundRect(frect, radius,radius, p);
+			
+		} else {
+			p.setAntiAlias(false);
+			
+			c.drawRect(rect, p);
+		}
 		//get text size.
 		
 		opts.setTypeface(Typeface.DEFAULT_BOLD);
@@ -471,7 +491,16 @@ public class SlickButton extends View {
 			m_rect.set(data.getX()-(int)((data.getWidth()*density)/2)+5,data.getY()-(int)((data.getHeight()*density)/2)+5,data.getX()+(int)((data.getWidth()*density)/2)-5,data.getY()+(int)((data.getHeight()*density)/2)-5);
 			Paint rpaint = new Paint();
 			rpaint.setColor(0xAAFF0000);
-			c.drawRect(m_rect, rpaint);
+			
+			
+			if(drawRound) {
+				float rradius = 5 * this.getResources().getDisplayMetrics().density;
+				RectF frect = new RectF(m_rect);
+				c.drawRoundRect(frect, radius,rradius, rpaint);
+			} else {
+				c.drawRect(m_rect, rpaint);
+			}
+			
 			//RectF frect = new RectF(m_rect);
 			//c.drawRoundRect(frect, 8, 8, rpaint);
 		}
