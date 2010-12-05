@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
@@ -30,7 +31,7 @@ public class Processor {
 		setEncoding(pEncoding);
 	}
 
-	private final boolean debugTelnet = false;
+	private final boolean debugTelnet = true;
 
 	private final byte IAC = (byte) 0xFF;
 	private final byte SB = (byte) 0xFA;
@@ -126,6 +127,10 @@ public class Processor {
 									.obtainMessage(
 											StellarService.MESSAGE_STARTCOMPRESS,
 											b.array()));
+							if(debugTelnet) {
+								String message = "\n"+Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-\n" + Colorizer.telOptColorEnd;
+								reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
+							}
 							byte[] trunc = new byte[count];
 							buff.rewind();
 							buff.get(trunc, 0, count);
@@ -221,10 +226,31 @@ public class Processor {
 		//Log.e("PROCESSOR","GOT COMMAND:" + "IAC|" + TC.decodeInt(new String(new byte[]{action},encoding),encoding) + "|"+ TC.decodeInt(new String(new byte[]{option},encoding), encoding));
 		byte[] resp = opthandler.processCommand(IAC, action, option);
 		Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
+		if(resp.length > 2) {
+			if(resp[2] == TC.NAWS) {
+			//naws has started.
+				Log.e("SERVICE","NAWS STARTED, SENDING NAWS STRING");
+				//opthandler.
+				disaptchNawsString();
+			}
+		}
 		//Log.e("PROCESSOR","SENDING RESPONSE:" + TC.decodeInt(new String(resp,encoding), encoding));
-		
+		//message format: IN:[WILL ECHO] OUT:[DONT ECHO] //background.
+		Bundle b = sb.getData();
+		b.putByteArray("THE_DATA", resp);
+		String message = null;
+		if(debugTelnet) {
+			message = Colorizer.telOptColorBegin + "IN:[" +TC.decodeIAC(new byte[]{IAC,action,option}) + "]" + " ";
+			message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeIAC(resp) + "]"+ Colorizer.telOptColorEnd + "\n";
+			//reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message),5);
+		}
+		b.putString("DEBUG_MESSAGE", message);
+		sb.setData(b);
 		reportto.sendMessage(sb);
+		
+		
 	}
+	
 
 	public boolean dispatchSUB(byte[] negotiation) {
 		// byte[] stmp = negotiation.getBytes("ISO-8859-1");
@@ -240,10 +266,10 @@ public class Processor {
 			return false;
 		} else {
 
-			// Log.e("PROCESSOR","RESPONSE:" + TC.decodeInt(new
-			// String(sub_r,encoding), encoding));
 		}
 
+		
+		
 		// special handling for the compression marker.
 		byte[] compressresp = new byte[1];
 		compressresp[0] = TC.COMPRESS2;
@@ -251,11 +277,22 @@ public class Processor {
 		if (sub_r[0] == compressresp[0]) {
 			return true;
 		} else {
-			Message sbm = reportto.obtainMessage(
-					StellarService.MESSAGE_SENDOPTIONDATA, sub_r);
+			String message = null;
+			if(debugTelnet) {
+				message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + " ";
+				message += Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(sub_r) + Colorizer.telOptColorEnd + "\n";
+				//reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message));
+			}
+			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Bundle b = sbm.getData();
+			b.putByteArray("THE_DATA",sub_r);
+			b.putString("DEBUG_MESSAGE", message);
+			sbm.setData(b);
 			reportto.sendMessage(sbm);
 			return false;
 		}
+		
+		
 	}
 
 	public void setEncoding(String encoding) {
@@ -274,10 +311,17 @@ public class Processor {
 	public void disaptchNawsString() {
 		if (opthandler.getNawsString() == null)
 			return;
-		Message sbm = reportto.obtainMessage(
-				StellarService.MESSAGE_SENDOPTIONDATA,
-				opthandler.getNawsString());
-		reportto.sendMessage(sbm);
+		Log.e("PROCESSOR","DISPATCHING NAWS");
+		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+		Bundle b = sbm.getData();
+		b.putByteArray("THE_DATA", opthandler.getNawsString());
+		String message = null;
+		if(debugTelnet) {
+			message = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(opthandler.getNawsString()) + "]" + Colorizer.telOptColorEnd + "\n";
+		}
+		b.putString("DEBUG_MESSAGE", message);
+		sbm.setData(b);
+		reportto.sendMessageDelayed(sbm,10);
 		return;
 	}
 
