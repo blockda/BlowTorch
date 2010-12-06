@@ -309,15 +309,19 @@ public class Processor {
 	}
 
 	public void disaptchNawsString() {
-		if (opthandler.getNawsString() == null)
+		byte[] nawsout = opthandler.getNawsString();
+		if(nawsout == null) {
+			Log.e("PROCESSOR","NAWS NOT CURRENTLY NEGOTIABLE");
 			return;
+		}
 		Log.e("PROCESSOR","DISPATCHING NAWS");
 		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
 		Bundle b = sbm.getData();
-		b.putByteArray("THE_DATA", opthandler.getNawsString());
+		b.putByteArray("THE_DATA", nawsout);
+		
 		String message = null;
 		if(debugTelnet) {
-			message = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(opthandler.getNawsString()) + "]" + Colorizer.telOptColorEnd + "\n";
+			message = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(nawsout) + "]" + Colorizer.telOptColorEnd + "\n";
 		}
 		b.putString("DEBUG_MESSAGE", message);
 		sbm.setData(b);

@@ -1148,7 +1148,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					break;
 				case MESSAGE_RAWINC:
 					screen2.addText((String)msg.obj,false);
-					tree.addText((String)msg.obj);
+					try {
+						tree.addBytes(((String)msg.obj).getBytes("ISO-8859-1"));
+					} catch (UnsupportedEncodingException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 					break;
 				case MESSAGE_BUFFINC:
 					//String message = "\n" + Colorizer.colorCyanBright + "Buffer received: " +  ((String)msg.obj).getBytes().length + Colorizer.colorWhite + "\n";
