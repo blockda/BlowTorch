@@ -137,7 +137,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	private int statusBarHeight = 1;
 	//GestureDetector gestureDetector = null;
 	OnTouchListener gestureListener = null;
-	SlickView screen2 = null;
+	ByteView screen2 = null;
 	CommandKeeper history = null;
 	ImageButton test_button = null;
 	ImageButton up_button_c = null;
@@ -253,7 +253,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
        // PREFS_NAME = prefsname; //kill off all white space in the display name, use it as the preference file
         history = new CommandKeeper(10);
         
-        screen2 = (SlickView)findViewById(R.id.slickview);
+        screen2 = (ByteView)findViewById(R.id.slickview);
         RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         screen2.setParentLayout(l);
         TextView fill2 = (TextView)findViewById(R.id.filler2);
@@ -1148,12 +1148,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					break;
 				case MESSAGE_RAWINC:
 					screen2.addText((String)msg.obj,false);
-					try {
-						tree.addBytes(((String)msg.obj).getBytes("ISO-8859-1"));
-					} catch (UnsupportedEncodingException e1) {
+					//try {
+					//	tree.addBytes(((String)msg.obj).getBytes("ISO-8859-1"));
+					//} catch (UnsupportedEncodingException e1) {
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
+					///	e1.printStackTrace();
+					//}
 					break;
 				case MESSAGE_BUFFINC:
 					//String message = "\n" + Colorizer.colorCyanBright + "Buffer received: " +  ((String)msg.obj).getBytes().length + Colorizer.colorWhite + "\n";
@@ -1268,10 +1268,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			}
 		});
 		
-		screen2.setDispatcher(myhandler);
-		screen2.setButtonHandler(myhandler);
-		screen2.setInputType(input_box);
-		input_box.bringToFront();
+		//screen2.setDispatcher(myhandler);
+		//screen2.setButtonHandler(myhandler);
+		//screen2.setInputType(input_box);
+		//input_box.bringToFront();
 		//icicile is out, prefs are in
 		
 		synchronized(settingsLoaded) {

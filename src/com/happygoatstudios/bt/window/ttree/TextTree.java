@@ -32,6 +32,14 @@ public class TextTree {
 		
 	}
 	
+	public LinkedList<Line> getLines() {
+		return mLines;
+	}
+
+	public void setLines(LinkedList<Line> mLines) {
+		this.mLines = mLines;
+	}
+
 	private LinkedList<Unit> makeLineFromData(String input) {
 		LinkedList<Unit> tmp = new LinkedList<Unit>();
 		colormatch.reset(input);
@@ -137,6 +145,7 @@ public class TextTree {
 	
 	boolean appendLast = false; //for marking when the addtext call has ended with a newline or not.
 	private byte[] holdover = null;
+	LinkedList<Integer> prev_color = null;
 	public void addBytes(byte[] data) throws UnsupportedEncodingException {
 		//this actually shouldn't be too hard to do with just a for loop.
 		STATE init = STATE.TEXT;
@@ -210,9 +219,9 @@ public class TextTree {
 					holdover = new byte[]{ ESC };
 					mLines.add(0,tmp);
 					//tmp = new Line();
-					Log.e("TEXTTREE",getLastTwenty(false));
+					//Log.e("TEXTTREE",getLastTwenty(false));
 					
-					Log.e("TREE","HOLDOVER EVENENT, ESC ONLY");
+					//Log.e("TREE","HOLDOVER EVENENT, ESC ONLY");
 					return;
 				}
 				//start ansi process sequence.
@@ -231,7 +240,7 @@ public class TextTree {
 					cb.get(holdover,0,tmpsize);
 					mLines.add(0,tmp);
 					//Log.e("TEXTTREE",getLastTwenty(false));
-					Log.e("TREE","HOLDOVER EVENT, ESC AND [");
+					//Log.e("TREE","HOLDOVER EVENT, ESC AND [");
 					return;
 				}
 				
@@ -436,7 +445,7 @@ public class TextTree {
 	Line pStart;
 	Line pSend;
 	
-	private class Line {
+	public class Line {
 		protected int totalchars;
 		protected int charcount;
 		protected int breaks;
@@ -470,7 +479,7 @@ public class TextTree {
 		
 	}
 	
-	private class Unit {
+	public class Unit {
 		protected int charcount;
 		//protected int bytecount;
 		
@@ -479,7 +488,7 @@ public class TextTree {
 		}
 	}
 	
-	private class Text extends Unit {
+	public class Text extends Unit {
 		protected String data;
 		protected byte[] bin;
 		public Text() {
@@ -495,6 +504,10 @@ public class TextTree {
 			bin = in;
 			data = new String(in,encoding);
 		}
+
+		public String getString() {
+			return data;
+		}
 		
 		
 	}
@@ -508,7 +521,7 @@ public class TextTree {
 		}
 		
 	}
-	private class NewLine extends Unit {
+	public class NewLine extends Unit {
 		protected String data;
 		
 		public NewLine() {
@@ -517,7 +530,7 @@ public class TextTree {
 		}
 		
 	}
-	private class Color extends Unit {
+	public class Color extends Unit {
 		protected String data;
 		LinkedList<Integer> operations;
 		
@@ -541,6 +554,10 @@ public class TextTree {
 		
 		public void computeOperations(String input) {
 			//
+		}
+
+		public LinkedList<Integer> getOperations() {
+			return operations;
 		}
 	}
 	
@@ -585,6 +602,10 @@ public class TextTree {
 		}
 		
 		return buf.toString();
+	}
+
+	public void setMaxLines(int maxLines) {
+		MAX_LINES = maxLines;
 	}
 	
 }
