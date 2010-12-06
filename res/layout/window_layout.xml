@@ -114,7 +114,7 @@
     					android:layout_y="0px">
     				
     				    
-    				<com.happygoatstudios.bt.window.SlickView
+    				<com.happygoatstudios.bt.window.ByteView
     					android:id="@+id/slickview"
     					android:layout_width="fill_parent"
     					android:layout_height="fill_parent"
