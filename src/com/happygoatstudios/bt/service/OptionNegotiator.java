@@ -3,6 +3,8 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import android.util.Log;
+
 //import android.util.Log;
 //import android.util.Log;
 
@@ -73,6 +75,7 @@ public class OptionNegotiator {
 	    		case NAWS_TYPE:
 	    			response = IAC_WILL;
 	    			isNAWS=true;
+	    			donenaws = false;
 	    			break; 
 	    		case TC.TERM:
 	    			response = IAC_WILL;
@@ -209,9 +212,16 @@ public class OptionNegotiator {
     	}
     	return null;
     }*/
-
+	//private int old_row = 0;
+	//private int old_col = 0;
+	private boolean donenaws = false;
 	public void setColumns(int columns) {
+		
+		if(this.columns != columns) {
+			donenaws = false;
+		}
 		this.columns = columns;
+		
 	}
 
 	public int getColumns() {
@@ -219,7 +229,11 @@ public class OptionNegotiator {
 	}
 
 	public void setRows(int rows) {
+		if(this.rows != rows) {
+			donenaws = false;
+		}
 		this.rows = rows;
+		
 	}
 
 	public int getRows() {
@@ -227,7 +241,9 @@ public class OptionNegotiator {
 	}
 	
 	public byte[] getNawsString() {
-		if(!isNAWS) return null;
+		if(!isNAWS) {Log.e("OPT","HAVENT NAWSED"); return null;}
+		if(donenaws) {Log.e("OPT","ALREADY NAWSED"); return null;}
+		Log.e("OPT","WHO LET THE NAWS OUT");
 		ByteBuffer buf = ByteBuffer.allocate(9);
 		buf.put((byte)0xFF); //IAC
 		buf.put((byte)0xFA); //SB
@@ -250,6 +266,7 @@ public class OptionNegotiator {
 		buf.rewind();
 		byte[] suboption = buf.array();
 		
+		donenaws = true; //only send naws once per valid session.
 		//send the data back.
 		return suboption;
 	}
