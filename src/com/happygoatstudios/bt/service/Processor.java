@@ -128,7 +128,7 @@ public class Processor {
 											StellarService.MESSAGE_STARTCOMPRESS,
 											b.array()));
 							if(debugTelnet) {
-								String message = "\n"+Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-\n" + Colorizer.telOptColorEnd;
+								String message = "\n"+Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.telOptColorEnd+"\n";
 								reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
 							}
 							byte[] trunc = new byte[count];
@@ -325,7 +325,7 @@ public class Processor {
 		}
 		b.putString("DEBUG_MESSAGE", message);
 		sbm.setData(b);
-		reportto.sendMessageDelayed(sbm,10);
+		reportto.sendMessageDelayed(sbm,2);
 		return;
 	}
 

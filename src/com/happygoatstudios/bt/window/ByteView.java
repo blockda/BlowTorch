@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.window;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
+import java.util.ListIterator;
 
 import com.happygoatstudios.bt.service.Colorizer;
 import com.happygoatstudios.bt.window.SlickView.DrawRunner;
@@ -19,6 +20,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.RelativeLayout;
@@ -43,9 +45,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private TextView new_text_in_buffer_indicator = null;
 
-	private int scrollback = 0;
+	private int scrollback = 20*PREF_LINESIZE;
 
-	private int debug_mode = 0;
+	private int debug_mode = 1;
 
 	private String encoding = "ISO-8859-1";
 
@@ -53,7 +55,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	int selectedColor = 37;
 	int selectedBright = 0;
-	int selectedBackground = 40;
+	int selectedBackground = 60;
 	
 	public ByteView(Context context) {
 		super(context);
@@ -126,12 +128,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	Paint b = new Paint();
 	public void onDraw(Canvas c) {
-		Matrix m = c.getMatrix();
+		//Matrix m = c.getMatrix();
 		
-		m.setTranslate(0, WINDOW_HEIGHT-5);
+		//m.setTranslate(0, WINDOW_HEIGHT-5);
 		//m.setScale(1, -1);
 		
-		c.setMatrix(m);
+		//c.setMatrix(m);
 		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
 		c.drawColor(0xFF0A0A0A); //fill with black
 		p.setTypeface(Typeface.MONOSPACE);
@@ -141,14 +143,71 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		float char_width = p.measureText("T");
 		
-		int x = 0;
-		int y = 0;
+		float x = 0;
+		float y = 0;
 		
-		Iterator<TextTree.Line> i = the_tree.getLines().iterator();
+		ListIterator<TextTree.Line> i = null;// = the_tree.getLines().iterator();
 		//Iterator<TextTree.Unit> u = null;
 		boolean stop = false;
-		while(!stop && i.hasNext()) {
+		
+		//TODO: STEP 0
+		//calculate the y position of the first line.
+		//float max_y = PREF_LINESIZE*the_tree.getLines().size();
+		
+		
+		//instead of being able to draw from the buttom up like i would have liked.
+		//we are going to do the first in hopefully few, really expensive operations.
+		
+		//TODO: STEP 1
+		//noting the current scrollback & window size, calculate the position of the first line of text that we need to draw.
+		int y_position = CALCULATED_LINESINWINDOW*PREF_LINESIZE;
+		int line_number = y_position/PREF_LINESIZE;
+		
+		//TODO: STEP 2
+		//get the iterator of the list at the given position.
+		//i = the_tree.getLines().listIterator(line_number);
+		//use our super cool iterator function.
+		Float offset = 0f;
+		IteratorBundle bundle = getListIteratorForPosition(y_position,PREF_LINESIZE,offset);
+		i = bundle.getI();
+		y = bundle.getOffset()-(3*this.getContext().getResources().getDisplayMetrics().density);
+		if(i == null) {Log.e("BYTE","CAN'T ITERATE, NO ITERATOR!"); return;}
+		//TODO: STEP 3
+		//find bleed.
+		boolean bleeding = false;
+		int back = 0;
+		while(i.hasNext() && !bleeding) {
+			
 			Line l = i.next();
+			back++;
+			
+			for(Unit u : l.getData()) {
+				if(u instanceof TextTree.Color) {
+					bleeding = true;
+					for(Integer o : ((TextTree.Color) u).getOperations()) {
+						updateColorRegisters(o);
+					}
+					p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+					//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
+					b.setColor(0xFF000000);//no not bleed background colors
+					
+				}
+			}
+		}
+		
+		//TODO: STEP 4
+		//advance the iterator back the number of units it took to find a bleed.
+		//second real expensive move. In the case of a no color text buffer, it would walk from scroll to end and back every time. USE COLOR 
+		while(back > 0) {
+			i.previous();
+			back--;
+		}
+		
+		//TODO: STEP 5
+		//draw the text, from top to bottom.	
+		int drawnlines = 0;
+		while(!stop && i.hasPrevious()) {
+			Line l = i.previous();
 			for(Unit u : l.getData()) {
 				//p.setColor(color)
 				boolean useBackground = false;
@@ -158,7 +217,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				
 				if(u instanceof TextTree.Text) {
 					if(useBackground) {
-						c.drawRect(x, y + p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
+						c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
 					}
 					c.drawText(((TextTree.Text)u).getString(),x,y,p);
 					x += p.measureText(((TextTree.Text)u).getString());
@@ -167,13 +226,25 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					for(Integer o : ((TextTree.Color)u).getOperations()) {
 						updateColorRegisters(o);
 					}
-					p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-					b.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackground, 0));
-					
+					if(debug_mode == 2 || debug_mode == 3) {
+						p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37));
+						b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40));
+					} else {
+						p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
+						b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
+					}
+					if(debug_mode == 1 || debug_mode == 2) {
+						c.drawText(((TextTree.Color)u).getData(),x,y,p);
+						x += p.measureText(((TextTree.Color)u).getData());
+					}
 				}
-				if(u instanceof TextTree.NewLine) {
-					y = y - PREF_LINESIZE;
+				if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
+					y = y + PREF_LINESIZE;
 					x = 0;
+					drawnlines++;
+					if(drawnlines > CALCULATED_LINESINWINDOW) {
+						stop = true;
+					}
 				}
 			}
 			
@@ -272,8 +343,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 
 	public void jumpToZero() {
-		scrollback = 0;
-		
+		//scrollback = 0;
 	}
 
 	public void doDelayedDraw(int i) {
@@ -286,6 +356,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	public void setColorDebugMode(int i) {
 		debug_mode = i;
+		doDelayedDraw(1);
 	}
 
 	public void setEncoding(String pEncoding) {
@@ -353,5 +424,78 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		return type;
 		//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 	
+	}
+	
+	private class IteratorBundle {
+		private ListIterator<TextTree.Line> i;
+		private Float offset;
+		public IteratorBundle(ListIterator<TextTree.Line> pI,Float pOffset) {
+			setI(pI);
+			setOffset(pOffset);
+		}
+		public void setOffset(Float offset) {
+			this.offset = offset;
+		}
+		public Float getOffset() {
+			return offset;
+		}
+		public void setI(ListIterator<TextTree.Line> i) {
+			this.i = i;
+		}
+		public ListIterator<TextTree.Line> getI() {
+			return i;
+		}
+		
+	}
+	
+	private IteratorBundle getListIteratorForPosition(float pY,float pLineSize,Float pOffset) {
+		
+		float max = the_tree.getBrokenLineCount() * pLineSize;
+		float percent = pY / max;
+		float fline = pY / pLineSize;
+		
+		double target = Math.floor(fline);
+		double offsetPercent = fline - Math.floor(fline);
+		
+		int current = 0;
+		boolean done = false;
+		int position = 0;
+		for(Line l : the_tree.getLines()) {
+			if(l.getBreaks() == 0) {
+				//none broken line
+				if(current > target) {
+					pOffset = (float) (pLineSize*offsetPercent);
+					done = true;
+				} else {
+					current++;
+				}
+			} else {
+				for(int i=0;i < l.getBreaks() ; i++) {
+					if((current - i) > target) {
+						Log.e("BYTE","CALCULATING OFFSET");
+						done = true;
+						pOffset = (float) (pLineSize*(i-(l.getBreaks()+1)) + pLineSize*offsetPercent);
+						Log.e("BYTE","CALCULATED OFFSET:" + pOffset + " LINEPOS:" + position);
+					
+					} else {
+						current++;
+					}
+				}
+			}
+			if(done) {
+				if(position < CALCULATED_LINESINWINDOW) {
+					pOffset = pLineSize * (CALCULATED_LINESINWINDOW-position);
+				}
+				IteratorBundle b = new IteratorBundle(the_tree.getLines().listIterator(position),pOffset);
+				return b;
+			}
+			position++;
+		}
+		if(position-1 < CALCULATED_LINESINWINDOW) {
+			pOffset = pLineSize * (CALCULATED_LINESINWINDOW-position);
+		}
+		IteratorBundle b = new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),pOffset);
+		return b;
+		//return the_tree.getLines().listIterator(the_tree.getLines().size());
 	}
 }
