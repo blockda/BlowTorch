@@ -21,8 +21,14 @@ import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.CycleInterpolator;
+import android.view.animation.Interpolator;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -40,12 +46,14 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	private Typeface PREF_FONT = Typeface.MONOSPACE;
 	public int CALCULATED_ROWSINWINDOW;
 	private double fling_velocity;
+	boolean buttondropstarted=false;
+	boolean increadedPriority = false;
 	
 	private RelativeLayout parent_layout = null;
 
 	private TextView new_text_in_buffer_indicator = null;
 
-	private int scrollback = 20*PREF_LINESIZE;
+	private Float scrollback = new Float(20*PREF_LINESIZE);
 
 	private int debug_mode = 1;
 
@@ -56,6 +64,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	int selectedColor = 37;
 	int selectedBright = 0;
 	int selectedBackground = 60;
+	private Handler buttonaddhandler = null;
+	private Handler realbuttonhandler = null;
+	
+	protected static final int MSG_UPPRIORITY = 200;
+	protected static final int MSG_NORMALPRIORITY = 201;
+	final static public int MSG_BUTTONDROPSTART = 100;
+	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
+	
+	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
+	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
+	
+	Handler dataDispatch = null;
+	EditText input = null;
 	
 	public ByteView(Context context) {
 		super(context);
@@ -75,6 +96,37 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private void init() {
 		the_tree = new TextTree();
+		buttonaddhandler = new Handler() {
+			public void handleMessage(Message msg) {
+				switch(msg.what) {
+				case MSG_UPPRIORITY:
+					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+					break;
+				case MSG_NORMALPRIORITY:
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					break;
+				case MSG_BUTTONDROPSTART:
+					Message addbtn = realbuttonhandler.obtainMessage(MainWindow.MESSAGE_ADDBUTTON, bx, by);
+					realbuttonhandler.sendMessage(addbtn);
+					buttondropstarted = false;
+					break;
+				case MSG_CLEAR_NEW_TEXT_INDICATOR:
+					new_text_in_buffer_indicator.startAnimation(indicator_off);
+					break;
+				}
+			}
+		};
+		
+		Interpolator i = new CycleInterpolator(1);
+		indicator_on.setDuration(1000);
+		indicator_on.setInterpolator(i);
+		indicator_on.setDuration(1000);
+		indicator_on.setFillAfter(true);
+		indicator_on.setFillBefore(true);
+		
+		indicator_off.setDuration(1000);
+		indicator_off.setFillAfter(true);
+		indicator_off.setFillBefore(true);
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
@@ -122,6 +174,125 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			} catch (InterruptedException e) { }
 		}
 	}
+	
+	boolean finger_down = false;
+	int diff_amount = 0;
+	public Boolean is_in_touch = false;
+	Float start_x = null;
+	Float start_y = null;
+	MotionEvent pre_event  = null;
+	boolean finger_down_to_up = false;
+	int prev_draw_time = 0;
+	Float prev_y = 0f;
+	int bx = 0;
+	int by = 0;
+	public boolean onTouchEvent(MotionEvent t) {
+		Log.e("BYTE","TOUCH EVENT");
+		synchronized(scrollback) {
+		if(t.getAction() == MotionEvent.ACTION_DOWN) {
+			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
+			start_x = new Float(t.getX(t.getPointerId(0)));
+			start_y = new Float(t.getY(t.getPointerId(0)));
+			pre_event = MotionEvent.obtainNoHistory(t);
+			fling_velocity = 0.0f;
+			finger_down = true;
+			finger_down_to_up = false;
+			prev_draw_time = 0;
+		}
+		
+		if(!increadedPriority) {
+			_runner.dcbPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+			//_runner.
+			increadedPriority = true;
+		}
+		
+		if(t.getAction() == MotionEvent.ACTION_MOVE) {
+			
+
+			//compute distance;
+			Float now_x = new Float(t.getX(t.getPointerId(0)));
+			Float now_y = new Float(t.getY(t.getPointerId(0)));
+			double distance = Math.sqrt(Math.pow(now_x-start_x, 2) + Math.pow(now_y-start_y,2));
+			if(distance > 30) {
+				buttonaddhandler.removeMessages(MSG_BUTTONDROPSTART);
+			}
+			
+
+			float thentime = pre_event.getEventTime();
+			float nowtime = t.getEventTime();
+			
+			float time = (nowtime - thentime) / 1000.0f; //convert to seconds
+			
+			//float prev_y = t.getHistoricalY(t.getPointerId(0),history-1);
+			float prev_y = pre_event.getY(t.getPointerId(0));
+			float dist = now_y - prev_y;
+			diff_amount = (int)dist;
+			
+			float velocity = dist / time;
+			float MAX_VELOCITY = 700;
+			if(Math.abs(velocity) > MAX_VELOCITY) {
+				if(velocity > 0) {
+					velocity = MAX_VELOCITY;
+				} else {
+					velocity = MAX_VELOCITY * -1;
+				}
+			}
+			fling_velocity = velocity;
+			//Log.e("SLICK","MOTIONEVENT HISTORICAL Y: "+new Float(dist).toString() + " TIME: " + new Float(time).toString() + " VEL: " + new Float(velocity));
+			
+			
+			if(Math.abs(diff_amount) > 5) {
+				
+				pre_event = MotionEvent.obtainNoHistory(t);
+			}
+			
+
+		}
+		
+		int pointers = t.getPointerCount();
+		//int the_last_pointer = t.getPointerId(0);
+		//float diff = 0;
+		for(int i=0;i<pointers;i++) {
+			
+			Float y_val = new Float(t.getY(t.getPointerId(i)));
+			Float x_val = new Float(t.getX(t.getPointerId(i)));
+			bx = x_val.intValue();
+			by = y_val.intValue();
+			//if(pre_event == null) {
+				//diff = 0;
+			//} else {
+				//diff = y_val - prev_y;	
+			//}
+			prev_y = y_val;
+		}
+		
+		
+		if(t.getAction() == (MotionEvent.ACTION_UP)) {
+			
+			pre_event = null;
+			prev_y = new Float(0);
+			buttonaddhandler.removeMessages(SlickView.MSG_BUTTONDROPSTART);
+	        
+	        //reset the priority
+	        increadedPriority = false;
+	        _runner.dcbPriority(Process.THREAD_PRIORITY_DEFAULT);
+	        
+
+	        pre_event = null;
+	        finger_down=false;
+	        finger_down_to_up = true;
+	        
+		}
+		
+		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+		}
+		}
+		return true; //consumes
+		
+	}
+	
+	
 	
 	Paint p = new Paint();
 
@@ -337,7 +508,16 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	public void setParentLayout(RelativeLayout l) {
 		parent_layout = l;
 	}
-
+	
+	public void setButtonHandler(Handler useme) {
+		realbuttonhandler = useme;
+	}
+	public void setDispatcher(Handler h) {
+		dataDispatch = h;
+	}
+	public void setInputType(EditText t) {
+		input = t;
+	}
 	public void setNewTextIndicator(TextView fill2) {
 		new_text_in_buffer_indicator = fill2;
 	}
