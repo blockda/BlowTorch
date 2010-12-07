@@ -1268,9 +1268,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			}
 		});
 		
-		//screen2.setDispatcher(myhandler);
-		//screen2.setButtonHandler(myhandler);
-		//screen2.setInputType(input_box);
+		screen2.setDispatcher(myhandler);
+		screen2.setButtonHandler(myhandler);
+		screen2.setInputType(input_box);
 		//input_box.bringToFront();
 		//icicile is out, prefs are in
 		

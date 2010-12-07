@@ -193,15 +193,26 @@ public class TextTree {
 			//Log.e("TREE","APPEND LAST IS:" + appendLast);
 		}
 		
+		LinkedList<Unit> ldata = null;
 		if(appendLast) { //yay appendLast is over. now just look at the last line of the buffer, parse through it and find if the last text in it (not color) was a newline.
 			//if(mLines.size() > 0) {
 				tmp = mLines.remove(0); //dont worry kids, it'll be appended back.
-				Log.e("TREE",">>>>>>>>>>>>>>APPENDING TO: " + deColorLine(tmp));
+				ldata = tmp.getData();
+				//Log.e("TREE",">>>>>>>>>>>>>>APPENDING TO: " + deColorLine(tmp));
 			//}
-		} else {
-			tmp = new Line();
-		}
+		} //else {
+			//tmp = new Line();
+		//}
 		
+		tmp = new Line();
+		
+		if(ldata != null) {
+			tmp = new Line();
+			tmp.setData(ldata);
+			//Log.e("TREE","DATA STRIP OUT:" + deColorLine(tmp));
+		} else {
+			//Log.e("TREE","NOT ATTEMPTING APPENDING");
+		}
 		//StringBuffer sb = new StringBuffer();
 		ByteBuffer sb = ByteBuffer.allocate(data.length);
 		int textcount = 0;
@@ -210,10 +221,10 @@ public class TextTree {
 		int iacount = 0;
 		//boolean endOnNewLine = false;
 		for(int i=0;i<data.length;i++) {
-			Log.e("TREE","DATA PROCESSING LOOP: " + deColorLine(tmp));
+			//Log.e("TREE","DATA PROCESSING LOOP: " + deColorLine(tmp));
 			switch(data[i]) {
 			case ESC:
-				Log.e("TREE","BEGIN ANSI ESCAPE");
+				//Log.e("TREE","BEGIN ANSI ESCAPE");
 				//end current text node.
 				if(sb.position() > 0) {
 					int size = sb.position();
@@ -320,21 +331,21 @@ public class TextTree {
 				tmp.getData().addLast(new Tab());
 				break;
 			case NEWLINE:
-				Log.e("TREE","START APPEND DUE TO NEWLINE:"  + deColorLine(tmp));
+				//Log.e("TREE","START APPEND DUE TO NEWLINE:"  + deColorLine(tmp));
 				//Log.e("TREE","NEWLINE ADDING: " +sb.toString());
 				if(sb.position() > 0) {
 					int nsize = sb.position();
 					byte[] txtdata = new byte[nsize];
 					sb.rewind();
 					sb.get(txtdata,0,nsize);
-					Log.e("TREE","APPEND TO LINE:"  + deColorLine(tmp));
+					//Log.e("TREE","APPEND TO LINE:"  + deColorLine(tmp));
 					tmp.getData().addLast(new Text(txtdata));
 					sb.rewind();
 				}
 				//append the line as we do.
 				NewLine nl = new NewLine();
 				tmp.getData().addLast(nl);
-				Log.e("TREE","APPEND DUE TO NEWLINE:"  + deColorLine(tmp));
+				//Log.e("TREE","APPEND DUE TO NEWLINE:"  + deColorLine(tmp));
 				addLine(tmp);
 				tmp = new Line();
 				break;
@@ -360,7 +371,7 @@ public class TextTree {
 			sb.rewind();
 			sb.get(tmpb,0,fsize);
 			tmp.getData().addLast(new Text(tmpb));
-			Log.e("TEXTTREE",getLastTwenty(false));
+			//Log.e("TEXTTREE",getLastTwenty(false));
 			//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
 			Log.e("TREE",">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>NOT ENDED BY NEWLINE:" + deColorLine(tmp));
 			
@@ -691,11 +702,11 @@ public class TextTree {
 				//Log.e("TEXTCOLOR","color encountered" + ((Color)u).data);
 				//buf.append(((Color)u).data);
 				//something special here.
-				buf.append("{|");
-				for(Integer i : ((Color)u).operations) {
-					buf.append(Integer.toString(i)+"|");
-				}
-				buf.append("}");
+				////buf.append("{|");
+				//for(Integer i : ((Color)u).operations) {
+				//	buf.append(Integer.toString(i)+"|");
+				//}
+				//buf.append("}");
 			}
 			if(u instanceof NewLine || u instanceof Break) {
 				buf.append("\n");
