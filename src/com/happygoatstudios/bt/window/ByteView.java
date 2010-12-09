@@ -71,6 +71,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	protected static final int MSG_NORMALPRIORITY = 201;
 	final static public int MSG_BUTTONDROPSTART = 100;
 	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
+
+	public static final int MESSAGE_ADDTEXT = 0;
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -128,7 +130,25 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		indicator_off.setFillAfter(true);
 		indicator_off.setFillBefore(true);
 	}
+	private Handler addTextHandler = new AddTextHandler();
+	private class AddTextHandler extends Handler {
+		public void handleMessage(Message msg) {
+			switch(msg.what) {
+			case MESSAGE_ADDTEXT:
+				addBytesImpl((byte[])msg.obj);
+				break;
+			default:
+				break;
+			}
+		}
 
+		
+	}
+
+	private void addBytesImpl(byte[] obj) {
+		the_tree.addBytes(obj);
+	}
+	
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
 		// TODO Auto-generated method stub
@@ -303,7 +323,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//m.setTranslate(0, WINDOW_HEIGHT-5);
 		//m.setScale(1, -1);
-		
+		synchronized(the_tree) {
 		//c.setMatrix(m);
 		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
 		c.drawColor(0xFF0A0A0A); //fill with black
@@ -312,7 +332,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		p.setTextSize(PREF_LINESIZE);
 		p.setColor(0xFFFFFFFF);
 		
-		float char_width = p.measureText("T");
+		//float char_width = p.measureText("T");
 		
 		float x = 0;
 		float y = 0;
@@ -331,18 +351,25 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//TODO: STEP 1
 		//noting the current scrollback & window size, calculate the position of the first line of text that we need to draw.
-		int y_position = CALCULATED_LINESINWINDOW*PREF_LINESIZE;
-		int line_number = y_position/PREF_LINESIZE;
+		float y_position = WINDOW_HEIGHT-(3*this.getContext().getResources().getDisplayMetrics().density);
+		float line_number = y_position/PREF_LINESIZE;
 		
 		//TODO: STEP 2
+		//new step 2, get an iterator to the start of the scrollback
+		
 		//get the iterator of the list at the given position.
 		//i = the_tree.getLines().listIterator(line_number);
 		//use our super cool iterator function.
 		Float offset = 0f;
 		IteratorBundle bundle = getListIteratorForPosition(y_position,PREF_LINESIZE,offset);
 		i = bundle.getI();
-		y = bundle.getOffset()-(3*this.getContext().getResources().getDisplayMetrics().density);
+		y = bundle.getOffset();
 		if(i == null) {Log.e("BYTE","CAN'T ITERATE, NO ITERATOR!"); return;}
+		
+		Paint z = new Paint();
+		z.setColor(0xFF0000FF);
+		c.drawLine(0, y, WINDOW_WIDTH, y, z);
+		z.setColor(0xFFFF0000);
 		//TODO: STEP 3
 		//find bleed.
 		boolean bleeding = false;
@@ -415,12 +442,16 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					drawnlines++;
 					if(drawnlines > CALCULATED_LINESINWINDOW) {
 						stop = true;
+						
+						
 					}
 				}
 			}
 			
 			
 		}
+		c.drawLine(0, y, WINDOW_WIDTH, y, z);
+		}//end synchronized block
 	}
 	
 	public class DrawRunner extends Thread {
@@ -474,9 +505,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						try{
 							c = _surfaceHolder.lockCanvas(null);
 							synchronized(_surfaceHolder) {
-								synchronized(the_tree) {
+								//synchronized(the_tree) {
 									_sv.onDraw(c);
-								}
+								//}
 								_surfaceHolder.notify();
 								//Log.e("DRAW","DRAWING THE SCREEEEEEN!!!!");
 							}
@@ -527,6 +558,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 
 	public void doDelayedDraw(int i) {
+		if(_runner.threadHandler == null) return;
 		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessageDelayed(DrawRunner.MSG_DRAW,i);
 		} else {
@@ -557,9 +589,17 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 
 	public void addText(String obj, boolean b) {
+		if(obj.equals("")) return;
 		synchronized(the_tree) {
+			//Log.e("BYTE",">>>>>>>ADDING TEXT:" + obj);
 			try {
-				the_tree.addBytes(obj.getBytes("ISO-8859-1"));
+				the_tree.addBytesImpl(obj.getBytes("ISO-8859-1"));
+			//try {
+			//	addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,obj.getBytes("ISO-8859-1")));
+			//} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -630,51 +670,107 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private IteratorBundle getListIteratorForPosition(float pY,float pLineSize,Float pOffset) {
 		
-		float max = the_tree.getBrokenLineCount() * pLineSize;
+		float max = (the_tree.getBrokenLineCount()+the_tree.getLines().size()) * pLineSize;
 		float percent = pY / max;
 		float fline = pY / pLineSize;
 		
 		double target = Math.floor(fline);
+		
+		
 		double offsetPercent = fline - Math.floor(fline);
+		
+		float working_y = 0;
+		
+		float target_y = (float) ((target)*pLineSize);
 		
 		int current = 0;
 		boolean done = false;
 		int position = 0;
+		//Log.e("BYTE","BEGINNING SEARCH FOR THE WINDOW LINES");
 		for(Line l : the_tree.getLines()) {
-			if(l.getBreaks() == 0) {
+			//Log.e("BYTE","WORKING ON:" + TextTree.deColorLine(l));
+			//Log.e("BYTE","HAS 1 Line and " + l.getBreaks() + " breaks.");
+			current += 1;
+			working_y = (current-1)*pLineSize;
+			
+			if(working_y > target_y) {
+				return new IteratorBundle(the_tree.getLines().listIterator(position),target_y-working_y);
+			}
+			
+			if(l.getBreaks() > 0) {
+				for(int i=1;i<=l.getBreaks();i++) {
+					current += 1;
+					working_y = (current-1)*pLineSize;
+					
+					
+					if(working_y > target_y) {
+						//fill out the number, this will most likely be in the middle of a broken line
+						float offset = (target_y-working_y)-(i-l.getBreaks())*pLineSize;
+						float initial = target_y-working_y;
+						float rest = (l.getBreaks()-i)*pLineSize;
+						offset = -rest;
+						Log.e("TREE","INIT: " + initial + " REST: " + rest+ "CALCULATED OFFSET:" + offset + " for line: " + position + " that is " + current + " broken lines away in the buffer with a window size of " + CALCULATED_LINESINWINDOW +" lines.\n"+
+								"LINE HAS " + l.getBreaks() + " breaks and broke on break " +i+ ".");
+						return new IteratorBundle(the_tree.getLines().listIterator(position),offset);
+						
+					}
+				}
+			}
+			
+			/*working_y = (current-1)*pLineSize;
+			//Log.e("BYTE","CURRENT NOW:"+ current);
+			if(working_y >= target_y) {
+				//int overby = current - CALCULATED_LINESINWINDOW;
+				float offset = target_y - working_y;
+				//offset ;
+				//int total = (current +1 + l.getBreaks()) - CALCULATED_LINESINWINDOW;
+				//int offset = (1 + l.getBreaks()) - total;
+				Log.e("TREE","CALCULATED OFFSET:" + offset + " for line: " + position + " that is " + current + " broken lines away in the buffer with a window size of " + CALCULATED_LINESINWINDOW +" lines.");
+				return new IteratorBundle(the_tree.getLines().listIterator(position),offset);
+			} */
+			position++;
+			//else {
+				//current += 1 + l.getBreaks();
+				//Log.e("BYTE","CURRENT NOW:"+ current);
+			//}
+			/*if(l.getBreaks() == 0) {
 				//none broken line
-				if(current > target) {
+				if(current >= target) {
 					pOffset = (float) (pLineSize*offsetPercent);
 					done = true;
 				} else {
 					current++;
 				}
 			} else {
-				for(int i=0;i < l.getBreaks() ; i++) {
-					if((current - i) > target) {
-						Log.e("BYTE","CALCULATING OFFSET");
+				for(int i=0;i <= l.getBreaks() ; i++) {
+					if((current + i) >= target) {
+						//Log.e("BYTE","CALCULATING OFFSET");
 						done = true;
 						pOffset = (float) (pLineSize*(i-(l.getBreaks()+1)) + pLineSize*offsetPercent);
-						Log.e("BYTE","CALCULATED OFFSET:" + pOffset + " LINEPOS:" + position);
-					
+						Log.e("BYTE","CALCULATED OFFSET ON BROKEN LINE:" + pOffset + " LINEPOS:" + position);
+						break;
 					} else {
 						current++;
 					}
 				}
 			}
 			if(done) {
-				if(position < CALCULATED_LINESINWINDOW) {
+				if(the_tree.getLines().size() <= CALCULATED_LINESINWINDOW) {
 					pOffset = pLineSize * (CALCULATED_LINESINWINDOW-position);
 				}
-				IteratorBundle b = new IteratorBundle(the_tree.getLines().listIterator(position),pOffset);
+				Log.e("BYTE","CALCULATED OFFSET:" + pOffset + " LINEPOS:" + position);
+				
+				IteratorBundle b = new IteratorBundle(the_tree.getLines().listIterator(position),0f);
 				return b;
 			}
-			position++;
+			position++;*/
 		}
-		if(position-1 < CALCULATED_LINESINWINDOW) {
+		if(the_tree.getLines().size() <= CALCULATED_LINESINWINDOW) {
 			pOffset = pLineSize * (CALCULATED_LINESINWINDOW-position);
 		}
-		IteratorBundle b = new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),pOffset);
+		//Log.e("BYTE","NOT ENOUGH LINES:" + pOffset + " LINEPOS:" + position);
+		
+		IteratorBundle b = new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),0f);
 		return b;
 		//return the_tree.getLines().listIterator(the_tree.getLines().size());
 	}
