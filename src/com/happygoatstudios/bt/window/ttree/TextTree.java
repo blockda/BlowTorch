@@ -28,7 +28,7 @@ public class TextTree {
 	private static Pattern oplookup = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?(([0-9]{1,2});)?([0-9]{1,2})m");
 	private static Matcher op_match = oplookup.matcher("");
 	
-	private int MAX_LINES = 10;
+	private int MAX_LINES = 300;
 	
 	private String encoding = "ISO-8859-1";
 	
@@ -561,6 +561,8 @@ public class TextTree {
 			//StringBuffer debug = new StringBuffer();
 			//Log.e("TREE","LINE NO BREAK:" + deColorLine(this));
 			int charsinline = 0;
+			breaks = 0;
+			charcount=0;
 			ListIterator<Unit> i = mData.listIterator(0);
 			while(i.hasNext()) {
 				
@@ -576,6 +578,8 @@ public class TextTree {
 						int length = ((Text)u).data.length();
 						if(amount == 0) {
 							i.add(new Break());
+							//advance so we don't process this for the original break checking.
+							i.next();
 							breaks += 1;
 							charsinline = 0;
 							removed = true;
@@ -630,6 +634,10 @@ public class TextTree {
 					totalchars += 1;
 					charsinline = 0;
 				}
+				if(u instanceof Break) {
+					i.remove();
+				}
+				
 				
 				
 			}
