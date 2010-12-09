@@ -10,15 +10,20 @@ import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class TextTree {
 	
+	public static final int MESSAGE_ADDTEXT = 0;
 	Pattern colordata = Pattern.compile("\\x1B\\x5B.+m");
 	Matcher colormatch = colordata.matcher("");
 	
 	Pattern newlinelookup = Pattern.compile("\n");
 	Pattern tab = Pattern.compile(new String(new byte[]{0x09}));
+	
+	public Handler addTextHandler = null;
 	
 	private static Pattern oplookup = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?(([0-9]{1,2});)?([0-9]{1,2})m");
 	private static Matcher op_match = oplookup.matcher("");
@@ -27,10 +32,12 @@ public class TextTree {
 	
 	private String encoding = "ISO-8859-1";
 	
-	private int breakAt = 80;
+	private int breakAt = 20;
 	private boolean wordWrap = false;
 	
 	private int brokenLineCount = 0;
+	
+	
 	
 	public int getBrokenLineCount() {
 		return brokenLineCount;
@@ -43,7 +50,7 @@ public class TextTree {
 	public TextTree() {
 		mLines = new LinkedList<Line>();
 		LinkedList<Unit> list = new LinkedList<Unit>();
-		
+		addTextHandler = new AddTextHandler();
 	}
 	
 	public LinkedList<Line> getLines() {
@@ -157,10 +164,24 @@ public class TextTree {
 	private final byte s = (byte)0x73;
 	private final byte u = (byte)0x75;
 	
+	public void addBytes(byte[] data) {
+		//synchronized(addTextHandler) {
+			//while(addTextHandler.hasMessages(MESSAGE_ADDTEXT)) {
+			//	try {
+			//		addTextHandler.wait();
+			//	} catch (InterruptedException e) {
+			//		throw new RuntimeException(e);
+			//	}
+			//}
+		//synchronized(mLines) {
+			addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,data));
+		//}
+	}
+	
 	boolean appendLast = false; //for marking when the addtext call has ended with a newline or not.
 	private byte[] holdover = null;
 	LinkedList<Integer> prev_color = null;
-	public void addBytes(byte[] data) throws UnsupportedEncodingException {
+	public void addBytesImpl(byte[] data) throws UnsupportedEncodingException {
 		//this actually shouldn't be too hard to do with just a for loop.
 		STATE init = STATE.TEXT;
 		
@@ -322,7 +343,7 @@ public class TextTree {
 					cb.get(holdover,0,mtmpsz);
 					Log.e("TREE","APPEND DUE TO UNTERMINATED ANSI SEQUENCE:"  + deColorLine(tmp));
 					addLine(tmp);
-					Log.e("TREE","WARNING: UNTERMINATED ASCII SEQUENCE: " + new String(holdover,encoding));
+					//Log.e("TREE","WARNING: UNTERMINATED ASCII SEQUENCE: " + new String(holdover,encoding));
 					return;
 				}
 				break;
@@ -373,10 +394,14 @@ public class TextTree {
 			tmp.getData().addLast(new Text(tmpb));
 			//Log.e("TEXTTREE",getLastTwenty(false));
 			//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
-			Log.e("TREE",">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>NOT ENDED BY NEWLINE:" + deColorLine(tmp));
+			//Log.e("TREE",">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>NOT ENDED BY NEWLINE:" + deColorLine(tmp));
 			
-			addLine(tmp);
+			
 			sb.rewind();
+		}
+		
+		if(tmp.getData().size() > 0) {
+			addLine(tmp);
 		}
 		
 		//if(lines.size() > 0) {
@@ -398,6 +423,9 @@ public class TextTree {
 		
 		//Log.e("TEXTTREE",getLastTwenty(false));
 		//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
+		//synchronized(addTextHandler) {
+		//	addTextHandler.notify();
+		//}
 	}
 	
 	/*public void addText(String text) {
@@ -480,10 +508,27 @@ public class TextTree {
 		
 	}*/
 	
+	private class AddTextHandler extends Handler {
+		public void handleMessage(Message msg) {
+			switch(msg.what) {
+			case MESSAGE_ADDTEXT:
+				try {
+					addBytesImpl((byte[])msg.obj);
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	
 	private void addLine(Line l) {
 		l.updateData();
 		brokenLineCount += l.breaks + 1;
-		Log.e("TREE","A:" + deColorLine(l));
+		//Log.e("TREE","A:" + deColorLine(l));
 		mLines.add(0,l);
 	}
 	
@@ -511,46 +556,95 @@ public class TextTree {
 			breaks =0;
 		}
 		
+		
 		public void updateData() {
+			//StringBuffer debug = new StringBuffer();
+			//Log.e("TREE","LINE NO BREAK:" + deColorLine(this));
+			int charsinline = 0;
 			ListIterator<Unit> i = mData.listIterator(0);
 			while(i.hasNext()) {
-				int charsinline = 0;
+				
 				Unit u = i.next();
 				if(u instanceof Text) {
+					//debug.append("["+charsinline+":"+((Text)u).charcount+"]"+((Text)u).getString());
 					charcount += ((Text)u).charcount;
 					totalchars += ((Text)u).charcount;
 					charsinline += ((Text)u).charcount; 
-					int removed = 0;
-					while(charsinline-removed >= breakAt) {
+					boolean removed = false;
+					if(charsinline >= breakAt) {
 						int amount = charsinline - breakAt;
+						int length = ((Text)u).data.length();
 						if(amount == 0) {
 							i.add(new Break());
 							breaks += 1;
+							charsinline = 0;
+							removed = true;
 						} else {
-							i.remove();
-							int length = ((Text)u).data.length();
+							//i.remove();
+							//debug.append()
 							//Log.e("TREE","BREAKING LINE: l: " +length+ " a:" + amount);
-							i.add(new Text(((Text)u).data.substring(0, length-amount)));
-							i.add(new Break());
-							i.add(new Text(((Text)u).data.substring(length-amount, length)));
+							int start = length - amount;
+							int end = length - (length-amount);
+							//try {
+								//debug.append("{"+removed+"|"+charsinline+"}\n");
+								//i.set(new Text(((Text)u).data.substring(0, length-amount)));
+								//i.add(new Break());
+								//i.add(new Text(((Text)u).data.substring(length-amount, length)));
+								
+								String str = ((Text)u).data.substring(0, start);
+								i.set(new Text(str));
+								//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}"+str + "\n");
+								
+								i.add(new Break());
+								i.add(new Text(((Text)u).data.substring(start,start+end)));
+								length = end;
+								breaks += 1;
+							//} catch (StringIndexOutOfBoundsException e) {
+								//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}\n");
+								//Log.e("TREE","BROKEN LINE BROKE:" + debug.toString());
+								//throw new RuntimeException(e);
+							//}
 							//((Text)u).data = ((Text)u).data
-							i.previous(); //make the previous item that next processed line
+							//u = i.previous(); //make the previous item that next processed line
+							//length = length - (length-amount);
+							removed = true;
+							charsinline = 0;
 						}
-						removed += breakAt;
-						//charsinline = 0;
+						
+						if(removed) {
+							i.previous();
+							//break;
+						}
+						//removed += breakAt;
+						//charsinline = length - (length-amount);
+						//debug.append("{"+charsinline+"}:" +"\n");
 					}
-					if(removed > 0) {
-						charsinline = 0;
-					}
+					//if(removed > 0) {
+					//	charsinline = 0;
+					//}
 				}
 				if(u instanceof Color) {
 					totalchars += ((Color)u).charcount;
 				}
 				if(u instanceof NewLine || u instanceof Tab) {
 					totalchars += 1;
+					charsinline = 0;
+				}
+				
+				
+			}
+			boolean dodebug = false;
+			for(Unit u : this.getData()) {
+				
+				if(u instanceof TextTree.Break) {
+					dodebug = true;
 				}
 			}
-			
+			//if(dodebug) {
+			//	Log.e("TREE","BROKEN LINE:\n" + debug.toString());
+			//}
+			//debug.setLength(0);
+			//Log.e("TREE","BROKEN LINE:" + debug.toString());
 		}
 
 		public LinkedList<Unit> getData() {
@@ -692,7 +786,7 @@ public class TextTree {
 		return buf.toString();
 	}
 	
-	private String deColorLine(Line line) {
+	public static String deColorLine(Line line) {
 		StringBuffer buf = new StringBuffer();
 		for(Unit u : line.getData()) {
 			if(u instanceof Text) {
