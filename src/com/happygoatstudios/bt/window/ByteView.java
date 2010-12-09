@@ -318,6 +318,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	
 	Paint b = new Paint();
+	Paint breakcolor = new Paint();
 	public void onDraw(Canvas c) {
 		//Matrix m = c.getMatrix();
 		
@@ -332,7 +333,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		p.setTextSize(PREF_LINESIZE);
 		p.setColor(0xFFFFFFFF);
 		
-		//float char_width = p.measureText("T");
+		float char_width = p.measureText("T");
 		
 		float x = 0;
 		float y = 0;
@@ -351,7 +352,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		//TODO: STEP 1
 		//noting the current scrollback & window size, calculate the position of the first line of text that we need to draw.
-		float y_position = WINDOW_HEIGHT-(3*this.getContext().getResources().getDisplayMetrics().density);
+		float y_position = WINDOW_HEIGHT;
 		float line_number = y_position/PREF_LINESIZE;
 		
 		//TODO: STEP 2
@@ -361,7 +362,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//i = the_tree.getLines().listIterator(line_number);
 		//use our super cool iterator function.
 		Float offset = 0f;
-		IteratorBundle bundle = getListIteratorForPosition(y_position,PREF_LINESIZE,offset);
+		IteratorBundle bundle = getScreenIterator(y_position,PREF_LINESIZE);
 		i = bundle.getI();
 		y = bundle.getOffset();
 		if(i == null) {Log.e("BYTE","CAN'T ITERATE, NO ITERATOR!"); return;}
@@ -406,6 +407,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		int drawnlines = 0;
 		while(!stop && i.hasPrevious()) {
 			Line l = i.previous();
+			
+			c.drawText(Integer.toString(drawnlines)+":", x, y, p);
+			x += p.measureText(Integer.toString(drawnlines)+":");
 			for(Unit u : l.getData()) {
 				//p.setColor(color)
 				boolean useBackground = false;
@@ -437,9 +441,23 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					}
 				}
 				if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
+					if(u instanceof TextTree.NewLine) {
+						breakcolor.setColor(0xFFFF0000);
+					}
+					if(u instanceof TextTree.Break) {
+						breakcolor.setColor(0xFF0000FF);
+					}
+					//draw break.
+					c.drawRect(x,y-p.getTextSize(),x+char_width,y+5,breakcolor);
+					
 					y = y + PREF_LINESIZE;
 					x = 0;
 					drawnlines++;
+					
+					if(u instanceof TextTree.Break) {
+						c.drawText(Integer.toString(drawnlines)+":", x, y, p);
+						x += p.measureText(Integer.toString(drawnlines)+":");
+					}
 					if(drawnlines > CALCULATED_LINESINWINDOW) {
 						stop = true;
 						
@@ -668,6 +686,59 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 	}
 	
+	private IteratorBundle getScreenIterator(float pIn,float pLineSize) {
+		
+		float working_h = 0;
+		int position = 0;
+		
+		float pY = pIn;
+		
+		if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
+			//calculate how few.
+			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount());
+			return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize);
+		}
+		
+		double target = Math.floor(pY/pLineSize);
+		int current = 0;
+		
+		Iterator<Line> i = the_tree.getLines().iterator();
+		while(i.hasNext()) {
+			Line l = i.next();
+			working_h += pLineSize * (1 + l.getBreaks());
+			current += 1 + l.getBreaks();
+			if(working_h > pY) {
+				float delta = working_h - pY;
+				float offset = delta - pLineSize;
+				
+				//assert that overrun did happen.
+				float showing = pY - (working_h - pLineSize*(1+l.getBreaks()));
+				
+				//fetch the actual next line.
+				l = i.next();
+				position++;
+				
+				showing -= pLineSize * (l.getBreaks());
+				
+				//String oformat = new PrintFormat("%6s").;
+				//String deltaformat;
+				//String hformat;
+				//String yformat;
+				String report = "REPORT: O="+-1*offset+" delta="+delta+" working_h="+working_h+" target="+pY+" position="+position+" breaks="+l.getBreaks()+" target="+target+" current="+current+" showing="+showing;
+				Log.e("BYTE",report);
+				//this is technically a new position.
+				//position = position +1;
+				return new IteratorBundle(the_tree.getLines().listIterator(position),showing);
+			} else {
+				//next line
+				position++;
+			}
+		}
+		
+		return null;
+		
+	}
+	
 	private IteratorBundle getListIteratorForPosition(float pY,float pLineSize,Float pOffset) {
 		
 		float max = (the_tree.getBrokenLineCount()+the_tree.getLines().size()) * pLineSize;
@@ -686,6 +757,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		int current = 0;
 		boolean done = false;
 		int position = 0;
+		
+	
 		//Log.e("BYTE","BEGINNING SEARCH FOR THE WINDOW LINES");
 		for(Line l : the_tree.getLines()) {
 			//Log.e("BYTE","WORKING ON:" + TextTree.deColorLine(l));
