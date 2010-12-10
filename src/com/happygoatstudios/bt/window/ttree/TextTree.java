@@ -32,10 +32,12 @@ public class TextTree {
 	
 	private String encoding = "ISO-8859-1";
 	
-	private int breakAt = 20;
+	private int breakAt = 77;
 	private boolean wordWrap = false;
 	
 	private int brokenLineCount = 0;
+	
+	private int totalbytes = 0;
 	
 	
 	
@@ -53,44 +55,66 @@ public class TextTree {
 		addTextHandler = new AddTextHandler();
 	}
 	
+	
+	public byte[] dumpToBytes() {
+		ByteBuffer buf = ByteBuffer.allocate(totalbytes);
+		Log.e("TREE","EXPORTING TREE:" + totalbytes + " bytes.");
+		int written =0;
+		//gotta do this from end to start.
+		ListIterator<Line> i = mLines.listIterator(mLines.size());
+		while(i.hasPrevious()) {
+			Line l = i.previous();
+			Iterator<Unit> iu = l.getData().iterator();
+			while(iu.hasNext()) {
+				Unit u = iu.next();
+				if(u instanceof Text) {
+					buf.put(((Text)u).bin);
+					written += ((Text)u).bin.length;
+				}
+				if(u instanceof Color) {
+					try {
+						buf.put(((Color)u).getData().getBytes(encoding));
+						written += ((Color)u).getData().getBytes(encoding).length;
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				if(u instanceof NewLine) {
+					try {
+						buf.put(((NewLine)u).data.getBytes(encoding));
+						written += 1;
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				if(u instanceof Tab) {
+					try {
+						buf.put(((Tab)u).data.getBytes(encoding));
+						written += 1;
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		}
+		
+		int size = buf.position();
+		Log.e("TREE","FINISHED EXPORTING:" + written + " bytes.");
+		byte[] ret = new byte[size];
+		buf.rewind();
+		buf.get(ret,0,size);
+		mLines.clear();
+		appendLast = false;
+		//buf.rewind();
+		return ret;
+	}
+	
 	public LinkedList<Line> getLines() {
 		return mLines;
 	}
 
 	public void setLines(LinkedList<Line> mLines) {
 		this.mLines = mLines;
-	}
-
-	private LinkedList<Unit> makeLineFromData(String input) {
-		LinkedList<Unit> tmp = new LinkedList<Unit>();
-		colormatch.reset(input);
-		buf.setLength(0);
-		boolean colorfound = false;
-		while(colormatch.find()) {
-			colorfound = true;
-			buf.setLength(0);
-			colormatch.appendReplacement(buf, "");
-		
-			if(buf.length() > 0) {
-				//if there is text, make and attach the text node first
-				tmp.addLast(new Text(buf.toString()));
-			} 
-			//then handle the color.
-			Color c = new Color(colormatch.group(0),getOperations(colormatch.group(0)));
-			tmp.addLast(c);
-		}
-		if(colorfound) {
-			//finish up
-			buf.setLength(0);
-			colormatch.appendTail(buf);
-			if(buf.length() > 0) {
-				tmp.addLast(new Text(buf.toString()));
-			} 
-		} else {
-			//there is no color info in this line
-			tmp.addLast(new Text(input));
-		}
-		return tmp;
 	}
 	
 	private static LinkedList<Integer> getOperations(String input) {
@@ -164,7 +188,7 @@ public class TextTree {
 	private final byte s = (byte)0x73;
 	private final byte u = (byte)0x75;
 	
-	public void addBytes(byte[] data) {
+	//public void addBytes(byte[] data) {
 		//synchronized(addTextHandler) {
 			//while(addTextHandler.hasMessages(MESSAGE_ADDTEXT)) {
 			//	try {
@@ -174,9 +198,9 @@ public class TextTree {
 			//	}
 			//}
 		//synchronized(mLines) {
-			addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,data));
+			//addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,data));
 		//}
-	}
+	//}
 	
 	boolean appendLast = false; //for marking when the addtext call has ended with a newline or not.
 	private byte[] holdover = null;
@@ -418,6 +442,7 @@ public class TextTree {
 				//Log.e("TREE","TRIMMING BUFFER");
 				Line del = mLines.removeLast();
 				brokenLineCount -= (1 + del.breaks);
+				totalbytes -= del.bytes;
 			}
 		}
 		
@@ -528,6 +553,7 @@ public class TextTree {
 	private void addLine(Line l) {
 		l.updateData();
 		brokenLineCount += l.breaks + 1;
+		totalbytes += l.bytes;
 		//Log.e("TREE","A:" + deColorLine(l));
 		mLines.add(0,l);
 	}
@@ -540,6 +566,7 @@ public class TextTree {
 		protected int totalchars;
 		protected int charcount;
 		protected int breaks;
+		protected int bytes;
 		
 		public int getBreaks() {
 			return breaks;
@@ -563,6 +590,7 @@ public class TextTree {
 			int charsinline = 0;
 			breaks = 0;
 			charcount=0;
+			bytes = 0;
 			ListIterator<Unit> i = mData.listIterator(0);
 			while(i.hasNext()) {
 				
@@ -571,7 +599,8 @@ public class TextTree {
 					//debug.append("["+charsinline+":"+((Text)u).charcount+"]"+((Text)u).getString());
 					charcount += ((Text)u).charcount;
 					totalchars += ((Text)u).charcount;
-					charsinline += ((Text)u).charcount; 
+					charsinline += ((Text)u).charcount;
+					bytes += ((Text)u).bytecount;
 					boolean removed = false;
 					if(charsinline >= breakAt) {
 						int amount = charsinline - breakAt;
@@ -579,7 +608,9 @@ public class TextTree {
 						if(amount == 0) {
 							i.add(new Break());
 							//advance so we don't process this for the original break checking.
-							i.next();
+							if(i.hasNext()) {
+								i.next(); //advance the cursor so we don't go through and delete existing breaks.
+							}
 							breaks += 1;
 							charsinline = 0;
 							removed = true;
@@ -629,10 +660,12 @@ public class TextTree {
 				}
 				if(u instanceof Color) {
 					totalchars += ((Color)u).charcount;
+					bytes += ((Color)u).bytecount;
 				}
 				if(u instanceof NewLine || u instanceof Tab) {
 					totalchars += 1;
 					charsinline = 0;
+					bytes += 1;
 				}
 				if(u instanceof Break) {
 					i.remove();
@@ -682,6 +715,7 @@ public class TextTree {
 	
 	public class Unit {
 		protected int charcount;
+		protected int bytecount;
 		//protected int bytecount;
 		
 		public Unit() {
@@ -697,21 +731,35 @@ public class TextTree {
 		public Text() {
 			data = "";
 			charcount = 0;
+			bytecount = 0;
+			bin = new byte[0];
 		}
 		
 		public Text(String input) {
 			data = input;
 			this.charcount = data.length();
+			try {
+				bin = data.getBytes(encoding);
+				this.bytecount = data.getBytes(encoding).length;
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		public Text(byte[] in) throws UnsupportedEncodingException {
 			bin = in;
 			data = new String(in,encoding);
 			this.charcount = data.length();
+			bytecount = bin.length;
 		}
 
 		public String getString() {
 			return data;
+		}
+		
+		public byte[] getBytes() {
+			return bin;
 		}
 		
 		//public Text copy() {
@@ -728,6 +776,7 @@ public class TextTree {
 		public Tab() {
 			data = new String(new byte[]{0x09});
 			this.charcount = 1;
+			this.bytecount = 1;
 		}
 		
 	}
@@ -737,6 +786,7 @@ public class TextTree {
 		public NewLine() {
 			data = new String("\n");
 			this.charcount = 1;
+			this.bytecount = 1;
 		}
 		
 	}
@@ -754,12 +804,24 @@ public class TextTree {
 			data = input;
 			this.charcount = data.length();
 			computeOperations(input);
+			try {
+				bytecount = data.getBytes(encoding).length;
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		public Color(String input,LinkedList<Integer> ops) {
 			data = input;
 			this.charcount = data.length();
 			operations = ops; //will need to track this for actual memory usage.
+			try {
+				bytecount = data.getBytes(encoding).length;
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		public String getData() {
