@@ -475,7 +475,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//i = the_tree.getLines().listIterator(line_number);
 		//use our super cool iterator function.
 		Float offset = 0f;
-		IteratorBundle bundle = getScreenIterator(scrollback,PREF_LINESIZE,c);
+		IteratorBundle bundle = getScreenIterator(scrollback,PREF_LINESIZE);
 		i = bundle.getI();
 		y = bundle.getOffset();
 		int extraLines = bundle.getExtraLines();
@@ -496,14 +496,16 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			for(Unit u : l.getData()) {
 				if(u instanceof TextTree.Color) {
-					bleeding = true;
+					
 					for(Integer o : ((TextTree.Color) u).getOperations()) {
 						updateColorRegisters(o);
 					}
 					p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 					//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
 					b.setColor(0xFF000000);//no not bleed background colors
-					
+					if(p.getColor() != (0xFF000000|Colorizer.getColorValue(0, 37))) {
+						bleeding = true;
+					}
 				}
 			}
 		}
@@ -734,6 +736,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	public void setFont(Typeface font) {
 		PREF_FONT = font;
 	}
+	
+	public void setLineBreaks(Integer i) {
+		synchronized(the_tree) {
+			the_tree.setLineBreakAt(i);
+		}
+		
+		if(_runner != null) {
+			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
+				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+
+			}
+		}
+	}
 
 	public void addText(String obj, boolean jumpToEnd) {
 		if(obj.equals("")) return;
@@ -848,7 +863,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 	}
 	Paint tmpp = new Paint();
-	private IteratorBundle getScreenIterator(double pIn,float pLineSize,Canvas c) {
+	private IteratorBundle getScreenIterator(double pIn,float pLineSize) {
 		tmpp.setColor(0xFF00FF00);
 		tmpp.setTypeface(Typeface.MONOSPACE);
 		tmpp.setTextSize(10);

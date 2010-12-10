@@ -113,7 +113,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_KEYBOARD = 878;
 	protected static final int MESSAGE_DODISCONNECT = 879;
 	public static final int MESSAGE_SENDBUTTONDATA = 880;
-
+	private static final int MESSAGE_LINEBREAK = 881;
 	
 	private TextTree tree = new TextTree();
 
@@ -361,7 +361,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
-				
+				case MESSAGE_LINEBREAK:
+					screen2.setLineBreaks((Integer)msg.obj);
+					break;
 				case MESSAGE_SENDBUTTONDATA:
 					ByteBuffer bbuf = null;
 					try {
@@ -2082,6 +2084,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		public void doDisconnectNotice() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
 			
+		}
+
+		public void doLineBreak(int i) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_LINEBREAK,new Integer(i)));
 		}
 	};
 	
