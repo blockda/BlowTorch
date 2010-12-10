@@ -72,28 +72,16 @@ public class TextTree {
 					written += ((Text)u).bin.length;
 				}
 				if(u instanceof Color) {
-					try {
-						buf.put(((Color)u).getData().getBytes(encoding));
-						written += ((Color)u).getData().getBytes(encoding).length;
-					} catch (UnsupportedEncodingException e) {
-						throw new RuntimeException(e);
-					}
+					buf.put(((Color)u).bin);
+					written += ((Color)u).bin.length;
 				}
 				if(u instanceof NewLine) {
-					try {
-						buf.put(((NewLine)u).data.getBytes(encoding));
-						written += 1;
-					} catch (UnsupportedEncodingException e) {
-						throw new RuntimeException(e);
-					}
+					buf.put(NEWLINE);
+					written += 1;
 				}
 				if(u instanceof Tab) {
-					try {
-						buf.put(((Tab)u).data.getBytes(encoding));
+						buf.put(TAB);
 						written += 1;
-					} catch (UnsupportedEncodingException e) {
-						throw new RuntimeException(e);
-					}
 				}
 			}
 		}
@@ -151,6 +139,75 @@ public class TextTree {
 		return tmp;
 	}
 	
+	private static LinkedList<Integer> getOperationsFromBytes(byte[] in) {
+		LinkedList<Integer> tmp = new LinkedList<Integer>();
+		int working = 0;
+		int place = 1;
+		for(int i=0;i<in.length;i++) {
+			switch(in[i]) {
+			case SEMI:
+				//reset 
+				tmp.addLast(new Integer(working));
+				working = 0;
+				place = 1;
+				break;
+			case m:
+				tmp.addLast(new Integer(working));
+				return tmp;
+				//end
+			case b0:
+			case b1:
+			case b2:
+			case b3:
+			case b4:
+			case b5:
+			case b6:
+			case b7:
+			case b8:
+			case b9:
+				working = working*place;
+				place = place*10;
+				working += getAsciiNumber(in[i]);
+				break;
+			case ESC:
+			case BRACKET:
+				break;
+			default:
+				break;
+			}
+		}
+		
+		return tmp;
+	}
+	
+	private static int getAsciiNumber(byte b) {
+		switch(b) {
+		case b0:
+			return 0;
+		case b1:
+			return 1;
+		case b2:
+			return 2;
+		case b3:
+			return 3;
+		case b4:
+			return 4;
+		case b5:
+			return 5;
+		case b6:
+			return 6;
+		case b7:
+			return 7;
+		case b8:
+			return 8;
+		case b9:
+			return 9;
+		default:
+			return 0;
+			
+		}
+	}
+	
 	StringBuffer buf = new StringBuffer();
 	StringBuffer linebuf = new StringBuffer();
 	Pattern newline = Pattern.compile("\n");
@@ -165,11 +222,23 @@ public class TextTree {
 	}
 	
 	private final byte TAB = (byte)0x09;
-	private final byte ESC = (byte)0x1B;
-	private final byte BRACKET = (byte)0x5B;
+	private final static byte ESC = (byte)0x1B;
+	private final static byte BRACKET = (byte)0x5B;
 	private final byte NEWLINE = (byte)0x0A;
 	private final byte CARRIAGE = (byte)0x0D;
-	private final byte m = (byte)0x6D;
+	private final static byte m = (byte)0x6D;
+	private final static byte SEMI = (byte)0x3B;
+	
+	private final static byte b0 = (byte)0x30;
+	private final static byte b1 = (byte)0x31;
+	private final static byte b2 = (byte)0x32;
+	private final static byte b3 = (byte)0x33;
+	private final static byte b4 = (byte)0x34;
+	private final static byte b5 = (byte)0x35;
+	private final static byte b6 = (byte)0x36;
+	private final static byte b7 = (byte)0x37;
+	private final static byte b8 = (byte)0x38;
+	private final static byte b9 = (byte)0x39;
 	
 	//more ansi escape sequences.
 	private final byte A = (byte)0x41;
@@ -329,7 +398,7 @@ public class TextTree {
 						byte[] cmd = new byte[cmdsize];
 						cb.rewind();
 						cb.get(cmd,0,cmdsize);
-						Color c = new Color(new String(cmd,encoding),getOperations(new String(cmd,encoding)));
+						Color c = new Color(cmd);
 						tmp.getData().addLast(c);
 						cb.rewind();
 						break;
@@ -602,57 +671,61 @@ public class TextTree {
 					charsinline += ((Text)u).charcount;
 					bytes += ((Text)u).bytecount;
 					boolean removed = false;
-					if(charsinline >= breakAt) {
-						int amount = charsinline - breakAt;
-						int length = ((Text)u).data.length();
-						if(amount == 0) {
-							i.add(new Break());
-							//advance so we don't process this for the original break checking.
-							if(i.hasNext()) {
-								i.next(); //advance the cursor so we don't go through and delete existing breaks.
-							}
-							breaks += 1;
-							charsinline = 0;
-							removed = true;
-						} else {
-							//i.remove();
-							//debug.append()
-							//Log.e("TREE","BREAKING LINE: l: " +length+ " a:" + amount);
-							int start = length - amount;
-							int end = length - (length-amount);
-							//try {
-								//debug.append("{"+removed+"|"+charsinline+"}\n");
-								//i.set(new Text(((Text)u).data.substring(0, length-amount)));
-								//i.add(new Break());
-								//i.add(new Text(((Text)u).data.substring(length-amount, length)));
-								
-								String str = ((Text)u).data.substring(0, start);
-								i.set(new Text(str));
-								//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}"+str + "\n");
-								
+					if(breakAt > 0) {
+						if(charsinline >= breakAt) {
+							int amount = charsinline - breakAt;
+							int length = ((Text)u).data.length();
+							if(amount == 0) {
 								i.add(new Break());
-								i.add(new Text(((Text)u).data.substring(start,start+end)));
-								length = end;
+								//advance so we don't process this for the original break checking.
+								if(i.hasNext()) {
+									i.next(); //advance the cursor so we don't go through and delete existing breaks.
+								}
 								breaks += 1;
-							//} catch (StringIndexOutOfBoundsException e) {
-								//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}\n");
-								//Log.e("TREE","BROKEN LINE BROKE:" + debug.toString());
-								//throw new RuntimeException(e);
-							//}
-							//((Text)u).data = ((Text)u).data
-							//u = i.previous(); //make the previous item that next processed line
-							//length = length - (length-amount);
-							removed = true;
-							charsinline = 0;
+								charsinline = 0;
+								removed = true;
+							} else {
+								//i.remove();
+								//debug.append()
+								//Log.e("TREE","BREAKING LINE: l: " +length+ " a:" + amount);
+								int start = length - amount;
+								int end = length - (length-amount);
+								//try {
+									//debug.append("{"+removed+"|"+charsinline+"}\n");
+									//i.set(new Text(((Text)u).data.substring(0, length-amount)));
+									//i.add(new Break());
+									//i.add(new Text(((Text)u).data.substring(length-amount, length)));
+									
+									String str = ((Text)u).data.substring(0, start);
+									i.set(new Text(str));
+									//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}"+str + "\n");
+									
+									i.add(new Break());
+									i.add(new Text(((Text)u).data.substring(start,start+end)));
+									length = end;
+									breaks += 1;
+								//} catch (StringIndexOutOfBoundsException e) {
+									//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}\n");
+									//Log.e("TREE","BROKEN LINE BROKE:" + debug.toString());
+									//throw new RuntimeException(e);
+								//}
+								//((Text)u).data = ((Text)u).data
+								//u = i.previous(); //make the previous item that next processed line
+								//length = length - (length-amount);
+								removed = true;
+								charsinline = 0;
+							}
+							
+							if(removed) {
+								i.previous();
+								//break;
+							}
+							//removed += breakAt;
+							//charsinline = length - (length-amount);
+							//debug.append("{"+charsinline+"}:" +"\n");
 						}
-						
-						if(removed) {
-							i.previous();
-							//break;
-						}
-						//removed += breakAt;
-						//charsinline = length - (length-amount);
-						//debug.append("{"+charsinline+"}:" +"\n");
+					} else {
+						//dont break.
 					}
 					//if(removed > 0) {
 					//	charsinline = 0;
@@ -791,6 +864,7 @@ public class TextTree {
 		
 	}
 	public class Color extends Unit {
+		protected byte[] bin;
 		protected String data;
 		LinkedList<Integer> operations;
 		
@@ -821,6 +895,17 @@ public class TextTree {
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}
+		}
+		
+		public Color(byte[] input) {
+			bin = input;
+			bytecount = input.length;
+			operations = getOperationsFromBytes(input);
+			try {
+				data = new String(bin,encoding);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
 			}
 		}
 		
@@ -883,6 +968,17 @@ public class TextTree {
 
 	public void setMaxLines(int maxLines) {
 		MAX_LINES = maxLines;
+	}
+
+	public void setLineBreakAt(Integer i) {
+		breakAt = i;
+		updateTree();
+	}
+	
+	private void updateTree() {
+		for(Line l : mLines) {
+			l.updateData();
+		}
 	}
 	
 }

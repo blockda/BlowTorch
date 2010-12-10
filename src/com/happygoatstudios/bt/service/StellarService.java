@@ -175,6 +175,7 @@ public class StellarService extends Service {
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
+		LineBreakCommand lccmd = new LineBreakCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
@@ -185,6 +186,7 @@ public class StellarService extends Service {
 		specialcommands.put("kb", kbcmd);
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
+		specialcommands.put(lccmd.commandName, lccmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -2571,6 +2573,71 @@ public class StellarService extends Service {
 			}
 			
 		}
+	}
+	
+	private class LineBreakCommand extends SpecialCommand {
+		
+		
+		
+		public LineBreakCommand() {
+			this.commandName = "linebreak";
+		}
+		public void execute(Object o) {
+			
+			//format: .linebreak [none]|[number]
+			String str = (String)o;
+			
+			
+			
+			Pattern argm = Pattern.compile("none|\\d+");
+			Matcher arg = argm.matcher(str);
+			if(arg.find()){
+				int breakat = 0;
+				try{
+					breakat = Integer.parseInt(str);
+					if(breakat < 1) {
+						//must be positive and greater than 0
+					} else {
+						//succeed
+						DoBreakAt(breakat);
+					}
+				} catch (NumberFormatException e) {
+					if(str.equals("none")) {
+						breakat=0;
+						//succeed
+						DoBreakAt(0);
+					} else {
+						//invalid argument.
+					}
+				}
+			}
+			//
+			
+			
+			//myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+			//String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
+			//try {
+			//	doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+			//} catch (RemoteException e) {
+			//	throw new RuntimeException(e);
+			//} catch (UnsupportedEncodingException e) {
+			//	throw new RuntimeException(e);
+			//}
+			
+		}
+	}
+	
+	private void DoBreakAt(int pLines) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).doLineBreak(pLines);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
 	}
 	
 	private String getErrorMessage(String arg1,String arg2) {
