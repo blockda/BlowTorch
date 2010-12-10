@@ -506,6 +506,16 @@ public class TextTree {
 		
 		//prune if too many.
 		//Log.e("TREE","BUFFER NOW:" + mLines.size() + " lines.");
+		
+		
+		//Log.e("TEXTTREE",getLastTwenty(false));
+		//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
+		//synchronized(addTextHandler) {
+		//	addTextHandler.notify();
+		//}
+	}
+	
+	public void prune() {
 		if(mLines.size() > MAX_LINES) {
 			while(mLines.size() > MAX_LINES) {
 				//Log.e("TREE","TRIMMING BUFFER");
@@ -514,12 +524,6 @@ public class TextTree {
 				totalbytes -= del.bytes;
 			}
 		}
-		
-		//Log.e("TEXTTREE",getLastTwenty(false));
-		//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
-		//synchronized(addTextHandler) {
-		//	addTextHandler.notify();
-		//}
 	}
 	
 	/*public void addText(String text) {
@@ -742,6 +746,7 @@ public class TextTree {
 				}
 				if(u instanceof Break) {
 					i.remove();
+					//breaks -= 1;
 				}
 				
 				
@@ -976,8 +981,12 @@ public class TextTree {
 	}
 	
 	private void updateTree() {
+		brokenLineCount = 0;
+		totalbytes = 0;
 		for(Line l : mLines) {
 			l.updateData();
+			totalbytes += l.bytes;
+			brokenLineCount += (1 + l.breaks);
 		}
 	}
 	
