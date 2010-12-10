@@ -1708,12 +1708,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 
 	private void saveBuffer() throws RemoteException {
-		SlickView sv = (SlickView)findViewById(R.id.slickview);
+		ByteView sv = (ByteView)findViewById(R.id.slickview);
 		//Log.e("WINDOW","SAVING BUFFER:" + sv.getBuffer().length());
 		//String message = "\n" + Colorizer.colorYeollowBright + "Saving buffer: " + sv.getBuffer().getBytes().length + Colorizer.colorWhite + "\n";
 		service.saveBuffer(sv.getBuffer());
 		service.unregisterCallback(the_callback);
-		sv.clearBuffer();
+		//sv.clearBuffer();
 	}
 	
 	public void onSaveInstanceState(Bundle data) {
