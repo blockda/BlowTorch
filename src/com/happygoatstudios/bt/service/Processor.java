@@ -10,7 +10,7 @@ import android.os.Message;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
-import android.util.Log;
+//import android.util.Log;
 
 public class Processor {
 
@@ -74,7 +74,7 @@ public class Processor {
 				// if the next byte is
 				if ((data[i + 1] >= WILL && data[i + 1] <= DONT)
 						|| data[i + 1] == SB) {
-					Log.e("SERVICE", "DO IAC");
+					//Log.e("SERVICE", "DO IAC");
 					// switch(data[i+1])
 					if (data[i + 1] == SB) {
 						// subnegotiation
@@ -114,8 +114,8 @@ public class Processor {
 									- i);
 							// if(in[0] == IAC && in[1] == SB && in[2] ==
 							// compressresp[0] && in[3] == IAC && in[4] == SE) {
-							Log.e("PROCESSOR",
-									"ENCOUNTERED START OF COMPRESSION EVENT");
+							//Log.e("PROCESSOR",
+									//"ENCOUNTERED START OF COMPRESSION EVENT");
 							// get rest
 
 							for (int z = i + 5; z < data.length; z++) {
@@ -229,7 +229,7 @@ public class Processor {
 		if(resp.length > 2) {
 			if(resp[2] == TC.NAWS) {
 			//naws has started.
-				Log.e("SERVICE","NAWS STARTED, SENDING NAWS STRING");
+				//Log.e("SERVICE","NAWS STARTED, SENDING NAWS STRING");
 				//opthandler.
 				disaptchNawsString();
 			}
@@ -311,10 +311,10 @@ public class Processor {
 	public void disaptchNawsString() {
 		byte[] nawsout = opthandler.getNawsString();
 		if(nawsout == null) {
-			Log.e("PROCESSOR","NAWS NOT CURRENTLY NEGOTIABLE");
+			//Log.e("PROCESSOR","NAWS NOT CURRENTLY NEGOTIABLE");
 			return;
 		}
-		Log.e("PROCESSOR","DISPATCHING NAWS");
+		//Log.e("PROCESSOR","DISPATCHING NAWS");
 		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
 		Bundle b = sbm.getData();
 		b.putByteArray("THE_DATA", nawsout);

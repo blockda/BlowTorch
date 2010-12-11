@@ -21,7 +21,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -168,6 +168,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		WINDOW_HEIGHT = height;
 		WINDOW_WIDTH = width;		
 		calculateCharacterFeatures(width,height);
+		//Log.e("BYTE","SURFACE CHANGED");
+		doDelayedDraw(0);
 	}
 	
 	public void calculateCharacterFeatures(int width,int height) {
@@ -491,7 +493,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		i = bundle.getI();
 		y = bundle.getOffset();
 		int extraLines = bundle.getExtraLines();
-		if(i == null) {Log.e("BYTE","CAN'T ITERATE, NO ITERATOR!"); return;}
+		if(i == null) { return;}
 		
 		Paint z = new Paint();
 		//z.setColor(0xFF0000FF);
