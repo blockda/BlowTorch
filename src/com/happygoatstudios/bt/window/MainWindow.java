@@ -22,6 +22,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
@@ -32,6 +34,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -227,10 +230,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	//public boolean finishStart = true;
 	
-	String html_buffer = new String();
-	Vector<SlickButton> current_button_views = new Vector<SlickButton>();
-	
+
 	//private int statusBarHeight = 1;
+	
 	
 	
 	public void onCreate(Bundle icicle) {
@@ -1024,6 +1026,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					tmp.setX(msg.arg1);
 					tmp.setY(msg.arg2);
 					
+					//if(OREINTATION == Configuration.ORIENTATION_PORTRAIT) {
+					//	tmp.setX(msg.arg2);
+					//	tmp.setY(msg.arg1);
+					//}
 					
 					
 					tmp.setText(input_box.getText().toString());
@@ -1046,6 +1052,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					tmp.setHeight(colorset.getButtonHeight());
 					
 					SlickButton new_button = new SlickButton(MainWindow.this,0,0);
+					if(OREINTATION == Configuration.ORIENTATION_PORTRAIT) {
+						new_button.setPortraiteMode(true);
+					}
 					if(isFullScreen) {
 						tmp.setY(msg.arg2 - statusBarHeight);
 						new_button.setFullScreenShift(statusBarHeight);
@@ -1578,6 +1587,40 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//alert.show();
 		
 		//super.onBackPressed();
+	}
+	
+	int OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
+	
+	public void onConfigurationChanged(Configuration newconfig) {
+		//Log.e("WINDOW","CONFIGURATION CHANGING");
+		super.onConfigurationChanged(newconfig);
+		//Log.e("WINDOW","CONFIGURATION CHANGED");
+		//RelativeLayout container = (RelativeLayout)this.findViewById(R.id.window_container);
+		//RelativeLayout.LayoutParams p = (RelativeLayout.LayoutParams)container.getLayoutParams();
+		switch(newconfig.orientation) {
+		case Configuration.ORIENTATION_PORTRAIT:
+		//	this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		//	container.requestLayout();
+			//DoButtonPortraitMode(true);
+			//OREINTATION = Configuration.ORIENTATION_PORTRAIT;
+			break;
+		case Configuration.ORIENTATION_LANDSCAPE:
+		//	this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		//	container.requestLayout();
+			//DoButtonPortraitMode(false);
+			//OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
+			break;
+		}
+		
+	}
+	
+	private void DoButtonPortraitMode(boolean use) {
+		RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
+		for(int i=0;i<l.getChildCount();i++) {
+			if(l.getChildAt(i) instanceof SlickButton) {
+				((SlickButton)l.getChildAt(i)).setPortraiteMode(use);
+			}
+		}
 	}
 	
 	private void DoHapticFeedback() {

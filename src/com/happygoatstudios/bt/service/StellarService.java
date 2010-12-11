@@ -53,7 +53,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -430,7 +430,7 @@ public class StellarService extends Service {
 					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex((byte[])msg.obj));
 					Bundle b = msg.getData();
 					byte[] obytes = b.getByteArray("THE_DATA");
-					Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex(obytes));
+					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex(obytes));
 					String message = b.getString("DEBUG_MESSAGE");
 					if(message != null) {
 						try {
@@ -445,14 +445,14 @@ public class StellarService extends Service {
 					}
 					
 					try {
-						if(obytes == null) Log.e("SERVICE","NULL BYTES");
-						if(output_writer == null) Log.e("SERVICE","NULL WRITER");
+						//if(obytes == null) Log.e("SERVICE","NULL BYTES");
+						//if(output_writer == null) Log.e("SERVICE","NULL WRITER");
 						output_writer.write(obytes);
 						output_writer.flush();
 					} catch (IOException e2) {
 						throw new RuntimeException(e2);
 					}
-					Log.e("BTSERVICE","DONE SENDING");
+					//Log.e("BTSERVICE","DONE SENDING");
 					
 					break;
 				case MESSAGE_SENDDATA:
@@ -3175,7 +3175,7 @@ public class StellarService extends Service {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
-			Log.e("SERVICE","OUTPUT WRITER KILLED");
+			//Log.e("SERVICE","OUTPUT WRITER KILLED");
 			output_writer = null;
 		}
 		
