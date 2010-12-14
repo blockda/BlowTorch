@@ -2,8 +2,9 @@ package com.happygoatstudios.bt.button;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.validator.Validator;
+import com.happygoatstudios.bt.window.ByteView;
 import com.happygoatstudios.bt.window.MainWindow;
-import com.happygoatstudios.bt.window.SlickView;
+
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -281,7 +282,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 			
 			public void onClick(View arg0) {
 				EXIT_STATE = EXIT_DELETE;
-				Message msg = deleter.obtainMessage(SlickView.MSG_REALLYDELETEBUTTON, the_button);
+				Message msg = deleter.obtainMessage(ByteView.MSG_REALLYDELETEBUTTON, the_button);
 				deleter.sendMessage(msg);
 				ButtonEditorDialog.this.dismiss();
 			}

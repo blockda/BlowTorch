@@ -5,10 +5,9 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 import com.happygoatstudios.bt.service.Colorizer;
-import com.happygoatstudios.bt.window.SlickView.DrawRunner;
-import com.happygoatstudios.bt.window.ttree.TextTree;
-import com.happygoatstudios.bt.window.ttree.TextTree.Line;
-import com.happygoatstudios.bt.window.ttree.TextTree.Unit;
+//import com.happygoatstudios.bt.window.SlickView.DrawRunner;
+import com.happygoatstudios.bt.window.TextTree.Line;
+import com.happygoatstudios.bt.window.TextTree.Unit;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -72,7 +71,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	protected static final int MSG_NORMALPRIORITY = 201;
 	final static public int MSG_BUTTONDROPSTART = 100;
 	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
-
+	final static public int MSG_DELETEBUTTON = 1040;
+	final static public int MSG_REALLYDELETEBUTTON = 1041;
+	//final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
+		
 	public static final int MESSAGE_ADDTEXT = 0;
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
@@ -308,7 +310,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			pre_event = null;
 			prev_y = new Float(0);
-			buttonaddhandler.removeMessages(SlickView.MSG_BUTTONDROPSTART);
+			buttonaddhandler.removeMessages(ByteView.MSG_BUTTONDROPSTART);
 	        
 	        //reset the priority
 	        increadedPriority = false;
@@ -321,7 +323,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	        
 		}
 		
-		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
 		}
@@ -363,7 +365,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					if(finger_down_to_up) {
 						prev_draw_time = System.currentTimeMillis(); 
 						Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
-						buttonaddhandler.sendEmptyMessage(SlickView.MSG_UPPRIORITY);
+						buttonaddhandler.sendEmptyMessage(ByteView.MSG_UPPRIORITY);
 						finger_down_to_up=false;
 					}
 				}
@@ -393,7 +395,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
+						buttonaddhandler.sendEmptyMessage(ByteView.MSG_NORMALPRIORITY);
 					}
 					
 					/*if(scrollback.intValue() / PREF_LINESIZE < 1) {
@@ -409,9 +411,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
+						buttonaddhandler.sendEmptyMessage(ByteView.MSG_NORMALPRIORITY);
 
-						buttonaddhandler.sendEmptyMessage(SlickView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+						buttonaddhandler.sendEmptyMessage(ByteView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					}
 					
 					//check and see if we are above the upper limit.
@@ -422,7 +424,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						buttonaddhandler.sendEmptyMessage(SlickView.MSG_NORMALPRIORITY);
+						buttonaddhandler.sendEmptyMessage(ByteView.MSG_NORMALPRIORITY);
 						
 					}
 				
@@ -760,7 +762,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	public void doDelayedDraw(int i) {
 		if(_runner == null || _runner.threadHandler == null) return;
-		if(!_runner.threadHandler.hasMessages(SlickView.DrawRunner.MSG_DRAW)) {
+		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessageDelayed(DrawRunner.MSG_DRAW,i);
 		} else {
 			//Log.e("SLICK","VIEW ALREADY HAS DRAW MESSAGES");

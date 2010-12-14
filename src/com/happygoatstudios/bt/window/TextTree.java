@@ -1,4 +1,4 @@
-package com.happygoatstudios.bt.window.ttree;
+package com.happygoatstudios.bt.window;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -33,7 +33,7 @@ public class TextTree {
 	private String encoding = "ISO-8859-1";
 	
 	private int breakAt = 77;
-	private boolean wordWrap = false;
+	private boolean wordWrap = true;
 	
 	private int brokenLineCount = 0;
 	
@@ -664,6 +664,7 @@ public class TextTree {
 			breaks = 0;
 			charcount=0;
 			bytes = 0;
+			int wordWrapAt = 0;
 			ListIterator<Unit> i = mData.listIterator(0);
 			while(i.hasNext()) {
 				
@@ -679,54 +680,69 @@ public class TextTree {
 						if(charsinline >= breakAt) {
 							int amount = charsinline - breakAt;
 							int length = ((Text)u).data.length();
-							if(amount == 0) {
-								i.add(new Break());
-								//advance so we don't process this for the original break checking.
-								if(i.hasNext()) {
-									i.next(); //advance the cursor so we don't go through and delete existing breaks.
+							/*if(wordWrap) {
+								//TODO: START WORD WRAP
+								//i.previous(); //step the cursor back one because we know what we are doing.
+								int wwop = 0;
+								boolean done = false;
+								int units_back = 0;
+								//begin word wrap search.
+								//start with our current block.
+								while(!done) {
+									//check this unit for an opportunity to word wrap.
+									wwop = ((Text)u).data.lastIndexOf(" ");
+									if(wwop == -1) {
+										//TODO: UNIT DOES NOT CONTAIN BREAK OPPORTUNITY
+										//we have exhausted this unit and should look to the next one
+										DebugCursorPosition(i,"SEARCHING FOR LINE BREAK OP|");
+										if(i.hasPrevious()) { i.previous(); units_back++; } //if we are here then the cursor will be at the end of the line or after the unit that occupies u, so advance one back, the i.hasPrevious() is probably un-neccessary because we can garuntee that i.next() has been called, and that there was at least one unit.
+										while(i.hasPrevious() && wwop == -1) {
+											u = i.previous();
+											if(u instanceof Text) {
+												wwop = ((Text)u).data.lastIndexOf(" ");
+											}
+											units_back++;
+										}
+										if(wwop == -1) {
+											//we have exhausted the line. and still not found a word wrap opportunity. This line should be broken normally.
+											DebugCursorPosition(i,"EXAUSTED TEXT UNITS|");
+											for(int z=0;z<units_back-1;z++) { u = i.next(); } //advance the cursor back
+											DebugCursorPosition(i,"EXECUTING NORMAL LINE BREAK|");
+											charsinline = breakAt(i, u, amount, length); //and break as normal
+											done = true;
+										}
+									}
+									
+									if(!done) {
+										//TODO: UNIT OCCUPYING u HAS A VALID WORD WRAP OPPORTUNITY.
+										if(length - wwop > amount) {
+											//must exceed the amount overrun by the line to be actually used
+											int start = length - wwop;
+											int end = length - (length-wwop);
+											
+											String str = ((Text)u).data.substring(0, start);
+											i.set(new Text(str));
+											i.add(new Break());
+											i.add(new Text(((Text)u).data.substring(start,start+end)));
+											length = end;
+											breaks += 1;
+										} else {
+											//or we keep going.
+											boolean found = false;
+											while(i.hasPrevious() && !found) {
+												Unit tmp = i.previous();
+												if(tmp instanceof Text) {
+													u = tmp; found=true;
+													units_back++;
+												}
+											}
+										}
+									}
 								}
-								breaks += 1;
-								charsinline = 0;
-								removed = true;
-							} else {
-								//i.remove();
-								//debug.append()
-								//Log.e("TREE","BREAKING LINE: l: " +length+ " a:" + amount);
-								int start = length - amount;
-								int end = length - (length-amount);
-								//try {
-									//debug.append("{"+removed+"|"+charsinline+"}\n");
-									//i.set(new Text(((Text)u).data.substring(0, length-amount)));
-									//i.add(new Break());
-									//i.add(new Text(((Text)u).data.substring(length-amount, length)));
-									
-									String str = ((Text)u).data.substring(0, start);
-									i.set(new Text(str));
-									//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}"+str + "\n");
-									
-									i.add(new Break());
-									i.add(new Text(((Text)u).data.substring(start,start+end)));
-									length = end;
-									breaks += 1;
-								//} catch (StringIndexOutOfBoundsException e) {
-									//debug.append("{"+length+"|"+amount+"|"+charsinline+"|"+start+"|"+end+"}\n");
-									//Log.e("TREE","BROKEN LINE BROKE:" + debug.toString());
-									//throw new RuntimeException(e);
-								//}
-								//((Text)u).data = ((Text)u).data
-								//u = i.previous(); //make the previous item that next processed line
-								//length = length - (length-amount);
-								removed = true;
-								charsinline = 0;
-							}
-							
-							if(removed) {
-								i.previous();
-								//break;
-							}
-							//removed += breakAt;
-							//charsinline = length - (length-amount);
-							//debug.append("{"+charsinline+"}:" +"\n");
+								//TODO: END WORD WRAP
+							} else {*/
+								charsinline = breakAt(i, u, amount, length);
+							//}
 						}
 					} else {
 						//dont break.
@@ -740,6 +756,18 @@ public class TextTree {
 					bytes += ((Color)u).bytecount;
 				}
 				if(u instanceof NewLine || u instanceof Tab) {
+					//so if the previous unit is a line break we should take care of it.
+					i.previous(); //== u
+					if(i.hasPrevious()) {
+						Unit tmp = i.previous();
+						if(tmp instanceof Break) {
+							i.remove();
+							breaks--;
+						} else {
+							i.next();
+						}
+					}
+					i.next(); //== u   
 					totalchars += 1;
 					charsinline = 0;
 					bytes += 1;
@@ -752,18 +780,60 @@ public class TextTree {
 				
 				
 			}
-			boolean dodebug = false;
-			for(Unit u : this.getData()) {
+			//boolean dodebug = false;
+			//for(Unit u : this.getData()) {
 				
-				if(u instanceof TextTree.Break) {
-					dodebug = true;
-				}
-			}
+			//	if(u instanceof TextTree.Break) {
+			//		dodebug = true;
+			//	}
+			//}
 			//if(dodebug) {
 			//	Log.e("TREE","BROKEN LINE:\n" + debug.toString());
 			//}
 			//debug.setLength(0);
 			//Log.e("TREE","BROKEN LINE:" + debug.toString());
+		}
+
+		private void DebugCursorPosition(ListIterator<Unit> i,String where) {
+			String debug = "Cursor Between: "+i.previousIndex()+":"+i.nextIndex();
+			Log.e("TREE",where + " " + debug);
+		}
+
+		private int breakAt(ListIterator<Unit> i, Unit u, int amount, int length) {
+			int charsinline;
+			boolean removed;
+			if(amount == 0) {
+				i.add(new Break());
+				//advance so we don't process this for the original break checking.
+				if(i.hasNext()) {
+					i.next(); //advance the cursor so we don't go through and delete existing breaks.
+				}
+				breaks += 1;
+				charsinline = 0;
+				removed = true;
+			} else {
+				//i.remove();
+				//debug.append()
+				//Log.e("TREE","BREAKING LINE: l: " +length+ " a:" + amount);
+				int start = length - amount;
+				int end = length - (length-amount);
+				
+				String str = ((Text)u).data.substring(0, start);
+				i.set(new Text(str));
+				i.add(new Break());
+				i.add(new Text(((Text)u).data.substring(start,start+end)));
+				length = end;
+				breaks += 1;
+				
+				removed = true;
+				charsinline = 0;
+			}
+			
+			if(removed) {
+				i.previous();
+				//break;
+			}
+			return charsinline;
 		}
 
 		public LinkedList<Unit> getData() {
@@ -988,6 +1058,14 @@ public class TextTree {
 			totalbytes += l.bytes;
 			brokenLineCount += (1 + l.breaks);
 		}
+	}
+
+	public void setWordWrap(boolean wordWrap) {
+		this.wordWrap = wordWrap;
+	}
+
+	public boolean isWordWrap() {
+		return wordWrap;
 	}
 	
 }

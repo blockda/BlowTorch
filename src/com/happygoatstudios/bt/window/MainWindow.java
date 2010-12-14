@@ -76,7 +76,6 @@ import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
 import com.happygoatstudios.bt.timer.TimerSelectionDialog;
 import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
-import com.happygoatstudios.bt.window.ttree.TextTree;
 
 public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
@@ -1003,11 +1002,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						throw new RuntimeException(e1);
 					}
 					break;
-				case SlickView.MSG_DELETEBUTTON:
+				case ByteView.MSG_DELETEBUTTON:
 					ButtonEditorDialog d = new ButtonEditorDialog(MainWindow.this,R.style.SuperSweetDialog,(SlickButton)msg.obj,this);
 					d.show();
 					break;
-				case SlickView.MSG_REALLYDELETEBUTTON:
+				case ByteView.MSG_REALLYDELETEBUTTON:
 					try {
 						service.removeButton(service.getLastSelectedSet(), ((SlickButton)msg.obj).orig_data);
 					} catch (RemoteException e1) {
@@ -1093,7 +1092,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					if(autoLaunch) {
 						new_button.prepareToLaunchEditor();
 						
-						Message launcheditor = this.obtainMessage(SlickView.MSG_DELETEBUTTON);
+						Message launcheditor = this.obtainMessage(ByteView.MSG_DELETEBUTTON);
 						launcheditor.obj = new_button;
 						this.sendMessage(launcheditor);
 					}
