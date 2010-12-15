@@ -80,8 +80,8 @@ public class TextTree {
 					written += 1;
 				}
 				if(u instanceof Tab) {
-						buf.put(TAB);
-						written += 1;
+					buf.put(TAB);
+					written += 1;
 				}
 			}
 		}
@@ -270,7 +270,11 @@ public class TextTree {
 			//addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,data));
 		//}
 	//}
-	
+	static enum RUN {
+		WHITESPACE,
+		TEXT,
+		NEW
+	};
 	boolean appendLast = false; //for marking when the addtext call has ended with a newline or not.
 	private byte[] holdover = null;
 	LinkedList<Integer> prev_color = null;
@@ -333,6 +337,8 @@ public class TextTree {
 		Text text = new Text();
 		ByteBuffer cb = ByteBuffer.allocate(data.length);
 		int iacount = 0;
+		RUN runtype = RUN.NEW;
+		
 		//boolean endOnNewLine = false;
 		for(int i=0;i<data.length;i++) {
 			//Log.e("TREE","DATA PROCESSING LOOP: " + deColorLine(tmp));
@@ -346,7 +352,17 @@ public class TextTree {
 					sb.rewind();
 					sb.get(strag,0,size);
 					sb.rewind();
-					tmp.getData().addLast(new Text(strag));
+					switch(runtype) {
+					case WHITESPACE:
+						tmp.getData().addLast(new WhiteSpace(strag));
+						break;
+					case TEXT:
+						tmp.getData().addLast(new Text(strag));
+						break;
+					default:
+						break;
+					}
+					runtype = RUN.NEW;
 					
 					
 				}
@@ -453,7 +469,17 @@ public class TextTree {
 					sb.rewind();
 					sb.get(txtdata,0,nsize);
 					//Log.e("TREE","APPEND TO LINE:"  + deColorLine(tmp));
-					tmp.getData().addLast(new Text(txtdata));
+					switch(runtype) {
+					case WHITESPACE:
+						tmp.getData().addLast(new WhiteSpace(txtdata));
+						break;
+					case TEXT:
+						tmp.getData().addLast(new Text(txtdata));
+						break;
+					default:
+						break;
+					}
+					runtype = RUN.NEW;
 					sb.rewind();
 				}
 				//append the line as we do.
@@ -468,6 +494,44 @@ public class TextTree {
 				break;
 			default:
 				//put it in the buffer.
+				if(Character.isWhitespace(data[i])) {
+					//start whitespace run
+					//Log.e("BYTE","FOUND WHITESPACE");
+					switch(runtype) {
+					case TEXT:
+						int len = sb.position();
+						byte[] cap = new byte[len];
+						sb.rewind();
+						sb.get(cap,0,len);
+						tmp.mData.addLast(new Text(cap));
+						runtype = RUN.WHITESPACE;
+						sb.rewind();
+						break;
+					case NEW:
+						runtype = RUN.WHITESPACE;
+						break;
+					default:
+						break;
+					}
+				} else {
+					switch(runtype) {
+					case WHITESPACE:
+						int len = sb.position();
+						byte[] cap = new byte[len];
+						sb.rewind();
+						sb.get(cap,0,len);
+						//Log.e("BYTE","ADDING WHITESPACE RUN");
+						tmp.mData.addLast(new WhiteSpace(cap));
+						runtype = RUN.TEXT;
+						sb.rewind();
+						break;
+					case NEW:
+						runtype = RUN.TEXT;
+						break;
+					default:
+						break;
+					}
+				}
 				sb.put(data[i]);
 				//Log.e("TREE","BUFFER NOW:"+sb.toString()+"|");
 				//endOnNewLine = false;
@@ -676,73 +740,78 @@ public class TextTree {
 					charsinline += ((Text)u).charcount;
 					bytes += ((Text)u).bytecount;
 					boolean removed = false;
+					Log.e("TREE","WORKING ON:" +((Text)u).getString());
 					if(breakAt > 0) {
-						if(charsinline >= breakAt) {
+						if(charsinline > breakAt) {
 							int amount = charsinline - breakAt;
 							int length = ((Text)u).data.length();
-							/*if(wordWrap) {
+							if(wordWrap) {
 								//TODO: START WORD WRAP
-								//i.previous(); //step the cursor back one because we know what we are doing.
-								int wwop = 0;
-								boolean done = false;
+								int backread = 0;
 								int units_back = 0;
-								//begin word wrap search.
-								//start with our current block.
-								while(!done) {
-									//check this unit for an opportunity to word wrap.
-									wwop = ((Text)u).data.lastIndexOf(" ");
-									if(wwop == -1) {
-										//TODO: UNIT DOES NOT CONTAIN BREAK OPPORTUNITY
-										//we have exhausted this unit and should look to the next one
-										DebugCursorPosition(i,"SEARCHING FOR LINE BREAK OP|");
-										if(i.hasPrevious()) { i.previous(); units_back++; } //if we are here then the cursor will be at the end of the line or after the unit that occupies u, so advance one back, the i.hasPrevious() is probably un-neccessary because we can garuntee that i.next() has been called, and that there was at least one unit.
-										while(i.hasPrevious() && wwop == -1) {
-											u = i.previous();
-											if(u instanceof Text) {
-												wwop = ((Text)u).data.lastIndexOf(" ");
-											}
-											units_back++;
-										}
-										if(wwop == -1) {
-											//we have exhausted the line. and still not found a word wrap opportunity. This line should be broken normally.
-											DebugCursorPosition(i,"EXAUSTED TEXT UNITS|");
-											for(int z=0;z<units_back-1;z++) { u = i.next(); } //advance the cursor back
-											DebugCursorPosition(i,"EXECUTING NORMAL LINE BREAK|");
-											charsinline = breakAt(i, u, amount, length); //and break as normal
+								boolean done = false;
+								//i.previous(); //==u
+								while(i.hasPrevious() && !done) {
+									u = i.previous();
+									if(u instanceof WhiteSpace) {
+										backread += u.bytecount;
+										if(backread >= amount) {
+											i.next();
+											//units_back -= 1;
+											i.add(new Break());
+											breaks += 1;
 											done = true;
+										} else {
+											units_back += 1;
+										}
+									} else if(u instanceof Text) {
+										
+										if(u.bytecount > breakAt) {
+											charsinline = breakAt(i,u,u.bytecount-breakAt,u.bytecount);
+											//if(i.hasNext()) {
+											//	i.next();
+											//}
+											done=true;
+										} else {
+											backread += u.bytecount;
+											units_back += 1;
 										}
 									}
 									
-									if(!done) {
-										//TODO: UNIT OCCUPYING u HAS A VALID WORD WRAP OPPORTUNITY.
-										if(length - wwop > amount) {
-											//must exceed the amount overrun by the line to be actually used
-											int start = length - wwop;
-											int end = length - (length-wwop);
-											
-											String str = ((Text)u).data.substring(0, start);
-											i.set(new Text(str));
-											i.add(new Break());
-											i.add(new Text(((Text)u).data.substring(start,start+end)));
-											length = end;
-											breaks += 1;
-										} else {
-											//or we keep going.
-											boolean found = false;
-											while(i.hasPrevious() && !found) {
-												Unit tmp = i.previous();
-												if(tmp instanceof Text) {
-													u = tmp; found=true;
-													units_back++;
-												}
+								}
+								if(!done) {
+									//word wrap like normal.
+									//advance cursor back.
+									//better, so if we are here, we know that we are at the start of the line.
+									//so work our way back, line breaking as normal.
+									charsinline = 0;
+									while(i.hasNext()) {
+										u = i.next();
+										if(u instanceof Text) {
+											charsinline += u.charcount;
+											if(charsinline > breakAt) {
+												//Log.e("TREE","DETECTED BREAK NEEDED:" +((Text)u).getString());
+												charsinline = breakAt(i,u,charsinline-breakAt,u.charcount);
+												//if(i.hasNext()) {
+												//	i.next();
+												//}
+												done = true;
 											}
 										}
 									}
+									
+									//for(int z=0;z<units_back;z++) { u = i.next(); }
+									//charsinline = breakAt(i,u,amount,length);
+									//done = true;
+								} else {
+									//just advance back
+									charsinline = 0;
+									for(int z=0;z<units_back;z++) { u = i.next(); charsinline += u.bytecount; }
 								}
 								//TODO: END WORD WRAP
-							} else {*/
+							} else {
 								charsinline = breakAt(i, u, amount, length);
-							//}
+							}
 						}
 					} else {
 						//dont break.
@@ -825,7 +894,11 @@ public class TextTree {
 				length = end;
 				breaks += 1;
 				
-				removed = true;
+				if(((start+end)-start) > breakAt) {
+					removed = true;
+				} else {
+					removed = false;
+				}
 				charsinline = 0;
 			}
 			
@@ -999,6 +1072,29 @@ public class TextTree {
 	
 	public class Break extends Unit {
 		int position;
+	}
+	
+	public class WhiteSpace extends Text {
+		//whitespace is esentially text.
+		public WhiteSpace() {
+			super();
+		}
+		
+		public WhiteSpace(String pIn) {
+			super(pIn);
+		}
+		
+		public WhiteSpace(byte[] pIn) throws UnsupportedEncodingException {
+			super(pIn);
+		}
+		
+		public String getString() {
+			return data;
+		}
+		
+		public byte[] getBytes() {
+			return bin;
+		}
 	}
 	
 	public String getLastTwenty(boolean showcolor) {

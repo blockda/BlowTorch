@@ -17,6 +17,7 @@ public class OptionNegotiator {
 	//private Handler dispatcher;
 	
 	boolean isNAWS=false;
+	//boolean hasNAWSed = false;
 
 	private String[] termtypes = {"BlowTorch","ansi","UNKNOWN"};
 	private int attempt = 0;
@@ -216,7 +217,7 @@ public class OptionNegotiator {
 	//private int old_col = 0;
 	private boolean donenaws = false;
 	public void setColumns(int columns) {
-		
+		if(columns < 1) { return; }
 		if(this.columns != columns) {
 			donenaws = false;
 		}
@@ -229,6 +230,7 @@ public class OptionNegotiator {
 	}
 
 	public void setRows(int rows) {
+		if(rows < 1) { return; }
 		if(this.rows != rows) {
 			donenaws = false;
 		}
