@@ -553,6 +553,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					useBackground = true;
 				}
 				
+				//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
 				if(u instanceof TextTree.Text) {
 					if(useBackground) {
 						c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
