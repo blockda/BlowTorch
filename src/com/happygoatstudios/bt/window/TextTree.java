@@ -729,6 +729,15 @@ public class TextTree {
 			charcount=0;
 			bytes = 0;
 			int wordWrapAt = 0;
+			
+			Iterator<Unit> stripper = mData.iterator();
+			while(stripper.hasNext()) {
+				Unit tmp = stripper.next();
+				if(tmp instanceof Break) {
+					stripper.remove();
+				}
+			}
+			
 			ListIterator<Unit> i = mData.listIterator(0);
 			while(i.hasNext()) {
 				
@@ -765,16 +774,61 @@ public class TextTree {
 											units_back += 1;
 										}
 									} else if(u instanceof Text) {
-										
+										backread += u.bytecount;
+										units_back += 1;
 										if(u.bytecount > breakAt) {
+											i.add(new Break());
+											this.breaks += 1;
+											u = i.next(); //move the cursor to the other side.
 											charsinline = breakAt(i,u,u.bytecount-breakAt,u.bytecount);
-											//if(i.hasNext()) {
-											//	i.next();
-											//}
+											//u = i.previous(); //skip the break
 											done=true;
-										} else {
-											backread += u.bytecount;
-											units_back += 1;
+										} else if(backread > breakAt) {
+											//if we are here, it means we have accumulated characters up to and over the break point without encountering a breakpoint
+											DebugCursorPosition2("BACKREAD BREAK");
+											int forward = 0;
+											boolean forwardfound = false;
+											int units_forward = 0;
+											String debugme = "";
+											while(i.hasNext() && !forwardfound) {
+												u = i.next();
+												units_forward += 1;
+												if(u instanceof Text) {
+													forward += u.bytecount;
+													debugme = ((Text)u).getString();
+													if(forward >= breakAt) {
+														if(forward - breakAt == 0) {
+															i.add(new Break());
+															this.breaks += 1;
+															units_forward += 1;
+															forwardfound = true;
+														} else {
+															charsinline = breakAt(i,u,u.bytecount-(forward-breakAt),u.bytecount);
+															//done = true;
+															units_forward +=1; // for the break
+															units_back += 1; //for the new text unit and the break
+															forwardfound = true;
+															//done = true;
+														}
+													}
+												}
+											}
+											int charsread = debugme.length();
+											charsread = 0;
+											String debugstr = "";
+											for(int zkj=0;zkj<units_forward;zkj++) {
+												Unit jfkd = i.previous();
+												if(jfkd instanceof Text) {
+													charsread += jfkd.bytecount;
+													debugstr = ((Text)jfkd).getString();
+												}
+											}
+											if(charsread != breakAt) { Log.e("TREE","NOT BREAKING AT CORRECT AMOUNT"); }
+											i.add(new Break());
+											i.previous();
+											//units_back += 1;
+											//add a break.
+											int dksfd = debugstr.length();
 										}
 									}
 									
@@ -790,7 +844,8 @@ public class TextTree {
 										if(u instanceof Text) {
 											charsinline += u.charcount;
 											if(charsinline > breakAt) {
-												//Log.e("TREE","DETECTED BREAK NEEDED:" +((Text)u).getString());
+												Log.e("TREE","DETECTED BREAK NEEDED:" +((Text)u).getString());
+												//i.next();
 												charsinline = breakAt(i,u,charsinline-breakAt,u.charcount);
 												//if(i.hasNext()) {
 												//	i.next();
@@ -806,7 +861,14 @@ public class TextTree {
 								} else {
 									//just advance back
 									charsinline = 0;
-									for(int z=0;z<units_back;z++) { u = i.next(); charsinline += u.bytecount; }
+									String debuglkfd="";
+									for(int z=0;z<units_back;z++) { 
+										u = i.next();
+										//charsinline += u.bytecount;
+										if(u instanceof Text) {
+											debuglkfd = ((Text)u).getString();
+										}
+									}
 								}
 								//TODO: END WORD WRAP
 							} else {
@@ -842,7 +904,8 @@ public class TextTree {
 					bytes += 1;
 				}
 				if(u instanceof Break) {
-					i.remove();
+					//breaks are stripped before breaking now, so if we encounter a break, we should leave it alone.
+					//i.remove();
 					//breaks -= 1;
 				}
 				
@@ -867,6 +930,18 @@ public class TextTree {
 			String debug = "Cursor Between: "+i.previousIndex()+":"+i.nextIndex();
 			Log.e("TREE",where + " " + debug);
 		}
+		
+		private void DebugCursorPosition2(String message) {
+			StringBuilder b = new StringBuilder();
+			Iterator<Unit> tmp = this.mData.iterator();
+			while(tmp.hasNext()) {
+				Unit u = tmp.next();
+				if(u instanceof Text) {
+					b.append(((Text)u).getString());
+				}
+			}
+			Log.e("TREE",message + "[" + b.toString() + "]" );
+		}
 
 		private int breakAt(ListIterator<Unit> i, Unit u, int amount, int length) {
 			int charsinline;
@@ -887,23 +962,34 @@ public class TextTree {
 				int start = length - amount;
 				int end = length - (length-amount);
 				
-				String str = ((Text)u).data.substring(0, start);
-				i.set(new Text(str));
+				String first = ((Text)u).data.substring(0, start);
+				String second = ((Text)u).data.substring(start,start+end);
+				i.set(new Text(first));
 				i.add(new Break());
-				i.add(new Text(((Text)u).data.substring(start,start+end)));
-				length = end;
+				i.add(new Text(second));
+				//length = end;
 				breaks += 1;
 				
-				if(((start+end)-start) > breakAt) {
-					removed = true;
-				} else {
-					removed = false;
-				}
-				charsinline = 0;
+				
+				removed = true;
+				
+				charsinline = end;
 			}
 			
 			if(removed) {
-				i.previous();
+				i.previous(); //queue the next pass to start with the unbroken end
+				//Iterator<Unit> ja = this.mData.iterator();
+				//StringBuilder b = new StringBuilder();
+				//while(ja.hasNext()) {
+				//	Unit tz = ja.next();
+				//	if(tz instanceof Text) {
+				//		b.append(((Text)tz).getString());
+				//	}
+				//	if(tz instanceof Break) {
+				//		b.append("|");
+				//	}
+				//}
+				//Log.e("TREE","BROKE LINE: " + b.toString());
 				//break;
 			}
 			return charsinline;
