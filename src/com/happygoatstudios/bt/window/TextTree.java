@@ -728,7 +728,8 @@ public class TextTree {
 			breaks = 0;
 			charcount=0;
 			bytes = 0;
-			int wordWrapAt = 0;
+			//int wordWrapAt = 0;
+			int textrun = 0;
 			
 			Iterator<Unit> stripper = mData.iterator();
 			while(stripper.hasNext()) {
@@ -748,6 +749,13 @@ public class TextTree {
 					totalchars += ((Text)u).charcount;
 					charsinline += ((Text)u).charcount;
 					bytes += ((Text)u).bytecount;
+					
+					if(u instanceof WhiteSpace) {
+						textrun = 0;
+					} else {
+						textrun += ((Text)u).charcount;
+					}
+					
 					boolean removed = false;
 					Log.e("TREE","WORKING ON:" +((Text)u).getString());
 					if(breakAt > 0) {
@@ -756,7 +764,50 @@ public class TextTree {
 							int length = ((Text)u).data.length();
 							if(wordWrap) {
 								//TODO: START WORD WRAP
-								int backread = 0;
+								
+								if(u instanceof WhiteSpace) {
+									//if we broke on whitespace, add a break at the end of the whitespace
+									i.add(new Break());
+									this.breaks++;
+								} else if (u instanceof Text) {
+									if(textrun > breakAt) {
+										//we have overrun the line width with text.
+										int tail = u.bytecount-(textrun-breakAt);
+										int tmp_charsinline = breakAt(i,u,tail,u.bytecount); //remember how many we had.
+										//go back and break at the breakat amount.
+										int units_back = 0;
+										boolean breakTextOverrun
+										while(i.hasPrevious() &&
+										
+									} else {
+										//find the last whitespace and break at it.
+										int units_back = 1;
+										u = i.previous();
+										boolean wsFound = false;
+										while(i.hasPrevious() && !wsFound) {
+											u = i.previous();
+											if(u instanceof WhiteSpace) {
+												u = i.next();
+												i.add(new Break());
+												this.breaks++;
+												wsFound = true;
+												charsinline = 0;
+											}
+											units_back += 1;
+										}
+										//advance the cursor back.
+										for(int j=0;j<units_back;j++) { u = i.next(); charsinline += u.bytecount; }
+										if(!wsFound) {
+											//we made it all the way back to the start of the line and didn't find whitespace.
+											//advance back to the unit we were on and break it.
+											charsinline = breakAt(i,u,u.bytecount-amount,u.bytecount);
+										} 
+									}
+								}
+								
+								
+								
+								/*int backread = 0;
 								int units_back = 0;
 								boolean done = false;
 								//i.previous(); //==u
@@ -869,7 +920,7 @@ public class TextTree {
 											debuglkfd = ((Text)u).getString();
 										}
 									}
-								}
+								}*/
 								//TODO: END WORD WRAP
 							} else {
 								charsinline = breakAt(i, u, amount, length);

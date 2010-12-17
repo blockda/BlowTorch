@@ -44,6 +44,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 
 import android.view.WindowManager;
@@ -1443,6 +1444,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		menu.add(0,105,0,"Timers");
 		menu.add(0,103,0,"Options");
 		menu.add(0,102,0,"Button Sets");
+		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
+		menu.add(0, 901, 0, "Reconnect");
+		menu.add(0, 902, 0, "Quit");
+		
 		
 		return true;
 		
