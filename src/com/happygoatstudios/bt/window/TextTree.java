@@ -32,7 +32,7 @@ public class TextTree {
 	
 	private String encoding = "ISO-8859-1";
 	
-	private int breakAt = 77;
+	private int breakAt = 3;
 	private boolean wordWrap = true;
 	
 	private int brokenLineCount = 0;
@@ -720,17 +720,74 @@ public class TextTree {
 			breaks =0;
 		}
 		
-		
 		public void updateData() {
-			//StringBuffer debug = new StringBuffer();
-			//Log.e("TREE","LINE NO BREAK:" + deColorLine(this));
-			int charsinline = 0;
-			breaks = 0;
-			charcount=0;
-			bytes = 0;
-			//int wordWrapAt = 0;
-			int textrun = 0;
+			this.breaks = 0;
+			this.charcount = 0;
+			this.bytes = 0;
+			stripBreaks();
 			
+			int charsinline = 0; //tracker for how many characters are in the line
+			//int nonWhiteSpaceRun = 0; //tracker for how many characters have accumulated without whitespace
+			boolean whiteSpaceFound = false;
+			
+			ListIterator<Unit> i = mData.listIterator(0);
+			while(i.hasNext()) {
+				Unit u = i.next();
+				
+				//check if it is whitespace
+				if(u instanceof WhiteSpace) {
+					if(wordWrap) {
+						whiteSpaceFound = true;
+					}
+				}
+				if(u instanceof Text) {
+					//update charsinline
+					charsinline += ((Text)u).charcount;
+				}
+				
+				if(charsinline > breakAt) {
+					int amount = charsinline - breakAt;
+					if(wordWrap) {
+						if(whiteSpaceFound) {
+							//find the nearest whitespace and break.
+							boolean found = false;
+							//i.previous(); //advance back because we are on the right hand side of the unit that broke.
+							while(!found && i.hasPrevious()) {
+								Unit tmp = i.previous();
+								if(tmp instanceof WhiteSpace) {
+									i.next(); //get on the right side of the unit.
+									i.add(new Break());
+									this.breaks += 1;
+									found = true;
+								}
+							}
+							whiteSpaceFound = false;
+							charsinline = 0;
+						} else {
+							//just break here and continue
+							//if(amount > u.charcount) {
+							//	Log.e("TREE","INVESTIGATE ME");
+							//}
+							int pos = u.charcount - (u.charcount-amount);
+							pos += 1;
+							pos -= 1;
+							breakAt(i,u,pos,u.charcount);
+							charsinline = 0;
+						}
+						
+					//if the number of non whitespace characters is < breakAt, then we should go back and search for the whitespace
+					//else, break in the middle.
+					} else {
+						//just break in the middle as we are not word wrapping
+						charsinline = breakAt(i,u,amount,u.charcount);
+					}
+				}
+				
+			}
+			
+		}
+		
+		public void stripBreaks() {
 			Iterator<Unit> stripper = mData.iterator();
 			while(stripper.hasNext()) {
 				Unit tmp = stripper.next();
@@ -738,243 +795,6 @@ public class TextTree {
 					stripper.remove();
 				}
 			}
-			
-			ListIterator<Unit> i = mData.listIterator(0);
-			while(i.hasNext()) {
-				
-				Unit u = i.next();
-				if(u instanceof Text) {
-					//debug.append("["+charsinline+":"+((Text)u).charcount+"]"+((Text)u).getString());
-					charcount += ((Text)u).charcount;
-					totalchars += ((Text)u).charcount;
-					charsinline += ((Text)u).charcount;
-					bytes += ((Text)u).bytecount;
-					
-					if(u instanceof WhiteSpace) {
-						textrun = 0;
-					} else {
-						textrun += ((Text)u).charcount;
-					}
-					
-					boolean removed = false;
-					Log.e("TREE","WORKING ON:" +((Text)u).getString());
-					if(breakAt > 0) {
-						if(charsinline > breakAt) {
-							int amount = charsinline - breakAt;
-							int length = ((Text)u).data.length();
-							if(wordWrap) {
-								//TODO: START WORD WRAP
-								
-								if(u instanceof WhiteSpace) {
-									//if we broke on whitespace, add a break at the end of the whitespace
-									i.add(new Break());
-									this.breaks++;
-								} else if (u instanceof Text) {
-									if(textrun > breakAt) {
-										//we have overrun the line width with text.
-										int tail = u.bytecount-(textrun-breakAt);
-										int tmp_charsinline = breakAt(i,u,tail,u.bytecount); //remember how many we had.
-										//go back and break at the breakat amount.
-										int units_back = 0;
-										boolean breakTextOverrun
-										while(i.hasPrevious() &&
-										
-									} else {
-										//find the last whitespace and break at it.
-										int units_back = 1;
-										u = i.previous();
-										boolean wsFound = false;
-										while(i.hasPrevious() && !wsFound) {
-											u = i.previous();
-											if(u instanceof WhiteSpace) {
-												u = i.next();
-												i.add(new Break());
-												this.breaks++;
-												wsFound = true;
-												charsinline = 0;
-											}
-											units_back += 1;
-										}
-										//advance the cursor back.
-										for(int j=0;j<units_back;j++) { u = i.next(); charsinline += u.bytecount; }
-										if(!wsFound) {
-											//we made it all the way back to the start of the line and didn't find whitespace.
-											//advance back to the unit we were on and break it.
-											charsinline = breakAt(i,u,u.bytecount-amount,u.bytecount);
-										} 
-									}
-								}
-								
-								
-								
-								/*int backread = 0;
-								int units_back = 0;
-								boolean done = false;
-								//i.previous(); //==u
-								while(i.hasPrevious() && !done) {
-									u = i.previous();
-									if(u instanceof WhiteSpace) {
-										backread += u.bytecount;
-										if(backread >= amount) {
-											i.next();
-											//units_back -= 1;
-											i.add(new Break());
-											breaks += 1;
-											done = true;
-										} else {
-											units_back += 1;
-										}
-									} else if(u instanceof Text) {
-										backread += u.bytecount;
-										units_back += 1;
-										if(u.bytecount > breakAt) {
-											i.add(new Break());
-											this.breaks += 1;
-											u = i.next(); //move the cursor to the other side.
-											charsinline = breakAt(i,u,u.bytecount-breakAt,u.bytecount);
-											//u = i.previous(); //skip the break
-											done=true;
-										} else if(backread > breakAt) {
-											//if we are here, it means we have accumulated characters up to and over the break point without encountering a breakpoint
-											DebugCursorPosition2("BACKREAD BREAK");
-											int forward = 0;
-											boolean forwardfound = false;
-											int units_forward = 0;
-											String debugme = "";
-											while(i.hasNext() && !forwardfound) {
-												u = i.next();
-												units_forward += 1;
-												if(u instanceof Text) {
-													forward += u.bytecount;
-													debugme = ((Text)u).getString();
-													if(forward >= breakAt) {
-														if(forward - breakAt == 0) {
-															i.add(new Break());
-															this.breaks += 1;
-															units_forward += 1;
-															forwardfound = true;
-														} else {
-															charsinline = breakAt(i,u,u.bytecount-(forward-breakAt),u.bytecount);
-															//done = true;
-															units_forward +=1; // for the break
-															units_back += 1; //for the new text unit and the break
-															forwardfound = true;
-															//done = true;
-														}
-													}
-												}
-											}
-											int charsread = debugme.length();
-											charsread = 0;
-											String debugstr = "";
-											for(int zkj=0;zkj<units_forward;zkj++) {
-												Unit jfkd = i.previous();
-												if(jfkd instanceof Text) {
-													charsread += jfkd.bytecount;
-													debugstr = ((Text)jfkd).getString();
-												}
-											}
-											if(charsread != breakAt) { Log.e("TREE","NOT BREAKING AT CORRECT AMOUNT"); }
-											i.add(new Break());
-											i.previous();
-											//units_back += 1;
-											//add a break.
-											int dksfd = debugstr.length();
-										}
-									}
-									
-								}
-								if(!done) {
-									//word wrap like normal.
-									//advance cursor back.
-									//better, so if we are here, we know that we are at the start of the line.
-									//so work our way back, line breaking as normal.
-									charsinline = 0;
-									while(i.hasNext()) {
-										u = i.next();
-										if(u instanceof Text) {
-											charsinline += u.charcount;
-											if(charsinline > breakAt) {
-												Log.e("TREE","DETECTED BREAK NEEDED:" +((Text)u).getString());
-												//i.next();
-												charsinline = breakAt(i,u,charsinline-breakAt,u.charcount);
-												//if(i.hasNext()) {
-												//	i.next();
-												//}
-												done = true;
-											}
-										}
-									}
-									
-									//for(int z=0;z<units_back;z++) { u = i.next(); }
-									//charsinline = breakAt(i,u,amount,length);
-									//done = true;
-								} else {
-									//just advance back
-									charsinline = 0;
-									String debuglkfd="";
-									for(int z=0;z<units_back;z++) { 
-										u = i.next();
-										//charsinline += u.bytecount;
-										if(u instanceof Text) {
-											debuglkfd = ((Text)u).getString();
-										}
-									}
-								}*/
-								//TODO: END WORD WRAP
-							} else {
-								charsinline = breakAt(i, u, amount, length);
-							}
-						}
-					} else {
-						//dont break.
-					}
-					//if(removed > 0) {
-					//	charsinline = 0;
-					//}
-				}
-				if(u instanceof Color) {
-					totalchars += ((Color)u).charcount;
-					bytes += ((Color)u).bytecount;
-				}
-				if(u instanceof NewLine || u instanceof Tab) {
-					//so if the previous unit is a line break we should take care of it.
-					i.previous(); //== u
-					if(i.hasPrevious()) {
-						Unit tmp = i.previous();
-						if(tmp instanceof Break) {
-							i.remove();
-							breaks--;
-						} else {
-							i.next();
-						}
-					}
-					i.next(); //== u   
-					totalchars += 1;
-					charsinline = 0;
-					bytes += 1;
-				}
-				if(u instanceof Break) {
-					//breaks are stripped before breaking now, so if we encounter a break, we should leave it alone.
-					//i.remove();
-					//breaks -= 1;
-				}
-				
-				
-				
-			}
-			//boolean dodebug = false;
-			//for(Unit u : this.getData()) {
-				
-			//	if(u instanceof TextTree.Break) {
-			//		dodebug = true;
-			//	}
-			//}
-			//if(dodebug) {
-			//	Log.e("TREE","BROKEN LINE:\n" + debug.toString());
-			//}
-			//debug.setLength(0);
-			//Log.e("TREE","BROKEN LINE:" + debug.toString());
 		}
 
 		private void DebugCursorPosition(ListIterator<Unit> i,String where) {
