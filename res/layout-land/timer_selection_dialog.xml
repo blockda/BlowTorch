@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/buttonsetselectionlayout"
+	android:layout_width="280dip"
+	android:layout_height="fill_parent">
+	
+	<TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="MODIFY TIMERS"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+	
+	<Button
+		android:id="@+id/timer_new_button"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+		android:layout_height="wrap_content"
+		android:layout_width="146dip"
+		android:text="New Timer"/>
+		
+	<Button
+		android:id="@+id/timer_cancel_button"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentRight="true"
+		android:layout_height="wrap_content"
+		android:layout_width="133dip"
+		android:text="Done"/>
+		
+	<TableLayout
+		android:id="@+id/button_table"
+		android:layout_above="@id/timer_cancel_button"
+		android:layout_alignParentLeft = "true"
+		android:layout_alignParentRight="true"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:stretchColumns="*"
+		android:layout_marginBottom="10dip">
+		<TableRow
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content">
+		<ImageButton
+			android:id="@+id/timer_pause"
+			android:layout_width = "wrap_content"
+			android:layout_height="wrap_content"
+			android:src = "@android:drawable/ic_media_pause"/>
+			
+		<ImageButton
+			android:id="@+id/timer_play"
+			android:layout_width = "wrap_content"
+			android:layout_height="wrap_content"
+			android:src = "@android:drawable/ic_media_play"/>
+
+		<ImageButton
+			android:id="@+id/timer_reset"
+			android:layout_width = "wrap_content"
+			android:layout_height="wrap_content"
+			android:src = "@android:drawable/ic_media_ff"/>	
+			
+		<Button
+			android:id="@+id/timer_edit"
+			android:layout_width = "wrap_content"
+			android:layout_height="wrap_content"
+			android:text = "EDIT"/>
+			
+		</TableRow>		
+	</TableLayout>	
+	<!-- <ScrollView
+		android:id="@+id/buttonset_scroller"
+		android:layout_alignParentTop="true"
+		android:layout_width="420px"
+		android:layout_height="fill_parent"
+		android:layout_above="@id/new_buttonset_button"> -->
+		<FrameLayout
+			android:id="@+id/timer_frame"
+			android:layout_width = "fill_parent"
+			android:layout_height="fill_parent"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_above="@id/button_table"
+			android:layout_below="@id/titlebar">
+		<ListView
+			android:id="@+id/timer_list"
+			android:layout_height="fill_parent"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_width="fill_parent"
+			android:listSelector="@drawable/timer_list_item_selector"
+			android:drawSelectorOnTop="true"/>
+		<TextView
+			android:id="@+id/timer_empty"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:text="No timers to display.\nNew timers can be made with the button below."
+			android:textColor="#FFFFFFFF"
+			android:background="#FF000000"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:textStyle="bold"
+			android:textSize="18dip"
+			android:gravity="center"/>
+			
+		</FrameLayout>
+		
+	<!-- </ScrollView> -->
+		
+</RelativeLayout>

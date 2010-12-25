@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<RelativeLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:id = "@+id/launcher_window_content"
+		android:layout_height = "wrap_content"
+		android:layout_width = "wrap_content">
+		
+		<ImageView
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:scaleType="centerCrop"
+			android:src="@drawable/background"/>
+		
+		<TextView
+			android:text = "Connections:"
+			android:textSize = "20sp"
+			android:layout_height = "wrap_content"
+			android:layout_width = "300dip"
+			android:layout_below="@id/launcher_window_content"
+			android:id = "@+id/c_label"
+			android:layout_alignParentRight = "true"
+			android:layout_alignParentTop = "true"
+			android:gravity = "center"
+			android:background = "#AAAAAAAA"
+			android:textColor = "#AA222222"
+			android:drawableBottom = "@drawable/horizontal_separator"
+			/>
+			
+		<!-- <ImageView
+			android:layout_width="275px"
+			android:layout_height="5px"
+			android:layout_below="@id/c_label"
+			android:id="@+id/separator"
+			src="@drawable/horizontal_separator"/> -->
+			
+		<TableLayout
+			android:id = "@+id/table_container"
+			android:layout_height = "wrap_content"
+			android:layout_width = "wrap_content"
+			android:layout_alignParentRight = "true"
+			android:layout_alignParentBottom = "true"
+			>
+			
+			<TableRow
+				android:layout_height = "wrap_content"
+				android:layout_width = "wrap_content"
+				android:gravity = "center"
+				android:background = "#AAAAAAAA">
+				<Button
+					android:id = "@+id/new_connection"
+					android:layout_height = "wrap_content"
+					android:layout_width = "100dip"
+					android:text = "[NEW]"/>
+				<Button
+					android:id = "@+id/help_button"
+					android:layout_height = "wrap_content"
+					android:layout_width = "100dip"
+					android:text = "[HELP]"/>
+				<Button
+					android:id = "@+id/donate_button"
+					android:layout_height = "wrap_content"
+					android:layout_width = "100dip"
+					android:text = "[DONATE]"/>
+			</TableRow>
+			
+		</TableLayout>
+		<FrameLayout
+			android:id="@+id/timer_frame"
+			android:layout_width = "300dip"
+			android:layout_height="fill_parent"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:layout_alignParentRight="true"
+			android:layout_above="@id/table_container"
+			android:layout_below="@id/c_label">	
+		<ListView
+			android:id = "@+id/connection_list"
+			android:layout_alignParentRight = "true"
+
+			android:layout_height = "fill_parent"
+			android:layout_width = "300dip"
+			android:divider= "#00000000">
+			
+		</ListView>
+		<TextView
+			android:id="@+id/launcher_empty"
+			android:layout_width="300dip"
+			android:layout_height="fill_parent"
+			android:text="No connections.\nNew connections can be made with the button below."
+			android:textColor="#AA222222"
+			android:background="#AAAAAAAA"
+			android:layout_margin="0dip"
+			android:padding="0dip"
+			android:textStyle="bold"
+			android:textSize="18dip"
+			android:gravity="center"/>
+		</FrameLayout>
+
+	
+	</RelativeLayout>

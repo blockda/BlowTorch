@@ -25,7 +25,13 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 public class HyperSettingsActivity extends PreferenceActivity {
 	
@@ -201,6 +207,38 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		
 		HyperDialogPreference defaulter = (HyperDialogPreference)findPreference("RESET_DEFAULTS");
 		defaulter.setHandler(importexport);
+		
+		
+		//Preference.
+	}
+	
+	public void onStart() {
+		super.onStart();
+		//TriStatePreference
+		//SeekBarPreference preffer = (SeekBarPreference)findPreference("TEST_SEEK");
+		//preffer.
+		//SeekBar seeker = null;
+		//TextView label = null;
+	
+		//preffer.getContext()
+		
+		//View tmp = new LinearLayout(this);
+		//ViewGroup widget = (ViewGroup) preffer.getContext().getView(tmp, null);//findViewById(preffer.getWidgetLayoutResource());
+		//int max = widget.getChildCount();
+		//for(int i=0;i<max;i++) {
+		//	View v = widget.getChildAt(i);
+		//	if(v instanceof SeekBar) {
+				//chow down
+		//		seeker = (SeekBar)v;
+		//	}
+		//	if(v instanceof TextView) {
+		//		label = (TextView)v;
+		//	}
+		//}
+		//SeekBar seeker = (SeekBar) widget.findViewById(R.id.slider);
+		// = (TextView) widget.findViewById(R.id.extra);
+		//seeker.setOnSeekBarChangeListener(new SeekerUpdater(label));
+		//Log.e("KLSDF","STARTING ONSTART");
 	}
 	
 	public Handler importexport = new Handler() {
@@ -219,4 +257,7 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		setResult(RESULT_OK,retval);
 		finish();
 	}
+	
+	
+	
 }
