@@ -32,13 +32,13 @@ public class TextTree {
 	
 	private String encoding = "ISO-8859-1";
 	
-	private int breakAt = 3;
+	private int breakAt = 77;
 	private boolean wordWrap = true;
 	
 	private int brokenLineCount = 0;
 	
 	private int totalbytes = 0;
-	
+	private boolean cullExtraneous = true;
 	
 	
 	public int getBrokenLineCount() {
@@ -278,6 +278,8 @@ public class TextTree {
 	boolean appendLast = false; //for marking when the addtext call has ended with a newline or not.
 	private byte[] holdover = null;
 	LinkedList<Integer> prev_color = null;
+	Color lastColor = null;
+	byte[] strag = null;
 	public void addBytesImpl(byte[] data) throws UnsupportedEncodingException {
 		//this actually shouldn't be too hard to do with just a for loop.
 		STATE init = STATE.TEXT;
@@ -346,9 +348,10 @@ public class TextTree {
 			case ESC:
 				//Log.e("TREE","BEGIN ANSI ESCAPE");
 				//end current text node.
+				
 				if(sb.position() > 0) {
 					int size = sb.position();
-					byte[] strag = new byte[size];
+					strag = new byte[size];
 					sb.rewind();
 					sb.get(strag,0,size);
 					sb.rewind();
@@ -414,8 +417,27 @@ public class TextTree {
 						byte[] cmd = new byte[cmdsize];
 						cb.rewind();
 						cb.get(cmd,0,cmdsize);
+						
 						Color c = new Color(cmd);
-						tmp.getData().addLast(c);
+						if(lastColor == null) {
+							lastColor = c;
+							tmp.getData().addLast(c);
+						} else if(lastColor.equals(c)) {
+							//if(strag != null) {
+								//tmp.getData().removeLast();
+								//sb.put(strag);	
+							//}
+							//dont add because the last color is the same.
+							if(this.isCullExtraneous()) {
+								//do nothing
+							} else {
+								tmp.getData().addLast(c);
+							}
+						} else {
+							tmp.getData().addLast(c);
+							lastColor = c;
+						}
+						
 						cb.rewind();
 						break;
 					case A:
@@ -785,6 +807,13 @@ public class TextTree {
 				
 			}
 			
+			//if we are here, then we should work backward through the list requesting sizes
+			this.bytes = 0;
+			while(i.hasPrevious()) {
+				Unit tmp = i.previous();
+				this.bytes += tmp.reportSize();
+			}
+			
 		}
 		
 		public void stripBreaks() {
@@ -896,14 +925,20 @@ public class TextTree {
 		protected int bytecount;
 		//protected int bytecount;
 		
-		public Unit() {
-			charcount = 0;
-		}
+		public Unit() { charcount = 0; bytecount=0; }
+		//	charcount = 0;
+		//}
 		
-		public Unit copy() { return null;}
+		//public Unit copy() { return null;}
+		public int reportSize() { return 0; } //raw units have no size.
+		
 	}
 	
-	public class Text extends Unit {
+	public interface UnitMizer {
+		
+	}
+	
+	public class Text extends Unit implements UnitMizer {
 		protected String data;
 		protected byte[] bin;
 		public Text() {
@@ -940,6 +975,12 @@ public class TextTree {
 			return bin;
 		}
 		
+		public int reportSize() {
+		
+			return bin.length;
+			
+		}
+		
 		//public Text copy() {
 			
 			
@@ -948,7 +989,7 @@ public class TextTree {
 		
 	}
 	
-	private class Tab extends Unit {
+	private class Tab extends Unit implements UnitMizer {
 		protected String data;
 		
 		public Tab() {
@@ -957,8 +998,12 @@ public class TextTree {
 			this.bytecount = 1;
 		}
 		
+		public int reportSize() {
+			return 1;
+		}
+		
 	}
-	public class NewLine extends Unit {
+	public class NewLine extends Unit implements UnitMizer {
 		protected String data;
 		
 		public NewLine() {
@@ -967,8 +1012,11 @@ public class TextTree {
 			this.bytecount = 1;
 		}
 		
+		public int reportSize() {
+			return 1;
+		}
 	}
-	public class Color extends Unit {
+	public class Color extends Unit implements UnitMizer {
 		protected byte[] bin;
 		protected String data;
 		LinkedList<Integer> operations;
@@ -1025,10 +1073,35 @@ public class TextTree {
 		public LinkedList<Integer> getOperations() {
 			return operations;
 		}
+		
+		public boolean equals(Object o) {
+			if(o == this) return true;
+			if(!(o instanceof Color)) return false;
+			Color c = (Color)o;
+			if(c.bin.length != this.bin.length) {
+				return false;
+			}
+			for(int i=0;i<this.bin.length;i++) {
+				if(c.bin[i] != this.bin[i]) {
+					return false;
+				}
+			}
+			
+			return true;
+		}
+		
+		public int reportSize() {
+			return bin.length;
+		}
 	}
 	
-	public class Break extends Unit {
-		int position;
+	public class Break extends Unit implements UnitMizer {
+		//int position;
+		//this is merly a marker for us to know where breaks occur, the only space these take up is the handle for a variable in memory.
+		public int reportSize() {
+			return 0;
+		}
+		
 	}
 	
 	public class WhiteSpace extends Text {
@@ -1051,6 +1124,10 @@ public class TextTree {
 		
 		public byte[] getBytes() {
 			return bin;
+		}
+		
+		public int reportSize() {
+			return super.reportSize();
 		}
 	}
 	
@@ -1119,6 +1196,14 @@ public class TextTree {
 
 	public boolean isWordWrap() {
 		return wordWrap;
+	}
+
+	public void setCullExtraneous(boolean cullExtraneous) {
+		this.cullExtraneous = cullExtraneous;
+	}
+
+	public boolean isCullExtraneous() {
+		return cullExtraneous;
 	}
 	
 }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<LinearLayout
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:background="#FF000000"
+  	android:orientation="horizontal">
+  	
+  	<Button android:layout_width="wrap_content" 
+  			android:layout_height="wrap_content"
+  			android:id="@+id/auto"
+  			android:text="Automatic"/>
+  	<Button android:layout_width="wrap_content" 
+  			android:layout_height="wrap_content"
+  			android:text="Landscape"
+  			android:id="@+id/landscape"/>
+  	<Button android:layout_width="wrap_content" 
+  			android:layout_height="wrap_content" 
+  			android:text="Portriat"
+  			android:id="@+id/portriat"/>
+  	
+ </LinearLayout>

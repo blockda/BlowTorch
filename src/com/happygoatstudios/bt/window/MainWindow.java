@@ -300,6 +300,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					String cmd = history.getPrev();
 					input_box.setText(cmd);
 					return true;
+				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER && event.getAction() == KeyEvent.ACTION_UP) {
+					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
+					screen2.jumpToZero();
+					return true;
 				}
 				
 				return false;
@@ -332,7 +336,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					event = new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_ENTER);
 				}
 				
-				if((event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP)) {
+				if(((event.getKeyCode() == KeyEvent.KEYCODE_ENTER || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER) && event.getAction() == KeyEvent.ACTION_UP)) {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
 					screen2.jumpToZero();
 

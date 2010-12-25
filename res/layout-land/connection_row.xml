@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content">
+  
+  <TextView
+    android:id = "@+id/displayname"
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:textSize="25sp"
+  	android:textStyle="bold"
+  	android:text="serif"
+  	android:background = "#AAAAAAAA"
+  	android:textColor = "#AA222222"
+  	
+  	/>
+  <TextView
+  	android:id = "@+id/hoststring"
+  	android:layout_width = "fill_parent"
+  	android:layout_height = "wrap_content"
+  	android:layout_below = "@id/displayname"
+  	android:layout_alignParentLeft="true"
+  	android:singleLine = "true"
+  	android:ellipsize = "marquee"
+  	android:marqueeRepeatLimit = "marquee_forever"
+  	android:drawableBottom = "@drawable/dashedline"
+  	android:textStyle="italic"
+  	android:textSize = "16sp"
+  	android:background = "#AAAAAAAA"
+  	android:textColor = "#AA222222"
+  	
+  	/>
+  <!--  <ImageView
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:src="@drawable/dashedline"/> -->
+
+
+</RelativeLayout>

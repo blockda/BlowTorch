@@ -16,6 +16,19 @@
 			android:key="INPUT_SCREEN"
 			android:title="Window"
 			android:summary="Options involved with the display of text or interactions with the window.">
+		<com.happygoatstudios.bt.settings.SeekBarPreference
+			android:key="TEST_SEEK"
+			android:defaultValue="32"
+			android:title="Seek Bar"
+			android:widgetLayout="@layout/seekbar_widget"
+			android:summary="test seek bar impl"/>
+		<com.happygoatstudios.bt.settings.TriStatePreference
+			android:key="TEST_TRI"
+			android:defaultValue="0"
+			android:title="TriState Bar"
+			android:widgetLayout="@layout/tristate_widget"
+			android:summary="test tristate bar impl"/>
+		
 		<CheckBoxPreference
 			android:key="DISABLE_COLOR"
 			android:title="Disable ANSI Color?"

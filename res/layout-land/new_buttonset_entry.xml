@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:layout_width="280dip"
+  	android:layout_height="wrap_content">
+  	
+  	<TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="ENTER NEW SET NAME"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+	
+	<EditText 
+		android:id="@+id/newbuttonset_entry"
+		android:layout_width="280dip"
+		android:layout_height="wrap_content"
+		android:singleLine="true"
+		android:layout_below="@id/titlebar"
+		android:hint="Enter new set name."/>
+		
+	<Button
+		android:id="@+id/newbuttonset_done"
+		android:layout_width="280dip"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/newbuttonset_entry"
+		android:text="Add and select new set!"/> 
+ 
+</RelativeLayout>
