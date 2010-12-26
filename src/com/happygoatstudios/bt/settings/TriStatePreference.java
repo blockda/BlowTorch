@@ -29,11 +29,37 @@ public class TriStatePreference extends Preference  {
 		Button box3 = (Button)v.findViewById(R.id.portriat);
 		
 		TextView t = (TextView) v.findViewById(android.R.id.summary);
-		t.setText("FOOMFOD");
+		//t.setText("FOOMFOD");
+		
+		
+		box1.setOnClickListener(new StateChanger(STATE.AUTO,box2,box3,t));
+		box2.setOnClickListener(new StateChanger(STATE.LANDSCAPE,box1,box3,t));
+		box3.setOnClickListener(new StateChanger(STATE.PORTRAIT,box1,box2,t));
+		//myHandler.sendEmptyMessageDelayed(0,10);
+		keeper = v;
+		return v;
+		
+		//LayoutInflater li = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		//return li.inflate(R.layout.tristate_widget, null);
+		//return li.inflate(android.R.layout.preference_category, null);
+		//android.R.layout.
+	}
+	
+	public void onBindView(View in) {
+		super.onBindView(in);
+		
+		View v = keeper;
+		
+		Button box1 = (Button)v.findViewById(R.id.auto);
+		Button box2 = (Button)v.findViewById(R.id.landscape);
+		Button box3 = (Button)v.findViewById(R.id.portriat);
+		
+		TextView t = (TextView) v.findViewById(android.R.id.summary);
+		//t.setText("FOOMFOD");
 		
 		SharedPreferences pref = getSharedPreferences();
 		int mode = pref.getInt(getKey(), STATE.AUTO.intVal());
-		STATE readState = STATE.AUTO;
+		//STATE readState = STATE.AUTO;
 		switch(mode) {
 		case 0:
 			box1.setEnabled(false);
@@ -50,19 +76,6 @@ public class TriStatePreference extends Preference  {
 		default:
 			break;
 		}
-		
-		
-		box1.setOnClickListener(new StateChanger(STATE.AUTO,box2,box3,t));
-		box2.setOnClickListener(new StateChanger(STATE.LANDSCAPE,box1,box3,t));
-		box3.setOnClickListener(new StateChanger(STATE.PORTRAIT,box1,box2,t));
-		myHandler.sendEmptyMessageDelayed(0,10);
-		keeper = v;
-		return v;
-		
-		//LayoutInflater li = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		//return li.inflate(R.layout.tristate_widget, null);
-		//return li.inflate(android.R.layout.preference_category, null);
-		//android.R.layout.
 	}
 	
 	public TriStatePreference(Context context, AttributeSet attrs, int defStyle) {
@@ -78,40 +91,7 @@ public class TriStatePreference extends Preference  {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public Handler myHandler = new Handler() {
-		public void handleMessage(Message msg) {
-			//Log.e("DKFSDF","ATTEMPTING INVALIDATE");
-			View v = keeper;
-			
-			Button box1 = (Button)v.findViewById(R.id.auto);
-			Button box2 = (Button)v.findViewById(R.id.landscape);
-			Button box3 = (Button)v.findViewById(R.id.portriat);
-			
-			TextView t = (TextView) v.findViewById(android.R.id.summary);
-			t.setText("FOOMFOD");
-			
-			SharedPreferences pref = getSharedPreferences();
-			int mode = pref.getInt(getKey(), STATE.AUTO.intVal());
-			STATE readState = STATE.AUTO;
-			switch(mode) {
-			case 0:
-				box1.setEnabled(false);
-				t.setText("Using automatic");
-				break;
-			case 1:
-				box2.setEnabled(false);
-				t.setText("Using landscape");
-				break;
-			case 2:
-				box3.setEnabled(false);
-				t.setText("Using portrait");
-				break;
-			default:
-				break;
-			}
-			keeper.invalidate();
-		}
-	};
+	
 	
 	public enum STATE {
 		AUTO (0),

@@ -32,7 +32,7 @@ public class TextTree {
 	
 	private String encoding = "ISO-8859-1";
 	
-	private int breakAt = 77;
+	private int breakAt = 43;
 	private boolean wordWrap = true;
 	
 	private int brokenLineCount = 0;
@@ -92,6 +92,8 @@ public class TextTree {
 		buf.rewind();
 		buf.get(ret,0,size);
 		mLines.clear();
+		this.totalbytes = 0;
+		this.brokenLineCount=0;
 		appendLast = false;
 		//buf.rewind();
 		return ret;

@@ -40,9 +40,10 @@
 	  		<TextView
 		  		android:layout_width="60dip"
 		  		android:layout_height="wrap_content"
-		  		android:text="Lines"
+		  		android:text="Chars"
 		  		android:textSize="10dip"
 		  		android:textStyle="bold"
+		  		android:id="@+id/extra"
 		  		android:gravity="top|center"/>
 	  </LinearLayout>
 </LinearLayout>
