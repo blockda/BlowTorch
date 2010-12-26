@@ -758,6 +758,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		synchronized(the_tree) {
 			SCROLL_MIN = WINDOW_HEIGHT-(double)(5*this.getResources().getDisplayMetrics().density);
 			scrollback = SCROLL_MIN;
+			fling_velocity=0;
 		}
 	}
 

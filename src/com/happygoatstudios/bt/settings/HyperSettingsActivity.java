@@ -214,6 +214,9 @@ public class HyperSettingsActivity extends PreferenceActivity {
 	
 	public void onStart() {
 		super.onStart();
+		
+		//CheckedEditPreference cep = (CheckedEditPreference)findPreference("TEST_CHECKER");
+		//cep.init();
 		//TriStatePreference
 		//SeekBarPreference preffer = (SeekBarPreference)findPreference("TEST_SEEK");
 		//preffer.
