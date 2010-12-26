@@ -28,7 +28,12 @@
 			android:title="TriState Bar"
 			android:widgetLayout="@layout/tristate_widget"
 			android:summary="test tristate bar impl"/>
-		
+		<com.happygoatstudios.bt.settings.CheckedEditPreference
+			android:key="TEST_CHECKER"
+			android:defaultValue="0"
+			android:title="Checked Edit"
+			android:widgetLayout="@layout/preference_checkededitor_widget"
+			android:summary="test checkededitor bar impl"/>
 		<CheckBoxPreference
 			android:key="DISABLE_COLOR"
 			android:title="Disable ANSI Color?"
