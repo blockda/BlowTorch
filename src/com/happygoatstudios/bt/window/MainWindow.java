@@ -304,6 +304,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
 					screen2.jumpToZero();
 					return true;
+				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+					return true;
 				}
 				
 				return false;

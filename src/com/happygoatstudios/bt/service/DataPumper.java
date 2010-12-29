@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
@@ -180,6 +181,7 @@ public class DataPumper extends Thread {
 					
 				} else {
 					//data to read, do it
+					//try {
 					byte[] data = new byte[numtoread];
 					int retval = -2;
 					try {
@@ -215,6 +217,9 @@ public class DataPumper extends Thread {
 					} 
 
 					data = null; //free data to the garbage collector.
+					//} catch (SocketException e) {
+						
+					//}
 				}
 		}
 		
