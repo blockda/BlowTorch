@@ -3,7 +3,7 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import android.util.Log;
+//import android.util.Log;
 
 //import android.util.Log;
 //import android.util.Log;
@@ -134,7 +134,7 @@ public class OptionNegotiator {
     		String termtype = termtypes[attempt];
     		//Log.e("PROCESSOR","Sending terminal type: " + termtype);
     		try {
-				responsedata = termtype.getBytes("UTF-8");
+				responsedata = termtype.getBytes("ISO-8859-1");
 			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}
@@ -243,9 +243,9 @@ public class OptionNegotiator {
 	}
 	
 	public byte[] getNawsString() {
-		if(!isNAWS) {Log.e("OPT","HAVENT NAWSED"); return null;}
-		if(donenaws) {Log.e("OPT","ALREADY NAWSED"); return null;}
-		Log.e("OPT","WHO LET THE NAWS OUT");
+		if(!isNAWS) { return null;}
+		if(donenaws) { return null;}
+		//Log.e("OPT","WHO LET THE NAWS OUT");
 		ByteBuffer buf = ByteBuffer.allocate(9);
 		buf.put((byte)0xFF); //IAC
 		buf.put((byte)0xFA); //SB

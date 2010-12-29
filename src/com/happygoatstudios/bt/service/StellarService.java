@@ -135,11 +135,13 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_RECONNECT = 506;
 	public static final int MESSAGE_DODISCONNECT = 507;
 	public static final int MESSAGE_PROCESSORWARNING = 508;
+	public static final int MESSAGE_DEBUGTELNET = 509;
 	
 	public boolean sending = false;
 	
-	StringBuffer the_buffer = new StringBuffer();
+	//StringBuffer the_buffer = new StringBuffer();
 	String settingslocation = "test_settings2.xml";
+	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
 	
 	//private boolean compressionStarting = false;
 	
@@ -154,10 +156,10 @@ public class StellarService extends Service {
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
-		this.
+		//this.
 		//set up the crash reporter
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
-		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
@@ -206,9 +208,16 @@ public class StellarService extends Service {
 		settingslocation = prefsname + ".xml";
 		loadXmlSettings(prefsname +".xml");
 		
+		buffer_tree.setLineBreakAt(80); //this doesn't really matter
+		buffer_tree.setEncoding(the_settings.getEncoding());
+		buffer_tree.setMaxLines(the_settings.getMaxLines());
+		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_DEBUGTELNET:
+					the_processor.setDebugTelnet((Boolean)msg.obj);
+					break;
 				case MESSAGE_PROCESSORWARNING:
 					try {
 						doDispatchNoProcess(((String)msg.obj).getBytes(the_settings.getEncoding()));
@@ -409,7 +418,12 @@ public class StellarService extends Service {
 					//if(compressionStarting) {
 					//	this.sendMessageDelayed(Message.obtain(msg), 10); //re-send this message for processing until compress is turned on.
 					//} else {
-						dispatchFinish((String)msg.obj);
+					try {
+						dispatchFinish((byte[])msg.obj);
+					} catch (UnsupportedEncodingException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
 					//}
 					break;
 				case MESSAGE_SETDATA:
@@ -560,10 +574,17 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_SAVEBUFFER:
+					try {
+						buffer_tree.addBytesImpl((byte[])msg.obj);
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					
-					the_buffer = new StringBuffer((String)msg.obj + the_buffer);
-					bufferLineCount = 0;
-					bufferLineCount = the_buffer.toString().split("\n").length;
+					//TODO: old stuff
+					//the_buffer = new StringBuffer((String)msg.obj + the_buffer);
+					//bufferLineCount = 0;
+					//bufferLineCount = the_buffer.toString().split("\n").length;
 					//Log.e("SERVICE","SAVING BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
 					break;
 				default:
@@ -654,6 +675,8 @@ public class StellarService extends Service {
 				}
 				//Log.e("SERVICE","LOADED SETTINGS, TIMER" + timer.getOrdinal() + ", DURATION " + timer.getSeconds());
 			}
+			
+			
 			
 		} catch (FileNotFoundException e) {
 			//if the file does not exist, then we need to load the default settings
@@ -901,7 +924,7 @@ public class StellarService extends Service {
 			
 		}
 
-		public void saveBuffer(String buffer) throws RemoteException {
+		public void saveBuffer(byte[] buffer) throws RemoteException {
 			//Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SAVEBUFFER);
 			//Bundle b = msg.getData();
 			//b.putString("BUFFER",buffer);
@@ -1138,6 +1161,7 @@ public class StellarService extends Service {
 			
 			synchronized(the_settings) {
 				the_settings.setMaxLines(keepcount);
+				buffer_tree.setMaxLines(keepcount);
 			}
 			
 		}
@@ -1699,6 +1723,7 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				the_settings.setEncoding(input);
 				the_processor.setEncoding(input);
+				buffer_tree.setEncoding(input);
 			}
 		}
 		
@@ -1802,7 +1827,9 @@ public class StellarService extends Service {
 		}
 
 		public boolean hasBuffer() throws RemoteException {
-			if(the_buffer.length() > 0) {
+			//TODO: old stuff
+			//if(the_buffer.length() > 0) {
+			if(buffer_tree.getBrokenLineCount() > 0) {
 				return true;
 			} else {
 				return false;
@@ -1822,6 +1849,67 @@ public class StellarService extends Service {
 		public void setRoundButtons(boolean use) throws RemoteException {
 			synchronized(the_settings) {
 				the_settings.setRoundButtons(use);
+			}
+		}
+
+		public int getBreakAmount() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getBreakAmount();
+			}
+		}
+
+		public int getOrientation() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getOrientation();
+			}
+		}
+
+		public boolean isWordWrap() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isWordWrap();
+			}
+		}
+
+		public void setBreakAmount(int pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setBreakAmount(pIn);
+			}
+		}
+
+		public void setOrientation(int pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setOrientation(pIn);
+			}
+		}
+
+		public void setWordWrap(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setWordWrap(pIn);
+			}
+		}
+
+		public boolean isDebugTelnet() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isDebugTelnet();
+			}
+		}
+
+		public boolean isRemoveExtraColor() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isRemoveExtraColor();
+			}
+		}
+
+		public void setDebugTelnet(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setDebugTelnet(pIn);
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DEBUGTELNET,new Boolean(pIn)));
+			}
+		}
+
+		public void setRemoveExtraColor(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setRemoveExtraColor(pIn);
 			}
 		}
 		
@@ -2061,12 +2149,18 @@ public class StellarService extends Service {
 	}
 	
 	public void sendBuffer() throws RemoteException {
+		
+		byte[] buf = buffer_tree.dumpToBytes();
+		
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			//callbacks.getBroadcastItem(i).dataIncoming(data);
 			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
 			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivering: " + the_buffer.toString().length() + " characters.");
-			callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
+			//TODO: old stuff
+			//callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
+			
+			callbacks.getBroadcastItem(i).rawBufferIncoming(buf);
 		}
 		
 		callbacks.finishBroadcast();
@@ -2075,12 +2169,21 @@ public class StellarService extends Service {
 		if( N < 1) {
 			//has no listeners
 			//Log.e("SERV","CANNOT SEND BUFFER, NO LISTENERS, TRYING AGAIN");
-			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,300);
-		} else {
-			if(the_buffer != null) {
-				the_buffer.setLength(0);
-				//the_buffer.clearSpans();
+			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,100);
+			try {
+				buffer_tree.addBytesImpl(buf);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+		} else {
+			//if(buffer_tree != null) {
+			//	buffer_tree.
+			//}
+			//if(the_buffer != null) {
+			//	the_buffer.setLength(0);
+				//the_buffer.clearSpans();
+			//}
 		}
 	}
 	
@@ -2663,7 +2766,7 @@ public class StellarService extends Service {
 	
 	public void dispatch(byte[] data) throws RemoteException, UnsupportedEncodingException {
 		
-		String rawData = the_processor.RawProcess(data);
+		byte[] rawData = the_processor.RawProcess(data);
 		//changing this to send data to the window, then process the triggers.
 		//if(firstDispatch)
 		//Spannable processed = the_processor.DoProcess(data);
@@ -2677,7 +2780,7 @@ public class StellarService extends Service {
 	private Pattern bufferLine = Pattern.compile(".*\n");
 	Matcher bufferLineMatch = bufferLine.matcher("");
 	StringBuffer tempBuffer = new StringBuffer();
-	public void dispatchFinish(String rawData) {
+	public void dispatchFinish(byte[] rawData) throws UnsupportedEncodingException {
 		
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
@@ -2700,12 +2803,17 @@ public class StellarService extends Service {
 		//if(callbacks.)
 		if(final_count == 0) {
 			//someone isnt listening so save the buffer
-			bufferLineCount += rawData.split("\n").length;
+			//bufferLineCount += rawData.split("\n").length;
 			//Log.e("SERVICE","FOUND:" + bufferLineCount);
-			the_buffer.append(rawData);
+			try {
+				buffer_tree.addBytesImpl(rawData);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			//Log.e("SERV","No listeners, buffering data.");
 			//appended data, trim the buffer.
-			if(bufferLineCount > the_settings.getMaxLines()) {
+			/*if(bufferLineCount > the_settings.getMaxLines()) {
 				//trim from the front.
 				bufferLineMatch.reset(the_buffer);
 				//the_buffer.setLength(0);
@@ -2727,11 +2835,11 @@ public class StellarService extends Service {
 				the_buffer.append(tempBuffer);
 				//Log.e("SERVICE","TRIMMED " + trimmed + " FROM BUFFER NOW " + the_buffer.toString().length() + " bytes.");
 				bufferLineCount = the_settings.getMaxLines();
-			}
+			}*/
 			
 		} else {
 			//someone is listening so save the buffer.
-			the_buffer.setLength(0);
+			buffer_tree.empty();
 			//the_buffer.clearSpans();
 			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
 		}
@@ -2742,7 +2850,7 @@ public class StellarService extends Service {
 			return; //return without processing, if there are no triggers.
 		}
 		
-		Matcher stripcolor = colordata.matcher(rawData);
+		Matcher stripcolor = colordata.matcher(new String(rawData,the_settings.getEncoding()));
 		regexp_test.append(stripcolor.replaceAll(""));
 		
 		boolean rebuildTriggers = false;
@@ -2812,13 +2920,13 @@ public class StellarService extends Service {
 	
 	public void doDispatchNoProcess(byte[] data) throws RemoteException{
 		
-		String rawData = null;
-		try {
-			rawData = new String(data,the_settings.getEncoding());
-		} catch (UnsupportedEncodingException e1) {
-			
-			e1.printStackTrace();
-		}
+		//String rawData = null;
+		//try {
+		//	rawData = new String(data,the_settings.getEncoding());
+		//} catch (UnsupportedEncodingException e1) {
+		//	
+		//	e1.printStackTrace();
+		//}
 		
 		final int N = callbacks.beginBroadcast();
 		int final_count = N;
@@ -2827,7 +2935,7 @@ public class StellarService extends Service {
 		//Log.e("SERVICE","SENDING TO WINDOW: " + rawData);
 		for(int i = 0;i<N;i++) {
 			try {
-			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
+			callbacks.getBroadcastItem(i).rawDataIncoming(data);
 			} catch (RemoteException e) {
 				//just need to catch it, don't need to care, the list maintains itself apparently.
 				final_count = final_count - 1;
@@ -3043,15 +3151,22 @@ public class StellarService extends Service {
 			showNotification();
 			
 			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
-			if(the_buffer == null) {
-				the_buffer = new StringBuffer();
-			}
+			//if(the_buffer == null) {
+			//	the_buffer = new StringBuffer();
+			//}
+			//if(buffer_tree == null) {
+			//	buffer_tree = new com.happygoatstudios.bt.window.TextTree();
+			//}
 			
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();
 				}
+				
+				the_processor.setDebugTelnet(the_settings.isDebugTelnet());
 			}
+			
+			
 			
 			isConnected = true;
 			

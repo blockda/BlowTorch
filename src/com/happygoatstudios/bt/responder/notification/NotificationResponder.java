@@ -206,7 +206,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		
 
 		NotificationManager NM = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
-		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"Trigger Fired!",System.currentTimeMillis());
+		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,xformedtitle,System.currentTimeMillis());
 		Intent notificationIntent  = new Intent(c,com.happygoatstudios.bt.window.MainWindow.class);
 		notificationIntent.putExtra("DISPLAY", displayname);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);

@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
@@ -216,7 +217,21 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 			}
 			label.setGravity(Gravity.CENTER);
 			label.setSingleLine(true);
-			label.setWidth((int) (130 * this.getContext().getResources().getDisplayMetrics().density));
+			
+			int labelwidth = 0;
+			//Display display = ;
+			switch(this.getContext().getResources().getConfiguration().orientation) {
+			
+			case Configuration.ORIENTATION_PORTRAIT:
+				labelwidth = 70;
+				break;
+			case Configuration.ORIENTATION_LANDSCAPE:
+			default:
+				labelwidth = 130;
+				break;
+			}
+			
+			label.setWidth((int) (labelwidth * this.getContext().getResources().getDisplayMetrics().density));
 			LinearLayout l1 = new LinearLayout(this.getContext());
 			l1.setGravity(Gravity.CENTER);
 			LinearLayout l2 = new LinearLayout(this.getContext());

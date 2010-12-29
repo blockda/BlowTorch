@@ -16,24 +16,30 @@
 			android:key="INPUT_SCREEN"
 			android:title="Window"
 			android:summary="Options involved with the display of text or interactions with the window.">
-		<com.happygoatstudios.bt.settings.SeekBarPreference
+		<!-- <com.happygoatstudios.bt.settings.SeekBarPreference
 			android:key="TEST_SEEK"
 			android:defaultValue="32"
 			android:title="Seek Bar"
 			android:widgetLayout="@layout/seekbar_widget"
-			android:summary="test seek bar impl"/>
+			android:summary="test seek bar impl"/>  -->
 		<com.happygoatstudios.bt.settings.TriStatePreference
-			android:key="TEST_TRI"
+			android:key="ORIENTATION"
 			android:defaultValue="0"
-			android:title="TriState Bar"
+			android:title="Orientation"
 			android:widgetLayout="@layout/tristate_widget"
-			android:summary="test tristate bar impl"/>
+			android:summary="Currently using automatic"/>
+		<CheckBoxPreference
+			android:key="WORD_WRAP"
+			android:title="Word Wrap?"
+			android:summary="Broken text will be wrapped at the nearest whitespace."
+			android:defaultValue="true"/>
+		
 		<com.happygoatstudios.bt.settings.CheckedEditPreference
-			android:key="TEST_CHECKER"
+			android:key="BREAK_AMOUNT"
 			android:defaultValue="0"
-			android:title="Checked Edit"
+			android:title="Break Limit"
 			android:widgetLayout="@layout/preference_checkededitor_widget"
-			android:summary="test checkededitor bar impl"/>
+			android:summary="Automatically calculated to window size."/>
 		<CheckBoxPreference
 			android:key="DISABLE_COLOR"
 			android:title="Disable ANSI Color?"
@@ -177,6 +183,16 @@
 			android:defaultValue="true"
 			android:summary="Attempt to keep WiFi radio active while service is running."
 			android:title="Keep Wifi Radio Active?"/>
+		<CheckBoxPreference
+			android:key="REMOVE_EXTRA_COLOR"
+			android:defaultValue="true"
+			android:summary="Removes extraneous color codes."
+			android:title="Cull Extraneous Colors?"/>
+		<CheckBoxPreference
+			android:key="DEBUG_TELNET"
+			android:defaultValue="false"
+			android:summary="Shows data involving telnet option transactions in the window."
+			android:title="Debug Telnet Options?"/>
 		</PreferenceScreen>
 		<PreferenceScreen
 			android:key="BELL_SETTINGS"

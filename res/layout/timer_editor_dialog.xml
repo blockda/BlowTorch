@@ -3,14 +3,14 @@
 <RelativeLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/newtriggerlayout"
-  android:layout_width="400dip"
-  android:layout_height="fill_parent"
+  android:layout_width="300dip"
+  android:layout_height="400dip"
   android:layout_marginLeft="10dip"
   android:layout_marginRight="10dip">
   
   <TextView
 		android:id="@+id/titlebar"
-		android:layout_width="400dip"
+		android:layout_width="300dip"
 		android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
 		android:text="TIMER EDITOR"
@@ -51,7 +51,7 @@
   					android:id="@+id/timer_editor_name"
   					
   					android:layout_marginRight="10dip"
-  					android:width="300dip"
+  					android:width="200dip"
   					android:singleLine="true"
   					android:hint="Timer Function"
   					android:inputType="text"/>
@@ -82,7 +82,7 @@
   						android:textSize="13sp"
   						android:layout_marginRight="10dip"
   						android:layout_marginLeft="30dip"
-  						android:layout_width="215dip" android:layout_height="wrap_content"/>
+  						android:layout_width="115dip" android:layout_height="wrap_content"/>
   			</TableRow>
   		</TableLayout>
   		<!-- <TableLayout android:layout_width="390dip" android:layout_height="wrap_content" android:stretchColumns="*"> -->
@@ -108,19 +108,19 @@
   				<TextView
   					android:text="Window\nOpen"
   					android:gravity="center"
-  					android:layout_marginRight="10dip" android:layout_marginLeft="10dip"/>
+  					android:layout_marginRight="3dip" android:layout_marginLeft="3dip"/>
   				<TextView
   					android:text="Window\nClosed"
   					android:gravity="center"
-  					android:layout_marginRight="10dip" android:layout_marginLeft="10dip"/>
+  					android:layout_marginRight="3dip" android:layout_marginLeft="3dip"/>
   				<TextView
-  					android:text="Delete"
+  					android:text="Del"
   					android:id="@+id/timer_delete_responder"
   					android:gravity="center"
-  					android:layout_marginRight="5dip" android:layout_marginLeft="5dip"/>
+  					android:layout_marginRight="1dip" android:layout_marginLeft="1dip"/>
   			</TableRow>
   			<TableRow android:id="@+id/timer_new_responder_row">
-  				<Button android:id="@+id/timer_new_notification" android:text="New Action" android:paddingLeft="30dip" android:paddingRight="30dip"/>
+  				<Button android:id="@+id/timer_new_notification" android:text="New Action" android:paddingLeft="10dip" android:paddingRight="10dip"/>
   				<TextView android:text=""/>
   				<TextView android:text=""/>
   			</TableRow>

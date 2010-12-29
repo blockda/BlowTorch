@@ -26,7 +26,7 @@ interface IStellarService {
 	void beginCompression();
 	void stopCompression();
 	void requestBuffer();
-	void saveBuffer(String buffer);
+	void saveBuffer(inout byte[] buffer);
 	void addAlias(in AliasData a);
 	List getSystemCommands();
 	Map getAliases();
@@ -121,4 +121,15 @@ interface IStellarService {
 	void setFullScreen(boolean use);	
 	boolean isRoundButtons();
 	void setRoundButtons(boolean use);
+	int getBreakAmount();
+	int getOrientation();
+	boolean isWordWrap();
+	void setBreakAmount(int pIn);
+	void setOrientation(int pIn);
+	void setWordWrap(boolean pIn);
+	boolean isRemoveExtraColor();
+	boolean isDebugTelnet();
+	void setRemoveExtraColor(boolean pIn);
+	void setDebugTelnet(boolean pIn);
+	
 }
