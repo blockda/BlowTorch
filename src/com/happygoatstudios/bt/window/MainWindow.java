@@ -239,7 +239,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		super.onCreate(icicle);
 		
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
-		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
@@ -758,6 +758,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean fullscreen_now = prefs.getBoolean("WINDOW_FULLSCREEN", false);
 						boolean roundbutt = prefs.getBoolean("ROUND_BUTTONS",true);
 						
+						int breakvalue = prefs.getInt("BREAK_AMOUNT", 0);
+						int orientationvalue = prefs.getInt("ORIENTATION", 0);
+						boolean wordwrapvalue = prefs.getBoolean("WORD_WRAP", true);
+						
+						boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
+						boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
+						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
@@ -790,6 +797,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setDisplayOnBell(belldisplay);
 							service.setFullScreen(fullscreen_now);
 							service.setRoundButtons(roundbutt);
+							service.setOrientation(orientationvalue);
+							service.setWordWrap(wordwrapvalue);
+							service.setBreakAmount(breakvalue);
+							service.setRemoveExtraColor(removeextracolor);
+							service.setDebugTelnet(debugtelnet);
 							service.saveSettings();
 						} catch (RemoteException e) {
 							throw new RuntimeException(e);
@@ -853,6 +865,26 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 						
 						screen2.setEncoding(service.getEncoding());
+						
+						screen2.setCullExtraneous(service.isRemoveExtraColor());
+						
+						//int or = MainWindow.this.getRequestedOrientation();
+						switch(service.getOrientation()) {
+						case 0:
+							MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+							break;
+						case 1:
+							MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+							break;
+						case 2:
+							MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+							break;
+						default:
+							break;
+						}
+						
+						screen2.setLineBreaks(service.getBreakAmount());
+						
 						//current_button_views.clear();
 						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
 						
@@ -1162,7 +1194,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					}
 					break;
 				case MESSAGE_RAWINC:
-					screen2.addText((String)msg.obj,false);
+					//screen2.addText((String)msg.obj,false);
+					screen2.addBytes((byte[])msg.obj, false);
 					//try {
 					//	tree.addBytes(((String)msg.obj).getBytes("ISO-8859-1"));
 					//} catch (UnsupportedEncodingException e1) {
@@ -1172,7 +1205,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					break;
 				case MESSAGE_BUFFINC:
 					//String message = "\n" + Colorizer.colorCyanBright + "Buffer received: " +  ((String)msg.obj).getBytes().length + Colorizer.colorWhite + "\n";
-					screen2.addText((String)msg.obj,true);
+					//screen2.addText((String)msg.obj,true);
+					screen2.addBytes((byte[])msg.obj,true);
 					break;
 				case MESSAGE_SENDDATAOUT:
 					try {
@@ -1519,6 +1553,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putString("HAPTIC_FLIP", service.getHFOnFlip());
 				edit.putString("ENCODING", service.getEncoding());
 				
+				edit.putInt("BREAK_AMOUNT", service.getBreakAmount());
+				edit.putInt("ORIENTATION", service.getOrientation());
+				edit.putBoolean("WORD_WRAP",service.isWordWrap());
+				edit.putInt("CALCULATED_WIDTH", screen2.CALCULATED_ROWSINWINDOW);
+				
+				edit.putBoolean("REMOVE_EXTRA_COLOR", service.isRemoveExtraColor());
+				edit.putBoolean("DEBUG_TELNET", service.isDebugTelnet());
+				
 				edit.putBoolean("KEEPLAST", service.isKeepLast());
 				edit.putString("FONT_SIZE", Integer.toString((service.getFontSize())));
 				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
@@ -1601,24 +1643,44 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public void onConfigurationChanged(Configuration newconfig) {
 		//Log.e("WINDOW","CONFIGURATION CHANGING");
-		super.onConfigurationChanged(newconfig);
+		
 		//Log.e("WINDOW","CONFIGURATION CHANGED");
 		//RelativeLayout container = (RelativeLayout)this.findViewById(R.id.window_container);
 		//RelativeLayout.LayoutParams p = (RelativeLayout.LayoutParams)container.getLayoutParams();
 		switch(newconfig.orientation) {
 		case Configuration.ORIENTATION_PORTRAIT:
-		//	this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+			
 		//	container.requestLayout();
 			//DoButtonPortraitMode(true);
 			//OREINTATION = Configuration.ORIENTATION_PORTRAIT;
+			try {
+				if(service.getOrientation() == 1) { //if we are selected as landscape
+					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
+					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			break;
 		case Configuration.ORIENTATION_LANDSCAPE:
 		//	this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		//	container.requestLayout();
 			//DoButtonPortraitMode(false);
 			//OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
+			try {
+				if(service.getOrientation() == 2) { //if we are selected as landscape
+					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
+					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			break;
 		}
+		
+		super.onConfigurationChanged(newconfig);
 		
 	}
 	
@@ -2053,7 +2115,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 		}
 
-		public void rawDataIncoming(String raw) throws RemoteException {
+		public void rawDataIncoming(byte[] raw) throws RemoteException {
 			
 			Message msg = myhandler.obtainMessage(MESSAGE_RAWINC,raw);
 			//Log.e("WINDOW","RECIEVING RAW");
@@ -2061,9 +2123,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 		}
 		
-		public void rawBufferIncoming(String rawbuf) throws RemoteException {
+		public void rawBufferIncoming(byte[] rawbuf) throws RemoteException {
 			Message msg = myhandler.obtainMessage(MESSAGE_BUFFINC,rawbuf);
-			myhandler.sendMessageDelayed(msg,10);
+			myhandler.sendMessage(msg);
 			//Log.e("WINDOW","RECEIVING BUFFER: " + rawbuf.length());
 		}
 

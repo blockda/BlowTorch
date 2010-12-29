@@ -6,11 +6,7 @@ import java.nio.ByteBuffer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
+
 
 public class Processor {
 
@@ -31,7 +27,16 @@ public class Processor {
 		setEncoding(pEncoding);
 	}
 
-	private final boolean debugTelnet = true;
+	private boolean debugTelnet = true;
+
+	public boolean isDebugTelnet() {
+		return debugTelnet;
+	}
+
+	public void setDebugTelnet(boolean debugTelnet) {
+		this.debugTelnet = debugTelnet;
+		//Log.e("PROC","SETTING DEBUG TELNET TO " + debugTelnet);
+	}
 
 	private final byte IAC = (byte) 0xFF;
 	private final byte SB = (byte) 0xFA;
@@ -48,6 +53,8 @@ public class Processor {
 	private final byte AYT = (byte) 246; // The function AYT.
 	private final byte EC = (byte) 247; // The function EC.
 	private final byte EL = (byte) 248; // The function EL.
+	
+	private final byte CARRIAGE = (byte)0x0D;
 
 	private final byte GOAHEAD = (byte) 0xF9;
 
@@ -59,9 +66,9 @@ public class Processor {
 	// private byte
 	// subnegotioation: \\xFF\\xFA(.{1})(.*)\\xFF\\xF0
 
-	public String RawProcess(byte[] data) {
+	public byte[] RawProcess(byte[] data) {
 		if (data == null) {
-			return "";
+			return null;
 		}
 
 		ByteBuffer buff = ByteBuffer.allocate(data.length);
@@ -134,11 +141,12 @@ public class Processor {
 							byte[] trunc = new byte[count];
 							buff.rewind();
 							buff.get(trunc, 0, count);
-							try {
-								return new String(trunc, encoding);
-							} catch (UnsupportedEncodingException e) {
-								throw new RuntimeException(e);
-							}
+							return trunc;
+							//try {
+							//	return new String(trunc, encoding);
+							//} catch (UnsupportedEncodingException e) {
+							//	throw new RuntimeException(e);
+							//}
 
 						} else {
 							i = i + 2 + (j - (i + 3)) + 2; // (original pos,
@@ -199,6 +207,9 @@ public class Processor {
 				// dispatch bell
 				reportto.sendEmptyMessage(StellarService.MESSAGE_BELLINC);
 				break;
+			case CARRIAGE:
+				//strip carriage returns
+				break;
 			// UNTIL FURTHER NOTICE, TAB HANDLING WILL BE THE WINDOWS
 			// RESPONSIBILITY
 			default:
@@ -214,11 +225,12 @@ public class Processor {
 		buff.rewind();
 		byte[] tmp = new byte[count];
 		buff.get(tmp, 0, count);
-		try {
-			return new String(tmp, encoding);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		return tmp;
+		//try {
+		//	return new String(tmp, encoding);
+		//} catch (UnsupportedEncodingException e) {
+		//	throw new RuntimeException(e);
+		//}
 	}
 
 	public void dispatchIAC(byte action,byte option) {

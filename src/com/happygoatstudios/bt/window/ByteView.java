@@ -20,6 +20,8 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
+import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -61,9 +63,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private int PREF_LINEEXTRA = 2;
 	
-	int selectedColor = 37;
-	int selectedBright = 0;
-	int selectedBackground = 60;
+	Integer selectedColor = new Integer(37);
+	Integer selectedBright = new Integer(0);
+	Integer selectedBackground = new Integer(60);
 	private Handler buttonaddhandler = null;
 	private Handler realbuttonhandler = null;
 	
@@ -174,22 +176,31 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		doDelayedDraw(0);
 	}
 	
+	private int leftOver = 0;
+	
 	public void calculateCharacterFeatures(int width,int height) {
 		
 		if(height == 0 && width == 0) {
 			return;
 		}
 		CALCULATED_LINESINWINDOW = (int) (height / PREF_LINESIZE);
+		
+		leftOver = height - CALCULATED_LINESINWINDOW*PREF_LINESIZE;
 		Paint p = new Paint();
 		p.setTypeface(PREF_FONT);
 		p.setTextSize(PREF_FONTSIZE);
 		int one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
 		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
 		
+		if(automaticBreaks) {
+			this.setLineBreaks(0);
+			//Log.e("SLICK","setting line breaks");
+		}
+		
 		jumpToZero();
 		//SCROLL_MIN = WINDOW_HEIGHT-(double)(3*this.getResources().getDisplayMetrics().density);
 		//if(CALCULATED_ROWSINWINDOW > 0) {
-			//Log.e("SLICK","surfaceChanged called, calculated" + CALCULATED_LINESINWINDOW + " lines and " + CALCULATED_ROWSINWINDOW + " rows.");
+			//Log.e("SLICK","surfaceChanged called, calculated" + CALCULATED_LINESINWINDOW + " lines and " + CALCULATED_ROWSINWINDOW + " rows." + " width="+width + " height="+height);
 		//}
 	}
 
@@ -445,7 +456,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private Double SCROLL_MIN = 24d;
 	
-	
+	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
+	Iterator<Unit> unitIterator = null;
 	public void onDraw(Canvas c) {
 		//Matrix m = c.getMatrix();
 		
@@ -467,7 +479,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		float x = 0;
 		float y = 0;
 		
-		ListIterator<TextTree.Line> i = null;// = the_tree.getLines().iterator();
+		
 		//Iterator<TextTree.Unit> u = null;
 		boolean stop = false;
 		
@@ -492,12 +504,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//use our super cool iterator function.
 		Float offset = 0f;
 		IteratorBundle bundle = getScreenIterator(scrollback,PREF_LINESIZE);
-		i = bundle.getI();
+		screenIt = bundle.getI();
 		y = bundle.getOffset();
 		int extraLines = bundle.getExtraLines();
-		if(i == null) { return;}
+		if(screenIt == null) { return;}
 		
-		Paint z = new Paint();
+		//Paint z = new Paint();
 		//z.setColor(0xFF0000FF);
 		//c.drawLine(0, y, WINDOW_WIDTH, y, z);
 		//z.setColor(0xFFFF0000);
@@ -505,23 +517,33 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//find bleed.
 		boolean bleeding = false;
 		int back = 0;
-		while(i.hasNext() && !bleeding) {
+		while(screenIt.hasNext() && !bleeding) {
 			
-			Line l = i.next();
+			Line l = screenIt.next();
 			back++;
 			
 			for(Unit u : l.getData()) {
 				if(u instanceof TextTree.Color) {
 					
-					for(Integer o : ((TextTree.Color) u).getOperations()) {
-						updateColorRegisters(o);
+					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
+					//for(Integer o : ((TextTree.Color) u).getOperations()) {
+						
+						updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
+						Colorizer.COLOR_TYPE type = Colorizer.getColorType(((TextTree.Color) u).getOperations().get(i));
+						if(type != Colorizer.COLOR_TYPE.NOT_A_COLOR && type != Colorizer.COLOR_TYPE.BACKGROUND && type != Colorizer.COLOR_TYPE.BRIGHT_CODE) {
+							bleeding = true;
+						}
+						
 					}
+					//bleeding = ((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
+					
 					p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 					//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
 					b.setColor(0xFF000000);//no not bleed background colors
-					if(p.getColor() != (0xFF000000|Colorizer.getColorValue(0, 37))) {
-						bleeding = true;
-					}
+					
+					//if(p.getColor() != (0xFF000000|Colorizer.getColorValue(0, 37))) {
+					//	bleeding = true;
+					//}
 				}
 			}
 		}
@@ -530,23 +552,26 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//advance the iterator back the number of units it took to find a bleed.
 		//second real expensive move. In the case of a no color text buffer, it would walk from scroll to end and back every time. USE COLOR 
 		while(back > 0) {
-			i.previous();
+			screenIt.previous();
 			back--;
 		}
-		if(i.hasNext()) {
-		i.next(); // the bleed/back stuff seems to be messing with my calculation
+		if(screenIt.hasNext()) {
+		screenIt.next(); // the bleed/back stuff seems to be messing with my calculation
 		//of what the next line is.
 		}
 		//TODO: STEP 5
 		//draw the text, from top to bottom.	
+		
 		int drawnlines = 0;
-		while(!stop && i.hasPrevious()) {
-			int index = i.previousIndex();
-			Line l = i.previous();
+		while(!stop && screenIt.hasPrevious()) {
+			int index = screenIt.previousIndex();
+			Line l = screenIt.previous();
 		
 			//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
 			//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
-			for(Unit u : l.getData()) {
+			unitIterator = l.getIterator();
+			while(unitIterator.hasNext()) {
+				Unit u = unitIterator.next();
 				//p.setColor(color)
 				boolean useBackground = false;
 				if(b.getColor() != 0xFF000000) {
@@ -562,9 +587,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					x += p.measureText(((TextTree.Text)u).getString());
 				}
 				if(u instanceof TextTree.Color) {
-					for(Integer o : ((TextTree.Color)u).getOperations()) {
-						updateColorRegisters(o);
+					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
+					//for(Integer o : ((TextTree.Color)u).getOperations()) {
+						updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
 					}
+					//((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
+					//Log.e("BYTE","COLOR:" + selectedBright + " , " + selectedColor + " " + selectedBackground);
 					if(debug_mode == 2 || debug_mode == 3) {
 						p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37));
 						b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40));
@@ -573,8 +601,15 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
 					}
 					if(debug_mode == 1 || debug_mode == 2) {
-						c.drawText(((TextTree.Color)u).getData(),x,y,p);
-						x += p.measureText(((TextTree.Color)u).getData());
+						String str = "";
+						try {
+							str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						c.drawText(str,x,y,p);
+						x += p.measureText(str);
 					}
 				}
 				if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
@@ -604,8 +639,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				}
 			}
 			
-			
+			l.resetIterator();
 		}
+		
 		//c.drawLine(0, y, WINDOW_WIDTH, y, z);
 		showScroller(c);
 		}//end synchronized block
@@ -778,22 +814,23 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	public void setEncoding(String pEncoding) {
 		encoding = pEncoding;
+		synchronized(the_tree) {
+			the_tree.setEncoding(pEncoding);
+		}
 	}
 	
-	public String getBuffer() {
-		try {
-			return new String(the_tree.dumpToBytes(),encoding);
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+	public byte[] getBuffer() {
+	
+		return the_tree.dumpToBytes();
+	
+		
 	}
 
 	public void setCharacterSizes(int fontSize, int fontSpaceExtra) {
 		PREF_FONTSIZE = fontSize;
 		PREF_LINEEXTRA = fontSpaceExtra;
 		PREF_LINESIZE = (int) (PREF_FONTSIZE + PREF_LINEEXTRA);
+		calculateCharacterFeatures(WINDOW_WIDTH,WINDOW_HEIGHT);
 	}
 
 	public void setMaxLines(int maxLines) {
@@ -804,12 +841,115 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		PREF_FONT = font;
 	}
 	
+	
+	boolean automaticBreaks = true;
 	public void setLineBreaks(Integer i) {
 		synchronized(the_tree) {
-			the_tree.setLineBreakAt(i);
+			if(i == 0) {
+				if(CALCULATED_ROWSINWINDOW != 0) {
+					the_tree.setLineBreakAt(CALCULATED_ROWSINWINDOW);
+					//Log.e("BYTE","SET LINE BREAKS TO: " + CALCULATED_ROWSINWINDOW);
+				} else {
+					the_tree.setLineBreakAt(80);
+					//Log.e("BYTE","SET LINE BREAKS TO DEFAULT BECAUSE CALCULATED WAS 0");
+				}
+				automaticBreaks = true;
+			} else {
+				the_tree.setLineBreakAt(i);
+				automaticBreaks = false;
+				Log.e("BYTE","SET LINE BREAKS TO: " + i);
+			}
 		}
 		
 		jumpToZero();
+		
+		if(_runner != null && _runner.threadHandler != null) {
+			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
+				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+
+			}
+		}
+	}
+	
+	public void setWordWrap(boolean pIn) {
+		synchronized(the_tree) {
+			the_tree.setWordWrap(pIn);
+		}
+		
+		jumpToZero();
+		
+		if(_runner != null) {
+			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
+				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+
+			}
+		}
+		
+	}
+	
+	public void addBytes(byte[] obj,boolean jumpToEnd) {
+		if(obj.length == 0) return;
+		synchronized(the_tree) {
+			//double oldposition = 0d;
+			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
+			//if(the_tree.getBrokenLineCount() > 0) {
+			//	oldposition = scrollback / (the_tree.getBrokenLineCount()*PREF_LINESIZE);
+			//} else {
+			//	oldposition = WINDOW_HEIGHT;
+			//}
+				//Log.e("BYTE",">>>>>>>ADDING TEXT:" + obj);
+			try {
+				the_tree.addBytesImpl(obj);
+			//try {
+			//	addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,obj.getBytes("ISO-8859-1")));
+			//} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			if(jumpToEnd) {
+				scrollback = SCROLL_MIN;
+				buttonaddhandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
+			} else {
+				if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
+					scrollback = (double)WINDOW_HEIGHT;
+				} else {
+					if(scrollback > SCROLL_MIN + PREF_LINESIZE ) {
+					//scrollback = oldposition * (the_tree.getBrokenLineCount()*PREF_LINESIZE);
+						double new_max = the_tree.getBrokenLineCount()*PREF_LINESIZE;
+						scrollback += new_max - old_max;
+						//Log.e("BYTE","REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback);
+						
+					} else {
+						scrollback = SCROLL_MIN;
+					}
+				
+				}
+				if(scrollback > WINDOW_HEIGHT) {
+					if(!indicated) {
+						if(fling_velocity > 0) {
+							//play with no animation
+							new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
+						} else {
+							new_text_in_buffer_indicator.startAnimation(indicator_on);
+							//indicated = true;
+						}
+						//Log.e("BYTE","REPORTED");
+						indicated = true;
+					}
+				} else {
+					new_text_in_buffer_indicator.startAnimation(indicator_off);
+					indicated = false;
+					//indicated = false;
+				}
+			}
+			the_tree.prune();
+			
+		}
 		
 		if(_runner != null) {
 			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
@@ -832,7 +972,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			//}
 				//Log.e("BYTE",">>>>>>>ADDING TEXT:" + obj);
 			try {
-				the_tree.addBytesImpl(obj.getBytes("ISO-8859-1"));
+				the_tree.addBytesImpl(obj.getBytes(encoding));
 			//try {
 			//	addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,obj.getBytes("ISO-8859-1")));
 			//} catch (UnsupportedEncodingException e) {
@@ -925,6 +1065,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	}
 	
+	public void setCullExtraneous(boolean pIn) {
+		synchronized(the_tree) {
+			the_tree.setCullExtraneous(pIn);
+		}
+	}
+	
 	private class IteratorBundle {
 		private ListIterator<TextTree.Line> i;
 		private Float offset;
@@ -972,7 +1118,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
 			//calculate how few.
-			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount());
+			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount()-1);
 			return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
 		}
 		
