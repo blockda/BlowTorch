@@ -10,7 +10,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.Preference;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,7 +69,7 @@ public class CheckedEditPreference extends Preference  {
 		
 		SharedPreferences prefs = getSharedPreferences();
 		int val = prefs.getInt(getKey(), 0);
-		Log.e("LKDSFS","LOADED:" + Integer.toString(val));
+		//Log.e("LKDSFS","LOADED:" + Integer.toString(val));
 		int calc = prefs.getInt("CALCULATED_WIDTH", 80);
 		if(val > 0) {
 			input.setEnabled(true);
@@ -129,7 +129,7 @@ public class CheckedEditPreference extends Preference  {
 					SharedPreferences.Editor edit = CheckedEditPreference.this.getEditor();
 					edit.putInt(CheckedEditPreference.this.getKey(), Integer.parseInt(towatch.getText().toString()));
 					edit.commit();
-					Log.e("sfdFD","SAVING:" +towatch.getText().toString() + " with key: " + CheckedEditPreference.this.getKey());
+					//Log.e("sfdFD","SAVING:" +towatch.getText().toString() + " with key: " + CheckedEditPreference.this.getKey());
 				}
 			}
 			
@@ -161,6 +161,10 @@ public class CheckedEditPreference extends Preference  {
 			if(isChecked) {
 				toggle1.setEnabled(false);
 				toggle2.setEnabled(false);
+				
+				SharedPreferences prefs = CheckedEditPreference.this.getSharedPreferences();
+				int calc = prefs.getInt("CALCULATED_WIDTH", 80);
+				toggle1.setText(Integer.toString(calc));
 				SharedPreferences.Editor edit = getEditor();
 				edit.putInt(CheckedEditPreference.this.getKey(), 0);
 				edit.commit();

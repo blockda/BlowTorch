@@ -2227,18 +2227,25 @@ public class StellarService extends Service {
 	
 	//private boolean isWifiLocked = false;
 	private WifiManager.WifiLock the_wifi_lock = null;
+	private WifiManager the_wifi_manager = null;
 	
 	private void EnableWifiKeepAlive() {
 		//get the wifi manager
-		WifiManager wifi = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-		
+		if(the_wifi_manager == null) {
+			the_wifi_manager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		}
+			
 		//check if we are connected to a wifi network
-		WifiInfo info = wifi.getConnectionInfo();
+		WifiInfo info = the_wifi_manager.getConnectionInfo();
 		if(info.getNetworkId() != -1) {
 			//if so, grab the lock
 			//Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
-			the_wifi_lock = wifi.createWifiLock("BLOWTORCH_WIFI_LOCK");
-			the_wifi_lock.acquire();
+			the_wifi_lock = the_wifi_manager.createWifiLock("BLOWTORCH_WIFI_LOCK");
+			boolean held = false;
+			while(!held) {
+				the_wifi_lock.acquire();
+				held = the_wifi_lock.isHeld();
+			}
 		}
 	}
 	
