@@ -373,7 +373,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					screen2.setLineBreaks((Integer)msg.obj);
 					break;
 				case MESSAGE_SENDBUTTONDATA:
-					ByteBuffer bbuf = null;
+					/*ByteBuffer bbuf = null;
 					try {
 						bbuf = ByteBuffer.allocate(((String)msg.obj).getBytes(service.getEncoding()).length);
 					} catch (UnsupportedEncodingException e6) {
@@ -396,11 +396,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				
 					bbuf.rewind();
 				
-					byte[] bbuffbytes = bbuf.array();
+					byte[] bbuffbytes = bbuf.array();*/
 					try {
-						service.sendData(bbuffbytes);
+						service.sendData(((String)msg.obj).getBytes(service.getEncoding()));
 						
 					} catch (RemoteException e) {
+						e.printStackTrace();
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					screen2.jumpToZero();
