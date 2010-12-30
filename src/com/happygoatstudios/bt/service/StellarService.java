@@ -1280,6 +1280,9 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				the_settings = new HyperSettings();
 				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
+				ColorSetSettings def_colorset = new ColorSetSettings();
+				def_colorset.toDefautls();
+				the_settings.getSetSettings().put("default", def_colorset);
 			}
 			sendInitOk();
 		}
