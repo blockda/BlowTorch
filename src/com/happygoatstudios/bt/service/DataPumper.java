@@ -166,7 +166,9 @@ public class DataPumper extends Thread {
 				try {
 					numtoread = reader.available();
 				} catch (IOException e) {
-					throw new RuntimeException(e);
+					//throw new RuntimeException(e);
+					reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+					return;
 				}
 				if(numtoread < 1) {
 					//no data to read
@@ -188,7 +190,8 @@ public class DataPumper extends Thread {
 						retval = reader.read(data,0,numtoread);
 					
 					} catch (IOException e) {
-						throw new RuntimeException(e);
+						//throw new RuntimeException(e);
+						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
 					}
 					//Log.e("PUMP","READ (string): " + new String(data));
 					//Log.e("PUMP","READ (hex): " + toHex(data));
