@@ -911,6 +911,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				e.printStackTrace();
 			}
 			
+			drawingIterator = null;
+			
 			if(jumpToEnd) {
 				scrollback = SCROLL_MIN;
 				buttonaddhandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
@@ -1101,6 +1103,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 	}
 	Paint tmpp = new Paint();
+	ListIterator<Line> drawingIterator = null;
 	private IteratorBundle getScreenIterator(double pIn,float pLineSize) {
 		tmpp.setColor(0xFF00FF00);
 		tmpp.setTypeface(Typeface.MONOSPACE);
@@ -1115,20 +1118,28 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			pY = max;
 		}
 		//Log.e("BYTE","SCROLLBACK IS:" +pIn);
+		int current = 0;
+		if(drawingIterator == null) {
+			drawingIterator = the_tree.getLines().listIterator();
+		} else {
+			while(drawingIterator.hasPrevious()) {
+				drawingIterator.previous(); //reset to beginning
+			}
+		}
 		
 		if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
 			//calculate how few.
 			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount()-1);
-			return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
+			while(drawingIterator.hasNext()) drawingIterator.next();
+			//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
+			return new IteratorBundle(drawingIterator,under*pLineSize,0);
 		}
 		
 		double target = Math.floor(pY/pLineSize);
-		int current = 0;
 		
-		ListIterator<Line> i = the_tree.getLines().listIterator();
-		while(i.hasNext()) {
-			position = i.nextIndex();
-			Line l = i.next();
+		while(drawingIterator.hasNext()) {
+			position = drawingIterator.nextIndex();
+			Line l = drawingIterator.next();
 			working_h += pLineSize * (1 + l.getBreaks());
 			current += 1 + l.getBreaks();
 			float screenpos = (float)pY - working_h;
@@ -1157,14 +1168,17 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				//Log.e("BYTE",report);
 				//this is technically a new position.
 				//position = position +1;
-				return new IteratorBundle(the_tree.getLines().listIterator(position),-1*offset,extra);
+				//return new IteratorBundle(the_tree.getLines().listIterator(position),-1*offset,extra);
+				if(drawingIterator.hasPrevious()) drawingIterator.previous();
+				return new IteratorBundle(drawingIterator,-1*offset,extra);
 			} else {
 				//next line
 				//position++;
 			}
 		}
 		
-		return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),pLineSize,0);
+		//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),pLineSize,0);
+		return new IteratorBundle(drawingIterator,pLineSize,0);
 		
 	}
 	
