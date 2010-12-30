@@ -53,6 +53,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -665,6 +666,14 @@ public class StellarService extends Service {
 			//if the file exists, we will get here, if not, it will go to file not found.
 			HyperSAXParser parser = new HyperSAXParser(filename,this);
 			the_settings = parser.load();
+			if(the_settings == null) {
+				the_settings = new HyperSettings();
+				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
+				ColorSetSettings def_colorset = new ColorSetSettings();
+				def_colorset.toDefautls();
+				the_settings.getSetSettings().put("default", def_colorset);
+				Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
+			}
 			buildAliases();
 			buildTriggerData();
 			
@@ -689,7 +698,7 @@ public class StellarService extends Service {
 			the_settings.getSetSettings().put("default", def_colorset);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		}
+		} 
 		
 	}
 	

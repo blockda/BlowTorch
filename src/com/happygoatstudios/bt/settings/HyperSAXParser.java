@@ -449,7 +449,7 @@ public class HyperSAXParser extends BaseParser {
 		try {
 			Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			return null;
 		}
 		
 		return tmp; 

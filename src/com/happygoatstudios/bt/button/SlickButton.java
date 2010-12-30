@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.button;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import com.happygoatstudios.bt.window.ByteView;
 import com.happygoatstudios.bt.window.MainWindow;
 
 import android.content.Context;
@@ -100,7 +101,7 @@ public class SlickButton extends View {
 					moving = false;
 					nudged = false;
 					hasfocus = false;
-					Message deleme = deleter.obtainMessage(666, SlickButton.this);
+					Message deleme = deleter.obtainMessage(ByteView.MSG_DELETEBUTTON, SlickButton.this);
 					deleter.sendMessage(deleme);
 					//dispatcher.
 					break;
