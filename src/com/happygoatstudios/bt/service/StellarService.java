@@ -216,7 +216,9 @@ public class StellarService extends Service {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
 				case MESSAGE_DEBUGTELNET:
-					the_processor.setDebugTelnet((Boolean)msg.obj);
+					if(the_processor != null) {
+						the_processor.setDebugTelnet((Boolean)msg.obj);
+					}
 					break;
 				case MESSAGE_PROCESSORWARNING:
 					try {
