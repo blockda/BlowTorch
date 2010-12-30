@@ -562,9 +562,10 @@ public class StellarService extends Service {
 							throw new RuntimeException(e);
 						}
 					} catch (IOException e) {
-						throw new RuntimeException(e);
+						//throw new RuntimeException(e);
+						myhandler.sendEmptyMessage(MESSAGE_DISCONNECTED);
 					} catch (RemoteException e) {
-						throw new RuntimeException(e);
+						e.printStackTrace();
 					}
 					break;
 				case MESSAGE_REQUESTBUFFER:
