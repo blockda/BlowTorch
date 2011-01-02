@@ -115,7 +115,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
-				NewButtonSetEntryDialog diag = new NewButtonSetEntryDialog(ButtonSetSelectorDialog.this.getContext(),dispater);
+				NewButtonSetEntryDialog diag = new NewButtonSetEntryDialog(ButtonSetSelectorDialog.this.getContext(),dispater,service);
 				diag.setTitle("New Button Set:");
 				diag.show();
 				ButtonSetSelectorDialog.this.dismiss();

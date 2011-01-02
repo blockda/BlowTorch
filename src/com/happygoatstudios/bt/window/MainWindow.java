@@ -1496,27 +1496,46 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
-		
-		menu.add(0,99,0,"Aliases");
-		menu.add(0,100,0,"Triggers");
-		menu.add(0,105,0,"Timers");
-		menu.add(0,103,0,"Options");
-		menu.add(0,102,0,"Button Sets");
+		MenuItem tmp = null;
+		tmp = menu.add(0,99,0,"Aliases").setIcon(android.R.drawable.ic_menu_sort_alphabetically);
+		menu.add(0,100,0,"Triggers").setIcon(android.R.drawable.ic_menu_mylocation);
+		menu.add(0,105,0,"Timers").setIcon(android.R.drawable.ic_menu_recent_history);
+		menu.add(0,103,0,"Options").setIcon(android.R.drawable.ic_menu_manage);
+		menu.add(0,102,0,"Button Sets").setIcon(android.R.drawable.ic_menu_today);
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 901, 0, "Reconnect");
-		menu.add(0, 902, 0, "Quit");
+		menu.add(0, 902, 0, "Disconnect");
+		menu.add(0, 903, 0, "Quit");
 		
 		
 		return true;
 		
 	}
 	
+	RotatableDialog d = null;
+	
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
+		case 903:
+			this.cleanExit();
+			this.finish();
+			break;
+		case 902:
+			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+			break;
+		case 901:
+			try {
+				service.reconnect();
+			} catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			break;
 		case 105:
 			TimerSelectionDialog tsel = null;
 			tsel = new TimerSelectionDialog(MainWindow.this,service);
+			//tsel.
 			tsel.show();
 			
 			break;

@@ -1,6 +1,10 @@
 package com.happygoatstudios.bt.button;
 
+import java.util.List;
+
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.validator.Validator;
 import com.happygoatstudios.bt.window.MainWindow;
 
 import android.app.Dialog;
@@ -8,6 +12,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -16,10 +21,12 @@ import android.widget.EditText;
 public class NewButtonSetEntryDialog extends Dialog {
 
 	Handler dispatcher = null;
+	IStellarService service = null;
 	
-	public NewButtonSetEntryDialog(Context context,Handler reportto) {
+	public NewButtonSetEntryDialog(Context context,Handler reportto,IStellarService theService) {
 		super(context);
 		dispatcher = reportto;
+		service = theService;
 	}
 	
 	public void onCreate(Bundle b) {
@@ -34,7 +41,36 @@ public class NewButtonSetEntryDialog extends Dialog {
 		done.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
+				
+				
+				
 				EditText ed = (EditText)findViewById(R.id.newbuttonset_entry);
+				
+				Validator checker = new Validator();
+				checker.add(ed, Validator.VALIDATE_NOT_BLANK, "Set name");
+				
+				
+				String result = checker.validate();
+				if(result != null) {
+					checker.showMessage(NewButtonSetEntryDialog.this.getContext(), result);
+					return;
+				}
+				
+				//step 2 validation
+				List<String> list = null;
+				try {
+					list = service.getButtonSetNames();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				for(String str : list) {
+					if(ed.getText().toString().equals(str)) {
+						checker.showMessage(NewButtonSetEntryDialog.this.getContext(), str + " is an existing button set.");
+						return;
+					}
+				}
 				
 				//send a message to add and start working on the new button set
 				Message newset = dispatcher.obtainMessage(MainWindow.MESSAGE_NEWBUTTONSET,ed.getText().toString());

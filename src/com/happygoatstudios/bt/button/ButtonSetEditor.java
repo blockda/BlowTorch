@@ -168,8 +168,8 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				}
 				
 				for(String str : takenNames) {
-					if(nameEditor.getText().toString().equals(str)) {
-						checker.showMessage(ButtonSetEditor.this.getContext(), set + " is an existing button set.");
+					if(nameEditor.getText().toString().equals(str) && !nameEditor.getText().toString().equals(set)) {
+						checker.showMessage(ButtonSetEditor.this.getContext(), nameEditor.getText().toString() + " is an existing button set.");
 						return;
 					}
 				}
