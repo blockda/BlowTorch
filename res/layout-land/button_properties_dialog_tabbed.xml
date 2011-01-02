@@ -260,6 +260,14 @@
 				</TableLayout>
 				</TableRow>
 			</TableLayout>
+			<!-- <TableLayout android:stretchColumns="*" android:layout_marginTop="15sp" android:layout_marginLeft="5sp" android:layout_marginRight="5sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/blue_frame_nomargin" android:gravity="center_horizontal">
+				<TableRow>
+					<Button android:id="@+id/fit" android:text="Fit Button to Label" android:layout_marginTop="10dip" android:paddingLeft="20dip" android:paddingRight="20dip"/>
+				</TableRow>
+				<TableRow>
+					<Button android:id="@+id/reset" android:text="Reset to Set Defaults" android:layout_marginTop="10dip" android:paddingLeft="20dip" android:paddingRight="20dip"/>
+				</TableRow>
+			</TableLayout> -->
 			</LinearLayout>
 			</ScrollView>
 			</LinearLayout>

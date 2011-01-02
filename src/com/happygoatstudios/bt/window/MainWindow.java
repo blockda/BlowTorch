@@ -117,6 +117,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_DODISCONNECT = 879;
 	public static final int MESSAGE_SENDBUTTONDATA = 880;
 	private static final int MESSAGE_LINEBREAK = 881;
+	//protected static final int MESSAGE_BUTTONRELOAD = 882;
 	
 	private TextTree tree = new TextTree();
 
@@ -284,13 +285,18 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						if(service.isKeepLast()) {
 							if(historyWidgetKept) {
-								input_box.setText(history.getNext());
+								String tmp = history.getNext();
+								input_box.setText(tmp);
+								input_box.setSelection(tmp.length());
 								historyWidgetKept=false;
 							} else {
 								input_box.setText(cmd);
+								//input_box.setText(cmd);
+								input_box.setSelection(cmd.length());
 							}
 						} else {
 							input_box.setText(cmd);
+							input_box.setSelection(cmd.length());
 						}
 					} catch (RemoteException e) {
 						throw new RuntimeException(e);
@@ -299,6 +305,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getPrev();
 					input_box.setText(cmd);
+					input_box.setSelection(cmd.length());
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER && event.getAction() == KeyEvent.ACTION_UP) {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
@@ -348,6 +355,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getNext();
 					input_box.setText(cmd);
+					input_box.setSelection(cmd.length());
 					if(actionId == EditorInfo.IME_ACTION_DONE) {
 
 						//	return false;
@@ -770,6 +778,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
 						boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
 						
+						//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
+						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
@@ -807,6 +817,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setBreakAmount(breakvalue);
 							service.setRemoveExtraColor(removeextracolor);
 							service.setDebugTelnet(debugtelnet);
+							//service.setShowFitMessage(fitmessage);
 							service.saveSettings();
 						} catch (RemoteException e) {
 							throw new RuntimeException(e);
@@ -1260,13 +1271,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						try {
 							if(service.isKeepLast()) {
 								if(historyWidgetKept) {
-									input_box.setText(history.getNext());
+									String tmp = history.getNext();
+									input_box.setText(tmp);
+									input_box.setSelection(tmp.length());
 									historyWidgetKept = false;
 								} else {
 									input_box.setText(cmd);
+									input_box.setSelection(cmd.length());
 								}
 							} else {
 								input_box.setText(cmd);
+								input_box.setSelection(cmd.length());
 							}
 						} catch (RemoteException e) {
 							throw new RuntimeException(e);
@@ -1579,6 +1594,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("BELL_DISPLAY", service.isDisplayOnBell());
 				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
 				edit.putBoolean("ROUND_BUTTONS",service.isRoundButtons());
+				//edit.putBoolean("FIT_MESSAGE", service.isShowFitMessage());
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
@@ -1661,7 +1677,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				if(service.getOrientation() == 1) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
+					HideKeyboard();
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+					
 				}
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
@@ -1676,6 +1694,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				if(service.getOrientation() == 2) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
+					HideKeyboard();
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 				}
 			} catch (RemoteException e) {
@@ -1687,6 +1706,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		super.onConfigurationChanged(newconfig);
 		
+	}
+	
+	private void HideKeyboard() {
+		InputMethodManager imm = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
+		EditText input_box = (EditText)findViewById(R.id.textinput);
+		imm.hideSoftInputFromWindow(input_box.getWindowToken(), 0);
 	}
 	
 	private void DoButtonPortraitMode(boolean use) {
@@ -2206,6 +2231,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 		public void doLineBreak(int i) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_LINEBREAK,new Integer(i)));
+		}
+
+		public void reloadButtons(String setName) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_CHANGEBUTTONSET,setName));
 		}
 	};
 	

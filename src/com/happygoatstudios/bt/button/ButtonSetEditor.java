@@ -1,5 +1,7 @@
 package com.happygoatstudios.bt.button;
 
+import java.util.List;
+
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.button.ButtonEditorDialog.COLOR_FIELDS;
 import com.happygoatstudios.bt.service.IStellarService;
@@ -29,6 +31,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 	EditText labelSize;
 	EditText buttonWidth;
 	EditText buttonHeight;
+	EditText nameEditor;
 	
 	ColorSetSettings newsettings;
 	ColorSetSettings oldsettings;
@@ -68,6 +71,13 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		flipColor = (Button)findViewById(R.id.btnset_flippedcolor);
 		labelColor = (Button)findViewById(R.id.btnset_labelcolor);
 		flipLabelColor = (Button)findViewById(R.id.btnset_fliplabelcolor);
+		
+		nameEditor = (EditText)findViewById(R.id.name);
+		nameEditor.setText(set);
+		nameEditor.setSelection(set.length());
+		if(set.equals("default")) {
+			nameEditor.setEnabled(false); //can not edit default set name
+		}
 		//normalColor = (Button)findViewById(R.id.btn_defaultcolor);
 		normalColor.setBackgroundColor(oldsettings.getPrimaryColor());
 		focusColor.setBackgroundColor(oldsettings.getSelectedColor());
@@ -148,9 +158,38 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 					return;
 				}
 				
+				//get set names
+				List<String> takenNames = null;
+				try {
+					takenNames = service.getButtonSetNames();
+				} catch (RemoteException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				for(String str : takenNames) {
+					if(nameEditor.getText().toString().equals(str)) {
+						checker.showMessage(ButtonSetEditor.this.getContext(), set + " is an existing button set.");
+						return;
+					}
+				}
+				
+				
 				newsettings.setButtonHeight(Integer.parseInt(buttonHeight.getText().toString()));
 				newsettings.setButtonWidth(Integer.parseInt(buttonWidth.getText().toString()));
 				newsettings.setLabelSize(Integer.parseInt(labelSize.getText().toString()));
+				
+				if(!(nameEditor.getText().toString().equals(set))) {
+					try {
+						service.updateAndRenameSet(set, nameEditor.getText().toString(), newsettings);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					notifychanged.sendEmptyMessage(100);
+					ButtonSetEditor.this.dismiss();
+					return;
+				} 
 				
 				if(newsettings.equals(oldsettings)) {
 

@@ -35,6 +35,7 @@ public class HyperSettings {
 	private String hapticFeedbackOnPress = "auto";
 	private String hapticFeedbackOnFlip = "none";
 	private boolean roundButtons = true;
+	private boolean showFitMessage = true;
 	
 	private boolean keepScreenOn = true;
 	private boolean vibrateOnBell = true;
@@ -176,6 +177,8 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_KEEPSCREENON, (data.isKeepScreenOn()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_FULLSCREEN, (data.isFullScreen()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_ROUNDBUTTONS, (data.isRoundButtons()) ? "true" : "false");
+			//out.attribute("", BaseParser.ATTR_FITBUTTONS, (data.isShowFitMessage()) ? "true" : "false");
+			
 			out.attribute("", BaseParser.ATTR_ORIENTATION, Integer.toString(data.getOrientation()));
 			out.attribute("", BaseParser.ATTR_BREAKAMOUNT, Integer.toString(data.getBreakAmount()));
 			out.attribute("", BaseParser.ATTR_WORDWRAP, (data.isWordWrap()) ? "true" : "false");
@@ -708,6 +711,14 @@ public class HyperSettings {
 
 	public boolean isRemoveExtraColor() {
 		return removeExtraColor;
+	}
+
+	public void setShowFitMessage(boolean showFitMessage) {
+		this.showFitMessage = showFitMessage;
+	}
+
+	public boolean isShowFitMessage() {
+		return showFitMessage;
 	}
 
 }

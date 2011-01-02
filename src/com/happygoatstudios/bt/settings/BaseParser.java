@@ -28,6 +28,7 @@ public class BaseParser {
 	static final String ATTR_HFONFLIP = "hapticFeedBackOnFlip";
 	static final String ATTR_ENCODING = "encoding";
 	static final String ATTR_ROUNDBUTTONS = "roundButtons";
+	//static final String ATTR_FITBUTTONS = "showFitDialog";
 	
 	static final String TAG_WINDOW = "window";
 	static final String ATTR_LINESIZE = "lineSize";
