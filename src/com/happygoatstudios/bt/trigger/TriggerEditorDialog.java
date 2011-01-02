@@ -44,8 +44,9 @@ import com.happygoatstudios.bt.responder.notification.*;
 import com.happygoatstudios.bt.responder.toast.*;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.validator.Validator;
+import com.happygoatstudios.bt.window.RotatableDialog;
 
-public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener{
+public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener,RotatableDialog{
 
 	private TableRow legend;
 	private TableLayout responderTable;
@@ -646,6 +647,10 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		//so the new responder is in.
 		the_trigger.getResponders().add(newresponder);
 		refreshResponderTable();
+	}
+
+	public void updateOrientation(int newOrientation) {
+		this.setContentView(R.layout.trigger_editor_dialog);
 	}
 
 	
