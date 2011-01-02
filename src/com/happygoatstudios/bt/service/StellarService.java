@@ -137,6 +137,7 @@ public class StellarService extends Service {
 	public static final int MESSAGE_DODISCONNECT = 507;
 	public static final int MESSAGE_PROCESSORWARNING = 508;
 	public static final int MESSAGE_DEBUGTELNET = 509;
+	protected static final int MESSAGE_DOBUTTONRELOAD = 510;
 	
 	public boolean sending = false;
 	
@@ -216,6 +217,9 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_DOBUTTONRELOAD:
+					DispatchButtonLoad((String)msg.obj);
+					break;
 				case MESSAGE_DEBUGTELNET:
 					if(the_processor != null) {
 						the_processor.setDebugTelnet((Boolean)msg.obj);
@@ -1927,6 +1931,41 @@ public class StellarService extends Service {
 				the_settings.setRemoveExtraColor(pIn);
 			}
 		}
+
+		public void updateAndRenameSet(String oldSet, String newSet, ColorSetSettings settings) throws RemoteException {
+			String currentlyUsed = null;
+			synchronized(the_settings) {
+				currentlyUsed = the_settings.getLastSelected();
+				//update references
+				for(String name : the_settings.getButtonSets().keySet()) {
+					Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(name);
+					for(SlickButtonData button : buttons) {
+						if(button.getTargetSet().equals(oldSet)) {
+							button.setTargetSet(newSet);
+						}
+					}
+				}
+				//remove old set
+				Vector<SlickButtonData> newset_buttons = the_settings.getButtonSets().remove(oldSet);
+				the_settings.getSetSettings().remove(oldSet);
+				//make new set
+				the_settings.getButtonSets().put(newSet, newset_buttons);
+				the_settings.getSetSettings().put(newSet, settings);
+				//send update notification
+				if(oldSet.equals(currentlyUsed)) {
+					the_settings.setLastSelected(newSet);
+				}
+			}
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			if(oldSet.equals(currentlyUsed)) {
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DOBUTTONRELOAD,newSet));
+			} else {
+				//we have to load it anyway in case buttons in that set have been updated to go to the new page.
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DOBUTTONRELOAD,currentlyUsed));
+			}
+		}
+
+		
 		
 	};
 	
@@ -2272,6 +2311,19 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private void DispatchButtonLoad(String setName) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).reloadButtons(setName);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
+	}
+	
 	private void DispatchToast(String message,boolean longtime) {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
@@ -2559,7 +2611,7 @@ public class StellarService extends Service {
 	
 	private class KeyBoardCommand extends SpecialCommand {
 		public KeyBoardCommand() {
-			this.commandName = ".keyboard";
+			this.commandName = "keyboard";
 			//alternate short form, kb.
 		}
 		public void execute(Object o) {

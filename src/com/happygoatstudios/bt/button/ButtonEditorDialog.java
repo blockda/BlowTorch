@@ -142,6 +142,9 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		ScrollView sv = (ScrollView)findViewById(R.id.btn_editor_advanced_scroll_containter);
 		sv.setScrollbarFadingEnabled(false);
 		
+		//Button fitbutton = (Button)findViewById(R.id.fit);
+		//fitbutton.setOnClickListener(new FitClickListener());
+		
 		move_free = (CheckBox)findViewById(R.id.move_free);
 		move_nudge = (CheckBox)findViewById(R.id.move_nudge);
 		move_freeze = (CheckBox)findViewById(R.id.move_freeze);
@@ -299,7 +302,11 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				//big ugly validation step.
 				//labels/commands can be empty or whatever I don't care.
 				//all numeric fields must be numbers and greater than 0.
-				Validator checker = new Validator();
+				boolean passed = validate();
+				if(!passed) {
+					return;
+				}
+				/*Validator checker = new Validator();
 				checker.add(xPos, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "X Coordinate");
 				checker.add(yPos, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Y Coordinate");
 				checker.add(eWidth, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Width");
@@ -310,9 +317,10 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				if(result != null) {
 					checker.showMessage(ButtonEditorDialog.this.getContext(), result);
 					return;
-				}
+				}*/
 				
-				EditText label = (EditText)findViewById(R.id.button_text_et);
+				updateData();
+				/*EditText label = (EditText)findViewById(R.id.button_text_et);
 				
 				
 				EditText command = (EditText)findViewById(R.id.button_command_et);
@@ -344,10 +352,10 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				
 				if(tfreeze.isChecked()) {
 					the_button.setMoveMethod(SlickButtonData.MOVE_FREEZE);
-				}
+				}*/
 				
 				//do the check for the button height/width.
-				Paint opts = new Paint();
+				/*Paint opts = new Paint();
 				opts.setTypeface(Typeface.DEFAULT_BOLD);
 				opts.setTextSize(the_button.getData().getLabelSize()*ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density);
 				//opts.setF
@@ -393,7 +401,7 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 					AlertDialog dialog = b.create();
 					dialog.show();
 					
-				}
+				}*/
 				
 				
 				
@@ -405,6 +413,58 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 				ButtonEditorDialog.this.dismiss();
 			}
 		}); 
+	}
+	
+	private boolean validate() {
+		Validator checker = new Validator();
+		checker.add(xPos, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "X Coordinate");
+		checker.add(yPos, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Y Coordinate");
+		checker.add(eWidth, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Width");
+		checker.add(eHeight, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Height");
+		checker.add(labelSize, Validator.VALIDATE_NOT_BLANK|Validator.VALIDATE_NUMBER_NOT_ZERO, "Label Size");
+		
+		String result = checker.validate();
+		if(result != null) {
+			checker.showMessage(ButtonEditorDialog.this.getContext(), result);
+			return false;
+		}
+		return true;
+	}
+	
+	private void updateData() {
+		EditText label = (EditText)findViewById(R.id.button_text_et);
+		
+		
+		EditText command = (EditText)findViewById(R.id.button_command_et);
+		EditText flip = (EditText)findViewById(R.id.button_flip_et);
+		EditText fliplbl = (EditText)findViewById(R.id.button_flip_label_et);
+		the_button.setLabel(label.getText().toString());
+		the_button.setText(command.getText().toString());
+		the_button.setFlipCommand(flip.getText().toString());
+		the_button.getData().setFlipLabel(fliplbl.getText().toString());
+		the_button.getData().setLabelSize(new Integer(labelSize.getText().toString()));
+		the_button.getData().setX(new Integer(xPos.getText().toString()));
+		the_button.getData().setY(new Integer(yPos.getText().toString()));
+		the_button.getData().setWidth(new Integer(eWidth.getText().toString()));
+		the_button.getData().setHeight(new Integer(eHeight.getText().toString()));
+		the_button.getData().setTargetSet(targetSet.getText().toString());
+		CheckBox tfree = (CheckBox)findViewById(R.id.move_free);
+		CheckBox tnudge = (CheckBox)findViewById(R.id.move_nudge);
+		CheckBox tfreeze = (CheckBox)findViewById(R.id.move_freeze);
+		
+		if(tfree.isChecked()) {
+			//Log.e("BTNEDITOR","SAVING WITH MOVE_FREE");
+			the_button.setMoveMethod(SlickButtonData.MOVE_FREE);
+		}
+		
+		if(tnudge.isChecked()) {
+			//Log.e("BTNEDITOR","SAVING WITH MOVE_NUDGE");
+			the_button.setMoveMethod(SlickButtonData.MOVE_NUDGE);
+		}
+		
+		if(tfreeze.isChecked()) {
+			the_button.setMoveMethod(SlickButtonData.MOVE_FREEZE);
+		}
 	}
 	
 	public void onBackPressed() {
@@ -419,20 +479,77 @@ public class ButtonEditorDialog extends Dialog implements ColorPickerDialog.OnCo
 		this.dismiss();
 	}
 	
-	private class FitClickListener implements DialogInterface.OnClickListener {
+	private class FitClickListener implements View.OnClickListener {
 
 		private int height;
 		private int width;
 		
-		public FitClickListener(int pHeight,int pWidth) {
-			height = pHeight;
-			width = pWidth;
+		public FitClickListener() {
+			//height = pHeight;
+			//width = pWidth;
 		}
 		
-		public void onClick(DialogInterface dialog, int which) {
+		public void onClick(View v) {
 			SlickButtonData fitbutton = the_button.getData().copy();
-			fitbutton.setWidth(width);
-			fitbutton.setHeight(height);
+			
+			//boolean needsfit = false;
+			
+			Paint opts = new Paint();
+			opts.setTypeface(Typeface.DEFAULT_BOLD);
+			opts.setTextSize(the_button.getData().getLabelSize()*ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density);
+			//opts.setF
+			
+			opts.setFlags(Paint.ANTI_ALIAS_FLAG);
+			
+			float length = opts.measureText(the_button.getData().getLabel());
+			float length2 = opts.measureText(the_button.getData().getFlipLabel());
+			float height = the_button.getData().getLabelSize();
+			
+			float density = ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density;
+			float lengthtofit = the_button.getData().getWidth()*density;
+			//Log.e("BUTTONEDITOR","LENGTH CALC: " + length2 + " width:" + the_button.getData().getWidth());
+			if(length/density > the_button.getData().getWidth() || length2/density > the_button.getData().getWidth()) {
+				//needsfit = true;
+			}
+			if(length > length2) {
+				lengthtofit = length;
+			} else {
+				lengthtofit = length2;
+			}
+			//Log.e("BUTTONEDITOR","HEIGHT CALC: " + height + " height:" + the_button.getData().getHeight());
+			if(height > the_button.getHeight()) {
+				//needsfit = true;
+			}
+			
+			/*if(needsfit) {
+				AlertDialog.Builder b = new AlertDialog.Builder(ButtonEditorDialog.this.getContext());
+				b.setMessage("The button label has exceeded the bounds of the button. Fit button to label?");
+				b.setTitle("Label too big.");
+				//float density = ButtonEditorDialog.this.getContext().getResources().getDisplayMetrics().density;
+				b.setPositiveButton("Fit please.", new FitClickListener((int)(height+20*density),(int)((lengthtofit/density)+(int)20*density)));
+				b.setNegativeButton("No thanks.", new DialogInterface.OnClickListener() {
+
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+					
+				});
+				
+				AlertDialog dialog = b.create();
+				dialog.show();
+				
+			}*/
+			boolean passed = validate();
+			if(!passed) {
+				return;
+			}
+			updateData();
+			
+			fitbutton.setWidth((int)((lengthtofit/density)+(int)20*density));
+			fitbutton.setHeight((int)(height+20*density));
+			the_button.iHaveChanged(the_button.orig_data);
+			the_button.invalidate();
+			
 			
 			Message msg = deleter.obtainMessage(MainWindow.MESSAGE_MODIFYBUTTON);
 			Bundle b = msg.getData();

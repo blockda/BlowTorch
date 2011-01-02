@@ -91,6 +91,7 @@ public class HyperSAXParser extends BaseParser {
 				tmp.setKeepScreenOn( (attributes.getValue("",ATTR_KEEPSCREENON) == null) ? true : (attributes.getValue("",ATTR_KEEPSCREENON).equals("true")) ? true : false);
 				tmp.setFullScreen( (attributes.getValue("",ATTR_FULLSCREEN) == null) ? false : (attributes.getValue("",ATTR_FULLSCREEN).equals("true")) ? true : false);
 				tmp.setRoundButtons( (attributes.getValue("",ATTR_ROUNDBUTTONS) == null) ? false : (attributes.getValue("",ATTR_ROUNDBUTTONS).equals("true")) ? true:false);
+				//tmp.setShowFitMessage( (attributes.getValue("",ATTR_FITBUTTONS) == null) ? true : (attributes.getValue("",ATTR_FITBUTTONS).equals("true")) ? true:false);
 				tmp.setOrientation( (attributes.getValue("",ATTR_ORIENTATION) == null) ? 0 : Integer.parseInt((attributes.getValue("",ATTR_ORIENTATION))));
 				tmp.setBreakAmount( (attributes.getValue("",ATTR_BREAKAMOUNT) == null) ? 0 : Integer.parseInt((attributes.getValue("",ATTR_BREAKAMOUNT))));
 				tmp.setWordWrap( (attributes.getValue("",ATTR_WORDWRAP) == null) ? true : (attributes.getValue("",ATTR_WORDWRAP).equals("true")) ? true : false);

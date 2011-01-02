@@ -131,5 +131,5 @@ interface IStellarService {
 	boolean isDebugTelnet();
 	void setRemoveExtraColor(boolean pIn);
 	void setDebugTelnet(boolean pIn);
-	
+	void updateAndRenameSet(String oldSet, String newSet,in ColorSetSettings settings);
 }
