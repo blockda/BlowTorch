@@ -117,6 +117,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_DODISCONNECT = 879;
 	public static final int MESSAGE_SENDBUTTONDATA = 880;
 	private static final int MESSAGE_LINEBREAK = 881;
+	private static final int MESSAGE_HIDEKEYBOARD =882;
 	//protected static final int MESSAGE_BUTTONRELOAD = 882;
 	
 	private TextTree tree = new TextTree();
@@ -377,6 +378,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_HIDEKEYBOARD:
+					HideKeyboard();
+					break;
 				case MESSAGE_LINEBREAK:
 					screen2.setLineBreaks((Integer)msg.obj);
 					break;
@@ -1683,7 +1687,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public void onConfigurationChanged(Configuration newconfig) {
 		//Log.e("WINDOW","CONFIGURATION CHANGING");
-		
+		if(service == null) {
+			super.onConfigurationChanged(newconfig);
+			return;
+		}
 		//Log.e("WINDOW","CONFIGURATION CHANGED");
 		//RelativeLayout container = (RelativeLayout)this.findViewById(R.id.window_container);
 		//RelativeLayout.LayoutParams p = (RelativeLayout.LayoutParams)container.getLayoutParams();
@@ -1696,7 +1703,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				if(service.getOrientation() == 1) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
-					HideKeyboard();
+					//HideKeyboard();
+					myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 5);
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 					
 				}
@@ -1713,7 +1721,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				if(service.getOrientation() == 2) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
-					HideKeyboard();
+					//HideKeyboard();
+					myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 5);
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 				}
 			} catch (RemoteException e) {
@@ -1980,7 +1989,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	//}
 	
 
-	
+	public void onStart() {
+		super.onStart();
+		if(!isServiceRunning()) {
+			//start the service
+			this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
+			//servicestarted = true;
+		}
+	}
 	public void onPause() {
 		//Log.e("WINDOW","onPause()");
 		
