@@ -65,13 +65,16 @@ public class Processor {
 
 	// private byte
 	// subnegotioation: \\xFF\\xFA(.{1})(.*)\\xFF\\xF0
+	byte[] holdover = null;
 
 	public byte[] RawProcess(byte[] data) {
 		if (data == null) {
 			return null;
 		}
 
-		ByteBuffer buff = ByteBuffer.allocate(data.length);
+		ByteBuffer buff = null;
+		if(holdover == null) {buff = ByteBuffer.allocate(data.length); }
+		else { buff = ByteBuffer.allocate(data.length + holdover.length); buff.put(holdover); holdover = null; }
 		ByteBuffer opbuf = ByteBuffer.allocate(30);
 
 		int count = 0; // count of the number of bytes in the buffer;
@@ -79,6 +82,10 @@ public class Processor {
 			switch (data[i]) {
 			case IAC:
 				// if the next byte is
+				if(i > data.length-1) {
+					holdover = new byte[] { (byte)0xFF };
+					return null;
+				}
 				if ((data[i + 1] >= WILL && data[i + 1] <= DONT)
 						|| data[i + 1] == SB) {
 					//Log.e("SERVICE", "DO IAC");
@@ -344,6 +351,8 @@ public class Processor {
 	public void reset() {
 		opthandler.reset();
 	}
+
+	
 
 }
 

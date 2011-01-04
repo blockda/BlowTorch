@@ -138,6 +138,7 @@ public class StellarService extends Service {
 	public static final int MESSAGE_PROCESSORWARNING = 508;
 	public static final int MESSAGE_DEBUGTELNET = 509;
 	protected static final int MESSAGE_DOBUTTONRELOAD = 510;
+	public static final int MESSAGE_MCCPFATALERROR = 511;
 	
 	public boolean sending = false;
 	
@@ -180,6 +181,7 @@ public class StellarService extends Service {
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
 		LineBreakCommand lccmd = new LineBreakCommand();
+		DataCorrupterCommand crcmd = new DataCorrupterCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
@@ -191,6 +193,7 @@ public class StellarService extends Service {
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
 		specialcommands.put(lccmd.commandName, lccmd);
+		specialcommands.put(crcmd.commandName, crcmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -234,13 +237,50 @@ public class StellarService extends Service {
 						throw new RuntimeException(e4);
 					}
 					break;
+				case MESSAGE_MCCPFATALERROR:
+					//killNetThreads();
+					//DoDisconnect("MCCP Data Corruption, Click to reconnect.");
+					//isConnected = false;
+					Message endCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
+					Bundle eb = endCompress.getData();
+					byte[] ec_neg = new byte[] { TC.IAC , TC.DONT , TC.COMPRESS2 };
+					eb.putByteArray("THE_DATA", ec_neg);
+					//eb.putString("DEBUG_MESSAGE", "\nIAC DONT COMPRESS2 - Sent\n");
+					endCompress.setData(eb);
+					this.sendMessage(endCompress);
+					try {
+						StellarService.this.doDispatchNoProcess(new String("\n\n" + Colorizer.colorRed + "MCCP Data Format Error - Attempting to restart MCCP\nSome data may be lost. Reconnect if compression is not restarted automatically." + Colorizer.colorWhite + "\n\n").getBytes(the_settings.getEncoding()));
+					} catch (RemoteException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					} catch (UnsupportedEncodingException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					}
+					//Message startCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
+					//Bundle sb = endCompress.getData();
+					byte[] sc_neg = new byte[] { TC.IAC , TC.WILL , TC.COMPRESS2 };
+					//sb.putByteArray("THE_DATA", sc_neg);
+					//sb.putString("DEBUG_MESSAGE", "\nIAC DO COMPRESS2 - Sent\n");
+					//startCompress.setData(sb);
+					//this.sendMessageDelayed(startCompress,20);
+					the_processor.RawProcess(sc_neg);
+					break;
 				case MESSAGE_DODISCONNECT:
 					killNetThreads();
-					DoDisconnect();
+					DoDisconnect(null);
 					isConnected = false;
 					break;
 				case MESSAGE_RECONNECT:
 					killNetThreads();
+					for(TriggerData t : the_settings.getTriggers().values()) {
+						if(t.isFireOnce()) {
+							t.setFired(false);
+						}
+					}
+					buildTriggerData();
+					the_processor.reset();
+					
 					try {
 						doStartup();
 					} catch (UnknownHostException e3) {
@@ -250,14 +290,14 @@ public class StellarService extends Service {
 					} catch (IOException e3) {
 						throw new RuntimeException(e3);
 					}
-					buildTriggerData();
-					the_processor.reset();
+					
+					
 					break;
 				case MESSAGE_DISCONNECTED:
 					//the pump has reported the connection closed.
 					//Log.e("SERV","ACTIVATING DISCONNECT");
 					killNetThreads();
-					DoDisconnect();
+					DoDisconnect(null);
 					isConnected = false;
 					break;
 				case MESSAGE_DISPLAYPARAMS:
@@ -626,7 +666,7 @@ public class StellarService extends Service {
 		doShutdown();
 	}
 	
-	private void DoDisconnect() {
+	private void DoDisconnect(String message) {
 		//attempt to display the disconnection dialog.
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
@@ -641,7 +681,7 @@ public class StellarService extends Service {
 		
 		if(N < 1) {
 			//no listeneres, just shutdown and put up a new notification.
-			ShowDisconnectedNotification();
+			ShowDisconnectedNotification(message);
 			//doShutdown();
 		}
 		
@@ -2752,6 +2792,16 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private class DataCorrupterCommand extends SpecialCommand {
+		public DataCorrupterCommand() {
+			this.commandName = "corrupt";
+		}
+		
+		public void execute(Object o) {
+			pump.corruptMe();
+		}
+	}
+	
 	private class LineBreakCommand extends SpecialCommand {
 		
 		
@@ -2843,6 +2893,9 @@ public class StellarService extends Service {
 		byte[] rawData = the_processor.RawProcess(data);
 		//changing this to send data to the window, then process the triggers.
 		//if(firstDispatch)
+		if(rawData == null) {
+			return;
+		}
 		//Spannable processed = the_processor.DoProcess(data);
 		Message dofinal = myhandler.obtainMessage(MESSAGE_DOFINALDISPATCH,rawData);
 		myhandler.sendMessage(dofinal);
@@ -2859,7 +2912,7 @@ public class StellarService extends Service {
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
 		//if(firstDispatch)
-		
+		if(rawData == null || rawData.length == 0) { return;}
 		
 		final int N = callbacks.beginBroadcast();
 		int final_count = N;
@@ -3260,13 +3313,14 @@ public class StellarService extends Service {
 
 	}
 	
-	private void ShowDisconnectedNotification() {
+	private void ShowDisconnectedNotification(String message) {
 		
 		//mNM.cancel(5545);
 		
 		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Disconnected",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
-		
+		//String defaultmsg = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
+		String defaultmsg = "Click to reconnect: "+ host +":"+ port;
 		//Intent the_intent = new Intent();
 		//the_intent.putExtra("DISPLAY",launch.getDisplayName());
     	//the_intent.putExtra("HOST", launch.getHostName());
@@ -3275,7 +3329,12 @@ public class StellarService extends Service {
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "BlowTorch Disconnected";
 		//CharSequence contentText = "Hello World!";
-		CharSequence contentText = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
+		CharSequence contentText = null;
+		if(message != null && !message.equals("")) {
+			contentText = message;
+		} else {
+			contentText = defaultmsg;
+		}
 		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
 		notificationIntent.putExtra("DISPLAY",display);
 		notificationIntent.putExtra("HOST", host);
