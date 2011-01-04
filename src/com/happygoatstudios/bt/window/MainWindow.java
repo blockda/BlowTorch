@@ -902,7 +902,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						default:
 							break;
 						}
-						
+						screen2.setWordWrap(service.isWordWrap());
 						screen2.setLineBreaks(service.getBreakAmount());
 						
 						//current_button_views.clear();
