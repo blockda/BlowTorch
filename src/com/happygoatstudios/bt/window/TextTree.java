@@ -35,6 +35,8 @@ public class TextTree {
 	
 	private String encoding = "ISO-8859-1";
 	
+	//boolean simpleMode = false;
+	
 	public String getEncoding() {
 		return encoding;
 	}
@@ -61,6 +63,7 @@ public class TextTree {
 	}
 
 	public TextTree() {
+		//simpleMode = pMode;
 		mLines = new LinkedList<Line>();
 		LinkedList<Unit> list = new LinkedList<Unit>();
 		addTextHandler = new AddTextHandler();
@@ -288,6 +291,56 @@ public class TextTree {
 			//addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,data));
 		//}
 	//}
+	public void addBytesImplSimple(byte[] data) {
+		ByteBuffer sb = ByteBuffer.allocate(data.length);
+		for(int i=0;i<data.length;i++) {
+			if(data[i] == NEWLINE) {
+				int size = sb.position();
+				byte[] buf = new byte[size];
+				sb.rewind();
+				sb.get(buf,0,size);
+				
+				sb.clear();
+				
+				try {
+					Text u = new Text(buf);
+					Line l = new Line();
+					l.getData().addLast(u);
+					l.getData().addLast(new NewLine());
+					addLine(l);
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
+			} else {
+				sb.put(data[i]);
+			}
+		}
+		
+		if(sb.position() > 0) {
+			int size = sb.position();
+			byte[] buf = new byte[size];
+			sb.rewind();
+			sb.get(buf,0,size);
+			
+			sb.clear();
+			
+			try {
+				Text u = new Text(buf);
+				Line l = new Line();
+				l.getData().addLast(u);
+				addLine(l);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
+	}
+	
 	static enum RUN {
 		WHITESPACE,
 		TEXT,
@@ -299,6 +352,9 @@ public class TextTree {
 	Color lastColor = null;
 	byte[] strag = null;
 	public void addBytesImpl(byte[] data) throws UnsupportedEncodingException {
+		//if(simpleMode) {
+		//	addBytesImplSimple(data);
+		//}
 		//this actually shouldn't be too hard to do with just a for loop.
 		STATE init = STATE.TEXT;
 		int projected = totalbytes + data.length;
@@ -833,7 +889,9 @@ public class TextTree {
 					//else, break in the middle.
 					} else {
 						//just break in the middle as we are not word wrapping
-						charsinline = breakAt(theIterator,u,amount,u.charcount);
+						//charsinline = breakAt(theIterator,u,amount,u.charcount);
+						breakAt(theIterator,u,amount,u.charcount);
+						charsinline = 0;
 					}
 				}
 				
@@ -913,11 +971,18 @@ public class TextTree {
 				int start = length - amount;
 				int end = length - (length-amount);
 				
+				try {
 				String first = ((Text)u).data.substring(0, start);
 				String second = ((Text)u).data.substring(start,start+end);
 				i.set(new Text(first));
 				i.add(new Break());
 				i.add(new Text(second));
+				} catch (StringIndexOutOfBoundsException e) { 
+					String message = ((Text)u).data + " is not valid break: amount="+amount+" length="+length+" start="+start+" end="+end+"\n";					
+					Log.e("TREE",message);
+					throw e;
+				}
+				
 				//length = end;
 				breaks += 1;
 				

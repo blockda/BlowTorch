@@ -601,6 +601,7 @@ public class StellarService extends Service {
 						//send the transformed data back to the window
 						try {
 							if(the_settings.isLocalEcho()) {
+								//preserve.
 								doDispatchNoProcess(preserve);
 							}
 						} catch (RemoteException e) {
@@ -2932,12 +2933,13 @@ public class StellarService extends Service {
 			//someone isnt listening so save the buffer
 			//bufferLineCount += rawData.split("\n").length;
 			//Log.e("SERVICE","FOUND:" + bufferLineCount);
-			try {
-				buffer_tree.addBytesImpl(rawData);
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			//try {
+				buffer_tree.addBytesImplSimple(rawData);
+			//} catch (UnsupportedEncodingException e) {
+			//	// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			buffer_tree.prune();
 			//Log.e("SERV","No listeners, buffering data.");
 			//appended data, trim the buffer.
 			/*if(bufferLineCount > the_settings.getMaxLines()) {
@@ -3055,6 +3057,19 @@ public class StellarService extends Service {
 		//	e1.printStackTrace();
 		//}
 		
+		//strip carriage return out of the data.
+		ByteBuffer buf = ByteBuffer.allocate(data.length);
+		for(int i = 0;i<data.length;i++)  {
+			if(data[i] != (byte)0x0d) { //strip carriage
+				buf.put(data[i]);
+			}
+		}
+		int size = buf.position();
+		byte[] stripped = new byte[size];
+		buf.rewind();
+		buf.get(stripped,0,size);
+		
+		
 		final int N = callbacks.beginBroadcast();
 		int final_count = N;
 		
@@ -3062,7 +3077,7 @@ public class StellarService extends Service {
 		//Log.e("SERVICE","SENDING TO WINDOW: " + rawData);
 		for(int i = 0;i<N;i++) {
 			try {
-			callbacks.getBroadcastItem(i).rawDataIncoming(data);
+			callbacks.getBroadcastItem(i).rawDataIncoming(stripped);
 			} catch (RemoteException e) {
 				//just need to catch it, don't need to care, the list maintains itself apparently.
 				final_count = final_count - 1;
