@@ -34,6 +34,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -1501,11 +1502,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuItem tmp = null;
-		tmp = menu.add(0,99,0,"Aliases").setIcon(android.R.drawable.ic_menu_sort_alphabetically);
-		menu.add(0,100,0,"Triggers").setIcon(android.R.drawable.ic_menu_mylocation);
-		menu.add(0,105,0,"Timers").setIcon(android.R.drawable.ic_menu_recent_history);
-		menu.add(0,103,0,"Options").setIcon(android.R.drawable.ic_menu_manage);
-		menu.add(0,102,0,"Button Sets").setIcon(android.R.drawable.ic_menu_today);
+		tmp = menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
+		menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers);
+		menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers);
+		menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options);
+		menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 901, 0, "Reconnect");
 		menu.add(0, 902, 0, "Disconnect");
@@ -1700,11 +1701,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//	container.requestLayout();
 			//DoButtonPortraitMode(true);
 			//OREINTATION = Configuration.ORIENTATION_PORTRAIT;
+			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
 			try {
 				if(service.getOrientation() == 1) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
 					//HideKeyboard();
-					myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 5);
+					//myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 1000);
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 					
 				}
@@ -1718,11 +1720,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		//	container.requestLayout();
 			//DoButtonPortraitMode(false);
 			//OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
+			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
 			try {
 				if(service.getOrientation() == 2) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
 					//HideKeyboard();
-					myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 5);
+					//myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 1000);
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 				}
 			} catch (RemoteException e) {
@@ -1740,6 +1743,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		InputMethodManager imm = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
 		EditText input_box = (EditText)findViewById(R.id.textinput);
 		imm.hideSoftInputFromWindow(input_box.getWindowToken(), 0);
+		Log.e("WINDOW","ATTEMPTING TO HIDE THE KEYBOARD");
 	}
 	
 	private void DoButtonPortraitMode(boolean use) {
