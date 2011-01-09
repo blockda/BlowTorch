@@ -508,8 +508,10 @@ public class StellarService extends Service {
 					try {
 						//if(obytes == null) Log.e("SERVICE","NULL BYTES");
 						//if(output_writer == null) Log.e("SERVICE","NULL WRITER");
-						output_writer.write(obytes);
-						output_writer.flush();
+						if(output_writer != null) {
+							output_writer.write(obytes);
+							output_writer.flush();
+						}
 					} catch (IOException e2) {
 						throw new RuntimeException(e2);
 					}
