@@ -59,6 +59,7 @@ import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
+//import android.util.Log;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -162,7 +163,7 @@ public class StellarService extends Service {
 		//this.
 		//set up the crash reporter
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
-		Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
@@ -180,8 +181,8 @@ public class StellarService extends Service {
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
-		LineBreakCommand lccmd = new LineBreakCommand();
-		DataCorrupterCommand crcmd = new DataCorrupterCommand();
+		//LineBreakCommand lccmd = new LineBreakCommand();
+		//DataCorrupterCommand crcmd = new DataCorrupterCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
@@ -192,8 +193,8 @@ public class StellarService extends Service {
 		specialcommands.put("kb", kbcmd);
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
-		specialcommands.put(lccmd.commandName, lccmd);
-		specialcommands.put(crcmd.commandName, crcmd);
+		//specialcommands.put(lccmd.commandName, lccmd);
+		//specialcommands.put(crcmd.commandName, crcmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -404,13 +405,15 @@ public class StellarService extends Service {
 					String ordinal = Integer.toString(msg.arg1);
 					DoTimerResponders(ordinal);
 					TimerData td = the_settings.getTimers().get(ordinal);
-					if(!td.isRepeat()) {
-						//need to make sure the timerTask is cancelled
-						TimerExtraTask tt = timerTasks.remove(ordinal);
-						tt.cancel();
-						the_timer.purge();
-						td.reset();
-						td.setPlaying(false);
+					if(td != null) {
+						if(!td.isRepeat()) {
+							//need to make sure the timerTask is cancelled
+							TimerExtraTask tt = timerTasks.remove(ordinal);
+							tt.cancel();
+							the_timer.purge();
+							td.reset();
+							td.setPlaying(false);
+						}
 					}
 					
 					break;

@@ -36,7 +36,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.text.SpannableString;
 import android.text.format.Time;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 //import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
@@ -724,7 +727,11 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Version " + versionString + " details!");
-		builder.setMessage(Launcher.this.getResources().getString(R.string.whatisnew));
+		
+		final SpannableString s = new SpannableString(Launcher.this.getResources().getString(R.string.whatisnew));
+	    Linkify.addLinks(s, Linkify.ALL);
+
+		builder.setMessage(s);
 		
 		builder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
 			
@@ -734,7 +741,13 @@ public class Launcher extends Activity implements ReadyListener {
 		});
 		
 		AlertDialog diag = builder.create();
+		
+		//TextView message = (TextView) diag.findViewById(android.R.id.message);
+		
 		diag.show();
+		
+		((TextView)diag.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+
 		
 	}
 	

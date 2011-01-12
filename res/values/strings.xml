@@ -4,5 +4,5 @@
     <string name="app_name">BaardTERM</string>
 <string name="thewelcometext">Welcome to BaardTERM version AWESOME!111!one!!!@1NOWWITHLINEBREAKSOMGWTFBBQOHANDYOUMADEITTAKEFOURTYPERCENTLESSBATTERY?!?!?!!??!!?OMGWTFBBQXIXORRRSSS!OMGDANISSOCOOL</string>
 <string name="hello2">This is the debug screen. However this text will dissapear when data arrives from the server.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n</string>
-<string name="whatisnew">===TEST VERSION 5===\n*Custom icons\n*DroidX Rotate Problem Fixed\n*Concurrent Modification Crash\n*More disconneciton handling stuff\n*Word wrap was not optional\n*MCCP Corruption Handling\n*Menu Icons\n*Button Set Defaults are editable again\n\n--- BUG FIXES\n*Force close fixes\n*IAC as data\n*Improved telnet negotiation with optional debug mode\nDisconnect crash fixes\n\n--- NEW FEATURES\n*Portrait Mode\n*Word Wrap\n*Optional Break Width\n\nVisit the website for more details!</string>
+<string name="whatisnew">--- BUG FIXES\n*Force close fixes\n*IAC as data fixed\n*Improved telnet negotiation with optional debug mode\n*Disconnect crash fixes\n\n--- NEW FEATURES\n*Portrait Mode\n*Word Wrap\n*Optional Break Width\n*Button Sets are now renamable\n\nVisit the website for more details!\nhttp://bt.happygoatstudios.com</string>
 </resources>

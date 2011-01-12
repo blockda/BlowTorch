@@ -16,7 +16,7 @@ import java.util.zip.Inflater;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 
 
@@ -103,7 +103,7 @@ public class DataPumper extends Thread {
 						break;
 					case MESSAGE_NOCOMPRESS:
 						stopCompression();
-						Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\n" + "BEING TOLD TO STOP BY THE SERVICE (processor encountered the IAC SB");
+						//Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\n" + "BEING TOLD TO STOP BY THE SERVICE (processor encountered the IAC SB");
 						break;
 					}
 					
@@ -280,7 +280,7 @@ public class DataPumper extends Thread {
 							//reportto.sendMessage(msg); //report to mom and dad.
 						}
 					//} 
-					Log.e("BTPUMP","ATTEMPTING MCCP RENEGOTIATION DUE TO:\n" + e.getMessage());
+					//Log.e("BTPUMP","ATTEMPTING MCCP RENEGOTIATION DUE TO:\n" + e.getMessage());
 					//compressed = false;
 					reportto.sendEmptyMessage(StellarService.MESSAGE_MCCPFATALERROR);
 					//return;
@@ -306,7 +306,7 @@ public class DataPumper extends Thread {
 							reportto.sendMessage(msg); //report to mom and dad.
 						}
 					} 
-					Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\nCompression End Event Processed.");
+					//Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\nCompression End Event Processed.");
 					compressed = false;
 					decompress = new Inflater(false);
 					corrupted = false;

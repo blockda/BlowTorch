@@ -1,9 +1,9 @@
 package com.happygoatstudios.bt.service;
 
-import java.io.UnsupportedEncodingException;
+//import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import android.util.Log;
+//import android.util.Log;
 
 public class TC {
 	/*final static byte IAC = (byte)0xFF; //255

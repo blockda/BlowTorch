@@ -8,7 +8,7 @@ import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.preference.Preference;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,7 +95,7 @@ private class SeekerUpdater implements SeekBar.OnSeekBarChangeListener {
 		SharedPreferences.Editor editor =  getEditor();
 		editor.putInt(getKey(), seekBar.getProgress());
 		editor.commit();
-		Log.e("SLKDF0","SAVING STUFFF!");
+		//Log.e("SLKDF0","SAVING STUFFF!");
 	}
 	
 	public void updateLabel(int f) {
