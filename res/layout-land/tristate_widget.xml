@@ -17,7 +17,7 @@
   			android:id="@+id/landscape"/>
   	<Button android:layout_width="wrap_content" 
   			android:layout_height="wrap_content" 
-  			android:text="Portriat"
+  			android:text="Portrait"
   			android:id="@+id/portriat"/>
   	
  </LinearLayout>

@@ -14,7 +14,7 @@ import com.happygoatstudios.bt.service.Colorizer;
 
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 
 public class TextTree {
@@ -978,8 +978,8 @@ public class TextTree {
 				i.add(new Break());
 				i.add(new Text(second));
 				} catch (StringIndexOutOfBoundsException e) { 
-					String message = ((Text)u).data + " is not valid break: amount="+amount+" length="+length+" start="+start+" end="+end+"\n";					
-					Log.e("TREE",message);
+					//String message = ((Text)u).data + " is not valid break: amount="+amount+" length="+length+" start="+start+" end="+end+"\n";					
+					//Log.e("TREE",message);
 					throw e;
 				}
 				

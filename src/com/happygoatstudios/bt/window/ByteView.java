@@ -21,7 +21,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 import android.view.MotionEvent;
@@ -884,7 +884,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			} else {
 				the_tree.setLineBreakAt(i);
 				automaticBreaks = false;
-				Log.e("BYTE","SET LINE BREAKS TO: " + i);
+				//Log.e("BYTE","SET LINE BREAKS TO: " + i);
 			}
 		}
 		

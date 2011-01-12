@@ -1,14 +1,14 @@
 package com.happygoatstudios.bt.button;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
+//import java.io.UnsupportedEncodingException;
+//import java.nio.ByteBuffer;
 
 import com.happygoatstudios.bt.window.ByteView;
 import com.happygoatstudios.bt.window.MainWindow;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
+//import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -18,7 +18,7 @@ import android.os.Handler;
 import android.os.Message;
 //import android.util.Log;
 //import android.util.Log;
-import android.util.Log;
+//import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
