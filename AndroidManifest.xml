@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.happygoatstudios.bt"
-      android:versionCode="10"
-      android:versionName="1.0.6">
+      android:versionCode="11"
+      android:versionName="1.0.7">
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
         <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
                   android:label="BlowTorch"
@@ -16,9 +16,9 @@
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
         		  android:windowSoftInputMode="adjustResize"
         		  android:label="BlowTorch"
-        		  android:screenOrientation="landscape"
+        		 
         		  
-				  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
+				  android:configChanges="orientation|keyboard|keyboardHidden"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
@@ -28,7 +28,7 @@
         <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
         		  android:label="Settings Editor"
         		  
-        		  android:screenOrientation="landscape"
+        		  
         		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
         		  android:noHistory = "true">
         		  <intent-filter>
