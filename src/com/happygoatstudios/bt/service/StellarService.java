@@ -21,6 +21,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,9 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
+//import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -83,7 +87,7 @@ public class StellarService extends Service {
 	
 	OutputStream output_writer = null;
 	
-	OutputWriter outputter = null;
+	//OutputWriter outputter = null;
 	
 	Processor the_processor = null;
 	
@@ -132,11 +136,16 @@ public class StellarService extends Service {
 	public static final int MESSAGE_DISCONNECTED = 505;
 	protected static final int MESSAGE_RECONNECT = 506;
 	public static final int MESSAGE_DODISCONNECT = 507;
+	public static final int MESSAGE_PROCESSORWARNING = 508;
+	public static final int MESSAGE_DEBUGTELNET = 509;
+	protected static final int MESSAGE_DOBUTTONRELOAD = 510;
+	public static final int MESSAGE_MCCPFATALERROR = 511;
 	
 	public boolean sending = false;
 	
-	StringBuffer the_buffer = new StringBuffer();
+	//StringBuffer the_buffer = new StringBuffer();
 	String settingslocation = "test_settings2.xml";
+	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
 	
 	//private boolean compressionStarting = false;
 	
@@ -151,7 +160,7 @@ public class StellarService extends Service {
 	public void onCreate() {
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
-		
+		//this.
 		//set up the crash reporter
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
 		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
@@ -172,6 +181,8 @@ public class StellarService extends Service {
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
+		//LineBreakCommand lccmd = new LineBreakCommand();
+		//DataCorrupterCommand crcmd = new DataCorrupterCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
@@ -182,6 +193,8 @@ public class StellarService extends Service {
 		specialcommands.put("kb", kbcmd);
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
+		//specialcommands.put(lccmd.commandName, lccmd);
+		//specialcommands.put(crcmd.commandName, crcmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
 		
 		
@@ -201,39 +214,98 @@ public class StellarService extends Service {
 		settingslocation = prefsname + ".xml";
 		loadXmlSettings(prefsname +".xml");
 		
+		buffer_tree.setLineBreakAt(80); //this doesn't really matter
+		buffer_tree.setEncoding(the_settings.getEncoding());
+		buffer_tree.setMaxLines(the_settings.getMaxLines());
+		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_DOBUTTONRELOAD:
+					DispatchButtonLoad((String)msg.obj);
+					break;
+				case MESSAGE_DEBUGTELNET:
+					if(the_processor != null) {
+						the_processor.setDebugTelnet((Boolean)msg.obj);
+					}
+					break;
+				case MESSAGE_PROCESSORWARNING:
+					try {
+						doDispatchNoProcess(((String)msg.obj).getBytes(the_settings.getEncoding()));
+					} catch (RemoteException e4) {
+						throw new RuntimeException(e4);
+					} catch (UnsupportedEncodingException e4) {
+						throw new RuntimeException(e4);
+					}
+					break;
+				case MESSAGE_MCCPFATALERROR:
+					//killNetThreads();
+					//DoDisconnect("MCCP Data Corruption, Click to reconnect.");
+					//isConnected = false;
+					Message endCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
+					Bundle eb = endCompress.getData();
+					byte[] ec_neg = new byte[] { TC.IAC , TC.DONT , TC.COMPRESS2 };
+					eb.putByteArray("THE_DATA", ec_neg);
+					//eb.putString("DEBUG_MESSAGE", "\nIAC DONT COMPRESS2 - Sent\n");
+					endCompress.setData(eb);
+					this.sendMessage(endCompress);
+					try {
+						StellarService.this.doDispatchNoProcess(new String("\n\n" + Colorizer.colorRed + "MCCP Data Format Error - Attempting to restart MCCP\nSome data may be lost. Reconnect if compression is not restarted automatically." + Colorizer.colorWhite + "\n\n").getBytes(the_settings.getEncoding()));
+					} catch (RemoteException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					} catch (UnsupportedEncodingException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					}
+					//Message startCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
+					//Bundle sb = endCompress.getData();
+					byte[] sc_neg = new byte[] { TC.IAC , TC.WILL , TC.COMPRESS2 };
+					//sb.putByteArray("THE_DATA", sc_neg);
+					//sb.putString("DEBUG_MESSAGE", "\nIAC DO COMPRESS2 - Sent\n");
+					//startCompress.setData(sb);
+					//this.sendMessageDelayed(startCompress,20);
+					the_processor.RawProcess(sc_neg);
+					break;
 				case MESSAGE_DODISCONNECT:
 					killNetThreads();
-					DoDisconnect();
+					DoDisconnect(null);
 					isConnected = false;
 					break;
 				case MESSAGE_RECONNECT:
 					killNetThreads();
+					for(TriggerData t : the_settings.getTriggers().values()) {
+						if(t.isFireOnce()) {
+							t.setFired(false);
+						}
+					}
+					buildTriggerData();
+					the_processor.reset();
+					
 					try {
 						doStartup();
 					} catch (UnknownHostException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					} catch (IOException e3) {
-						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						throw new RuntimeException(e3);
 					}
+					
+					
 					break;
 				case MESSAGE_DISCONNECTED:
 					//the pump has reported the connection closed.
 					//Log.e("SERV","ACTIVATING DISCONNECT");
 					killNetThreads();
-					DoDisconnect();
+					DoDisconnect(null);
 					isConnected = false;
 					break;
 				case MESSAGE_DISPLAYPARAMS:
-					the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
-					the_processor.disaptchNawsString();
+					if(the_processor != null) {
+						the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
+						the_processor.disaptchNawsString();
+					}
 					break;
 				case MESSAGE_BELLINC:
 					//bell recieved.
@@ -333,13 +405,15 @@ public class StellarService extends Service {
 					String ordinal = Integer.toString(msg.arg1);
 					DoTimerResponders(ordinal);
 					TimerData td = the_settings.getTimers().get(ordinal);
-					if(!td.isRepeat()) {
-						//need to make sure the timerTask is cancelled
-						TimerExtraTask tt = timerTasks.remove(ordinal);
-						tt.cancel();
-						the_timer.purge();
-						td.reset();
-						td.setPlaying(false);
+					if(td != null) {
+						if(!td.isRepeat()) {
+							//need to make sure the timerTask is cancelled
+							TimerExtraTask tt = timerTasks.remove(ordinal);
+							tt.cancel();
+							the_timer.purge();
+							td.reset();
+							td.setPlaying(false);
+						}
 					}
 					
 					break;
@@ -381,10 +455,6 @@ public class StellarService extends Service {
 					doShutdown();
 					break;
 				case MESSAGE_PROCESS:
-					//Log.e("BTSERVICE","PROCESSING");
-					//byte[] data = msg.getData().getByteArray("THEBYTES");
-					
-					//need to throttle this somehow to avoid sending messages too fast.
 					try {
 						dispatch((byte[])msg.obj);
 					} catch (RemoteException e) {
@@ -398,7 +468,12 @@ public class StellarService extends Service {
 					//if(compressionStarting) {
 					//	this.sendMessageDelayed(Message.obtain(msg), 10); //re-send this message for processing until compress is turned on.
 					//} else {
-						dispatchFinish((String)msg.obj);
+					try {
+						dispatchFinish((byte[])msg.obj);
+					} catch (UnsupportedEncodingException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
 					//}
 					break;
 				case MESSAGE_SETDATA:
@@ -417,14 +492,33 @@ public class StellarService extends Service {
 					break;
 				case MESSAGE_SENDOPTIONDATA:
 					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex((byte[])msg.obj));
-					byte[] obytes = (byte[])(msg.obj);
+					Bundle b = msg.getData();
+					byte[] obytes = b.getByteArray("THE_DATA");
+					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex(obytes));
+					String message = b.getString("DEBUG_MESSAGE");
+					if(message != null) {
+						try {
+							doDispatchNoProcess(message.getBytes(the_settings.getEncoding()));
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 					
 					try {
-						output_writer.write(obytes);
-						output_writer.flush();
+						//if(obytes == null) Log.e("SERVICE","NULL BYTES");
+						//if(output_writer == null) Log.e("SERVICE","NULL WRITER");
+						if(output_writer != null) {
+							output_writer.write(obytes);
+							output_writer.flush();
+						}
 					} catch (IOException e2) {
 						throw new RuntimeException(e2);
 					}
+					//Log.e("BTSERVICE","DONE SENDING");
 					
 					break;
 				case MESSAGE_SENDDATA:
@@ -454,83 +548,7 @@ public class StellarService extends Service {
 						}
 					}
 					//do search and replace with aliases.
-					
-					/*if(joined_alias.length() > 0) {
-
-						Pattern to_replace = Pattern.compile(joined_alias.toString());
-						
-						Matcher replacer = null;
-						try {
-							replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						}
-						
-						StringBuffer replaced = new StringBuffer();
-						
-						boolean found = false;
-						while(replacer.find()) {
-							//String matched = replacer.group(0);
-							found = true;
-							AliasData replace_with = the_settings.getAliases().get(replacer.group(0));
-							replacer.appendReplacement(replaced, replace_with.getPost());
-						}
-						
-						replacer.appendTail(replaced);
-						
-						StringBuffer buffertemp = new StringBuffer();
-						if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
-							boolean recursivefound = false;
-							do {
-								recursivefound = false;
-								Matcher recursivematch = to_replace.matcher(replaced.toString());
-								while(recursivematch.find()) {
-									recursivefound = true;
-									AliasData replace_with = the_settings.getAliases().get(recursivematch.group(0));
-									recursivematch.appendReplacement(buffertemp, replace_with.getPost());
-								}
-								if(recursivefound) {
-									recursivematch.appendTail(buffertemp);
-									replaced.setLength(0);
-									replaced.append(buffertemp);
-								}
-							} while(recursivefound == true);
-						}
-						//so replacer should contain the transformed string now.
-						//pull the bytes back out.
-						try {
-							bytes = replaced.toString().getBytes(the_settings.getEncoding());
-							//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
-							//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						}
-						
-						replaced.setLength(0);
-					}
-					*/
 					bytes = DoAliasReplacement(bytes);
-					//do command processing after alias processing.
-					/*String retval = null;
-					try {
-						retval = ProcessCommands(new String(bytes,the_settings.getEncoding()));
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-					}
-					if(retval == null || retval.equals("")) {
-						//command was intercepted. do nothing for now and return
-						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
-						return;
-					} else {
-						//not a command data.
-						try {
-							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
-							if(retval.equals("")) { return; }
-							bytes = retval.getBytes(the_settings.getEncoding());
-						} catch (UnsupportedEncodingException e) {
-							throw new RuntimeException(e);
-						}
-					}*/
 					
 					//strip semi
 					Character cr = new Character((char)13);
@@ -554,22 +572,51 @@ public class StellarService extends Service {
 					}
 					//nosemidata = nosemidata.concat(crlf);
 					
+					//now we have an extra step, we have to police all outbound data for the IAC character.
+					//if it appears, we must double it.
+					
 					try {
-						//Log.e("SERVICE","WRITE: "+nosemidata);
-						output_writer.write(nosemidata.getBytes(the_settings.getEncoding()));
-
-						output_writer.flush();
+						byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
+						ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
+						//int found = 0;
+						int count = 0;
+						for(int i=0;i<sendtest.length;i++) {
+							if(sendtest[i] == (byte)0xFF) {
+								//buf = ByteBuffer.wrap(buf.array());
+								buf.put((byte)0xFF);
+								buf.put((byte)0xFF);
+								count += 2;
+							} else {
+								buf.put(sendtest[i]);
+								count++;
+							}
+						}
 						
+						byte[] tosend = new byte[count];
+						buf.rewind();
+						buf.get(tosend,0,count);
+						
+						//Log.e("SERVICE","WRITE: "+nosemidata);
+						if(output_writer != null) {
+							output_writer.write(tosend);
+							output_writer.flush();
+						} else {
+							doDispatchNoProcess(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+						}
 						//send the transformed data back to the window
 						try {
 							if(the_settings.isLocalEcho()) {
+								//preserve.
 								doDispatchNoProcess(preserve);
 							}
 						} catch (RemoteException e) {
 							throw new RuntimeException(e);
 						}
 					} catch (IOException e) {
-						throw new RuntimeException(e);
+						//throw new RuntimeException(e);
+						myhandler.sendEmptyMessage(MESSAGE_DISCONNECTED);
+					} catch (RemoteException e) {
+						e.printStackTrace();
 					}
 					break;
 				case MESSAGE_REQUESTBUFFER:
@@ -581,10 +628,17 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_SAVEBUFFER:
+					try {
+						buffer_tree.addBytesImpl((byte[])msg.obj);
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					
-					the_buffer = new StringBuffer((String)msg.obj + the_buffer);
-					bufferLineCount = 0;
-					bufferLineCount = the_buffer.toString().split("\n").length;
+					//TODO: old stuff
+					//the_buffer = new StringBuffer((String)msg.obj + the_buffer);
+					//bufferLineCount = 0;
+					//bufferLineCount = the_buffer.toString().split("\n").length;
 					//Log.e("SERVICE","SAVING BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
 					break;
 				default:
@@ -618,7 +672,7 @@ public class StellarService extends Service {
 		doShutdown();
 	}
 	
-	private void DoDisconnect() {
+	private void DoDisconnect(String message) {
 		//attempt to display the disconnection dialog.
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
@@ -633,7 +687,7 @@ public class StellarService extends Service {
 		
 		if(N < 1) {
 			//no listeneres, just shutdown and put up a new notification.
-			ShowDisconnectedNotification();
+			ShowDisconnectedNotification(message);
 			//doShutdown();
 		}
 		
@@ -662,6 +716,14 @@ public class StellarService extends Service {
 			//if the file exists, we will get here, if not, it will go to file not found.
 			HyperSAXParser parser = new HyperSAXParser(filename,this);
 			the_settings = parser.load();
+			if(the_settings == null) {
+				the_settings = new HyperSettings();
+				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
+				ColorSetSettings def_colorset = new ColorSetSettings();
+				def_colorset.toDefautls();
+				the_settings.getSetSettings().put("default", def_colorset);
+				Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
+			}
 			buildAliases();
 			buildTriggerData();
 			
@@ -676,6 +738,8 @@ public class StellarService extends Service {
 				//Log.e("SERVICE","LOADED SETTINGS, TIMER" + timer.getOrdinal() + ", DURATION " + timer.getSeconds());
 			}
 			
+			
+			
 		} catch (FileNotFoundException e) {
 			//if the file does not exist, then we need to load the default settings
 			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
@@ -684,7 +748,7 @@ public class StellarService extends Service {
 			the_settings.getSetSettings().put("default", def_colorset);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		}
+		} 
 		
 	}
 	
@@ -922,7 +986,7 @@ public class StellarService extends Service {
 			
 		}
 
-		public void saveBuffer(String buffer) throws RemoteException {
+		public void saveBuffer(byte[] buffer) throws RemoteException {
 			//Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SAVEBUFFER);
 			//Bundle b = msg.getData();
 			//b.putString("BUFFER",buffer);
@@ -947,7 +1011,7 @@ public class StellarService extends Service {
 
 
 		@SuppressWarnings("unchecked")
-		public void setAliases(Map map) throws RemoteException {
+		public void setAliases(@SuppressWarnings("rawtypes") Map map) throws RemoteException {
 			
 			the_settings.getAliases().clear();
 			the_settings.setAliases(new HashMap<String,AliasData>(map));
@@ -1134,7 +1198,7 @@ public class StellarService extends Service {
 		}
 
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getButtonSetListInfo() throws RemoteException {
 			
 			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
@@ -1159,6 +1223,7 @@ public class StellarService extends Service {
 			
 			synchronized(the_settings) {
 				the_settings.setMaxLines(keepcount);
+				buffer_tree.setMaxLines(keepcount);
 			}
 			
 		}
@@ -1265,6 +1330,9 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				the_settings = new HyperSettings();
 				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
+				ColorSetSettings def_colorset = new ColorSetSettings();
+				def_colorset.toDefautls();
+				the_settings.getSetSettings().put("default", def_colorset);
 			}
 			sendInitOk();
 		}
@@ -1320,7 +1388,7 @@ public class StellarService extends Service {
 		}
 
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTriggerData() throws RemoteException {
 			
 			synchronized(the_settings) {
@@ -1563,7 +1631,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTimers() throws RemoteException {
 			synchronized(the_settings) {
 				//updat the timer table
@@ -1664,7 +1732,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public Map getTimerProgressWad() throws RemoteException {
 			HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
 			
@@ -1720,6 +1788,7 @@ public class StellarService extends Service {
 			synchronized(the_settings) {
 				the_settings.setEncoding(input);
 				the_processor.setEncoding(input);
+				buffer_tree.setEncoding(input);
 			}
 		}
 		
@@ -1800,7 +1869,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "rawtypes" })
 		public List getSystemCommands() throws RemoteException {
 			ArrayList<String> names = new ArrayList<String>();
 			for(String name : specialcommands.keySet()) {
@@ -1823,7 +1892,9 @@ public class StellarService extends Service {
 		}
 
 		public boolean hasBuffer() throws RemoteException {
-			if(the_buffer.length() > 0) {
+			//TODO: old stuff
+			//if(the_buffer.length() > 0) {
+			if(buffer_tree.getBrokenLineCount() > 0) {
 				return true;
 			} else {
 				return false;
@@ -1845,6 +1916,102 @@ public class StellarService extends Service {
 				the_settings.setRoundButtons(use);
 			}
 		}
+
+		public int getBreakAmount() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getBreakAmount();
+			}
+		}
+
+		public int getOrientation() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getOrientation();
+			}
+		}
+
+		public boolean isWordWrap() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isWordWrap();
+			}
+		}
+
+		public void setBreakAmount(int pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setBreakAmount(pIn);
+			}
+		}
+
+		public void setOrientation(int pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setOrientation(pIn);
+			}
+		}
+
+		public void setWordWrap(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setWordWrap(pIn);
+			}
+		}
+
+		public boolean isDebugTelnet() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isDebugTelnet();
+			}
+		}
+
+		public boolean isRemoveExtraColor() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isRemoveExtraColor();
+			}
+		}
+
+		public void setDebugTelnet(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setDebugTelnet(pIn);
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DEBUGTELNET,new Boolean(pIn)));
+			}
+		}
+
+		public void setRemoveExtraColor(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setRemoveExtraColor(pIn);
+			}
+		}
+
+		public void updateAndRenameSet(String oldSet, String newSet, ColorSetSettings settings) throws RemoteException {
+			String currentlyUsed = null;
+			synchronized(the_settings) {
+				currentlyUsed = the_settings.getLastSelected();
+				//update references
+				for(String name : the_settings.getButtonSets().keySet()) {
+					Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(name);
+					for(SlickButtonData button : buttons) {
+						if(button.getTargetSet().equals(oldSet)) {
+							button.setTargetSet(newSet);
+						}
+					}
+				}
+				//remove old set
+				Vector<SlickButtonData> newset_buttons = the_settings.getButtonSets().remove(oldSet);
+				the_settings.getSetSettings().remove(oldSet);
+				//make new set
+				the_settings.getButtonSets().put(newSet, newset_buttons);
+				the_settings.getSetSettings().put(newSet, settings);
+				//send update notification
+				if(oldSet.equals(currentlyUsed)) {
+					the_settings.setLastSelected(newSet);
+				}
+			}
+			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			if(oldSet.equals(currentlyUsed)) {
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DOBUTTONRELOAD,newSet));
+			} else {
+				//we have to load it anyway in case buttons in that set have been updated to go to the new page.
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DOBUTTONRELOAD,currentlyUsed));
+			}
+		}
+
+		
 		
 	};
 	
@@ -2082,12 +2249,18 @@ public class StellarService extends Service {
 	}
 	
 	public void sendBuffer() throws RemoteException {
+		
+		byte[] buf = buffer_tree.dumpToBytes();
+		
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			//callbacks.getBroadcastItem(i).dataIncoming(data);
 			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
 			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivering: " + the_buffer.toString().length() + " characters.");
-			callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
+			//TODO: old stuff
+			//callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
+			
+			callbacks.getBroadcastItem(i).rawBufferIncoming(buf);
 		}
 		
 		callbacks.finishBroadcast();
@@ -2096,12 +2269,21 @@ public class StellarService extends Service {
 		if( N < 1) {
 			//has no listeners
 			//Log.e("SERV","CANNOT SEND BUFFER, NO LISTENERS, TRYING AGAIN");
-			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,300);
-		} else {
-			if(the_buffer != null) {
-				the_buffer.setLength(0);
-				//the_buffer.clearSpans();
+			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,100);
+			try {
+				buffer_tree.addBytesImpl(buf);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+		} else {
+			//if(buffer_tree != null) {
+			//	buffer_tree.
+			//}
+			//if(the_buffer != null) {
+			//	the_buffer.setLength(0);
+				//the_buffer.clearSpans();
+			//}
 		}
 	}
 	
@@ -2145,18 +2327,25 @@ public class StellarService extends Service {
 	
 	//private boolean isWifiLocked = false;
 	private WifiManager.WifiLock the_wifi_lock = null;
+	private WifiManager the_wifi_manager = null;
 	
 	private void EnableWifiKeepAlive() {
 		//get the wifi manager
-		WifiManager wifi = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-		
+		if(the_wifi_manager == null) {
+			the_wifi_manager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		}
+			
 		//check if we are connected to a wifi network
-		WifiInfo info = wifi.getConnectionInfo();
+		WifiInfo info = the_wifi_manager.getConnectionInfo();
 		if(info.getNetworkId() != -1) {
 			//if so, grab the lock
 			//Log.e("SERVICE","ATTEMPTING TO GRAB WIFI LOCK");
-			the_wifi_lock = wifi.createWifiLock("BLOWTORCH_WIFI_LOCK");
-			the_wifi_lock.acquire();
+			the_wifi_lock = the_wifi_manager.createWifiLock("BLOWTORCH_WIFI_LOCK");
+			boolean held = false;
+			while(!held) {
+				the_wifi_lock.acquire();
+				held = the_wifi_lock.isHeld();
+			}
 		}
 	}
 	
@@ -2166,6 +2355,19 @@ public class StellarService extends Service {
 			the_wifi_lock.release();
 			the_wifi_lock = null;
 		}
+	}
+	
+	private void DispatchButtonLoad(String setName) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).reloadButtons(setName);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
 	}
 	
 	private void DispatchToast(String message,boolean longtime) {
@@ -2455,7 +2657,7 @@ public class StellarService extends Service {
 	
 	private class KeyBoardCommand extends SpecialCommand {
 		public KeyBoardCommand() {
-			this.commandName = ".keyboard";
+			this.commandName = "keyboard";
 			//alternate short form, kb.
 		}
 		public void execute(Object o) {
@@ -2568,11 +2770,9 @@ public class StellarService extends Service {
 			try {
 				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 		}
@@ -2590,14 +2790,87 @@ public class StellarService extends Service {
 			try {
 				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 		}
+	}
+	
+	private class DataCorrupterCommand extends SpecialCommand {
+		public DataCorrupterCommand() {
+			this.commandName = "corrupt";
+		}
+		
+		public void execute(Object o) {
+			pump.corruptMe();
+		}
+	}
+	
+	private class LineBreakCommand extends SpecialCommand {
+		
+		
+		
+		public LineBreakCommand() {
+			this.commandName = "linebreak";
+		}
+		public void execute(Object o) {
+			
+			//format: .linebreak [none]|[number]
+			String str = (String)o;
+			
+			
+			
+			Pattern argm = Pattern.compile("none|\\d+");
+			Matcher arg = argm.matcher(str);
+			if(arg.find()){
+				int breakat = 0;
+				try{
+					breakat = Integer.parseInt(str);
+					if(breakat < 1) {
+						//must be positive and greater than 0
+					} else {
+						//succeed
+						DoBreakAt(breakat);
+					}
+				} catch (NumberFormatException e) {
+					if(str.equals("none")) {
+						breakat=0;
+						//succeed
+						DoBreakAt(0);
+					} else {
+						//invalid argument.
+					}
+				}
+			}
+			//
+			
+			
+			//myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
+			//String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
+			//try {
+			//	doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+			//} catch (RemoteException e) {
+			//	throw new RuntimeException(e);
+			//} catch (UnsupportedEncodingException e) {
+			//	throw new RuntimeException(e);
+			//}
+			
+		}
+	}
+	
+	private void DoBreakAt(int pLines) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).doLineBreak(pLines);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
 	}
 	
 	private String getErrorMessage(String arg1,String arg2) {
@@ -2623,9 +2896,12 @@ public class StellarService extends Service {
 	
 	public void dispatch(byte[] data) throws RemoteException, UnsupportedEncodingException {
 		
-		String rawData = the_processor.RawProcess(data);
+		byte[] rawData = the_processor.RawProcess(data);
 		//changing this to send data to the window, then process the triggers.
 		//if(firstDispatch)
+		if(rawData == null) {
+			return;
+		}
 		//Spannable processed = the_processor.DoProcess(data);
 		Message dofinal = myhandler.obtainMessage(MESSAGE_DOFINALDISPATCH,rawData);
 		myhandler.sendMessage(dofinal);
@@ -2637,12 +2913,12 @@ public class StellarService extends Service {
 	private Pattern bufferLine = Pattern.compile(".*\n");
 	Matcher bufferLineMatch = bufferLine.matcher("");
 	StringBuffer tempBuffer = new StringBuffer();
-	public void dispatchFinish(String rawData) {
+	public void dispatchFinish(byte[] rawData) throws UnsupportedEncodingException {
 		
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
 		//if(firstDispatch)
-		
+		if(rawData == null || rawData.length == 0) { return;}
 		
 		final int N = callbacks.beginBroadcast();
 		int final_count = N;
@@ -2660,12 +2936,18 @@ public class StellarService extends Service {
 		//if(callbacks.)
 		if(final_count == 0) {
 			//someone isnt listening so save the buffer
-			bufferLineCount += rawData.split("\n").length;
+			//bufferLineCount += rawData.split("\n").length;
 			//Log.e("SERVICE","FOUND:" + bufferLineCount);
-			the_buffer.append(rawData);
+			//try {
+				buffer_tree.addBytesImplSimple(rawData);
+			//} catch (UnsupportedEncodingException e) {
+			//	// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			buffer_tree.prune();
 			//Log.e("SERV","No listeners, buffering data.");
 			//appended data, trim the buffer.
-			if(bufferLineCount > the_settings.getMaxLines()) {
+			/*if(bufferLineCount > the_settings.getMaxLines()) {
 				//trim from the front.
 				bufferLineMatch.reset(the_buffer);
 				//the_buffer.setLength(0);
@@ -2687,11 +2969,11 @@ public class StellarService extends Service {
 				the_buffer.append(tempBuffer);
 				//Log.e("SERVICE","TRIMMED " + trimmed + " FROM BUFFER NOW " + the_buffer.toString().length() + " bytes.");
 				bufferLineCount = the_settings.getMaxLines();
-			}
+			}*/
 			
 		} else {
 			//someone is listening so save the buffer.
-			the_buffer.setLength(0);
+			buffer_tree.empty();
 			//the_buffer.clearSpans();
 			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
 		}
@@ -2702,7 +2984,7 @@ public class StellarService extends Service {
 			return; //return without processing, if there are no triggers.
 		}
 		
-		Matcher stripcolor = colordata.matcher(rawData);
+		Matcher stripcolor = colordata.matcher(new String(rawData,the_settings.getEncoding()));
 		regexp_test.append(stripcolor.replaceAll(""));
 		
 		boolean rebuildTriggers = false;
@@ -2772,13 +3054,26 @@ public class StellarService extends Service {
 	
 	public void doDispatchNoProcess(byte[] data) throws RemoteException{
 		
-		String rawData = null;
-		try {
-			rawData = new String(data,the_settings.getEncoding());
-		} catch (UnsupportedEncodingException e1) {
-			
-			e1.printStackTrace();
+		//String rawData = null;
+		//try {
+		//	rawData = new String(data,the_settings.getEncoding());
+		//} catch (UnsupportedEncodingException e1) {
+		//	
+		//	e1.printStackTrace();
+		//}
+		
+		//strip carriage return out of the data.
+		ByteBuffer buf = ByteBuffer.allocate(data.length);
+		for(int i = 0;i<data.length;i++)  {
+			if(data[i] != (byte)0x0d) { //strip carriage
+				buf.put(data[i]);
+			}
 		}
+		int size = buf.position();
+		byte[] stripped = new byte[size];
+		buf.rewind();
+		buf.get(stripped,0,size);
+		
 		
 		final int N = callbacks.beginBroadcast();
 		int final_count = N;
@@ -2787,7 +3082,7 @@ public class StellarService extends Service {
 		//Log.e("SERVICE","SENDING TO WINDOW: " + rawData);
 		for(int i = 0;i<N;i++) {
 			try {
-			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
+			callbacks.getBroadcastItem(i).rawDataIncoming(stripped);
 			} catch (RemoteException e) {
 				//just need to catch it, don't need to care, the list maintains itself apparently.
 				final_count = final_count - 1;
@@ -3003,15 +3298,22 @@ public class StellarService extends Service {
 			showNotification();
 			
 			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
-			if(the_buffer == null) {
-				the_buffer = new StringBuffer();
-			}
+			//if(the_buffer == null) {
+			//	the_buffer = new StringBuffer();
+			//}
+			//if(buffer_tree == null) {
+			//	buffer_tree = new com.happygoatstudios.bt.window.TextTree();
+			//}
 			
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();
 				}
+				
+				the_processor.setDebugTelnet(the_settings.isDebugTelnet());
 			}
+			
+			
 			
 			isConnected = true;
 			
@@ -3031,13 +3333,14 @@ public class StellarService extends Service {
 
 	}
 	
-	private void ShowDisconnectedNotification() {
+	private void ShowDisconnectedNotification(String message) {
 		
 		//mNM.cancel(5545);
 		
 		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Disconnected",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
-		
+		//String defaultmsg = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
+		String defaultmsg = "Click to reconnect: "+ host +":"+ port;
 		//Intent the_intent = new Intent();
 		//the_intent.putExtra("DISPLAY",launch.getDisplayName());
     	//the_intent.putExtra("HOST", launch.getHostName());
@@ -3046,7 +3349,12 @@ public class StellarService extends Service {
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "BlowTorch Disconnected";
 		//CharSequence contentText = "Hello World!";
-		CharSequence contentText = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
+		CharSequence contentText = null;
+		if(message != null && !message.equals("")) {
+			contentText = message;
+		} else {
+			contentText = defaultmsg;
+		}
 		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
 		notificationIntent.putExtra("DISPLAY",display);
 		notificationIntent.putExtra("HOST", host);
@@ -3135,6 +3443,8 @@ public class StellarService extends Service {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
+			//Log.e("SERVICE","OUTPUT WRITER KILLED");
+			output_writer = null;
 		}
 		
 		if(the_socket != null) {

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
@@ -88,7 +89,9 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 		}
 		
 		String translated = ToastResponder.this.translate(message, captureMap);
-		Toast t = Toast.makeText(c, translated, delay*1000);
+		Toast t = Toast.makeText(c, translated, delay);
+		float density = c.getResources().getDisplayMetrics().density;
+		t.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, (int) (50*density));
 		t.show();
 	}
 

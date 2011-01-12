@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newacklayout"
+  android:layout_width="350dip"
+  android:layout_height="150dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="ACK WITH RESPONDER"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+    <Button
+    	android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:id="@+id/responder_ack_cancel"
+  		android:layout_alignParentBottom="true"
+  		android:layout_alignParentRight="true"
+  		android:text="Cancel" />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Done"
+  	android:id="@+id/responder_ack_done_button"
+  	android:layout_toLeftOf="@id/responder_ack_cancel"
+  	android:layout_alignParentBottom="true"/>
+  
+  <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_above="@id/responder_ack_done_button" android:layout_below="@id/titlebar">
+  <TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="*">
+  	<TableRow>
+  		<TextView android:text="Send this command:"/>
+  	</TableRow>
+  		<EditText android:id="@+id/responder_ack_ackwith" android:singleLine="true"/>
+  </TableLayout>
+  </LinearLayout>
+
+  
+</RelativeLayout>

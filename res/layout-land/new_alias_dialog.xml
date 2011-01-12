@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newaliaslayout"
+  android:layout_width="400dip"
+  android:layout_height="200dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="NEW ALIAS"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+    <Button
+    android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/new_alias_cancel"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:text="Cancel" />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Done"
+  	android:id="@+id/new_alias_done_button"
+  	android:layout_toLeftOf="@id/new_alias_cancel"
+  	android:layout_alignParentBottom="true"/>
+  
+  <ScrollView 
+  	android:layout_width="400dip"
+  	android:layout_height="fill_parent"
+  	android:layout_above="@id/new_alias_done_button"
+  	android:layout_below="@id/titlebar">
+  <TableLayout
+  	android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:layout_alignParentLeft="true"
+  	android:id="@+id/alias_label"
+  	android:layout_alignParentTop="true">
+
+  	<TableRow>
+  		<TextView 
+  			android:layout_width="80dip"
+  			android:layout_height="wrap_content"
+ 			android:text = "Replace:"/>
+  		<EditText
+  			android:id = "@+id/new_alias_pre"
+  			android:layout_width="300dip"
+  			android:singleLine = "true"
+  			android:layout_height="wrap_content"
+  			android:hint="Text to replace." />
+  	
+  	</TableRow>
+  	<TableRow>
+  		<TextView 
+  			android:layout_width="80dip"
+  			android:layout_height="wrap_content"
+ 			android:text = "With:"/>
+  		<EditText
+  			android:id="@+id/new_alias_post"
+  			android:layout_width="300dip"
+  			android:layout_height="wrap_content"
+  			android:inputType="textMultiLine"
+  			android:hint="Replace with this." />
+  	
+  	</TableRow>
+  </TableLayout>
+  </ScrollView>
+
+
+  
+</RelativeLayout>
