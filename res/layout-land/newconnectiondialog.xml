@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newconnectionlayout"
+  android:layout_width="300dip"
+  android:layout_height="wrap_content">
+  
+    <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="CONNECTION PROPERTIES"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+  <TableLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/new_connection_table" android:layout_below="@id/titlebar">
+  	<TableRow>
+  	  <TextView
+  	android:id="@+id/displabel"
+  	android:text="Display Name: "
+  	android:layout_height="40dip"
+  	android:layout_width="wrap_content"
+  	android:layout_alignParentTop="true"
+  	android:layout_alignParentLeft="true"
+	android:gravity="right"
+  	/>
+  	   <EditText
+  	android:id="@+id/dispinput"
+  	android:layout_width="200dip"
+  	android:layout_height="40dip"
+  	android:inputType="text"
+  	android:layout_alignParentTop="true"
+    android:imeOptions="actionNone|flagNoEnterAction"
+    android:singleLine = "true"
+    android:textSize="15dip"
+  	android:layout_toRightOf="@id/displabel"
+  	android:layout_alignTop="@id/displabel"/>
+  	</TableRow>
+  	<TableRow>
+  	  <TextView
+  	android:id="@+id/hostlabel"
+  	android:text="Host Name:"
+  	android:layout_height="40dip"
+  	android:layout_width="wrap_content"
+  	android:layout_below="@id/displabel"
+  	android:layout_alignParentLeft="true"
+  	android:gravity="right"/>
+  	   <EditText
+  	android:id="@+id/hostinput"
+  	android:layout_width="200dip"
+  	android:layout_height="40dip"
+  	android:inputType="text"
+    android:imeOptions="actionNone|flagNoEnterAction"
+    android:singleLine = "true"
+    android:textSize="15dip"
+    android:layout_below="@id/dispinput"
+  	android:layout_toRightOf="@id/hostlabel"
+  	android:layout_alignTop="@id/hostlabel"/>
+  	</TableRow>
+  	<TableRow>
+  	  <TextView
+  	android:id="@+id/portlabel"
+  	android:text="Port Number:"
+  	android:layout_height="40dip"
+  	android:layout_width="wrap_content"
+  	android:layout_below="@id/hostlabel"
+  	android:layout_alignParentLeft="true"
+  	android:gravity="right"/>
+  	   <EditText
+  	android:id="@+id/portinput"
+  	android:layout_width="200dip"
+  	android:layout_height="40dip"
+  	android:inputType="number"
+    android:imeOptions="actionNone|flagNoEnterAction"
+    android:singleLine = "true"
+    android:textSize="15dip"
+    android:layout_below="@id/hostinput"
+  	android:layout_toRightOf="@id/portlabel"
+  	android:layout_alignTop="@id/portlabel"/>
+  	</TableRow>
+  </TableLayout>
+
+
+
+
+
+
+   <Button
+   	android:id="@+id/acceptbutton"
+   	android:layout_width="170dip"
+   	android:layout_height="wrap_content"
+   	android:layout_below="@id/new_connection_table"
+   	android:text="Accept!"/>
+   <Button
+    android:id="@+id/cancelbutton"
+   	android:layout_width="130dip"
+   	android:layout_height="wrap_content"
+   	android:layout_toRightOf="@id/acceptbutton"
+   	android:layout_alignTop="@id/acceptbutton"
+   	android:text="Cancel"/>
+  	
+</RelativeLayout>

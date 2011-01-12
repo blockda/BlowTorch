@@ -3,7 +3,7 @@
 <RelativeLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/newtoastlayout"
-  android:layout_width="350dip"
+  android:layout_width="300dip"
   android:layout_height="200dip">
   
   <TextView
@@ -19,7 +19,7 @@
 		android:gravity="center"/>
   
     <Button
-    	android:layout_width="100dip"
+    	android:layout_width="80dip"
   		android:layout_height="wrap_content"
   		android:id="@+id/responder_toast_cancel"
   		android:layout_alignParentBottom="true"
@@ -27,7 +27,7 @@
   		android:text="Cancel" />
   
   <Button
-  	android:layout_width="240dip"
+  	android:layout_width="200dip"
   	android:layout_height="wrap_content"
   	android:text="Done"
   	android:id="@+id/responder_toast_done_button"

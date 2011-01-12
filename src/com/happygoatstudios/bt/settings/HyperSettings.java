@@ -35,6 +35,7 @@ public class HyperSettings {
 	private String hapticFeedbackOnPress = "auto";
 	private String hapticFeedbackOnFlip = "none";
 	private boolean roundButtons = true;
+	private boolean showFitMessage = true;
 	
 	private boolean keepScreenOn = true;
 	private boolean vibrateOnBell = true;
@@ -43,6 +44,10 @@ public class HyperSettings {
 	private boolean localEcho = true;
 	private boolean fullScreen = true;
 	
+	
+	private boolean wordWrap = true;
+	private int breakAmount = 0; //0 is automatic
+	private int orientation = 0; //0 is automatic
 	
 	private boolean UseExtractUI = false;
 	private boolean AttemptSuggestions = false;
@@ -59,7 +64,8 @@ public class HyperSettings {
 	private boolean backspaceBugFix = false;
 	
 	
-	
+	private boolean debugTelnet = false;
+	private boolean removeExtraColor = true;
 	
 
 	
@@ -171,6 +177,14 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_KEEPSCREENON, (data.isKeepScreenOn()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_FULLSCREEN, (data.isFullScreen()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_ROUNDBUTTONS, (data.isRoundButtons()) ? "true" : "false");
+			//out.attribute("", BaseParser.ATTR_FITBUTTONS, (data.isShowFitMessage()) ? "true" : "false");
+			
+			out.attribute("", BaseParser.ATTR_ORIENTATION, Integer.toString(data.getOrientation()));
+			out.attribute("", BaseParser.ATTR_BREAKAMOUNT, Integer.toString(data.getBreakAmount()));
+			out.attribute("", BaseParser.ATTR_WORDWRAP, (data.isWordWrap()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_REMOVEEXTRACOLOR, (data.isRemoveExtraColor()) ? "true" : "false");
+			out.attribute("", BaseParser.ATTR_DEBUGTELNET, (data.isDebugTelnet()) ? "true" : "false");
+			
 			
 			switch(data.getWrapMode()) {
 			case NONE:
@@ -657,6 +671,54 @@ public class HyperSettings {
 
 	public boolean isRoundButtons() {
 		return roundButtons;
+	}
+
+	public void setWordWrap(boolean wordWrap) {
+		this.wordWrap = wordWrap;
+	}
+
+	public boolean isWordWrap() {
+		return wordWrap;
+	}
+
+	public void setBreakAmount(int breakAmount) {
+		this.breakAmount = breakAmount;
+	}
+
+	public int getBreakAmount() {
+		return breakAmount;
+	}
+
+	public void setOrientation(int orientation) {
+		this.orientation = orientation;
+	}
+
+	public int getOrientation() {
+		return orientation;
+	}
+
+	public void setDebugTelnet(boolean debugTelnet) {
+		this.debugTelnet = debugTelnet;
+	}
+
+	public boolean isDebugTelnet() {
+		return debugTelnet;
+	}
+
+	public void setRemoveExtraColor(boolean removeExtraColor) {
+		this.removeExtraColor = removeExtraColor;
+	}
+
+	public boolean isRemoveExtraColor() {
+		return removeExtraColor;
+	}
+
+	public void setShowFitMessage(boolean showFitMessage) {
+		this.showFitMessage = showFitMessage;
+	}
+
+	public boolean isShowFitMessage() {
+		return showFitMessage;
 	}
 
 }

@@ -85,6 +85,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 			error.printStackTrace();
 		}
 		
+		e.printStackTrace();
+		
 		defaultUEH.uncaughtException(t, e);
 		
 	}

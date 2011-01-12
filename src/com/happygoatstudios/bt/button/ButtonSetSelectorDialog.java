@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+//import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +49,37 @@ public class ButtonSetSelectorDialog extends Dialog {
 	
 	private boolean noSets = false;
 	
+	@SuppressWarnings("unchecked")
+	public void buildList() {
+		entries.clear();
+		ListView lv = (ListView) findViewById(R.id.buttonset_list);
+		
+		try {
+			data = (HashMap<String, Integer>) service.getButtonSetListInfo();
+			selected_set = service.getLastSelectedSet();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		
+		for(String key : data.keySet()) {
+			entries.add(new ButtonEntry(key,data.get(key)));
+		}
+		
+		if(data.size() == 0) {
+			noSets = true;
+		}
+		
+		adapter = new ConnectionAdapter(this.getContext(),R.layout.buttonset_selection_list_row,entries);
+		adapter.sort(new EntryCompare());
+		
+		lv.setAdapter(adapter);
+		lv.setTextFilterEnabled(true);
+		
+		lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
+	}
+	
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
@@ -60,8 +92,10 @@ public class ButtonSetSelectorDialog extends Dialog {
 		ListView lv = (ListView) findViewById(R.id.buttonset_list);
 
 		lv.setScrollbarFadingEnabled(false);
+		
+		buildList();
 		//build list.
-		for(String key : data.keySet()) {
+		/*for(String key : data.keySet()) {
 			entries.add(new ButtonEntry(key,data.get(key)));
 		}
 		
@@ -69,11 +103,11 @@ public class ButtonSetSelectorDialog extends Dialog {
 			noSets = true;
 		}
 		adapter = new ConnectionAdapter(lv.getContext(),R.layout.buttonset_selection_list_row,entries);
-		adapter.sort(new EntryCompare());
-		lv.setAdapter(adapter);
-		lv.setTextFilterEnabled(true);
+		adapter.sort(new EntryCompare());*/
+		//lv.setAdapter(adapter);
+		//lv.setTextFilterEnabled(true);
 		
-		lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
+		//lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
 		
 		Button newbutton = (Button)findViewById(R.id.new_buttonset_button);
 		Button cancel = (Button)findViewById(R.id.cancel_buttonset_button);
@@ -81,7 +115,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
-				NewButtonSetEntryDialog diag = new NewButtonSetEntryDialog(ButtonSetSelectorDialog.this.getContext(),dispater);
+				NewButtonSetEntryDialog diag = new NewButtonSetEntryDialog(ButtonSetSelectorDialog.this.getContext(),dispater,service);
 				diag.setTitle("New Button Set:");
 				diag.show();
 				ButtonSetSelectorDialog.this.dismiss();
@@ -315,6 +349,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 			//handle the thing comin back;
 			//if we got this, it means some settings have changed, and we should reload the button set when we are done regardless if it is the one already selected, or cancelled.
 			setSettingsHaveChanged = true;
+			ButtonSetSelectorDialog.this.buildList();
+			//Log.e("EDITOR","REBUILDING LIST");
 		}
 	};
 	

@@ -1,221 +1,317 @@
 package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import java.nio.ByteBuffer;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
+
 
 public class Processor {
-	
+
 	Handler reportto = null;
 	Colorizer colormebad = new Colorizer();
 	OptionNegotiator opthandler;
 	IStellarService.Stub service = null;
-	
-	
-	
+
 	private String encoding = null;
-	
-	public Processor(Handler useme,IStellarService.Stub theserv,String pEncoding) {
-		//not really much to do here, this will be a static class thing
+
+	public Processor(Handler useme, IStellarService.Stub theserv,
+			String pEncoding) {
 		reportto = useme;
 		service = theserv;
-		
-		opthandler = new OptionNegotiator(reportto);
-		
+
+		opthandler = new OptionNegotiator();
+
 		setEncoding(pEncoding);
-		try {
-			iac_cmd_reg = Pattern.compile(new String("\\xFF([\\xFB-\\xFE])(.{1})".getBytes(encoding),encoding));
-			subnego_reg = Pattern.compile(new String("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0".getBytes(encoding),encoding));
-			goahead_reg = Pattern.compile(new String("\\xFF\\xF9".getBytes(encoding),encoding));
-			tab_reg  = Pattern.compile(new String("\\x09".getBytes(encoding),encoding));
-			bell_reg = Pattern.compile(new String("\\x07".getBytes(encoding),encoding));
-			
-			iac_match = iac_cmd_reg.matcher("");
-			sub_match = subnego_reg.matcher("");
-			goahead_match = goahead_reg.matcher("");
-			tab_match = tab_reg.matcher("");
-			bell_match = bell_reg.matcher("");
-			
-			massive_match = Pattern.compile("("+iac_cmd_reg.pattern()+")|" + "("+subnego_reg.pattern()+")|" + "("+goahead_reg.pattern()+")|" + "("+tab_reg.pattern()+")|(" + bell_reg.pattern() + ")");
-			ma_matcher = massive_match.matcher("");
-		} catch (PatternSyntaxException e) {
-			throw new RuntimeException(e);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
 	}
+
+	private boolean debugTelnet = true;
+
+	public boolean isDebugTelnet() {
+		return debugTelnet;
+	}
+
+	public void setDebugTelnet(boolean debugTelnet) {
+		this.debugTelnet = debugTelnet;
+		//Log.e("PROC","SETTING DEBUG TELNET TO " + debugTelnet);
+	}
+
+	private final byte IAC = (byte) 0xFF;
+	private final byte SB = (byte) 0xFA;
+	private final byte SE = (byte) 0xF0;
+
+	private final byte WILL = (byte) 0xFB;
+	// private final byte WONT = (byte) 0xFC;
+	// private final byte DO = (byte) 0xFD;
+	private final byte DONT = (byte) 0xFE;
+
+	private final byte BREAK = (byte) 243; // NVT character BRK.
+	// private final byte Interrupt Process 244 //The function IP.
+	private final byte AO = (byte) 245; // The function AO.
+	private final byte AYT = (byte) 246; // The function AYT.
+	private final byte EC = (byte) 247; // The function EC.
+	private final byte EL = (byte) 248; // The function EL.
 	
-	Pattern iac_cmd_reg;
-	Matcher iac_match;
-	//Pattern iac_cmd_reg = Pattern.compile("\\xFF.*");
-	Pattern subnego_reg;
-	Matcher sub_match;
-	
-	Pattern normal_reg = Pattern.compile("[\\x00-\\x7F]*"); //match any 7-bit ascii character, zero or more times
-	
-	Pattern goahead_reg;
-	Matcher goahead_match;
-	
-	Pattern tab_reg;
-	
-	
-	Matcher tab_match;
-	
-	Pattern bell_reg;
-	Matcher bell_match;
-	
-	Pattern massive_match;
-	Matcher ma_matcher;
-	
-	StringBuffer holder = new StringBuffer("");
-	public String RawProcess(byte[] data) throws UnsupportedEncodingException {
-		if(data == null) {
-			return "";
+	private final byte CARRIAGE = (byte)0x0D;
+
+	private final byte GOAHEAD = (byte) 0xF9;
+
+	private final byte IP = (byte) 0xF4;
+
+	// private final byte TAB = (byte)0x09;
+	private final byte BELL = (byte) 0x07;
+
+	// private byte
+	// subnegotioation: \\xFF\\xFA(.{1})(.*)\\xFF\\xF0
+	byte[] holdover = null;
+
+	public byte[] RawProcess(byte[] data) {
+		if (data == null) {
+			return null;
 		}
-		String tmp = new String(data,encoding);
-		
-		//StringBuffer holder = new StringBuffer("");
-		holder.setLength(0);
-		
-		ma_matcher.reset(tmp);
-		
-		//Log.e("PROCESSOR","DEC:" + TC.decodeInt(tmp.substring(0,tmp.length()),encoding) + " encoded in " + encoding);
-		
-		boolean hasmatched = false;
-		while(ma_matcher.find()) {
-			hasmatched = true;
-			String matched = ma_matcher.group(0);
-			boolean tabreplace = false;
-			boolean bellreplace= false;
-			iac_match.reset(matched);
-			if(iac_match.matches()) {
-				//dispatch IAC
-				//String action = iac_match.group(1);
-				//String option = iac_match.group(2);
-				dispatchIAC(iac_match.group(1),iac_match.group(2));
-				//Log.e("PROCESSOR","GOT IAC " + TC.decodeInt(iac_match.group(1),encoding) + " " + TC.decodeInt(iac_match.group(2),encoding));
-			} else {
-				sub_match.reset(matched);
-				if(sub_match.matches()) {
-					//dispatch sub
-					//String subneg = sub_match.group(0);
-					//Log.e("PROCESSOR","GOT SUB " + TC.decodeInt(sub_match.group(0),encoding));
-					//Log.e("PROCESSOR","IN:" +tmp );
-					boolean skip = dispatchSUB(sub_match.group(0),data);
-					if(skip) return holder.toString(); //subnegotiation had compress, we shoudl return what we have, but not the rest because it is compressed.
-					
-				} else {
-					goahead_match.reset(matched);
-					if(goahead_match.matches()) {
-						//replace goahead.
-					} else {
-						tab_match.reset(matched);
-						if(tab_match.matches()) {
-							//replace tab
-							tabreplace = true;
-						} else {
-							bell_match.reset(matched);
-							if(bell_match.matches()) {
-								//replace bell
-								bellreplace = true;
+
+		ByteBuffer buff = null;
+		if(holdover == null) {buff = ByteBuffer.allocate(data.length); }
+		else { buff = ByteBuffer.allocate(data.length + holdover.length); buff.put(holdover); holdover = null; }
+		ByteBuffer opbuf = ByteBuffer.allocate(30);
+
+		int count = 0; // count of the number of bytes in the buffer;
+		for (int i = 0; i < data.length; i++) {
+			switch (data[i]) {
+			case IAC:
+				// if the next byte is
+				if(i > data.length-1) {
+					holdover = new byte[] { (byte)0xFF };
+					return null;
+				}
+				if ((data[i + 1] >= WILL && data[i + 1] <= DONT)
+						|| data[i + 1] == SB) {
+					//Log.e("SERVICE", "DO IAC");
+					// switch(data[i+1])
+					if (data[i + 1] == SB) {
+						// subnegotiation
+						// now we have an optional number of bytes between the
+						// indicated subnegotiation and the IAC SE end of
+						// sequence.
+						boolean done = false;
+						int j = i + 3;
+						while (!done) {
+							if (data[j] == IAC) {
+								if (data[j + 1] == SE) {
+									done = true;
+								}
 							} else {
-								//unknown.
-								//Log.e("PROCESSOR","UNKNOWN:" + matched);
+								opbuf.put(data[j]);
+								j++;
 							}
 						}
+						// so if we are here, than j - (i+3) is the number of
+						// optional bytes.
+						opbuf = ByteBuffer.allocate(j - (i + 3) + 5);
+						opbuf.put(IAC);
+						opbuf.put(data[i + 1]);
+						opbuf.put(data[i + 2]);
+						if (j - (i + 3) > 0) {
+							for (int q = i + 3; q < j; q++) {
+								opbuf.put(data[q]);
+							}
+						}
+						opbuf.put(IAC);
+						opbuf.put(SE);
+
+						opbuf.rewind();
+						boolean compress = dispatchSUB(opbuf.array());
+						if (compress) {
+							ByteBuffer b = ByteBuffer.allocate(data.length - 5
+									- i);
+							// if(in[0] == IAC && in[1] == SB && in[2] ==
+							// compressresp[0] && in[3] == IAC && in[4] == SE) {
+							//Log.e("PROCESSOR",
+									//"ENCOUNTERED START OF COMPRESSION EVENT");
+							// get rest
+
+							for (int z = i + 5; z < data.length; z++) {
+								b.put(data[z]);
+							}
+
+							b.rewind();
+							reportto.sendMessageAtFrontOfQueue(reportto
+									.obtainMessage(
+											StellarService.MESSAGE_STARTCOMPRESS,
+											b.array()));
+							if(debugTelnet) {
+								String message = "\n"+Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.telOptColorEnd+"\n";
+								reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
+							}
+							byte[] trunc = new byte[count];
+							buff.rewind();
+							buff.get(trunc, 0, count);
+							return trunc;
+							//try {
+							//	return new String(trunc, encoding);
+							//} catch (UnsupportedEncodingException e) {
+							//	throw new RuntimeException(e);
+							//}
+
+						} else {
+							i = i + 2 + (j - (i + 3)) + 2; // (original pos,
+															// plus the 2
+															// mandatory bytes,
+															// plus the optional
+															// data length, plus
+															// the 2 bytes at
+															// the end (one is
+															// included in the
+															// loop).
+						}
+					} else {
+						dispatchIAC(data[i + 1], data[i + 2]);
+						i = i + 2;
+					}
+				} else {// if(data[i+1] == GOAHEAD) {
+
+					// i++;
+					// Log.e("SERVICE","DO GOAHEAD");
+					// } else if(data[i+1] == IAC) {
+					// /Log.e("SERVICE","FOUND IAC AS DATA");
+					// buff.put(data[i]);
+					// count++;
+					// i++;
+					// } else if(data[i+1] == IP) {
+					// we handle disconnections on our own.
+					// Log.e("SERVICE","GOT IP");
+					// i++;
+
+					switch (data[i + 1]) {
+					case IAC:
+						buff.put(data[i]); // and one IAC and consume the extra.
+						count++;
+						break;
+					case GOAHEAD:
+					case IP:
+						// TODO: REAL IP HANDLING HERE, I THINK THIS INVOLVES
+						// SETTING THE CURSOR BACK TO A PLACE OR SOMETHING
+					case BREAK:
+					case AO:
+						// i think this one is more for us to send to the
+						// server.
+					case EC:
+						// TODO: REAL ERASE CHARACTER
+					case EL:
+						// TODO: REAL ERASE LINE
+					case AYT:
+						i++; // consume the byte.
+						break;
+					default:
+						// everything else keep
+						break;
 					}
 				}
-			}
-			if(tabreplace) {
-				ma_matcher.appendReplacement(holder, "    ");
-			} else if(bellreplace) {
-				ma_matcher.appendReplacement(holder, "");
-				//and do bell.
+				break;
+			case BELL:
+				// dispatch bell
 				reportto.sendEmptyMessage(StellarService.MESSAGE_BELLINC);
-			} else {
-				ma_matcher.appendReplacement(holder, ""); //remove it from the stream
+				break;
+			case CARRIAGE:
+				//strip carriage returns
+				break;
+			// UNTIL FURTHER NOTICE, TAB HANDLING WILL BE THE WINDOWS
+			// RESPONSIBILITY
+			default:
+				buff.put(data[i]);
+				count++;
+				break;
 			}
-			
-			
-		}
-		if(hasmatched) {
-			ma_matcher.appendTail(holder);
-		} else {
-			holder.append(tmp);
-		}
-		
-		//now we are finished, send text off for dispatching.
-		return holder.toString();
-		
-		
-	}
-	
-	public void dispatchIAC(String action,String option) throws UnsupportedEncodingException {
-		byte[] snd = new byte[3];
-		snd[0] = (byte)TC.IAC;
-		byte[] atmp = action.getBytes("ISO-8859-1");
-		snd[1] = atmp[0];
-		atmp = option.getBytes("ISO-8859-1");
-		snd[2] = atmp[0];
-		
-		//Log.e("PROCESSOR","GOT COMMAND:" + "IAC|" + TC.decodeInt(action,encoding) + "|"+ TC.decodeInt(option, encoding));
-		byte[] resp = opthandler.processCommand(snd[0], snd[1], snd[2]);
-		Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
-		//Log.e("PROCESSOR","SENDING RESPONSE:" + TC.decodeInt(new String(resp,encoding), encoding));
-		
-		reportto.sendMessage(sb);
-	}
-	
-	public boolean dispatchSUB(String negotiation,byte[] in) throws UnsupportedEncodingException {
-		byte[] stmp = negotiation.getBytes("ISO-8859-1");
-		//Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(negotiation, encoding));
 
-		byte[] sub_r = opthandler.getSubnegotiationResponse(stmp);
-		//String sub_resp = new String(opthandler.getSubnegotiationResponse(stmp));
+		}
+		// buff.rewind();
+		// count should reflect an accurate amount of bytes written to the
+		// buffer.
+		buff.rewind();
+		byte[] tmp = new byte[count];
+		buff.get(tmp, 0, count);
+		return tmp;
+		//try {
+		//	return new String(tmp, encoding);
+		//} catch (UnsupportedEncodingException e) {
+		//	throw new RuntimeException(e);
+		//}
+	}
+
+	public void dispatchIAC(byte action,byte option) {
 		
-		if(sub_r == null) {
-			//Log.e("PROCESSOR","SUBNEGOTIATION RESPONSE NULL");
+		//Log.e("PROCESSOR","GOT COMMAND:" + "IAC|" + TC.decodeInt(new String(new byte[]{action},encoding),encoding) + "|"+ TC.decodeInt(new String(new byte[]{option},encoding), encoding));
+		byte[] resp = opthandler.processCommand(IAC, action, option);
+		Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
+		if(resp.length > 2) {
+			if(resp[2] == TC.NAWS) {
+			//naws has started.
+				//Log.e("SERVICE","NAWS STARTED, SENDING NAWS STRING");
+				//opthandler.
+				disaptchNawsString();
+			}
+		}
+		//Log.e("PROCESSOR","SENDING RESPONSE:" + TC.decodeInt(new String(resp,encoding), encoding));
+		//message format: IN:[WILL ECHO] OUT:[DONT ECHO] //background.
+		Bundle b = sb.getData();
+		b.putByteArray("THE_DATA", resp);
+		String message = null;
+		if(debugTelnet) {
+			message = Colorizer.telOptColorBegin + "IN:[" +TC.decodeIAC(new byte[]{IAC,action,option}) + "]" + " ";
+			message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeIAC(resp) + "]"+ Colorizer.telOptColorEnd + "\n";
+			//reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message),5);
+		}
+		b.putString("DEBUG_MESSAGE", message);
+		sb.setData(b);
+		reportto.sendMessage(sb);
+		
+		
+	}
+	
+
+	public boolean dispatchSUB(byte[] negotiation) {
+		// byte[] stmp = negotiation.getBytes("ISO-8859-1");
+		// Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(new
+		// String(negotiation,encoding), encoding));
+
+		byte[] sub_r = opthandler.getSubnegotiationResponse(negotiation);
+		// String sub_resp = new
+		// String(opthandler.getSubnegotiationResponse(stmp));
+
+		if (sub_r == null) {
+			// Log.e("PROCESSOR","SUBNEGOTIATION RESPONSE NULL");
 			return false;
 		} else {
-			//Log.e("PROCESSOR","RESPONSE:" + TC.decodeInt(new String(sub_r,encoding), encoding));
+
 		}
 
-		//special handling for the compression marker.
+		
+		
+		// special handling for the compression marker.
 		byte[] compressresp = new byte[1];
 		compressresp[0] = TC.COMPRESS2;
-		if(sub_r[0] == compressresp[0]) {
-			StringBuffer b = new StringBuffer();
-			sub_match.reset(new String(in,"ISO-8859-1"));
-			boolean found = false;
-			while(sub_match.find()) {
-				found = true;
-				sub_match.appendReplacement(b, "");
-			}
-			byte[] rest = null;
-			if(found) {
-				b.setLength(0);
-				sub_match.appendTail(b);
-				//b now contains the rest of the data.
-				if(b.length() > 0) {
-					rest = b.toString().getBytes("ISO-8859-1");
-				}
-			}
-			
-			reportto.sendMessageAtFrontOfQueue(reportto.obtainMessage(StellarService.MESSAGE_STARTCOMPRESS,rest));
+
+		if (sub_r[0] == compressresp[0]) {
 			return true;
 		} else {
-			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,sub_r);
+			String message = null;
+			if(debugTelnet) {
+				message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + " ";
+				message += Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(sub_r) + "]" + Colorizer.telOptColorEnd + "\n";
+				//reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message));
+			}
+			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Bundle b = sbm.getData();
+			b.putByteArray("THE_DATA",sub_r);
+			b.putString("DEBUG_MESSAGE", message);
+			sbm.setData(b);
 			reportto.sendMessage(sbm);
 			return false;
 		}
+		
+		
 	}
 
 	public void setEncoding(String encoding) {
@@ -225,18 +321,57 @@ public class Processor {
 	public String getEncoding() {
 		return encoding;
 	}
-	
-	public void setDisplayDimensions(int rows,int cols) {
+
+	public void setDisplayDimensions(int rows, int cols) {
 		opthandler.setColumns(cols);
 		opthandler.setRows(rows);
 	}
-	
+
 	public void disaptchNawsString() {
-		if(opthandler.getNawsString() == null) return;
-		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,opthandler.getNawsString());
-		reportto.sendMessage(sbm);
+		byte[] nawsout = opthandler.getNawsString();
+		if(nawsout == null) {
+			//Log.e("PROCESSOR","NAWS NOT CURRENTLY NEGOTIABLE");
+			return;
+		}
+		//Log.e("PROCESSOR","DISPATCHING NAWS");
+		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+		Bundle b = sbm.getData();
+		b.putByteArray("THE_DATA", nawsout);
+		
+		String message = null;
+		if(debugTelnet) {
+			message = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(nawsout) + "]" + Colorizer.telOptColorEnd + "\n";
+		}
+		b.putString("DEBUG_MESSAGE", message);
+		sbm.setData(b);
+		reportto.sendMessageDelayed(sbm,2);
 		return;
 	}
+
+	public void reset() {
+		opthandler.reset();
+	}
+
 	
 
 }
+
+/*
+ * Straight from rfc 854 NAME CODE MEANING
+ * 
+ * SE 240 End of subnegotiation parameters. NOP 241 No operation. Data Mark 242
+ * The data stream portion of a Synch. This should always be accompanied by a
+ * TCP Urgent notification. Break 243 NVT character BRK. Interrupt Process 244
+ * The function IP. Abort output 245 The function AO. Are You There 246 The
+ * function AYT. Erase character 247 The function EC. Erase Line 248 The
+ * function EL. Go ahead 249 The GA signal. SB 250 Indicates that what follows
+ * is subnegotiation of the indicated option. WILL (option code) 251 Indicates
+ * the desire to begin performing, or confirmation that you are now performing,
+ * the indicated option. WON'T (option code) 252 Indicates the refusal to
+ * perform, or continue performing, the indicated option. DO (option code) 253
+ * Indicates the request that the other party perform, or confirmation that you
+ * are expecting the other party to perform, the indicated option. DON'T (option
+ * code) 254 Indicates the demand that the other party stop performing, or
+ * confirmation that you are no longer expecting the other party to perform, the
+ * indicated option. IAC 255 Data Byte 255.
+ */

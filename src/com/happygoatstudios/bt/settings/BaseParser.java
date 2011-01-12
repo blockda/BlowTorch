@@ -28,6 +28,7 @@ public class BaseParser {
 	static final String ATTR_HFONFLIP = "hapticFeedBackOnFlip";
 	static final String ATTR_ENCODING = "encoding";
 	static final String ATTR_ROUNDBUTTONS = "roundButtons";
+	//static final String ATTR_FITBUTTONS = "showFitDialog";
 	
 	static final String TAG_WINDOW = "window";
 	static final String ATTR_LINESIZE = "lineSize";
@@ -52,6 +53,12 @@ public class BaseParser {
 	static final String ATTR_THROTTLEBACKGROUND = "throttle";
 	static final String ATTR_PROCESSPERIOD = "processPeriod";
 	static final String ATTR_WIFIKEEPALIVE = "keepWifiActive";
+	static final String ATTR_ORIENTATION = "orientation";
+	static final String ATTR_BREAKAMOUNT = "breakAmount";
+	static final String ATTR_WORDWRAP = "wordWrap";
+	static final String ATTR_DEBUGTELNET = "debugTelnet";
+	static final String ATTR_REMOVEEXTRACOLOR = "removeExtraColor";
+	
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";
 	static final String ATTR_PRE = "pre";

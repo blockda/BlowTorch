@@ -6,17 +6,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
+
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 //import android.util.Log;
-import android.util.Log;
+//import android.util.Log;
 
 
 public class DataPumper extends Thread {
@@ -26,7 +27,7 @@ public class DataPumper extends Thread {
 		private Handler reportto = null;
 		private boolean compressed = false;
 		private Handler myhandler = null;
-		private InflaterInputStream decomp_stream = null;
+		//private InflaterInputStream decomp_stream = null;
 		
 		private Inflater decompress = null;
 		//private ZStream decomp  = null;
@@ -74,11 +75,8 @@ public class DataPumper extends Thread {
 						//Log.e("PUMP","PUMP CHECKING FOR NEW DATA!");
 						try {
 							getData();
-						} catch (UnsupportedEncodingException e1) {
-							throw new RuntimeException(e1);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+						}  catch (IOException e) {
+							throw new RuntimeException(e);
 						}
 						//keep the pump flowing.
 						break;
@@ -105,6 +103,7 @@ public class DataPumper extends Thread {
 						break;
 					case MESSAGE_NOCOMPRESS:
 						stopCompression();
+						//Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\n" + "BEING TOLD TO STOP BY THE SERVICE (processor encountered the IAC SB");
 						break;
 					}
 					
@@ -130,7 +129,7 @@ public class DataPumper extends Thread {
 		private void useCompression(byte[] input) throws UnsupportedEncodingException {
 			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
 			compressed = true;
-			
+			corrupted = false;
 			if(input == null) return;
 			if(input.length > 0) {
 				//try {
@@ -169,28 +168,37 @@ public class DataPumper extends Thread {
 				try {
 					numtoread = reader.available();
 				} catch (IOException e) {
-					throw new RuntimeException(e);
+					//throw new RuntimeException(e);
+					reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+					return;
 				}
 				if(numtoread < 1) {
 					//no data to read
 					//Log.e("PUMP","NO DATA TO READ");
 					reader.mark(1);
-					if(reader.read() == -1) {
-						//Log.e("PUMP","END OF STREAM");
+					try {
+						if(reader.read() == -1) {
+							//Log.e("PUMP","END OF STREAM");
+							reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+						} else {
+							reader.reset();
+						}
+					} catch (IOException e) { 
 						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
-					} else {
-						reader.reset();
+						return;
 					}
 					
 				} else {
 					//data to read, do it
+					//try {
 					byte[] data = new byte[numtoread];
 					int retval = -2;
 					try {
 						retval = reader.read(data,0,numtoread);
 					
 					} catch (IOException e) {
-						throw new RuntimeException(e);
+						//throw new RuntimeException(e);
+						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
 					}
 					//Log.e("PUMP","READ (string): " + new String(data));
 					//Log.e("PUMP","READ (hex): " + toHex(data));
@@ -219,6 +227,9 @@ public class DataPumper extends Thread {
 					} 
 
 					data = null; //free data to the garbage collector.
+					//} catch (SocketException e) {
+						
+					//}
 				}
 		}
 		
@@ -235,12 +246,22 @@ public class DataPumper extends Thread {
 			
 		}
 		
+		private boolean corrupted = false;
 		private byte[] DoDecompress(byte[] data) throws UnsupportedEncodingException {
 			int count = 0;
 			
 			byte[] decompressed_data = null;
 			
-			decompress.setInput(data,0,data.length);
+			if(doCorrupt) {
+				doCorrupt = false;
+				if(data.length > 1) {
+					decompress.setInput(data,1,data.length-1);
+				}
+			} else {
+				decompress.setInput(data,0,data.length);
+			}
+			
+			
 			
 			byte[] tmp = new byte[256];
 			
@@ -257,9 +278,14 @@ public class DataPumper extends Thread {
 						decompress = new Inflater(false);
 						//synchronized(reportto) {
 							//reportto.sendMessage(msg); //report to mom and dad.
-						//}
-					} 
+						}
+					//} 
+					//Log.e("BTPUMP","ATTEMPTING MCCP RENEGOTIATION DUE TO:\n" + e.getMessage());
+					//compressed = false;
+					reportto.sendEmptyMessage(StellarService.MESSAGE_MCCPFATALERROR);
+					//return;
 					compressed = false;
+					corrupted = true;
 					return null;
 				}
 				if(decompress.finished()) {
@@ -272,7 +298,7 @@ public class DataPumper extends Thread {
 					b.put(data, pos, length);
 					b.rewind();
 					//String remains = new String(b.array(),"ISO-8859-1");
-					//Log.e("PUMP","REMAINS: " + remains);
+					
 					if(reportto != null) {
 						Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,b.array()); //get a send data message.
 						//either we woke up or the processor was ready.
@@ -280,8 +306,10 @@ public class DataPumper extends Thread {
 							reportto.sendMessage(msg); //report to mom and dad.
 						}
 					} 
+					//Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\nCompression End Event Processed.");
 					compressed = false;
 					decompress = new Inflater(false);
+					corrupted = false;
 					return null;
 				}
 				if(decompressed_data == null && count > 0) {
@@ -298,8 +326,16 @@ public class DataPumper extends Thread {
 					}
 				}
 			} //end while
-			
-			return decompressed_data;
+			if(corrupted) {
+				return null;
+			} else {
+				return decompressed_data;
+			}
 		}
+
+	private boolean doCorrupt = false;
+	public void corruptMe() {
+		doCorrupt = true;
+	}
 		
 }

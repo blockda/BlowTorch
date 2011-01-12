@@ -3,7 +3,7 @@
 <RelativeLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/newaliaslayout"
-  android:layout_width="400dip"
+  android:layout_width="300dip"
   android:layout_height="200dip">
   
   <TextView
@@ -35,7 +35,7 @@
   	android:layout_alignParentBottom="true"/>
   
   <ScrollView 
-  	android:layout_width="400dip"
+  	android:layout_width="300dip"
   	android:layout_height="fill_parent"
   	android:layout_above="@id/new_alias_done_button"
   	android:layout_below="@id/titlebar">
@@ -53,7 +53,7 @@
  			android:text = "Replace:"/>
   		<EditText
   			android:id = "@+id/new_alias_pre"
-  			android:layout_width="300dip"
+  			android:layout_width="220dip"
   			android:singleLine = "true"
   			android:layout_height="wrap_content"
   			android:hint="Text to replace." />
@@ -66,7 +66,7 @@
  			android:text = "With:"/>
   		<EditText
   			android:id="@+id/new_alias_post"
-  			android:layout_width="300dip"
+  			android:layout_width="220dip"
   			android:layout_height="wrap_content"
   			android:inputType="textMultiLine"
   			android:hint="Replace with this." />

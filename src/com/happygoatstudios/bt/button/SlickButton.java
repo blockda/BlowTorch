@@ -1,12 +1,14 @@
 package com.happygoatstudios.bt.button;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
+//import java.io.UnsupportedEncodingException;
+//import java.nio.ByteBuffer;
 
+import com.happygoatstudios.bt.window.ByteView;
 import com.happygoatstudios.bt.window.MainWindow;
 
 import android.content.Context;
 import android.graphics.Canvas;
+//import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -14,6 +16,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 import android.view.MotionEvent;
@@ -30,6 +33,8 @@ public class SlickButton extends View {
 	
 	private int fullScreenShift = 0;
 	private boolean drawRound = true;
+	
+	private boolean portraiteMode = false;
 	
 	//dip change
 	//was 80
@@ -96,7 +101,7 @@ public class SlickButton extends View {
 					moving = false;
 					nudged = false;
 					hasfocus = false;
-					Message deleme = deleter.obtainMessage(666, SlickButton.this);
+					Message deleme = deleter.obtainMessage(ByteView.MSG_DELETEBUTTON, SlickButton.this);
 					deleter.sendMessage(deleme);
 					//dispatcher.
 					break;
@@ -434,6 +439,22 @@ public class SlickButton extends View {
 		//c.drawColor(0xFF0FF000);
 		//c.
 		
+		/*if(portraiteMode) {
+			Log.e("BUTTON","DOING PORTRAIT MODE DRAW: x="+data.getX()+" y="+data.getY()+ "width="+this.getWidth());
+			Matrix m = c.getMatrix();
+			//m.
+			double angle = (3*Math.PI)/4;
+			int tmpx = data.getX();
+			int tmpy = data.getY();
+			
+			data.setX((int)(tmpx*Math.cos(angle) + tmpy*Math.sin(angle)));
+			data.setY((int)(-1*tmpx*Math.sin(angle) - tmpy*Math.cos(angle)));
+			
+			//data.setX(data.getX()+this.getWidth());
+			Log.e("BUTTON","ROTATED: x="+data.getX()+" y="+data.getY());
+			
+		}*/
+		
 		if(fullScreenShift > 0) {
 			c.translate(0, fullScreenShift);
 		}
@@ -504,6 +525,19 @@ public class SlickButton extends View {
 			//RectF frect = new RectF(m_rect);
 			//c.drawRoundRect(frect, 8, 8, rpaint);
 		}
+		
+		/*if(portraiteMode) {
+			
+			
+			double angle = (Math.PI)/2;
+			int tmpx = data.getX();
+			int tmpy = data.getY();
+			
+			data.setX((int)(tmpx*Math.cos(angle) +  tmpy*Math.sin(angle)));
+			data.setY((int)(-1*tmpx*Math.sin(angle) - tmpy*Math.cos(angle)));
+			//data.setY(data.getY()-this.getWidth());
+			
+		}*/
 		
 		return;
 	}
@@ -588,6 +622,14 @@ public class SlickButton extends View {
 
 	public int getFullScreenShift() {
 		return fullScreenShift;
+	}
+
+	public void setPortraiteMode(boolean portraiteMode) {
+		this.portraiteMode = portraiteMode;
+	}
+
+	public boolean isPortraiteMode() {
+		return portraiteMode;
 	}
 	
 

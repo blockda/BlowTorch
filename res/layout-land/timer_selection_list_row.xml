@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:background="#FF333333">
+  	
+  	<TextView
+  		android:id="@+id/timer_ordinal"
+  		android:text="1"
+  		android:textColor="#FF888888"
+  		android:background="#FF333333"
+  		android:layout_alignParentLeft="true"
+  		android:layout_alignParentTop="true"
+  		android:layout_alignParentBottom="true"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:textSize="45dip"
+  		android:paddingRight="15dip"
+  		android:paddingLeft="15dip"
+  		android:paddingTop="0dip"
+  		android:paddingBottom="0dip"
+  		android:textStyle="bold"
+  		
+  		/>
+  		
+  	<!--  <ImageButton
+  		android:id="@+id/timer_playpause"
+  		android:layout_alignParentRight="true"
+  		android:layout_alignParentTop="true"
+  		android:layout_width="wrap_content"
+  		
+  		android:layout_height="wrap_content"
+  		android:layout_margin="10dip"
+  		android:src="@android:drawable/ic_media_play"
+  		
+  		/>-->
+  		
+  	 <!-- <ImageButton
+  		android:id="@+id/timer_reset"
+  		android:layout_toLeftOf="@id/timer_playpause"
+  		android:layout_alignParentTop="true"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_margin="10dip"
+  		android:src="@android:drawable/ic_media_ff"
+  		
+  		/>-->
+  	
+  	<TableLayout
+  		android:layout_width ="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:id="@+id/display_meat"
+  		android:layout_alignParentRight="true"
+  		android:layout_alignParentTop="true"
+  		android:layout_toRightOf="@id/timer_ordinal"
+  		android:stretchColumns="*"
+  		android:paddingRight="0dip"
+  		android:paddingLeft="0dip">
+  		
+  		
+  	<TableRow
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content">
+  	
+  	<TextView
+  		android:id="@+id/timer_title"
+  		android:layout_width="100dip"
+  		android:layout_height="wrap_content"
+  		android:gravity = "left"
+  		android:textSize = "24sp"
+  		android:text="DISPLAY"
+  		android:textStyle = "bold"
+  		android:ellipsize="end"
+  		android:singleLine="true"
+  		android:paddingLeft = "7dip"
+  		android:background="#FF333333"/>
+  		
+ 	 <TextView
+  		android:id="@+id/timer_total"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:gravity = "right"
+  		android:textSize = "24sp"
+  		android:text="MAX"
+  		android:textStyle = "bold"
+  		android:singleLine="true"
+  		android:paddingRight="10dip"
+  		android:background="#FF333333"/>	
+  	</TableRow>	
+	<TableRow
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content">
+  	
+  	  <TextView
+  		android:id="@+id/timer_display"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+
+  		android:gravity = "center"
+  		android:textSize = "16sp"
+  		android:textStyle = "bold"
+  		android:singleLine="true"
+  		android:textColorHighlight="#FFAAAAAA"
+  		android:background="#FF333333"
+  		
+  		android:text="00:05:35"/>
+  		
+  		<TextView
+  		android:id="@+id/timer_status"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+		
+  		android:gravity = "right"
+  		android:textSize = "16sp"
+  		android:textStyle = "bold"
+  		android:singleLine="true"
+  		android:textColorHighlight="#FFAAAAAA"
+  		android:background="#FF333333"
+  		android:paddingRight="10dip"
+  		android:text="stop"/>
+  	  </TableRow>	
+  		
+  	  </TableLayout>
+  		
+  		
+  	  <com.happygoatstudios.bt.timer.ProgressMeter
+  		android:id="@+id/timer_progress"
+  		android:layout_width="fill_parent"
+  		android:layout_height="fill_parent"
+  		android:layout_below="@id/display_meat"
+  		android:layout_alignParentRight="true"
+  		android:layout_alignBottom="@id/timer_ordinal"
+  		android:layout_toRightOf="@id/timer_ordinal"
+  		/>
+  <!-- <TextView
+  		android:id="@+id/trigger_extra"
+  		android:layout_width="280dip"
+  		android:layout_height="wrap_content"
+  		android:layout_below="@id/trigger_title"
+  		android:gravity = "center"
+  		android:textSize = "12sp"
+  		android:textStyle = "italic"
+  		android:background="#AA333333"/>-->
+  	
+ </RelativeLayout>
