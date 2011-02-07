@@ -30,4 +30,16 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>BTLib_aidl</name>
+			<type>2</type>
+			<locationURI>_android_BTLib_3c968d3/aidl</locationURI>
+		</link>
+		<link>
+			<name>BTLib_src</name>
+			<type>2</type>
+			<locationURI>_android_BTLib_3c968d3/src</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

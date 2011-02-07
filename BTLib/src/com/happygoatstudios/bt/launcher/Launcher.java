@@ -41,6 +41,7 @@ import android.text.format.Time;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 //import android.util.Log;
+import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
 import android.view.LayoutInflater;
@@ -84,11 +85,42 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	IStellarService service;
 	
+	private enum LAUNCH_MODE {
+		FREE,
+		PAID,
+		TEST
+	}
+	
+	private LAUNCH_MODE mode = LAUNCH_MODE.FREE;
+	private String launcher_source = "";
+	
 	//make this save a change
 	boolean dowhatsnew = false;
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		
+		//determine launch mode
+		//Intent intent = this.getIntent();
+		launcher_source = this.getIntent().getStringExtra("LAUNCH_MODE");
+		if(launcher_source == null) {
+			Log.e("BlowTorch","Launcher not provided a valid launch source. Finishing.");
+			this.finish();
+		}
+		
+		if(launcher_source.equals("com.happygoatstudios.bttest")) {
+			mode = LAUNCH_MODE.TEST;
+			Log.e("BlowTorch","Test Launcher Engaged.");
+		} else if(launcher_source.equals("com.happygoatstudios.bt")) {
+			Log.e("BlowTorch","Free Launcher Engaged.");
+			mode = LAUNCH_MODE.FREE;
+		} else if(launcher_source.equals("com.happygoatstudios.btpro")) {
+			Log.e("BlowTorch","Paid Launcher Engaged");
+			mode = LAUNCH_MODE.PAID;
+		} else {
+			Log.e("BlowTorch","Launcher given source: " + launcher_source + " which is invalid, Finishing");
+			this.finish();
+		}
 		
 		actionHandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -204,7 +236,7 @@ public class Launcher extends Activity implements ReadyListener {
 		PackageManager m = this.getPackageManager();
 		String versionString = null;
 		try {
-			versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+			versionString = m.getPackageInfo(launcher_source, PackageManager.GET_CONFIGURATIONS).versionName;
 		} catch (NameNotFoundException e) {
 			//can't execute on our package aye?
 			throw new RuntimeException(e);
@@ -719,7 +751,7 @@ public class Launcher extends Activity implements ReadyListener {
 		PackageManager m = this.getPackageManager();
 		String versionString = null;
 		try {
-			versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+			versionString = m.getPackageInfo(launcher_source, PackageManager.GET_CONFIGURATIONS).versionName;
 		} catch (NameNotFoundException e) {
 			//can't execute on our package aye?
 			throw new RuntimeException(e);
