@@ -27,6 +27,7 @@
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
+        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
@@ -42,9 +43,10 @@
         		  </intent-filter>
         </activity>
         <service android:name="com.happygoatstudios.bt.service.StellarService"
-        		 android:process=":remote">
+        		 android:process=":stellar_pro">
         		 <intent-filter>
         		 	<action android:name="com.happygoatstudios.bt.service.IStellarService"/>
+        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.MODE_NORMAL"/>
         		 </intent-filter>
         </service>
         		  

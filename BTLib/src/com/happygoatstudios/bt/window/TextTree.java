@@ -70,7 +70,7 @@ public class TextTree {
 	}
 	
 	
-	public byte[] dumpToBytes() {
+	public byte[] dumpToBytes(boolean keep) {
 		ByteBuffer buf = ByteBuffer.allocate(totalbytes);
 		//Log.e("TREE","EXPORTING TREE:" + totalbytes + " bytes.");
 		int written =0;
@@ -106,7 +106,7 @@ public class TextTree {
 		byte[] ret = new byte[size];
 		buf.rewind();
 		buf.get(ret,0,size);
-		empty();
+		if(!keep) empty();
 		//buf.rewind();
 		return ret;
 	}

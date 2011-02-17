@@ -41,6 +41,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Environment;
@@ -63,6 +64,7 @@ import android.util.Log;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
@@ -74,9 +76,12 @@ import com.happygoatstudios.bt.timer.TimerExtraTask;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
+import dalvik.system.PathClassLoader;
+
 
 public class StellarService extends Service {
 
+	LAUNCH_MODE mode = LAUNCH_MODE.FREE;
 	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IStellarServiceCallback> callbacks = new RemoteCallbackList<IStellarServiceCallback>();
@@ -157,7 +162,22 @@ public class StellarService extends Service {
 		//Log.e("SERVICE","The service has been requested to shore up memory usage, potentially going to be killed.");
 	}
 	
+	public int onStartCommand(Intent intent,int flags,int startId) {
+		if(intent == null) {
+			Log.e("SERVICE","onStartCommand passed null intent");
+			return Service.START_STICKY;
+		}
+		Log.e("SERVICE",intent.getAction());
+		if(intent.getAction().equals("com.happygoatstudios.bt.service.IStellarService.MODE_TEST")) {
+			Log.e("SERVICE","STARTING IN TEST MODE");
+			mode=LAUNCH_MODE.TEST;
+		}
+		return Service.START_STICKY;
+	}
+	
 	public void onCreate() {
+		//if(this.getApplicationContext().getIn)
+		
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
 		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
 		//this.
@@ -280,7 +300,7 @@ public class StellarService extends Service {
 						}
 					}
 					buildTriggerData();
-					the_processor.reset();
+					if(the_processor != null) { the_processor.reset();  }// corner case. Not sure how to make this null.//2/16/2008 -- Fix for NullPointerException found in StellarService$handler
 					
 					try {
 						doStartup();
@@ -823,7 +843,13 @@ public class StellarService extends Service {
 		CharSequence contentTitle = "BlowTorch - Alert!";
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "The server is notifying you with the bell character, 0x07.";
-		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
+		Intent notificationIntent = null;
+		if(mode == LAUNCH_MODE.TEST) {
+			notificationIntent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.toString()+".NORMAL_MODE");
+		
+		} else {
+			notificationIntent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.toString()+".TEST_MODE");
+		}
 		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
@@ -2250,7 +2276,7 @@ public class StellarService extends Service {
 	
 	public void sendBuffer() throws RemoteException {
 		
-		byte[] buf = buffer_tree.dumpToBytes();
+		byte[] buf = buffer_tree.dumpToBytes(true);
 		
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
@@ -2919,7 +2945,7 @@ public class StellarService extends Service {
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
 		//if(firstDispatch)
 		if(rawData == null || rawData.length == 0) { return;}
-		
+		//callbacks.
 		final int N = callbacks.beginBroadcast();
 		int final_count = N;
 	
@@ -2934,7 +2960,7 @@ public class StellarService extends Service {
 		callbacks.finishBroadcast();
 		
 		//if(callbacks.)
-		if(final_count == 0) {
+		//if(final_count == 0) {
 			//someone isnt listening so save the buffer
 			//bufferLineCount += rawData.split("\n").length;
 			//Log.e("SERVICE","FOUND:" + bufferLineCount);
@@ -2971,12 +2997,12 @@ public class StellarService extends Service {
 				bufferLineCount = the_settings.getMaxLines();
 			}*/
 			
-		} else {
+		//} else {
 			//someone is listening so save the buffer.
-			buffer_tree.empty();
+		//	buffer_tree.empty();
 			//the_buffer.clearSpans();
 			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
-		}
+		//}
 		
 		//IDLE:  "Your eyes glaze over."
 		//REQU:  "QUEST: You may now quest again."
@@ -3006,7 +3032,7 @@ public class StellarService extends Service {
 					
 					//iterate through the responders.
 					for(TriggerResponder responder : triggered.getResponders()) {
-						responder.doResponse(this, display, trigger_count++,hasListener,myhandler,captureMap);
+						responder.doResponse(this, display, trigger_count++,hasListener,myhandler,captureMap,mode);
 					}
 					
 					if(triggered.isFireOnce()) {
@@ -3029,7 +3055,7 @@ public class StellarService extends Service {
 									captureMap.put(Integer.toString(i), testmatch.group(i));
 								}
 								for(TriggerResponder responder : data.getResponders()) {
-									responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap);
+									responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap,mode);
 								}
 								
 								if(data.isFireOnce()) {
@@ -3135,6 +3161,7 @@ public class StellarService extends Service {
 					recursivefound = false;
 					//Matcher recursivematch = to_replace.matcher(replaced.toString());
 					alias_recursive.reset(replaced.toString());
+					buffertemp.setLength(0);
 					while(alias_recursive.find()) {
 						recursivefound = true;
 						AliasData replace_with = the_settings.getAliases().get(alias_recursive.group(0));
@@ -3183,7 +3210,7 @@ public class StellarService extends Service {
 			}
 			
 			for(TriggerResponder responder : data.getResponders()) {
-				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null);
+				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null,mode);
 			}
 		}
 	}
@@ -3355,7 +3382,63 @@ public class StellarService extends Service {
 		} else {
 			contentText = defaultmsg;
 		}
-		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
+		Intent notificationIntent = null;
+		//Context packageContext = null;
+		//ClassLoader loader = null;
+		if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
+			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".NORMAL_MODE");
+			
+			String apkName = null;
+			try {
+				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bt", 0).sourceDir;
+			} catch (NameNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Class<?> w = null;
+        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+        	try {
+				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		
+			
+			try {
+				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_INCLUDE_CODE), w);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} else {
+			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
+			String apkName = null;
+			try {
+				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bttest", 0).sourceDir;
+			} catch (NameNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Class<?> w = null;
+        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+        	try {
+				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			
+			try {
+				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bttest", Context.CONTEXT_INCLUDE_CODE), w);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
 		notificationIntent.putExtra("DISPLAY",display);
 		notificationIntent.putExtra("HOST", host);
 		notificationIntent.putExtra("PORT", Integer.toString(port));
@@ -3410,10 +3493,72 @@ public class StellarService extends Service {
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
 		
 		Context context = getApplicationContext();
-		CharSequence contentTitle = "BlowTorch";
+		
+		CharSequence contentTitle = "";
+		if(mode == LAUNCH_MODE.TEST) {
+			contentTitle = "BlowTorch TEST";
+		} else {
+			contentTitle = "BlowTorch";
+		}
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
-		Intent notificationIntent = new Intent(this, com.happygoatstudios.bt.window.MainWindow.class);
+		Intent notificationIntent = null;
+		//Context packageContext = null;
+		//ClassLoader loader = null;
+		if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
+			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".NORMAL_MODE");
+			
+			String apkName = null;
+			try {
+				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bt", 0).sourceDir;
+			} catch (NameNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Class<?> w = null;
+        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+        	try {
+				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		
+			
+			try {
+				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_INCLUDE_CODE), w);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} else {
+			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
+			String apkName = null;
+			try {
+				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bttest", 0).sourceDir;
+			} catch (NameNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Class<?> w = null;
+        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+        	try {
+				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			
+			try {
+				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bttest", Context.CONTEXT_INCLUDE_CODE), w);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
 		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
