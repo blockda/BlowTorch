@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.launcher;
 
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +10,11 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,6 +24,7 @@ import java.util.regex.Pattern;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,6 +33,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Rect;
@@ -85,7 +93,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	IStellarService service;
 	
-	private enum LAUNCH_MODE {
+	public enum LAUNCH_MODE {
 		FREE,
 		PAID,
 		TEST
@@ -170,6 +178,143 @@ public class Launcher extends Activity implements ReadyListener {
 		};
 		
 		setContentView(R.layout.new_launcher_layout);
+		int testversion = 0;
+		if(mode == LAUNCH_MODE.TEST) {
+			findViewById(R.id.test_update).setVisibility(View.VISIBLE);
+			try {
+				//this.getPackageManager().getPackageInfo(launcher_source, PackageManager.GET_META_DATA).;
+				ApplicationInfo testLauncher = this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA);
+				if(testLauncher != null) {
+					if(testLauncher.metaData != null) {
+						testversion = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
+					} else {
+						Log.e("BlowTorch","metaData is null");
+						return;
+					}
+				
+				} else {
+					Log.e("BlowTorch","ApplicationInfo is null");
+					return;
+				}
+				//int testversion = this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA).metaData.getInt("TEST_VERSION");
+				((TextView)findViewById(R.id.update_label)).setText("Test Version " + testversion);
+				
+				boolean needsupdate = true;
+				
+				
+				
+				if(needsupdate) {
+					//check if file exists.
+					findViewById(R.id.update_button).setVisibility(View.VISIBLE);
+					findViewById(R.id.update_button).setOnClickListener(new View.OnClickListener() {
+						
+						public void onClick(View v) {
+							// TODO Auto-generated method stub
+							updateDialog = ProgressDialog.show(Launcher.this, "", "Checking update status",true,true,new DialogInterface.OnCancelListener() {
+								
+								//@Override
+								public void onCancel(DialogInterface dialog) {
+									return;
+								}
+							});
+							URL url2 = null;
+							try {
+								url2 = new URL("http://bt.happygoatstudios.com/test/version");
+							} catch (MalformedURLException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							try {
+								BufferedReader in = new BufferedReader(new InputStreamReader(url2.openStream()));
+								StringBuffer buf = new StringBuffer();
+								String tmp;
+								while((tmp = in.readLine()) != null) {
+									buf.append(tmp);
+								}
+								try {
+									Integer newVersion = Integer.parseInt(buf.toString());
+									Log.e("BlowTorch","Web update version: " + newVersion);
+									ApplicationInfo testLauncher = Launcher.this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA);
+									int testversion = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
+									if(newVersion > testversion) {
+										//needsupdate = true;
+									} else {
+										Toast t = Toast.makeText(Launcher.this, "BlowTorch Test Version "+testversion+" is up to date.", Toast.LENGTH_SHORT);
+										t.show();
+										updateDialog.dismiss();
+										updateDialog = null;
+										return;
+									}
+								} catch(NumberFormatException e) {
+									Log.e("BlowTorch","Web update response: " + buf.toString());
+								} catch (NameNotFoundException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							updateDialog.dismiss();
+							updateDialog = null;
+							
+							String state = Environment.getExternalStorageState();
+							if(!state.equals(Environment.MEDIA_MOUNTED)) {
+								//no sd card
+							} else {
+								//proceed
+								//attempt to download new version.
+								updateDialog = ProgressDialog.show(Launcher.this, "", "Downloading update.",true,true,new DialogInterface.OnCancelListener() {
+									
+									//@Override
+									public void onCancel(DialogInterface dialog) {
+										//update.doCancel();
+									}
+								});
+								//updateDialog.show();
+								//v.invalidate();
+								//updateDialog = ProgressDialog.show(Launcher.this, "Downloading", "Getting update from web.");
+								//updateDialog.show();
+								//Launcher.this.findViewById(R.id.)
+								/*synchronized(updateHandler) {
+									try {
+										updateHandler.wait(3000);
+									} catch (InterruptedException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+								}
+								updateHandler.sendEmptyMessage(MESSAGE_STARTDOWNLOAD);*/
+								updateHandler.sendEmptyMessageDelayed(MESSAGE_STARTDOWNLOAD,1000);
+								/*String filename = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
+								File file = new File(filename);
+								if(!file.exists()) {
+									Log.e("BlowTorch","Test application update does not exist.");
+									return; //file doesn't exist
+								}
+								
+								Intent i = new Intent();
+								i.setAction(Intent.ACTION_VIEW);
+								Uri data = Uri.parse("file://" + filename);
+								i.setDataAndType(data, "application/vnd.android.package-archive");
+								startActivity(i);*/
+							}
+						}
+					});
+					
+					
+					
+				}
+				
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} //catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			//}
+		}
 		
 		launcher_settings = new LauncherSettings();
 		connections = new ArrayList<MudConnection>();
@@ -433,8 +578,11 @@ public class Launcher extends Activity implements ReadyListener {
 	    		//service exists, we should figure out the name of what it is playing.
 	    		//Log.e("LAUNCHER","SERVICE IS RUNNING");
 	    		launch = muc.copy();
-	    		bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
-				
+	    		if(mode == LAUNCH_MODE.FREE) {
+	    			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_NORMAL"), mConnection, 0); //do not auto create
+	    		} else {
+	    			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
+	    		}
 	    	}
 	    	
 		}
@@ -677,7 +825,14 @@ public class Launcher extends Activity implements ReadyListener {
     		//service.service.
     		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
     			//service is running, don't do anything.
-    			found = true;
+    			Log.e(":Launcher","Service lives in: " + service.process);
+    			if(mode == LAUNCH_MODE.FREE) {
+    				
+    				if(service.process.equals("com.happygoatstudios.bt:stellar_free")) found = true;
+    			} else if(mode == LAUNCH_MODE.TEST) {
+    				if(service.process.equals("com.happygoatstudios.bt:stellar_test")) found = true;
+    			}
+    			
     		} else {
 
     			
@@ -811,8 +966,13 @@ public class Launcher extends Activity implements ReadyListener {
 	}
 	
 	private void DoFinalStartup() {
-		Intent the_intent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.getName());
-    	
+		Intent the_intent = null;
+		if(mode == LAUNCH_MODE.TEST) {
+			the_intent = new Intent("com.happygoatstudios.bt.window.MainWindow.TEST_MODE");
+		} else {
+			Log.e("BlowTorch","LAUNCHING NORMAL MODE!");
+			the_intent = new Intent("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE");
+		}
     	the_intent.putExtra("DISPLAY",launch.getDisplayName());
     	the_intent.putExtra("HOST", launch.getHostName());
     	the_intent.putExtra("PORT", launch.getPortString());
@@ -992,8 +1152,179 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		
 	}
+	
+	private final int MESSAGE_STARTUPDATE = 10098;
+	private final int MESSAGE_STARTDOWNLOAD = 10099;
+	private final int MESSAGE_CANCELDOWNLOAD = 10100;
+	private final int MESSAGE_FINISHUPDATE = 10101;
+	private final int MESSAGE_DOWNLOADEDBYTES = 10102;
+	ProgressDialog updateDialog = null;
+	UpdateThread update = null;
+	Handler updateHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			switch(msg.what) {
+			case MESSAGE_DOWNLOADEDBYTES:
+				//updateDialog.incrementProgressBy(msg.arg1);
+				break;
+			case MESSAGE_STARTUPDATE:
+				
+				break;
+			case MESSAGE_STARTDOWNLOAD:
+				
+				/*updateDialog = new ProgressDialog(Launcher.this);
+				updateDialog.setCancelable(true);
+				updateDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				updateDialog.setCancelMessage(this.obtainMessage(MESSAGE_CANCELDOWNLOAD));
+				//updateDialog.setMax(size);
+				//updateDialog.setProgress(0);
+				updateDialog.show();
+				*/
+				
+				
+				synchronized(this) {
+				try {
+					
+					this.wait(50);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				}
+				/*URL updateSize;
+				try {
+					updateSize = new URL("http://bt.happygoatstudios.com/test/size");
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return;
+				}
+				BufferedReader in;
+				try {
+					in = new BufferedReader(new InputStreamReader(updateSize.openStream()));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return;
+				}
+				String tmp = "";
+				StringBuffer buf = new StringBuffer();
+				try {
+					while((tmp = in.readLine())!=null) {
+						buf.append(tmp);
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return;
+				}
+				Integer size = Integer.parseInt(buf.toString());
+				Log.e("BlowTorch","Update size is: " + size + " bytes.");*/
+				String filename = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
+				//proceed with download.
+				File deleter = new File(filename);
+				if(deleter.exists()) deleter.delete();
+				
+				
+				
+				update = new UpdateThread(this);
+				update.run();
+				
+				
+				break;
+			case MESSAGE_CANCELDOWNLOAD:
+				update.doCancel();
+				updateDialog.dismiss();
+				updateDialog = null;
+				String delyou = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
+				//proceed with download.
+				File delme = new File(delyou);
+				if(delme.exists()) delme.delete();
+				break;
+			case MESSAGE_FINISHUPDATE:
+				updateDialog.dismiss();
+				updateDialog = null;
+				update = null;
+				String updatepath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
+				File file = new File(updatepath);
+				if(!file.exists()) {
+					Log.e("BlowTorch","Test application update does not exist.");
+					return; //file doesn't exist
+				}
+				
+				Intent i = new Intent();
+				i.setAction(Intent.ACTION_VIEW);
+				Uri data = Uri.parse("file://" + updatepath);
+				i.setDataAndType(data, "application/vnd.android.package-archive");
+				startActivity(i);
+				Launcher.this.finish();
+				break;
+			}
+		}
+	};
 
-
+	private class UpdateThread extends Thread {
+		
+		private boolean cancelled = false;
+		private Handler reportTo = null;
+		
+		public UpdateThread(Handler useMe) {
+			reportTo = useMe;
+		}
+		
+		public void doCancel() {
+			cancelled = true;
+		}
+		
+		public void run() {
+			//this is really just downloading the file.
+			URL url = null;
+			try {
+				url = new URL("http://bt.happygoatstudios.com/test/TestPackage.apk");
+				
+				HttpURLConnection c = (HttpURLConnection) url.openConnection();
+				
+				c.setRequestMethod("GET");
+				c.setDoOutput(true);
+				c.connect();
+				String updatepath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
+				File file = new File(updatepath);
+				FileOutputStream fos = new FileOutputStream(file);
+				
+				InputStream is = c.getInputStream();
+				
+				byte[] buffer = new byte[8192];
+				int len = 0;
+				while((len = is.read(buffer,0,8192)) != -1 && !cancelled) {
+					fos.write(buffer,0,len);
+					//reportTo.sendMessage(reportTo.obtainMessage(MESSAGE_DOWNLOADEDBYTES,len,0));
+				}
+				
+				fos.close();
+				is.close();
+				
+				reportTo.sendEmptyMessage(MESSAGE_FINISHUPDATE);
+				
+				return;
+				
+				
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+				reportTo.sendEmptyMessage(MESSAGE_CANCELDOWNLOAD);
+				return;
+			} catch (IOException e) {
+				e.printStackTrace();
+				reportTo.sendEmptyMessage(MESSAGE_CANCELDOWNLOAD);
+				return;
+			}
+			
+			
+			
+			
+			
+			
+			
+		}
+	}
 
 
 

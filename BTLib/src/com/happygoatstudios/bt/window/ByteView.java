@@ -475,7 +475,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		calculateScrollBack();
 		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
 		c.drawColor(0xFF0A0A0A); //fill with black
-		p.setTypeface(Typeface.MONOSPACE);
+		p.setTypeface(PREF_FONT);
 		p.setAntiAlias(true);
 		p.setTextSize(PREF_FONTSIZE);
 		p.setColor(0xFFFFFFFF);
@@ -847,7 +847,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	public byte[] getBuffer() {
 		synchronized(token) {
-			return the_tree.dumpToBytes();
+			return the_tree.dumpToBytes(false);
 		}
 		
 	}

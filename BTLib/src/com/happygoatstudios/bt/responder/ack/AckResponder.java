@@ -9,6 +9,7 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.StellarService;
 
@@ -50,7 +51,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 
 	@Override
 	public void doResponse(Context c, String displayname, int triggernumber,
-			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
+			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LAUNCH_MODE mode) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
 		} else {
@@ -127,5 +128,13 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	public String getAckWith() {
 		return ackWith;
 	}
+
+	/*@Override
+	public void doResponse(Context c, String displayname, int triggernumber,
+			boolean windowIsOpen, Handler dispatcher,
+			HashMap<String, String> captureMap, LAUNCH_MODE mode) {
+		// TODO Auto-generated method stub
+		
+	}*/
 
 }

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -118,7 +120,7 @@ public abstract class TriggerResponder implements Parcelable {
 		//Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
-	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap);
+	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LAUNCH_MODE mode);
 	public abstract TriggerResponder copy();
 	//public abstract void writeToParcel(Parcel in,int args);
 

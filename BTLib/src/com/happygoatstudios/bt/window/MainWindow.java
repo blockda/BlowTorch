@@ -34,6 +34,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -73,6 +74,7 @@ import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.launcher.Launcher;
+import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
@@ -81,7 +83,8 @@ import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
 public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
-	
+	public static String TEST_MODE = "blowTorchTestMode";
+	public static String NORMAL_MODE = "blowTorchNormalMode";
 	
 	//public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	//public String PREFS_NAME;
@@ -181,7 +184,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		public void onServiceDisconnected(ComponentName arg0) {
 			try {
 				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
-				service.unregisterCallback(the_callback);
+				if(service != null) service.unregisterCallback(the_callback);
 			} catch (RemoteException e) {
 				//do nothing here, as there isn't much we can do
 			}
@@ -236,11 +239,18 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 	//private int statusBarHeight = 1;
 	
-	
+	LAUNCH_MODE mode = LAUNCH_MODE.FREE;
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		
+		Log.e("BlowTorch","INTENT: " + this.getIntent().getAction());
+		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+			Log.e("BlowTorch","Free/Pro mode launch");
+			mode = LAUNCH_MODE.FREE;
+		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
+			Log.e("BlowTorch","Test mode launch");
+			mode = LAUNCH_MODE.TEST;
+		}
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
 		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
@@ -1382,7 +1392,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		if(!isServiceRunning()) {
 			//start the service
-			this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
+			//if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+			//	mode = LAUNCH_MODE.FREE;
+			//} else if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+			//	mode = LAUNCH_MODE.TEST;
+			//}
+			if(mode == LAUNCH_MODE.FREE) {
+				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
+			} else if(mode == LAUNCH_MODE.TEST) {
+				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
+			}
+			//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			//servicestarted = true;
 		}
 		
@@ -1799,7 +1819,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 	
 	private boolean isServiceRunning() {
-		ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
+	/*	ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
     	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
     	boolean found = false;
     	for(RunningServiceInfo service : services) {
@@ -1813,7 +1833,29 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
     			
     		}
     	}
-		return found;
+		return found;*/
+	ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
+	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+	boolean found = false;
+	for(RunningServiceInfo service : services) {
+		Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
+		//service.service.
+		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
+			//service is running, don't do anything.
+			Log.e(":Launcher","Service lives in: " + service.process);
+			if(mode == LAUNCH_MODE.FREE) {
+				
+				if(service.process.equals("com.happygoatstudios.btfree:stellar_free")) found = true;
+			} else if(mode == LAUNCH_MODE.TEST) {
+				if(service.process.equals("com.happygoatstudios.bttest:stellar_test")) found = true;
+			}
+			
+		} else {
+
+			
+		}
+	}
+	return found;
 	}
 	
 	private boolean isServiceConnected() {
@@ -1857,7 +1899,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		//saveSettings();
 		//
-		stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
+		//if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+		//	mode = LAUNCH_MODE.FREE;
+		//} else if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+		//	mode = LAUNCH_MODE.TEST;
+		//}
+		if(mode == LAUNCH_MODE.FREE) {
+			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
+		} else if(mode == LAUNCH_MODE.TEST) {
+			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
+		}
+		//stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 		
 	}
 	
@@ -1885,10 +1937,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 
 	private void saveBuffer() throws RemoteException {
-		ByteView sv = (ByteView)findViewById(R.id.slickview);
+		//ByteView sv = (ByteView)findViewById(R.id.slickview);
 		//Log.e("WINDOW","SAVING BUFFER:" + sv.getBuffer().length());
 		//String message = "\n" + Colorizer.colorYeollowBright + "Saving buffer: " + sv.getBuffer().getBytes().length + Colorizer.colorWhite + "\n";
-		service.saveBuffer(sv.getBuffer());
+		//service.saveBuffer(sv.getBuffer());
 		service.unregisterCallback(the_callback);
 		//sv.clearBuffer();
 	}
@@ -1995,9 +2047,19 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 
 	public void onStart() {
 		super.onStart();
+		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+			mode = LAUNCH_MODE.FREE;
+		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
+			mode = LAUNCH_MODE.TEST;
+		}
+		
 		if(!isServiceRunning()) {
 			//start the service
-			this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
+			if(mode == LAUNCH_MODE.FREE) {
+				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
+			} else if(mode == LAUNCH_MODE.TEST) {
+				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
+			}
 			//servicestarted = true;
 		}
 	}
@@ -2076,7 +2138,19 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		
 		if(!isBound) {
-			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
+			if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+				mode = LAUNCH_MODE.FREE;
+			} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
+				mode = LAUNCH_MODE.TEST;
+			}
+			if(mode == LAUNCH_MODE.FREE) {
+				//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
+				bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_NORMAL"), mConnection, 0);
+			} else if(mode == LAUNCH_MODE.TEST) {
+				//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
+				this.bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
+			}
+			//bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
 			//Log.e("WINDOW","Bound connection at onResume");
 			isBound = true;
 			

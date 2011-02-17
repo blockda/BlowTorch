@@ -7,7 +7,7 @@
       
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:theme="@android:style/Theme.NoTitleBar">
      	<activity android:name="com.happygoatstudios.bttest.TestLauncher"
-                  android:label="BlowTorch">
+                  android:label="BlowTorch TEST">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -26,7 +26,8 @@
 				  android:configChanges="orientation|keyboard|keyboardHidden"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
+        		  	
+        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.TEST_MODE"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
@@ -42,13 +43,15 @@
         		  </intent-filter>
         </activity>
         <service android:name="com.happygoatstudios.bt.service.StellarService"
-        		 android:process=":remote">
+        		 android:process=":stellar_test">
         		 <intent-filter>
-        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService"/>
+        		 	
+        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.MODE_TEST"/>
+        		 
         		 </intent-filter>
         </service>
         		  
-
+	<meta-data android:value="4" android:name="BLOWTORCH_TEST_VERSION"/>
     </application>
     <uses-sdk android:minSdkVersion="7" />
     <uses-permission android:name="android.permission.VIBRATE"/>
@@ -57,4 +60,5 @@
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
 
+	
 </manifest> 
