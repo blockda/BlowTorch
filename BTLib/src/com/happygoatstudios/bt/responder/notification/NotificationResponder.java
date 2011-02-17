@@ -8,12 +8,16 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+
+import dalvik.system.PathClassLoader;
 
 
 public class NotificationResponder extends TriggerResponder implements Parcelable {
@@ -178,7 +182,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	//vp[3] = 200;
 	
 	@Override
-	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
+	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LAUNCH_MODE mode) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {
@@ -207,7 +211,65 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 
 		NotificationManager NM = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
 		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,xformedtitle,System.currentTimeMillis());
-		Intent notificationIntent  = new Intent(c,com.happygoatstudios.bt.window.MainWindow.class);
+		//Intent notificationIntent  = new Intent(c,com.happygoatstudios.bt.window.MainWindow.class);
+		Intent notificationIntent = null;
+		//Context packageContext = null;
+		//ClassLoader loader = null;
+		if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
+			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".NORMAL_MODE");
+			
+			String apkName = null;
+			try {
+				apkName = c.getPackageManager().getApplicationInfo("com.happygoatstudios.bt", 0).sourceDir;
+			} catch (NameNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Class<?> w = null;
+        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+        	try {
+				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		
+			
+			try {
+				notificationIntent.setClass(c.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_INCLUDE_CODE), w);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} else {
+			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
+			String apkName = null;
+			try {
+				apkName = c.getPackageManager().getApplicationInfo("com.happygoatstudios.bttest", 0).sourceDir;
+			} catch (NameNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Class<?> w = null;
+        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+        	try {
+				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			
+			try {
+				notificationIntent.setClass(c.createPackageContext("com.happygoatstudios.bttest", Context.CONTEXT_INCLUDE_CODE), w);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
 		notificationIntent.putExtra("DISPLAY", displayname);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		
