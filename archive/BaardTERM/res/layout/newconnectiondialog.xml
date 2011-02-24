@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newconnectionlayout"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content">
+  <TextView
+  	android:id="@+id/displabel"
+  	android:text="Display Name:"
+  	android:layout_height="35px"
+  	android:layout_width="wrap_content"
+  	android:layout_alignParentTop="true"
+  	android:layout_alignParentLeft="true"
+
+  	/>
+  <TextView
+  	android:id="@+id/hostlabel"
+  	android:text="Host Name:"
+  	android:layout_height="35px"
+  	android:layout_width="wrap_content"
+  	android:layout_below="@id/displabel"
+  	android:layout_alignParentLeft="true"/>
+  <TextView
+  	android:id="@+id/portlabel"
+  	android:text="Port Number:"
+  	android:layout_height="35px"
+  	android:layout_width="wrap_content"
+  	android:layout_below="@id/hostlabel"
+  	android:layout_alignParentLeft="true"/>
+   <EditText
+  	android:id="@+id/dispinput"
+  	android:layout_width="200px"
+  	android:layout_height="35px"
+  	android:inputType="text"
+  	android:layout_alignParentTop="true"
+    android:imeOptions="actionNone|flagNoEnterAction"
+    android:singleLine = "true"
+    android:textSize="12px"
+  	android:layout_toRightOf="@id/displabel"
+  	android:layout_alignTop="@id/displabel"/>
+   <EditText
+  	android:id="@+id/hostinput"
+  	android:layout_width="200px"
+  	android:layout_height="35px"
+  	android:inputType="text"
+    android:imeOptions="actionNone|flagNoEnterAction"
+    android:singleLine = "true"
+    android:textSize="12px"
+    android:layout_below="@id/dispinput"
+  	android:layout_toRightOf="@id/hostlabel"
+  	android:layout_alignTop="@id/hostlabel"/>
+   <EditText
+  	android:id="@+id/portinput"
+  	android:layout_width="200px"
+  	android:layout_height="35px"
+  	android:inputType="number"
+    android:imeOptions="actionNone|flagNoEnterAction"
+    android:singleLine = "true"
+    android:textSize="15px"
+    android:layout_below="@id/hostinput"
+  	android:layout_toRightOf="@id/portlabel"
+  	android:layout_alignTop="@id/portlabel"/>
+   <Button
+   	android:id="@+id/acceptbutton"
+   	android:layout_width="wrap_content"
+   	android:layout_height="wrap_content"
+   	android:layout_below="@id/portlabel"
+   	android:text="Accept!"/>
+   <Button
+    android:id="@+id/cancelbutton"
+   	android:layout_width="wrap_content"
+   	android:layout_height="wrap_content"
+   	android:layout_toRightOf="@id/acceptbutton"
+   	android:layout_alignTop="@id/acceptbutton"
+   	android:text="Cancel"/>
+  	
+</RelativeLayout>
