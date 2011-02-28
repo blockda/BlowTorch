@@ -39,8 +39,16 @@
 			android:layout_width = "wrap_content"
 			android:layout_alignParentRight = "true"
 			android:layout_alignParentBottom = "true"
+			android:background = "#AAAAAAAA"
 			>
-			
+			<TableRow
+				android:id="@+id/test_update"
+				android:visibility="gone"
+				android:layout_span="3">
+				<TextView android:id="@+id/update_label" android:text="Test Version 1"  android:textSize="18dip" android:textColor = "#AA222222" android:textStyle="bold"/>
+				<Button android:text="Update!" android:id="@+id/update_button" android:visibility="gone"/>
+				
+			</TableRow>
 			<TableRow
 				android:layout_height = "wrap_content"
 				android:layout_width = "wrap_content"
