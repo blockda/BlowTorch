@@ -171,6 +171,9 @@ public class StellarService extends Service {
 		if(intent.getAction().equals("com.happygoatstudios.bt.service.IStellarService.MODE_TEST")) {
 			Log.e("SERVICE","STARTING IN TEST MODE");
 			mode=LAUNCH_MODE.TEST;
+			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
+			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+			
 		}
 		return Service.START_STICKY;
 	}
@@ -2699,6 +2702,8 @@ public class StellarService extends Service {
 			//.kb add popop message - append message and popup.
 			//.kb popup add message - same as prev, but with syntax swapped.
 			//.kb flush message - send the keyboard.
+			//.kb close - closes the keyboard
+			//.kb clear - clears any text in the keyboard
 			//.kb - print the kb help message.
 			boolean failed = false;
 			if(o==null) {
@@ -2711,7 +2716,18 @@ public class StellarService extends Service {
 			
 			if(failed) {
 				try {
-					doDispatchNoProcess(getErrorMessage("Keyboard (kb) special command usage:",".kb [add]|[popup]|[flush] message\nadd and popup are optional flags that will append text or popup the window when supplied.\nExample:\n\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\n\".kb flush\" will transmit the text currently in the box.\nThe cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
+					doDispatchNoProcess(getErrorMessage("Keyboard (kb) special command usage:",".kb options message\n" +
+							"Options are as follows:\n" +
+							"add,popup,flush,close,clear\n"+
+							"add and popup are optional flags that will append text or popup the window when supplied.\n" +
+							"flush sends the current text in the input window to the server.\n" +
+							"close will close the keyboard if it is open.\n"+
+							"clear will erase any text that is currently in the input window.\n" +
+							"Example:\n" +
+							"\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n" +
+							"\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\n" +
+							"\".kb flush\" will transmit the text currently in the box.\n" +
+							"The cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				} catch (UnsupportedEncodingException e) {
@@ -2720,7 +2736,7 @@ public class StellarService extends Service {
 				return;
 			}
 			
-			Pattern p = Pattern.compile("^\\s*(add|popup|flush){0,1}\\s*(add\\s+|popup\\s+|flush\\s+){0,1}(.*)$");
+			Pattern p = Pattern.compile("^\\s*(add|popup|flush|close|clear){0,1}\\s*(add\\s+|popup\\s+|flush\\s+){0,1}(.*)$");
 			Matcher m = p.matcher((String)o);
 			String operation1 = "";
 			String operation2 = "";
@@ -2736,6 +2752,8 @@ public class StellarService extends Service {
 			boolean doadd = false;
 			boolean dopopup = false;
 			boolean doflush = false;
+			boolean doclear = false;
+			boolean doclose = false;
 			
 			if(operation1 != null && !operation1.equals("")) {
 				operation1 = operation1.replaceAll("\\s", "");
@@ -2761,6 +2779,12 @@ public class StellarService extends Service {
 				if(operation1.equalsIgnoreCase("flush")) {
 					doflush = true;
 				}
+				if(operation1.equalsIgnoreCase("clear")) {
+					doclear = true;
+				}
+				if(operation1.equalsIgnoreCase("close")) {
+					doclose = true;
+				}
 			}
 			
 			try {
@@ -2772,7 +2796,7 @@ public class StellarService extends Service {
 			final int N = callbacks.beginBroadcast();
 			for(int i = 0;i<N;i++) {
 				try {
-					callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush);
+					callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush,doclear,doclose);
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}

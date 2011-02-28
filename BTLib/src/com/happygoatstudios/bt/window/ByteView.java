@@ -511,13 +511,27 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		Float offset = 0f;
 		IteratorBundle bundle = null;
 		boolean gotIt = false;
-		while(!gotIt) {
+		int maxTries = 100;
+		int tries = 0;
+		while(!gotIt && tries <= maxTries) {
 			try {
 				bundle = getScreenIterator(scrollback,PREF_LINESIZE);
 				gotIt = true;
+				tries++;
 			} catch (ConcurrentModificationException e) {
 				//loop again to get it, continue till you get one.
+				synchronized(this) {
+					try {
+						this.wait(5);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
 			}
+		}
+		if(!gotIt) {
+			return;
 		}
 		screenIt = bundle.getI();
 		y = bundle.getOffset();

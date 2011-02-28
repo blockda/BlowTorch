@@ -16,26 +16,39 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.text.format.Time;
 
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
 	private Thread.UncaughtExceptionHandler defaultUEH;
-	//private Context app = null;
+	private Context app = null;
 	
 	public CrashReporter(Context crash_watch) {
 		defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
-		//app = crash_watch;
+		app = crash_watch;
 	}
 	
 	public void uncaughtException(Thread t, Throwable e) {
 		//do stuff here
 		//Log.e("TESTUEH","CUSTOM UEH HANDLER AWAY!");
+		int test_version = 0;
+		try {
+			test_version = app.getPackageManager().getApplicationInfo(app.getApplicationInfo().packageName, PackageManager.GET_META_DATA).metaData.getInt("BLOWTORCH_TEST_VERSION");
+		} catch (NameNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		String test_user = app.getSharedPreferences("TEST_USER", Context.MODE_PRIVATE).getString("USER_NAME", "Undefined User");
 		
 		//build the report
 		final Writer result = new StringWriter();
 		
 		final PrintWriter printWriter = new PrintWriter(result);
+		
+		printWriter.append(test_user + ": Test Version " + test_version + "\n");
 		
 		e.printStackTrace(printWriter);
 		
