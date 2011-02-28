@@ -81,6 +81,8 @@ public class Launcher extends Activity implements ReadyListener {
 	protected static final int MESSAGE_WHATSNEW = 1;
 	protected static final int MESSAGE_IMPORT = 2;
 	protected static final int MESSAGE_EXPORT = 3;
+
+	protected static final int MESSAGE_USERNAME = 4;
 	
 	private ArrayList<MudConnection> connections;
 	private Launcher.ConnectionAdapter apdapter;
@@ -133,6 +135,11 @@ public class Launcher extends Activity implements ReadyListener {
 		actionHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_USERNAME:
+					SharedPreferences.Editor edit = Launcher.this.getSharedPreferences("TEST_USER", Context.MODE_PRIVATE).edit();
+					edit.putString("USER_NAME", (String)msg.obj);
+					edit.commit();
+					break;
 				case MESSAGE_WHATSNEW:
 					break;
 				case MESSAGE_IMPORT:
@@ -436,6 +443,25 @@ public class Launcher extends Activity implements ReadyListener {
 			//Log.e("LAUNCHER","NOT OUTDATED, WAS " + launcher_settings.getCurrentVersion() + " NOW " + versionString);
 		}
 		
+		//if test mode, load test mode version
+		if(mode == LAUNCH_MODE.TEST) {
+			int readver = this.getSharedPreferences("TEST_VERSION_DOWHATSNEW", Context.MODE_PRIVATE).getInt("TEST_VERSION", 0);
+			int testVersion = 0;
+			try {
+				testVersion = this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA).metaData.getInt("BLOWTORCH_TEST_VERSION");
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			if(testVersion != readver) {
+				dowhatsnew = true;
+				SharedPreferences.Editor edit = this.getSharedPreferences("TEST_VERSION_DOWHATSNEW", Context.MODE_PRIVATE).edit();
+				edit.putInt("TEST_VERSION", testVersion);
+				edit.commit();
+			}
+		}
+		
 		
 		//getConnectionsFromDisk();
 		
@@ -459,7 +485,12 @@ public class Launcher extends Activity implements ReadyListener {
 		//}
 		if(dowhatsnew) {
 			dowhatsnew = false;
-			DoWhatsNew();
+			try {
+				DoWhatsNew();
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -900,7 +931,7 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 	}
 	
-	private void DoWhatsNew() { 
+	private void DoWhatsNew() throws NameNotFoundException { 
 		
 		//get the version information.
 		PackageManager m = this.getPackageManager();
@@ -912,14 +943,25 @@ public class Launcher extends Activity implements ReadyListener {
 			throw new RuntimeException(e);
 		}
 		
+		
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle("Version " + versionString + " details!");
 		
-		final SpannableString s = new SpannableString(Launcher.this.getResources().getString(R.string.whatisnew));
-	    Linkify.addLinks(s, Linkify.ALL);
-
-		builder.setMessage(s);
-		
+		if(mode == LAUNCH_MODE.TEST) {
+			int testVersion = this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA).metaData.getInt("BLOWTORCH_TEST_VERSION");
+			builder.setTitle("Version " + versionString + "t"+testVersion+" details!");
+			
+			final SpannableString s = new SpannableString(Launcher.this.getResources().getString(R.string.whatisnew_test));
+		    Linkify.addLinks(s, Linkify.ALL);
+	
+			builder.setMessage(s);
+		} else {
+			builder.setTitle("Version " + versionString + " details!");
+			
+			final SpannableString s = new SpannableString(Launcher.this.getResources().getString(R.string.whatisnew));
+		    Linkify.addLinks(s, Linkify.ALL);
+	
+			builder.setMessage(s);
+		}
 		builder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
 			
 			public void onClick(DialogInterface dialog, int which) {
@@ -1062,16 +1104,24 @@ public class Launcher extends Activity implements ReadyListener {
 		menu.add(0,99,0,"What's New");
 		menu.add(0,100,0,"Import List");
 		menu.add(0,105,0,"Export List");
+		if(mode == LAUNCH_MODE.TEST) menu.add(0,106,0,"User Name");
 		
 		return true;
 		
 	}
 	
+	private EditText entry = null;
+	
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		case 99:
 			//dowhatsnew
-			DoWhatsNew();
+			try {
+				DoWhatsNew();
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			break;
 		case 100:
 			//start import
@@ -1080,8 +1130,8 @@ public class Launcher extends Activity implements ReadyListener {
 		case 105:
 			//start export
             LayoutInflater factory = LayoutInflater.from(this);
-            final View textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
-            final EditText entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
+            View textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
+            entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
         
             AlertDialog exporter = new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_info)
@@ -1091,6 +1141,37 @@ public class Launcher extends Activity implements ReadyListener {
                     public void onClick(DialogInterface dialog, int whichButton) {
 
                         actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_EXPORT,entry.getText().toString()));
+                    }
+                })
+                
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                        dialog.dismiss();
+                    }
+                })
+                .create();
+            
+            exporter.show();
+
+			break;
+		case 106:
+			//start export
+            factory = LayoutInflater.from(this);
+            textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
+            entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
+            String username = "";
+            username = this.getSharedPreferences("TEST_USER", Context.MODE_PRIVATE).getString("USER_NAME", "");
+            if(!username.equals("")){ entry.setText(username); entry.setSelection(username.length()); }
+        
+            exporter = new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle("Set Test User")
+                .setView(textEntryView)
+                .setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                        actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_USERNAME,entry.getText().toString()));
                     }
                 })
                 

@@ -122,7 +122,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public static final int MESSAGE_SENDBUTTONDATA = 880;
 	private static final int MESSAGE_LINEBREAK = 881;
 	private static final int MESSAGE_HIDEKEYBOARD =882;
+	protected static final int MESSAGE_CLEARINPUTWINDOW = 883;
 	//protected static final int MESSAGE_BUTTONRELOAD = 882;
+	protected static final int MESSAGE_CLOSEINPUTWINDOW = 884;
 	
 	private TextTree tree = new TextTree();
 
@@ -250,9 +252,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			Log.e("BlowTorch","Test mode launch");
 			mode = LAUNCH_MODE.TEST;
+			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
+			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+			
 		}
-		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
-		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
@@ -389,6 +392,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_CLEARINPUTWINDOW:
+					ClearKeyboard();
+					break;
+				case MESSAGE_CLOSEINPUTWINDOW:
 				case MESSAGE_HIDEKEYBOARD:
 					HideKeyboard();
 					break;
@@ -1759,6 +1766,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 	}
 	
+	private void ClearKeyboard() {
+		EditText input_box = (EditText)findViewById(R.id.textinput);
+		input_box.setText("");
+	}
+	
 	private void HideKeyboard() {
 		InputMethodManager imm = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
 		EditText input_box = (EditText)findViewById(R.id.textinput);
@@ -2327,9 +2339,19 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			myhandler.sendMessage(doScreenMode);
 		}
 
-		public void showKeyBoard(String txt,boolean popup,boolean add,boolean flush) throws RemoteException {
+		public void showKeyBoard(String txt,boolean popup,boolean add,boolean flush,boolean clear,boolean close) throws RemoteException {
 			if(flush) {
 				myhandler.sendEmptyMessage(MESSAGE_PROCESSINPUTWINDOW);
+				return;
+			}
+			
+			if(clear) {
+				myhandler.sendEmptyMessage(MESSAGE_CLEARINPUTWINDOW);
+				return;
+			}
+			
+			if(close) {
+				myhandler.sendEmptyMessage(MESSAGE_CLOSEINPUTWINDOW);
 				return;
 			}
 			int p = (popup) ? 1 : 0;
