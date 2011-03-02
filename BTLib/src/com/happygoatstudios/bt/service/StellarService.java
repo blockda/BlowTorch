@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -204,6 +205,7 @@ public class StellarService extends Service {
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
+		SpeedwalkCommand swcmd = new SpeedwalkCommand();
 		//LineBreakCommand lccmd = new LineBreakCommand();
 		//DataCorrupterCommand crcmd = new DataCorrupterCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
@@ -216,6 +218,7 @@ public class StellarService extends Service {
 		specialcommands.put("kb", kbcmd);
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
+		specialcommands.put(swcmd.commandName, swcmd);
 		//specialcommands.put(lccmd.commandName, lccmd);
 		//specialcommands.put(crcmd.commandName, crcmd);
 		//specialcommands.put(enccmd.commandName, enccmd);
@@ -2907,6 +2910,191 @@ public class StellarService extends Service {
 			//	throw new RuntimeException(e);
 			//}
 			
+		}
+	}
+	
+	private class SpeedwalkCommand extends SpecialCommand {
+		
+		
+		
+		public SpeedwalkCommand() {
+			this.commandName = "run";
+		}
+		public void execute(Object o) {
+			String str = (String)o;
+			
+			Character cr = new Character((char)13);
+			Character lf = new Character((char)10);
+			String crlf = cr.toString() + lf.toString();
+			//str will be of the form, 3d2enewsnu3d32wijkl
+			//n = north
+			//e = east
+			//s = south
+			//w = west
+			//u = up
+			//d = down
+			//i = northeast
+			//j = southeast
+			//k = southwest
+			//l = northwest
+			
+			if(str.equals("") || str.equals(" ")) {
+				try {
+					doDispatchNoProcess(getErrorMessage("Speedwalk (run) special command usage:",".run directions\n" +
+							"directions are as follows:\n" +
+							"n: north, e: east, s: south, w: west, u: up, d: down, i: ne, j:se, k: sw, l: nw\n"+
+							"directions may be prefeced with an integer value to run that many times.\n" +
+							"Example:\n" +
+							"\".run 3desw2n\", will send d;d;d;e;s;w;n;n to the server.\n" +
+							"\".run jlk3n3j\", will send se;nw;sw;n;n;n;se;se;se to the server"+
+							"The cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
+				} catch (RemoteException ef) {
+					ef.printStackTrace();
+				} catch (UnsupportedEncodingException ea) {
+					throw new RuntimeException(ea);
+				}
+				return;
+				
+			}
+			
+			int runlength = 1;
+			int place =0;
+			StringBuffer buf = new StringBuffer();
+			int counted = 0;
+			LinkedList<Integer> runtable = new LinkedList<Integer>();
+			for(int i=0;i<str.length();i++) {
+				char theChar = str.charAt(i);
+				String bit = String.valueOf(theChar);
+				try {
+					int num = Integer.parseInt(bit);
+					runtable.add(num);
+					//place += 1;
+					//runlength = (runlength *10) + runlength * num;
+				} catch (NumberFormatException e) {
+					//got exception, this is a direction or an invalid character.
+					boolean valid = false;
+					String respString = "";
+					switch(theChar) {
+					case 'n':
+						respString = "n";
+						valid = true;
+						break;
+					case 'e':
+						respString = "e";
+						valid = true;
+						break;
+					case 's':
+						respString = "s";
+						valid = true;
+						break;
+					case 'w':
+						respString = "w";
+						valid = true;
+						break;
+					case 'u':
+						respString = "u";
+						valid = true;
+						break;
+					case 'd':
+						respString = "d";
+						valid = true;
+						break;
+					case 'i':
+						respString = "ne";
+						valid = true;
+						break;
+					case 'j':
+						respString = "se";
+						valid = true;
+						break;
+					case 'k':
+						respString = "sw";
+						valid = true;
+						break;
+					case 'l':
+						respString = "nw";
+						valid = true;
+						break;
+					default:
+						
+					
+					}
+					
+					if(valid) {
+						//compute the run length.
+						int run = 1;
+						int tmpPlace = runtable.size()-1;
+						if(runtable.size() > 0) {
+							run = 0;
+							for(Integer tmp : runtable) {
+								run += Math.pow(10,tmpPlace) * tmp;
+								tmpPlace--;
+							}
+						}
+						
+						for(int j=0;j<run;j++) {
+							buf.append(respString+crlf);
+						}
+						
+						runtable.clear();
+						
+					} else {
+						//bail with error,
+						int errlength = i + 5;
+						StringBuffer tmpb = new StringBuffer();
+						for(int a=0;a<errlength;a++) {
+							tmpb.append("-");
+						}
+						tmpb.append("^");
+						try {
+							doDispatchNoProcess(getErrorMessage("Invalid direction in command:","."+commandName + " " +str+"\n" +
+									tmpb.toString() + "\n" + 
+									"At location " + errlength + ", " + bit).getBytes(the_settings.getEncoding()));
+						} catch (RemoteException ef) {
+							ef.printStackTrace();
+						} catch (UnsupportedEncodingException ea) {
+							throw new RuntimeException(ea);
+						}
+						return;
+					}
+				}
+				//counted++;
+			}
+			
+			//if we are here, then we have traversed the input string and have the generated command in the buf.
+			//Log.e("BlowTorch","RUN COMMAND: " + buf.toString());
+			//if(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
+			//	synchronized(sendlock) {
+			//		while(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
+			//			try {
+			//				sendlock.wait();
+			//			} catch (InterruptedException e) {
+			//				throw new RuntimeException(e);
+			//			}
+			//		}
+			//	}
+			//}
+			Message msg = null;
+			try {
+				//String tmp = buf.toString();
+				//String tmp2 = tmp.substring(0, tmp.length()-1);
+				msg = myhandler.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+				Bundle b = msg.getData();
+				b.putByteArray("THE_DATA", buf.toString().getBytes(the_settings.getEncoding()));
+				msg.setData(b);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			myhandler.sendMessage(msg);
+			
+			try {
+				doDispatchNoProcess((".run " + str +"\n").getBytes(the_settings.getEncoding()));
+			} catch (RemoteException ef) {
+				ef.printStackTrace();
+			} catch (UnsupportedEncodingException ea) {
+				throw new RuntimeException(ea);
+			}
 		}
 	}
 	
