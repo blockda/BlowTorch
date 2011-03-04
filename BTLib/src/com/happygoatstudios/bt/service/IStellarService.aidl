@@ -71,6 +71,8 @@ interface IStellarService {
 	void setThrottleBackground(boolean use);
 	boolean isThrottleBackground();
 	boolean isProcessPeriod();
+	boolean isEchoAliasUpdate();
+	void setEchoAliasUpdate(boolean use);
 	boolean isSemiNewline();
 	void setKeepWifiActive(boolean use);
 	boolean isKeepWifiActive();
