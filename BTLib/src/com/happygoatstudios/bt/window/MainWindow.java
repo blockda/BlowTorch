@@ -799,7 +799,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						
 						boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
 						boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
-						
+						boolean echoaliasupdate = prefs.getBoolean("ECHO_ALIAS_UPDATE", true);
 						//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
 						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
@@ -839,6 +839,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setBreakAmount(breakvalue);
 							service.setRemoveExtraColor(removeextracolor);
 							service.setDebugTelnet(debugtelnet);
+							service.setEchoAliasUpdate(echoaliasupdate);
 							//service.setShowFitMessage(fitmessage);
 							service.saveSettings();
 						} catch (RemoteException e) {
@@ -1645,6 +1646,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("BELL_DISPLAY", service.isDisplayOnBell());
 				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
 				edit.putBoolean("ROUND_BUTTONS",service.isRoundButtons());
+				edit.putBoolean("ECHO_ALIAS_UPDATE", service.isEchoAliasUpdate());
 				//edit.putBoolean("FIT_MESSAGE", service.isShowFitMessage());
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);

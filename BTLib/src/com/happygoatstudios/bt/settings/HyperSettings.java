@@ -43,6 +43,7 @@ public class HyperSettings {
 	private boolean displayOnBell = false;
 	private boolean localEcho = true;
 	private boolean fullScreen = true;
+	private boolean echoAliasUpdates = true;
 	
 	
 	private boolean wordWrap = true;
@@ -226,6 +227,7 @@ public class HyperSettings {
 			//out.attribute("", BaseParser.ATTR_USEEXTRACTUI, (data.isUseExtractUI()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_THROTTLEBACKGROUND, (data.isThrottleBackground()) ? "true" : "false");
 			out.attribute("" , BaseParser.ATTR_PROCESSPERIOD, data.isProcessPeriod() ? "true" : "false");
+			if(!data.isEchoAliasUpdates()) out.attribute("", BaseParser.ATTR_ECHOALIASUPDATE, "false");
 			out.attribute("", BaseParser.ATTR_WIFIKEEPALIVE, data.isKeepWifiActive() ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_LOCALECHO, (data.isLocalEcho()) ? "true" : "false");
 			out.attribute("", BaseParser.ATTR_BELLVIBRATE, (data.isVibrateOnBell()) ? "true" : "false");
@@ -719,6 +721,14 @@ public class HyperSettings {
 
 	public boolean isShowFitMessage() {
 		return showFitMessage;
+	}
+
+	public void setEchoAliasUpdates(boolean echoAliasUpdates) {
+		this.echoAliasUpdates = echoAliasUpdates;
+	}
+
+	public boolean isEchoAliasUpdates() {
+		return echoAliasUpdates;
 	}
 
 }
