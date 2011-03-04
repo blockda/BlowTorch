@@ -50,6 +50,7 @@ public class BaseParser {
 	static final String ATTR_FULLSCREEN = "fullScreen";
 	static final String TAG_SERVICE = "service";
 	static final String ATTR_SEMINEWLINE = "processSemi";
+	static final String ATTR_ECHOALIASUPDATE = "echoAliasUpdates";
 	static final String ATTR_THROTTLEBACKGROUND = "throttle";
 	static final String ATTR_PROCESSPERIOD = "processPeriod";
 	static final String ATTR_WIFIKEEPALIVE = "keepWifiActive";

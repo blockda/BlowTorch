@@ -169,6 +169,12 @@
 			android:summary="Perform internal functions using input starting with a period."
 			android:title="Process Dot Commands?"/>
 		<CheckBoxPreference
+			android:key="ECHO_ALIAS_UPDATE"
+			android:defaultValue="true"
+			android:summary="Local echo special command updates to aliases"
+			android:title="Echo Alias Updates?"/>
+			
+		<CheckBoxPreference
 			android:key="THROTTLE_BACKGROUND"
 			android:defaultValue="false"
 			android:summary="Slow down service when the window is closed. Conserve battery."

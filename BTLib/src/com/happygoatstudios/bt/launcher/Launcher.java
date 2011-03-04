@@ -1156,10 +1156,12 @@ public class Launcher extends Activity implements ReadyListener {
 
 			break;
 		case 106:
-			//start export
+			
             factory = LayoutInflater.from(this);
             textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
             entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
+            TextView title = (TextView)textEntryView.findViewById(R.id.username_view);
+            title.setText("Enter user name:");
             String username = "";
             username = this.getSharedPreferences("TEST_USER", Context.MODE_PRIVATE).getString("USER_NAME", "");
             if(!username.equals("")){ entry.setText(username); entry.setSelection(username.length()); }

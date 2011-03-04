@@ -123,6 +123,7 @@ public class HyperSAXParser extends BaseParser {
 				//ouch. just look at that nested ternary operator.
 				//tmp.setUseExtractUI( (a.getValue("",ATTR_USEEXTRACTUI) == null) ? false : (a.getValue("",ATTR_USEEXTRACTUI).equals("true")) ? true : false);
 				tmp.setProcessPeriod( (a.getValue("",ATTR_PROCESSPERIOD) == null) ? false : (a.getValue("",ATTR_PROCESSPERIOD).equals("true")) ? true : false);
+				tmp.setEchoAliasUpdates( (a.getValue("",ATTR_ECHOALIASUPDATE) == null) ? true : (a.getValue("",ATTR_ECHOALIASUPDATE).equals("true")) ? true : false);
 				tmp.setSemiIsNewLine( (a.getValue("",ATTR_SEMINEWLINE) == null) ? true : (a.getValue("",ATTR_SEMINEWLINE).equals("true")) ? true : false);
 				tmp.setThrottleBackground( (a.getValue("",ATTR_THROTTLEBACKGROUND) == null) ? false : (a.getValue("",ATTR_THROTTLEBACKGROUND).equals("true")) ? true : false);
 				tmp.setKeepWifiActive( (a.getValue("",ATTR_WIFIKEEPALIVE) == null ? true : (a.getValue("",ATTR_WIFIKEEPALIVE).equals("true")) ? true : false)); //if not available, default to true
