@@ -23,9 +23,12 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -56,6 +59,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -165,12 +169,12 @@ public class StellarService extends Service {
 	
 	public int onStartCommand(Intent intent,int flags,int startId) {
 		if(intent == null) {
-			Log.e("SERVICE","onStartCommand passed null intent");
+			//Log.e("SERVICE","onStartCommand passed null intent");
 			return Service.START_STICKY;
 		}
-		Log.e("SERVICE",intent.getAction());
+		//Log.e("SERVICE",intent.getAction());
 		if(intent.getAction().equals("com.happygoatstudios.bt.service.IStellarService.MODE_TEST")) {
-			Log.e("SERVICE","STARTING IN TEST MODE");
+			//Log.e("SERVICE","STARTING IN TEST MODE");
 			mode=LAUNCH_MODE.TEST;
 			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
@@ -550,8 +554,26 @@ public class StellarService extends Service {
 				case MESSAGE_SENDDATA:
 					//Log.e("BTSERVICE","SENDING NORMAL DATA");
 					//byte[] bytes = msg.getData().getByteArray("THEDATA");
+					
+					
 					byte[] bytes = (byte[]) msg.obj;
 					
+					//test call
+					Data d = null;
+					try {
+						d = ProcessOutputData(new String(bytes,the_settings.getEncoding()));
+					} catch (UnsupportedEncodingException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					
+					if(d == null) {
+						return;
+					}
+					
+					
+					
+					/*
 					//dispatch this for command processing
 					String retval = null;
 					try {
@@ -587,56 +609,70 @@ public class StellarService extends Service {
 					} catch (UnsupportedEncodingException e1) {
 						throw new RuntimeException(e1);
 					}
+					*/
 					
-					String nosemidata = null;
-					synchronized(the_settings) {
+					/*synchronized(the_settings) {
 						if(the_settings.isSemiIsNewLine()) {
 							nosemidata = tostripsemi.replace(";", crlf);
 						} else {
 							nosemidata = tostripsemi;
 						}
-					}
+					}*/
 					//nosemidata = nosemidata.concat(crlf);
 					
 					//now we have an extra step, we have to police all outbound data for the IAC character.
 					//if it appears, we must double it.
 					
+					
+					String nosemidata = null;
 					try {
-						byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
-						ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
-						//int found = 0;
-						int count = 0;
-						for(int i=0;i<sendtest.length;i++) {
-							if(sendtest[i] == (byte)0xFF) {
-								//buf = ByteBuffer.wrap(buf.array());
-								buf.put((byte)0xFF);
-								buf.put((byte)0xFF);
-								count += 2;
-							} else {
-								buf.put(sendtest[i]);
-								count++;
+						
+						if(d.cmdString != null && !d.cmdString.equals("")) {
+							nosemidata = d.cmdString;
+							byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
+							ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
+							//int found = 0;
+							int count = 0;
+							for(int i=0;i<sendtest.length;i++) {
+								if(sendtest[i] == (byte)0xFF) {
+									//buf = ByteBuffer.wrap(buf.array());
+									buf.put((byte)0xFF);
+									buf.put((byte)0xFF);
+									count += 2;
+								} else {
+									buf.put(sendtest[i]);
+									count++;
+								}
 							}
-						}
-						
-						byte[] tosend = new byte[count];
-						buf.rewind();
-						buf.get(tosend,0,count);
-						
-						//Log.e("SERVICE","WRITE: "+nosemidata);
-						if(output_writer != null) {
-							output_writer.write(tosend);
-							output_writer.flush();
+							
+							byte[] tosend = new byte[count];
+							buf.rewind();
+							buf.get(tosend,0,count);
+							
+							//Log.e("SERVICE","WRITE: "+nosemidata);
+							if(output_writer != null) {
+								output_writer.write(tosend);
+								output_writer.flush();
+							} else {
+								doDispatchNoProcess(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+							}
 						} else {
-							doDispatchNoProcess(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+							if(d.cmdString.equals("") && d.visString == null) {
+								output_writer.write(crlf.getBytes(the_settings.getEncoding()));
+								output_writer.flush();
+								d.visString = "\n";
+							}
 						}
 						//send the transformed data back to the window
-						try {
-							if(the_settings.isLocalEcho()) {
-								//preserve.
-								doDispatchNoProcess(preserve);
+						if(d.visString != null && !d.visString.equals("")) {
+							try {
+								if(the_settings.isLocalEcho()) {
+									//preserve.
+									doDispatchNoProcess(d.visString.getBytes(the_settings.getEncoding()));
+								}
+							} catch (RemoteException e) {
+								throw new RuntimeException(e);
 							}
-						} catch (RemoteException e) {
-							throw new RuntimeException(e);
 						}
 					} catch (IOException e) {
 						//throw new RuntimeException(e);
@@ -2044,6 +2080,20 @@ public class StellarService extends Service {
 		}
 
 		
+		public boolean isEchoAliasUpdate() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isEchoAliasUpdates();
+			}
+		}
+
+		
+		public void setEchoAliasUpdate(boolean use) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setEchoAliasUpdates(use);
+			}
+		}
+
+		
 		
 	};
 	
@@ -2192,6 +2242,120 @@ public class StellarService extends Service {
 		}
 		
 		return output;
+	}
+	
+	public Data ProcessCommand(String cmd) {
+		//Log.e("SERVICE","IN CMD: "+cmd);
+		Data data = new Data();
+		if(cmd.equals(".." + "\n") || cmd.equals("..")) {
+			//Log.e("SERVICE","CMD==\"..\"");
+			synchronized(the_settings) {
+				String outputmsg = "\n" + Colorizer.colorRed + "Dot command processing ";
+				if(the_settings.isProcessPeriod()) {
+					//the_settings.setProcessPeriod(false);
+					overrideProcessPeriods(false);
+					outputmsg = outputmsg.concat("disabled.");
+				} else {
+					//the_settings.setProcessPeriod(true);
+					overrideProcessPeriods(true);
+					outputmsg = outputmsg.concat("enabled.");
+				}
+				outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
+				try {
+					doDispatchNoProcess(outputmsg.getBytes(the_settings.getEncoding()));
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				} catch (UnsupportedEncodingException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			
+			return null;
+		}
+		
+		
+		if(cmd.startsWith(".") && the_settings.isProcessPeriod()) {
+			
+			if(cmd.startsWith("..")) {
+				data.cmdString = cmd.replace("..", ".");
+				data.visString = cmd.replace("..", ".");
+				return data;
+			}
+			
+			
+			commandMatcher.reset(cmd);
+			if(commandMatcher.find()) {
+				synchronized(the_settings) {
+					
+					//string should be of the form .aliasname |settarget can have whitespace|
+
+						String alias = commandMatcher.group(1);
+						String argument = commandMatcher.group(2);
+						
+						
+						if(the_settings.getAliases().containsKey(alias)) {
+							//real argument
+							if(!argument.equals("")) {
+								AliasData mod = the_settings.getAliases().remove(alias);
+								mod.setPost(argument);
+								the_settings.getAliases().put(alias, mod);
+								data.cmdString = "";
+								if(the_settings.isEchoAliasUpdates()) {
+									data.visString = "["+alias+"=>"+argument+"]";
+								} else {
+									data.visString = "";
+								}
+								return data;
+							} else {
+								//display error message
+								String noarg_message = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"." + alias + " replacetext\"" + Colorizer.colorWhite +"\n";
+								try {
+									doDispatchNoProcess(noarg_message.getBytes(the_settings.getEncoding()));
+								} catch (RemoteException e) {
+									throw new RuntimeException(e);
+								} catch (UnsupportedEncodingException e) {
+									throw new RuntimeException(e);
+								}
+								return null;
+							}
+						} else if(specialcommands.containsKey(alias)){
+							//Log.e("SERVICE","SERVICE FOUND SPECIAL COMMAND: " + alias);
+							SpecialCommand command = specialcommands.get(alias);
+							data = (Data) command.execute(argument);
+							return data;
+						} else {
+							//format error message.
+							
+							String error = Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
+							error += "  \""+alias+"\" is not a recognized alias or command.\n";
+							error += "   No data has been sent to the server. If you intended\n";
+							error += "   this to be done, please type \".."+alias+"\"\n";
+							error += "   To toggle command processing, input \"..\" with no arguments\n";
+							error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";  
+							
+							try {
+								doDispatchNoProcess(error.getBytes(the_settings.getEncoding()));
+							} catch (RemoteException e) {
+								throw new RuntimeException(e);
+							} catch (UnsupportedEncodingException e) {
+								throw new RuntimeException(e);
+							}
+							return null;
+						}
+					}
+			} else {
+				//Log.e("SERVICE",cmd + " not valid.");
+			}
+			
+			return data;
+		} else {
+			data.cmdString = cmd;
+			data.visString = cmd;
+			return data;
+		}
+		
+		
+		//return null;
 	}
 	
 	private void overrideProcessPeriods(boolean value) {
@@ -2428,13 +2592,139 @@ public class StellarService extends Service {
 		}
 		callbacks.finishBroadcast();
 	}
-	private class SpecialCommand {
+	
+	StringBuffer dataToServer = new StringBuffer();
+	StringBuffer dataToWindow = new StringBuffer();
+	private Data ProcessOutputData(String out) throws UnsupportedEncodingException {
+		dataToServer.setLength(0);
+		dataToWindow.setLength(0);
+		//Log.e("BT","PROCESSING: " + out);
+		//steps that need to happen.
+		if(out.endsWith("\n")) {
+			out = out.substring(0, out.length()-2);
+		}
+		
+		if(out.equals("")) {
+			Data enter = new Data();
+			enter.cmdString = "";
+			enter.visString = null;
+			return enter;
+		}
+		//1 - chop up input up on semi's
+		String[] commands = null;
+		if(the_settings.isSemiIsNewLine()) {
+			commands = semicolon.split(out);  
+		} else {
+			commands = new String[] { out };
+		}
+		StringBuffer holdover = new StringBuffer();
+		//2 - for each unit		
+		ArrayList<String> list = new ArrayList<String>(Arrays.asList(commands));
+		
+		
+		ListIterator<String> iterator = list.listIterator();
+		while(iterator.hasNext()) {
+			String cmd = iterator.next();
+			
+			if(cmd.endsWith("~")) {
+				holdover.append(cmd.substring(0,cmd.length()-1) + ";");
+			} else {
+				if(holdover.length() > 0) {
+					cmd = holdover.toString() + cmd;
+					holdover.setLength(0);
+				}
+				//3 - do special command processing.
+				Data d = ProcessCommand(cmd);
+				//4 - handle command processing output
+				
+				if(d != null) {
+					boolean m = false;
+					if(d.cmdString != null && d.visString != null) {
+						if(d.cmdString.equals(d.visString)) {
+							m = true; //aliases & regular commands will always have the same cmdString and visString
+						}
+					}
+					
+					//5 - alias replacement				
+					if(d.cmdString != null && !d.cmdString.equals("")) {
+						byte[] tmp = DoAliasReplacement(d.cmdString.getBytes(the_settings.getEncoding()));
+						String tmpstr = new String(tmp,the_settings.getEncoding());
+						//if(tmpstr)
+						if(!d.cmdString.equals(tmpstr)) {
+							//alias replaced, needs to be processed
+							
+							String[] alias_cmds = null;
+							if(the_settings.isSemiIsNewLine()) {
+								alias_cmds = semicolon.split(tmpstr);
+							} else {
+								alias_cmds = new String[] { tmpstr };
+							}
+							for(String alias_cmd : alias_cmds) {
+								iterator.add(alias_cmd);
+							}
+							for(int ax=0;ax<alias_cmds.length;ax++) {
+								iterator.previous();
+							}
+						
+						} else {
+						
+							if(m) {
+								String srv = new String(tmp,the_settings.getEncoding()) + crlf;
+								//srv = srv.replace(";", crlf);
+								dataToServer.append(new String(srv));
+								
+								dataToWindow.append(new String(tmp,the_settings.getEncoding()) + ";");
+							} else {
+								String srv = new String(tmp,the_settings.getEncoding()) + crlf;
+								//srv = srv.replace(";", crlf);
+								dataToServer.append(new String(srv));
+							}
+						}
+					}
+						//dataToServer.append(d.cmdString + crlf);
+					if(d.visString != null && !d.visString.equals("")) {
+						if(!m) {
+							dataToWindow.append(d.visString + ";");
+						}
+					}
+				}
+			
+
+			}
+		}
+		//7 - return Data packet with commands to send to server, and data to send to window.
+		Data d = new Data();
+		d.cmdString = dataToServer.toString();
+		d.visString = dataToWindow.toString();
+		//if(the_settings.isSemiIsNewLine()) {
+			if(d.visString.endsWith(";")) {
+				d.visString = d.visString.substring(0,d.visString.length()-1) + "\n";
+			}
+		//}
+		//Log.e("BT","TO SERVER:" + d.cmdString);
+		//Log.e("BT","TO WINDOW:" + d.visString);
+		
+		return d;
+	}
+	
+	public class SpecialCommand {
 		public String commandName;
 		public SpecialCommand() {
 			//nothing really to do here
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			//this is to be overridden.
+			return null;
+		}
+		
+		
+	}
+	public class Data {
+		public String cmdString;
+		public String visString;
+		public Data() {
+			cmdString = "";
+			visString = "";
 		}
 	}
 	
@@ -2442,7 +2732,7 @@ public class StellarService extends Service {
 		public ColorDebugCommand() {
 			commandName = "colordebug";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			//Log.e("WINDOW","EXECUTING COLOR DEBUG COMMAND WITH STRING ARGUMENT: " + (String)o);
 			String arg = (String)o;
 			Integer iarg = 0;
@@ -2479,7 +2769,7 @@ public class StellarService extends Service {
 					throw new RuntimeException(e);
 				}
 				
-				return;
+				return null;
 			}
 			//if we are here we are good to go.
 			final int N = callbacks.beginBroadcast();
@@ -2517,6 +2807,7 @@ public class StellarService extends Service {
 				throw new RuntimeException(e);
 			}
 			
+			return null;
 		}
 		
 	}
@@ -2540,7 +2831,7 @@ public class StellarService extends Service {
 		public DirtyExitCommand() {
 			this.commandName = "closewindow";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			final int N = callbacks.beginBroadcast();
 			for(int i = 0;i<N;i++) {
@@ -2552,7 +2843,7 @@ public class StellarService extends Service {
 				//notify listeners that data can be read
 			}
 			callbacks.finishBroadcast();
-			
+			return null;
 		}
 	}
 	
@@ -2563,7 +2854,7 @@ public class StellarService extends Service {
 		public TimerCommand() {
 			this.commandName = "timer";
 		}
-		public void execute(Object o)  {
+		public Object execute(Object o)  {
 			//example argument " info 0"
 			//regex = "^\s+(\S+)\s+(\d+)";
 			Pattern p = Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s*(\\S*)");
@@ -2591,7 +2882,7 @@ public class StellarService extends Service {
 					} catch (RemoteException e) {
 						throw new RuntimeException(e);
 					}
-					return;
+					return null;
 				}
 				
 				try {
@@ -2600,7 +2891,7 @@ public class StellarService extends Service {
 				} catch (NumberFormatException e) {
 					try {
 						doDispatchNoProcess(getErrorMessage("Timer index argument " + ordinal + " is not a number.","Acceptable argument is an integer.").getBytes());
-						return;
+						return null;
 					} catch (RemoteException e1) {
 						throw new RuntimeException(e);
 					}
@@ -2616,20 +2907,20 @@ public class StellarService extends Service {
 					
 					if(action.equals("info")) {
 						myhandler.sendMessage(myhandler.obtainMessage(StellarService.MESSAGE_TIMERINFO, ordinal));
-						return;
+						return null;
 					}
 					if(action.equals("reset")) {
 						myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERRESET, 0, domsg, ordinal));
-						return;
+						return null;
 					}
 					if(action.equals("play")) {
 						//play
 						myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERSTART,0,domsg,ordinal));
-						return;
+						return null;
 					}
 					if(action.equals("pause")) {
 						myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TIMERPAUSE, 0, domsg, ordinal));
-						return;
+						return null;
 					}
 					
 					
@@ -2652,6 +2943,8 @@ public class StellarService extends Service {
 				}
 			}
 			
+			return null;
+			
 		}
 	}
 	
@@ -2659,9 +2952,11 @@ public class StellarService extends Service {
 		public BellCommand() {
 			this.commandName = "dobell";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			myhandler.sendEmptyMessage(MESSAGE_BELLINC);
+			
+			return null;
 			
 		}
 	}
@@ -2670,7 +2965,7 @@ public class StellarService extends Service {
 		public FullScreenCommand() {
 			this.commandName = "togglefullscreen";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			
 			final int N = callbacks.beginBroadcast();
@@ -2683,7 +2978,7 @@ public class StellarService extends Service {
 				//notify listeners that data can be read
 			}
 			callbacks.finishBroadcast();
-			
+			return null;
 		}
 	}
 	
@@ -2692,7 +2987,7 @@ public class StellarService extends Service {
 			this.commandName = "keyboard";
 			//alternate short form, kb.
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			//DO ALIAS/VARIABLE TRANSFORMATIONS!!!
 			//ACTUALLY, I THINK THE TRANSFORM STEP
@@ -2736,7 +3031,7 @@ public class StellarService extends Service {
 				} catch (UnsupportedEncodingException e) {
 					throw new RuntimeException(e);
 				}
-				return;
+				return null;
 			}
 			
 			Pattern p = Pattern.compile("^\\s*(add|popup|flush|close|clear){0,1}\\s*(add\\s+|popup\\s+|flush\\s+){0,1}(.*)$");
@@ -2806,7 +3101,7 @@ public class StellarService extends Service {
 				//notify listeners that data can be read
 			}
 			callbacks.finishBroadcast();
-			
+			return null;
 		}
 	}
 	
@@ -2815,7 +3110,7 @@ public class StellarService extends Service {
 		public DisconnectCommand() {
 			this.commandName = "disconnect";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			
 			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
@@ -2827,7 +3122,7 @@ public class StellarService extends Service {
 			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}
-			
+			return null;
 		}
 	}
 	
@@ -2835,7 +3130,7 @@ public class StellarService extends Service {
 		public ReconnectCommand() {
 			this.commandName = "reconnect";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			
 			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
@@ -2847,7 +3142,7 @@ public class StellarService extends Service {
 			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}
-			
+			return null;
 		}
 	}
 	
@@ -2856,8 +3151,9 @@ public class StellarService extends Service {
 			this.commandName = "corrupt";
 		}
 		
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			pump.corruptMe();
+			return null;
 		}
 	}
 	
@@ -2868,7 +3164,7 @@ public class StellarService extends Service {
 		public LineBreakCommand() {
 			this.commandName = "linebreak";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			
 			//format: .linebreak [none]|[number]
 			String str = (String)o;
@@ -2898,7 +3194,7 @@ public class StellarService extends Service {
 				}
 			}
 			//
-			
+			return null;
 			
 			//myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
 			//String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
@@ -2920,7 +3216,7 @@ public class StellarService extends Service {
 		public SpeedwalkCommand() {
 			this.commandName = "run";
 		}
-		public void execute(Object o) {
+		public Object execute(Object o) {
 			String str = (String)o;
 			
 			Character cr = new Character((char)13);
@@ -2942,18 +3238,20 @@ public class StellarService extends Service {
 				try {
 					doDispatchNoProcess(getErrorMessage("Speedwalk (run) special command usage:",".run directions\n" +
 							"directions are as follows:\n" +
-							"n: north, e: east, s: south, w: west, u: up, d: down, i: ne, j:se, k: sw, l: nw\n"+
+							"n: north, e: east, s: south, w: west, u: up, d: down, h: ne, j:se, k: sw, l: nw\n"+
 							"directions may be prefeced with an integer value to run that many times.\n" +
+							"Commands may be inserted into the direction stream with commas,\n" +
+							"directions may be resumed by entering another comma followed by directions.\n" +
 							"Example:\n" +
 							"\".run 3desw2n\", will send d;d;d;e;s;w;n;n to the server.\n" +
-							"\".run jlk3n3j\", will send se;nw;sw;n;n;n;se;se;se to the server"+
-							"The cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
+							"\".run jlk3n3j\", will send se;nw;sw;n;n;n;se;se;se to the server.\n"+
+							"\".run 3ds,open door,3w\" will send d;d;d;s;open door;w;w;w to the server.\n").getBytes(the_settings.getEncoding()));
 				} catch (RemoteException ef) {
 					ef.printStackTrace();
 				} catch (UnsupportedEncodingException ea) {
 					throw new RuntimeException(ea);
 				}
-				return;
+				return null;
 				
 			}
 			
@@ -2961,101 +3259,121 @@ public class StellarService extends Service {
 			int place =0;
 			StringBuffer buf = new StringBuffer();
 			int counted = 0;
+			boolean commanding = false;
 			LinkedList<Integer> runtable = new LinkedList<Integer>();
 			for(int i=0;i<str.length();i++) {
 				char theChar = str.charAt(i);
 				String bit = String.valueOf(theChar);
-				try {
-					int num = Integer.parseInt(bit);
-					runtable.add(num);
-					//place += 1;
-					//runlength = (runlength *10) + runlength * num;
-				} catch (NumberFormatException e) {
-					//got exception, this is a direction or an invalid character.
-					boolean valid = false;
-					String respString = "";
-					switch(theChar) {
-					case 'n':
-						respString = "n";
-						valid = true;
-						break;
-					case 'e':
-						respString = "e";
-						valid = true;
-						break;
-					case 's':
-						respString = "s";
-						valid = true;
-						break;
-					case 'w':
-						respString = "w";
-						valid = true;
-						break;
-					case 'u':
-						respString = "u";
-						valid = true;
-						break;
-					case 'd':
-						respString = "d";
-						valid = true;
-						break;
-					case 'i':
-						respString = "ne";
-						valid = true;
-						break;
-					case 'j':
-						respString = "se";
-						valid = true;
-						break;
-					case 'k':
-						respString = "sw";
-						valid = true;
-						break;
-					case 'l':
-						respString = "nw";
-						valid = true;
-						break;
-					default:
-						
-					
-					}
-					
-					if(valid) {
-						//compute the run length.
-						int run = 1;
-						int tmpPlace = runtable.size()-1;
-						if(runtable.size() > 0) {
-							run = 0;
-							for(Integer tmp : runtable) {
-								run += Math.pow(10,tmpPlace) * tmp;
-								tmpPlace--;
-							}
-						}
-						
-						for(int j=0;j<run;j++) {
-							buf.append(respString+crlf);
-						}
-						
-						runtable.clear();
-						
+				if(commanding) {
+					if(bit.equals(",")) {
+						commanding = false;
+						buf.append(crlf);
 					} else {
-						//bail with error,
-						int errlength = i + 5;
-						StringBuffer tmpb = new StringBuffer();
-						for(int a=0;a<errlength;a++) {
-							tmpb.append("-");
+						buf.append(bit);
+					}
+				} else {
+					
+				
+					try {
+						int num = Integer.parseInt(bit);
+						runtable.add(num);
+						//place += 1;
+						//runlength = (runlength *10) + runlength * num;
+					} catch (NumberFormatException e) {
+						//got exception, this is a direction or an invalid character.
+						boolean valid = false;
+						String respString = "";
+						switch(theChar) {
+						case 'n':
+							respString = "n";
+							valid = true;
+							break;
+						case 'e':
+							respString = "e";
+							valid = true;
+							break;
+						case 's':
+							respString = "s";
+							valid = true;
+							break;
+						case 'w':
+							respString = "w";
+							valid = true;
+							break;
+						case 'u':
+							respString = "u";
+							valid = true;
+							break;
+						case 'd':
+							respString = "d";
+							valid = true;
+							break;
+						case 'h':
+							respString = "ne";
+							valid = true;
+							break;
+						case 'j':
+							respString = "se";
+							valid = true;
+							break;
+						case 'k':
+							respString = "sw";
+							valid = true;
+							break;
+						case 'l':
+							respString = "nw";
+							valid = true;
+							break;
+						case ',':
+							commanding = true;
+							buf.append(crlf);
+							break;
+						default:
+							
+						
 						}
-						tmpb.append("^");
-						try {
-							doDispatchNoProcess(getErrorMessage("Invalid direction in command:","."+commandName + " " +str+"\n" +
-									tmpb.toString() + "\n" + 
-									"At location " + errlength + ", " + bit).getBytes(the_settings.getEncoding()));
-						} catch (RemoteException ef) {
-							ef.printStackTrace();
-						} catch (UnsupportedEncodingException ea) {
-							throw new RuntimeException(ea);
+						
+						if(valid) {
+							//compute the run length.
+							int run = 1;
+							int tmpPlace = runtable.size()-1;
+							if(runtable.size() > 0) {
+								run = 0;
+								for(Integer tmp : runtable) {
+									run += Math.pow(10,tmpPlace) * tmp;
+									tmpPlace--;
+								}
+							}
+							
+							for(int j=0;j<run;j++) {
+								//if(j == run-1) {
+								//	buf.append(respString);
+								//} else {
+									buf.append(respString+crlf);
+								//}
+							}
+							
+							runtable.clear();
+							
+						} else if(!valid && !commanding) {
+							//bail with error,
+							int errlength = i + 5;
+							StringBuffer tmpb = new StringBuffer();
+							for(int a=0;a<errlength;a++) {
+								tmpb.append("-");
+							}
+							tmpb.append("^");
+							try {
+								doDispatchNoProcess(getErrorMessage("Invalid direction in command:","."+commandName + " " +str+"\n" +
+										tmpb.toString() + "\n" + 
+										"At location " + errlength + ", " + bit).getBytes(the_settings.getEncoding()));
+							} catch (RemoteException ef) {
+								ef.printStackTrace();
+							} catch (UnsupportedEncodingException ea) {
+								throw new RuntimeException(ea);
+							}
+							return null;
 						}
-						return;
 					}
 				}
 				//counted++;
@@ -3074,7 +3392,7 @@ public class StellarService extends Service {
 			//		}
 			//	}
 			//}
-			Message msg = null;
+			/*Message msg = null;
 			try {
 				//String tmp = buf.toString();
 				//String tmp2 = tmp.substring(0, tmp.length()-1);
@@ -3094,7 +3412,14 @@ public class StellarService extends Service {
 				ef.printStackTrace();
 			} catch (UnsupportedEncodingException ea) {
 				throw new RuntimeException(ea);
-			}
+			}*/
+			//buf.deleteCharAt(location)
+			Data d = new Data();
+			d.cmdString = buf.toString();
+			d.cmdString = d.cmdString.substring(0, d.cmdString.length()-2); //strip trailing crlf
+			d.visString = ".run " + str;
+			
+			return d;
 		}
 	}
 	
@@ -3395,6 +3720,10 @@ public class StellarService extends Service {
 			} catch (UnsupportedEncodingException e1) {
 				throw new RuntimeException(e1);
 			}
+			
+			//Data d = new Data();
+			////d.cmdString = replaced.toString();
+			//d.visString = replaced.toString();
 			
 			replaced.setLength(0);
 			

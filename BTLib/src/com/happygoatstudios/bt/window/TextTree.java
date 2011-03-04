@@ -277,6 +277,7 @@ public class TextTree {
 	private final byte f = (byte)0x66;
 	private final byte s = (byte)0x73;
 	private final byte u = (byte)0x75;
+	private final byte n = (byte)0x6E;
 	
 	//public void addBytes(byte[] data) {
 		//synchronized(addTextHandler) {
@@ -529,8 +530,10 @@ public class TextTree {
 					case S:
 					case T:
 					case f:
+					case n:
 					case s:
 					case u:
+						done=true;
 						cb.rewind();
 						break;
 					default:
