@@ -166,7 +166,7 @@ public class Launcher extends Activity implements ReadyListener {
 					PackageManager m = Launcher.this.getPackageManager();
 					String versionString = null;
 					try {
-						versionString = m.getPackageInfo("com.happygoatstudios.bt", PackageManager.GET_CONFIGURATIONS).versionName;
+						versionString = m.getPackageInfo(Launcher.this.getApplicationInfo().packageName, PackageManager.GET_CONFIGURATIONS).versionName;
 					} catch (NameNotFoundException e) {
 						//can't execute on our package aye?
 						throw new RuntimeException(e);
@@ -242,11 +242,14 @@ public class Launcher extends Activity implements ReadyListener {
 									Integer newVersion = Integer.parseInt(buf.toString());
 									Log.e("BlowTorch","Web update version: " + newVersion);
 									ApplicationInfo testLauncher = Launcher.this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA);
-									int testversion = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
+									int testversionName = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
+									int testversion = newVersion;
+									PackageManager pm = Launcher.this.getPackageManager();
+									testversion = pm.getPackageInfo(testLauncher.packageName, PackageManager.GET_CONFIGURATIONS).versionCode;
 									if(newVersion > testversion) {
 										//needsupdate = true;
 									} else {
-										Toast t = Toast.makeText(Launcher.this, "BlowTorch Test Version "+testversion+" is up to date.", Toast.LENGTH_SHORT);
+										Toast t = Toast.makeText(Launcher.this, "BlowTorch Test Version "+testversionName+" is up to date.", Toast.LENGTH_SHORT);
 										t.show();
 										updateDialog.dismiss();
 										updateDialog = null;
