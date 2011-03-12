@@ -62,6 +62,8 @@ interface IStellarService {
 	void setColorSetDefaultsForSet(String the_set,in ColorSetSettings input);
 	void setProcessPeriod(boolean value);
 	Map getTriggerData();
+	Map getDirectionData();
+	void setDirectionData(in Map data);
 	void newTrigger(in TriggerData data);
 	void updateTrigger(in TriggerData from,in TriggerData to);
 	void deleteTrigger(String which);

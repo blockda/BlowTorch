@@ -78,6 +78,7 @@ import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
+import com.happygoatstudios.bt.speedwalk.SpeedWalkConfigurationDialog;
 import com.happygoatstudios.bt.timer.TimerSelectionDialog;
 import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
@@ -1536,9 +1537,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options);
 		menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
+		menu.add(0, 905, 0 ,"Speedwalk Directions");
 		menu.add(0, 901, 0, "Reconnect");
 		menu.add(0, 902, 0, "Disconnect");
 		menu.add(0, 903, 0, "Quit");
+		
 		
 		
 		return true;
@@ -1550,6 +1553,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
+		case 905: //speedwalk config
+			SpeedWalkConfigurationDialog swDialog = new SpeedWalkConfigurationDialog(this,service);
+			swDialog.show();
+			break;
 		case 903:
 			this.cleanExit();
 			this.finish();

@@ -137,7 +137,12 @@ public class BaseParser {
 	public static final String ATTR_HOST = "host";
 	public static final String ATTR_PORT = "port";
 	public static final String ATTR_DATEPLAYED = "lastPlayed";
-
+	
+	//these tags are for the configurable "run" command.
+	public static final String TAG_DIRECTIONS = "directions";
+	public static final String TAG_ENTRY = "entry";
+	public static final String ATTR_DIRECTION = "dir";
+	public static final String ATTR_COMMAND = "cmd";
 	
 	final String path;
 	Context window;
