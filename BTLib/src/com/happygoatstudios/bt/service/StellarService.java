@@ -76,6 +76,7 @@ import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
+import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerExtraTask;
 import com.happygoatstudios.bt.timer.TimerProgress;
@@ -786,8 +787,12 @@ public class StellarService extends Service {
 				the_settings.getSetSettings().put("default", def_colorset);
 				Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
 			}
+			if(the_settings.getDirections().size() == 0) {
+				loadDefaultDirections();
+			}
 			buildAliases();
 			buildTriggerData();
+			
 			
 			//temporarily output the timers.
 			for(TimerData timer : the_settings.getTimers().values()) {
@@ -808,12 +813,28 @@ public class StellarService extends Service {
 			ColorSetSettings def_colorset = new ColorSetSettings();
 			def_colorset.toDefautls();
 			the_settings.getSetSettings().put("default", def_colorset);
+			if(the_settings.getDirections().size() == 0) {
+				loadDefaultDirections();
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} 
 		
 	}
 	
+	private void loadDefaultDirections() {
+		HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
+		tmp.put("n", new DirectionData("n","n"));
+		tmp.put("e", new DirectionData("e","e"));
+		tmp.put("s", new DirectionData("s","s"));
+		tmp.put("w", new DirectionData("w","w"));
+		tmp.put("h", new DirectionData("h","nw"));
+		tmp.put("j", new DirectionData("j","ne"));
+		tmp.put("k", new DirectionData("k","sw"));
+		tmp.put("l", new DirectionData("l","se"));
+		the_settings.setDirections(tmp);
+	}
+
 	public void loadAliases() {
 		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
 		if(display == null || display.equals("")) {
@@ -2093,6 +2114,20 @@ public class StellarService extends Service {
 			}
 		}
 
+		public Map getDirectionData() throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				return the_settings.getDirections();
+			}
+		}
+
+		public void setDirectionData(Map data) throws RemoteException {
+			// TODO Auto-generated method stub
+			synchronized(the_settings) {
+				the_settings.setDirections((HashMap<String,DirectionData>)data);
+			}
+		}
+
 		
 		
 	};
@@ -3223,22 +3258,13 @@ public class StellarService extends Service {
 			Character lf = new Character((char)10);
 			String crlf = cr.toString() + lf.toString();
 			//str will be of the form, 3d2enewsnu3d32wijkl
-			//n = north
-			//e = east
-			//s = south
-			//w = west
-			//u = up
-			//d = down
-			//i = northeast
-			//j = southeast
-			//k = southwest
-			//l = northwest
+			//direction ordinals are now configurable.
 			
 			if(str.equals("") || str.equals(" ")) {
 				try {
 					doDispatchNoProcess(getErrorMessage("Speedwalk (run) special command usage:",".run directions\n" +
-							"directions are as follows:\n" +
-							"n: north, e: east, s: south, w: west, u: up, d: down, h: ne, j:se, k: sw, l: nw\n"+
+							"Direction ordinal to command mappings are editable, press MENU->More->Speedwalk Configuration for more info. The default mapping is as follows:\n" +
+							" n: north\n e: east\n s: south\n w: west\n u: up\n d: down\n h: northwest\n j: northeast\n k: southwest\n l: southeast\n"+
 							"directions may be prefeced with an integer value to run that many times.\n" +
 							"Commands may be inserted into the direction stream with commas,\n" +
 							"directions may be resumed by entering another comma followed by directions.\n" +
@@ -3283,7 +3309,22 @@ public class StellarService extends Service {
 						//got exception, this is a direction or an invalid character.
 						boolean valid = false;
 						String respString = "";
-						switch(theChar) {
+						
+						//make "theChar" a string
+						String testVal = Character.toString(theChar);
+						if(testVal.equals(",")) {
+							commanding = true;
+							buf.append(crlf);
+						} else {
+							//check if the testVal has a mapping in the table
+							if(the_settings.getDirections().containsKey(testVal)) {
+								valid = true;
+								respString = the_settings.getDirections().get(testVal).getCommand();
+							}
+						}
+						
+						
+						/*switch(theChar) {
 						case 'n':
 							respString = "n";
 							valid = true;
@@ -3331,7 +3372,7 @@ public class StellarService extends Service {
 						default:
 							
 						
-						}
+						}*/
 						
 						if(valid) {
 							//compute the run length.

@@ -15,6 +15,7 @@ import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
+import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
@@ -33,6 +34,7 @@ public class HyperSAXParser extends BaseParser {
 	final TimerData current_timer = new TimerData();
 	final TriggerData current_trigger = new TriggerData();
 	final AliasData current_alias = new AliasData();
+	final DirectionData current_dir = new DirectionData();
 	
 	public HyperSAXParser(String location, Context context) {
 		super(location, context);
@@ -44,7 +46,9 @@ public class HyperSAXParser extends BaseParser {
 		Element window = root.getChild(TAG_WINDOW);
 		Element data = root.getChild(TAG_SERVICE);
 		Element aliases = root.getChild(TAG_ALIASES);
+		Element directions = root.getChild(TAG_DIRECTIONS);
 		Element alias = aliases.getChild(TAG_ALIAS);
+		Element dir_entry = directions.getChild(TAG_ENTRY);
 		Element buttonsets = root.getChild(TAG_BUTTONSETS);
 		Element buttonset = buttonsets.getChild(TAG_BUTTONSET);
 		Element selected = buttonsets.getChild(TAG_SELECTEDSET);
@@ -67,7 +71,7 @@ public class HyperSAXParser extends BaseParser {
 		final StringBuffer button_set_name = new StringBuffer("default");
 		final ColorSetSettings setinfo =  new ColorSetSettings();
 		final HashMap<String,ColorSetSettings> colorsets = new HashMap<String,ColorSetSettings>();
-		
+		final HashMap<String,DirectionData> directions_read = new HashMap<String,DirectionData>();
 		window.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes attributes) {
@@ -167,6 +171,26 @@ public class HyperSAXParser extends BaseParser {
 			@SuppressWarnings("unchecked")
 			public void end() {
 				tmp.setAliases((HashMap<String,AliasData>)aliases_read.clone());
+			}
+			
+		});
+		
+		dir_entry.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes a) {
+				current_dir.setDirection(a.getValue("",ATTR_DIRECTION));
+				current_dir.setCommand(a.getValue("", ATTR_COMMAND));
+				directions_read.put(current_dir.getDirection(), current_dir.copy());
+			}
+			
+		});
+		
+		directions.setEndElementListener(new EndElementListener() {
+
+			@SuppressWarnings("unchecked")
+			public void end() {
+				// TODO Auto-generated method stub
+				tmp.setDirections((HashMap<String,DirectionData>)directions_read.clone());
 			}
 			
 		});
