@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newaliaslayout"
+  android:layout_width="300dip"
+  android:layout_height="200dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="NEW DIRECTION"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+  
+  <ImageButton
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:layout_marginLeft="75dip"
+  	android:layout_marginRight="75dip"
+  	android:src="@drawable/new_button"
+  	android:id="@+id/new_sw_done_button"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:layout_alignParentLeft="true"/>
+  	
+  <RelativeLayout
+  	android:layout_width="200dip"
+  	android:layout_height="wrap_content"
+  	android:layout_above="@id/new_sw_done_button"
+  	android:layout_below="@id/titlebar"
+  	android:layout_marginLeft="5dip"
+  	android:layout_marginRight="5dip">
+  		<TextView 
+  			android:id="@+id/dirlabel"
+  			android:layout_marginTop="10dip"
+  			android:layout_alignParentTop="true"
+  			android:layout_alignParentLeft="true"
+  			android:layout_width="80dip"
+  			android:layout_height="wrap_content"
+ 			android:text = "Direction:"/>
+  		<EditText
+  			android:id = "@+id/sw_dir"
+  			android:layout_width="60dip"
+  			android:maxWidth="60dip"
+  			android:singleLine = "true"
+  			android:layout_toRightOf="@id/dirlabel"
+  			android:layout_alignParentTop="true"
+  			android:layout_height="wrap_content"
+  			android:hint="Dir" />
+  	
+  		 <TextView 
+  		 	android:layout_marginTop="10dip"
+  			android:layout_below="@id/sw_dir"
+  			android:layout_alignParentLeft="true"
+  			android:id="@+id/cmdlabel"
+  			android:layout_width="80dip"
+  			android:layout_height="wrap_content"
+ 			android:text = "Command:"/>
+  		<EditText
+  			android:id="@+id/sw_cmd"
+  			android:layout_width="200dip"
+  			android:maxWidth="200dip"
+  			android:layout_height="wrap_content"
+  			android:singleLine="true"
+  			android:layout_toRightOf="@id/cmdlabel"
+  			android:layout_below="@id/sw_dir"
+  			android:hint="Command" /> 
+  	</RelativeLayout>
+  
+</RelativeLayout>
