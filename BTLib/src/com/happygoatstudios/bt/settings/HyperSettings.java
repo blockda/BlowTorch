@@ -18,6 +18,7 @@ import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
+import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
@@ -75,6 +76,8 @@ public class HyperSettings {
 	private HashMap<String,ColorSetSettings> SetSettings = new HashMap<String,ColorSetSettings>();
 	private HashMap<String,TriggerData> Triggers = new HashMap<String,TriggerData>();
 	private HashMap<String,TimerData> Timers = new HashMap<String,TimerData>();
+	private HashMap<String,DirectionData> Directions = new HashMap<String,DirectionData>();
+	
 	
 	private String lastSelected = "default";
 	enum WRAP_MODE {
@@ -250,6 +253,18 @@ public class HyperSettings {
 			}
 			
 			out.endTag("", BaseParser.TAG_ALIASES);
+			
+			//dump directions.
+			out.startTag("", BaseParser.TAG_DIRECTIONS);
+			for(String tmp : data.getDirections().keySet()) {
+				DirectionData d = data.getDirections().get(tmp);
+				out.startTag("", BaseParser.TAG_ENTRY);
+				out.attribute("", BaseParser.ATTR_DIRECTION, d.getDirection());
+				out.attribute("", BaseParser.ATTR_COMMAND, d.getCommand());
+				out.endTag("", BaseParser.TAG_ENTRY);
+			}
+			
+			out.endTag("", BaseParser.TAG_DIRECTIONS);
 			
 			out.startTag("", BaseParser.TAG_BUTTONSETS);
 			//buttons
@@ -729,6 +744,14 @@ public class HyperSettings {
 
 	public boolean isEchoAliasUpdates() {
 		return echoAliasUpdates;
+	}
+
+	public void setDirections(HashMap<String,DirectionData> directions) {
+		Directions = directions;
+	}
+
+	public HashMap<String,DirectionData> getDirections() {
+		return Directions;
 	}
 
 }
