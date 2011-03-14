@@ -19,20 +19,20 @@
 		android:gravity="center"/>
   
   
-  <ImageButton
+  <Button
     android:layout_width="100dip"
   	android:layout_height="wrap_content"
   	android:id="@+id/sw_close"
   	android:layout_alignParentBottom="true"
   	android:layout_alignParentRight="true"
-  	android:src="@drawable/back_button" />
+  	android:text="Done" />
   
 
   
-  <ImageButton
+  <Button
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:src="@drawable/new_button"
+  	android:text="New Direction"
   	android:id="@+id/new_dir_button"
   	android:layout_toLeftOf="@id/sw_close"
   	android:layout_alignParentBottom="true"/>

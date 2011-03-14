@@ -49,7 +49,7 @@ import android.text.format.Time;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 //import android.util.Log;
-import android.util.Log;
+//import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
 import android.view.LayoutInflater;
@@ -114,21 +114,21 @@ public class Launcher extends Activity implements ReadyListener {
 		//Intent intent = this.getIntent();
 		launcher_source = this.getIntent().getStringExtra("LAUNCH_MODE");
 		if(launcher_source == null) {
-			Log.e("BlowTorch","Launcher not provided a valid launch source. Finishing.");
+			//Log.e("BlowTorch","Launcher not provided a valid launch source. Finishing.");
 			this.finish();
 		}
 		
 		if(launcher_source.equals("com.happygoatstudios.bttest")) {
 			mode = LAUNCH_MODE.TEST;
-			Log.e("BlowTorch","Test Launcher Engaged.");
+			//Log.e("BlowTorch","Test Launcher Engaged.");
 		} else if(launcher_source.equals("com.happygoatstudios.bt")) {
-			Log.e("BlowTorch","Free Launcher Engaged.");
+			//Log.e("BlowTorch","Free Launcher Engaged.");
 			mode = LAUNCH_MODE.FREE;
 		} else if(launcher_source.equals("com.happygoatstudios.btpro")) {
-			Log.e("BlowTorch","Paid Launcher Engaged");
+			//Log.e("BlowTorch","Paid Launcher Engaged");
 			mode = LAUNCH_MODE.PAID;
 		} else {
-			Log.e("BlowTorch","Launcher given source: " + launcher_source + " which is invalid, Finishing");
+			//Log.e("BlowTorch","Launcher given source: " + launcher_source + " which is invalid, Finishing");
 			this.finish();
 		}
 		
@@ -195,12 +195,12 @@ public class Launcher extends Activity implements ReadyListener {
 					if(testLauncher.metaData != null) {
 						testversion = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
 					} else {
-						Log.e("BlowTorch","metaData is null");
+						//Log.e("BlowTorch","metaData is null");
 						return;
 					}
 				
 				} else {
-					Log.e("BlowTorch","ApplicationInfo is null");
+					//Log.e("BlowTorch","ApplicationInfo is null");
 					return;
 				}
 				//int testversion = this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA).metaData.getInt("TEST_VERSION");
@@ -240,7 +240,7 @@ public class Launcher extends Activity implements ReadyListener {
 								}
 								try {
 									Integer newVersion = Integer.parseInt(buf.toString());
-									Log.e("BlowTorch","Web update version: " + newVersion);
+									//Log.e("BlowTorch","Web update version: " + newVersion);
 									ApplicationInfo testLauncher = Launcher.this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA);
 									int testversionName = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
 									int testversion = newVersion;
@@ -256,7 +256,7 @@ public class Launcher extends Activity implements ReadyListener {
 										return;
 									}
 								} catch(NumberFormatException e) {
-									Log.e("BlowTorch","Web update response: " + buf.toString());
+									//Log.e("BlowTorch","Web update response: " + buf.toString());
 								} catch (NameNotFoundException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
@@ -859,7 +859,7 @@ public class Launcher extends Activity implements ReadyListener {
     		//service.service.
     		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
     			//service is running, don't do anything.
-    			Log.e(":Launcher","Service lives in: " + service.process);
+    			//Log.e(":Launcher","Service lives in: " + service.process);
     			if(mode == LAUNCH_MODE.FREE) {
     				
     				if(service.process.equals("com.happygoatstudios.bt:stellar_free")) found = true;
@@ -1015,7 +1015,7 @@ public class Launcher extends Activity implements ReadyListener {
 		if(mode == LAUNCH_MODE.TEST) {
 			the_intent = new Intent("com.happygoatstudios.bt.window.MainWindow.TEST_MODE");
 		} else {
-			Log.e("BlowTorch","LAUNCHING NORMAL MODE!");
+			//Log.e("BlowTorch","LAUNCHING NORMAL MODE!");
 			the_intent = new Intent("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE");
 		}
     	the_intent.putExtra("DISPLAY",launch.getDisplayName());
@@ -1333,7 +1333,7 @@ public class Launcher extends Activity implements ReadyListener {
 				String updatepath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
 				File file = new File(updatepath);
 				if(!file.exists()) {
-					Log.e("BlowTorch","Test application update does not exist.");
+					//Log.e("BlowTorch","Test application update does not exist.");
 					return; //file doesn't exist
 				}
 				

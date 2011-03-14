@@ -115,7 +115,7 @@ public class SpeedWalkConfigurationDialog extends Dialog implements DirectionEdi
 		public void onClick(View v) {
 			SWEntry e = theList.get(pos);
 			DirectionData d = new DirectionData(e.dir,e.cmd);
-			SpeedWalkDirectionEditorDialog editor = new SpeedWalkDirectionEditorDialog(SpeedWalkConfigurationDialog.this.getContext(),SpeedWalkConfigurationDialog.this,d);
+			SpeedWalkDirectionEditorDialog editor = new SpeedWalkDirectionEditorDialog(SpeedWalkConfigurationDialog.this.getContext(),SpeedWalkConfigurationDialog.this,d,service);
 			editor.show();
 		}
 		
@@ -124,7 +124,7 @@ public class SpeedWalkConfigurationDialog extends Dialog implements DirectionEdi
 	private class NewClickListener implements View.OnClickListener {
 
 		public void onClick(View v) {
-			SpeedWalkDirectionEditorDialog editor = new SpeedWalkDirectionEditorDialog(SpeedWalkConfigurationDialog.this.getContext(),SpeedWalkConfigurationDialog.this);
+			SpeedWalkDirectionEditorDialog editor = new SpeedWalkDirectionEditorDialog(SpeedWalkConfigurationDialog.this.getContext(),SpeedWalkConfigurationDialog.this,service);
 			editor.show();
 		}
 		
