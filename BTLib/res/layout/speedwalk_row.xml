@@ -6,7 +6,8 @@
   android:layout_width="300dip"
   android:layout_height="wrap_content"
   android:stretchColumns="0"
-  android:shrinkColumns="1,2">
+  android:shrinkColumns="1,2"
+  android:background="#FF006464">
   
   	<TableRow>
   		<TextView 
@@ -14,17 +15,20 @@
   			android:id="@+id/dir_str"
   			android:layout_width="150dip"
   			android:layout_height="35dip"
-  			android:background="#AA630460"
+  			
   			android:textColor="#FFF7941D"
   			android:textSize="22dip"
   			android:gravity="center_horizontal|center_vertical"
   			
  			/>
   		<ImageButton
+  			android:layout_marginTop="3dip"
   			android:id="@+id/dir_edit"
   			android:src="@drawable/edit_button"
   			/>
   		<ImageButton
+  		android:layout_marginLeft="3dip"
+  		android:layout_marginTop="3dip"
   			android:id="@+id/dir_del"
   			android:src="@drawable/delete_button"/>
   	</TableRow>

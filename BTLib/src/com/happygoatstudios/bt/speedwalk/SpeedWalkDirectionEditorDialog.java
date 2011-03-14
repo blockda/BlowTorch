@@ -1,14 +1,19 @@
 package com.happygoatstudios.bt.speedwalk;
 
 
+import java.util.HashMap;
+
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -19,21 +24,25 @@ public class SpeedWalkDirectionEditorDialog extends Dialog {
 	DirectionEditorDoneListener doneListener = null;
 	DirectionData oldData = null;
 	
+	IStellarService service = null;
+	
 	EditText direction = null;
 	EditText command = null;
 	
-	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener) {
+	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,IStellarService service) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		this.doneListener = doneListener;
+		this.service = service;
 	}
 	
-	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,DirectionData old) {
+	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,DirectionData old,IStellarService service) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		this.doneListener = doneListener;
 		oldData = old;
 		isEditor = true;
+		this.service = service;
 	}
 	
 	public void onCreate(Bundle b) {
@@ -51,7 +60,7 @@ public class SpeedWalkDirectionEditorDialog extends Dialog {
 			((TextView)findViewById(R.id.titlebar)).setText("EDIT DIRECTION");
 			((TextView)findViewById(R.id.sw_dir)).setText(oldData.getDirection());
 			((TextView)findViewById(R.id.sw_cmd)).setText(oldData.getCommand());
-			((ImageButton)findViewById(R.id.new_sw_done_button)).setImageResource(R.drawable.edit_button);
+			((Button)findViewById(R.id.new_sw_done_button)).setText("Save Changes");
 			findViewById(R.id.new_sw_done_button).setOnClickListener(new View.OnClickListener() {
 				
 				
@@ -81,13 +90,13 @@ public class SpeedWalkDirectionEditorDialog extends Dialog {
 			});
 		}
 		
-		/*findViewById(R.id.new_sw_cancel).setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.new_sw_cancel_button).setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				SpeedWalkDirectionEditorDialog.this.dismiss();
 			}
-		});*/
+		});
 		
 	}
 	
@@ -114,6 +123,33 @@ public class SpeedWalkDirectionEditorDialog extends Dialog {
 		} catch(NumberFormatException e) {
 			
 		}
+		
+		//must not be an existing direction
+		try {
+			HashMap<String,DirectionData> tmp = (HashMap<String, DirectionData>) service.getDirectionData();
+			for(DirectionData d : tmp.values()) {
+				if(isEditor) {
+					if(d.getDirection().equals(direction.getText().toString()) && !d.getDirection().equals(oldData.getDirection())) {
+						checker.showMessage(SpeedWalkDirectionEditorDialog.this.getContext(), d.getDirection() +" is already used as a direction.");
+						return false;
+					}
+				} else {
+					if(d.getDirection().equals(direction.getText().toString())) {
+						checker.showMessage(SpeedWalkDirectionEditorDialog.this.getContext(), d.getDirection() +" is already used as a direction.");
+						return false;
+					}
+				}
+			}
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if(direction.getText().toString().equals(";") || direction.getText().toString().equals(",")) {
+			checker.showMessage(SpeedWalkDirectionEditorDialog.this.getContext(), "\""+direction.getText().toString() +"\" can not be used as a direction.");
+			return false;
+		}
+		
 		
 		return true;
 	}
