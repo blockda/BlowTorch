@@ -58,7 +58,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -785,7 +785,7 @@ public class StellarService extends Service {
 				ColorSetSettings def_colorset = new ColorSetSettings();
 				def_colorset.toDefautls();
 				the_settings.getSetSettings().put("default", def_colorset);
-				Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
+				//Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
 			}
 			if(the_settings.getDirections().size() == 0) {
 				loadDefaultDirections();

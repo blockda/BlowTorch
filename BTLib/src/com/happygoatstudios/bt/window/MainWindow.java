@@ -34,7 +34,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
-import android.util.Log;
+//import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -246,12 +246,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		Log.e("BlowTorch","INTENT: " + this.getIntent().getAction());
+		//Log.e("BlowTorch","INTENT: " + this.getIntent().getAction());
 		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
-			Log.e("BlowTorch","Free/Pro mode launch");
+			//Log.e("BlowTorch","Free/Pro mode launch");
 			mode = LAUNCH_MODE.FREE;
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
-			Log.e("BlowTorch","Test mode launch");
+			//Log.e("BlowTorch","Test mode launch");
 			mode = LAUNCH_MODE.TEST;
 			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
@@ -1859,11 +1859,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
 	boolean found = false;
 	for(RunningServiceInfo service : services) {
-		Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
+		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
 		//service.service.
 		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
 			//service is running, don't do anything.
-			Log.e(":Launcher","Service lives in: " + service.process);
+			//Log.e(":Launcher","Service lives in: " + service.process);
 			if(mode == LAUNCH_MODE.FREE) {
 				
 				if(service.process.equals("com.happygoatstudios.btfree:stellar_free")) found = true;

@@ -166,6 +166,7 @@ public class BaseParser {
 			} else {
 				input = window.openFileInput(path);
 			}
+			
 			return input;
 		} catch (IOException e) {
 			throw new RuntimeException(e);

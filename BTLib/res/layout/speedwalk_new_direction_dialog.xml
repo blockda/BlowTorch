@@ -19,15 +19,20 @@
 		android:gravity="center"/>
   
   
-  <ImageButton
+   <Button
+  	android:layout_width="100dip"
+  	android:layout_height="wrap_content"
+  	android:text="Cancel"
+  	android:id="@+id/new_sw_cancel_button"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"/>
+  <Button
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:layout_marginLeft="75dip"
-  	android:layout_marginRight="75dip"
-  	android:src="@drawable/new_button"
+  	android:text="Add Direction"
   	android:id="@+id/new_sw_done_button"
   	android:layout_alignParentBottom="true"
-  	android:layout_alignParentRight="true"
+  	android:layout_toLeftOf="@+id/new_sw_cancel_button"
   	android:layout_alignParentLeft="true"/>
   	
   <RelativeLayout
@@ -49,12 +54,12 @@
   			android:id = "@+id/sw_dir"
   			android:layout_width="60dip"
   			android:maxWidth="60dip"
+  			android:maxLength="1"
   			android:singleLine = "true"
   			android:layout_toRightOf="@id/dirlabel"
   			android:layout_alignParentTop="true"
   			android:layout_height="wrap_content"
   			android:hint="Dir" />
-  	
   		 <TextView 
   		 	android:layout_marginTop="10dip"
   			android:layout_below="@id/sw_dir"
