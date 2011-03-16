@@ -67,6 +67,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	Integer selectedColor = new Integer(37);
 	Integer selectedBright = new Integer(0);
 	Integer selectedBackground = new Integer(60);
+	boolean xterm256FGStart = false;
+	boolean xterm256BGStart = false;
+	boolean xterm256Color = false;
 	private Handler buttonaddhandler = null;
 	private Handler realbuttonhandler = null;
 	
@@ -565,11 +568,15 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						
 					}
 					//bleeding = ((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
+					if(xterm256FGStart) {
+						p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, xterm256Color));
+					} else {//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
+						p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, false));
+						
+					}
 					
-					p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-					//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
 					b.setColor(0xFF000000);//no not bleed background colors
-					
+					//resetXterm256Regs();
 					//if(p.getColor() != (0xFF000000|Colorizer.getColorValue(0, 37))) {
 					//	bleeding = true;
 					//}
@@ -617,6 +624,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					x += p.measureText(((TextTree.Text)u).getString());
 				}
 				if(u instanceof TextTree.Color) {
+					xterm256Color = false;
+					xterm256FGStart = false;
+					xterm256BGStart = false;
 					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
 					//for(Integer o : ((TextTree.Color)u).getOperations()) {
 						updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
@@ -624,20 +634,46 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					//((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
 					//Log.e("BYTE","COLOR:" + selectedBright + " , " + selectedColor + " " + selectedBackground);
 					if(debug_mode == 2 || debug_mode == 3) {
-						p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37));
-						b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40));
+						p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37,false));
+						b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40,false));
 					} else {
-						p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-						b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
+						if(xterm256FGStart) {
+							if(selectedColor == 33) {
+								selectedColor = 33;
+							}
+							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,xterm256Color));
+						} else {
+							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
+							
+						}
+						
+						if(xterm256BGStart) {
+							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,xterm256Color));
+						} else {
+							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,false));
+							
+						}
 					}
 					if(debug_mode == 1 || debug_mode == 2) {
 						String str = "";
-						try {
+						/*try {
 							str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
 						} catch (UnsupportedEncodingException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
+						}*/
+						str += "[";
+						for(Integer tmpI : ((TextTree.Color)u).operations) {
+							str += Integer.toString(tmpI) + ",";
 						}
+						String flagDebug = "";
+						if(xterm256FGStart) {
+							flagDebug = "!";
+							if(xterm256Color) {
+								flagDebug = "!!";
+							}
+						}
+						str+= selectedColor + "" + flagDebug +"]";
 						c.drawText(str,x,y,p);
 						x += p.measureText(str);
 					}
@@ -1078,19 +1114,43 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 	}
 	
+	private void resetXterm256Regs() {
+		xterm256Color = false;
+		xterm256FGStart = false;
+		xterm256BGStart = false;
+	}
+	
 	private Colorizer.COLOR_TYPE updateColorRegisters(Integer i) {
 		if(i == null) return Colorizer.COLOR_TYPE.NOT_A_COLOR;
+		
+		if(xterm256Color) {
+			if(xterm256FGStart) {
+				selectedColor = i;
+			}
+			
+			if(xterm256BGStart) {
+				selectedBackground = i;
+			}
+			
+			return null;
+		}
 		
 		Colorizer.COLOR_TYPE type = Colorizer.getColorType(i);
 		switch(type) {
 		case FOREGROUND:
 			selectedColor = i;
+			xterm256FGStart = false;
+			xterm256BGStart = false;
+			xterm256Color = false;
 			//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 			//notFound = false;
 			break;
 		case BACKGROUND:
 			//Log.e("SLICK","BACKGROUND COLOR ENCOUNTERED: " + i);
 			selectedBackground = i;
+			xterm256FGStart = false;
+			xterm256BGStart = false;
+			xterm256Color = false;
 			//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
 			break;
 		case ZERO_CODE:
@@ -1098,9 +1158,28 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			selectedBright = 0;
 			selectedColor = 37;
 			selectedBackground = 40;
+			xterm256FGStart = false;
+			xterm256BGStart = false;
+			xterm256Color = false;
 			break;
 		case BRIGHT_CODE:
 			selectedBright = 1;
+			xterm256FGStart = false;
+			xterm256BGStart = false;
+			xterm256Color = false;
+			break;
+		case XTERM_256_FG_START:
+			xterm256FGStart = true;
+			break;
+		case XTERM_256_BG_START:
+			xterm256BGStart = true;
+			break;
+		case XTERM_256_FIVE:
+			if(xterm256BGStart || xterm256FGStart) {
+				xterm256Color = true;
+			} else {
+				//this would be a "blink" command, but blink sucks, so do nothing.
+			}
 			break;
 		default:
 			return Colorizer.COLOR_TYPE.NOT_A_COLOR;
