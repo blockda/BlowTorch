@@ -656,13 +656,13 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					}
 					if(debug_mode == 1 || debug_mode == 2) {
 						String str = "";
-						/*try {
+						try {
 							str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
 						} catch (UnsupportedEncodingException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
-						}*/
-						str += "[";
+						}
+						/*str += "[";
 						for(Integer tmpI : ((TextTree.Color)u).operations) {
 							str += Integer.toString(tmpI) + ",";
 						}
@@ -673,7 +673,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 								flagDebug = "!!";
 							}
 						}
-						str+= selectedColor + "" + flagDebug +"]";
+						str+= selectedColor + "" + flagDebug +"]";*/
 						c.drawText(str,x,y,p);
 						x += p.measureText(str);
 					}
