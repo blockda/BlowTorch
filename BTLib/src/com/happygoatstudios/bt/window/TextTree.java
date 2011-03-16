@@ -28,7 +28,7 @@ public class TextTree {
 	
 	public Handler addTextHandler = null;
 	
-	private static Pattern oplookup = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?(([0-9]{1,2});)?([0-9]{1,2})m");
+	private static Pattern oplookup = Pattern.compile("\\x1B\\x5B(([0-9]{1,3});)?(([0-9]{1,3});)?([0-9]{1,3})m");
 	private static Matcher op_match = oplookup.matcher("");
 	
 	private int MAX_LINES = 300;
@@ -160,20 +160,35 @@ public class TextTree {
 		return tmp;
 	}
 	
+	private static ArrayList<Integer> placeMap = new ArrayList<Integer>();
+	
 	private static LinkedList<Integer> getOperationsFromBytes(byte[] in) {
 		LinkedList<Integer> tmp = new LinkedList<Integer>();
 		int working = 0;
 		int place = 1;
+		placeMap.clear();
 		for(int i=0;i<in.length;i++) {
 			switch(in[i]) {
 			case SEMI:
 				//reset 
-				tmp.addLast(new Integer(working));
+				
+				int finalVal = 0;
+				for(int j=0;j<placeMap.size();j++) {
+					finalVal += placeMap.get(j) * Math.pow(10, placeMap.size()-1-j);
+				}
+				placeMap.clear();
+				tmp.addLast(new Integer(finalVal));
 				working = 0;
 				place = 1;
 				break;
 			case m:
-				tmp.addLast(new Integer(working));
+				finalVal = 0;
+				for(int j=0;j<placeMap.size();j++) {
+					finalVal += placeMap.get(j) * Math.pow(10, placeMap.size()-1-j);
+				}
+				placeMap.clear();
+				tmp.addLast(new Integer(finalVal));
+				//tmp.addLast(new Integer(working));
 				return tmp;
 				//end
 			case b0:
@@ -186,6 +201,8 @@ public class TextTree {
 			case b7:
 			case b8:
 			case b9:
+				placeMap.add(new Integer(getAsciiNumber(in[i])));
+				
 				working = working*place;
 				place = place*10;
 				working += getAsciiNumber(in[i]);
