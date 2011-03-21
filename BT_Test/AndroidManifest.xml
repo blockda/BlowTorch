@@ -3,7 +3,8 @@
       package="com.happygoatstudios.bttest"
       android:versionCode="22"
       android:versionName="1.1.1">
-    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:theme="@android:style/Theme.NoTitleBar">
+    <!--  <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:theme="@android:style/Theme.NoTitleBar"> -->
+    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST">
      	<meta-data android:value="1" android:name="BLOWTORCH_TEST_VERSION"/>
      	<activity android:name="com.happygoatstudios.bttest.TestLauncher"
                   android:label="BlowTorch TEST">
