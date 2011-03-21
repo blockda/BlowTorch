@@ -32,14 +32,14 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>BTLib_aidl</name>
+			<name>Launcher_aidl</name>
 			<type>2</type>
-			<locationURI>_android_BTLib_3c968d3/aidl</locationURI>
+			<locationURI>_android_Launcher_aff973c0/aidl</locationURI>
 		</link>
 		<link>
-			<name>BTLib_src</name>
+			<name>Launcher_src</name>
 			<type>2</type>
-			<locationURI>_android_BTLib_3c968d3/src</locationURI>
+			<locationURI>_android_Launcher_aff973c0/src</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
