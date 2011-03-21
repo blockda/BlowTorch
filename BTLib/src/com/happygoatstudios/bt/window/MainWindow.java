@@ -126,6 +126,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_CLEARINPUTWINDOW = 883;
 	//protected static final int MESSAGE_BUTTONRELOAD = 882;
 	protected static final int MESSAGE_CLOSEINPUTWINDOW = 884;
+	private static final int MESSAGE_RENAWS = 885;
 	
 	private TextTree tree = new TextTree();
 
@@ -393,6 +394,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_RENAWS:
+					try {
+						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
+					} catch (RemoteException e5) {
+						// TODO Auto-generated catch block
+						e5.printStackTrace();
+					}
+					break;
 				case MESSAGE_CLEARINPUTWINDOW:
 					ClearKeyboard();
 					break;
@@ -1738,6 +1747,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//DoButtonPortraitMode(true);
 			//OREINTATION = Configuration.ORIENTATION_PORTRAIT;
 			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
+			myhandler.sendEmptyMessageDelayed(MESSAGE_RENAWS, 80);
 			try {
 				if(service.getOrientation() == 1) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
@@ -1757,6 +1767,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//DoButtonPortraitMode(false);
 			//OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
 			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
+			myhandler.sendEmptyMessageDelayed(MESSAGE_RENAWS, 80);
 			try {
 				if(service.getOrientation() == 2) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
