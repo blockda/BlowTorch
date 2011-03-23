@@ -20,6 +20,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
 //import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -101,7 +102,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			}
 		});
 		
-		Button done = (Button)findViewById(R.id.alias_dialog_done);
+		/*Button done = (Button)findViewById(R.id.alias_dialog_done);
 		
 		done.setOnClickListener(new View.OnClickListener() {
 			
@@ -123,7 +124,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				//reporto.aliasDialogDone(AliasEditorDialog.this.aliases);
 				AliasEditorDialog.this.dismiss();
 			}
-		});
+		});*/
 		
 		Button cancel = (Button)findViewById(R.id.alias_cancel_done);
 		cancel.setOnClickListener(new View.OnClickListener() {
@@ -240,7 +241,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
 			case MSG_DELETEALIAS:
-				
+				AliasEntry tmp = apdapter.getItem(msg.arg1);
 				apdapter.remove(apdapter.getItem(msg.arg1));
 				//check to see if this is an offender
 				for(int i=0;i<apdapter.getCount();i++) {
@@ -250,6 +251,19 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				
 				apdapter.notifyDataSetChanged();
 				apdapter.sort(new AliasComparator());
+				
+				String oldKey = tmp.pre;
+				if(oldKey.startsWith("^")) oldKey = oldKey.substring(1,oldKey.length());
+				if(oldKey.endsWith("$")) oldKey = oldKey.substring(0,oldKey.length()-1);
+				
+				try {
+					HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
+					existingAliases.remove(oldKey);
+					service.setAliases(existingAliases);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				//Log.e("ALIASED","DELETING ALIAS");
 				break;
 			case MSG_MODIFYALIAS:
@@ -270,12 +284,31 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	
 	private List<String> computeNames(String name) {
 		names.clear(); 
-		for(int i=0;i<apdapter.getCount();i++) {
+		
+		if(name.startsWith("^")) name = name.substring(0,name.length());
+		if(name.endsWith("$")) name = name.substring(0,name.length()-1);
+		
+		try {
+			HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
+			
+			for(String key : existingAliases.keySet()) {
+				if(!key.equals(name)) {
+					names.add(key);
+				}
+			}
+			
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		/*for(int i=0;i<apdapter.getCount();i++) {
 			if(!apdapter.getItem(i).pre.equals(name)) {
 				//Log.e("FLOOP","COMPUTED " + apdapter.getItem(i).pre + " AS INVALID");
 				names.add(apdapter.getItem(i).pre);
 			}
-		}
+		}*/
 		
 		return names;
 	}
@@ -294,8 +327,25 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		apdapter.add(tmp);
 		apdapter.notifyDataSetChanged();
 		apdapter.sort(new AliasComparator());
+		
+		try {
+			HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
+			AliasData newAlias = new AliasData();
+			newAlias.setPost(post);
+			newAlias.setPre(pre);
+			String newKey = newAlias.getPre();
+			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
+			if(newKey.endsWith("$")) newKey = newKey.substring(0,newKey.length()-1);
+			
+			existingAliases.put(newKey, newAlias);
+			service.setAliases(existingAliases);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		//int pos = apdapter.getPosition(tmp);
-		boolean validated = validateList();
+		/*boolean validated = validateList();
 		if(!validated) {
 			//do some stuff to make the dialog better.
 			apdapter.notifyDataSetChanged();
@@ -307,7 +357,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			apdapter.notifyDataSetChanged();
 			apdapter.sort(new AliasComparator());
 			//apdapter.
-		}
+		}*/
 		//apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 
 	}
@@ -319,7 +369,29 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		apdapter.notifyDataSetChanged();
 		apdapter.sort(new AliasComparator());
 		pos = apdapter.getPosition(tmp);
-		boolean validated = validateList();
+		
+		//remove from the list and add the new one.
+		try {
+			HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
+			String oldKey = orig.getPre();
+			if(oldKey.startsWith("^")) oldKey = oldKey.substring(1,oldKey.length());
+			if(oldKey.endsWith("$")) oldKey = oldKey.substring(0,oldKey.length()-1);
+			existingAliases.remove(oldKey);
+			
+			String newKey = pre;
+			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
+			if(newKey.endsWith("$")) newKey = newKey.substring(0,newKey.length()-1);
+			AliasData newAlias = new AliasData();
+			newAlias.setPre(pre);
+			newAlias.setPost(post);
+			existingAliases.put(newKey, newAlias);
+			service.setAliases(existingAliases);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		/*boolean validated = validateList();
 		if(!validated) {
 			//do some stuff to make the dialog better.
 			apdapter.notifyDataSetChanged();
@@ -330,7 +402,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			offenders.clear();
 			apdapter.notifyDataSetChanged();
 			//apdapter.sort(new AliasComparator());
-		}
+		}*/
 		//apdapter.sort(String.CASE_INSENSITIVE_ORDER);
 	}
 	
