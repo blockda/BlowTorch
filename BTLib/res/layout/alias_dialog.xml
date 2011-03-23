@@ -3,7 +3,7 @@
 <RelativeLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/aliasdialoglayout"
-  android:layout_width="300dip"
+  android:layout_width="275dip"
   android:layout_height="250dip">
   
   <TextView
@@ -43,27 +43,27 @@
   </TableLayout>
   
   <Button
-    android:layout_width="wrap_content"
+    android:layout_width="100dip"
   	android:layout_height="wrap_content"
   	android:id="@+id/alias_cancel_done"
   	android:layout_alignParentBottom="true"
   	android:layout_alignParentRight="true"
-  	android:text="Cancel" />
+  	android:text="Done" />
   
-  <Button
+  <!--  <Button
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
   	android:id="@+id/alias_dialog_done"
 	android:layout_toLeftOf="@id/alias_cancel_done"
 	android:layout_alignParentBottom="true"
-  	android:text="Save List" />
+  	android:text="Save List" /> -->
   
   <Button
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
   	android:text="New Alias"
   	android:id="@+id/new_alias_button"
-  	android:layout_toLeftOf="@id/alias_dialog_done"
+  	android:layout_toLeftOf="@id/alias_cancel_done"
   	android:layout_alignParentBottom="true"/>
   
 
