@@ -4,7 +4,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/newaliaslayout"
   android:layout_width="300dip"
-  android:layout_height="200dip">
+  android:layout_height="220dip">
   
   <TextView
 		android:id="@+id/titlebar"
@@ -39,6 +39,9 @@
   	android:layout_height="fill_parent"
   	android:layout_above="@id/new_alias_done_button"
   	android:layout_below="@id/titlebar">
+  	<LinearLayout
+  		android:layout_width="300dip"
+  		android:layout_height="wrap_content" android:orientation="vertical">
   <TableLayout
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
@@ -72,7 +75,53 @@
   			android:hint="Replace with this." />
   	
   	</TableRow>
+  	<TableRow android:layout_span="2">
+  		
+  			
+  	</TableRow>
   </TableLayout>
+  <RelativeLayout
+  			android:layout_width="fill_parent"
+  			android:layout_height="wrap_content"
+  			android:layout_marginTop="5dip"
+  			>
+  			
+  				<Button 
+  					android:id="@+id/carrot" 
+  					android:layout_alignParentLeft="true" 
+  					android:layout_alignParentTop="true" 
+  					android:layout_marginLeft="30dip" 
+  					android:layout_width="60dip" 
+  					android:layout_height="40dip" 
+  					android:textStyle="bold"
+  					android:textSize="18dip"
+  					android:text="^"/>
+  				<Button 
+  					android:id="@+id/dollar" 
+  					android:layout_alignParentRight="true" 
+  					android:layout_alignParentTop="true" 
+  					android:layout_marginRight="30dip" 
+  					android:layout_width="60dip" 
+  					android:layout_height="40dip" 
+  					android:textStyle="bold"
+  					android:textSize="18dip"
+  					android:text="$"/>
+  					
+  				
+  				
+  				<TextView 
+  					android:layout_width="fill_parent" 
+  					android:layout_height="40dip" 
+  					android:layout_alignParentTop="true" 
+  					android:layout_toRightOf="@id/carrot" 
+  					android:layout_toLeftOf="@id/dollar" 
+  					android:textStyle="bold"
+  					android:textSize="18dip"
+  					android:text="matching" 
+  					android:gravity="center"/>
+  			
+  		</RelativeLayout>
+  </LinearLayout>
   </ScrollView>
 
 

@@ -1,6 +1,10 @@
 package com.happygoatstudios.bt.alias;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.service.IStellarService;
@@ -38,8 +42,13 @@ public class NewAliasDialog extends Dialog {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
+		
+		
+		
+		
 		if(isEditor) {
 			createeditor();
+			
 		} else {
 		
 			setContentView(R.layout.new_alias_dialog);
@@ -83,11 +92,50 @@ public class NewAliasDialog extends Dialog {
 			});
 		
 		}
+		initMatches();
 		//load in the array adapter to hook up the list view
 	}
 	
 	private String mPre;
 	private String mPost;
+	
+	private void initMatches() {
+		Button carrot = (Button)findViewById(R.id.carrot);
+		Button dollar = (Button)findViewById(R.id.dollar);
+		carrot.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
+				if(!pre.getText().toString().equals("")) {
+					if(!pre.getText().toString().startsWith("^")) {
+						pre.setText("^" + pre.getText().toString());
+					} else {
+						pre.setText(pre.getText().toString().substring(1, pre.getText().toString().length()));
+					}
+					pre.setSelection(pre.getText().toString().length());
+				}
+			}
+		});
+		
+		dollar.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				EditText pre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
+				if(!pre.getText().toString().equals("")) {
+					if(!pre.getText().toString().endsWith("$")) {
+						pre.setText(pre.getText().toString() + "$");
+					} else {
+						pre.setText(pre.getText().toString().substring(0, pre.getText().toString().length()-1));
+					}
+					pre.setSelection(pre.getText().toString().length());
+				}
+			}
+		});
+	}
 	
 	private void createeditor() {
 		setContentView(R.layout.new_alias_dialog);
@@ -148,6 +196,9 @@ public class NewAliasDialog extends Dialog {
 	
 	@SuppressWarnings("unchecked")
 	private boolean validatePhaseTwo(String pre, String post, Validator checker) {
+		if(pre.startsWith("^")) pre = pre.substring(1,pre.length());
+		if(pre.endsWith("$")) pre = pre.substring(0,pre.length()-1);
+		
 		String invalid_name = "";
 		boolean is_invalid = false;
 		//Log.e("FLIIP","CHECK EXISTING:");
@@ -183,6 +234,16 @@ public class NewAliasDialog extends Dialog {
 			return false;
 		}
 		
+		try {
+			if(!validateList()) {
+				checker.showMessage(NewAliasDialog.this.getContext(), "Circular reference detected.");
+				return false;
+			}
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return true;
 	}
 	
@@ -198,8 +259,96 @@ public class NewAliasDialog extends Dialog {
 		service = pService;
 		cant_name = invalid_names;
 	}
-
-		//load in the array adapter to hook up the list view
 	
+	Vector<String> offenders = new Vector<String>();
+		//load in the array adapter to hook up the list view
+	public boolean validateList() throws RemoteException {
+		Boolean retval = true;
+		
+		//int count = apdapter.getCount();
+		HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
+		int count = existingAliases.size();
+		
+		String testVal = "";
+		if(isEditor) {
+			String key = original_alias.getPre();
+			if(key.startsWith("^")) key = key.substring(1,key.length());
+			if(key.endsWith("$")) key = key.substring(0,key.length()-1);
+			
+			
+			existingAliases.remove(key);
+			
+			AliasData tmp = new AliasData();
+			tmp.setPost(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post)).getText().toString());
+			tmp.setPre(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre)).getText().toString());
+			
+			String newKey = tmp.getPre();
+			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
+			if(newKey.endsWith("$")) newKey = newKey.substring(0,newKey.length()-1);
+			testVal = newKey;
+			existingAliases.put(newKey, tmp);
+		} else {
+			AliasData tmp = new AliasData();
+			tmp.setPost(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post)).getText().toString());
+			tmp.setPre(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre)).getText().toString());
+			
+			String newKey = tmp.getPre();
+			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
+			if(newKey.endsWith("$")) newKey = newKey.substring(0,newKey.length()-1);
+			testVal = newKey;
+			existingAliases.put(newKey, tmp);
+		}
+		
+		//build "alias table"
+		String regExp = "";
+		//String suffix = "\\b";
+		//String prefix = "\\b";
+		for(String pre : existingAliases.keySet()) {
+			//if()
+			String suffix = "\\b";
+			String prefix = "\\b";
+			AliasData d = existingAliases.get(pre);
+			//if(!d.equals(original_alias)) {
+				if(d.getPre().startsWith("^")) prefix = "";
+				if(d.getPre().endsWith("$")) suffix = "";
+				regExp += "("+prefix+d.getPre()+suffix+")|";
+			//}
+		}
+		
+		regExp = regExp.substring(0,regExp.length()-1);
+		
+		Pattern bigmatch = Pattern.compile(regExp);
+		Matcher reMatch = bigmatch.matcher(testVal);
+		
+		StringBuffer replaceHolder = new StringBuffer();
+		
+		int tries = 0;
+		int maxTries = existingAliases.size() + 5; //size + wiggle room.
+		boolean done = false;
+		while(tries <= maxTries && !done) {
+			boolean matched = false;
+			while(reMatch.find()) {
+				matched = true;
+				AliasData d = existingAliases.get(reMatch.group(0));
+				
+				reMatch.appendReplacement(replaceHolder, d.getPost());
+			}
+			if(matched) {
+				reMatch.appendTail(replaceHolder);
+				
+				reMatch.reset(replaceHolder.toString());
+				replaceHolder.setLength(0);
+				tries++;
+			} else {
+				done = true;
+			}
+		}
+		
+		if(tries >= maxTries) {
+			return false;
+		}
+		
+		return true;
+	}
 
 }

@@ -2398,7 +2398,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		if(items.size() > 0) {
 			for(AliasData d : items) {
-				map.put(d.getPre(), d);
+				String alias_key = d.getPre();
+				if(d.getPre().startsWith("^")) alias_key = alias_key.substring(1, alias_key.length());
+				if(d.getPre().endsWith("$")) alias_key = alias_key.substring(0, alias_key.length()-1);
+				map.put(alias_key, d);
 			}
 			try {
 				service.setAliases(map);
