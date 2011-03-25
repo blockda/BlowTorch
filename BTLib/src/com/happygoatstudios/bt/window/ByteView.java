@@ -68,6 +68,17 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private int PREF_LINEEXTRA = 2;
 	
+	public static enum LINK_MODE {
+		BACKGROUND,
+		HIGHLIGHT,
+		HIGHLIGHT_COLOR,
+		HIGHLIGHT_COLOR_ONLY_BLAND,
+		NONE,
+	}
+	
+	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+	private int linkHighlightColor = 0xFF0000FF;
+	
 	Integer selectedColor = new Integer(37);
 	Integer selectedBright = new Integer(0);
 	Integer selectedBackground = new Integer(60);
@@ -510,7 +521,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//synchronized(the_tree) {
 		//c.setMatrix(m);
 		if(linkColor == null) {
+			
 			linkColor = new Paint();
+			linkColor.setAntiAlias(true);
 			linkColor.setColor(0xFF0000FF);
 		}
 		//try {	
@@ -678,22 +691,63 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 							doingLink = true;
 							currentLink.append(((TextTree.Text)u).getString());
 							
+							
 							Rect r = new Rect();
 							r.left = (int) x;
 							r.top = (int) (y - p.getTextSize());
 							r.right = (int) (x + p.measureText(((TextTree.Text)u).getString()));
 							r.bottom = (int) (y+5);
+							if(linkMode == LINK_MODE.BACKGROUND) {
+								linkColor.setColor(linkHighlightColor);
 							//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, linkColor);
-							c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
-							
+								c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
+							}
 							//register linkBox;
 							LinkBox linkbox = new LinkBox(null,r);
 							linkBoxes.add(linkbox);
 							
 						}
 					}
-					c.drawText(((TextTree.Text)u).getString(),x,y,p);
-					x += p.measureText(((TextTree.Text)u).getString());
+					if(doingLink) {
+						switch(linkMode) {
+						case HIGHLIGHT:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setColor(p.getColor());
+							linkColor.setUnderlineText(true);
+							break;
+						case HIGHLIGHT_COLOR:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setColor(linkHighlightColor);
+							linkColor.setUnderlineText(true);
+							break;
+						case HIGHLIGHT_COLOR_ONLY_BLAND:
+							
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							if(selectedColor == 37) {
+								linkColor.setColor(linkHighlightColor);
+							} else {
+								linkColor.setColor(p.getColor());
+							}
+							linkColor.setUnderlineText(true);
+							break;
+						default:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setUnderlineText(false);
+							linkColor.setColor(linkHighlightColor);
+						}
+						c.drawText(((TextTree.Text)u).getString(),x,y,linkColor);
+						x += p.measureText(((TextTree.Text)u).getString());
+						
+					} else {
+						//p.setUnderlineText(false);
+						c.drawText(((TextTree.Text)u).getString(),x,y,p);
+						x += p.measureText(((TextTree.Text)u).getString());
+					}
+					
 				}
 				if(u instanceof TextTree.Color) {
 					xterm256Color = false;
