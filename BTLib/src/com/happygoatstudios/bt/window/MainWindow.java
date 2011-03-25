@@ -397,8 +397,22 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
 				case MESSAGE_LAUNCHURL:
-					Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse((String)msg.obj));
-					startActivity(web_help);
+					Pattern urlPattern = Pattern.compile(TextTree.urlFinderString);
+					Matcher urlMatcher = urlPattern.matcher((String)msg.obj);
+					if(urlMatcher.find()) {
+						String url = "";
+						if(urlMatcher.group(1) == null || urlMatcher.group(1).equals("")) {
+							if(urlMatcher.group(2) == null || !urlMatcher.group(2).equals("")) {
+								url = "http://"+urlMatcher.group(2);
+							}
+						} else {
+							url = urlMatcher.group(1);
+						}
+						if(!url.equals("")) {
+							Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse(url));
+							startActivity(web_help);
+						}
+					}
 					break;
 				case MESSAGE_RENAWS:
 					try {
