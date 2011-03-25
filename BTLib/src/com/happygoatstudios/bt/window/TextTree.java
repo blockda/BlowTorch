@@ -19,6 +19,10 @@ import android.os.Message;
 
 public class TextTree {
 	
+	public static final String urlFinderString = "(http://.+\\b)|(www\\..+\\b)"; 
+	private final Pattern urlPattern = Pattern.compile(urlFinderString);
+	private final Matcher urlMatcher = urlPattern.matcher("");
+	
 	public static final int MESSAGE_ADDTEXT = 0;
 	Pattern colordata = Pattern.compile("\\x1B\\x5B.+m");
 	Matcher colormatch = colordata.matcher("");
@@ -1094,7 +1098,8 @@ public class TextTree {
 		public Text(String input) {
 			
 			if(linkify) {
-				if(input.startsWith("http://")) {
+				urlMatcher.reset(input);
+				if(urlMatcher.find()) {
 					this.link = true;
 				}
 			}
@@ -1114,7 +1119,8 @@ public class TextTree {
 			bin = in;
 			data = new String(in,encoding);
 			if(linkify) {
-				if(data.startsWith("http://")) {
+				urlMatcher.reset(data);
+				if(urlMatcher.find()) {
 					this.link = true;
 				}
 			}
