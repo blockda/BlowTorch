@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.window;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.ListIterator;
@@ -11,16 +12,19 @@ import com.happygoatstudios.bt.window.TextTree.Line;
 import com.happygoatstudios.bt.window.TextTree.Unit;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -244,6 +248,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	Float prev_y = 0f;
 	int bx = 0;
 	int by = 0;
+	public int touchInLink = -1;
 	public boolean onTouchEvent(MotionEvent t) {
 		//Log.e("BYTE","TOUCH EVENT");
 		//synchronized(the_tree) {
@@ -257,6 +262,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			finger_down = true;
 			finger_down_to_up = false;
 			prev_draw_time = 0;
+			
+			for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
+				if(linkBoxes.get(tmpCount).getBox().contains((int)(float)start_x,(int)(float)start_y)) {
+					touchInLink = tmpCount;
+				}
+			}
 		}
 		
 		if(!increadedPriority) {
@@ -341,6 +352,23 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	        finger_down=false;
 	        finger_down_to_up = true;
 	        
+	        Float y_val = new Float(t.getY(t.getPointerId(0)));
+			Float x_val = new Float(t.getX(t.getPointerId(0)));
+	        
+			if(touchInLink > -1) {
+		        for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
+					if(linkBoxes.get(tmpCount).getBox().contains((int)(float)x_val,(int)(float)y_val)) {
+						if(tmpCount == touchInLink) {
+							Log.e("BYTEVIEW","TOUCH IN LINK: " + linkBoxes.get(tmpCount).getData());
+							dataDispatch.sendMessage(dataDispatch.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(tmpCount).getData()));
+							//Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse(linkBoxes.get(tmpCount).getData()));
+							//startActivity(web_help);
+						}
+					}
+				}
+		        touchInLink = -1;
+			}
+	        
 		}
 		
 		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
@@ -348,6 +376,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		}
 		return true; //consumes
+		
+	}
+	private void startActivity(Intent web_help) {
+		// TODO Auto-generated method stub
 		
 	}
 	//float start_x = 0;
@@ -461,12 +493,15 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	
 	Paint b = new Paint();
+	
+	Paint linkColor = null;
 	Paint breakcolor = new Paint();
 
 	private Double SCROLL_MIN = 24d;
 	
 	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
 	Iterator<Unit> unitIterator = null;
+	
 	public void onDraw(Canvas c) {
 		//Matrix m = c.getMatrix();
 		
@@ -474,6 +509,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//m.setScale(1, -1);
 		//synchronized(the_tree) {
 		//c.setMatrix(m);
+		if(linkColor == null) {
+			linkColor = new Paint();
+			linkColor.setColor(0xFF0000FF);
+		}
 		//try {	
 		calculateScrollBack();
 		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
@@ -599,6 +638,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//draw the text, from top to bottom.	
 		
 		int drawnlines = 0;
+		
+		boolean doingLink = false;
+		StringBuffer currentLink = new StringBuffer();
+		linkBoxes.clear();
 		//try {
 		while(!stop && screenIt.hasPrevious()) {
 			int index = screenIt.previousIndex();
@@ -619,6 +662,35 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				if(u instanceof TextTree.Text) {
 					if(useBackground) {
 						c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
+					}
+					
+					if(((TextTree.Text)u).isLink() || doingLink) {
+						if(u instanceof TextTree.WhiteSpace) {
+							//DO LINK BOX.
+							for(int z=0;z<linkBoxes.size();z++) {
+								if(linkBoxes.get(z).getData() == null) {
+									linkBoxes.get(z).setData(currentLink.toString());
+								}
+							}
+							currentLink.setLength(0);
+							doingLink = false;
+						} else {
+							doingLink = true;
+							currentLink.append(((TextTree.Text)u).getString());
+							
+							Rect r = new Rect();
+							r.left = (int) x;
+							r.top = (int) (y - p.getTextSize());
+							r.right = (int) (x + p.measureText(((TextTree.Text)u).getString()));
+							r.bottom = (int) (y+5);
+							//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, linkColor);
+							c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
+							
+							//register linkBox;
+							LinkBox linkbox = new LinkBox(null,r);
+							linkBoxes.add(linkbox);
+							
+						}
 					}
 					c.drawText(((TextTree.Text)u).getString(),x,y,p);
 					x += p.measureText(((TextTree.Text)u).getString());
@@ -688,6 +760,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					//draw break.
 					//c.drawRect(x,y-p.getTextSize(),x+char_width,y+5,breakcolor);
 					
+					if(u instanceof TextTree.NewLine) {
+						if(doingLink) {
+							for(int z=0;z<linkBoxes.size();z++) {
+								if(linkBoxes.get(z).getData() == null) {
+									linkBoxes.get(z).setData(currentLink.toString());
+								}
+							}
+							currentLink.setLength(0);
+							doingLink = false;
+							//REGISTER LINK BOX
+						}
+					}
+					
 					y = y + PREF_LINESIZE;
 					x = 0;
 					drawnlines++;
@@ -716,6 +801,29 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//c.drawLine(0, y, WINDOW_WIDTH, y, z);
 		showScroller(c);
 		//}//end synchronized block
+	}
+	
+	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
+	
+	private class LinkBox {
+		private String data;
+		private Rect box;
+		public LinkBox(String link,Rect rect) {
+			this.data = link;
+			this.box = rect;
+		}
+		public void setData(String data) {
+			this.data = data;
+		}
+		public String getData() {
+			return data;
+		}
+		public void setBox(Rect box) {
+			this.box = box;
+		}
+		public Rect getBox() {
+			return box;
+		}
 	}
 	
 	private Paint scroller_paint = new Paint();

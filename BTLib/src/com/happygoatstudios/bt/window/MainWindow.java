@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -127,6 +128,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	//protected static final int MESSAGE_BUTTONRELOAD = 882;
 	protected static final int MESSAGE_CLOSEINPUTWINDOW = 884;
 	private static final int MESSAGE_RENAWS = 885;
+	public final static int MESSAGE_LAUNCHURL = 886;
 	
 	private TextTree tree = new TextTree();
 
@@ -394,6 +396,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_LAUNCHURL:
+					Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse((String)msg.obj));
+					startActivity(web_help);
+					break;
 				case MESSAGE_RENAWS:
 					try {
 						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
