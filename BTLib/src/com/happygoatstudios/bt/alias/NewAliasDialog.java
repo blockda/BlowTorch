@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.alias;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
@@ -17,6 +18,7 @@ import android.os.RemoteException;
 //import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnFocusChangeListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -135,6 +137,29 @@ public class NewAliasDialog extends Dialog {
 				}
 				v.setText(str);
 				return true;
+			}
+			
+		});
+		
+		pre.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+			
+			public void onFocusChange(View v, boolean focused) {
+				if(!focused) {
+					EditText e = (EditText)v;
+					
+					String str = e.getText().toString();
+					if(str.startsWith("^")) {
+						str = str.substring(1,str.length());
+						((CheckBox)findViewById(R.id.carrot)).setChecked(true);
+					}
+					
+					if(str.endsWith("$")) {
+						str = str.substring(0,str.length()-1);
+						((CheckBox)findViewById(R.id.dollar)).setChecked(true);
+					}
+					e.setText(str);
+				}
 			}
 			
 		});
@@ -269,7 +294,12 @@ public class NewAliasDialog extends Dialog {
 		if(pre.startsWith("^")) pre = pre.substring(1,pre.length());
 		if(pre.endsWith("$")) pre = pre.substring(0,pre.length()-1);
 		
-		String original_pre = original_alias.getPre();
+		String original_pre = "";
+		if(original_alias != null) {
+			original_pre = original_alias.getPre();
+		} else {
+			original_pre = "";
+		}
 		if(original_pre.startsWith("^")) original_pre = original_pre.substring(1,original_pre.length());
 		if(original_pre.endsWith("$")) original_pre = original_pre.substring(0,original_pre.length()-1);
 		String invalid_name = "";
@@ -308,8 +338,14 @@ public class NewAliasDialog extends Dialog {
 		}
 		
 		try {
-			if(!validateList()) {
-				checker.showMessage(NewAliasDialog.this.getContext(), "Circular reference detected.");
+			Object[] offenders = validateList();
+			if(offenders != null && offenders.length > 0) {
+				String offendersStr = "";
+				for(int i=0;i<offenders.length;i++) {
+					offendersStr += (String)offenders[i] + ", ";
+				}
+				offendersStr = offendersStr.substring(0,offendersStr.length()-2);
+				checker.showMessage(NewAliasDialog.this.getContext(), "Circular reference with aliases: "+offendersStr);
 				return false;
 			}
 		} catch (RemoteException e) {
@@ -335,9 +371,9 @@ public class NewAliasDialog extends Dialog {
 	
 	Vector<String> offenders = new Vector<String>();
 		//load in the array adapter to hook up the list view
-	public boolean validateList() throws RemoteException {
+	public Object[] validateList() throws RemoteException {
 		Boolean retval = true;
-		
+		ArrayList<String> offenders = new ArrayList<String>();
 		//int count = apdapter.getCount();
 		HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
 		int count = existingAliases.size();
@@ -416,7 +452,7 @@ public class NewAliasDialog extends Dialog {
 			while(reMatch.find()) {
 				matched = true;
 				AliasData d = existingAliases.get(reMatch.group(0));
-				
+				if(tries > 0) { if(!offenders.contains(reMatch.group(0))) { offenders.add(reMatch.group(0)); } }
 				reMatch.appendReplacement(replaceHolder, d.getPost());
 			}
 			if(matched) {
@@ -431,10 +467,10 @@ public class NewAliasDialog extends Dialog {
 		}
 		
 		if(tries >= maxTries) {
-			return false;
+			return offenders.toArray();
 		}
 		
-		return true;
+		return null;
 	}
 
 }
