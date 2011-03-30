@@ -670,6 +670,7 @@ public class StellarService extends Service {
 							try {
 								if(the_settings.isLocalEcho()) {
 									//preserve.
+									//buffer_tree.addBytesImplSimple(data)
 									doDispatchNoProcess(d.visString.getBytes(the_settings.getEncoding()));
 								}
 							} catch (RemoteException e) {
@@ -3676,7 +3677,7 @@ public class StellarService extends Service {
 		//	
 		//	e1.printStackTrace();
 		//}
-		
+		buffer_tree.addBytesImplSimple(data);
 		//strip carriage return out of the data.
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
 		for(int i = 0;i<data.length;i++)  {
