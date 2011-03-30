@@ -19,7 +19,7 @@ public class OptionNegotiator {
 	boolean isNAWS=false;
 	//boolean hasNAWSed = false;
 
-	private String[] termtypes = {"BlowTorch","xterm-256color","ansi","UNKNOWN"};
+	private String[] termtypes = {"BlowTorch","ansi","xterm-256color","UNKNOWN"};
 	private int attempt = 0;
 	
 	public OptionNegotiator() {
