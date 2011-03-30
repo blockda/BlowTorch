@@ -221,7 +221,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 			modmsg.arg1 = arg2; //add position
 			
 			AlertDialog.Builder build = new AlertDialog.Builder(AliasEditorDialog.this.getContext())
-				.setMessage("Edit alias?");
+				.setMessage("Edit or Delete Alias?");
 			AlertDialog dialog = build.create();
 			dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Edit", modmsg);
 			dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete",delmsg);
@@ -459,7 +459,14 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	private class AliasComparator implements Comparator<AliasEntry> {
 
 		public int compare(AliasEntry a, AliasEntry b) {
-			return a.pre.compareToIgnoreCase(b.pre);
+			String a_str = a.pre;
+			String b_str = b.pre;
+			if(a_str.startsWith("^")) a_str = a_str.substring(1, a_str.length());
+			if(a_str.endsWith("$")) a_str = a_str.substring(0, a_str.length()-1);
+			
+			if(b_str.startsWith("^")) b_str = b_str.substring(1, b_str.length());
+			if(b_str.endsWith("$")) b_str = b_str.substring(0, b_str.length()-1);
+			return a_str.compareToIgnoreCase(b_str);
 		}
 		
 	}

@@ -116,7 +116,7 @@ public class TriggerSelectionDialog extends Dialog {
 		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerSelectionDialog.this.getContext());
-			builder.setTitle("Edit Trigger?");
+			builder.setTitle("Edit or Delete Trigger?");
 			DeleteTriggerFinishListener delete_me = new DeleteTriggerFinishListener(arg2);
 			builder.setNeutralButton("Delete",delete_me);
 			builder.setNegativeButton("Cancel", delete_me);
