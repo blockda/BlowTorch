@@ -162,17 +162,20 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 				//TextView port = (TextView)v.findViewById(R.id.port);
 				if(pre != null) {
 					//title.setText(" " + m.getDisplayName());
-					pre.setText(a.pre + " ");
+					String str = a.pre;
+					if(str.startsWith("^")) str = str.substring(1,str.length());
+					if(str.endsWith("$")) str = str.substring(0,str.length()-1);
+					pre.setText(str);
 				}
 				if(post != null) {
 					//host.setText("\t"  + m.getHostName() + ":" + m.getPortString());
-					post.setText(" " + a.post);
+					post.setText(a.post);
 				}
 				//if(port != null) {
 				//	port.setText(" Port: " + m.getPortString());
 				//}
 				
-				Boolean isoffender = false;
+				/*Boolean isoffender = false;
 				if(offenders.contains(new Integer(position))) {
 					isoffender = true;
 					//Log.e("ALIASEDITOR","POSITION " + position + " is a circular reference offender.");
@@ -193,7 +196,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 					tmp2.setBackgroundColor(0xAAF7941D);
 					tmp1.setTextColor(0xFFF7941D);
 					tmp2.setTextColor(0xFF630460);
-				}
+				}*/
 			}
 			return v;
 		}
@@ -285,7 +288,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	private List<String> computeNames(String name) {
 		names.clear(); 
 		
-		if(name.startsWith("^")) name = name.substring(0,name.length());
+		if(name.startsWith("^")) name = name.substring(1,name.length());
 		if(name.endsWith("$")) name = name.substring(0,name.length()-1);
 		
 		try {

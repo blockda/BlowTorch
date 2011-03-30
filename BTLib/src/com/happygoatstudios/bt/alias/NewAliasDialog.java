@@ -15,11 +15,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.RemoteException;
 //import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 
 public class NewAliasDialog extends Dialog {
@@ -77,7 +80,18 @@ public class NewAliasDialog extends Dialog {
 					}
 					
 					if(pre != null && post != null) {
-						reportto.newAliasDialogDone(pre.getText().toString(), post.getText().toString());
+						CheckBox carrot = (CheckBox)NewAliasDialog.this.findViewById(R.id.carrot);
+						CheckBox dollar = (CheckBox)NewAliasDialog.this.findViewById(R.id.dollar);
+						String prefix = "^";
+						String suffix= "$";
+						if(!carrot.isChecked()) {
+							prefix = "";
+						}
+						
+						if(!dollar.isChecked()) {
+							suffix = "";
+						}
+						reportto.newAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString());
 						NewAliasDialog.this.dismiss();
 					}
 				}
@@ -100,9 +114,31 @@ public class NewAliasDialog extends Dialog {
 	private String mPost;
 	
 	private void initMatches() {
-		Button carrot = (Button)findViewById(R.id.carrot);
-		Button dollar = (Button)findViewById(R.id.dollar);
-		carrot.setOnClickListener(new View.OnClickListener() {
+		CheckBox carrot = (CheckBox)findViewById(R.id.carrot);
+		CheckBox dollar = (CheckBox)findViewById(R.id.dollar);
+		
+		TextView pre = (TextView)findViewById(R.id.new_alias_pre);
+		
+		pre.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+
+			public boolean onEditorAction(TextView v, int actionId,
+					KeyEvent event) {
+				String str = v.getText().toString();
+				if(str.startsWith("^")) {
+					str = str.substring(1,str.length());
+					((CheckBox)findViewById(R.id.carrot)).setChecked(true);
+				}
+				
+				if(str.endsWith("$")) {
+					str = str.substring(0,str.length()-1);
+					((CheckBox)findViewById(R.id.dollar)).setChecked(true);
+				}
+				v.setText(str);
+				return true;
+			}
+			
+		});
+		/*carrot.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -134,7 +170,7 @@ public class NewAliasDialog extends Dialog {
 					pre.setSelection(pre.getText().toString().length());
 				}
 			}
-		});
+		});*/
 	}
 	
 	private void createeditor() {
@@ -148,8 +184,30 @@ public class NewAliasDialog extends Dialog {
 		EditText tpre = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre);
 		EditText tpost = (EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post);
 		
-		tpre.setText(mPre);
+		
 		tpost.setText(mPost);
+		
+		CheckBox carrot = (CheckBox)NewAliasDialog.this.findViewById(R.id.carrot);
+		CheckBox dollar = (CheckBox)NewAliasDialog.this.findViewById(R.id.dollar);
+		
+		String preText = mPre;
+		if(preText.startsWith("^")) {
+			preText = preText.substring(1,preText.length());
+			carrot.setChecked(true);
+		} else {
+			carrot.setChecked(false);
+		}
+		if(preText.endsWith("$")) {
+			preText = preText.substring(0,preText.length()-1);
+			dollar.setChecked(true);
+		} else {
+			dollar.setChecked(false);
+		}
+		
+		
+		tpre.setText(preText);
+		
+		
 		
 		//tpre.setEnabled(false);
 		
@@ -187,7 +245,19 @@ public class NewAliasDialog extends Dialog {
 				
 				
 				if(pre != null && post != null) {
-					reportto.editAliasDialogDone(pre.getText().toString(), post.getText().toString(),old_pos,original_alias);
+					CheckBox carrot = (CheckBox)NewAliasDialog.this.findViewById(R.id.carrot);
+					CheckBox dollar = (CheckBox)NewAliasDialog.this.findViewById(R.id.dollar);
+					String prefix = "^";
+					String suffix= "$";
+					if(!carrot.isChecked()) {
+						prefix = "";
+					}
+					
+					if(!dollar.isChecked()) {
+						suffix = "";
+					}
+					
+					reportto.editAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString(),old_pos,original_alias);
 					NewAliasDialog.this.dismiss();
 				}
 			}
@@ -199,12 +269,15 @@ public class NewAliasDialog extends Dialog {
 		if(pre.startsWith("^")) pre = pre.substring(1,pre.length());
 		if(pre.endsWith("$")) pre = pre.substring(0,pre.length()-1);
 		
+		String original_pre = original_alias.getPre();
+		if(original_pre.startsWith("^")) original_pre = original_pre.substring(1,original_pre.length());
+		if(original_pre.endsWith("$")) original_pre = original_pre.substring(0,original_pre.length()-1);
 		String invalid_name = "";
 		boolean is_invalid = false;
 		//Log.e("FLIIP","CHECK EXISTING:");
 		for(String name : cant_name) {
 			//Log.e("FLIIP","EXISTING ALIAS: " + name);
-			if(pre.equals(name)) {
+			if(pre.equals(name) && !name.equals(original_pre)) {
 				is_invalid = true;
 				invalid_name = name;
 			}
@@ -269,6 +342,19 @@ public class NewAliasDialog extends Dialog {
 		HashMap<String,AliasData> existingAliases = (HashMap<String, AliasData>) service.getAliases();
 		int count = existingAliases.size();
 		
+		CheckBox carrot = (CheckBox)NewAliasDialog.this.findViewById(R.id.carrot);
+		CheckBox dollar = (CheckBox)NewAliasDialog.this.findViewById(R.id.dollar);
+		String pre_prefix = "";
+		String pre_suffix = "";
+		
+		if(carrot.isChecked()) {
+			pre_prefix = "^";
+		}
+		
+		if(dollar.isChecked()) {
+			pre_suffix = "$";
+		}
+		
 		String testVal = "";
 		if(isEditor) {
 			String key = original_alias.getPre();
@@ -280,7 +366,7 @@ public class NewAliasDialog extends Dialog {
 			
 			AliasData tmp = new AliasData();
 			tmp.setPost(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post)).getText().toString());
-			tmp.setPre(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre)).getText().toString());
+			tmp.setPre(pre_prefix + ((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre)).getText().toString() + pre_suffix);
 			
 			String newKey = tmp.getPre();
 			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
@@ -290,7 +376,7 @@ public class NewAliasDialog extends Dialog {
 		} else {
 			AliasData tmp = new AliasData();
 			tmp.setPost(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_post)).getText().toString());
-			tmp.setPre(((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre)).getText().toString());
+			tmp.setPre(pre_prefix + ((EditText)NewAliasDialog.this.findViewById(R.id.new_alias_pre)).getText().toString() + pre_suffix);
 			
 			String newKey = tmp.getPre();
 			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
