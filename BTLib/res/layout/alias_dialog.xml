@@ -18,12 +18,12 @@
 		android:textStyle="bold"
 		android:gravity="center"/>
   
-  <TableLayout
+  <!-- <TableLayout
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
   	android:id="@+id/alias_label"
   	android:layout_below="@id/titlebar">
-  	<TableRow>
+  	 <TableRow>
   		<TextView 
   			android:layout_width="150dip"
   			android:layout_height="wrap_content"
@@ -40,7 +40,7 @@
  			android:text = "Replace With:"/>
   	
   	</TableRow>
-  </TableLayout>
+  </TableLayout> -->
   
   <Button
     android:layout_width="100dip"
@@ -74,9 +74,9 @@
 		android:layout_margin="0dip"
 		android:padding="0dip"
 		android:layout_above="@id/new_alias_button"
-  		android:layout_below="@id/alias_label">
+  		android:layout_below="@id/titlebar">
   <ListView
-  	android:layout_width="300dip"
+  	android:layout_width="275dip"
   	android:layout_height="fill_parent"
   	android:id="@+id/alias_list"
   	/>
