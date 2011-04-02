@@ -16,6 +16,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.RemoteException;
 //import android.util.Log;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
@@ -125,6 +126,9 @@ public class NewAliasDialog extends Dialog {
 
 			public boolean onEditorAction(TextView v, int actionId,
 					KeyEvent event) {
+				//Log.e("EDITOR","EDITOR ACTION: " + actionId);
+				//if(event != null) Log.e("EDITOR","EVENT IS NOT NULL:" + event.describeContents());
+				
 				String str = v.getText().toString();
 				if(str.startsWith("^")) {
 					str = str.substring(1,str.length());
@@ -136,7 +140,7 @@ public class NewAliasDialog extends Dialog {
 					((CheckBox)findViewById(R.id.dollar)).setChecked(true);
 				}
 				v.setText(str);
-				return true;
+				return false;
 			}
 			
 		});
