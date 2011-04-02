@@ -4,7 +4,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/newaliaslayout"
   android:layout_width="300dip"
-  android:layout_height="220dip">
+  android:layout_height="252dip">
   
   <TextView
 		android:id="@+id/titlebar"
