@@ -19,6 +19,10 @@ import android.os.Message;
 
 public class TextTree {
 	
+	public static final String urlFinderString = "(http://.+\\b)|(www\\..+\\b)"; 
+	private final Pattern urlPattern = Pattern.compile(urlFinderString);
+	private final Matcher urlMatcher = urlPattern.matcher("");
+	
 	public static final int MESSAGE_ADDTEXT = 0;
 	Pattern colordata = Pattern.compile("\\x1B\\x5B.+m");
 	Matcher colormatch = colordata.matcher("");
@@ -27,6 +31,7 @@ public class TextTree {
 	Pattern tab = Pattern.compile(new String(new byte[]{0x09}));
 	
 	public Handler addTextHandler = null;
+	private boolean linkify = true;
 	
 	private static Pattern oplookup = Pattern.compile("\\x1B\\x5B(([0-9]{1,3});)?(([0-9]{1,3});)?([0-9]{1,3})m");
 	private static Matcher op_match = oplookup.matcher("");
@@ -327,7 +332,7 @@ public class TextTree {
 					l.getData().addLast(new NewLine());
 					addLine(l);
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
 				
@@ -351,7 +356,7 @@ public class TextTree {
 				l.getData().addLast(u);
 				addLine(l);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 			}
 		}
@@ -452,9 +457,11 @@ public class TextTree {
 					switch(runtype) {
 					case WHITESPACE:
 						tmp.getData().addLast(new WhiteSpace(strag));
+						
 						break;
 					case TEXT:
 						tmp.getData().addLast(new Text(strag));
+						//TODO: HTTP HIGHLIGHT INSERTION POINT
 						break;
 					default:
 						break;
@@ -593,6 +600,7 @@ public class TextTree {
 						break;
 					case TEXT:
 						tmp.getData().addLast(new Text(txtdata));
+						//TODO: HTTP HIGHLIGHT INSERTION
 						break;
 					default:
 						break;
@@ -619,6 +627,7 @@ public class TextTree {
 						sb.rewind();
 						sb.get(cap,0,len);
 						tmp.mData.addLast(new Text(cap));
+						//TODO: HTTP INSERTION POINRT
 						runtype = RUN.WHITESPACE;
 						sb.rewind();
 						break;
@@ -778,7 +787,7 @@ public class TextTree {
 		while(mLines.size() > MAX_LINES) {
 			mLines.removeLast();
 		}
-		//TODO: finish the line loop here
+		
 		
 		//Log.e("TEXTTREE",getLastTwenty(false));
 		//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
@@ -792,7 +801,7 @@ public class TextTree {
 				try {
 					addBytesImpl((byte[])msg.obj);
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
 				break;
@@ -1077,6 +1086,8 @@ public class TextTree {
 	public class Text extends Unit implements UnitMizer {
 		protected String data;
 		protected byte[] bin;
+		private boolean link = false;
+		//TODO: HTTP LINK MODIFICATION
 		public Text() {
 			data = "";
 			charcount = 0;
@@ -1085,13 +1096,21 @@ public class TextTree {
 		}
 		
 		public Text(String input) {
+			
+			if(linkify) {
+				urlMatcher.reset(input);
+				if(urlMatcher.find()) {
+					this.link = true;
+				}
+			}
+			
 			data = input;
 			this.charcount = data.length();
 			try {
 				bin = data.getBytes(encoding);
 				this.bytecount = data.getBytes(encoding).length;
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 			}
 		}
@@ -1099,6 +1118,12 @@ public class TextTree {
 		public Text(byte[] in) throws UnsupportedEncodingException {
 			bin = in;
 			data = new String(in,encoding);
+			if(linkify) {
+				urlMatcher.reset(data);
+				if(urlMatcher.find()) {
+					this.link = true;
+				}
+			}
 			this.charcount = data.length();
 			bytecount = bin.length;
 		}
@@ -1115,6 +1140,14 @@ public class TextTree {
 		
 			return bin.length;
 			
+		}
+
+		public void setLink(boolean link) {
+			this.link = link;
+		}
+
+		public boolean isLink() {
+			return link;
 		}
 		
 		//public Text copy() {
@@ -1173,7 +1206,7 @@ public class TextTree {
 			//try {
 				//bytecount = data.getBytes(encoding).length;
 			//} catch (UnsupportedEncodingException e) {
-			//	// TODO Auto-generated catch block
+			//	
 		//		e.printStackTrace();
 		//	}
 		//}
@@ -1185,7 +1218,7 @@ public class TextTree {
 			try {
 				bytecount = data.getBytes(encoding).length;
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
+		
 				e.printStackTrace();
 			}
 		}*/
@@ -1395,6 +1428,14 @@ public class TextTree {
 
 	public boolean isCullExtraneous() {
 		return cullExtraneous;
+	}
+
+	public void setLinkify(boolean linkify) {
+		this.linkify = linkify;
+	}
+
+	public boolean isLinkify() {
+		return linkify;
 	}
 	
 }
