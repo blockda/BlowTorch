@@ -1097,7 +1097,7 @@ public class TextTree {
 		
 		public Text(String input) {
 			
-			if(linkify) {
+			if(linkify && (input.length() > 4)) {
 				urlMatcher.reset(input);
 				if(urlMatcher.find()) {
 					this.link = true;
@@ -1118,7 +1118,7 @@ public class TextTree {
 		public Text(byte[] in) throws UnsupportedEncodingException {
 			bin = in;
 			data = new String(in,encoding);
-			if(linkify) {
+			if(linkify && in.length > 4) {
 				urlMatcher.reset(data);
 				if(urlMatcher.find()) {
 					this.link = true;
