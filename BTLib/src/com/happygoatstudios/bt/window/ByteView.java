@@ -674,6 +674,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
 				if(u instanceof TextTree.Text) {
 					if(useBackground) {
+						//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 						c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
 					}
 					
@@ -744,6 +745,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						
 					} else {
 						//p.setUnderlineText(false);
+						if(useBackground) {
+							//Log.e("WINDOW","DRAWING BACKGROUND TEXT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
+						}
 						c.drawText(((TextTree.Text)u).getString(),x,y,p);
 						x += p.measureText(((TextTree.Text)u).getString());
 					}
@@ -768,13 +772,16 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 								selectedColor = 33;
 							}
 							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,xterm256Color));
+							//Log.e("WINDOW","SET XTERM FG: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 						} else {
-							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
-							
+							if(!xterm256BGStart) {
+								p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
+							}
 						}
 						
 						if(xterm256BGStart) {
 							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,xterm256Color));
+							//Log.e("WINDOW","SET XTERM BG: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 						} else {
 							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,false));
 							
