@@ -608,7 +608,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			for(Unit u : l.getData()) {
 				if(u instanceof TextTree.Color) {
-					
+					xterm256Color = false;
+					xterm256FGStart = false;
+					xterm256BGStart = false;
 					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
 					//for(Integer o : ((TextTree.Color) u).getOperations()) {
 						
@@ -1295,10 +1297,14 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		if(xterm256Color) {
 			if(xterm256FGStart) {
 				selectedColor = i;
+				//xterm256FGStart = false;
+				//xterm256Color = false;
 			}
 			
 			if(xterm256BGStart) {
 				selectedBackground = i;
+				//xterm256BGStart = false;
+				//xterm256Color = false;
 			}
 			
 			return null;
