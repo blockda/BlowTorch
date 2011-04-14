@@ -278,7 +278,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
         screen2 = (ByteView)findViewById(R.id.slickview);
         RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         screen2.setParentLayout(l);
-        TextView fill2 = (TextView)findViewById(R.id.filler2);
+        View fill2 = (View)findViewById(R.id.filler2);
         fill2.setFocusable(false);
         fill2.setClickable(false);
         screen2.setNewTextIndicator(fill2);
@@ -342,9 +342,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
         input_box.setDrawingCacheEnabled(true);
         input_box.setVisibility(View.VISIBLE);
         input_box.setEnabled(true);
-        TextView filler = (TextView)findViewById(R.id.filler);
-        filler.setFocusable(false);
-        filler.setClickable(false);
+        //TextView filler = (TextView)findViewById(R.id.filler);
+        //filler.setFocusable(false);
+        //filler.setClickable(false);
         
         
         input_box.setOnEditorActionListener(new TextView.OnEditorActionListener() {
