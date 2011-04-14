@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/window_container"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    
+    
+
+<RelativeLayout
+	android:layout_height="40dip"
+	android:layout_width="wrap_content"
+	android:id="@+id/input_bar"
+	android:layout_alignParentBottom="true"
+	android:layout_alignParentLeft="true">
+    <LinearLayout
+    	android:layout_height="40dip"
+    	android:layout_width="wrap_content"
+       	android:layout_alignParentBottom="true"
+    	
+    	android:id="@+id/ctrl_target" />
+
+    
+     <ImageButton
+    	android:id="@+id/test_btn"
+    	android:layout_width="80dip"
+    	android:layout_height="40dip"
+    	android:background="#0A0A0A"
+    	android:src="@drawable/sliderwidgetout"
+    	android:textSize="16sp"
+    	android:layout_toRightOf="@id/ctrl_target"
+    	android:layout_alignParentBottom="true"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="|DOWN|"/>
+
+    <!--  android:background="#0A0A0A" -->
+    <!-- <EditText -->
+    <!-- pre-screen size support android:height = "30px" -->
+    <com.happygoatstudios.bt.window.BetterEditText
+    android:layout_width="fill_parent"
+    android:layout_height="40dip"
+    android:height = "40dip"
+    android:textSize="24sp"
+    android:typeface="monospace"
+    android:textColor="#9999FF"
+    android:textColorHighlight="#555555"
+    android:background="@drawable/input_bar_bg"
+    android:candidatesTextStyleSpans=""
+    android:editable="true"
+    android:layout_alignParentBottom="true"
+    android:layout_marginLeft="3sp"
+    android:layout_toRightOf="@id/test_btn"
+    android:id="@+id/textinput"
+    android:singleLine = "true"
+    android:inputType = "textLongMessage"
+    android:nextFocusUp = "@id/textinput"
+    android:nextFocusDown = "@id/textinput"
+    android:nextFocusLeft = "@id/textinput"
+    android:nextFocusRight = "@id/textinput"
+    android:isScrollContainer = "false"
+    android:keepScreenOn = "true"
+    android:imeOptions = "actionSend"/>
+ </RelativeLayout>
+	<!--  android:lineSpacingExtra = "-2sp" -->
+    
+    <View 
+    android:layout_width = "fill_parent" 
+    android:layout_height = "3px"
+    android:id = "@+id/filler"
+    android:background = "#FF9999FF"
+    android:drawableTop = "#FF9999FF" 
+    android:layout_above="@id/input_bar" 
+    />
+    
+    <View 
+    android:layout_width = "fill_parent" 
+    android:layout_height = "3px"
+    android:id = "@+id/filler2"
+    android:background = "#FFFF0000"
+    android:drawableTop = "#00FF0000" 
+    android:layout_above="@id/input_bar" 
+    />
+
+     <com.happygoatstudios.bt.legacy.FixedViewFlipper 
+    	android:id="@+id/flippdipper"
+    	android:layout_height="fill_parent"
+    	android:layout_width="fill_parent"
+    	android:layout_above="@id/filler">
+    	
+    	
+ <!--   <ScrollView 
+    		android:id="@+id/secscroller"
+    		android:layout_height="fill_parent"
+   	 		android:layout_width="fill_parent"> -->
+    			<!-- <TextView  
+    				android:layout_width="fill_parent" 
+   					android:layout_height="fill_parent" 
+    				android:text="@string/hello2"
+   					android:textSize="12sp"
+    				android:typeface="monospace"
+    				android:id="@+id/tv2" /> -->
+    				<RelativeLayout 
+    					android:id="@+id/slickholder"
+    					android:layout_width="fill_parent"
+    					android:layout_height="fill_parent"
+    					android:layout_x="0px"
+    					android:layout_y="0px">
+    				
+    				    
+    				<com.happygoatstudios.bt.window.ByteView
+    					android:id="@+id/slickview"
+    					android:layout_width="fill_parent"
+    					android:layout_height="fill_parent"
+    					android:layout_marginLeft = "0px"
+    					android:layout_marginTop= "0px"/>
+    					
+    				</RelativeLayout>
+    					
+    <!--	</ScrollView> -->
+    	<!-- <ScrollView
+    	    android:id="@+id/thrirdscroller"
+    		android:layout_height="fill_parent"
+   	 		android:layout_width="fill_parent"> -->
+    		<!--  <WebView
+    			android:id="@+id/webview"
+    			android:layout_height="fill_parent"
+    			android:layout_width="fill_parent"
+    			android:typeface="monospace"/> -->
+    		
+    	<!-- </ScrollView> -->	
+	 </com.happygoatstudios.bt.legacy.FixedViewFlipper>
+	
+
+</RelativeLayout>
+
