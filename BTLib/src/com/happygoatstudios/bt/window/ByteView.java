@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.CycleInterpolator;
@@ -58,7 +59,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private RelativeLayout parent_layout = null;
 
-	private TextView new_text_in_buffer_indicator = null;
+	private View new_text_in_buffer_indicator = null;
 
 	private Double scrollback = (double)WINDOW_HEIGHT;
 
@@ -1029,7 +1030,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	public void setInputType(EditText t) {
 		input = t;
 	}
-	public void setNewTextIndicator(TextView fill2) {
+	public void setNewTextIndicator(View fill2) {
 		new_text_in_buffer_indicator = fill2;
 	}
 
