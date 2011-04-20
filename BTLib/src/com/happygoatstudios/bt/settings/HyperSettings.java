@@ -21,6 +21,7 @@ import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
+import com.happygoatstudios.bt.window.ByteView;
 
 public class HyperSettings {
 	
@@ -68,6 +69,9 @@ public class HyperSettings {
 	
 	private boolean debugTelnet = false;
 	private boolean removeExtraColor = true;
+	
+	private ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+	private int hyperLinkColor = 0xFF883333;
 	
 
 	
@@ -202,6 +206,12 @@ public class HyperSettings {
 				break;
 			default:
 			}
+			
+			//this.
+			
+			out.attribute("", BaseParser.ATTR_HYPERLINKMODE, data.getHyperLinkMode().getValue());
+			
+			out.attribute("", BaseParser.ATTR_HYPERLINKCOLOR, Integer.toHexString(data.getHyperLinkColor()));
 			
 			out.endTag("", BaseParser.TAG_WINDOW);
 			
@@ -752,6 +762,22 @@ public class HyperSettings {
 
 	public HashMap<String,DirectionData> getDirections() {
 		return Directions;
+	}
+
+	public void setHyperLinkMode(ByteView.LINK_MODE hyperLinkMode) {
+		this.hyperLinkMode = hyperLinkMode;
+	}
+
+	public ByteView.LINK_MODE getHyperLinkMode() {
+		return hyperLinkMode;
+	}
+
+	public void setHyperLinkColor(int hyperLinkColor) {
+		this.hyperLinkColor = hyperLinkColor;
+	}
+
+	public int getHyperLinkColor() {
+		return hyperLinkColor;
 	}
 
 }

@@ -69,15 +69,24 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	private int PREF_LINEEXTRA = 2;
 	
 	public static enum LINK_MODE {
-		BACKGROUND,
-		HIGHLIGHT,
-		HIGHLIGHT_COLOR,
-		HIGHLIGHT_COLOR_ONLY_BLAND,
-		NONE,
+		BACKGROUND ( "background"),
+		HIGHLIGHT ("highlight"),
+		HIGHLIGHT_COLOR ("highlight_color"),
+		HIGHLIGHT_COLOR_ONLY_BLAND ( "highlight_color_bland_only"),
+		NONE ( "none");
+		
+		private final String mode;
+		LINK_MODE(String str) {
+			mode = str;
+		}
+		
+		public String getValue() {
+			return mode;
+		}
 	}
 	
 	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-	private int linkHighlightColor = 0xFF0000FF;
+	private int linkHighlightColor = 0xFF3333FF;
 	
 	Integer selectedColor = new Integer(37);
 	Integer selectedBright = new Integer(0);
@@ -246,6 +255,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				retry = false;
 			} catch (InterruptedException e) { }
 		}
+		
+		the_tree.empty();
 	}
 	
 	boolean finger_down = false;
@@ -524,8 +535,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			linkColor = new Paint();
 			linkColor.setAntiAlias(true);
-			linkColor.setColor(0xFF0000FF);
+			linkColor.setColor(linkHighlightColor);
 		}
+		
+		linkColor.setColor(linkHighlightColor);
 		//try {	
 		calculateScrollBack();
 		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
@@ -713,6 +726,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					}
 					if(doingLink) {
 						switch(linkMode) {
+						case NONE:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setUnderlineText(false);
+							linkColor.setColor(p.getColor());
+							break;
 						case HIGHLIGHT:
 							linkColor.setTextSize(p.getTextSize());
 							linkColor.setTypeface(p.getTypeface());
@@ -735,6 +754,14 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 								linkColor.setColor(p.getColor());
 							}
 							linkColor.setUnderlineText(true);
+							break;
+						case BACKGROUND:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setUnderlineText(false);
+							//calculate the "reverse-most-constrasty-color"
+							int counterpart = 0xFF000000 | (linkHighlightColor ^ 0xFFFFFFFF);
+							linkColor.setColor(counterpart);
 							break;
 						default:
 							linkColor.setTextSize(p.getTextSize());
@@ -1134,6 +1161,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 		}
 		
+	}
+	
+	public void setLinkMode(LINK_MODE mode) {
+		this.linkMode = mode;
+	}
+	
+	public void setLinkColor(int linkColor) {
+		//this.linkColor.setColor(linkColor);
+		this.linkHighlightColor = linkColor;
+	}
+	
+	public void clearAllText() {
+		the_tree.empty();
 	}
 	
 	public void addBytes(byte[] obj,boolean jumpToEnd) {

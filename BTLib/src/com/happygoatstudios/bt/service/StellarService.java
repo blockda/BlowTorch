@@ -82,6 +82,7 @@ import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerExtraTask;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.trigger.TriggerData;
+import com.happygoatstudios.bt.window.ByteView;
 
 import dalvik.system.PathClassLoader;
 
@@ -2127,6 +2128,38 @@ public class StellarService extends Service {
 			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				the_settings.setDirections((HashMap<String,DirectionData>)data);
+			}
+		}
+
+		
+		public void setHyperLinkMode(String pIn) throws RemoteException {
+			synchronized(the_settings) {
+				for(ByteView.LINK_MODE mode : ByteView.LINK_MODE.values()) {
+					if(mode.getValue().equals(pIn)) {
+						the_settings.setHyperLinkMode(mode);
+					}
+				}
+			}
+		}
+
+		
+		public String getHyperLinkMode() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getHyperLinkMode().getValue();
+			}
+		}
+
+		
+		public void setHyperLinkColor(int pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setHyperLinkColor(pIn);
+			}
+		}
+
+		
+		public int getHyperLinkColor() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.getHyperLinkColor();
 			}
 		}
 

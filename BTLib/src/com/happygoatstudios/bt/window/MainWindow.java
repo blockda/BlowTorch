@@ -830,6 +830,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
 						boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
 						boolean echoaliasupdate = prefs.getBoolean("ECHO_ALIAS_UPDATE", true);
+						String hyperLinkMode = prefs.getString("HYPERLINK_MODE", "highlight_color_bland_only");
+						int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", 0xFF883333);
 						//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
 						
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
@@ -870,6 +872,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setRemoveExtraColor(removeextracolor);
 							service.setDebugTelnet(debugtelnet);
 							service.setEchoAliasUpdate(echoaliasupdate);
+							service.setHyperLinkMode(hyperLinkMode);
+							service.setHyperLinkColor(hyperLinkColor);
 							//service.setShowFitMessage(fitmessage);
 							service.saveSettings();
 						} catch (RemoteException e) {
@@ -919,6 +923,17 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 					
 					try {
+						
+						//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+						String str = service.getHyperLinkMode();
+						for(ByteView.LINK_MODE mode : ByteView.LINK_MODE.values()) {
+							if(mode.getValue().equals(str)) {
+								screen2.setLinkMode(mode);
+							}
+						}
+						
+						screen2.setLinkColor(service.getHyperLinkColor());
+						
 						if(service.isFullScreen()) {
 						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
@@ -1683,6 +1698,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
 				edit.putBoolean("ROUND_BUTTONS",service.isRoundButtons());
 				edit.putBoolean("ECHO_ALIAS_UPDATE", service.isEchoAliasUpdate());
+				edit.putInt("HYPERLINK_COLOR", service.getHyperLinkColor());
+				edit.putString("HYPERLINK_MODE", service.getHyperLinkMode());
 				//edit.putBoolean("FIT_MESSAGE", service.isShowFitMessage());
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
@@ -2117,7 +2134,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 	public void onPause() {
 		//Log.e("WINDOW","onPause()");
-		
+		//if()
+		//if()
+		//screen2.clearAllText();
 		if(isBound) {
 			
 			try {
