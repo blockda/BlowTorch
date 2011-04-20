@@ -59,6 +59,8 @@ public class BaseParser {
 	static final String ATTR_WORDWRAP = "wordWrap";
 	static final String ATTR_DEBUGTELNET = "debugTelnet";
 	static final String ATTR_REMOVEEXTRACOLOR = "removeExtraColor";
+	static final String ATTR_HYPERLINKMODE = "hyperLinkMode";
+	static final String ATTR_HYPERLINKCOLOR = "hyperLinkColor";
 	
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";
