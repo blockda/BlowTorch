@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:layout_width="wrap_content"
+  	android:layout_height="wrap_content">
+  	
+  	<Button
+  		android:layout_width="50dip"
+  		android:layout_height="30dip"
+  		android:background="#FF883333"
+  		android:id="@+id/colorswatch"
+  		/>
+  		
+  	
+  		
+</LinearLayout>

@@ -22,6 +22,19 @@
 			android:title="Seek Bar"
 			android:widgetLayout="@layout/seekbar_widget"
 			android:summary="test seek bar impl"/>  -->
+		<ListPreference
+			android:key="HYPERLINK_MODE"
+			android:title="Hyperlink Mode"
+			android:summary="How hyperlinks are presented."
+			android:entries="@array/hyperlink_mode_names"
+			android:entryValues="@array/hyperlink_mode_values"
+			android:defaultValue="highlight_color_bland_only"
+			/>	
+		<com.happygoatstudios.bt.settings.ColorSwatchPreference
+			android:key="HYPERLINK_COLOR"
+			android:title="Hyperlink Color"
+			android:widgetLayout="@layout/colorswatch_widget"
+			android:summary="Highlight color that is applied to hyperlinks"/>
 		<com.happygoatstudios.bt.settings.TriStatePreference
 			android:key="ORIENTATION"
 			android:defaultValue="0"

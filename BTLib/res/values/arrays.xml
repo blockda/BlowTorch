@@ -16,4 +16,18 @@
 <item>Always. Override System Setting.</item>
 <item>Never. Ever.</item>
 </string-array>
+<string-array name="hyperlink_mode_values">
+    <item>none</item>
+    <item>highlight</item>
+    <item>highlight_color</item>
+    <item>highlight_color_bland_only</item>
+    <item>background</item>
+</string-array>
+<string-array name="hyperlink_mode_names">
+    <item>None</item>
+    <item>Underline</item>
+    <item>Underline with specified Color</item>
+    <item>Underline and Colorize, only if no ANSI color is specified</item>
+    <item>Background highlight with specified color</item>
+</string-array>
 </resources>
