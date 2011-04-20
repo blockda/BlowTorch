@@ -136,4 +136,8 @@ interface IStellarService {
 	void setRemoveExtraColor(boolean pIn);
 	void setDebugTelnet(boolean pIn);
 	void updateAndRenameSet(String oldSet, String newSet,in ColorSetSettings settings);
+	void setHyperLinkMode(String pIn);
+	String getHyperLinkMode();
+	void setHyperLinkColor(int pIn);
+	int getHyperLinkColor();
 }
