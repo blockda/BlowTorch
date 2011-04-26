@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.window;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.ListIterator;
@@ -11,22 +12,26 @@ import com.happygoatstudios.bt.window.TextTree.Line;
 import com.happygoatstudios.bt.window.TextTree.Unit;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.CycleInterpolator;
@@ -54,7 +59,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	private RelativeLayout parent_layout = null;
 
-	private TextView new_text_in_buffer_indicator = null;
+	private View new_text_in_buffer_indicator = null;
 
 	private Double scrollback = (double)WINDOW_HEIGHT;
 
@@ -63,6 +68,17 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	private String encoding = "ISO-8859-1";
 
 	private int PREF_LINEEXTRA = 2;
+	
+	public static enum LINK_MODE {
+		BACKGROUND,
+		HIGHLIGHT,
+		HIGHLIGHT_COLOR,
+		HIGHLIGHT_COLOR_ONLY_BLAND,
+		NONE,
+	}
+	
+	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+	private int linkHighlightColor = 0xFF0000FF;
 	
 	Integer selectedColor = new Integer(37);
 	Integer selectedBright = new Integer(0);
@@ -244,6 +260,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	Float prev_y = 0f;
 	int bx = 0;
 	int by = 0;
+	public int touchInLink = -1;
 	public boolean onTouchEvent(MotionEvent t) {
 		//Log.e("BYTE","TOUCH EVENT");
 		//synchronized(the_tree) {
@@ -257,6 +274,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			finger_down = true;
 			finger_down_to_up = false;
 			prev_draw_time = 0;
+			
+			for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
+				if(linkBoxes.get(tmpCount).getBox().contains((int)(float)start_x,(int)(float)start_y)) {
+					touchInLink = tmpCount;
+				}
+			}
 		}
 		
 		if(!increadedPriority) {
@@ -341,6 +364,23 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	        finger_down=false;
 	        finger_down_to_up = true;
 	        
+	        Float y_val = new Float(t.getY(t.getPointerId(0)));
+			Float x_val = new Float(t.getX(t.getPointerId(0)));
+	        
+			if(touchInLink > -1) {
+		        for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
+					if(linkBoxes.get(tmpCount).getBox().contains((int)(float)x_val,(int)(float)y_val)) {
+						if(tmpCount == touchInLink) {
+							Log.e("BYTEVIEW","TOUCH IN LINK: " + linkBoxes.get(tmpCount).getData());
+							dataDispatch.sendMessage(dataDispatch.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(tmpCount).getData()));
+							//Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse(linkBoxes.get(tmpCount).getData()));
+							//startActivity(web_help);
+						}
+					}
+				}
+		        touchInLink = -1;
+			}
+	        
 		}
 		
 		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
@@ -348,6 +388,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		}
 		return true; //consumes
+		
+	}
+	private void startActivity(Intent web_help) {
+		// TODO Auto-generated method stub
 		
 	}
 	//float start_x = 0;
@@ -461,12 +505,15 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	
 	Paint b = new Paint();
+	
+	Paint linkColor = null;
 	Paint breakcolor = new Paint();
 
 	private Double SCROLL_MIN = 24d;
 	
 	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
 	Iterator<Unit> unitIterator = null;
+	
 	public void onDraw(Canvas c) {
 		//Matrix m = c.getMatrix();
 		
@@ -474,6 +521,12 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//m.setScale(1, -1);
 		//synchronized(the_tree) {
 		//c.setMatrix(m);
+		if(linkColor == null) {
+			
+			linkColor = new Paint();
+			linkColor.setAntiAlias(true);
+			linkColor.setColor(0xFF0000FF);
+		}
 		//try {	
 		calculateScrollBack();
 		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
@@ -556,7 +609,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			for(Unit u : l.getData()) {
 				if(u instanceof TextTree.Color) {
-					
+					xterm256Color = false;
+					xterm256FGStart = false;
+					xterm256BGStart = false;
 					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
 					//for(Integer o : ((TextTree.Color) u).getOperations()) {
 						
@@ -599,6 +654,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//draw the text, from top to bottom.	
 		
 		int drawnlines = 0;
+		
+		boolean doingLink = false;
+		StringBuffer currentLink = new StringBuffer();
+		linkBoxes.clear();
 		//try {
 		while(!stop && screenIt.hasPrevious()) {
 			int index = screenIt.previousIndex();
@@ -618,10 +677,84 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 				//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
 				if(u instanceof TextTree.Text) {
 					if(useBackground) {
+						//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 						c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
 					}
-					c.drawText(((TextTree.Text)u).getString(),x,y,p);
-					x += p.measureText(((TextTree.Text)u).getString());
+					
+					if(((TextTree.Text)u).isLink() || doingLink) {
+						if(u instanceof TextTree.WhiteSpace) {
+							//DO LINK BOX.
+							for(int z=0;z<linkBoxes.size();z++) {
+								if(linkBoxes.get(z).getData() == null) {
+									linkBoxes.get(z).setData(currentLink.toString());
+								}
+							}
+							currentLink.setLength(0);
+							doingLink = false;
+						} else {
+							doingLink = true;
+							currentLink.append(((TextTree.Text)u).getString());
+							
+							
+							Rect r = new Rect();
+							r.left = (int) x;
+							r.top = (int) (y - p.getTextSize());
+							r.right = (int) (x + p.measureText(((TextTree.Text)u).getString()));
+							r.bottom = (int) (y+5);
+							if(linkMode == LINK_MODE.BACKGROUND) {
+								linkColor.setColor(linkHighlightColor);
+							//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, linkColor);
+								c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
+							}
+							//register linkBox;
+							LinkBox linkbox = new LinkBox(null,r);
+							linkBoxes.add(linkbox);
+							
+						}
+					}
+					if(doingLink) {
+						switch(linkMode) {
+						case HIGHLIGHT:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setColor(p.getColor());
+							linkColor.setUnderlineText(true);
+							break;
+						case HIGHLIGHT_COLOR:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setColor(linkHighlightColor);
+							linkColor.setUnderlineText(true);
+							break;
+						case HIGHLIGHT_COLOR_ONLY_BLAND:
+							
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							if(selectedColor == 37) {
+								linkColor.setColor(linkHighlightColor);
+							} else {
+								linkColor.setColor(p.getColor());
+							}
+							linkColor.setUnderlineText(true);
+							break;
+						default:
+							linkColor.setTextSize(p.getTextSize());
+							linkColor.setTypeface(p.getTypeface());
+							linkColor.setUnderlineText(false);
+							linkColor.setColor(linkHighlightColor);
+						}
+						c.drawText(((TextTree.Text)u).getString(),x,y,linkColor);
+						x += p.measureText(((TextTree.Text)u).getString());
+						
+					} else {
+						//p.setUnderlineText(false);
+						if(useBackground) {
+							//Log.e("WINDOW","DRAWING BACKGROUND TEXT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
+						}
+						c.drawText(((TextTree.Text)u).getString(),x,y,p);
+						x += p.measureText(((TextTree.Text)u).getString());
+					}
+					
 				}
 				if(u instanceof TextTree.Color) {
 					xterm256Color = false;
@@ -642,13 +775,16 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 								selectedColor = 33;
 							}
 							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,xterm256Color));
+							//Log.e("WINDOW","SET XTERM FG: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 						} else {
-							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
-							
+							if(!xterm256BGStart) {
+								p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
+							}
 						}
 						
 						if(xterm256BGStart) {
 							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,xterm256Color));
+							//Log.e("WINDOW","SET XTERM BG: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 						} else {
 							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,false));
 							
@@ -688,6 +824,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					//draw break.
 					//c.drawRect(x,y-p.getTextSize(),x+char_width,y+5,breakcolor);
 					
+					if(u instanceof TextTree.NewLine) {
+						if(doingLink) {
+							for(int z=0;z<linkBoxes.size();z++) {
+								if(linkBoxes.get(z).getData() == null) {
+									linkBoxes.get(z).setData(currentLink.toString());
+								}
+							}
+							currentLink.setLength(0);
+							doingLink = false;
+							//REGISTER LINK BOX
+						}
+					}
+					
 					y = y + PREF_LINESIZE;
 					x = 0;
 					drawnlines++;
@@ -716,6 +865,29 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//c.drawLine(0, y, WINDOW_WIDTH, y, z);
 		showScroller(c);
 		//}//end synchronized block
+	}
+	
+	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
+	
+	private class LinkBox {
+		private String data;
+		private Rect box;
+		public LinkBox(String link,Rect rect) {
+			this.data = link;
+			this.box = rect;
+		}
+		public void setData(String data) {
+			this.data = data;
+		}
+		public String getData() {
+			return data;
+		}
+		public void setBox(Rect box) {
+			this.box = box;
+		}
+		public Rect getBox() {
+			return box;
+		}
 	}
 	
 	private Paint scroller_paint = new Paint();
@@ -858,7 +1030,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	public void setInputType(EditText t) {
 		input = t;
 	}
-	public void setNewTextIndicator(TextView fill2) {
+	public void setNewTextIndicator(View fill2) {
 		new_text_in_buffer_indicator = fill2;
 	}
 
@@ -1126,10 +1298,14 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		if(xterm256Color) {
 			if(xterm256FGStart) {
 				selectedColor = i;
+				//xterm256FGStart = false;
+				//xterm256Color = false;
 			}
 			
 			if(xterm256BGStart) {
 				selectedBackground = i;
+				//xterm256BGStart = false;
+				//xterm256Color = false;
 			}
 			
 			return null;

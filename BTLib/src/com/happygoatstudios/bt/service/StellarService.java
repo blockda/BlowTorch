@@ -71,6 +71,7 @@ import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -669,6 +670,7 @@ public class StellarService extends Service {
 							try {
 								if(the_settings.isLocalEcho()) {
 									//preserve.
+									//buffer_tree.addBytesImplSimple(data)
 									doDispatchNoProcess(d.visString.getBytes(the_settings.getEncoding()));
 								}
 							} catch (RemoteException e) {
@@ -835,7 +837,7 @@ public class StellarService extends Service {
 		the_settings.setDirections(tmp);
 	}
 
-	public void loadAliases() {
+	/*public void loadAliases() {
 		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
 		if(display == null || display.equals("")) {
 			return;
@@ -861,8 +863,8 @@ public class StellarService extends Service {
 				}
 			}
 		}
-	}
-	
+	}*/
+	/*
 	public void saveAliases() {
 		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
 		
@@ -890,7 +892,7 @@ public class StellarService extends Service {
 		
 		ed.commit();
 		
-	}
+	}*/
 	
 	private void doVibrateBell() {
 		Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
@@ -2442,14 +2444,22 @@ public class StellarService extends Service {
 	private void buildAliases() {
 		joined_alias.setLength(0);
 		
-		Object[] a = the_settings.getAliases().keySet().toArray();
+		//Object[] a = the_settings.getAliases().keySet().toArray();
+		Object[] a = the_settings.getAliases().values().toArray();
 		
+		
+		String prefix = "\\b";
+		String suffix = "\\b";
 		//StringBuffer joined_alias = new StringBuffer();
 		if(a.length > 0) {
-			joined_alias.append("(\\b"+(String)a[0]+"\\b)");
+			if(((AliasData)a[0]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
+			if(((AliasData)a[0]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
+			joined_alias.append("("+prefix+((AliasData)a[0]).getPre()+suffix+")");
 			for(int i=1;i<a.length;i++) {
+				if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
+				if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
 				joined_alias.append("|");
-				joined_alias.append("(\\b"+(String)a[i]+"\\b)");
+				joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
 			}
 			
 		}
@@ -2459,6 +2469,8 @@ public class StellarService extends Service {
 		alias_recursive = alias_replace.matcher("");
 		//Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
 	}
+	
+	
 	
 	public void sendInitOk() throws RemoteException {
 		
@@ -3665,7 +3677,7 @@ public class StellarService extends Service {
 		//	
 		//	e1.printStackTrace();
 		//}
-		
+		buffer_tree.addBytesImplSimple(data);
 		//strip carriage return out of the data.
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
 		for(int i = 0;i<data.length;i++)  {
@@ -3708,6 +3720,8 @@ public class StellarService extends Service {
 	Matcher alias_replacer = alias_replace.matcher("");
 	Matcher alias_recursive = alias_replace.matcher("");
 	
+	Pattern whiteSpace = Pattern.compile("\\s");
+	
 	private byte[] DoAliasReplacement(byte[] input) {
 		if(joined_alias.length() > 0) {
 
@@ -3723,15 +3737,39 @@ public class StellarService extends Service {
 			StringBuffer replaced = new StringBuffer();
 			
 			boolean found = false;
+			boolean doTail = true;
 			while(alias_replacer.find()) {
-				//String matched = replacer.group(0);
+				String matched = alias_replacer.group(0);
 				found = true;
+				
 				AliasData replace_with = the_settings.getAliases().get(alias_replacer.group(0));
-				alias_replacer.appendReplacement(replaced, replace_with.getPost());
+				//do special replace if only ^ is matched.
+				if(replace_with.getPre().startsWith("^") && !replace_with.getPre().endsWith("$")) {
+					doTail = false;
+					//do special replace.
+					String[] tParts = null;
+					try {
+						tParts = whiteSpace.split(new String(input,the_settings.getEncoding()));
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					HashMap<String,String> map = new HashMap<String,String>();
+					for(int i=0;i<tParts.length;i++) {
+						map.put(Integer.toString(i), tParts[i]);
+					}
+					ToastResponder r = new ToastResponder();
+					String finalString = r.translate(replace_with.getPost(), map);
+					
+					replaced.append(finalString);
+					
+				} else {
+					alias_replacer.appendReplacement(replaced, replace_with.getPost());
+				}
 			}
-			
-			alias_replacer.appendTail(replaced);
-			
+			if(doTail) {
+				alias_replacer.appendTail(replaced);
+			}
 			StringBuffer buffertemp = new StringBuffer();
 			if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
 				boolean recursivefound = false;

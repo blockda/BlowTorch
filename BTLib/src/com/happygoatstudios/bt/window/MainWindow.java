@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -126,6 +127,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	protected static final int MESSAGE_CLEARINPUTWINDOW = 883;
 	//protected static final int MESSAGE_BUTTONRELOAD = 882;
 	protected static final int MESSAGE_CLOSEINPUTWINDOW = 884;
+	private static final int MESSAGE_RENAWS = 885;
+	public final static int MESSAGE_LAUNCHURL = 886;
 	
 	private TextTree tree = new TextTree();
 
@@ -275,7 +278,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
         screen2 = (ByteView)findViewById(R.id.slickview);
         RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         screen2.setParentLayout(l);
-        TextView fill2 = (TextView)findViewById(R.id.filler2);
+        View fill2 = (View)findViewById(R.id.filler2);
         fill2.setFocusable(false);
         fill2.setClickable(false);
         screen2.setNewTextIndicator(fill2);
@@ -339,9 +342,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
         input_box.setDrawingCacheEnabled(true);
         input_box.setVisibility(View.VISIBLE);
         input_box.setEnabled(true);
-        TextView filler = (TextView)findViewById(R.id.filler);
-        filler.setFocusable(false);
-        filler.setClickable(false);
+        //TextView filler = (TextView)findViewById(R.id.filler);
+        //filler.setFocusable(false);
+        //filler.setClickable(false);
         
         
         input_box.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -393,6 +396,32 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_LAUNCHURL:
+					Pattern urlPattern = Pattern.compile(TextTree.urlFinderString);
+					Matcher urlMatcher = urlPattern.matcher((String)msg.obj);
+					if(urlMatcher.find()) {
+						String url = "";
+						if(urlMatcher.group(1) == null || urlMatcher.group(1).equals("")) {
+							if(urlMatcher.group(2) == null || !urlMatcher.group(2).equals("")) {
+								url = "http://"+urlMatcher.group(2);
+							}
+						} else {
+							url = urlMatcher.group(1);
+						}
+						if(!url.equals("")) {
+							Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse(url));
+							startActivity(web_help);
+						}
+					}
+					break;
+				case MESSAGE_RENAWS:
+					try {
+						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
+					} catch (RemoteException e5) {
+						// TODO Auto-generated catch block
+						e5.printStackTrace();
+					}
+					break;
 				case MESSAGE_CLEARINPUTWINDOW:
 					ClearKeyboard();
 					break;
@@ -1738,6 +1767,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//DoButtonPortraitMode(true);
 			//OREINTATION = Configuration.ORIENTATION_PORTRAIT;
 			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
+			myhandler.sendEmptyMessageDelayed(MESSAGE_RENAWS, 80);
 			try {
 				if(service.getOrientation() == 1) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
@@ -1757,6 +1787,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//DoButtonPortraitMode(false);
 			//OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
 			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
+			myhandler.sendEmptyMessageDelayed(MESSAGE_RENAWS, 80);
 			try {
 				if(service.getOrientation() == 2) { //if we are selected as landscape
 					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
@@ -2387,7 +2418,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		if(items.size() > 0) {
 			for(AliasData d : items) {
-				map.put(d.getPre(), d);
+				String alias_key = d.getPre();
+				if(d.getPre().startsWith("^")) alias_key = alias_key.substring(1, alias_key.length());
+				if(d.getPre().endsWith("$")) alias_key = alias_key.substring(0, alias_key.length()-1);
+				map.put(alias_key, d);
 			}
 			try {
 				service.setAliases(map);
