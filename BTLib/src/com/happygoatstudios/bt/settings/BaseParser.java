@@ -61,6 +61,7 @@ public class BaseParser {
 	static final String ATTR_REMOVEEXTRACOLOR = "removeExtraColor";
 	static final String ATTR_HYPERLINKMODE = "hyperLinkMode";
 	static final String ATTR_HYPERLINKCOLOR = "hyperLinkColor";
+	static final String ATTR_HYPERLINKENABLED = "hyperLinkEnabled";
 	
 	static final String TAG_ALIASES = "aliases";
 	static final String TAG_ALIAS = "alias";

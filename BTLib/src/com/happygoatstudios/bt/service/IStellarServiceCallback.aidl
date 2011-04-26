@@ -1,7 +1,8 @@
 package com.happygoatstudios.bt.service;
 
 
-oneway interface IStellarServiceCallback {
+interface IStellarServiceCallback {
+	boolean isWindowShowing();
 	void dataIncoming(inout byte[] seq);
 	void processedDataIncoming(CharSequence seq);
 	void htmlDataIncoming(String html);

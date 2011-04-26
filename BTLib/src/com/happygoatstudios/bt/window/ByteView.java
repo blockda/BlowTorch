@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.window;
 
 import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -39,6 +40,8 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.happygoatstudios.bt.settings.HyperSettings.LINK_MODE;
+
 public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private DrawRunner _runner = null;
@@ -68,22 +71,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private int PREF_LINEEXTRA = 2;
 	
-	public static enum LINK_MODE {
-		BACKGROUND ( "background"),
-		HIGHLIGHT ("highlight"),
-		HIGHLIGHT_COLOR ("highlight_color"),
-		HIGHLIGHT_COLOR_ONLY_BLAND ( "highlight_color_bland_only"),
-		NONE ( "none");
-		
-		private final String mode;
-		LINK_MODE(String str) {
-			mode = str;
-		}
-		
-		public String getValue() {
-			return mode;
-		}
-	}
+	
 	
 	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 	private int linkHighlightColor = 0xFF3333FF;
@@ -101,6 +89,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	protected static final int MSG_NORMALPRIORITY = 201;
 	final static public int MSG_BUTTONDROPSTART = 100;
 	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
+	final static public int MSG_SET_NEW_TEXT_INDICATOR = 106;
+	final static public int MSG_SET_NEW_TEXT_INDICATOR_ANIMATED = 107;
 	final static public int MSG_DELETEBUTTON = 1040;
 	final static public int MSG_REALLYDELETEBUTTON = 1041;
 	//final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
@@ -114,7 +104,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	Handler dataDispatch = null;
 	EditText input = null;
 	
-	Object token = new Object(); //token for synchronization.
+	//Object token = new Object(); //token for synchronization.
 	
 	public ByteView(Context context) {
 		super(context);
@@ -152,6 +142,14 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					new_text_in_buffer_indicator.startAnimation(indicator_off);
 					indicated = false;
 					break;
+				case MSG_SET_NEW_TEXT_INDICATOR:
+					new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
+					indicated = true;
+					break;
+				case MSG_SET_NEW_TEXT_INDICATOR_ANIMATED:
+					new_text_in_buffer_indicator.startAnimation(indicator_on);
+					indicated = true;
+					break;
 				}
 			}
 		};
@@ -172,35 +170,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		indicator_on_no_cycle.setFillBefore(true);
 		
 	}
-	private Handler addTextHandler = new AddTextHandler();
-	private class AddTextHandler extends Handler {
-		public void handleMessage(Message msg) {
-			switch(msg.what) {
-			case MESSAGE_ADDTEXT:
-				addBytesImpl((byte[])msg.obj);
-				break;
-			default:
-				break;
-			}
-		}
-
-		
-	}
-
-	private void addBytesImpl(byte[] obj) {
-		//synchronized(the_tree) {
-		synchronized(token) {
-			try {
-				the_tree.addBytesImpl(obj);
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
 	
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
-		// TODO Auto-generated method stub
+		
 		WINDOW_HEIGHT = height;
 		WINDOW_WIDTH = width;		
 		calculateCharacterFeatures(width,height);
@@ -208,7 +181,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		doDelayedDraw(0);
 	}
 	
-	private int leftOver = 0;
+	//private int leftOver = 0;
 	
 	public void calculateCharacterFeatures(int width,int height) {
 		
@@ -217,7 +190,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		CALCULATED_LINESINWINDOW = (int) (height / PREF_LINESIZE);
 		
-		leftOver = height - CALCULATED_LINESINWINDOW*PREF_LINESIZE;
+		//leftOver = height - CALCULATED_LINESINWINDOW*PREF_LINESIZE;
 		Paint p = new Paint();
 		p.setTypeface(PREF_FONT);
 		p.setTextSize(PREF_FONTSIZE);
@@ -240,12 +213,24 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		_runner = new DrawRunner(getHolder(),this);
 		_runner.setRunning(true);
 		_runner.start();
+		while(_runner.threadHandler == null) {
+			synchronized(this) {
+				try {
+					this.wait(50); //make sure the thread handler starts up before we do anything else.
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		Log.e("SERVICE","ON SURFACE CREATED: started draw thread.");
+		windowShowing = true;
 	}
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		boolean retry = true;
-		
-
+		windowShowing = false;
+		Log.e("BYTEVIEW","surfaceViewDestroyed");
 		while(retry) {
 			try{
 				_runner.setRunning(false);
@@ -256,7 +241,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			} catch (InterruptedException e) { }
 		}
 		
-		the_tree.empty();
+		//the_tree.empty();
 	}
 	
 	boolean finger_down = false;
@@ -274,7 +259,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	public boolean onTouchEvent(MotionEvent t) {
 		//Log.e("BYTE","TOUCH EVENT");
 		//synchronized(the_tree) {
-		synchronized(token) {
+		//synchronized(token) {
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
 			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
 			start_x = new Float(t.getX(t.getPointerId(0)));
@@ -396,14 +381,11 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 		}
-		}
+		//}
 		return true; //consumes
 		
 	}
-	private void startActivity(Intent web_help) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 	//float start_x = 0;
 	//float start_y = 0;
 	//float fling_velocity;
@@ -969,6 +951,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		
 		public static final int MSG_DRAW = 100;
 		public static final int MSG_SHUTDOWN = 101;
+		public static final int MESSAGE_EMPTY_TREE = 102;
 		
 		private Handler threadHandler = null;
 		
@@ -1012,9 +995,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 							c = _surfaceHolder.lockCanvas(null);
 							synchronized(_surfaceHolder) {
 								//synchronized(the_tree) {
-								synchronized(token) {
+								//synchronized(token) {
 									_sv.onDraw(c);
-								}
+								//}
 								_surfaceHolder.notify();
 								//Log.e("DRAW","DRAWING THE SCREEEEEEN!!!!");
 							}
@@ -1030,6 +1013,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					case MSG_SHUTDOWN:
 						this.getLooper().quit();
 						break;
+					case MESSAGE_EMPTY_TREE:
+						the_tree.empty();
 					default:
 						break;
 					}
@@ -1062,11 +1047,21 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	public void jumpToZero() {
 		//synchronized(the_tree) {
-		synchronized(token) {
-			SCROLL_MIN = WINDOW_HEIGHT-(double)(5*this.getResources().getDisplayMetrics().density);
+		//synchronized(token) {
+		if(_runner != null && _runner.threadHandler != null) {
+			_runner.threadHandler.post(new Runnable() {
+				public void run() {
+					SCROLL_MIN = WINDOW_HEIGHT-(double)(5*ByteView.this.getResources().getDisplayMetrics().density);
+					scrollback = SCROLL_MIN;
+					fling_velocity=0;
+				}
+			});
+		} else {
+			SCROLL_MIN = WINDOW_HEIGHT-(double)(5*ByteView.this.getResources().getDisplayMetrics().density);
 			scrollback = SCROLL_MIN;
 			fling_velocity=0;
 		}
+		//}
 		//}
 	}
 
@@ -1084,21 +1079,29 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		doDelayedDraw(1);
 	}
 
-	public void setEncoding(String pEncoding) {
+	public void setEncoding(final String pEncoding) {
 		encoding = pEncoding;
 		//synchronized(the_tree) {
-		synchronized(token) {
-			the_tree.setEncoding(pEncoding);
+		//synchronized(token) {
+		if(_runner != null &&_runner.threadHandler != null) {
+		_runner.threadHandler.post(new Runnable() {
+			public void run() {
+				the_tree.setEncoding(pEncoding);
+			}
+		});
+		} else {
+			the_tree.setEncoding(encoding);
 		}
+		//}
 		//}
 	}
 	
-	public byte[] getBuffer() {
-		synchronized(token) {
+	/*public byte[] getBuffer() {
+		//synchronized(token) {
 			return the_tree.dumpToBytes(false);
-		}
+		//}
 		
-	}
+	}*/
 
 	public void setCharacterSizes(int fontSize, int fontSpaceExtra) {
 		PREF_FONTSIZE = fontSize;
@@ -1117,9 +1120,31 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	
 	boolean automaticBreaks = true;
-	public void setLineBreaks(Integer i) {
+	public void setLineBreaks(final Integer i) {
 		//synchronized(the_tree) {
-		synchronized(token) {
+		//synchronized(token) { 
+		if(_runner != null && _runner.threadHandler != null) {
+		_runner.threadHandler.post(new Runnable() {
+			public void run() {
+				if(i == 0) {
+					if(CALCULATED_ROWSINWINDOW != 0) {
+						the_tree.setLineBreakAt(CALCULATED_ROWSINWINDOW);
+						//Log.e("BYTE","SET LINE BREAKS TO: " + CALCULATED_ROWSINWINDOW);
+					} else {
+						the_tree.setLineBreakAt(80);
+						//Log.e("BYTE","SET LINE BREAKS TO DEFAULT BECAUSE CALCULATED WAS 0");
+					}
+					automaticBreaks = true;
+				} else {
+					the_tree.setLineBreakAt(i);
+					automaticBreaks = false;
+					//Log.e("BYTE","SET LINE BREAKS TO: " + i);
+				}
+			
+			
+				jumpToZero();
+		}
+		}); } else{
 			if(i == 0) {
 				if(CALCULATED_ROWSINWINDOW != 0) {
 					the_tree.setLineBreakAt(CALCULATED_ROWSINWINDOW);
@@ -1136,8 +1161,6 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 		}
 		
-		jumpToZero();
-		
 		if(_runner != null && _runner.threadHandler != null) {
 			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
 				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
@@ -1146,20 +1169,29 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 	}
 	
-	public void setWordWrap(boolean pIn ) {
+	public void setWordWrap(final boolean pIn ) {
 		//synchronized(the_tree) {
-		synchronized(token) {
+		//synchronized(token) {
+		if(_runner != null && _runner.threadHandler != null) {
+		_runner.threadHandler.post(new Runnable() {
+			public void run() {
+				the_tree.setWordWrap(pIn);
+			//}
+			
+				jumpToZero();
+			
+				if(_runner != null && _runner.threadHandler != null) {
+					if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
+						_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
+		
+					}
+				}
+			}
+		});
+		} else {
 			the_tree.setWordWrap(pIn);
 		}
 		
-		jumpToZero();
-		
-		if(_runner != null && _runner.threadHandler != null) {
-			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
-				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
-
-			}
-		}
 		
 	}
 	
@@ -1173,13 +1205,32 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	public void clearAllText() {
-		the_tree.empty();
+		_runner.threadHandler.sendEmptyMessage(DrawRunner.MESSAGE_EMPTY_TREE);
+		//the_tree.empty();
 	}
 	
-	public void addBytes(byte[] obj,boolean jumpToEnd) {
+	public void pauseDrawing() {
+		
+	}
+	
+	public void resumeDrawing() {
+		
+	}
+	public void addBytes(final byte[] obj,final boolean jumpToEnd) {
+		if(_runner != null && _runner.threadHandler != null && _runner.isAlive()) {
+		_runner.threadHandler.post(new Runnable() {
+			public void run() {
+				addBytesImpl(obj,jumpToEnd);
+			}
+		});
+		} else {
+			addBytesImpl(obj,jumpToEnd);
+		}
+	}
+	public void addBytesImpl(byte[] obj,boolean jumpToEnd) {
 		if(obj.length == 0) return;
 		//synchronized(the_tree) {
-		synchronized(token) {
+		//synchronized(token) {
 			//double oldposition = 0d;
 			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
 			//if(the_tree.getBrokenLineCount() > 0) {
@@ -1225,25 +1276,28 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 					if(!indicated) {
 						if(fling_velocity > 0) {
 							//play with no animation
-							new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
+							//new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
+							buttonaddhandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR);
 						} else {
-							new_text_in_buffer_indicator.startAnimation(indicator_on);
+							//new_text_in_buffer_indicator.startAnimation(indicator_on);
+							buttonaddhandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR_ANIMATED);
 							//indicated = true;
 						}
 						//Log.e("BYTE","REPORTED");
 						indicated = true;
 					}
 				} else {
-					new_text_in_buffer_indicator.startAnimation(indicator_off);
+					//new_text_in_buffer_indicator.startAnimation(indicator_off);
+					buttonaddhandler.sendEmptyMessage(ByteView.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					indicated = false;
 					//indicated = false;
 				}
 			}
 			the_tree.prune();
 			
-		}
+		//}
 		
-		if(_runner != null) {
+		if(_runner != null && _runner.isAlive()) {
 			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
 				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 
@@ -1252,78 +1306,6 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	boolean indicated = false;
-	public void addText(String obj, boolean jumpToEnd) {
-		if(obj.equals("")) return;
-		//synchronized(the_tree) {
-		synchronized(token) {
-			//double oldposition = 0d;
-			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
-			//if(the_tree.getBrokenLineCount() > 0) {
-			//	oldposition = scrollback / (the_tree.getBrokenLineCount()*PREF_LINESIZE);
-			//} else {
-			//	oldposition = WINDOW_HEIGHT;
-			//}
-				//Log.e("BYTE",">>>>>>>ADDING TEXT:" + obj);
-			try {
-				the_tree.addBytesImpl(obj.getBytes(encoding));
-			//try {
-			//	addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,obj.getBytes("ISO-8859-1")));
-			//} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-			//	e.printStackTrace();
-			//}
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			if(jumpToEnd) {
-				scrollback = SCROLL_MIN;
-				buttonaddhandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
-			} else {
-				if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
-					scrollback = (double)WINDOW_HEIGHT;
-				} else {
-					if(scrollback > SCROLL_MIN + PREF_LINESIZE ) {
-					//scrollback = oldposition * (the_tree.getBrokenLineCount()*PREF_LINESIZE);
-						double new_max = the_tree.getBrokenLineCount()*PREF_LINESIZE;
-						scrollback += new_max - old_max;
-						//Log.e("BYTE","REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback);
-						
-					} else {
-						scrollback = SCROLL_MIN;
-					}
-				
-				}
-				if(scrollback > WINDOW_HEIGHT) {
-					if(!indicated) {
-						if(fling_velocity > 0) {
-							//play with no animation
-							new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
-						} else {
-							new_text_in_buffer_indicator.startAnimation(indicator_on);
-							//indicated = true;
-						}
-						//Log.e("BYTE","REPORTED");
-						indicated = true;
-					}
-				} else {
-					new_text_in_buffer_indicator.startAnimation(indicator_off);
-					indicated = false;
-					//indicated = false;
-				}
-			}
-			the_tree.prune();
-			
-		}
-		
-		if(_runner != null) {
-			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
-				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
-
-			}
-		}
-	}
 	
 	private void resetXterm256Regs() {
 		xterm256Color = false;
@@ -1405,11 +1387,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	}
 	
-	public void setCullExtraneous(boolean pIn) {
+	public void setCullExtraneous(final boolean pIn) {
 		//synchronized(the_tree) {
-		synchronized(token) {
+		//synchronized(token) {
+		if(_runner != null && _runner.threadHandler != null) {
+		_runner.threadHandler.post(new Runnable() {
+			public void run() {
+				the_tree.setCullExtraneous(pIn);
+			}
+		});
+		} else {
 			the_tree.setCullExtraneous(pIn);
 		}
+		//}
 	}
 	
 	private class IteratorBundle {
@@ -1519,6 +1509,23 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),pLineSize,0);
 		return new IteratorBundle(drawingIterator,pLineSize,0);
 		
+	}
+
+	public void setLinksEnabled(boolean hyperLinkEnabled) {
+		the_tree.setLinkify(hyperLinkEnabled);
+	}
+
+	public boolean windowShowing = false;
+	public boolean loaded() {
+		// TODO Auto-generated method stub
+		if(_runner == null || _runner.threadHandler == null || !_runner.isAlive()) {
+			if(_runner != null && !_runner.isAlive()) {
+				Log.e("WINDOW","HOLY GOD THE THREAD IS DEAD");
+			}
+			return false;
+		}
+		
+		return windowShowing;
 	}
 	
 	

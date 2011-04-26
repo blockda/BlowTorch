@@ -1319,7 +1319,9 @@ public class Launcher extends Activity implements ReadyListener {
 				break;
 			case MESSAGE_CANCELDOWNLOAD:
 				update.doCancel();
-				updateDialog.dismiss();
+				if(updateDialog != null) {
+					updateDialog.dismiss();
+				}
 				updateDialog = null;
 				String delyou = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
 				//proceed with download.
@@ -1396,11 +1398,11 @@ public class Launcher extends Activity implements ReadyListener {
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 				reportTo.sendEmptyMessage(MESSAGE_CANCELDOWNLOAD);
-				return;
+				throw new RuntimeException(e);
 			} catch (IOException e) {
 				e.printStackTrace();
 				reportTo.sendEmptyMessage(MESSAGE_CANCELDOWNLOAD);
-				return;
+				throw new RuntimeException(e);
 			}
 			
 			
