@@ -24,6 +24,23 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.window.ByteView;
 
 public class HyperSettings {
+	public static enum LINK_MODE {
+		BACKGROUND ( "background"),
+		HIGHLIGHT ("highlight"),
+		HIGHLIGHT_COLOR ("highlight_color"),
+		HIGHLIGHT_COLOR_ONLY_BLAND ( "highlight_color_bland_only"),
+		NONE ( "none");
+		
+		private final String mode;
+		LINK_MODE(String str) {
+			mode = str;
+		}
+		
+		public String getValue() {
+			return mode;
+		}
+	}
+	public final static int DEFAULT_HYPERLINK_COLOR = 0xFF8888EE;
 	
 	private int LineSize = 18;
 	private int LineSpaceExtra = 2;
@@ -70,8 +87,11 @@ public class HyperSettings {
 	private boolean debugTelnet = false;
 	private boolean removeExtraColor = true;
 	
-	private ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-	private int hyperLinkColor = 0xFF883333;
+	private LINK_MODE hyperLinkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+	private int hyperLinkColor = DEFAULT_HYPERLINK_COLOR;
+	private boolean hyperLinkEnabled = false;
+	
+	
 	
 
 	
@@ -212,6 +232,8 @@ public class HyperSettings {
 			out.attribute("", BaseParser.ATTR_HYPERLINKMODE, data.getHyperLinkMode().getValue());
 			
 			out.attribute("", BaseParser.ATTR_HYPERLINKCOLOR, Integer.toHexString(data.getHyperLinkColor()));
+			
+			out.attribute("", BaseParser.ATTR_HYPERLINKENABLED, (data.isHyperLinkEnabled()) ? "true" : "false");
 			
 			out.endTag("", BaseParser.TAG_WINDOW);
 			
@@ -764,11 +786,11 @@ public class HyperSettings {
 		return Directions;
 	}
 
-	public void setHyperLinkMode(ByteView.LINK_MODE hyperLinkMode) {
+	public void setHyperLinkMode(LINK_MODE hyperLinkMode) {
 		this.hyperLinkMode = hyperLinkMode;
 	}
 
-	public ByteView.LINK_MODE getHyperLinkMode() {
+	public LINK_MODE getHyperLinkMode() {
 		return hyperLinkMode;
 	}
 
@@ -778,6 +800,14 @@ public class HyperSettings {
 
 	public int getHyperLinkColor() {
 		return hyperLinkColor;
+	}
+
+	public void setHyperLinkEnabled(boolean hyperLinkEnabled) {
+		this.hyperLinkEnabled = hyperLinkEnabled;
+	}
+
+	public boolean isHyperLinkEnabled() {
+		return hyperLinkEnabled;
 	}
 
 }

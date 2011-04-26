@@ -22,6 +22,15 @@
 			android:title="Seek Bar"
 			android:widgetLayout="@layout/seekbar_widget"
 			android:summary="test seek bar impl"/>  -->
+		<PreferenceScreen
+			android:key="HYPERLINK_SCREEN"
+			android:title="Hyperlink Settings"
+			android:summary="Options for highlighting web page URLs.">
+		<CheckBoxPreference
+			android:key="HYPERLINK_ENABLED"
+			android:summary="Make text that starts with http:// or www. a clickable link."
+			android:title="Enable Hyperlinks?"
+			android:defaultValue="true"/>
 		<ListPreference
 			android:key="HYPERLINK_MODE"
 			android:title="Hyperlink Mode"
@@ -29,12 +38,15 @@
 			android:entries="@array/hyperlink_mode_names"
 			android:entryValues="@array/hyperlink_mode_values"
 			android:defaultValue="highlight_color_bland_only"
-			/>	
+			android:dependency="HYPERLINK_ENABLED"
+			/>
 		<com.happygoatstudios.bt.settings.ColorSwatchPreference
 			android:key="HYPERLINK_COLOR"
 			android:title="Hyperlink Color"
 			android:widgetLayout="@layout/colorswatch_widget"
-			android:summary="Highlight color that is applied to hyperlinks"/>
+			android:summary="Highlight color that is applied to hyperlinks"
+			android:dependency="HYPERLINK_ENABLED"/>
+		</PreferenceScreen>
 		<com.happygoatstudios.bt.settings.TriStatePreference
 			android:key="ORIENTATION"
 			android:defaultValue="0"
