@@ -120,7 +120,7 @@ public class HyperSAXParser extends BaseParser {
 				
 				String hmode = ((attributes.getValue("",ATTR_HYPERLINKMODE) == null) ? "highlight_color_blank_only" : attributes.getValue("",ATTR_HYPERLINKMODE));
 				boolean found = false;
-				for(ByteView.LINK_MODE mode: ByteView.LINK_MODE.values()) {
+				for(HyperSettings.LINK_MODE mode: HyperSettings.LINK_MODE.values()) {
 					if(hmode.equals(mode.getValue())) {
 						found = true;
 						tmp.setHyperLinkMode(mode);
@@ -130,8 +130,10 @@ public class HyperSAXParser extends BaseParser {
 					//will be default value.
 				}
 				
-				int hcolor = ((attributes.getValue("",ATTR_HYPERLINKCOLOR) == null) ? 0xFF883333 : new BigInteger(attributes.getValue("",ATTR_HYPERLINKCOLOR),16).intValue());
+				int hcolor = ((attributes.getValue("",ATTR_HYPERLINKCOLOR) == null) ? HyperSettings.DEFAULT_HYPERLINK_COLOR : new BigInteger(attributes.getValue("",ATTR_HYPERLINKCOLOR),16).intValue());
 				tmp.setHyperLinkColor(hcolor);
+				
+				tmp.setHyperLinkEnabled( (attributes.getValue("",ATTR_HYPERLINKENABLED) == null) ? false : ((attributes.getValue("",ATTR_HYPERLINKENABLED)).equals("true") ? true : false));
 				
 			}
 			

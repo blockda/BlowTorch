@@ -58,6 +58,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -975,7 +976,8 @@ public class StellarService extends Service {
 				if(callbacks.register(m,binderCookie)) {
 					bindCount++;
 					//Log.e("SERV","Registering callback, " + bindCount + " now.");
-					hasListener = true;
+					//hasListener = true;
+					hasListener = isWindowShowing();
 				} else {
 					//Log.e("SERV","Callback not registerd because it is already in the list, " + bindCount + " now.");
 				}
@@ -984,9 +986,14 @@ public class StellarService extends Service {
 				callbacks = new RemoteCallbackList<IStellarServiceCallback>();
 				if(m!= null) {
 					callbacks.register(m);
-					hasListener = true;
+					//hasListener = true;
+					hasListener = isWindowShowing();
 				}
 			}
+			
+			int count = callbacks.beginBroadcast();
+			callbacks.finishBroadcast();
+			Log.e("SERVICE","REGISTERED CALLBACK, COUNT NOW: " + count);
 			sendInitOk();
 			doThrottleBackground();
 		}
@@ -1001,6 +1008,7 @@ public class StellarService extends Service {
 				if(callbacks.unregister(m)) {
 					bindCount--;
 					//Log.e("SERV","Unregistering callback, " + bindCount + " left.");
+					//hasListener = false;
 					hasListener = false;
 				}
 			}
@@ -2134,7 +2142,7 @@ public class StellarService extends Service {
 		
 		public void setHyperLinkMode(String pIn) throws RemoteException {
 			synchronized(the_settings) {
-				for(ByteView.LINK_MODE mode : ByteView.LINK_MODE.values()) {
+				for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
 					if(mode.getValue().equals(pIn)) {
 						the_settings.setHyperLinkMode(mode);
 					}
@@ -2160,6 +2168,20 @@ public class StellarService extends Service {
 		public int getHyperLinkColor() throws RemoteException {
 			synchronized(the_settings) {
 				return the_settings.getHyperLinkColor();
+			}
+		}
+
+		//@Override
+		public void setHyperLinkEnabled(boolean pIn) throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.setHyperLinkEnabled(pIn);
+			}
+		}
+
+		//@Override
+		public boolean isHyperLinkEnabled() throws RemoteException {
+			synchronized(the_settings) {
+				return the_settings.isHyperLinkEnabled();
 			}
 		}
 
@@ -3509,6 +3531,22 @@ public class StellarService extends Service {
 		}
 	}
 	
+	private boolean isWindowShowing() {
+		boolean result = false;
+		final int N = callbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				result = callbacks.getBroadcastItem(i).isWindowShowing();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		callbacks.finishBroadcast();
+		
+		return result;
+	}
+	
 	private void DoBreakAt(int pLines) {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
@@ -3574,7 +3612,9 @@ public class StellarService extends Service {
 	
 		for(int i = 0;i<N;i++) {
 			try {
-			callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
+				if(callbacks.getBroadcastItem(i).isWindowShowing()) {
+					callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
+				}
 			} catch (RemoteException e) {
 				//just need to catch it, don't need to care, the list maintains itself apparently.
 				final_count = final_count - 1;
@@ -3643,7 +3683,7 @@ public class StellarService extends Service {
 		if(has_triggers) {
 			
 			trigger_matcher.reset(regexp_test);
-		
+			hasListener = isWindowShowing();
 			while(trigger_matcher.find()) {
 				//so if we found something here, we triggered.
 				//Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
@@ -3862,6 +3902,7 @@ public class StellarService extends Service {
 				return; //this shoudn't happen. means there is a null entry in the map.
 			}
 			
+			hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
 				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null,mode);
 			}

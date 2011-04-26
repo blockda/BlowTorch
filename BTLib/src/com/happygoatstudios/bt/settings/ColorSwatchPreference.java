@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.Preference;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -83,6 +84,19 @@ public class ColorSwatchPreference extends Preference implements ColorPickerDial
 		
 		edit.commit();
 		
+	}
+	
+	public void onDependencyChanged(Preference dependency, boolean disableDependent) {
+		Log.e("SWATCH",dependency.getKey() + "is telling me " + Boolean.toString(disableDependent));
+		if(theView != null) {
+			if(disableDependent) {
+				theView.setEnabled(false);
+			} else {
+				theView.setEnabled(true);
+			}
+		}
+		this.setEnabled(!disableDependent);
+		//super.onDependencyChanged(dependency, disableDependent);
 	}
 	
 	
