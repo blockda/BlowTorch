@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:id="@+id/input_ctrl_container"
+    android:layout_width="300dip"
+    android:layout_height="40dip"
+    >
+    
+    <ImageButton
+    	android:id="@+id/down_btn_c"
+    	android:layout_width="100dip"
+    	android:layout_height="40dip"
+    	android:layout_alignParentBottom="true"
+    	android:layout_alignParentLeft="true"
+    	android:src="@drawable/prev_button"
+    	android:background="#0A0A0A"
+    	android:textSize="16sp"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="|DOWN|"/>
+
+    <ImageButton
+    	android:id="@+id/up_btn_c"
+    	android:layout_width="100dip"
+    	android:layout_height="40dip"
+    	android:layout_alignParentBottom="true"
+    	android:layout_toRightOf="@id/down_btn_c"
+    	android:background="#0A0A0A"
+    	android:src="@drawable/next_button"
+    	android:textSize="16sp"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="| UP |"/>
+    <ImageButton
+    	android:id="@+id/enter_btn_c"
+    	android:layout_width="100dip"
+    	android:layout_height="40dip"
+    	android:layout_alignParentBottom="true"
+    	android:layout_toRightOf="@id/up_btn_c"
+    	android:background="#0A0A0A"
+    	android:src="@drawable/enter_button"
+    	android:textSize="16sp"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="ENTER"/>
+</RelativeLayout>
