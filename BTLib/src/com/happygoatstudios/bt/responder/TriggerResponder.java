@@ -136,7 +136,7 @@ public abstract class TriggerResponder implements Parcelable {
 	Matcher replacer = replace.matcher("");
 	StringBuffer output = new StringBuffer("");
 	
-	protected String translate(String input,HashMap<String,String> map) {
+	public String translate(String input,HashMap<String,String> map) {
 		if(input == null) {
 			return "";
 		}
