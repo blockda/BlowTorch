@@ -159,7 +159,10 @@ public class HyperSAXParser extends BaseParser {
 			public void start(Attributes attributes) {
 				current_alias.setPre(attributes.getValue("",ATTR_PRE));
 				current_alias.setPost(attributes.getValue("",ATTR_POST));
-				aliases_read.put(attributes.getValue("",ATTR_PRE), current_alias.copy());
+				String alias_key = attributes.getValue("",ATTR_PRE);
+				if(attributes.getValue("",ATTR_PRE).startsWith("^")) alias_key = alias_key.substring(1, alias_key.length());
+				if(attributes.getValue("",ATTR_PRE).endsWith("$")) alias_key = alias_key.substring(0, alias_key.length()-1);
+				aliases_read.put(alias_key, current_alias.copy());
 				//aliases_read.put(attributes.getValue("",ATTR_PRE), attributes.getValue("",ATTR_POST));
 				
 			}

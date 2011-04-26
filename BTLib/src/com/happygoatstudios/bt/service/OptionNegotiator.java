@@ -19,7 +19,7 @@ public class OptionNegotiator {
 	boolean isNAWS=false;
 	//boolean hasNAWSed = false;
 
-	private String[] termtypes = {"BlowTorch","ansi","UNKNOWN"};
+	private String[] termtypes = {"BlowTorch","ansi","BlowTorch-256color","UNKNOWN"};
 	private int attempt = 0;
 	
 	public OptionNegotiator() {
@@ -144,7 +144,7 @@ public class OptionNegotiator {
     		buf.put(responsedata,0,responsedata.length);
     		buf.put(sequence,sequence.length-2,2);
     		
-    		if(attempt < 2) {
+    		if(attempt < 3) {
     			attempt++;
     		} //else return UNKNOWN every time
     		return buf.array();
