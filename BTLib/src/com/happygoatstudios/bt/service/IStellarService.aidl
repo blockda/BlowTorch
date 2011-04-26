@@ -140,4 +140,6 @@ interface IStellarService {
 	String getHyperLinkMode();
 	void setHyperLinkColor(int pIn);
 	int getHyperLinkColor();
+	void setHyperLinkEnabled(boolean pIn);
+	boolean isHyperLinkEnabled();
 }

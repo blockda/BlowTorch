@@ -35,6 +35,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
 //import android.util.Log;
@@ -78,6 +79,7 @@ import com.happygoatstudios.bt.launcher.Launcher;
 import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
+import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
 import com.happygoatstudios.bt.speedwalk.SpeedWalkConfigurationDialog;
 import com.happygoatstudios.bt.timer.TimerSelectionDialog;
@@ -140,6 +142,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	private String overrideHFPress = "auto";
 	
 	private boolean isFullScreen = false;
+	
+	private boolean windowShowing = false;
 	
 	String host;
 	int port;
@@ -785,6 +789,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
 					//TODO: SETTINGS LOAD PLACE
+					if(!isResumed || !screen2.loaded()) {
+						this.sendEmptyMessageDelayed(MESSAGE_LOADSETTINGS, 50);
+						break;
+					}
 					//attemppt to load button sets.
 					@SuppressWarnings("unused")
 					boolean fontSizeChanged = false;
@@ -831,9 +839,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
 						boolean echoaliasupdate = prefs.getBoolean("ECHO_ALIAS_UPDATE", true);
 						String hyperLinkMode = prefs.getString("HYPERLINK_MODE", "highlight_color_bland_only");
-						int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", 0xFF883333);
+						int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
 						//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
-						
+						boolean hyperLinkEnabled = prefs.getBoolean("HYPERLINK_ENABLED", true);
 						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
 						
 						try {
@@ -874,6 +882,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							service.setEchoAliasUpdate(echoaliasupdate);
 							service.setHyperLinkMode(hyperLinkMode);
 							service.setHyperLinkColor(hyperLinkColor);
+							service.setHyperLinkEnabled(hyperLinkEnabled);
 							//service.setShowFitMessage(fitmessage);
 							service.saveSettings();
 						} catch (RemoteException e) {
@@ -926,13 +935,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 						
 						//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 						String str = service.getHyperLinkMode();
-						for(ByteView.LINK_MODE mode : ByteView.LINK_MODE.values()) {
+						for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
 							if(mode.getValue().equals(str)) {
 								screen2.setLinkMode(mode);
 							}
 						}
 						
 						screen2.setLinkColor(service.getHyperLinkColor());
+						
+						screen2.setLinksEnabled(service.isHyperLinkEnabled());
 						
 						if(service.isFullScreen()) {
 						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -1700,6 +1711,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				edit.putBoolean("ECHO_ALIAS_UPDATE", service.isEchoAliasUpdate());
 				edit.putInt("HYPERLINK_COLOR", service.getHyperLinkColor());
 				edit.putString("HYPERLINK_MODE", service.getHyperLinkMode());
+				edit.putBoolean("HYPERLINK_ENABLED", service.isHyperLinkEnabled());
 				//edit.putBoolean("FIT_MESSAGE", service.isShowFitMessage());
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
@@ -2115,6 +2127,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	
 
 	public void onStart() {
+		Log.e("WINDOW","onStart()");
 		super.onStart();
 		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.FREE;
@@ -2132,7 +2145,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//servicestarted = true;
 		}
 	}
-	public void onPause() {
+	public void onDestroy() {
 		//Log.e("WINDOW","onPause()");
 		//if()
 		//if()
@@ -2167,7 +2180,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 
 		isResumed = false;
-		super.onPause();
+		super.onDestroy();
+		
+		//this.finish();
 	
 	}
 	
@@ -2176,16 +2191,20 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		super.onStop();
 	}
 	
-	public void onDestroy() {
+	public void onPause() {
 		//Log.e("WINDOW","onDestroy()");
-		super.onDestroy();
+		windowShowing = false;
+		screen2.pauseDrawing();
+		screen2.clearAllText();
+		isResumed = false;
+		super.onPause();
 	}
 	
 	public void onResume() {
 		
-		
+		windowShowing = true;
 
-		//Log.e("WINDOW","onResume()");
+		Log.e("WINDOW","onResume()");
 		
 		//SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
 		//servicestarted = prefs.getBoolean("CONNECTED", false);
@@ -2228,8 +2247,24 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 			isResumed = true;
 
+		} else {
+			//request buffer.
+			try {
+				if(service.hasBuffer()) {
+					//Log.e("WINDOW","REQUESTING BUFFER");
+					service.requestBuffer();
+				} else {
+					//Log.e("WINDOW","SERVICE RESPONDED THAT IT HAS NO BUFFER");
+				}
+			} catch (RemoteException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
 		}
-	
+		
+		screen2.resumeDrawing();
+		isResumed = true;
 		super.onResume();
 	}
 	
@@ -2256,6 +2291,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 		
 		finishStart = false;*/
+		
 		try {
 			if(service.hasBuffer()) {
 				//Log.e("WINDOW","REQUESTING BUFFER");
@@ -2310,6 +2346,10 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			b.putByteArray("SEQ", seq);
 			msg.setData(b);
 			myhandler.sendMessage(msg);
+		}
+		
+		public boolean isWindowShowing() {
+			return windowShowing;
 		}
 
 		public void processedDataIncoming(CharSequence seq) throws RemoteException {
