@@ -1210,13 +1210,13 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//the_tree.empty();
 	}
 	
-	public void pauseDrawing() {
+	/*public void pauseDrawing() {
 		
 	}
 	
 	public void resumeDrawing() {
 		
-	}
+	}*/
 	public void addBytes(final byte[] obj,final boolean jumpToEnd) {
 		if(_runner != null && _runner.threadHandler != null && _runner.isAlive()) {
 		_runner.threadHandler.post(new Runnable() {
