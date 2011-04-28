@@ -133,7 +133,7 @@ public class HyperSAXParser extends BaseParser {
 				int hcolor = ((attributes.getValue("",ATTR_HYPERLINKCOLOR) == null) ? HyperSettings.DEFAULT_HYPERLINK_COLOR : new BigInteger(attributes.getValue("",ATTR_HYPERLINKCOLOR),16).intValue());
 				tmp.setHyperLinkColor(hcolor);
 				
-				tmp.setHyperLinkEnabled( (attributes.getValue("",ATTR_HYPERLINKENABLED) == null) ? false : ((attributes.getValue("",ATTR_HYPERLINKENABLED)).equals("true") ? true : false));
+				tmp.setHyperLinkEnabled( (attributes.getValue("",ATTR_HYPERLINKENABLED) == null) ? true : ((attributes.getValue("",ATTR_HYPERLINKENABLED)).equals("true") ? true : false));
 				
 			}
 			
