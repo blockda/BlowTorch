@@ -2194,7 +2194,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public void onPause() {
 		//Log.e("WINDOW","onDestroy()");
 		windowShowing = false;
-		screen2.pauseDrawing();
+		//screen2.pauseDrawing();
 		screen2.clearAllText();
 		isResumed = false;
 		super.onPause();
@@ -2263,7 +2263,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
 		}
 		
-		screen2.resumeDrawing();
+		//screen2.resumeDrawing();
+		screen2.doDelayedDraw(0);
 		isResumed = true;
 		super.onResume();
 	}
