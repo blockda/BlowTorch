@@ -3596,10 +3596,11 @@ public class StellarService extends Service {
 	
 
 	HashMap<String,String> captureMap = new HashMap<String,String>();
-	private int bufferLineCount = 0;
+	//private int bufferLineCount = 0;
 	private Pattern bufferLine = Pattern.compile(".*\n");
 	Matcher bufferLineMatch = bufferLine.matcher("");
 	StringBuffer tempBuffer = new StringBuffer();
+	Matcher colorStripper = colordata.matcher("");
 	public void dispatchFinish(byte[] rawData) throws UnsupportedEncodingException {
 		
 		//String htmlText = colorer.htmlColorize(data);
@@ -3673,8 +3674,9 @@ public class StellarService extends Service {
 			return; //return without processing, if there are no triggers.
 		}
 		
-		Matcher stripcolor = colordata.matcher(new String(rawData,the_settings.getEncoding()));
-		regexp_test.append(stripcolor.replaceAll(""));
+		//Matcher stripcolor = colordata.matcher(new String(rawData,the_settings.getEncoding()));
+		colorStripper = colorStripper.reset(new String(rawData,the_settings.getEncoding()));
+		regexp_test.append(colorStripper.replaceAll(""));
 		
 		boolean rebuildTriggers = false;
 		//test the de-colorized data against registered patterns.
