@@ -4,5 +4,7 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="src" path="Launcher_src"/>
+	<classpathentry kind="src" path="BTLib_src"/>
+	<classpathentry kind="src" path="BTLib_aidl"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -40,14 +40,14 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	
 	ListView lv = null;
 	
-	AliasDialogDoneListener reporto = null;
+	//AliasDialogDoneListener reporto = null;
 	HashMap<String,AliasData> input;
 	
 	IStellarService service;
 
-	public AliasEditorDialog(Context context,HashMap<String,AliasData> pinput,AliasDialogDoneListener useme,IStellarService pService) {
+	public AliasEditorDialog(Context context,HashMap<String,AliasData> pinput,IStellarService pService) {
 		super(context);
-		reporto = useme;
+		//reporto = useme;
 		input = pinput;
 		service = pService;
 	}
