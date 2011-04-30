@@ -1404,13 +1404,6 @@ public class Launcher extends Activity implements ReadyListener {
 				reportTo.sendEmptyMessage(MESSAGE_CANCELDOWNLOAD);
 				throw new RuntimeException(e);
 			}
-			
-			
-			
-			
-			
-			
-			
 		}
 	}
 
