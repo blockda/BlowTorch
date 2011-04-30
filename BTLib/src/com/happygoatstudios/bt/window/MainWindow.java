@@ -890,7 +890,7 @@ public class MainWindow extends Activity {
 					
 					
 					try {
-						calculate80CharFontSize();
+						//calculate80CharFontSize();
 						//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 						String str = service.getHyperLinkMode();
 						for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
@@ -2088,7 +2088,7 @@ public class MainWindow extends Activity {
 		}
 	}
 	
-	private void calculate80CharFontSize() throws RemoteException {
+	/*private void calculate80CharFontSize() throws RemoteException {
 		int windowWidth = this.getResources().getDisplayMetrics().widthPixels;
 		if(this.getResources().getDisplayMetrics().heightPixels > windowWidth) {
 			windowWidth = this.getResources().getDisplayMetrics().heightPixels;
@@ -2115,7 +2115,7 @@ public class MainWindow extends Activity {
 		}
 		Log.e("WINDOW",String.format("FINISHED: font size %.2f", (fontSize-delta)));
 		
-	}
+	}*/
 	
 	private Typeface loadFontFromName(String name) {
 		Typeface font = Typeface.MONOSPACE;
