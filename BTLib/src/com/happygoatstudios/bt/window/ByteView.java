@@ -885,6 +885,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 	
 	private Paint scroller_paint = new Paint();
+	Rect scrollerRect = new Rect();
 	public void showScroller(Canvas c) {
 		//i am not sure this is going to work, so we are just going to fake something for now.
 		
@@ -922,9 +923,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		int final_color = android.graphics.Color.argb(alpha_value, red_value, 100, blue_value);
 		scroller_paint.setColor( final_color);
 		float density = this.getResources().getDisplayMetrics().density;
-		Rect r = new Rect(WINDOW_WIDTH-(int)(2*density),(int)(scrollerPos - scrollerSize/2),WINDOW_WIDTH,(int)(scrollerPos + scrollerSize/2));
+		scrollerRect.set(WINDOW_WIDTH-(int)(2*density),(int)(scrollerPos - scrollerSize/2),WINDOW_WIDTH,(int)(scrollerPos + scrollerSize/2));
 		
-		c.drawRect(r, scroller_paint);
+		c.drawRect(scrollerRect, scroller_paint);
 		
 	}
 	
