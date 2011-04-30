@@ -1092,6 +1092,10 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		PREF_FONT = font;
 	}
 	
+	public Typeface getFont() {
+		return PREF_FONT;
+	}
+	
 	
 	boolean automaticBreaks = true;
 	public void setLineBreaks(Integer i) {

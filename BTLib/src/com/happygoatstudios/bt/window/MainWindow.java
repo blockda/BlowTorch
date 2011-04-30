@@ -21,6 +21,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -888,7 +890,7 @@ public class MainWindow extends Activity {
 					
 					
 					try {
-						
+						calculate80CharFontSize();
 						//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 						String str = service.getHyperLinkMode();
 						for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
@@ -984,35 +986,9 @@ public class MainWindow extends Activity {
 						
 						//get the font name 
 						String tmpname = service.getFontName();
-						Typeface font = Typeface.MONOSPACE;
-						//Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
-						if(tmpname.contains("/")) {
-							//string is a path
-							if(tmpname.contains(Environment.getExternalStorageDirectory().getPath())) {
-								
-								String sdstate = Environment.getExternalStorageState();
-								if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
-									font = Typeface.createFromFile(tmpname);
-								} else {
-									font = Typeface.MONOSPACE;
-								}
-								
-							} else {
-								//path is a system path
-								font = Typeface.createFromFile(tmpname);
-							}
-							
-						} else {
-							if(tmpname.equals("monospace")) {
-								font = Typeface.MONOSPACE;
-							} else if(tmpname.equals("sans serif")) {
-								font = Typeface.SANS_SERIF;
-							} else if (tmpname.equals("default")) {
-								font = Typeface.DEFAULT;
-							}
-						}
+						//Typeface font = loadFontFromName(tmpname);
 						
-						screen2.setFont(font);
+						screen2.setFont(loadFontFromName(tmpname));
 						
 						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
 						
@@ -2112,6 +2088,66 @@ public class MainWindow extends Activity {
 		}
 	}
 	
+	private void calculate80CharFontSize() throws RemoteException {
+		int windowWidth = this.getResources().getDisplayMetrics().widthPixels;
+		if(this.getResources().getDisplayMetrics().heightPixels > windowWidth) {
+			windowWidth = this.getResources().getDisplayMetrics().heightPixels;
+		}
+		float fontSize = 8.0f;
+		float delta = 1.0f;
+		Paint p = new Paint();
+		p.setTextSize(8.0f);
+		//p.setTypeface(Typeface.createFromFile(service.getFontName()));
+		p.setTypeface(loadFontFromName(service.getFontName()));
+		boolean done = false;
+		while(!done) {
+			float charWidth = p.measureText("A");
+			float charsPerLine = windowWidth / charWidth;
+			Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
+			
+			if(charsPerLine < 80.0f) {
+				done = true;
+			} else {
+				//Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
+				fontSize += delta;
+				p.setTextSize(fontSize);
+			}
+		}
+		Log.e("WINDOW",String.format("FINISHED: font size %.2f", (fontSize-delta)));
+		
+	}
+	
+	private Typeface loadFontFromName(String name) {
+		Typeface font = Typeface.MONOSPACE;
+		//Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
+		if(name.contains("/")) {
+			//string is a path
+			if(name.contains(Environment.getExternalStorageDirectory().getPath())) {
+				
+				String sdstate = Environment.getExternalStorageState();
+				if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
+					font = Typeface.createFromFile(name);
+				} else {
+					font = Typeface.MONOSPACE;
+				}
+				
+			} else {
+				//path is a system path
+				font = Typeface.createFromFile(name);
+			}
+			
+		} else {
+			if(name.equals("monospace")) {
+				font = Typeface.MONOSPACE;
+			} else if(name.equals("sans serif")) {
+				font = Typeface.SANS_SERIF;
+			} else if (name.equals("default")) {
+				font = Typeface.DEFAULT;
+			}
+		}
+		return font;
+	}
+
 	private IStellarServiceCallback.Stub the_callback = new IStellarServiceCallback.Stub() {
 
 		public void dataIncoming(byte[] seq) throws RemoteException {
