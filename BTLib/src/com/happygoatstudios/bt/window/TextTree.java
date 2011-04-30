@@ -5,17 +5,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.happygoatstudios.bt.service.Colorizer;
-
 import android.os.Handler;
 import android.os.Message;
-//import android.util.Log;
-//import android.util.Log;
+
 
 public class TextTree {
 	
@@ -33,14 +29,9 @@ public class TextTree {
 	public Handler addTextHandler = null;
 	private boolean linkify = true;
 	
-	private static Pattern oplookup = Pattern.compile("\\x1B\\x5B(([0-9]{1,3});)?(([0-9]{1,3});)?([0-9]{1,3})m");
-	private static Matcher op_match = oplookup.matcher("");
-	
 	private int MAX_LINES = 300;
 	
 	private String encoding = "ISO-8859-1";
-	
-	//boolean simpleMode = false;
 	
 	public String getEncoding() {
 		return encoding;
@@ -70,7 +61,7 @@ public class TextTree {
 	public TextTree() {
 		//simpleMode = pMode;
 		mLines = new LinkedList<Line>();
-		LinkedList<Unit> list = new LinkedList<Unit>();
+		//LinkedList<Unit> list = new LinkedList<Unit>();
 		addTextHandler = new AddTextHandler();
 	}
 	
@@ -130,41 +121,7 @@ public class TextTree {
 	public void setLines(LinkedList<Line> mLines) {
 		this.mLines = mLines;
 	}
-	
-	private static LinkedList<Integer> getOperations(String input) {
-		op_match.reset(input);
-		LinkedList<Integer> tmp = new LinkedList<Integer>();
-		if(op_match.matches()) {
-			String one = op_match.group(2);
-			String two = op_match.group(4);
-			String three = op_match.group(5);
-		
-			if(one != null) {
-				try {
-					tmp.add(Integer.parseInt(one));
-				} catch (NumberFormatException e) {
-					//we dont really care.
-				}
-			}
-			if(two != null) {
-				try {
-					tmp.add(Integer.parseInt(two));
-				} catch (NumberFormatException e) {
-					//we dont really care.
-				}
-			}
-			if(three != null) {
-				try {
-					tmp.add(Integer.parseInt(three));
-				} catch (NumberFormatException e) {
-					//we dont really care.
-				}
-			}
-		}
-		
-		return tmp;
-	}
-	
+
 	private static ArrayList<Integer> placeMap = new ArrayList<Integer>();
 	
 	private static LinkedList<Integer> getOperationsFromBytes(byte[] in) {
@@ -256,19 +213,12 @@ public class TextTree {
 	Pattern newline = Pattern.compile("\n");
 	Matcher newline_ma = newline.matcher("");
 	
-	private static enum STATE {
-		TEXT,
-		ANSI,
-		COLOR,
-		NEWLINE,
-		TAB
-	}
 	
 	private final byte TAB = (byte)0x09;
 	private final static byte ESC = (byte)0x1B;
 	private final static byte BRACKET = (byte)0x5B;
 	private final byte NEWLINE = (byte)0x0A;
-	private final byte CARRIAGE = (byte)0x0D;
+	//private final byte CARRIAGE = (byte)0x0D;
 	private final static byte m = (byte)0x6D;
 	private final static byte SEMI = (byte)0x3B;
 	
@@ -379,10 +329,10 @@ public class TextTree {
 		//	addBytesImplSimple(data);
 		//}
 		//this actually shouldn't be too hard to do with just a for loop.
-		STATE init = STATE.TEXT;
-		int projected = totalbytes + data.length;
+		//STATE init = STATE.TEXT;
+		//int projected = totalbytes + data.length;
 		//Log.e("TREE","ADDING: " + data.length + " bytes, buffer has " + totalbytes + " total bytes. " + projected + " projected.");
-		LinkedList<Line> lines = new LinkedList<Line>();
+		//LinkedList<Line> lines = new LinkedList<Line>();
 		Line tmp = null;
 		
 		if(holdover != null) {
@@ -429,15 +379,10 @@ public class TextTree {
 			tmp = new Line();
 			tmp.setData(ldata);
 			//Log.e("TREE","DATA STRIP OUT:" + deColorLine(tmp));
-		} else {
-			//Log.e("TREE","NOT ATTEMPTING APPENDING");
 		}
-		//StringBuffer sb = new StringBuffer();
+		
 		ByteBuffer sb = ByteBuffer.allocate(data.length);
-		int textcount = 0;
-		Text text = new Text();
 		ByteBuffer cb = ByteBuffer.allocate(data.length);
-		int iacount = 0;
 		RUN runtype = RUN.NEW;
 		
 		//boolean endOnNewLine = false;
@@ -457,11 +402,9 @@ public class TextTree {
 					switch(runtype) {
 					case WHITESPACE:
 						tmp.getData().addLast(new WhiteSpace(strag));
-						
 						break;
 					case TEXT:
 						tmp.getData().addLast(new Text(strag));
-						//TODO: HTTP HIGHLIGHT INSERTION POINT
 						break;
 					default:
 						break;
@@ -600,7 +543,6 @@ public class TextTree {
 						break;
 					case TEXT:
 						tmp.getData().addLast(new Text(txtdata));
-						//TODO: HTTP HIGHLIGHT INSERTION
 						break;
 					default:
 						break;
@@ -627,7 +569,7 @@ public class TextTree {
 						sb.rewind();
 						sb.get(cap,0,len);
 						tmp.mData.addLast(new Text(cap));
-						//TODO: HTTP INSERTION POINRT
+						
 						runtype = RUN.WHITESPACE;
 						sb.rewind();
 						break;
@@ -964,23 +906,6 @@ public class TextTree {
 			}
 		}
 
-		private void DebugCursorPosition(ListIterator<Unit> i,String where) {
-			String debug = "Cursor Between: "+i.previousIndex()+":"+i.nextIndex();
-			//Log.e("TREE",where + " " + debug);
-		}
-		
-		private void DebugCursorPosition2(String message) {
-			StringBuilder b = new StringBuilder();
-			Iterator<Unit> tmp = this.mData.iterator();
-			while(tmp.hasNext()) {
-				Unit u = tmp.next();
-				if(u instanceof Text) {
-					b.append(((Text)u).getString());
-				}
-			}
-			//Log.e("TREE",message + "[" + b.toString() + "]" );
-		}
-
 		private int breakAt(ListIterator<Unit> i, Unit u, int amount, int length) {
 			int charsinline;
 			boolean removed;
@@ -994,9 +919,6 @@ public class TextTree {
 				charsinline = 0;
 				removed = true;
 			} else {
-				//i.remove();
-				//debug.append()
-				//Log.e("TREE","BREAKING LINE: l: " +length+ " a:" + amount);
 				int start = length - amount;
 				int end = length - (length-amount);
 				
@@ -1007,8 +929,6 @@ public class TextTree {
 				i.add(new Break());
 				i.add(new Text(second));
 				} catch (StringIndexOutOfBoundsException e) { 
-					//String message = ((Text)u).data + " is not valid break: amount="+amount+" length="+length+" start="+start+" end="+end+"\n";					
-					//Log.e("TREE",message);
 					throw e;
 				}
 				
@@ -1087,7 +1007,7 @@ public class TextTree {
 		protected String data;
 		protected byte[] bin;
 		private boolean link = false;
-		//TODO: HTTP LINK MODIFICATION
+		
 		public Text() {
 			data = "";
 			charcount = 0;
@@ -1159,10 +1079,10 @@ public class TextTree {
 	}
 	
 	private class Tab extends Unit implements UnitMizer {
-		protected String data;
+		//protected String data;
 		
 		public Tab() {
-			data = new String(new byte[]{0x09});
+			//data = new String(new byte[]{0x09});
 			this.charcount = 1;
 			this.bytecount = 1;
 		}
