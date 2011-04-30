@@ -1057,7 +1057,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 
 	public void doDelayedDraw(int i) {
-		if(_runner == null || _runner.threadHandler == null) return;
+		if(_runner == null || _runner.threadHandler == null || _runner.isAlive()) return;
 		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessageDelayed(DrawRunner.MSG_DRAW,i);
 		} else {
