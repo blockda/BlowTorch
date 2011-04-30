@@ -3,11 +3,8 @@ package com.happygoatstudios.bt.window;
 import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,24 +28,15 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Parcel;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
-import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 
 import android.view.WindowManager;
@@ -69,13 +57,11 @@ import android.widget.Toast;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.alias.AliasData;
-import com.happygoatstudios.bt.alias.AliasDialogDoneListener;
 import com.happygoatstudios.bt.alias.AliasEditorDialog;
 import com.happygoatstudios.bt.button.ButtonEditorDialog;
 import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.launcher.Launcher;
 import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -85,7 +71,7 @@ import com.happygoatstudios.bt.speedwalk.SpeedWalkConfigurationDialog;
 import com.happygoatstudios.bt.timer.TimerSelectionDialog;
 import com.happygoatstudios.bt.trigger.TriggerSelectionDialog;
 
-public class MainWindow extends Activity implements AliasDialogDoneListener {
+public class MainWindow extends Activity {
 	
 	public static String TEST_MODE = "blowTorchTestMode";
 	public static String NORMAL_MODE = "blowTorchNormalMode";
@@ -132,7 +118,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	private static final int MESSAGE_RENAWS = 885;
 	public final static int MESSAGE_LAUNCHURL = 886;
 	
-	private TextTree tree = new TextTree();
+	//private TextTree tree = new TextTree();
 
 	protected boolean settingsDialogRun = false;
 	
@@ -260,7 +246,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			//Log.e("BlowTorch","Test mode launch");
 			mode = LAUNCH_MODE.TEST;
-			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
+			
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 			
 		}
@@ -270,18 +256,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		
 		setContentView(R.layout.window_layout);
 		
-		//String display_name = this.getIntent().getStringExtra("DISPLAY");
-		//Pattern invalidchars = Pattern.compile("\\W"); 
-		//Matcher replacebadchars = invalidchars.matcher(display_name);
-		//String prefsname = replacebadchars.replaceAll("") + ".PREFS";
-		//prefsname = prefsname.replaceAll("/", "");
-        //Log.e("WINDOW","LAUNCHING WITH CONFIGURATION FILE NAME:" + tmpstr);
-       // PREFS_NAME = prefsname; //kill off all white space in the display name, use it as the preference file
-        history = new CommandKeeper(10);
+		history = new CommandKeeper(10);
         
         screen2 = (ByteView)findViewById(R.id.slickview);
-        RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
-        screen2.setParentLayout(l);
+        //RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
+        //screen2.setParentLayout(l);
         View fill2 = (View)findViewById(R.id.filler2);
         fill2.setFocusable(false);
         fill2.setClickable(false);
@@ -422,7 +401,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					try {
 						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
 					} catch (RemoteException e5) {
-						// TODO Auto-generated catch block
+						
 						e5.printStackTrace();
 					}
 					break;
@@ -437,37 +416,14 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					screen2.setLineBreaks((Integer)msg.obj);
 					break;
 				case MESSAGE_SENDBUTTONDATA:
-					/*ByteBuffer bbuf = null;
-					try {
-						bbuf = ByteBuffer.allocate(((String)msg.obj).getBytes(service.getEncoding()).length);
-					} catch (UnsupportedEncodingException e6) {
-						// TODO Auto-generated catch block
-						e6.printStackTrace();
-					} catch (RemoteException e6) {
-						// TODO Auto-generated catch block
-						e6.printStackTrace();
-					}
 					
-					try {
-						bbuf.put(((String)msg.obj).getBytes(service.getEncoding()));
-					} catch (UnsupportedEncodingException e) {
-						
-						e.printStackTrace();
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				
-					bbuf.rewind();
-				
-					byte[] bbuffbytes = bbuf.array();*/
 					try {
 						service.sendData(((String)msg.obj).getBytes(service.getEncoding()));
 						
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
+						
 						e.printStackTrace();
 					}
 					screen2.jumpToZero();
@@ -1196,7 +1152,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 							new_button.setDrawRound(false);
 						}
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
 						e3.printStackTrace();
 					}
 					new_button.setData(tmp);
@@ -1289,18 +1244,12 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					}
 					break;
 				case MESSAGE_RAWINC:
-					//screen2.addText((String)msg.obj,false);
+					
 					screen2.addBytes((byte[])msg.obj, false);
-					//try {
-					//	tree.addBytes(((String)msg.obj).getBytes("ISO-8859-1"));
-					//} catch (UnsupportedEncodingException e1) {
-						// TODO Auto-generated catch block
-					///	e1.printStackTrace();
-					//}
+					
 					break;
 				case MESSAGE_BUFFINC:
-					//String message = "\n" + Colorizer.colorCyanBright + "Buffer received: " +  ((String)msg.obj).getBytes().length + Colorizer.colorWhite + "\n";
-					//screen2.addText((String)msg.obj,true);
+					
 					screen2.addBytes((byte[])msg.obj,true);
 					break;
 				case MESSAGE_SENDDATAOUT:
@@ -1516,7 +1465,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				try {
 					service.reconnect();
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -1585,8 +1533,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	}
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuItem tmp = null;
-		tmp = menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
+		//MenuItem tmp = null;
+		menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
 		menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers);
 		menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers);
 		menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options);
@@ -1623,21 +1571,19 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			try {
 				service.reconnect();
 			} catch (RemoteException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			break;
 		case 105:
 			TimerSelectionDialog tsel = null;
 			tsel = new TimerSelectionDialog(MainWindow.this,service);
-			//tsel.
 			tsel.show();
 			
 			break;
 		case 99:
 			AliasEditorDialog d = null;
 			try {
-				d = new AliasEditorDialog(this,(HashMap<String,AliasData>)service.getAliases(),this,service);
+				d = new AliasEditorDialog(this,(HashMap<String,AliasData>)service.getAliases(),service);
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
@@ -1656,14 +1602,9 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			}
 			break;
 		case 101:
-			//SettingEditorDialog sedit = new SettingEditorDialog(this,service);
-			//sedit.setTitle("Modify Settings...");
-			//sedit.show();
-			//showsettingsoptions = true;
-			//settingsmenuclosed = false;
+			
 			MainWindow.this.myhandler.postDelayed(new Runnable() { public void run() { openOptionsMenu();}}, 1);
-			//Intent settingintent = new Intent(this,HyperSettingsActivity.class);
-			//this.startActivityForResult(settingintent, 0);
+			
 			break;
 		case 103:
 			//fix up the shared preferences so that it will actually work.
@@ -1806,7 +1747,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					
 				}
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			break;
@@ -1825,7 +1765,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 				}
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			break;
@@ -1845,15 +1784,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		EditText input_box = (EditText)findViewById(R.id.textinput);
 		imm.hideSoftInputFromWindow(input_box.getWindowToken(), 0);
 		//Log.e("WINDOW","ATTEMPTING TO HIDE THE KEYBOARD");
-	}
-	
-	private void DoButtonPortraitMode(boolean use) {
-		RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
-		for(int i=0;i<l.getChildCount();i++) {
-			if(l.getChildAt(i) instanceof SlickButton) {
-				((SlickButton)l.getChildAt(i)).setPortraiteMode(use);
-			}
-		}
 	}
 	
 	private void DoHapticFeedback() {
@@ -1947,7 +1877,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				return false;
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return false;
@@ -1975,22 +1904,11 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 		
 		
-		//finishStart = true;
-		//servicestarted = false;
-		
-		//saveSettings();
-		//
-		//if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
-		//	mode = LAUNCH_MODE.FREE;
-		//} else if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
-		//	mode = LAUNCH_MODE.TEST;
-		//}
 		if(mode == LAUNCH_MODE.FREE) {
 			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
 		} else if(mode == LAUNCH_MODE.TEST) {
 			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
 		}
-		//stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 		
 	}
 	
@@ -2000,7 +1918,7 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			
 			try {
 				//Log.e("WINDOW","Attempting to unregister the callback due to unbinding");
-				saveBuffer();
+				service.unregisterCallback(the_callback);
 			} catch (RemoteException e) {
 				//e.printStackTrace();
 			}
@@ -2009,102 +1927,15 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			//Log.e("WINDOW","Unbound connection at cleanExit");
 			isBound = false;
 		}
-		
-		//save settings
-		//finishStart = false;
-		//servicestarted = true;
-		//this.onPause();
-		saveSettings();
-	}
-
-	private void saveBuffer() throws RemoteException {
-		//ByteView sv = (ByteView)findViewById(R.id.slickview);
-		//Log.e("WINDOW","SAVING BUFFER:" + sv.getBuffer().length());
-		//String message = "\n" + Colorizer.colorYeollowBright + "Saving buffer: " + sv.getBuffer().getBytes().length + Colorizer.colorWhite + "\n";
-		//service.saveBuffer(sv.getBuffer());
-		service.unregisterCallback(the_callback);
-		//sv.clearBuffer();
+		//saveSettings();
 	}
 	
 	public void onSaveInstanceState(Bundle data) {
-		//SlickView sv = (SlickView)findViewById(R.id.slickview);
-		//data.putCharSequence("BUFFER", sv.getBuffer());
+		super.onSaveInstanceState(data);
 	}
 	
 	public void onRestoreInstanceState(Bundle data) {
-
-		//SlickView sv = (SlickView)findViewById(R.id.slickview);
-		//sv.setBuffer((new StringBuffer(data.getCharSequence("BUFFER")).toString()));
-
-
-	}
-	
-	public void saveSettings() {
-		//shared preferences
-		/*synchronized(settingsLoaded) {
-			while(settingsLoaded == false) {
-				try {
-					settingsLoaded.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			
-		
-		//SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
-		
-		SharedPreferences.Editor editor = prefs.edit();
-		
-		editor.putBoolean("CONNECTED", servicestarted);
-		editor.putBoolean("FINISHSTART", finishStart);
-		
-		//build the slickviews string arrays for buttons.
-		SlickView sv = (SlickView)findViewById(R.id.slickview);
-		Vector<SlickButton> btns = sv.buttons;
-		Iterator<SlickButton> itrator = btns.listIterator();
-		
-		Vector<String> bstrings = new Vector<String>();
-		StringBuffer serialbuttons = new StringBuffer();
-		int buttoncount = 0;
-		while(itrator.hasNext()) {
-			SlickButton b = itrator.next();
-			Parcel p = Parcel.obtain();
-			Bundle tmp = new Bundle();
-			tmp.putParcelable("DATA", b.getData());
-			p.writeBundle(tmp);
-			//p.unmarshall(arg0, arg1, arg2)
-
-			editor.putString("BUTTON" + buttoncount,b.getData().toString());
-			//LOG.e("WINDOW","SERIALIZING: " + b.toString());
-			buttoncount++;
-			String str = new String(b.getData().getX() +"||" +b.getData().getY() + "||"+b.getData().getText()+"||"+b.getData().getLabel());
-			serialbuttons.append(str + "&&");
-			
-			
-			bstrings.add(str);
-		}
-		
-		editor.putInt("BUTTONCOUNT", buttoncount);
-		if(buttoncount == 0) {
-			//Log.e("WINDOW","SAVED BUTTONCOUNT OF ZERO!!!");
-		}
-		
-		editor.commit();
-		
-		String str = "Save settings: ";
-		if(servicestarted) {
-			str = str + " servicestatred=true";
-		} else {
-			str = str + " servicestatred=false";
-		}
-		
-		if(finishStart) {
-			str = str + " finishStart=true";
-		} else {
-			str = str + " finishStart=false";
-		}
-		}*/
-		
+		super.onRestoreInstanceState(data);
 	}
 	
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -2114,20 +1945,8 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			settingsDialogRun = true;
 		}
 	}
-	
-	
-	//public void onWindowFocusChanged() {
-		//Log.e("WINDOW","onStart()");
-	//	super.onStart();
-	//	windowHeight = this.getWindowManager().getDefaultDisplay().getHeight();
-	//	int full_height = findViewById(R.id.window_container).getHeight();
-	//	Log.e("WINDOW","STATUS BAR HEIGHT IS: " + (windowHeight - full_height) + " = WH:" + windowHeight + " - FH:" + full_height );
-		
-	//}
-	
 
 	public void onStart() {
-		Log.e("WINDOW","onStart()");
 		super.onStart();
 		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.FREE;
@@ -2146,17 +1965,13 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		}
 	}
 	public void onDestroy() {
-		//Log.e("WINDOW","onPause()");
-		//if()
-		//if()
-		//screen2.clearAllText();
 		if(isBound) {
 			
 			try {
 				//Log.e("WINDOW","SAVING BUFFER IN SERVICE");
 				
 				if(service != null) {
-					saveBuffer();
+					//service.unregisterCallback(the_callback);
 					
 					service.unregisterCallback(the_callback);
 					service.unregisterCallback(the_callback);
@@ -2203,29 +2018,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 	public void onResume() {
 		
 		windowShowing = true;
-
-		Log.e("WINDOW","onResume()");
-		
-		//SharedPreferences prefs = this.getSharedPreferences(PREFS_NAME,0);
-		//servicestarted = prefs.getBoolean("CONNECTED", false);
-		//finishStart = prefs.getBoolean("FINISHSTART", true);
-		
-		
-		//String str = "Load settings (onResume): ";
-		//if(servicestarted) {
-		//	str = str + " servicestatred=true";
-		//} else {
-		//	str = str + " servicestatred=false";
-		//}
-		
-		//if(finishStart) {
-		//	str = str + " finishStart=true";
-		//} else {
-		//	str = str + " finishStart=false";
-		//}
-		
-		//Log.e("WINDOW",str);
-		
 		
 		if(!isBound) {
 			if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
@@ -2240,24 +2032,21 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
 				this.bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
 			}
-			//bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()), mConnection, 0); //do not auto create
-			//Log.e("WINDOW","Bound connection at onResume");
+			
 			isBound = true;
-			
-			
 			isResumed = true;
 
 		} else {
 			//request buffer.
 			try {
 				if(service.hasBuffer()) {
-					//Log.e("WINDOW","REQUESTING BUFFER");
+		
 					service.requestBuffer();
 				} else {
-					//Log.e("WINDOW","SERVICE RESPONDED THAT IT HAS NO BUFFER");
+					
 				}
 			} catch (RemoteException e2) {
-				// TODO Auto-generated catch block
+				
 				e2.printStackTrace();
 			}
 			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
@@ -2278,21 +2067,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 		Intent myintent = this.getIntent();
 		
 		
-		//TODO: check if there is a buffer to fetch, and if so, fetch it.
-		/*if(!finishStart) {
-			
-			try {
-				service.requestBuffer();
-			} catch (RemoteException e) {
-				
-			}
-			return;
-		} else {
-			
-		}
-		
-		finishStart = false;*/
-		
 		try {
 			if(service.hasBuffer()) {
 				//Log.e("WINDOW","REQUESTING BUFFER");
@@ -2301,7 +2075,6 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 				//Log.e("WINDOW","SERVICE RESPONDED THAT IT HAS NO BUFFER");
 			}
 		} catch (RemoteException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		
@@ -2472,32 +2245,4 @@ public class MainWindow extends Activity implements AliasDialogDoneListener {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_CHANGEBUTTONSET,setName));
 		}
 	};
-	
-	public void aliasDialogDone(ArrayList<AliasData> items) {
-		HashMap<String,AliasData> map = new HashMap<String,AliasData>();
-		
-		if(items.size() > 0) {
-			for(AliasData d : items) {
-				String alias_key = d.getPre();
-				if(d.getPre().startsWith("^")) alias_key = alias_key.substring(1, alias_key.length());
-				if(d.getPre().endsWith("$")) alias_key = alias_key.substring(0, alias_key.length()-1);
-				map.put(alias_key, d);
-			}
-			try {
-				service.setAliases(map);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		} else {
-			try {
-				service.setAliases(map);
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}	
-
-		
-	
-
 }
