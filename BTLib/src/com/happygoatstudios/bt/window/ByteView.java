@@ -21,6 +21,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -56,7 +57,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	private Double scrollback = (double)WINDOW_HEIGHT;
 
-	private int debug_mode = 1;
+	private int debug_mode = 0;
 
 	//private String encoding = "ISO-8859-1";
 
@@ -225,8 +226,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			try{
 				_runner.setRunning(false);
 				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_SHUTDOWN);
-				
+				//Log.e("WINDOW","SHUTTING DOWN DRAW THREAD");
 				_runner.join();
+				//Log.e("WINDOW","SUCCESSFULY SHUT DOWN DRAW THREAD");
 				retry = false;
 			} catch (InterruptedException e) { }
 		}
@@ -551,17 +553,19 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		//Float offset = 0f;
 		IteratorBundle bundle = null;
 		boolean gotIt = false;
-		int maxTries = 100;
+		int maxTries = 20;
 		int tries = 0;
 		while(!gotIt && tries <= maxTries) {
 			try {
+				tries = tries + 1;
 				bundle = getScreenIterator(scrollback,PREF_LINESIZE);
 				gotIt = true;
-				tries++;
+				
 			} catch (ConcurrentModificationException e) {
 				//loop again to get it, continue till you get one.
 				synchronized(this) {
 					try {
+						//Log.e("DRAWRUNNER","CAUGHT CONCURRENT MODIFICATION, tried:" + tries);
 						this.wait(5);
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
@@ -570,6 +574,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			}
 		}
 		if(!gotIt) {
+			_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
 			return;
 		}
 		screenIt = bundle.getI();
@@ -1000,6 +1005,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 						}
 						break;
 					case MSG_SHUTDOWN:
+						this.removeMessages(MSG_DRAW);
 						this.getLooper().quit();
 						break;
 					case MESSAGE_EMPTY_TREE:
@@ -1012,7 +1018,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			threadHandler.sendEmptyMessage(MSG_DRAW); //just to get us started.
 			//threadHandler.getLooper();
 			Looper.loop();
-			
+			//Log.e("DRAWRUNNER","SHUTTING DOWN DRAW THREAD");
 		}
 		
 	}
@@ -1057,7 +1063,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 
 	public void doDelayedDraw(int i) {
-		if(_runner == null || _runner.threadHandler == null || _runner.isAlive()) return;
+		if(_runner == null || _runner.threadHandler == null || !_runner.isAlive()) return;
 		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
 			_runner.threadHandler.sendEmptyMessageDelayed(DrawRunner.MSG_DRAW,i);
 		} else {
