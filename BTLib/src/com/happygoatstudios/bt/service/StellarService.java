@@ -46,6 +46,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Environment;
@@ -789,6 +791,8 @@ public class StellarService extends Service {
 				ColorSetSettings def_colorset = new ColorSetSettings();
 				def_colorset.toDefautls();
 				the_settings.getSetSettings().put("default", def_colorset);
+				
+				the_settings.setLineSize(calculate80CharFontSize());
 				//Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
 			}
 			if(the_settings.getDirections().size() == 0) {
@@ -820,6 +824,7 @@ public class StellarService extends Service {
 			if(the_settings.getDirections().size() == 0) {
 				loadDefaultDirections();
 			}
+			the_settings.setLineSize(calculate80CharFontSize());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} 
@@ -1433,6 +1438,7 @@ public class StellarService extends Service {
 				ColorSetSettings def_colorset = new ColorSetSettings();
 				def_colorset.toDefautls();
 				the_settings.getSetSettings().put("default", def_colorset);
+				the_settings.setLineSize(calculate80CharFontSize());
 			}
 			sendInitOk();
 		}
@@ -4318,6 +4324,48 @@ public class StellarService extends Service {
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return mBinder;
+	}
+	
+	private int calculate80CharFontSize() {
+		int windowWidth = this.getResources().getDisplayMetrics().widthPixels;
+		if(this.getResources().getDisplayMetrics().heightPixels > windowWidth) {
+			windowWidth = this.getResources().getDisplayMetrics().heightPixels;
+		}
+		float fontSize = 8.0f;
+		float delta = 1.0f;
+		Paint p = new Paint();
+		p.setTextSize(8.0f);
+		//p.setTypeface(Typeface.createFromFile(service.getFontName()));
+		p.setTypeface(Typeface.MONOSPACE);
+		boolean done = false;
+		
+		float charWidth = p.measureText("A");
+		float charsPerLine = windowWidth / charWidth;
+		
+		if(charsPerLine < 80.0f) {
+			//for QVGA screens, this test will always fail on the first step.
+			done = true;
+		} else {
+			fontSize += delta;
+			p.setTextSize(fontSize);
+		}
+		
+		while(!done) {
+			charWidth = p.measureText("A");
+			charsPerLine = windowWidth / charWidth;
+			//Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
+			
+			if(charsPerLine < 80.0f) {
+				done = true;
+				fontSize -= delta; //return to the previous font size that produced > 80 characters.
+			} else {
+				//Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
+				fontSize += delta;
+				p.setTextSize(fontSize);
+			}
+		}
+		//Log.e("WINDOW",String.format("FINISHED: font size %.2f", (fontSize-delta)));
+		return (int)fontSize;
 	}
 
 }
