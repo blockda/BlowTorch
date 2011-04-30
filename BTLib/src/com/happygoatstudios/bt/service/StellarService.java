@@ -3681,7 +3681,6 @@ public class StellarService extends Service {
 		boolean rebuildTriggers = false;
 		//test the de-colorized data against registered patterns.
 		
-		
 		if(has_triggers) {
 			
 			trigger_matcher.reset(regexp_test);
