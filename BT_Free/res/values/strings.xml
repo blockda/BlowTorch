@@ -5,6 +5,6 @@
 	<string name="notificationIcon">blowtorch_notification2</string>
 	<string name="serviceProcessName">:stellar_free</string>
 	<string name="serviceBindAction">com.happygoatstudios.bt.service.IStellarService.MODE_NORMAL</string>
-	<string name="ongoingNotificationLabel">BlowTorch Normal</string>
+	<string name="ongoingNotificationLabel">BlowTorch</string>
 	<string name="packageName">com.happygoatstudios.bt</string>
 </resources>
