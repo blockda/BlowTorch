@@ -9,7 +9,6 @@ import android.os.Parcelable;
 import android.view.Gravity;
 import android.widget.Toast;
 
-import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 
 public class ToastResponder extends TriggerResponder implements Parcelable {
@@ -78,7 +77,7 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 
 	@Override
 	public void doResponse(Context c, String displayname, int triggernumber,
-			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LAUNCH_MODE mode) {
+			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
 				return;

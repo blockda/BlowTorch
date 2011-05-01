@@ -1,0 +1,19 @@
+package com.happygoatstudios.bt.settings;
+
+import android.content.Context;
+
+public class ConfigurationLoader {
+	
+	public static String getConfigurationValue(String key, Context context) {
+		int id = context.getResources().getIdentifier(key, "string", context.getPackageName());
+		return context.getResources().getString(id);
+	}
+	
+    public static boolean isTestMode(Context context) {
+    	if(getConfigurationValue("testMode",context).equals("true")) {
+    		return true;
+    	} else {
+    		return false;
+    	}
+    }
+}
