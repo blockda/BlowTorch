@@ -64,9 +64,9 @@ import com.happygoatstudios.bt.button.ButtonEditorDialog;
 import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
+import com.happygoatstudios.bt.settings.ConfigurationLoader;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.settings.HyperSettingsActivity;
 import com.happygoatstudios.bt.speedwalk.SpeedWalkConfigurationDialog;
@@ -237,12 +237,12 @@ public class MainWindow extends Activity {
 
 	//private int statusBarHeight = 1;
 	
-	LAUNCH_MODE mode = LAUNCH_MODE.FREE;
+	//LAUNCH_MODE mode = LAUNCH_MODE.FREE;
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		//Log.e("BlowTorch","INTENT: " + this.getIntent().getAction());
-		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+		/*if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
 			//Log.e("BlowTorch","Free/Pro mode launch");
 			mode = LAUNCH_MODE.FREE;
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
@@ -251,6 +251,9 @@ public class MainWindow extends Activity {
 			
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 			
+		}*/
+		if(ConfigurationLoader.isTestMode(this)) {
+			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		}
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
@@ -1386,11 +1389,15 @@ public class MainWindow extends Activity {
 			//} else if("com.happygoatstudios.bt.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
 			//	mode = LAUNCH_MODE.TEST;
 			//}
-			if(mode == LAUNCH_MODE.FREE) {
+			
+			/*if(mode == LAUNCH_MODE.FREE) {
 				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
 			} else if(mode == LAUNCH_MODE.TEST) {
 				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
-			}
+			}*/
+			
+			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
+			this.startService(new Intent(serviceBindAction));
 			//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			//servicestarted = true;
 		}
@@ -1824,18 +1831,20 @@ public class MainWindow extends Activity {
 	ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
 	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
 	boolean found = false;
+	String serviceProcessName = "com.happygoatstudios.bt" + ConfigurationLoader.getConfigurationValue("serviceProcessName", this);
 	for(RunningServiceInfo service : services) {
 		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
 		//service.service.
 		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
 			//service is running, don't do anything.
 			//Log.e(":Launcher","Service lives in: " + service.process);
-			if(mode == LAUNCH_MODE.FREE) {
+			/*if(mode == LAUNCH_MODE.FREE) {
 				
 				if(service.process.equals("com.happygoatstudios.btfree:stellar_free")) found = true;
 			} else if(mode == LAUNCH_MODE.TEST) {
 				if(service.process.equals("com.happygoatstudios.bttest:stellar_test")) found = true;
-			}
+			}*/
+			if(service.process.equals(serviceProcessName)) found = true;
 			
 		} else {
 
@@ -1879,12 +1888,13 @@ public class MainWindow extends Activity {
 			//Log.e("WINDOW","Unbound connection at cleanExit");
 		}
 		
-		
-		if(mode == LAUNCH_MODE.FREE) {
+		String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
+		this.stopService(new Intent(serviceBindAction));
+		/*if(mode == LAUNCH_MODE.FREE) {
 			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
 		} else if(mode == LAUNCH_MODE.TEST) {
 			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
-		}
+		}*/
 		
 	}
 	
@@ -1924,19 +1934,21 @@ public class MainWindow extends Activity {
 
 	public void onStart() {
 		super.onStart();
-		if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+		/*if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.FREE;
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.TEST;
-		}
+		}*/
 		
 		if(!isServiceRunning()) {
+			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
+			this.startService(new Intent(serviceBindAction));
 			//start the service
-			if(mode == LAUNCH_MODE.FREE) {
+			/*if(mode == LAUNCH_MODE.FREE) {
 				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
 			} else if(mode == LAUNCH_MODE.TEST) {
 				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
-			}
+			}*/
 			//servicestarted = true;
 		}
 	}
@@ -1996,7 +2008,7 @@ public class MainWindow extends Activity {
 		windowShowing = true;
 		
 		if(!isBound) {
-			if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
+			/*if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
 				mode = LAUNCH_MODE.FREE;
 			} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 				mode = LAUNCH_MODE.TEST;
@@ -2007,7 +2019,9 @@ public class MainWindow extends Activity {
 			} else if(mode == LAUNCH_MODE.TEST) {
 				//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
 				this.bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
-			}
+			}*/
+			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
+			this.bindService(new Intent(serviceBindAction),mConnection, 0);
 			
 			isBound = true;
 			isResumed = true;

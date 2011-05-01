@@ -14,8 +14,8 @@ import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.settings.ConfigurationLoader;
 
 import dalvik.system.PathClassLoader;
 
@@ -182,7 +182,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	//vp[3] = 200;
 	
 	@Override
-	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LAUNCH_MODE mode) {
+	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {
@@ -207,20 +207,22 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		String xformedtitle = this.translate(title, captureMap);
 		String xformedmessage = this.translate(message, captureMap);
 		
+		int resId = c.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", c), "drawable", c.getPackageName());
 		
 
 		NotificationManager NM = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
-		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,xformedtitle,System.currentTimeMillis());
+		Notification note = new Notification(resId,xformedtitle,System.currentTimeMillis());
 		//Intent notificationIntent  = new Intent(c,com.happygoatstudios.bt.window.MainWindow.class);
 		Intent notificationIntent = null;
 		//Context packageContext = null;
 		//ClassLoader loader = null;
-		if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
-			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".NORMAL_MODE");
+		//if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
+			String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", c);
+			notificationIntent = new Intent(windowAction);
 			
 			String apkName = null;
 			try {
-				apkName = c.getPackageManager().getApplicationInfo("com.happygoatstudios.bt", 0).sourceDir;
+				apkName = c.getPackageManager().getApplicationInfo(c.getPackageName(), 0).sourceDir;
 			} catch (NameNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -236,13 +238,13 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		
 			
 			try {
-				notificationIntent.setClass(c.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_INCLUDE_CODE), w);
+				notificationIntent.setClass(c.createPackageContext(c.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
 			} catch (NameNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-		} else {
+		/*} else {
 			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
 			String apkName = null;
 			try {
@@ -268,7 +270,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 				e.printStackTrace();
 			}
 			
-		}
+		}*/
 		
 		notificationIntent.putExtra("DISPLAY", displayname);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -315,7 +317,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		
 		note.flags = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL;
 		note.defaults = defaults;
-		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		note.icon = resId;
 		
 		//long[] vp = new long[4];
 		//vp[0] = 0;
