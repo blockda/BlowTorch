@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.happygoatstudios.bt"
-      android:versionCode="11"
-      android:versionName="1.0.7">
-    <application android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
-        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
-                  android:label="BlowTorch"
-                  >
+      package="com.happygoatstudios.aardwolf"
+      android:versionName="1.1.1" android:versionCode="15">
+      
+      
+    <application android:icon="@drawable/aard_icon" android:label="Aardwolf RPG" android:theme="@android:style/Theme.NoTitleBar">
+     	<activity android:name="com.happygoatstudios.aardwolf.AardLauncher"
+                  android:label="Aardwolf RPG">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
+                  android:label="Aardwolf RPG"
+                  >
+        </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
         		  android:windowSoftInputMode="adjustResize"
-        		  android:label="BlowTorch"
+        		  android:label="Aardwolf RPG"
         		 
         		  
 				  android:configChanges="orientation|keyboard|keyboardHidden"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
+        		  	
+        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.AARDWOLF_CLIENT"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
@@ -37,9 +42,10 @@
         		  </intent-filter>
         </activity>
         <service android:name="com.happygoatstudios.bt.service.StellarService"
-        		 android:process=":remote">
+        		 android:process=":aardwolf">
         		 <intent-filter>
-        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService"/>
+        		 	
+        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.AARDWOLF_CLIENT"/>
         		 </intent-filter>
         </service>
         		  

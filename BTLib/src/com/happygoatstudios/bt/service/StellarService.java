@@ -72,12 +72,12 @@ import android.util.Log;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.launcher.Launcher.LAUNCH_MODE;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
+import com.happygoatstudios.bt.settings.ConfigurationLoader;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
@@ -92,7 +92,7 @@ import dalvik.system.PathClassLoader;
 
 public class StellarService extends Service {
 
-	LAUNCH_MODE mode = LAUNCH_MODE.FREE;
+	//LAUNCH_MODE mode = LAUNCH_MODE.FREE;
 	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IStellarServiceCallback> callbacks = new RemoteCallbackList<IStellarServiceCallback>();
@@ -179,13 +179,14 @@ public class StellarService extends Service {
 			return Service.START_STICKY;
 		}
 		//Log.e("SERVICE",intent.getAction());
-		if(intent.getAction().equals("com.happygoatstudios.bt.service.IStellarService.MODE_TEST")) {
+		//if(intent.getAction().equals("com.happygoatstudios.bt.service.IStellarService.MODE_TEST")) {
 			//Log.e("SERVICE","STARTING IN TEST MODE");
-			mode=LAUNCH_MODE.TEST;
+			//mode=LAUNCH_MODE.TEST;
 			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
-			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
-			
-		}
+			if(ConfigurationLoader.isTestMode(this.getApplicationContext())) {
+				Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+			}
+		//}
 		return Service.START_STICKY;
 	}
 	
@@ -193,7 +194,7 @@ public class StellarService extends Service {
 		//if(this.getApplicationContext().getIn)
 		
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
-		//Log.e("SERV","BAARDTERMSERVICE STARTING!");
+		Log.e("SERV","Service started in package: " + this.getPackageName());
 		//this.
 		//set up the crash reporter
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
@@ -908,7 +909,9 @@ public class StellarService extends Service {
 	
 	private int bellcount = 3344;
 	private void doNotifyBell() { 
-		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"Alert!",System.currentTimeMillis());
+		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
+		
+		Notification note = new Notification(resId,"Alert!",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
 		
 		Context context = getApplicationContext();
@@ -916,12 +919,14 @@ public class StellarService extends Service {
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "The server is notifying you with the bell character, 0x07.";
 		Intent notificationIntent = null;
-		if(mode == LAUNCH_MODE.TEST) {
+		/*if(mode == LAUNCH_MODE.TEST) {
 			notificationIntent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.toString()+".NORMAL_MODE");
 		
 		} else {
 			notificationIntent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.toString()+".TEST_MODE");
-		}
+		}*/
+		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+		notificationIntent = new Intent(windowAction);
 		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
@@ -929,7 +934,7 @@ public class StellarService extends Service {
 
 		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		note.icon = resId;
 		note.flags = Notification.DEFAULT_ALL;
 		
 		//startForeground to avoid being killed off.
@@ -3702,7 +3707,7 @@ public class StellarService extends Service {
 					
 					//iterate through the responders.
 					for(TriggerResponder responder : triggered.getResponders()) {
-						responder.doResponse(this, display, trigger_count++,hasListener,myhandler,captureMap,mode);
+						responder.doResponse(this, display, trigger_count++,hasListener,myhandler,captureMap);
 					}
 					
 					if(triggered.isFireOnce()) {
@@ -3725,7 +3730,7 @@ public class StellarService extends Service {
 									captureMap.put(Integer.toString(i), testmatch.group(i));
 								}
 								for(TriggerResponder responder : data.getResponders()) {
-									responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap,mode);
+									responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap);
 								}
 								
 								if(data.isFireOnce()) {
@@ -3911,7 +3916,7 @@ public class StellarService extends Service {
 			
 			hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
-				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null,mode);
+				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null);
 			}
 		}
 	}
@@ -4064,8 +4069,9 @@ public class StellarService extends Service {
 	private void ShowDisconnectedNotification(String message) {
 		
 		//mNM.cancel(5545);
+		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
-		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Disconnected",System.currentTimeMillis());
+		Notification note = new Notification(resId,"BlowTorch Disconnected",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
 		//String defaultmsg = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
 		String defaultmsg = "Click to reconnect: "+ host +":"+ port;
@@ -4086,12 +4092,13 @@ public class StellarService extends Service {
 		Intent notificationIntent = null;
 		//Context packageContext = null;
 		//ClassLoader loader = null;
-		if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
-			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".NORMAL_MODE");
+		//if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
+			String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+			notificationIntent = new Intent(windowAction);
 			
 			String apkName = null;
 			try {
-				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bt", 0).sourceDir;
+				apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
 			} catch (NameNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -4107,13 +4114,13 @@ public class StellarService extends Service {
 		
 			
 			try {
-				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_INCLUDE_CODE), w);
+				notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
 			} catch (NameNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-		} else {
+		/*} else {
 			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
 			String apkName = null;
 			try {
@@ -4139,7 +4146,7 @@ public class StellarService extends Service {
 				e.printStackTrace();
 			}
 			
-		}
+		}*/
 		notificationIntent.putExtra("DISPLAY",display);
 		notificationIntent.putExtra("HOST", host);
 		notificationIntent.putExtra("PORT", Integer.toString(port));
@@ -4151,7 +4158,7 @@ public class StellarService extends Service {
 		
 		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		note.icon = resId;
 		
 		
 		Pattern invalidchars = Pattern.compile("\\W"); 
@@ -4188,30 +4195,32 @@ public class StellarService extends Service {
 	
 	private void showNotification() {
 		
+		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
 		
-		Notification note = new Notification(com.happygoatstudios.bt.R.drawable.blowtorch_notification2,"BlowTorch Initialized",System.currentTimeMillis());
+		Notification note = new Notification(resId,"BlowTorch Initialized",System.currentTimeMillis());
 		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
 		
 		Context context = getApplicationContext();
 		
-		CharSequence contentTitle = "";
-		if(mode == LAUNCH_MODE.TEST) {
+		CharSequence contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+		/*if(mode == LAUNCH_MODE.TEST) {
 			contentTitle = "BlowTorch TEST";
 		} else {
 			contentTitle = "BlowTorch";
-		}
+		}*/
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
 		Intent notificationIntent = null;
 		//Context packageContext = null;
 		//ClassLoader loader = null;
-		if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
-			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".NORMAL_MODE");
+		//if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
+			String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+			notificationIntent = new Intent(windowAction);
 			
 			String apkName = null;
 			try {
-				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bt", 0).sourceDir;
+				apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
 			} catch (NameNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -4227,13 +4236,13 @@ public class StellarService extends Service {
 		
 			
 			try {
-				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_INCLUDE_CODE), w);
+				notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
 			} catch (NameNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-		} else {
+		/*} else {
 			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
 			String apkName = null;
 			try {
@@ -4259,7 +4268,7 @@ public class StellarService extends Service {
 				e.printStackTrace();
 			}
 			
-		}
+		}*/
 		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
@@ -4267,7 +4276,7 @@ public class StellarService extends Service {
 
 		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		note.icon = com.happygoatstudios.bt.R.drawable.blowtorch_notification2;
+		note.icon = resId;
 		note.flags = Notification.FLAG_ONGOING_EVENT;
 		
 		//startForeground to avoid being killed off.
