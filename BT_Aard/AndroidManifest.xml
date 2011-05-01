@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.happygoatstudios.aardwolf"
-      android:versionName="1.1.1" android:versionCode="15">
+      android:versionName="1.1.2" android:versionCode="16">
       
       
     <application android:icon="@drawable/aard_icon" android:label="Aardwolf RPG" android:theme="@android:style/Theme.NoTitleBar">
