@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+	<string name="testMode">true</string>
+	<string name="windowAction">com.happygoatstudios.bt.window.MainWindow.TEST_MODE</string>
+	<string name="notificationIcon">blowtorch_notification2</string>
+	<string name="serviceProcessName">:stellar_test</string>
+	<string name="serviceBindAction">com.happygoatstudios.bt.service.IStellarService.MODE_TEST</string>
+	<string name="ongoingNotificationLabel">BlowTorch TEST</string>
+	<string name="packageName">com.happygoatstudios.bttest</string>
+</resources>

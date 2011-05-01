@@ -12,6 +12,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -36,6 +37,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -50,6 +52,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 //import android.util.Log;
 //import android.util.Log;
+import android.util.Log;
 import android.util.TimeFormatException;
 //import android.util.Log;
 import android.view.LayoutInflater;
@@ -69,6 +72,9 @@ import android.widget.Toast;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.settings.ConfigurationLoader;
+
+import dalvik.system.PathClassLoader;
 
 
 public class Launcher extends Activity implements ReadyListener {
@@ -95,13 +101,13 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	IStellarService service;
 	
-	public enum LAUNCH_MODE {
+	/*public enum LAUNCH_MODE {
 		FREE,
 		PAID,
 		TEST
-	}
+	}*/
 	
-	private LAUNCH_MODE mode = LAUNCH_MODE.FREE;
+	//private LAUNCH_MODE mode = LAUNCH_MODE.FREE;
 	private String launcher_source = "";
 	
 	//make this save a change
@@ -109,7 +115,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		
+		Log.e("LAUNCHER","Launched from package: " + this.getPackageName());
 		//determine launch mode
 		//Intent intent = this.getIntent();
 		launcher_source = this.getIntent().getStringExtra("LAUNCH_MODE");
@@ -118,7 +124,7 @@ public class Launcher extends Activity implements ReadyListener {
 			this.finish();
 		}
 		
-		if(launcher_source.equals("com.happygoatstudios.bttest")) {
+		/*if(launcher_source.equals("com.happygoatstudios.bttest")) {
 			mode = LAUNCH_MODE.TEST;
 			//Log.e("BlowTorch","Test Launcher Engaged.");
 		} else if(launcher_source.equals("com.happygoatstudios.bt")) {
@@ -130,7 +136,7 @@ public class Launcher extends Activity implements ReadyListener {
 		} else {
 			//Log.e("BlowTorch","Launcher given source: " + launcher_source + " which is invalid, Finishing");
 			this.finish();
-		}
+		}*/
 		
 		actionHandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -186,7 +192,8 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		setContentView(R.layout.new_launcher_layout);
 		int testversion = 0;
-		if(mode == LAUNCH_MODE.TEST) {
+		//if(mode == LAUNCH_MODE.TEST) {
+		if(ConfigurationLoader.isTestMode(this)) {
 			findViewById(R.id.test_update).setVisibility(View.VISIBLE);
 			try {
 				//this.getPackageManager().getPackageInfo(launcher_source, PackageManager.GET_META_DATA).;
@@ -447,7 +454,8 @@ public class Launcher extends Activity implements ReadyListener {
 		}
 		
 		//if test mode, load test mode version
-		if(mode == LAUNCH_MODE.TEST) {
+		//if(mode == LAUNCH_MODE.TEST) {
+		if(ConfigurationLoader.isTestMode(this)) {
 			int readver = this.getSharedPreferences("TEST_VERSION_DOWHATSNEW", Context.MODE_PRIVATE).getInt("TEST_VERSION", 0);
 			int testVersion = 0;
 			try {
@@ -612,11 +620,15 @@ public class Launcher extends Activity implements ReadyListener {
 	    		//service exists, we should figure out the name of what it is playing.
 	    		//Log.e("LAUNCHER","SERVICE IS RUNNING");
 	    		launch = muc.copy();
-	    		if(mode == LAUNCH_MODE.FREE) {
+	    		
+	    		
+	    		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+	    		bindService(new Intent(action),mConnection,0);
+	    		/*if(mode == LAUNCH_MODE.FREE) {
 	    			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_NORMAL"), mConnection, 0); //do not auto create
 	    		} else {
 	    			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
-	    		}
+	    		}*/
 	    	}
 	    	
 		}
@@ -854,18 +866,21 @@ public class Launcher extends Activity implements ReadyListener {
 		ActivityManager activityManager = (ActivityManager)Launcher.this.getSystemService(Context.ACTIVITY_SERVICE);
     	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
     	boolean found = false;
+    	String serviceName = "com.happygoatstudios.bt" + ConfigurationLoader.getConfigurationValue("serviceProcessName",this);
+    	
     	for(RunningServiceInfo service : services) {
     		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
     		//service.service.
     		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
     			//service is running, don't do anything.
     			//Log.e(":Launcher","Service lives in: " + service.process);
-    			if(mode == LAUNCH_MODE.FREE) {
+    			if(service.process.equals(serviceName)) found = true;
+    			/*if(mode == LAUNCH_MODE.FREE) {
     				
     				if(service.process.equals("com.happygoatstudios.bt:stellar_free")) found = true;
     			} else if(mode == LAUNCH_MODE.TEST) {
     				if(service.process.equals("com.happygoatstudios.bt:stellar_test")) found = true;
-    			}
+    			}*/
     			
     		} else {
 
@@ -949,7 +964,8 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		
-		if(mode == LAUNCH_MODE.TEST) {
+		//if(mode == LAUNCH_MODE.TEST) {
+		if(ConfigurationLoader.isTestMode(this)) {
 			int testVersion = this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA).metaData.getInt("BLOWTORCH_TEST_VERSION");
 			builder.setTitle("Version " + versionString + "t"+testVersion+" details!");
 			
@@ -1012,12 +1028,15 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	private void DoFinalStartup() {
 		Intent the_intent = null;
-		if(mode == LAUNCH_MODE.TEST) {
+		/*if(mode == LAUNCH_MODE.TEST) {
 			the_intent = new Intent("com.happygoatstudios.bt.window.MainWindow.TEST_MODE");
 		} else {
 			//Log.e("BlowTorch","LAUNCHING NORMAL MODE!");
 			the_intent = new Intent("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE");
-		}
+		}*/
+		
+		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction",this);
+		the_intent = new Intent(windowAction);
     	the_intent.putExtra("DISPLAY",launch.getDisplayName());
     	the_intent.putExtra("HOST", launch.getHostName());
     	the_intent.putExtra("PORT", launch.getPortString());
@@ -1107,7 +1126,7 @@ public class Launcher extends Activity implements ReadyListener {
 		menu.add(0,99,0,"What's New");
 		menu.add(0,100,0,"Import List");
 		menu.add(0,105,0,"Export List");
-		if(mode == LAUNCH_MODE.TEST) menu.add(0,106,0,"User Name");
+		if(ConfigurationLoader.isTestMode(this)) menu.add(0,106,0,"User Name");
 		
 		return true;
 		
@@ -1198,7 +1217,7 @@ public class Launcher extends Activity implements ReadyListener {
 		return true;
 	}
 	
-    
+	
     
 	private class ConnectionAdapter extends ArrayAdapter<MudConnection> {
 		private ArrayList<MudConnection> items;

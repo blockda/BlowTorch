@@ -1,5 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="hello">Hello World, FreeLauncher!</string>
-    <string name="app_name">BlowTorch</string>
+	<string name="testMode">false</string>
+	<string name="windowAction">com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE</string>
+	<string name="notificationIcon">blowtorch_notification2</string>
+	<string name="serviceProcessName">:stellar_free</string>
+	<string name="serviceBindAction">com.happygoatstudios.bt.service.IStellarService.MODE_NORMAL</string>
+	<string name="ongoingNotificationLabel">BlowTorch Normal</string>
+	<string name="packageName">com.happygoatstudios.bt</string>
 </resources>
