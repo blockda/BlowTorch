@@ -89,7 +89,7 @@ public class HyperSettings {
 	
 	private LINK_MODE hyperLinkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 	private int hyperLinkColor = DEFAULT_HYPERLINK_COLOR;
-	private boolean hyperLinkEnabled = false;
+	private boolean hyperLinkEnabled = true;
 	
 	
 	

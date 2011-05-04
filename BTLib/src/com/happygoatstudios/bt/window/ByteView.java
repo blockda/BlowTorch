@@ -32,6 +32,7 @@ import android.view.animation.CycleInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.EditText;
 
+import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.settings.HyperSettings.LINK_MODE;
 
 public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
@@ -66,7 +67,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	
 	
 	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-	private int linkHighlightColor = 0xFF3333FF;
+	private int linkHighlightColor = HyperSettings.DEFAULT_HYPERLINK_COLOR;
 	
 	Integer selectedColor = new Integer(37);
 	Integer selectedBright = new Integer(0);
