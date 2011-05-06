@@ -2030,7 +2030,7 @@ public class MainWindow extends Activity {
 			//request buffer.
 			try {
 				if(service.hasBuffer()) {
-		
+					setHyperLinkSettings();
 					service.requestBuffer();
 				} else {
 					
@@ -2060,6 +2060,7 @@ public class MainWindow extends Activity {
 		try {
 			if(service.hasBuffer()) {
 				//Log.e("WINDOW","REQUESTING BUFFER");
+				setHyperLinkSettings();
 				service.requestBuffer();
 			} else {
 				//Log.e("WINDOW","SERVICE RESPONDED THAT IT HAS NO BUFFER");
@@ -2102,6 +2103,25 @@ public class MainWindow extends Activity {
 		}
 	}
 	
+	private void setHyperLinkSettings() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		//boolean enabled = prefs.getBoolean("HYPERLINKS_ENABLED", true);
+		//int color = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
+		String hyperLinkMode = prefs.getString("HYPERLINK_MODE", "highlight_color_bland_only");
+		int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
+		//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
+		boolean hyperLinkEnabled = prefs.getBoolean("HYPERLINK_ENABLED", true);
+		//HyperSettings.LINK_MODE mode = HyperSettings.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+		for(HyperSettings.LINK_MODE m : HyperSettings.LINK_MODE.values()) {
+			if(m.getValue().equals(hyperLinkMode)) {
+				screen2.setLinkMode(m);
+			}
+		}
+		
+		screen2.setLinkColor(hyperLinkColor);
+		screen2.setLinksEnabled(hyperLinkEnabled);
+	}
+
 	/*private void calculate80CharFontSize() throws RemoteException {
 		int windowWidth = this.getResources().getDisplayMetrics().widthPixels;
 		if(this.getResources().getDisplayMetrics().heightPixels > windowWidth) {
