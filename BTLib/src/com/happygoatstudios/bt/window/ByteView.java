@@ -266,6 +266,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 			for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
 				if(linkBoxes.get(tmpCount).getBox().contains((int)(float)start_x,(int)(float)start_y)) {
 					touchInLink = tmpCount;
+					buttonaddhandler.removeMessages(MSG_BUTTONDROPSTART);
 				}
 			}
 		}
