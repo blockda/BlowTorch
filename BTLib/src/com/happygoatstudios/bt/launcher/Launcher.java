@@ -12,6 +12,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -27,6 +28,7 @@ import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog.Builder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -89,6 +91,8 @@ public class Launcher extends Activity implements ReadyListener {
 	protected static final int MESSAGE_EXPORT = 3;
 
 	protected static final int MESSAGE_USERNAME = 4;
+
+	protected static final int MESSAGE_DORECOVERY = 5;
 	
 	private ArrayList<MudConnection> connections;
 	private Launcher.ConnectionAdapter apdapter;
@@ -183,6 +187,14 @@ public class Launcher extends Activity implements ReadyListener {
 					break;
 				case MESSAGE_EXPORT:
 					DoExport((String)msg.obj);
+					break;
+				case MESSAGE_DORECOVERY:
+					try {
+						DoRecovery((String)msg.obj);
+					} catch (NameNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					break;
 				default:
 					break;
@@ -949,6 +961,67 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 	}
 	
+	
+	private void DoRecovery(String targetPackage) throws NameNotFoundException {
+		String dir = "/BlowTorch";
+		String backupDir = "/recovered/";
+		
+		Context c = this.createPackageContext(targetPackage, Context.CONTEXT_INCLUDE_CODE|Context.CONTEXT_IGNORE_SECURITY);
+		String targetInstallation = c.getApplicationInfo().dataDir + "/files";
+		//c.get
+		try {
+			File root = Environment.getExternalStorageDirectory();
+			String state = Environment.getExternalStorageState();
+			if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+				//make sure destination directory exists
+				File btdir = new File(root,dir);
+				btdir.mkdir();
+				
+				File backupdir = new File(btdir,backupDir);
+				backupdir.mkdir();
+				
+				//get all the files in the target directory.
+				File harvestDir = new File(targetInstallation);
+				
+				/*InputStream inp = c.openFileInput("blowtorch_launcher_list.xml");
+				byte[] buff = new byte[1024];
+				int len2 = 0;
+				while((len2 = inp.read(buff)) > 0) {
+					Log.e("FOO",new String(buff));
+				}*/
+				//iterate through copying to backup directory.
+				String[] names = harvestDir.list();
+				for(String name : names) {
+					
+					File oldFile = new File(harvestDir,name);
+					File newFile = new File(backupdir,name);
+					
+					InputStream in = new FileInputStream(oldFile);
+					OutputStream out = new FileOutputStream(newFile);
+					//OutputStream out = new 
+					byte[] buf = new byte[1024];
+					int len;
+					while((len = in.read(buf)) > 0) {
+						out.write(buf,0,len);
+					}
+					
+					in.close();
+					out.close();
+					
+				}
+				
+				Toast t = Toast.makeText(this, "Settings copied to: " + backupdir.getAbsolutePath() + "/", Toast.LENGTH_LONG);
+				t.show();
+			} else {
+				Toast t = Toast.makeText(this, "SD Card Unavailabe. Cannot recover settings.", Toast.LENGTH_LONG);
+				t.show();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	private void DoWhatsNew() throws NameNotFoundException { 
 		
 		//get the version information.
@@ -1127,6 +1200,7 @@ public class Launcher extends Activity implements ReadyListener {
 		menu.add(0,100,0,"Import List");
 		menu.add(0,105,0,"Export List");
 		if(ConfigurationLoader.isTestMode(this)) menu.add(0,106,0,"User Name");
+		menu.add(0,107,0,"Recover Settings");
 		
 		return true;
 		
@@ -1209,6 +1283,45 @@ public class Launcher extends Activity implements ReadyListener {
             
             exporter.show();
 
+			break;
+		case 107:
+			//data recovery.
+			//figure out if the release package is installed.
+			/*boolean retailInstalled = false;
+			try {
+				Context c = this.createPackageContext("com.happygoatstudios.bt", Context.CONTEXT_IGNORE_SECURITY|Context.CONTEXT_INCLUDE_CODE);
+				retailInstalled = true;
+			} catch (NameNotFoundException e) {
+				retailInstalled = false;
+			}
+			
+			final String[] names;
+			final String[] values;
+			if(retailInstalled) {
+				names = new String[] {"BlowTorch (Release)", "BlowTorch (Test)" };
+				values = new String[] {"com.happygoatstudios.bt","com.happygoatstudios.bttest"};
+			} else {
+				names = new String[] {"BlowTorch (Test)" };
+				values = new String[] {"com.happygoatstudios.bttest"};
+			}
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setSingleChoiceItems(names, 0, new DialogInterface.OnClickListener() {
+				
+				
+				public void onClick(DialogInterface dialog, int which) {
+					
+					//switch(which) {
+						actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_DORECOVERY,values[which]));
+					//}
+					dialog.dismiss();
+				}
+			});
+			
+			AlertDialog dialog = builder.create();
+			dialog.show();*/
+			actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_DORECOVERY, this.getPackageName()));
+			
 			break;
 		default:
 			break;
