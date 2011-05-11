@@ -3,12 +3,6 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-//import android.util.Log;
-
-//import android.util.Log;
-//import android.util.Log;
-
-
 public class OptionNegotiator {
 	
 	private int columns = 80;

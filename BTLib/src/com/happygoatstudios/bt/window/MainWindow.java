@@ -32,7 +32,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
-import android.util.Log;
+//import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -750,324 +750,7 @@ public class MainWindow extends Activity {
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
 					//TODO: SETTINGS LOAD PLACE
-					if(!isResumed || !screen2.loaded()) {
-						this.sendEmptyMessageDelayed(MESSAGE_LOADSETTINGS, 50);
-						break;
-					}
-					//attemppt to load button sets.
-					@SuppressWarnings("unused")
-					boolean fontSizeChanged = false;
-					//boolean fullscreen_now = false;
-					if(settingsDialogRun) {
-						//so, if we a are here, then the dialog screen has been run.
-						//we need to read in the values and supply them to the service
-						settingsDialogRun = false;
-						//Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
-						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
-						//Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
-						Integer font_size = Integer.parseInt(prefs.getString("FONT_SIZE", "18"));
-						Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
-						Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
-						String font_name = prefs.getString("FONT_NAME", "monospace");
-						boolean process_periods = prefs.getBoolean("PROCESS_PERIOD", true);
-						boolean use_semi = prefs.getBoolean("PROCESS_SEMI", true);
-						boolean use_extractui = prefs.getBoolean("USE_EXTRACTUI", false);
-						boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
-						boolean wifi_keepalive = prefs.getBoolean("WIFI_KEEPALIVE", true);
-						boolean use_suggestions = prefs.getBoolean("USE_SUGGESTIONS", true);
-						boolean keeplast = prefs.getBoolean("KEEPLAST", false);
-						boolean bsbugfix = prefs.getBoolean("BACKSPACE_BUGFIX", false);
-						boolean autolaunch = prefs.getBoolean("AUTOLAUNCH_EDITOR",true);
-						boolean disablecolor = prefs.getBoolean("DISABLE_COLOR", false);
-						String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
-						String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
-						String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
-						String sel_encoding = prefs.getString("ENCODING", "ISO-8859-1");
-						
-						boolean keepscreen = prefs.getBoolean("KEEP_SCREEN_ON",true);
-						boolean localecho = prefs.getBoolean("LOCAL_ECHO",true);
-						boolean bellvibrate = prefs.getBoolean("BELL_VIBRATE",true);
-						boolean bellnotify = prefs.getBoolean("BELL_NOTIFY",false);
-						boolean belldisplay = prefs.getBoolean("BELL_DISPLAY",false);
-						boolean fullscreen_now = prefs.getBoolean("WINDOW_FULLSCREEN", false);
-						boolean roundbutt = prefs.getBoolean("ROUND_BUTTONS",true);
-						
-						int breakvalue = prefs.getInt("BREAK_AMOUNT", 0);
-						int orientationvalue = prefs.getInt("ORIENTATION", 0);
-						boolean wordwrapvalue = prefs.getBoolean("WORD_WRAP", true);
-						
-						boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
-						boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
-						boolean echoaliasupdate = prefs.getBoolean("ECHO_ALIAS_UPDATE", true);
-						String hyperLinkMode = prefs.getString("HYPERLINK_MODE", "highlight_color_bland_only");
-						int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
-						//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
-						boolean hyperLinkEnabled = prefs.getBoolean("HYPERLINK_ENABLED", true);
-						//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
-						
-						try {
-							if(font_size != service.getFontSize()) {
-								fontSizeChanged = true;
-							}
-							
-							service.setFontSize(font_size);
-							service.setFontSpaceExtra(line_space);
-							service.setMaxLines(max_lines);
-							service.setFontName(font_name);
-							service.setProcessPeriod(process_periods);
-							service.setUseExtractUI(use_extractui);
-							service.setThrottleBackground(throttle_background);
-							service.setSemiOption(use_semi);
-							service.setKeepWifiActive(wifi_keepalive);
-							service.setAttemptSuggestions(use_suggestions);
-							service.setKeepLast(keeplast);
-							service.setBackSpaceBugFix(bsbugfix);
-							service.setAutoLaunchEditor(autolaunch);
-							service.setDisableColor(disablecolor);
-							service.setHapticFeedbackMode(overrideHF);
-							service.setHFOnPress(overrideHFPress);
-							service.setHFOnFlip(overrideHFFlip);
-							service.setEncoding(sel_encoding);
-							service.setKeepScreenOn(keepscreen);
-							service.setLocalEcho(localecho);
-							service.setVibrateOnBell(bellvibrate);
-							service.setNotifyOnBell(bellnotify);
-							service.setDisplayOnBell(belldisplay);
-							service.setFullScreen(fullscreen_now);
-							service.setRoundButtons(roundbutt);
-							service.setOrientation(orientationvalue);
-							service.setWordWrap(wordwrapvalue);
-							service.setBreakAmount(breakvalue);
-							service.setRemoveExtraColor(removeextracolor);
-							service.setDebugTelnet(debugtelnet);
-							service.setEchoAliasUpdate(echoaliasupdate);
-							service.setHyperLinkMode(hyperLinkMode);
-							service.setHyperLinkColor(hyperLinkColor);
-							service.setHyperLinkEnabled(hyperLinkEnabled);
-							//service.setShowFitMessage(fitmessage);
-							service.saveSettings();
-						} catch (RemoteException e) {
-							throw new RuntimeException(e);
-						}
-						
-						String importPath = prefs.getString("IMPORT_PATH","");
-						String exportPath = prefs.getString("EXPORT_PATH", "");
-						String defaultSettings = prefs.getString("SETTINGS_TO_DEFAULT", "");
-						
-
-						
-						SharedPreferences.Editor editor = prefs.edit();
-						
-						if(defaultSettings.equals("doit")) {
-							editor.putString("SETTINGS_TO_DEFAULT", "");
-							try {
-								service.resetSettings();
-							} catch (RemoteException e) {
-								throw new RuntimeException(e);
-							}
-						}
-						
-						if(!importPath.equals("")) {
-							try {
-								service.LoadSettingsFromPath(importPath);
-							} catch (RemoteException e) {
-								throw new RuntimeException(e);
-							}
-							editor.putString("IMPORT_PATH", "");
-						}
-						
-						if(!exportPath.equals("")) {
-							//export needed
-							String fullPath = "/BlowTorch/" + exportPath;
-							try {
-								service.ExportSettingsToPath(fullPath);
-							} catch (RemoteException e) {
-								throw new RuntimeException(e);
-							}
-							editor.putString("EXPORT_PATH","");
-						}
-						
-						editor.commit();
-						
-					}
-					
-					
-					try {
-						//calculate80CharFontSize();
-						//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-						String str = service.getHyperLinkMode();
-						for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
-							if(mode.getValue().equals(str)) {
-								screen2.setLinkMode(mode);
-							}
-						}
-						
-						screen2.setLinkColor(service.getHyperLinkColor());
-						
-						screen2.setLinksEnabled(service.isHyperLinkEnabled());
-						
-						if(service.isFullScreen()) {
-						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-						} else {
-							MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-							MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-						}
-
-						MainWindow.this.findViewById(R.id.window_container).requestLayout();
-						isFullScreen = service.isFullScreen();
-						
-						input_box.setKeepScreenOn(service.isKeepScreenOn());
-					
-						
-						screen2.setEncoding(service.getEncoding());
-						
-						screen2.setCullExtraneous(service.isRemoveExtraColor());
-						
-						//int or = MainWindow.this.getRequestedOrientation();
-						switch(service.getOrientation()) {
-						case 0:
-							MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-							break;
-						case 1:
-							MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-							break;
-						case 2:
-							MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-							break;
-						default:
-							break;
-						}
-						screen2.setWordWrap(service.isWordWrap());
-						screen2.setLineBreaks(service.getBreakAmount());
-						
-						//current_button_views.clear();
-						List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
-						
-						RelativeLayout button_layout = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-						
-						int posl = button_layout.indexOfChild(screen2);
-						int countl = button_layout.getChildCount();
-						if(posl == 0) {
-							button_layout.removeViews(1, countl-1);
-						} else {
-							button_layout.removeViews(0,posl);
-							button_layout.removeViews(posl+1,countl - posl);
-						}
-						
-						if(buttons != null) {
-							if(buttons.size() > 0) {
-								for(SlickButtonData button : buttons) {
-									SlickButton tmp = new SlickButton(MainWindow.this,0,0);
-									tmp.setData(button);
-									tmp.setDispatcher(this);
-									tmp.setDeleter(this);
-									//adjust for full screen.
-									if(isFullScreen) {
-										tmp.setFullScreenShift(statusBarHeight);
-									} else {
-										tmp.setFullScreenShift(0);
-									}
-									
-									if(!service.isRoundButtons()) {
-										tmp.setDrawRound(false);
-									}
-									button_layout.addView(tmp);
-									//current_button_views.add(tmp);
-								}
-							} else {
-								makeFakeButton();
-								//show that the loaded set has no buttons.
-								showNoButtonMessage(false);
-							}
-						}
-						
-						//screen2.setFontSize(service.getFontSize());
-						//screen2.setLineSpace(service.getFontSpaceExtra());
-						screen2.setCharacterSizes(service.getFontSize(), service.getFontSpaceExtra());
-						screen2.setMaxLines(service.getMaxLines());
-						
-						//get the font name 
-						String tmpname = service.getFontName();
-						//Typeface font = loadFontFromName(tmpname);
-						
-						screen2.setFont(loadFontFromName(tmpname));
-						
-						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
-						
-						//if(fontSizeChanged) {
-						//	screen2.reBreakBuffer();
-						//}
-						
-						
-						if(service.getUseExtractUI()) {
-							
-							
-							int current = input_box.getImeOptions();
-							int wanted = current & (0xFFFFFFFF^EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-							
-							//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
-							input_box.setImeOptions(wanted);
-							input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
-							BetterEditText better = (BetterEditText)input_box;
-							better.setUseFullScreen(true);
-						} else {
-							int current = input_box.getImeOptions();
-							int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
-							//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
-							input_box.setImeOptions(wanted);
-							if(service.isAttemptSuggestions()) {
-								input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
-							} else {
-								input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
-									
-							}
-							BetterEditText better = (BetterEditText)input_box;
-							better.setUseFullScreen(false);
-							//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
-						}
-						
-						
-						if(service.isKeepLast()) {
-							isKeepLast = true;
-						} else {
-							isKeepLast = false;
-						}
-						
-						//handle auto launch
-						autoLaunch = service.isAutoLaunchEditor();
-						//handle disable color
-						if(service.isDisableColor()) {
-							//set the slick view debug mode to 3.
-							screen2.setColorDebugMode(3);
-						} else {
-							screen2.setColorDebugMode(0);
-						}
-						//handle overridehf.
-						overrideHF = service.HapticFeedbackMode();
-						
-						overrideHFPress = service.getHFOnPress();
-						overrideHFFlip = service.getHFOnFlip();
-						
-						if(service.isBackSpaceBugFix()) {
-							//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
-							BetterEditText tmp_bar = (BetterEditText)input_box;
-							tmp_bar.setBackSpaceBugFix(true);
-						} else {
-							BetterEditText tmp_bar = (BetterEditText)input_box;
-							tmp_bar.setBackSpaceBugFix(false);
-							//Log.e("WINDOW","NOT APPLYING BACK SPACE BUG FIX");
-						}
-						
-						InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-						imm.restartInput(input_box);
-						//imm.
-						//im
-						//get the rest of the window options that are necessary to function
-						
-					} catch (RemoteException e1) {
-						throw new RuntimeException(e1);
-					}
+					loadSettings();
 					break;
 				case ByteView.MSG_DELETEBUTTON:
 					ButtonEditorDialog d = new ButtonEditorDialog(MainWindow.this,R.style.SuperSweetDialog,(SlickButton)msg.obj,this);
@@ -2029,6 +1712,7 @@ public class MainWindow extends Activity {
 		} else {
 			//request buffer.
 			try {
+				loadSettings();
 				if(service.hasBuffer()) {
 					setHyperLinkSettings();
 					service.requestBuffer();
@@ -2039,7 +1723,7 @@ public class MainWindow extends Activity {
 				
 				e2.printStackTrace();
 			}
-			myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
+			//myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
 		}
 		
 		//screen2.resumeDrawing();
@@ -2121,35 +1805,328 @@ public class MainWindow extends Activity {
 		screen2.setLinkColor(hyperLinkColor);
 		screen2.setLinksEnabled(hyperLinkEnabled);
 	}
-
-	/*private void calculate80CharFontSize() throws RemoteException {
-		int windowWidth = this.getResources().getDisplayMetrics().widthPixels;
-		if(this.getResources().getDisplayMetrics().heightPixels > windowWidth) {
-			windowWidth = this.getResources().getDisplayMetrics().heightPixels;
+	
+	private void loadSettings() {
+		//TODO: NEW LOAD SETTINGS PLACE
+		if(!isResumed || !screen2.loaded()) {
+			myhandler.sendEmptyMessageDelayed(MESSAGE_LOADSETTINGS, 50);
+			return;
 		}
-		float fontSize = 8.0f;
-		float delta = 1.0f;
-		Paint p = new Paint();
-		p.setTextSize(8.0f);
-		//p.setTypeface(Typeface.createFromFile(service.getFontName()));
-		p.setTypeface(loadFontFromName(service.getFontName()));
-		boolean done = false;
-		while(!done) {
-			float charWidth = p.measureText("A");
-			float charsPerLine = windowWidth / charWidth;
-			Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
+		//attemppt to load button sets.
+		@SuppressWarnings("unused")
+		boolean fontSizeChanged = false;
+		//boolean fullscreen_now = false;
+		if(settingsDialogRun) {
+			//so, if we a are here, then the dialog screen has been run.
+			//we need to read in the values and supply them to the service
+			settingsDialogRun = false;
+			//Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
+			//Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
+			Integer font_size = Integer.parseInt(prefs.getString("FONT_SIZE", "18"));
+			Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
+			Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
+			String font_name = prefs.getString("FONT_NAME", "monospace");
+			boolean process_periods = prefs.getBoolean("PROCESS_PERIOD", true);
+			boolean use_semi = prefs.getBoolean("PROCESS_SEMI", true);
+			boolean use_extractui = prefs.getBoolean("USE_EXTRACTUI", false);
+			boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
+			boolean wifi_keepalive = prefs.getBoolean("WIFI_KEEPALIVE", true);
+			boolean use_suggestions = prefs.getBoolean("USE_SUGGESTIONS", true);
+			boolean keeplast = prefs.getBoolean("KEEPLAST", false);
+			boolean bsbugfix = prefs.getBoolean("BACKSPACE_BUGFIX", false);
+			boolean autolaunch = prefs.getBoolean("AUTOLAUNCH_EDITOR",true);
+			boolean disablecolor = prefs.getBoolean("DISABLE_COLOR", false);
+			String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
+			String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
+			String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
+			String sel_encoding = prefs.getString("ENCODING", "ISO-8859-1");
 			
-			if(charsPerLine < 80.0f) {
-				done = true;
-			} else {
-				//Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
-				fontSize += delta;
-				p.setTextSize(fontSize);
+			boolean keepscreen = prefs.getBoolean("KEEP_SCREEN_ON",true);
+			boolean localecho = prefs.getBoolean("LOCAL_ECHO",true);
+			boolean bellvibrate = prefs.getBoolean("BELL_VIBRATE",true);
+			boolean bellnotify = prefs.getBoolean("BELL_NOTIFY",false);
+			boolean belldisplay = prefs.getBoolean("BELL_DISPLAY",false);
+			boolean fullscreen_now = prefs.getBoolean("WINDOW_FULLSCREEN", false);
+			boolean roundbutt = prefs.getBoolean("ROUND_BUTTONS",true);
+			
+			int breakvalue = prefs.getInt("BREAK_AMOUNT", 0);
+			int orientationvalue = prefs.getInt("ORIENTATION", 0);
+			boolean wordwrapvalue = prefs.getBoolean("WORD_WRAP", true);
+			
+			boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
+			boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
+			boolean echoaliasupdate = prefs.getBoolean("ECHO_ALIAS_UPDATE", true);
+			String hyperLinkMode = prefs.getString("HYPERLINK_MODE", "highlight_color_bland_only");
+			int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
+			//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
+			boolean hyperLinkEnabled = prefs.getBoolean("HYPERLINK_ENABLED", true);
+			//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
+			
+			try {
+				if(font_size != service.getFontSize()) {
+					fontSizeChanged = true;
+				}
+				
+				service.setFontSize(font_size);
+				service.setFontSpaceExtra(line_space);
+				service.setMaxLines(max_lines);
+				service.setFontName(font_name);
+				service.setProcessPeriod(process_periods);
+				service.setUseExtractUI(use_extractui);
+				service.setThrottleBackground(throttle_background);
+				service.setSemiOption(use_semi);
+				service.setKeepWifiActive(wifi_keepalive);
+				service.setAttemptSuggestions(use_suggestions);
+				service.setKeepLast(keeplast);
+				service.setBackSpaceBugFix(bsbugfix);
+				service.setAutoLaunchEditor(autolaunch);
+				service.setDisableColor(disablecolor);
+				service.setHapticFeedbackMode(overrideHF);
+				service.setHFOnPress(overrideHFPress);
+				service.setHFOnFlip(overrideHFFlip);
+				service.setEncoding(sel_encoding);
+				service.setKeepScreenOn(keepscreen);
+				service.setLocalEcho(localecho);
+				service.setVibrateOnBell(bellvibrate);
+				service.setNotifyOnBell(bellnotify);
+				service.setDisplayOnBell(belldisplay);
+				service.setFullScreen(fullscreen_now);
+				service.setRoundButtons(roundbutt);
+				service.setOrientation(orientationvalue);
+				service.setWordWrap(wordwrapvalue);
+				service.setBreakAmount(breakvalue);
+				service.setRemoveExtraColor(removeextracolor);
+				service.setDebugTelnet(debugtelnet);
+				service.setEchoAliasUpdate(echoaliasupdate);
+				service.setHyperLinkMode(hyperLinkMode);
+				service.setHyperLinkColor(hyperLinkColor);
+				service.setHyperLinkEnabled(hyperLinkEnabled);
+				//service.setShowFitMessage(fitmessage);
+				service.saveSettings();
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
 			}
+			
+			String importPath = prefs.getString("IMPORT_PATH","");
+			String exportPath = prefs.getString("EXPORT_PATH", "");
+			String defaultSettings = prefs.getString("SETTINGS_TO_DEFAULT", "");
+			
+
+			
+			SharedPreferences.Editor editor = prefs.edit();
+			
+			if(defaultSettings.equals("doit")) {
+				editor.putString("SETTINGS_TO_DEFAULT", "");
+				try {
+					service.resetSettings();
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			
+			if(!importPath.equals("")) {
+				try {
+					service.LoadSettingsFromPath(importPath);
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				editor.putString("IMPORT_PATH", "");
+			}
+			
+			if(!exportPath.equals("")) {
+				//export needed
+				String fullPath = "/BlowTorch/" + exportPath;
+				try {
+					service.ExportSettingsToPath(fullPath);
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				editor.putString("EXPORT_PATH","");
+			}
+			
+			editor.commit();
+			
 		}
-		Log.e("WINDOW",String.format("FINISHED: font size %.2f", (fontSize-delta)));
 		
-	}*/
+		
+		try {
+			//calculate80CharFontSize();
+			//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+			String str = service.getHyperLinkMode();
+			for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
+				if(mode.getValue().equals(str)) {
+					screen2.setLinkMode(mode);
+				}
+			}
+			
+			screen2.setLinkColor(service.getHyperLinkColor());
+			
+			screen2.setLinksEnabled(service.isHyperLinkEnabled());
+			
+			if(service.isFullScreen()) {
+			    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+			} else {
+				MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+				MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			}
+
+			MainWindow.this.findViewById(R.id.window_container).requestLayout();
+			isFullScreen = service.isFullScreen();
+			EditText input_box = (EditText)findViewById(R.id.textinput);
+			input_box.setKeepScreenOn(service.isKeepScreenOn());
+		
+			
+			screen2.setEncoding(service.getEncoding());
+			
+			screen2.setCullExtraneous(service.isRemoveExtraColor());
+			
+			//int or = MainWindow.this.getRequestedOrientation();
+			switch(service.getOrientation()) {
+			case 0:
+				MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+				break;
+			case 1:
+				MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+				break;
+			case 2:
+				MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+				break;
+			default:
+				break;
+			}
+			screen2.setWordWrap(service.isWordWrap());
+			screen2.setLineBreaks(service.getBreakAmount());
+			
+			//current_button_views.clear();
+			List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
+			
+			RelativeLayout button_layout = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
+			
+			int posl = button_layout.indexOfChild(screen2);
+			int countl = button_layout.getChildCount();
+			if(posl == 0) {
+				button_layout.removeViews(1, countl-1);
+			} else {
+				button_layout.removeViews(0,posl);
+				button_layout.removeViews(posl+1,countl - posl);
+			}
+			
+			if(buttons != null) {
+				if(buttons.size() > 0) {
+					for(SlickButtonData button : buttons) {
+						SlickButton tmp = new SlickButton(MainWindow.this,0,0);
+						tmp.setData(button);
+						tmp.setDispatcher(myhandler);
+						tmp.setDeleter(myhandler);
+						//adjust for full screen.
+						if(isFullScreen) {
+							tmp.setFullScreenShift(statusBarHeight);
+						} else {
+							tmp.setFullScreenShift(0);
+						}
+						
+						if(!service.isRoundButtons()) {
+							tmp.setDrawRound(false);
+						}
+						button_layout.addView(tmp);
+						//current_button_views.add(tmp);
+					}
+				} else {
+					makeFakeButton();
+					//show that the loaded set has no buttons.
+					showNoButtonMessage(false);
+				}
+			}
+			
+			//screen2.setFontSize(service.getFontSize());
+			//screen2.setLineSpace(service.getFontSpaceExtra());
+			screen2.setCharacterSizes(service.getFontSize(), service.getFontSpaceExtra());
+			screen2.setMaxLines(service.getMaxLines());
+			
+			//get the font name 
+			String tmpname = service.getFontName();
+			//Typeface font = loadFontFromName(tmpname);
+			
+			screen2.setFont(loadFontFromName(tmpname));
+			
+			service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
+			
+			//if(fontSizeChanged) {
+			//	screen2.reBreakBuffer();
+			//}
+			
+			
+			if(service.getUseExtractUI()) {
+				
+				
+				int current = input_box.getImeOptions();
+				int wanted = current & (0xFFFFFFFF^EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+				
+				//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
+				input_box.setImeOptions(wanted);
+				input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				BetterEditText better = (BetterEditText)input_box;
+				better.setUseFullScreen(true);
+			} else {
+				int current = input_box.getImeOptions();
+				int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+				//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
+				input_box.setImeOptions(wanted);
+				if(service.isAttemptSuggestions()) {
+					input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				} else {
+					input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+						
+				}
+				BetterEditText better = (BetterEditText)input_box;
+				better.setUseFullScreen(false);
+				//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
+			}
+			
+			
+			if(service.isKeepLast()) {
+				isKeepLast = true;
+			} else {
+				isKeepLast = false;
+			}
+			
+			//handle auto launch
+			autoLaunch = service.isAutoLaunchEditor();
+			//handle disable color
+			if(service.isDisableColor()) {
+				//set the slick view debug mode to 3.
+				screen2.setColorDebugMode(3);
+			} else {
+				screen2.setColorDebugMode(0);
+			}
+			//handle overridehf.
+			overrideHF = service.HapticFeedbackMode();
+			
+			overrideHFPress = service.getHFOnPress();
+			overrideHFFlip = service.getHFOnFlip();
+			
+			if(service.isBackSpaceBugFix()) {
+				//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
+				BetterEditText tmp_bar = (BetterEditText)input_box;
+				tmp_bar.setBackSpaceBugFix(true);
+			} else {
+				BetterEditText tmp_bar = (BetterEditText)input_box;
+				tmp_bar.setBackSpaceBugFix(false);
+				//Log.e("WINDOW","NOT APPLYING BACK SPACE BUG FIX");
+			}
+			
+			InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.restartInput(input_box);
+			//imm.
+			//im
+			//get the rest of the window options that are necessary to function
+			
+		} catch (RemoteException e1) {
+			throw new RuntimeException(e1);
+		}
+	}
 	
 	private Typeface loadFontFromName(String name) {
 		Typeface font = Typeface.MONOSPACE;
