@@ -16,8 +16,7 @@ import java.util.zip.Inflater;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-//import android.util.Log;
-//import android.util.Log;
+
 
 
 public class DataPumper extends Thread {

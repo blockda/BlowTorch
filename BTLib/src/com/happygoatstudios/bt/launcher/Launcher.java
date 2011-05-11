@@ -52,11 +52,7 @@ import android.text.SpannableString;
 import android.text.format.Time;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-//import android.util.Log;
-//import android.util.Log;
-import android.util.Log;
 import android.util.TimeFormatException;
-//import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -119,7 +115,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		Log.e("LAUNCHER","Launched from package: " + this.getPackageName());
+		//Log.e("LAUNCHER","Launched from package: " + this.getPackageName());
 		//determine launch mode
 		//Intent intent = this.getIntent();
 		launcher_source = this.getIntent().getStringExtra("LAUNCH_MODE");
