@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
-//import android.util.Log;
+
 
 public class Colorizer {
 	

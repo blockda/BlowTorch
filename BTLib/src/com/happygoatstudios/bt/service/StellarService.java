@@ -60,16 +60,6 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
-
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
@@ -194,7 +184,7 @@ public class StellarService extends Service {
 		//if(this.getApplicationContext().getIn)
 		
 		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
-		Log.e("SERV","Service started in package: " + this.getPackageName());
+		//Log.e("SERV","Service started in package: " + this.getPackageName());
 		//this.
 		//set up the crash reporter
 		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
@@ -1003,7 +993,7 @@ public class StellarService extends Service {
 			
 			int count = callbacks.beginBroadcast();
 			callbacks.finishBroadcast();
-			Log.e("SERVICE","REGISTERED CALLBACK, COUNT NOW: " + count);
+			//Log.e("SERVICE","REGISTERED CALLBACK, COUNT NOW: " + count);
 			sendInitOk();
 			doThrottleBackground();
 		}
