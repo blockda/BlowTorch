@@ -197,61 +197,9 @@ public class MainWindow extends Activity {
 		
 	};
 	
-	Pattern newline = Pattern.compile("\n");
-	//Pattern newline = Pattern.compile("[\\x0D][\\x0A]");
-
-	public Bundle CountNewLine(String ISOLATINstring,int maxlines) {
-		
-		Matcher match = newline.matcher(ISOLATINstring);
-		
-		int prunelocation = 0;
-		int numberfound = 0;
-		//boolean found = false;
-		while(match.find()) {
-			numberfound++;	
-		}
-		
-		
-		
-		if(numberfound > maxlines) {
-			int numtoprune = numberfound - maxlines;
-			match.reset();
-			for(int i = 0;i < numtoprune;i++) {
-				if(match.find()) { //shouldalways be true
-					prunelocation = match.start();
-				}
-			}
-			//by the time we are here, the prunelocation is known
-		}
-		//LOG.e("WINDOW","FOUND: " + numberfound + " with prune location at: " + prunelocation);
-		
-		Bundle dat = new Bundle();
-		dat.putInt("TOTAL", numberfound);
-		dat.putInt("PRUNELOC", prunelocation);
-		
-		return dat;
-	}
-	
-	//public boolean finishStart = true;
-	
-
-	//private int statusBarHeight = 1;
-	
-	//LAUNCH_MODE mode = LAUNCH_MODE.FREE;
-	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		//Log.e("BlowTorch","INTENT: " + this.getIntent().getAction());
-		/*if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
-			//Log.e("BlowTorch","Free/Pro mode launch");
-			mode = LAUNCH_MODE.FREE;
-		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
-			//Log.e("BlowTorch","Test mode launch");
-			mode = LAUNCH_MODE.TEST;
-			
-			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
-			
-		}*/
+		
 		if(ConfigurationLoader.isTestMode(this)) {
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		}
@@ -1217,7 +1165,7 @@ public class MainWindow extends Activity {
 		
 	}
 	
-	RotatableDialog d = null;
+	//RotatableDialog d = null;
 	
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {

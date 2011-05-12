@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -44,7 +43,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -75,32 +73,21 @@ import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerExtraTask;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.trigger.TriggerData;
-import com.happygoatstudios.bt.window.ByteView;
 
 import dalvik.system.PathClassLoader;
 
 
 public class StellarService extends Service {
 
-	//LAUNCH_MODE mode = LAUNCH_MODE.FREE;
 	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IStellarServiceCallback> callbacks = new RemoteCallbackList<IStellarServiceCallback>();
-	
 	HyperSettings the_settings = new HyperSettings();
-	
 	NotificationManager mNM;
-	
 	OutputStream output_writer = null;
-	
-	//OutputWriter outputter = null;
-	
 	Processor the_processor = null;
-	
 	Object sendlock = new Object();
-	
 	protected int bindCount = 0;
-	
 	InetAddress the_addr = null;
 	String host;
 	int port;
@@ -108,13 +95,9 @@ public class StellarService extends Service {
 	final int BAD_PORT = 999999;
 	final String BAD_HOST = "NOTSETYET";
 	Socket the_socket = null;
-	
 	DataPumper pump = null;
-	
 	Handler myhandler = null;
-	
 	public int trigger_count = 5555;
-	
 	final static public int MESSAGE_PROCESS = 102;
 	final static public int MESSAGE_INIT = 100;
 	final static public int MESSAGE_END = 101;
@@ -124,7 +107,6 @@ public class StellarService extends Service {
 	final static public int MESSAGE_SENDDATA = 106;
 	final static public int MESSAGE_REQUESTBUFFER = 107;
 	final static public int MESSAGE_CHECKIFALIVE = 109;
-
 	protected static final int MESSAGE_SAVEBUFFER = 108;
 	protected static final int MESSAGE_SENDOPTIONDATA = 110;
 	private static final int MESSAGE_DOFINALDISPATCH = 121;
@@ -146,16 +128,10 @@ public class StellarService extends Service {
 	public static final int MESSAGE_DEBUGTELNET = 509;
 	protected static final int MESSAGE_DOBUTTONRELOAD = 510;
 	public static final int MESSAGE_MCCPFATALERROR = 511;
-	
 	public boolean sending = false;
-	
-	//StringBuffer the_buffer = new StringBuffer();
 	String settingslocation = "test_settings2.xml";
 	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
-	
-	//private boolean compressionStarting = false;
-	
-	//need some goodies to track running timers.
+
 	Timer the_timer = new Timer("BLOWTORCH_TIMER",true);
 	HashMap<String,TimerExtraTask> timerTasks = new HashMap<String,TimerExtraTask>();
 	
@@ -168,49 +144,32 @@ public class StellarService extends Service {
 			//Log.e("SERVICE","onStartCommand passed null intent");
 			return Service.START_STICKY;
 		}
-		//Log.e("SERVICE",intent.getAction());
-		//if(intent.getAction().equals("com.happygoatstudios.bt.service.IStellarService.MODE_TEST")) {
-			//Log.e("SERVICE","STARTING IN TEST MODE");
-			//mode=LAUNCH_MODE.TEST;
-			//TODO: CRASH HANDLER NOW PROGRAMATICALLY DEFINED!
-			if(ConfigurationLoader.isTestMode(this.getApplicationContext())) {
-				Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
-			}
-		//}
+		
+		if(ConfigurationLoader.isTestMode(this.getApplicationContext())) {
+			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+		}
+		
 		return Service.START_STICKY;
 	}
 	
 	public void onCreate() {
-		//if(this.getApplicationContext().getIn)
-		
-		//called when we are created from a startService or bindService call with the IBaardTERMService interface intent.
-		//Log.e("SERV","Service started in package: " + this.getPackageName());
-		//this.
-		//set up the crash reporter
-		//TODO: REMOVE THE CRASH HANDLER BEFORE RELEASES.
-		//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
 		host = BAD_HOST;
 		port = BAD_PORT;
 		
-		//load special commands.
+		
 		ColorDebugCommand colordebug = new ColorDebugCommand();
-		//BrokenColor brokencolor = new BrokenColor();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
 		TimerCommand timercmd = new TimerCommand();
-		//EncCommand enccmd = new EncCommand();
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
 		SpeedwalkCommand swcmd = new SpeedwalkCommand();
-		//LineBreakCommand lccmd = new LineBreakCommand();
-		//DataCorrupterCommand crcmd = new DataCorrupterCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
-		//specialcommands.put(brokencolor.commandName,brokencolor);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
 		specialcommands.put(bellcmd.commandName, bellcmd);
@@ -220,12 +179,7 @@ public class StellarService extends Service {
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
 		specialcommands.put(swcmd.commandName, swcmd);
-		//specialcommands.put(lccmd.commandName, lccmd);
-		//specialcommands.put(crcmd.commandName, crcmd);
-		//specialcommands.put(enccmd.commandName, enccmd);
 		
-		
-		//Looper.prepare();
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
 		settingslocation = prefs.getString("SETTINGS_PATH", "");
 		if(settingslocation.equals("")) {
@@ -237,7 +191,6 @@ public class StellarService extends Service {
 		Matcher replacebadchars = invalidchars.matcher(settingslocation);
 		String prefsname = replacebadchars.replaceAll("");
 		prefsname = prefsname.replaceAll("/", "");
-		//Log.e("SERVICE","Attempting to load "+ prefsname);
 		settingslocation = prefsname + ".xml";
 		loadXmlSettings(prefsname +".xml");
 		
@@ -266,23 +219,17 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_MCCPFATALERROR:
-					//killNetThreads();
-					//DoDisconnect("MCCP Data Corruption, Click to reconnect.");
-					//isConnected = false;
 					Message endCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
 					Bundle eb = endCompress.getData();
 					byte[] ec_neg = new byte[] { TC.IAC , TC.DONT , TC.COMPRESS2 };
 					eb.putByteArray("THE_DATA", ec_neg);
-					//eb.putString("DEBUG_MESSAGE", "\nIAC DONT COMPRESS2 - Sent\n");
 					endCompress.setData(eb);
 					this.sendMessage(endCompress);
 					try {
 						StellarService.this.doDispatchNoProcess(new String("\n\n" + Colorizer.colorRed + "MCCP Data Format Error - Attempting to restart MCCP\nSome data may be lost. Reconnect if compression is not restarted automatically." + Colorizer.colorWhite + "\n\n").getBytes(the_settings.getEncoding()));
 					} catch (RemoteException e4) {
-						// TODO Auto-generated catch block
 						e4.printStackTrace();
 					} catch (UnsupportedEncodingException e4) {
-						// TODO Auto-generated catch block
 						e4.printStackTrace();
 					}
 					//Message startCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
@@ -428,13 +375,11 @@ public class StellarService extends Service {
 					
 					break;
 				case MESSAGE_TIMERFIRED:
-					//Log.e("SERVICE","TIMER " + msg.arg1 + " FIRED!");
 					String ordinal = Integer.toString(msg.arg1);
 					DoTimerResponders(ordinal);
 					TimerData td = the_settings.getTimers().get(ordinal);
 					if(td != null) {
 						if(!td.isRepeat()) {
-							//need to make sure the timerTask is cancelled
 							TimerExtraTask tt = timerTasks.remove(ordinal);
 							tt.cancel();
 							the_timer.purge();
@@ -459,11 +404,8 @@ public class StellarService extends Service {
 					doThrottleBackgroundImpl();
 					break;
 				case MESSAGE_COMPRESSIONREQUESTED:
-					//compressionStarting = true;
 					break;
 				case MESSAGE_INIT:
-					//Log.e("BTSERVICE","INTIIALIZING");
-					
 					try {
 						doStartup();
 					} catch (UnknownHostException e) {
@@ -477,7 +419,6 @@ public class StellarService extends Service {
 					
 					break;
 				case MESSAGE_END:
-					//Log.e("BTSERVICE","ENDING");
 					pump.stop();
 					doShutdown();
 					break;
@@ -491,53 +432,38 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_DOFINALDISPATCH:
-					//Log.e("BTSERVICE","FINAL DISPATCH");
-					//if(compressionStarting) {
-					//	this.sendMessageDelayed(Message.obtain(msg), 10); //re-send this message for processing until compress is turned on.
-					//} else {
 					try {
 						dispatchFinish((byte[])msg.obj);
 					} catch (UnsupportedEncodingException e3) {
-						// TODO Auto-generated catch block
 						e3.printStackTrace();
 					}
-					//}
 					break;
 				case MESSAGE_SETDATA:
-					//Log.e("BTSERVICE","SETTING DISPLAY DATA!");
 					host = msg.getData().getString("HOST");
 					port = msg.getData().getInt("PORT");
 					display = msg.getData().getString("DISPLAY");					
 					showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
-					//Log.e("BTSERVICE","STARTING COMPRESSION!");
-					//compressionStarting = false;
 					pump.getHandler().sendMessage(pump.getHandler().obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
 				case MESSAGE_SENDOPTIONDATA:
-					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex((byte[])msg.obj));
 					Bundle b = msg.getData();
 					byte[] obytes = b.getByteArray("THE_DATA");
-					//Log.e("BTSERVICE","SENDING OPTION DATA: " + DataPumper.toHex(obytes));
 					String message = b.getString("DEBUG_MESSAGE");
 					if(message != null) {
 						try {
 							doDispatchNoProcess(message.getBytes(the_settings.getEncoding()));
 						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						} catch (UnsupportedEncodingException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
 					
 					try {
-						//if(obytes == null) Log.e("SERVICE","NULL BYTES");
-						//if(output_writer == null) Log.e("SERVICE","NULL WRITER");
 						if(output_writer != null) {
 							output_writer.write(obytes);
 							output_writer.flush();
@@ -545,81 +471,21 @@ public class StellarService extends Service {
 					} catch (IOException e2) {
 						throw new RuntimeException(e2);
 					}
-					//Log.e("BTSERVICE","DONE SENDING");
-					
 					break;
 				case MESSAGE_SENDDATA:
-					//Log.e("BTSERVICE","SENDING NORMAL DATA");
-					//byte[] bytes = msg.getData().getByteArray("THEDATA");
-					
 					
 					byte[] bytes = (byte[]) msg.obj;
 					
-					//test call
 					Data d = null;
 					try {
 						d = ProcessOutputData(new String(bytes,the_settings.getEncoding()));
 					} catch (UnsupportedEncodingException e2) {
-						// TODO Auto-generated catch block
 						e2.printStackTrace();
 					}
 					
 					if(d == null) {
 						return;
 					}
-					
-					
-					
-					/*
-					//dispatch this for command processing
-					String retval = null;
-					try {
-						retval = ProcessCommands(new String(bytes,the_settings.getEncoding()));
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-					}
-					if(retval == null || retval.equals("")) {
-						//command was intercepted. do nothing for now and return
-						//Log.e("SERVICE","CONSUMED ALL COMMANDS");
-						return;
-					} else {
-						//not a command data.
-						try {
-							//Log.e("SERVICE","PROCESSED COMMANDS AND WAS LEFT WITH:" + retval);
-							if(retval.equals("")) { return; }
-							bytes = retval.getBytes(the_settings.getEncoding());
-						} catch (UnsupportedEncodingException e) {
-							throw new RuntimeException(e);
-						}
-					}
-					//do search and replace with aliases.
-					bytes = DoAliasReplacement(bytes);
-					
-					//strip semi
-					Character cr = new Character((char)13);
-					Character lf = new Character((char)10);
-					String crlf = cr.toString() + lf.toString();
-					byte[] preserve = bytes;
-					String tostripsemi = null;
-					try {
-						tostripsemi = new String(bytes,the_settings.getEncoding());
-					} catch (UnsupportedEncodingException e1) {
-						throw new RuntimeException(e1);
-					}
-					*/
-					
-					/*synchronized(the_settings) {
-						if(the_settings.isSemiIsNewLine()) {
-							nosemidata = tostripsemi.replace(";", crlf);
-						} else {
-							nosemidata = tostripsemi;
-						}
-					}*/
-					//nosemidata = nosemidata.concat(crlf);
-					
-					//now we have an extra step, we have to police all outbound data for the IAC character.
-					//if it appears, we must double it.
-					
 					
 					String nosemidata = null;
 					try {
@@ -646,7 +512,6 @@ public class StellarService extends Service {
 							buf.rewind();
 							buf.get(tosend,0,count);
 							
-							//Log.e("SERVICE","WRITE: "+nosemidata);
 							if(output_writer != null) {
 								output_writer.write(tosend);
 								output_writer.flush();
@@ -680,7 +545,6 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_REQUESTBUFFER:
-					//Log.e("BTSERVICE","SENDING REQUESTED BUFFER");
 					try {
 						sendBuffer();
 					} catch (RemoteException e) {
@@ -691,15 +555,8 @@ public class StellarService extends Service {
 					try {
 						buffer_tree.addBytesImpl((byte[])msg.obj);
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					
-					//TODO: old stuff
-					//the_buffer = new StringBuffer((String)msg.obj + the_buffer);
-					//bufferLineCount = 0;
-					//bufferLineCount = the_buffer.toString().split("\n").length;
-					//Log.e("SERVICE","SAVING BUFFER " + bufferLineCount + " lines, " +the_buffer.toString().length() + " bytes.");
 					break;
 				default:
 					break;	
@@ -990,10 +847,7 @@ public class StellarService extends Service {
 					hasListener = isWindowShowing();
 				}
 			}
-			
-			int count = callbacks.beginBroadcast();
-			callbacks.finishBroadcast();
-			//Log.e("SERVICE","REGISTERED CALLBACK, COUNT NOW: " + count);
+
 			sendInitOk();
 			doThrottleBackground();
 		}
@@ -1804,8 +1658,6 @@ public class StellarService extends Service {
 					ordinal = ordinal+1;
 				}
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-				//remove this from the clock manager / stop it before removing it.
-				//the_settings.getTimers().remove(deltimer.getOrdinal().toString());
 			}
 		}
 
@@ -1847,33 +1699,15 @@ public class StellarService extends Service {
 					timer.setPlaying(true);
 				
 					timer.setTTF(timer.getSeconds()*1000 - (now - started));
-					
-					//what we are lookin for is the progress and time left.
 					TimerProgress p = new TimerProgress();
 					p.setTimeleft(timer.getTTF());
-					//p.set
 					p.setState(TimerProgress.STATE.PLAYING);
 					p.setPercentage(((float)timer.getTTF()/1000)/((float)timer.getSeconds()));
 					tmp.put(timer.getOrdinal().toString(), p);
 					
 				} else {
-					/*if(timer.getTTF() != timer.getSeconds()*1000) {
-						TimerProgress paused = new TimerProgress();
-						paused.setState(TimerProgress.STATE.PAUSED);
-						paused.setPercentage(((float)timer.getTTF()/1000)/((float)timer.getSeconds()));
-						paused.setTimeleft(timer.getTTF());
-						tmp.put(timer.getOrdinal().toString(), paused);
-						
-					} else {
-						TimerProgress stopped = new TimerProgress();
-						stopped.setState(TimerProgress.STATE.STOPPED);
-						stopped.setTimeleft(timer.getSeconds()*1000);
-						stopped.setPercentage(100);
-						tmp.put(timer.getOrdinal().toString(), stopped);
-					}*/
 					
 				}
-				//Log.e("SERVICE","SERVICE SENDING TIMER WITH " + timer.getSeconds().toString() + " SECONDS.");
 			}
 			
 			return tmp;
@@ -1993,8 +1827,6 @@ public class StellarService extends Service {
 		}
 
 		public boolean hasBuffer() throws RemoteException {
-			//TODO: old stuff
-			//if(the_buffer.length() > 0) {
 			if(buffer_tree.getBrokenLineCount() > 0) {
 				return true;
 			} else {
@@ -2126,15 +1958,15 @@ public class StellarService extends Service {
 			}
 		}
 
+		@SuppressWarnings("rawtypes")
 		public Map getDirectionData() throws RemoteException {
-			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				return the_settings.getDirections();
 			}
 		}
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void setDirectionData(Map data) throws RemoteException {
-			// TODO Auto-generated method stub
 			synchronized(the_settings) {
 				the_settings.setDirections((HashMap<String,DirectionData>)data);
 			}
@@ -2533,7 +2365,6 @@ public class StellarService extends Service {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			callbacks.getBroadcastItem(i).loadSettings();
-			//notify listeners that data can be read
 		}
 		callbacks.finishBroadcast();
 	}
@@ -2542,7 +2373,6 @@ public class StellarService extends Service {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			callbacks.getBroadcastItem(i).displayXMLError(error);
-			//notify listeners that data can be read
 		}
 		callbacks.finishBroadcast();
 	}
@@ -2553,37 +2383,19 @@ public class StellarService extends Service {
 		
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
-			//callbacks.getBroadcastItem(i).dataIncoming(data);
-			//callbacks.getBroadcastItem(i).processedDataIncoming(the_buffer);
-			//Log.e("SERV","BUFFERED DATA REQUESTED. Delivering: " + the_buffer.toString().length() + " characters.");
-			//TODO: old stuff
-			//callbacks.getBroadcastItem(i).rawBufferIncoming(the_buffer.toString());
-			
 			callbacks.getBroadcastItem(i).rawBufferIncoming(buf);
 		}
 		
 		callbacks.finishBroadcast();
 		
-		//Log.e("SERV","BUFFERED DATA REQUESTED. Delivered and cleared.");
 		if( N < 1) {
-			//has no listeners
-			//Log.e("SERV","CANNOT SEND BUFFER, NO LISTENERS, TRYING AGAIN");
 			myhandler.sendEmptyMessageDelayed(MESSAGE_REQUESTBUFFER,100);
 			try {
 				buffer_tree.addBytesImpl(buf);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} else {
-			//if(buffer_tree != null) {
-			//	buffer_tree.
-			//}
-			//if(the_buffer != null) {
-			//	the_buffer.setLength(0);
-				//the_buffer.clearSpans();
-			//}
-		}
+		} 
 	}
 	
 	Pattern trigger_regex = Pattern.compile("");
@@ -3249,69 +3061,6 @@ public class StellarService extends Service {
 		}
 	}
 	
-	private class DataCorrupterCommand extends SpecialCommand {
-		public DataCorrupterCommand() {
-			this.commandName = "corrupt";
-		}
-		
-		public Object execute(Object o) {
-			pump.corruptMe();
-			return null;
-		}
-	}
-	
-	private class LineBreakCommand extends SpecialCommand {
-		
-		
-		
-		public LineBreakCommand() {
-			this.commandName = "linebreak";
-		}
-		public Object execute(Object o) {
-			
-			//format: .linebreak [none]|[number]
-			String str = (String)o;
-			
-			
-			
-			Pattern argm = Pattern.compile("none|\\d+");
-			Matcher arg = argm.matcher(str);
-			if(arg.find()){
-				int breakat = 0;
-				try{
-					breakat = Integer.parseInt(str);
-					if(breakat < 1) {
-						//must be positive and greater than 0
-					} else {
-						//succeed
-						DoBreakAt(breakat);
-					}
-				} catch (NumberFormatException e) {
-					if(str.equals("none")) {
-						breakat=0;
-						//succeed
-						DoBreakAt(0);
-					} else {
-						//invalid argument.
-					}
-				}
-			}
-			//
-			return null;
-			
-			//myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
-			//String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
-			//try {
-			//	doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
-			//} catch (RemoteException e) {
-			//	throw new RuntimeException(e);
-			//} catch (UnsupportedEncodingException e) {
-			//	throw new RuntimeException(e);
-			//}
-			
-		}
-	}
-	
 	private class SpeedwalkCommand extends SpecialCommand {
 		
 		
@@ -3348,11 +3097,8 @@ public class StellarService extends Service {
 				return null;
 				
 			}
-			
-			int runlength = 1;
-			int place =0;
+
 			StringBuffer buf = new StringBuffer();
-			int counted = 0;
 			boolean commanding = false;
 			LinkedList<Integer> runtable = new LinkedList<Integer>();
 			for(int i=0;i<str.length();i++) {
@@ -3485,44 +3231,8 @@ public class StellarService extends Service {
 						}
 					}
 				}
-				//counted++;
 			}
 			
-			//if we are here, then we have traversed the input string and have the generated command in the buf.
-			//Log.e("BlowTorch","RUN COMMAND: " + buf.toString());
-			//if(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
-			//	synchronized(sendlock) {
-			//		while(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
-			//			try {
-			//				sendlock.wait();
-			//			} catch (InterruptedException e) {
-			//				throw new RuntimeException(e);
-			//			}
-			//		}
-			//	}
-			//}
-			/*Message msg = null;
-			try {
-				//String tmp = buf.toString();
-				//String tmp2 = tmp.substring(0, tmp.length()-1);
-				msg = myhandler.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
-				Bundle b = msg.getData();
-				b.putByteArray("THE_DATA", buf.toString().getBytes(the_settings.getEncoding()));
-				msg.setData(b);
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			myhandler.sendMessage(msg);
-			
-			try {
-				doDispatchNoProcess((".run " + str +"\n").getBytes(the_settings.getEncoding()));
-			} catch (RemoteException ef) {
-				ef.printStackTrace();
-			} catch (UnsupportedEncodingException ea) {
-				throw new RuntimeException(ea);
-			}*/
-			//buf.deleteCharAt(location)
 			Data d = new Data();
 			d.cmdString = buf.toString();
 			d.cmdString = d.cmdString.substring(0, d.cmdString.length()-2); //strip trailing crlf
@@ -3539,7 +3249,6 @@ public class StellarService extends Service {
 			try {
 				result = callbacks.getBroadcastItem(i).isWindowShowing();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -3548,7 +3257,7 @@ public class StellarService extends Service {
 		return result;
 	}
 	
-	private void DoBreakAt(int pLines) {
+	/*private void DoBreakAt(int pLines) {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			try {
@@ -3559,7 +3268,7 @@ public class StellarService extends Service {
 			//notify listeners that data can be read
 		}
 		callbacks.finishBroadcast();
-	}
+	}*/
 	
 	private String getErrorMessage(String arg1,String arg2) {
 		
@@ -3575,7 +3284,7 @@ public class StellarService extends Service {
 	
 	
 	
-	Colorizer colorer = new Colorizer();
+	//Colorizer colorer = new Colorizer();
 	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
 	StringBuffer regexp_test = new StringBuffer();
 	Vector<String> test_set = new Vector<String>();
@@ -3623,72 +3332,23 @@ public class StellarService extends Service {
 			}
 		}
 		callbacks.finishBroadcast();
+		buffer_tree.addBytesImplSimple(rawData);
+		buffer_tree.prune();
 		
-		//if(callbacks.)
-		//if(final_count == 0) {
-			//someone isnt listening so save the buffer
-			//bufferLineCount += rawData.split("\n").length;
-			//Log.e("SERVICE","FOUND:" + bufferLineCount);
-			//try {
-				buffer_tree.addBytesImplSimple(rawData);
-			//} catch (UnsupportedEncodingException e) {
-			//	// TODO Auto-generated catch block
-			//	e.printStackTrace();
-			//}
-			buffer_tree.prune();
-			//Log.e("SERV","No listeners, buffering data.");
-			//appended data, trim the buffer.
-			/*if(bufferLineCount > the_settings.getMaxLines()) {
-				//trim from the front.
-				bufferLineMatch.reset(the_buffer);
-				//the_buffer.setLength(0);
-				tempBuffer.setLength(0);
-				int trimmed =0;
-				while(bufferLineMatch.find()) {
-					
-					if((bufferLineCount - trimmed) > the_settings.getMaxLines()) {
-						bufferLineMatch.appendReplacement(tempBuffer, "");
-						//Log.e("SERVICE","TRIMMING: " + bufferLineMatch.group(0).length());
-						trimmed++;
-						//Log.e("SERVICE","TRIMMING LINE FROM BUFFER");
-					} else {
-						bufferLineMatch.appendReplacement(tempBuffer, bufferLineMatch.group(0));
-					}
-				}
-				bufferLineMatch.appendTail(tempBuffer);
-				the_buffer.setLength(0);
-				the_buffer.append(tempBuffer);
-				//Log.e("SERVICE","TRIMMED " + trimmed + " FROM BUFFER NOW " + the_buffer.toString().length() + " bytes.");
-				bufferLineCount = the_settings.getMaxLines();
-			}*/
-			
-		//} else {
-			//someone is listening so save the buffer.
-		//	buffer_tree.empty();
-			//the_buffer.clearSpans();
-			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
-		//}
-		
-		//IDLE:  "Your eyes glaze over."
-		//REQU:  "QUEST: You may now quest again."
 		if(trigger_string.length() < 1) {
 			return; //return without processing, if there are no triggers.
 		}
 		
-		//Matcher stripcolor = colordata.matcher(new String(rawData,the_settings.getEncoding()));
 		colorStripper = colorStripper.reset(new String(rawData,the_settings.getEncoding()));
 		regexp_test.append(colorStripper.replaceAll(""));
 		
 		boolean rebuildTriggers = false;
-		//test the de-colorized data against registered patterns.
 		
 		if(has_triggers) {
 			
 			trigger_matcher.reset(regexp_test);
 			hasListener = isWindowShowing();
 			while(trigger_matcher.find()) {
-				//so if we found something here, we triggered.
-				//Log.e("SERVICE","TRIGGERPARSE FOUND" + trigger_matcher.group(0));
 				TriggerData triggered = the_settings.getTriggers().get(trigger_matcher.group(0));
 				if(triggered != null) {
 					//build hash map, if we are here we have a literal match.
@@ -3745,15 +3405,7 @@ public class StellarService extends Service {
 	
 	public void doDispatchNoProcess(byte[] data) throws RemoteException{
 		
-		//String rawData = null;
-		//try {
-		//	rawData = new String(data,the_settings.getEncoding());
-		//} catch (UnsupportedEncodingException e1) {
-		//	
-		//	e1.printStackTrace();
-		//}
 		buffer_tree.addBytesImplSimple(data);
-		//strip carriage return out of the data.
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
 		for(int i = 0;i<data.length;i++)  {
 			if(data[i] != (byte)0x0d) { //strip carriage
@@ -3780,15 +3432,6 @@ public class StellarService extends Service {
 			}
 		}
 		callbacks.finishBroadcast();
-		//if(final_count == 0) {
-			//someone is listening so don't save the buffer
-			//Log.e("SERV","No listeners, buffering data.");
-		//} else {
-			
-		//	the_buffer.setLength(0);
-			//the_buffer.clearSpans();
-			//Log.e("SERV","Clearing the buffer because I have " + bindCount + " listeners.");
-		//}
 	}
 	
 	Pattern alias_replace = Pattern.compile(joined_alias.toString());
@@ -3814,7 +3457,6 @@ public class StellarService extends Service {
 			boolean found = false;
 			boolean doTail = true;
 			while(alias_replacer.find()) {
-				String matched = alias_replacer.group(0);
 				found = true;
 				
 				AliasData replace_with = the_settings.getAliases().get(alias_replacer.group(0));
@@ -3826,7 +3468,6 @@ public class StellarService extends Service {
 					try {
 						tParts = whiteSpace.split(new String(input,the_settings.getEncoding()));
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					HashMap<String,String> map = new HashMap<String,String>();
@@ -3869,15 +3510,9 @@ public class StellarService extends Service {
 			//pull the bytes back out.
 			try {
 				retval = replaced.toString().getBytes(the_settings.getEncoding());
-				//Log.e("SERVICE","UNTRNFORMED:" + new String(bytes));
-				//Log.e("SERVICE","TRANSFORMED: " + replaced.toString());
 			} catch (UnsupportedEncodingException e1) {
 				throw new RuntimeException(e1);
 			}
-			
-			//Data d = new Data();
-			////d.cmdString = replaced.toString();
-			//d.visString = replaced.toString();
 			
 			replaced.setLength(0);
 			
@@ -3980,9 +3615,6 @@ public class StellarService extends Service {
 		
 		try {
 			
-			//the
-			//the_socket = new Socket(addr.getHostAddress(),port);
-			
 			the_socket = new Socket();
 			SocketAddress adr = new InetSocketAddress(addr,port);
 			
@@ -4021,13 +3653,6 @@ public class StellarService extends Service {
 			showNotification();
 			
 			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
-			//if(the_buffer == null) {
-			//	the_buffer = new StringBuffer();
-			//}
-			//if(buffer_tree == null) {
-			//	buffer_tree = new com.happygoatstudios.bt.window.TextTree();
-			//}
-			
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();
@@ -4036,12 +3661,7 @@ public class StellarService extends Service {
 				the_processor.setDebugTelnet(the_settings.isDebugTelnet());
 			}
 			
-			
-			
 			isConnected = true;
-			
-			
-			//BEGIN OPERATIONS!
 			
 		} catch (SocketException e) {
 			DispatchDialog("Socket Exception: " + e.getMessage());
@@ -4062,14 +3682,7 @@ public class StellarService extends Service {
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
 		Notification note = new Notification(resId,"BlowTorch Disconnected",System.currentTimeMillis());
-		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
-		//String defaultmsg = "DISCONNECTED: "+ host +":"+ port + ". Click to reconnect.";
 		String defaultmsg = "Click to reconnect: "+ host +":"+ port;
-		//Intent the_intent = new Intent();
-		//the_intent.putExtra("DISPLAY",launch.getDisplayName());
-    	//the_intent.putExtra("HOST", launch.getHostName());
-    	//the_intent.putExtra("PORT", launch.getPortString());
-		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "BlowTorch Disconnected";
 		//CharSequence contentText = "Hello World!";
@@ -4080,107 +3693,50 @@ public class StellarService extends Service {
 			contentText = defaultmsg;
 		}
 		Intent notificationIntent = null;
-		//Context packageContext = null;
-		//ClassLoader loader = null;
-		//if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
-			String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
-			notificationIntent = new Intent(windowAction);
-			
-			String apkName = null;
-			try {
-				apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
-			} catch (NameNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			Class<?> w = null;
-        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
-        	try {
-				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+		notificationIntent = new Intent(windowAction);
 		
-			
-			try {
-				notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
-			} catch (NameNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-		/*} else {
-			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
-			String apkName = null;
-			try {
-				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bttest", 0).sourceDir;
-			} catch (NameNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			Class<?> w = null;
-        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
-        	try {
-				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-			
-			try {
-				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bttest", Context.CONTEXT_INCLUDE_CODE), w);
-			} catch (NameNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-		}*/
+		String apkName = null;
+		try {
+			apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
+		} catch (NameNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		Class<?> w = null;
+    	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+    	try {
+			w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}
+	
+		
+		try {
+			notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
 		notificationIntent.putExtra("DISPLAY",display);
 		notificationIntent.putExtra("HOST", host);
 		notificationIntent.putExtra("PORT", Integer.toString(port));
-		
-		//notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		
-		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = resId;
-		
-		
 		Pattern invalidchars = Pattern.compile("\\W"); 
 		Matcher replacebadchars = invalidchars.matcher(display);
 		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
-		//prefsname = prefsname.replaceAll("/", "");
-		//Log.e("WINDOW","CHECKING SETTINGS FROM: " + prefsname);
 		SharedPreferences sprefs = this.getSharedPreferences(prefsname,0);
-		//servicestarted = prefs.getBoolean("CONNECTED", false);
-		//finishStart = prefs.getBoolean("FINISHSTART", true);
 		SharedPreferences.Editor editor = sprefs.edit();
 		editor.putBoolean("CONNECTED", false);
 		editor.putBoolean("FINISHSTART", true);
 		editor.commit();
-		//Log.e("LAUNCHER","SERVICE NOT STARTED, AM RESETTING THE INITIALIZER BOOLS IN " + prefsname);
-		
-		//Launcher.this.startActivity(the_intent);
-		//SharedPreferences sprefs = Launcher.this.getSharedPreferences(prefsname,0);
-		//SharedPreferences.Editor editor = sprefs.edit();
-		//editor.putBoolean("CONNECTED", false);
-		//editor.putBoolean("FINISHSTART", true);
 		editor.commit();
-		//mNM.cancelAll();
 		this.stopForeground(true);
-		//startForeground to avoid being killed off.
 		mNM.notify(5546,note);
 		showdcmessage = true;
 		this.stopSelf();
-		
-		//mNM.cancel(5545);
-		//this.stop
-		//mNM.cancelAll();
 	}
 	
 	private void showNotification() {
@@ -4189,90 +3745,43 @@ public class StellarService extends Service {
 		
 		
 		Notification note = new Notification(resId,"BlowTorch Initialized",System.currentTimeMillis());
-		//note.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
-		
 		Context context = getApplicationContext();
 		
 		CharSequence contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
-		/*if(mode == LAUNCH_MODE.TEST) {
-			contentTitle = "BlowTorch TEST";
-		} else {
-			contentTitle = "BlowTorch";
-		}*/
-		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
 		Intent notificationIntent = null;
-		//Context packageContext = null;
-		//ClassLoader loader = null;
-		//if(mode == LAUNCH_MODE.FREE || mode == LAUNCH_MODE.PAID) {
-			String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
-			notificationIntent = new Intent(windowAction);
-			
-			String apkName = null;
-			try {
-				apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
-			} catch (NameNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			Class<?> w = null;
-        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
-        	try {
-				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+		notificationIntent = new Intent(windowAction);
 		
-			
-			try {
-				notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
-			} catch (NameNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-		/*} else {
-			notificationIntent = new Intent("com.happygoatstudios.bt.window.MainWindow"+".TEST_MODE");
-			String apkName = null;
-			try {
-				apkName = this.getPackageManager().getApplicationInfo("com.happygoatstudios.bttest", 0).sourceDir;
-			} catch (NameNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			Class<?> w = null;
-        	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
-        	try {
-				w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
-			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-			
-			try {
-				notificationIntent.setClass(this.createPackageContext("com.happygoatstudios.bttest", Context.CONTEXT_INCLUDE_CODE), w);
-			} catch (NameNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-		}*/
+		String apkName = null;
+		try {
+			apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
+		} catch (NameNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		Class<?> w = null;
+    	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+    	try {
+			w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}
+	
+		
+		try {
+			notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
 		notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = resId;
 		note.flags = Notification.FLAG_ONGOING_EVENT;
-		
-		//startForeground to avoid being killed off.
 		this.startForeground(5545, note);
 		
-		//mNM.notify(5545,note);
 		
 	}
 	
@@ -4288,7 +3797,6 @@ public class StellarService extends Service {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
-			//Log.e("SERVICE","OUTPUT WRITER KILLED");
 			output_writer = null;
 		}
 		
@@ -4352,18 +3860,14 @@ public class StellarService extends Service {
 		while(!done) {
 			charWidth = p.measureText("A");
 			charsPerLine = windowWidth / charWidth;
-			//Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
-			
 			if(charsPerLine < 80.0f) {
 				done = true;
 				fontSize -= delta; //return to the previous font size that produced > 80 characters.
 			} else {
-				//Log.e("WINDOW",String.format("font size %.2f produces %.2f characters", fontSize,charsPerLine));
 				fontSize += delta;
 				p.setTextSize(fontSize);
 			}
 		}
-		//Log.e("WINDOW",String.format("FINISHED: font size %.2f", (fontSize-delta)));
 		return (int)fontSize;
 	}
 
