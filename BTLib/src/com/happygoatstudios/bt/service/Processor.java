@@ -1,6 +1,5 @@
 package com.happygoatstudios.bt.service;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import android.os.Bundle;
@@ -13,14 +12,12 @@ public class Processor {
 	Handler reportto = null;
 	Colorizer colormebad = new Colorizer();
 	OptionNegotiator opthandler;
-	IStellarService.Stub service = null;
 
 	private String encoding = null;
 
 	public Processor(Handler useme, IStellarService.Stub theserv,
 			String pEncoding) {
 		reportto = useme;
-		service = theserv;
 
 		opthandler = new OptionNegotiator();
 
@@ -41,30 +38,19 @@ public class Processor {
 	private final byte IAC = (byte) 0xFF;
 	private final byte SB = (byte) 0xFA;
 	private final byte SE = (byte) 0xF0;
-
 	private final byte WILL = (byte) 0xFB;
-	// private final byte WONT = (byte) 0xFC;
-	// private final byte DO = (byte) 0xFD;
 	private final byte DONT = (byte) 0xFE;
-
 	private final byte BREAK = (byte) 243; // NVT character BRK.
 	// private final byte Interrupt Process 244 //The function IP.
 	private final byte AO = (byte) 245; // The function AO.
 	private final byte AYT = (byte) 246; // The function AYT.
 	private final byte EC = (byte) 247; // The function EC.
 	private final byte EL = (byte) 248; // The function EL.
-	
 	private final byte CARRIAGE = (byte)0x0D;
-
 	private final byte GOAHEAD = (byte) 0xF9;
-
 	private final byte IP = (byte) 0xF4;
-
 	// private final byte TAB = (byte)0x09;
 	private final byte BELL = (byte) 0x07;
-
-	// private byte
-	// subnegotioation: \\xFF\\xFA(.{1})(.*)\\xFF\\xF0
 	byte[] holdover = null;
 
 	public byte[] RawProcess(byte[] data) {
@@ -172,18 +158,6 @@ public class Processor {
 					}
 				} else {// if(data[i+1] == GOAHEAD) {
 
-					// i++;
-					// Log.e("SERVICE","DO GOAHEAD");
-					// } else if(data[i+1] == IAC) {
-					// /Log.e("SERVICE","FOUND IAC AS DATA");
-					// buff.put(data[i]);
-					// count++;
-					// i++;
-					// } else if(data[i+1] == IP) {
-					// we handle disconnections on our own.
-					// Log.e("SERVICE","GOT IP");
-					// i++;
-
 					switch (data[i + 1]) {
 					case IAC:
 						buff.put(data[i]); // and one IAC and consume the extra.
@@ -211,14 +185,11 @@ public class Processor {
 				}
 				break;
 			case BELL:
-				// dispatch bell
 				reportto.sendEmptyMessage(StellarService.MESSAGE_BELLINC);
 				break;
 			case CARRIAGE:
 				//strip carriage returns
 				break;
-			// UNTIL FURTHER NOTICE, TAB HANDLING WILL BE THE WINDOWS
-			// RESPONSIBILITY
 			default:
 				buff.put(data[i]);
 				count++;
@@ -226,18 +197,12 @@ public class Processor {
 			}
 
 		}
-		// buff.rewind();
-		// count should reflect an accurate amount of bytes written to the
-		// buffer.
+		
 		buff.rewind();
 		byte[] tmp = new byte[count];
 		buff.get(tmp, 0, count);
 		return tmp;
-		//try {
-		//	return new String(tmp, encoding);
-		//} catch (UnsupportedEncodingException e) {
-		//	throw new RuntimeException(e);
-		//}
+		
 	}
 
 	public void dispatchIAC(byte action,byte option) {
@@ -247,9 +212,7 @@ public class Processor {
 		Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
 		if(resp.length > 2) {
 			if(resp[2] == TC.NAWS) {
-			//naws has started.
-				//Log.e("SERVICE","NAWS STARTED, SENDING NAWS STRING");
-				//opthandler.
+				//naws has started.
 				disaptchNawsString();
 			}
 		}

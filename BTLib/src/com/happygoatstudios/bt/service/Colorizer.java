@@ -1,16 +1,12 @@
 package com.happygoatstudios.bt.service;
 
 import java.util.HashMap;
-import java.util.regex.Pattern;
 
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 
 
 public class Colorizer {
-	
-	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
-	Pattern nocrlf = Pattern.compile("\\x0D");
 	
 	public static Character escape = new Character((char) 0x1B);
 	public static String colorRed = escape+"[1;31m";
@@ -21,13 +17,6 @@ public class Colorizer {
 	public static String telOptColorBegin = escape + "[1;43;30m";
 	public static String telOptColorEnd = escape + "[0m";
 	public static String debugString = escape+"[39;49m" + escape + "[0;10m" + "this is the debug string" + colorGreen + "greentext" + escape + "[39;49m" + escape + "[0;10mbacktonormal\n";
-	Pattern newline = Pattern.compile("\\x0D");
-	Pattern carriage = Pattern.compile("\\x0A");
-	Pattern subnego_reg = Pattern.compile("\\xFF\\xFA(.{1})(.*)\\xFF\\xF0");
-	Pattern iac_cmd_reg = Pattern.compile("\\xFF([\\xFB-\\xFE])(.{1})");
-	Pattern space = Pattern.compile("\\x20");
-	Pattern dash = Pattern.compile("\\x2D");
-	Pattern tab = Pattern.compile("\\x09");
 	
 	public Colorizer() {
 		//i'm more of a static class.
