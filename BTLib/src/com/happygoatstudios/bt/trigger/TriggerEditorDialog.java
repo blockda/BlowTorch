@@ -41,9 +41,8 @@ import com.happygoatstudios.bt.responder.notification.*;
 import com.happygoatstudios.bt.responder.toast.*;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.validator.Validator;
-import com.happygoatstudios.bt.window.RotatableDialog;
 
-public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener,RotatableDialog{
+public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener{
 
 	private TableRow legend;
 	private TableLayout responderTable;

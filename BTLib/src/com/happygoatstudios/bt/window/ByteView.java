@@ -449,8 +449,6 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	Paint b = new Paint();
 	
 	Paint linkColor = null;
-	Paint breakcolor = new Paint();
-
 	private Double SCROLL_MIN = 24d;
 	
 	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
@@ -458,12 +456,6 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	private int mLinkBoxHeightMinimum = 20;
 	
 	public void onDraw(Canvas c) {
-		//Matrix m = c.getMatrix();
-		
-		//m.setTranslate(0, WINDOW_HEIGHT-5);
-		//m.setScale(1, -1);
-		//synchronized(the_tree) {
-		//c.setMatrix(m);
 		if(linkColor == null) {
 			
 			linkColor = new Paint();
@@ -1223,12 +1215,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		
 	}
-	Paint tmpp = new Paint();
 	ListIterator<Line> drawingIterator = null;
 	private IteratorBundle getScreenIterator(double pIn,float pLineSize) {
-		tmpp.setColor(0xFF00FF00);
-		tmpp.setTypeface(Typeface.MONOSPACE);
-		tmpp.setTextSize(10);
 		float working_h = 0;
 		//int position = 0;
 		
