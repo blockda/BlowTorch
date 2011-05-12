@@ -9,10 +9,6 @@ import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import android.os.Handler;
-import android.os.Message;
-
-
 public class TextTree {
 	
 	public static final String urlFinderString = "(http://.+\\b)|(www\\..+\\b)"; 
@@ -23,10 +19,10 @@ public class TextTree {
 	Pattern colordata = Pattern.compile("\\x1B\\x5B.+m");
 	Matcher colormatch = colordata.matcher("");
 	
-	Pattern newlinelookup = Pattern.compile("\n");
-	Pattern tab = Pattern.compile(new String(new byte[]{0x09}));
+	//Pattern newlinelookup = Pattern.compile("\n");
+	//Pattern tab = Pattern.compile(new String(new byte[]{0x09}));
 	
-	public Handler addTextHandler = null;
+	//public Handler addTextHandler = null;
 	private boolean linkify = true;
 	
 	private int MAX_LINES = 300;
@@ -62,7 +58,7 @@ public class TextTree {
 		//simpleMode = pMode;
 		mLines = new LinkedList<Line>();
 		//LinkedList<Unit> list = new LinkedList<Unit>();
-		addTextHandler = new AddTextHandler();
+		//addTextHandler = new AddTextHandler();
 	}
 	
 	
@@ -208,12 +204,6 @@ public class TextTree {
 		}
 	}
 	
-	StringBuffer buf = new StringBuffer();
-	StringBuffer linebuf = new StringBuffer();
-	Pattern newline = Pattern.compile("\n");
-	Matcher newline_ma = newline.matcher("");
-	
-	
 	private final byte TAB = (byte)0x09;
 	private final static byte ESC = (byte)0x1B;
 	private final static byte BRACKET = (byte)0x5B;
@@ -251,19 +241,6 @@ public class TextTree {
 	private final byte u = (byte)0x75;
 	private final byte n = (byte)0x6E;
 	
-	//public void addBytes(byte[] data) {
-		//synchronized(addTextHandler) {
-			//while(addTextHandler.hasMessages(MESSAGE_ADDTEXT)) {
-			//	try {
-			//		addTextHandler.wait();
-			//	} catch (InterruptedException e) {
-			//		throw new RuntimeException(e);
-			//	}
-			//}
-		//synchronized(mLines) {
-			//addTextHandler.sendMessage(addTextHandler.obtainMessage(MESSAGE_ADDTEXT,data));
-		//}
-	//}
 	public void addBytesImplSimple(byte[] data) {
 		ByteBuffer sb = ByteBuffer.allocate(data.length);
 		for(int i=0;i<data.length;i++) {
@@ -627,22 +604,6 @@ public class TextTree {
 			addLine(tmp);
 		}
 		
-		//if(lines.size() > 0) {
-			//if we have more than 0 lines.
-		//	for(Line line : lines) {
-		//		mLines.addFirst(line); //this will reverse order them. so the first "line" in the list will be the last.
-		//	}
-		//}
-		
-		//prune if too many.
-		//Log.e("TREE","BUFFER NOW:" + totalbytes + " bytes");
-		
-		
-		//Log.e("TEXTTREE",getLastTwenty(false));
-		//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
-		//synchronized(addTextHandler) {
-		//	addTextHandler.notify();
-		//}
 	}
 	
 	public void prune() {
@@ -656,87 +617,7 @@ public class TextTree {
 		}
 	}
 	
-	/*public void addText(String text) {
-		//actually the first thing that needs to happen is we cut up the array on newlines.
-		//String[] inputs = text.split("[\n\r]");
-		newline_ma.reset(text);
-		
-		LinkedList<Line> lines = new LinkedList<Line>();
-		
-		boolean newlinefound = false;
-		while(newline_ma.find()) {
-			linebuf.setLength(0);
-			newline_ma.appendReplacement(linebuf, "");
-			newlinefound = true;
-			//first thing is we have to split the string up on the colors. and set up a new line
-			if(linebuf.length() > 0) {
-				Line tmp = null;
-				if(appendLast) {
-					//Log.e("TEXTREEDATAINPUT","APPENDING:" + linebuf.toString());
-					if(mLines.size() > 0) {
-						tmp  = mLines.remove(0);	
-					} else {
-						tmp = new Line();
-					}
-					tmp.getData().add(tmp.getData().size(),new Text("|"));
-					tmp.getData().addAll(tmp.getData().size(),makeLineFromData(linebuf.toString()));
-					lines.add(tmp);
-				} else {
-					//Log.e("TEXTREEDATAINPUT","INSERTING:" + linebuf.toString());
-					Line colorline = new Line();
-					colorline.setData(makeLineFromData(linebuf.toString()));
-					lines.add(colorline);
-				}
-			}
-		}
-		
-		if(newlinefound) {
-			//finish up
-			linebuf.setLength(0);
-			newline_ma.appendTail(linebuf);
-			if(linebuf.length() > 0) {
-				//Log.e("TEXTREEDATAINPUT","FINISHING:" + linebuf.toString());
-				Line tmp = new Line();
-				tmp.setData(makeLineFromData(linebuf.toString()));
-				lines.add(tmp);
-				appendLast = true;
-			} else {
-				appendLast = false;
-			}
-		} else {
-			//this had no newlines. we should start the next add text loop at the end of this line.
-			if(text.length() > 0) {
-				//Log.e("TEXTREEDATAINPUT","ADDING END TEXT:" + linebuf.toString());
-				
-				Line lastline = new Line();
-				lastline.setData(makeLineFromData(text));
-				lines.add(lastline);
-				appendLast = true;
-			} else {
-				appendLast = false;
-			}
-		}
-		
-		//now we are here at the end.
-		if(lines.size() > 0) {
-			//if we have more than 0 lines.
-			for(Line line : lines) {
-				mLines.addFirst(line); //this will reverse order them. so the first "line" in the list will be the last.
-			}
-		}
-		
-		//prune if too many.
-		while(mLines.size() > MAX_LINES) {
-			mLines.removeLast();
-		}
-		
-		
-		//Log.e("TEXTTREE",getLastTwenty(false));
-		//Log.e("TEXTTREE","ADDED TEXT: LAST 20 LINES");
-		
-	}*/
-	
-	private class AddTextHandler extends Handler {
+	/*private class AddTextHandler extends Handler {
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
 			case MESSAGE_ADDTEXT:
@@ -751,7 +632,7 @@ public class TextTree {
 				break;
 			}
 		}
-	}
+	}*/
 	
 	private void addLine(Line l) {
 		l.updateData();
@@ -999,11 +880,8 @@ public class TextTree {
 		
 	}
 	
-	public interface UnitMizer {
-		
-	}
 	
-	public class Text extends Unit implements UnitMizer {
+	public class Text extends Unit {
 		protected String data;
 		protected byte[] bin;
 		private boolean link = false;
@@ -1078,7 +956,7 @@ public class TextTree {
 		
 	}
 	
-	private class Tab extends Unit implements UnitMizer {
+	private class Tab extends Unit {
 		//protected String data;
 		
 		public Tab() {
@@ -1092,7 +970,7 @@ public class TextTree {
 		}
 		
 	}
-	public class NewLine extends Unit implements UnitMizer {
+	public class NewLine extends Unit {
 		protected String data;
 		
 		public NewLine() {
@@ -1107,7 +985,7 @@ public class TextTree {
 	}
 	
 	
-	public class Color extends Unit implements UnitMizer {
+	public class Color extends Unit {
 		protected byte[] bin;
 		//protected String data;
 		ArrayList<Integer> operations;
@@ -1183,60 +1061,13 @@ public class TextTree {
 			return true;
 		}
 		
-		/*public boolean updateColorRegisters(Integer bright,Integer fg,Integer bg) {
-			
-			boolean isBleeding = false;
-			
-			while(it.hasNext()) {
-			
-				Integer i = it.next();
-				
-				Colorizer.COLOR_TYPE type = Colorizer.getColorType(i);
-				switch(type) {
-				case FOREGROUND:
-					fg = i;
-					isBleeding = true;
-					//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
-					//notFound = false;
-					break;
-				case BACKGROUND:
-					//Log.e("SLICK","BACKGROUND COLOR ENCOUNTERED: " + i);
-					bg = i;
-					//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
-					break;
-				case ZERO_CODE:
-					//Log.e("WINDOW","ZERO CODE ENCOUNTERED");
-					isBleeding = true;
-					bright = 0;
-					fg = 37;
-					bg = 40;
-					break;
-				case BRIGHT_CODE:
-					isBleeding = true;
-					bright = 1;
-					break;
-				default:
-					//return Colorizer.COLOR_TYPE.NOT_A_COLOR;
-				}
-			
-			}
-			
-			while(it.hasPrevious()) {
-				it.previous();
-			}
-			Log.e("TREE","COLOR:" + bright + " , " + fg + " " + bg);
-			
-			return isBleeding;
-		}*/
-		
 		public int reportSize() {
 			return bin.length;
 		}
 	}
 	
-	public class Break extends Unit implements UnitMizer {
-		//int position;
-		//this is merly a marker for us to know where breaks occur, the only space these take up is the handle for a variable in memory.
+	public class Break extends Unit {
+		
 		public int reportSize() {
 			return 0;
 		}
@@ -1291,16 +1122,7 @@ public class TextTree {
 			if(u instanceof Text) {
 				buf.append(((Text)u).data);
 			}
-			if(u instanceof Color) {
-				//Log.e("TEXTCOLOR","color encountered" + ((Color)u).data);
-				//buf.append(((Color)u).data);
-				//something special here.
-				////buf.append("{|");
-				//for(Integer i : ((Color)u).operations) {
-				//	buf.append(Integer.toString(i)+"|");
-				//}
-				//buf.append("}");
-			}
+			
 			if(u instanceof NewLine) {
 				buf.append("\n");
 			}

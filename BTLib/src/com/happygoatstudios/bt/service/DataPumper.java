@@ -6,9 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -22,7 +20,7 @@ import android.os.Message;
 public class DataPumper extends Thread {
 
 		private InputStream reader = null;
-		private OutputStream writer = null;
+		//private OutputStream writer = null;
 		private Handler reportto = null;
 		private boolean compressed = false;
 		private Handler myhandler = null;
@@ -32,7 +30,7 @@ public class DataPumper extends Thread {
 		//private ZStream decomp  = null;
 		
 		final static public int MESSAGE_RETRIEVE = 100;
-		final static public int MESSAGE_SEND = 101;
+		//final static public int MESSAGE_SEND = 101;
 		final static public int MESSAGE_END = 102;
 		final static public int MESSAGE_INITXFER = 103;
 		final static public int MESSAGE_ENDXFER = 104;
@@ -46,7 +44,7 @@ public class DataPumper extends Thread {
 		public DataPumper(InputStream istream,OutputStream ostream,Handler useme) {
 			reader = new BufferedInputStream(istream);
 			//writer = new BufferedOutputStream(ostream);
-			writer = ostream;
+			//writer = ostream;
 			reportto = useme;
 			decompress = new Inflater(false);
 			//decomp = new ZStream();
@@ -79,9 +77,9 @@ public class DataPumper extends Thread {
 						}
 						//keep the pump flowing.
 						break;
-					case MESSAGE_SEND:
-						sendData(msg.getData().getByteArray("THEDATA"));
-						break;
+					//case MESSAGE_SEND:
+						//sendData(msg.getData().getByteArray("THEDATA"));
+						//break;
 					case MESSAGE_END:
 						//Log.e("PUMP","PUMP QUITTING!");
 						this.getLooper().quit();
@@ -232,9 +230,9 @@ public class DataPumper extends Thread {
 				}
 		}
 		
-		Pattern newline = Pattern.compile("\\w*");
+		//Pattern newline = Pattern.compile("\\w*");
 		
-		private void sendData(byte[] data) {
+		/*private void sendData(byte[] data) {
 			try {
 				writer.write(data);
 				writer.flush();
@@ -243,7 +241,7 @@ public class DataPumper extends Thread {
 			}
 			
 			
-		}
+		}*/
 		
 		private boolean corrupted = false;
 		private byte[] DoDecompress(byte[] data) throws UnsupportedEncodingException {
