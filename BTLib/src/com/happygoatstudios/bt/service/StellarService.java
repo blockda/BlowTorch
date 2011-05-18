@@ -36,6 +36,8 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.xml.sax.SAXException;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -45,6 +47,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -169,6 +173,8 @@ public class StellarService extends Service {
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
 		SpeedwalkCommand swcmd = new SpeedwalkCommand();
+		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
+		ClearButtonsCommand cbcmd = new ClearButtonsCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
@@ -179,6 +185,8 @@ public class StellarService extends Service {
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
 		specialcommands.put(swcmd.commandName, swcmd);
+		specialcommands.put(lbcmd.commandName, lbcmd);
+		specialcommands.put(cbcmd.commandName, cbcmd);
 		
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
 		settingslocation = prefs.getString("SETTINGS_PATH", "");
@@ -626,57 +634,79 @@ public class StellarService extends Service {
 	
 	public void loadXmlSettings(String filename) {
 		
+		HyperSAXParser parser = new HyperSAXParser(filename,this);
+		
 		try {
-			FileInputStream fos = this.openFileInput(filename);
-			fos.close();
-			
-			//if the file exists, we will get here, if not, it will go to file not found.
-			HyperSAXParser parser = new HyperSAXParser(filename,this);
 			the_settings = parser.load();
-			if(the_settings == null) {
-				the_settings = new HyperSettings();
-				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
-				ColorSetSettings def_colorset = new ColorSetSettings();
-				def_colorset.toDefautls();
-				the_settings.getSetSettings().put("default", def_colorset);
-				
-				the_settings.setLineSize(calculate80CharFontSize());
-				//Log.e("BTSERVICE","Error loading settings for: " + filename + " \nUsing defaults.");
-			}
-			if(the_settings.getDirections().size() == 0) {
-				loadDefaultDirections();
-			}
-			buildAliases();
-			buildTriggerData();
-			
-			
-			//temporarily output the timers.
-			for(TimerData timer : the_settings.getTimers().values()) {
-				timer.reset();
-				//timer.setPlaying(false);
-				if(timer.isPlaying()) {
-					//
-					//myhandler.sendMessageDelayed(myhandler.obtainMessage(MESSAGE_TIMERSTART,timer.getOrdinal().toString()),1000); //start this timer in 1 second.
-				}
-				//Log.e("SERVICE","LOADED SETTINGS, TIMER" + timer.getOrdinal() + ", DURATION " + timer.getSeconds());
-			}
-			
-			
-			
 		} catch (FileNotFoundException e) {
-			//if the file does not exist, then we need to load the default settings
-			the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
-			ColorSetSettings def_colorset = new ColorSetSettings();
-			def_colorset.toDefautls();
-			the_settings.getSetSettings().put("default", def_colorset);
-			if(the_settings.getDirections().size() == 0) {
-				loadDefaultDirections();
-			}
-			the_settings.setLineSize(calculate80CharFontSize());
+			the_settings = loadDefaultSettings();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		} 
+		} catch (SAXException e) {
+			//settings wad corrupted.
+			String message = e.getMessage();
+			try {
+				dispatchXMLError(message);
+			} catch (RemoteException e1) {
+			}
+			//throw new RuntimeException(e);
+		}
 		
+		if(the_settings.getDirections().size() == 0) {
+			loadDefaultDirections();
+		}
+		buildAliases();
+		buildTriggerData();
+		
+	}
+	
+	private HyperSettings loadDefaultSettings() {
+		HyperSettings tmp = null;
+		HyperSAXParser parser = null;
+		parser = new HyperSAXParser(null,this); //load default settings.
+		try {
+			tmp = parser.load();
+		} catch (FileNotFoundException e1) {
+			// SHOULD NEVER GET HERE, "null" load implementation uses a resource handle to a file that will guaranteed be there.
+		} catch (IOException e1) {
+			// SHOULD NEVER GET HERE, well, this one maybe, if the internal memory got severed by a micrometeorite or cosmic ray.
+			throw new RuntimeException(e1);
+		} catch (SAXException e1) {
+			//SHOULD NEVER GET HERE, defaults files should always be "parseable" before getting wadd-ed.
+		}
+		tmp.setLineSize(calculate80CharFontSize());
+		
+		//TODO: adjust default buttons.
+		//this is tricky, got to go through and adjust the dip to real pixel values, and compute the max/min bounding box.
+		float margin = 7.0f; //10 dip margin
+		float right = 0.0f;
+		float bottom = 0.0f;
+		float left = 100000.0f;
+		float top = 100000.0f;
+		float density = this.getResources().getDisplayMetrics().density;
+		for(Vector<SlickButtonData> set : tmp.getButtonSets().values()) {
+			for(SlickButtonData data : set) {
+				data.setX((int)(data.getX() * density));
+				data.setY((int)(data.getY() * density));
+				if((data.getX() + ((data.getWidth() * density)/2)) > right) right = data.getX() + ((data.getWidth() * density)/2);
+				if((data.getY() + ((data.getHeight() * density)/2)) > bottom) bottom = data.getY() + ((data.getHeight() * density)/2);
+				if((data.getX() - ((data.getWidth() * density)/2)) < left) left = data.getX() - ((data.getWidth() * density)/2);
+				if((data.getY() - ((data.getHeight() * density)/2)) < top) top = data.getY() - ((data.getHeight() * density)/2);
+			}
+		}
+		
+		//so now we have the "bounding box" so we need to compute the shift to the right corner.
+		int width = this.getResources().getDisplayMetrics().widthPixels;
+		if(width < this.getResources().getDisplayMetrics().heightPixels) width = this.getResources().getDisplayMetrics().heightPixels;
+		
+		int xOffset = width - (int)right - (int)(margin*density);
+		for(Vector<SlickButtonData> set : tmp.getButtonSets().values()) {
+			for(SlickButtonData data : set) {
+				data.setX(data.getX() + xOffset);
+				//data.setY(data.getY() + offset);
+			}
+		}
+		return tmp;
 	}
 	
 	private void loadDefaultDirections() {
@@ -691,63 +721,6 @@ public class StellarService extends Service {
 		tmp.put("l", new DirectionData("l","se"));
 		the_settings.setDirections(tmp);
 	}
-
-	/*public void loadAliases() {
-		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
-		if(display == null || display.equals("")) {
-			return;
-			//no display set, do not try and load aliases.
-		}
-		
-		Pattern whitespacestrip = Pattern.compile("\\s");
-		Matcher stripper = whitespacestrip.matcher(display);
-		
-		String usethis = stripper.replaceAll("");
-		int count = pref.getInt("ALIASCOUNT" + usethis, 0);
-		//Log.e("SERVICE","Loading: " + count + " aliases.");
-		if(count > 0) {
-			for(int i=0;i<count;i++) {
-				String alias = pref.getString(usethis + "ALIAS" + i, "");
-				if(!alias.equals("")) {
-					//Log.e("SERVICE","Attempting to load: " + alias);
-					String[] parts = alias.split("\\Q[||]\\E");
-					if(parts.length == 2) {
-						//only do well formatted alias pairs.
-						aliases.put(parts[0], parts[1]);
-					}
-				}
-			}
-		}
-	}*/
-	/*
-	public void saveAliases() {
-		SharedPreferences pref = this.getSharedPreferences(ALIAS_PREFS, 0);
-		
-		if(display == null || display.equals("")) {
-			return;
-			//no display set, do not try and load aliases.
-		}
-		
-		Pattern whitespacestrip = Pattern.compile("\\s");
-		Matcher stripper = whitespacestrip.matcher(display);
-		
-		String usethis = stripper.replaceAll("");
-		
-		Editor ed = pref.edit();
-		
-		Object[] a = aliases.keySet().toArray();
-		
-		if(a.length > 0) {
-			for(int i=0;i<a.length;i++) {
-				ed.putString(usethis + "ALIAS" + i, (String)a[i] + "[||]" + aliases.get(a[i]));
-			}
-			
-			ed.putInt("ALIASCOUNT" + usethis, a.length);
-		}
-		
-		ed.commit();
-		
-	}*/
 	
 	private void doVibrateBell() {
 		Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
@@ -766,12 +739,6 @@ public class StellarService extends Service {
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = "The server is notifying you with the bell character, 0x07.";
 		Intent notificationIntent = null;
-		/*if(mode == LAUNCH_MODE.TEST) {
-			notificationIntent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.toString()+".NORMAL_MODE");
-		
-		} else {
-			notificationIntent = new Intent(com.happygoatstudios.bt.window.MainWindow.class.toString()+".TEST_MODE");
-		}*/
 		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
 		notificationIntent = new Intent(windowAction);
 		notificationIntent.putExtra("DISPLAY", display);
@@ -1265,10 +1232,12 @@ public class StellarService extends Service {
 				HyperSAXParser loader = new HyperSAXParser(path,StellarService.this);
 				try {
 					the_settings = loader.load();
-				} catch(RuntimeException e) {
-					//extract the message.
+				} catch (FileNotFoundException e) {
+					//shouldn't get here. file path has already been queried and checked.
+				} catch (IOException e) {
+					throw new RuntimeException(e); //die before corrupting something.
+				} catch (SAXException e) {
 					String message = e.getMessage();
-					//send the message.
 					dispatchXMLError(message);
 				} finally {
 					buildAliases();
@@ -1282,12 +1251,7 @@ public class StellarService extends Service {
 
 		public void resetSettings() throws RemoteException {
 			synchronized(the_settings) {
-				the_settings = new HyperSettings();
-				the_settings.getButtonSets().put("default", new Vector<SlickButtonData>());
-				ColorSetSettings def_colorset = new ColorSetSettings();
-				def_colorset.toDefautls();
-				the_settings.getSetSettings().put("default", def_colorset);
-				the_settings.setLineSize(calculate80CharFontSize());
+				the_settings = loadDefaultSettings();
 			}
 			sendInitOk();
 		}
@@ -3056,6 +3020,50 @@ public class StellarService extends Service {
 				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
+			}
+			return null;
+		}
+	}
+	
+	private class ClearButtonsCommand extends SpecialCommand {
+		public ClearButtonsCommand() {
+			this.commandName = "clearbuttons";
+		}
+		
+		public Object execute(Object o) {
+			int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).clearAllButtons();
+				} catch (RemoteException e) {
+				}
+			}
+			callbacks.finishBroadcast();
+			return null;
+		}
+		
+	}
+	
+	private class LoadButtonsCommand extends SpecialCommand {
+		public LoadButtonsCommand() {
+			this.commandName = "loadset";
+		}
+		
+		public Object execute(Object o) {
+			String str = (String)o;
+			if(the_settings.getButtonSets().containsKey(str)) {
+				//load that set.
+				int N = callbacks.beginBroadcast();
+				for(int i=0;i<N;i++) {
+					try {
+						callbacks.getBroadcastItem(i).reloadButtons(str);
+					} catch (RemoteException e) {
+					}
+				}
+				callbacks.finishBroadcast();
+			} else {
+				//invalid key
+				DispatchToast("Button Set: \"" + str + "\" does not exist.",false);
 			}
 			return null;
 		}

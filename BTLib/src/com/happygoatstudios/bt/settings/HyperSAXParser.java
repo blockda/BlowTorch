@@ -1,11 +1,14 @@
 package com.happygoatstudios.bt.settings;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 
 import com.happygoatstudios.bt.alias.AliasData;
@@ -41,7 +44,7 @@ public class HyperSAXParser extends BaseParser {
 		super(location, context);
 	}
 	
-	public HyperSettings load() {
+	public HyperSettings load() throws FileNotFoundException, IOException, SAXException {
 		final HyperSettings tmp = new HyperSettings();
 		RootElement root = new RootElement("root");
 		Element window = root.getChild(TAG_WINDOW);
@@ -331,130 +334,7 @@ public class HyperSAXParser extends BaseParser {
 		
 		notificationResponder.setStartElementListener(new NotificationElementListener(new TriggerData()));
 		ackResponder.setStartElementListener(new AckElementListener(new TriggerData()));
-		toastResponder.setStartElementListener(new ToastElementListener(new TriggerData()));
-		
-		/*notificationResponder.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes attr) {
-				//Log.e("PARSER","PARSING NOTIFICATION ELEMENT");
-				NotificationResponder responder = new NotificationResponder();
-				responder.setMessage(attr.getValue("",ATTR_NOTIFICATIONMESSAGE));
-				responder.setTitle(attr.getValue("",ATTR_NOTIFICATIONTITLE));
-				String fireType = attr.getValue("",ATTR_FIRETYPE);
-				if(fireType == null) fireType = "";
-				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
-					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
-				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
-					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
-				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
-					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
-					responder.setFireType(FIRE_WHEN.WINDOW_NEVER);
-				} else {
-					responder.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				}
-				String spawnnew = attr.getValue("",ATTR_NEWNOTIFICATION);
-				if(spawnnew == null) spawnnew = "";
-				if(spawnnew.equals("true")) {
-					responder.setSpawnNewNotification(true);
-				} else {
-					responder.setSpawnNewNotification(false);
-				}
-				
-				String useongoing = attr.getValue("",ATTR_USEONGOING);
-				if(useongoing == null) useongoing = "";
-				if(useongoing.equals("true")) {
-					responder.setUseOnGoingNotification(true);
-				} else {
-					responder.setUseOnGoingNotification(false);
-				}
-				
-				String usedefaultlight = attr.getValue("",ATTR_USEDEFAULTLIGHT);
-				if(usedefaultlight == null) usedefaultlight = "false";
-				if(usedefaultlight.equals("true")) {
-					responder.setUseDefaultLight(true);
-					responder.setColorToUse( (attr.getValue("",ATTR_LIGHTCOLOR) == null) ? 0xFFFF0000 : new BigInteger(attr.getValue("",ATTR_LIGHTCOLOR),16).intValue());
-				} else {
-					responder.setUseDefaultLight(false);
-				}
-				
-				String usedefaultvibrate = attr.getValue("",ATTR_USEDEFAULTVIBRATE);
-				if(usedefaultvibrate == null) usedefaultvibrate = "false";
-				if(usedefaultvibrate.equals("true")) {
-					responder.setUseDefaultVibrate(true);
-					responder.setVibrateLength( (attr.getValue("",ATTR_VIBRATELENGTH) == null) ? 0 : Integer.parseInt(attr.getValue("",ATTR_VIBRATELENGTH)));
-				} else {
-					responder.setUseDefaultVibrate(false);
-				}
-				
-				String usedefaultsound = attr.getValue("",ATTR_USEDEFAULTSOUND);
-				if(usedefaultsound == null) usedefaultsound = "false";
-				if(usedefaultsound.equals("true")) {
-					responder.setUseDefaultSound(true);
-					responder.setSoundPath(attr.getValue("",ATTR_SOUNDPATH));
-				} else {
-					responder.setUseDefaultSound(false);
-				}
-				
-				current_trigger.getResponders().add(responder);
-			}
-			
-		});
-		
-		toastResponder.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes a) {
-				ToastResponder toast = new ToastResponder();
-				toast.setDelay( (a.getValue("",ATTR_TOASTDELAY) == null) ? 1500 : Integer.parseInt(a.getValue("",ATTR_TOASTDELAY)));
-				toast.setMessage(a.getValue("",ATTR_TOASTMESSAGE));
-				
-				String fireType = a.getValue("",ATTR_FIRETYPE);
-				if(fireType == null) fireType = "";
-				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
-					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
-				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
-					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
-				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
-					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
-					toast.setFireType(FIRE_WHEN.WINDOW_NEVER);
-				} else {
-					toast.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				}
-				
-				current_trigger.getResponders().add(toast);
-			}
-			
-		});
-		
-		ackResponder.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes attributes) {
-				
-				AckResponder ack = new AckResponder();
-				ack.setAckWith(attributes.getValue("",ATTR_ACKWITH));
-				
-				String fireType = attributes.getValue("",ATTR_FIRETYPE);
-				if(fireType == null) fireType = "";
-				//Log.e("PARSER","ACK TAG READ, FIRETYPE IS:" + fireType);
-				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
-					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
-				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
-					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
-				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
-					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
-					ack.setFireType(FIRE_WHEN.WINDOW_NEVER);
-				} else {
-					ack.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				}
-				
-				
-				current_trigger.getResponders().add(ack);
-			}
-			
-		});*/
-		
+		toastResponder.setStartElementListener(new ToastElementListener(new TriggerData()));		
 		trigger.setEndElementListener(new EndElementListener() {
 
 			public void end() {
@@ -494,11 +374,9 @@ public class HyperSAXParser extends BaseParser {
 		timerToastResponder.setStartElementListener(new ToastElementListener(new TimerData()));
 		
 		
-		try {
-			Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
-		} catch (Exception e) {
-			return null;
-		}
+		
+		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
+		
 		
 		return tmp; 
 	}
