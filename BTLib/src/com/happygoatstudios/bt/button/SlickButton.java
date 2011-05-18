@@ -32,7 +32,7 @@ public class SlickButton extends View {
 	private boolean drawRound = true;
 	
 	private boolean portraiteMode = false;
-	
+	private boolean disableEditing = false;
 	//dip change
 	//was 80
 	//private int size = 48;
@@ -317,8 +317,10 @@ public class SlickButton extends View {
 			start_x = touchx;
 			start_y = touchy;
 			//schedule message for moving
-			myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1000);
-			myhandler.sendEmptyMessageDelayed(MSG_DELETE, 2000);
+			if(!disableEditing) {
+				myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1000);
+				myhandler.sendEmptyMessageDelayed(MSG_DELETE, 2000);
+			}
 			save_x = data.getX();
 			save_y = data.getY();
 			button_down=true;
@@ -627,6 +629,14 @@ public class SlickButton extends View {
 
 	public boolean isPortraiteMode() {
 		return portraiteMode;
+	}
+
+	public void setDisableEditing(boolean disableEditing) {
+		this.disableEditing = disableEditing;
+	}
+
+	public boolean isDisableEditing() {
+		return disableEditing;
 	}
 	
 

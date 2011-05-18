@@ -88,6 +88,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	final static public int MSG_REALLYDELETEBUTTON = 1041;
 		
 	public static final int MESSAGE_ADDTEXT = 0;
+	private boolean disableEditing = false;
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -245,7 +246,9 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	public boolean onTouchEvent(MotionEvent t) {
 		synchronized(token) {
 		if(t.getAction() == MotionEvent.ACTION_DOWN) {
-			buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
+			if(!disableEditing) {
+				buttonaddhandler.sendEmptyMessageDelayed(MSG_BUTTONDROPSTART, 2500);
+			}
 			start_x = new Float(t.getX(t.getPointerId(0)));
 			start_y = new Float(t.getY(t.getPointerId(0)));
 			pre_event = MotionEvent.obtainNoHistory(t);
@@ -1282,6 +1285,14 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		
 		return windowShowing;
+	}
+
+	public void setDisableEditing(boolean disableEditing) {
+		this.disableEditing = disableEditing;
+	}
+
+	public boolean isDisableEditing() {
+		return disableEditing;
 	}
 	
 	

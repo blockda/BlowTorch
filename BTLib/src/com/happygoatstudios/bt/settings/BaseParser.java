@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.settings;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -148,37 +149,33 @@ public class BaseParser {
 	public static final String ATTR_COMMAND = "cmd";
 	
 	final String path;
-	Context window;
+	Context mContext;
+	boolean defaultSettings = false;
 	
 	protected BaseParser(String location,Context context) {
-			
-			window = context;
-			this.path = location;
-		
-		
+			mContext = context;
+			path = location;
 	}
 	
-	protected InputStream getInputStream() {
-		try {
+	protected InputStream getInputStream() throws FileNotFoundException {
+		
 			FileInputStream input = null;
+			
+			if(path == null) {
+				return mContext.getResources().openRawResource(mContext.getResources().getIdentifier("default_settings", "raw", mContext.getPackageName()));
+			}
+			
 			if(path.contains(Environment.getExternalStorageDirectory().getPath())) {
 				String state = Environment.getExternalStorageState();
 				if(Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 					input = new FileInputStream(path);
 				}
 			} else {
-				input = window.openFileInput(path);
+				input = mContext.openFileInput(path);
 			}
 			
 			return input;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	//appease the beast
-	public List<HyperSettings> parse() {
-		return null;
+		
 	}
 
 }
