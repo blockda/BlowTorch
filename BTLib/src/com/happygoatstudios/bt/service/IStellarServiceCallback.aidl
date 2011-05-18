@@ -20,4 +20,5 @@ interface IStellarServiceCallback {
 	void doDisconnectNotice();
 	void doLineBreak(int i);
 	void reloadButtons(String setName);
+	void clearAllButtons();
 }
