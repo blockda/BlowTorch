@@ -119,6 +119,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_CLOSEINPUTWINDOW = 884;
 	private static final int MESSAGE_RENAWS = 885;
 	public final static int MESSAGE_LAUNCHURL = 886;
+	protected static final int MESSAGE_CLEARALLBUTTONS = 887;
 	
 	//private TextTree tree = new TextTree();
 
@@ -332,6 +333,13 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_CLEARALLBUTTONS:
+					try {
+						ClearButtonsImplementation();
+					} catch (RemoteException e6) {
+						e6.printStackTrace();
+					}
+					break;
 				case MESSAGE_LAUNCHURL:
 					Pattern urlPattern = Pattern.compile(TextTree.urlFinderString);
 					Matcher urlMatcher = urlPattern.matcher((String)msg.obj);
@@ -629,6 +637,7 @@ public class MainWindow extends Activity {
 				case MESSAGE_CHANGEBUTTONSET:
 					RelativeLayout modb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 					//get the new list
+					screen2.setDisableEditing(false);
 					try {
 						
 						List<SlickButtonData> newset = service.getButtonSet((String)msg.obj);
@@ -1050,6 +1059,56 @@ public class MainWindow extends Activity {
 		}
 	}
 	
+	protected void ClearButtonsImplementation() throws RemoteException {
+		//find the button holder, nuke the buttons, find the button set that sent the "clear all" and make a button with a link back to that set, and then position that button.
+		//TODO: impl
+		RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.slickholder);
+		screen2.setDisableEditing(true);
+		int posm = layout.indexOfChild(screen2);
+		int countm = layout.getChildCount();
+		if(posm == 0) {
+			layout.removeViews(1, countm-1);
+		} else {
+			layout.removeViews(0,posm);
+			layout.removeViews(posm+1,countm - posm);
+		}
+		
+		String lastSet = service.getLastSelectedSet();
+		
+		SlickButtonData data = new SlickButtonData();
+		data.setLabel("BACK");
+		data.setText(".loadset " + lastSet);
+		
+		ColorSetSettings colorset = null;
+		
+		colorset = service.getCurrentColorSetDefaults();
+		
+		
+		data.setLabelColor(colorset.getLabelColor());
+		data.setPrimaryColor(colorset.getPrimaryColor());
+		data.setFlipColor(colorset.getFlipColor());
+		data.setSelectedColor(colorset.getSelectedColor());
+		data.setLabelSize(colorset.getLabelSize());
+		
+		data.setWidth(colorset.getButtonWidth());
+		data.setHeight(colorset.getButtonHeight());
+		
+		float margin = 7.0f;
+		float density = this.getResources().getDisplayMetrics().density;
+		float xPos = screen2.getWidth() - ((data.getWidth() * density)/2) - (margin * density);
+		float yPos = screen2.getHeight() - ((data.getHeight() * density)/2)- (margin * density);
+		data.setX((int)xPos);
+		data.setY((int)yPos);
+		
+		SlickButton newButt = new SlickButton(this,0,0);
+		newButt.setData(data);
+		newButt.setDeleter(myhandler);
+		newButt.setDispatcher(myhandler);
+		newButt.setDisableEditing(true);
+		layout.addView(newButt);
+		
+	}
+
 	/*boolean showsettingsoptions = false;
 	boolean settingsmenuclosed  = true;
 	public boolean onPrepareOptionsMenu(Menu menu) {
@@ -2238,6 +2297,10 @@ public class MainWindow extends Activity {
 
 		public void reloadButtons(String setName) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_CHANGEBUTTONSET,setName));
+		}
+		
+		public void clearAllButtons() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_CLEARALLBUTTONS);
 		}
 	};
 }
