@@ -1943,7 +1943,8 @@ public class MainWindow extends Activity {
 			
 			if(!exportPath.equals("")) {
 				//export needed
-				String fullPath = "/BlowTorch/" + exportPath;
+				String exportDir = ConfigurationLoader.getConfigurationValue("exportDirectory", this);
+				String fullPath = "/"+exportDir+"/" + exportPath;
 				try {
 					service.ExportSettingsToPath(fullPath);
 				} catch (RemoteException e) {

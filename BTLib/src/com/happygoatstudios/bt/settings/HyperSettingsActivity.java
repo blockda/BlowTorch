@@ -70,8 +70,11 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		encoding.setEntries(array_actual);
 		encoding.setEntryValues(array_actual);
 		
-		
-		
+		Preference pimport = findPreference("IMPORT_PATH");
+		Preference pexport = findPreference("EXPORT_PATH");
+		String exportDir = ConfigurationLoader.getConfigurationValue("exportDirectory", this);
+		pimport.setSummary("Import settings from .xml files in /sdcard/"+exportDir+"/");
+		pexport.setSummary("Export settings to an .xml file in /sdcard/"+exportDir+"/");
 		ListPreference fonts = (ListPreference)findPreference("FONT_NAME");
 		//List<String> fontnames = new ArrayList<String>();
 		
@@ -102,8 +105,8 @@ public class HyperSettingsActivity extends PreferenceActivity {
 		};
 		
 		File tmp = Environment.getExternalStorageDirectory();
-		
-		File btermdir = new File(tmp,"/BlowTorch/");
+		//String exportDir = ConfigurationLoader.getConfigurationValue("exportDirectory", this);
+		File btermdir = new File(tmp,"/"+exportDir+"/");
 		
 		String sdstate = Environment.getExternalStorageState();
 		HashMap<String,String> efonts = new HashMap<String,String>();
