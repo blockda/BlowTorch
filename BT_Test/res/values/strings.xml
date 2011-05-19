@@ -7,4 +7,6 @@
 	<string name="serviceBindAction">com.happygoatstudios.bt.service.IStellarService.MODE_TEST</string>
 	<string name="ongoingNotificationLabel">BlowTorch TEST</string>
 	<string name="packageName">com.happygoatstudios.bttest</string>
+	<string name="exportDirectory">BlowTorch</string>
+	<string name="terminalTypeString">BlowTorch</string>
 </resources>
