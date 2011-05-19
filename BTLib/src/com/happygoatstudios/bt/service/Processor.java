@@ -2,6 +2,9 @@ package com.happygoatstudios.bt.service;
 
 import java.nio.ByteBuffer;
 
+import com.happygoatstudios.bt.settings.ConfigurationLoader;
+
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -14,12 +17,14 @@ public class Processor {
 	OptionNegotiator opthandler;
 
 	private String encoding = null;
-
+	private Context mContext = null;
 	public Processor(Handler useme, IStellarService.Stub theserv,
-			String pEncoding) {
+			String pEncoding,Context pContext) {
 		reportto = useme;
 
-		opthandler = new OptionNegotiator();
+		mContext = pContext;
+		String ttype = ConfigurationLoader.getConfigurationValue("terminalTypeString", mContext);
+		opthandler = new OptionNegotiator(ttype);
 
 		setEncoding(pEncoding);
 	}

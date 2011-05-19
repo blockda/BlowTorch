@@ -13,12 +13,16 @@ public class OptionNegotiator {
 	boolean isNAWS=false;
 	//boolean hasNAWSed = false;
 
-	private String[] termtypes = {"BlowTorch","ansi","BlowTorch-256color","UNKNOWN"};
+	private String[] termtypes = null;// = {"BlowTorch","ansi","BlowTorch-256color","UNKNOWN"};
 	private int attempt = 0;
 	
-	public OptionNegotiator() {
+	String termType = null;
+	public OptionNegotiator(String ttype) {
 		//not really much to initialize, this class just returns a response to an option
 		//dispatcher = idispatcher;
+		termType = ttype;
+		termtypes = new String[] {termType,"ansi","BlowTorch-256color","UNKNOWN"};
+		
 	}
 	byte IAC_WILL = (byte)0xFB; //251
 	byte IAC_WONT = (byte)0xFC; //252
