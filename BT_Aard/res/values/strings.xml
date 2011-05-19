@@ -7,4 +7,6 @@
 	<string name="serviceBindAction">com.happygoatstudios.bt.service.IStellarService.AARDWOLF_CLIENT</string>
 	<string name="ongoingNotificationLabel">Aardwolf RPG</string>
 	<string name="packageName">com.happygoatstudios.aardwolf</string>
+	<string name="exportDirectory">Aardwolf</string>
+	<string name="terminalTypeString">BlowTorch-Aard</string>
 </resources>

@@ -3660,7 +3660,7 @@ public class StellarService extends Service {
 			//show notification
 			showNotification();
 			
-			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding());
+			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding(),this.getApplicationContext());
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();
