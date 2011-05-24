@@ -36,6 +36,7 @@ public class TimerData implements Parcelable {
 		playing = false;
 		ttf = seconds*1000;
 		responders = new ArrayList<TriggerResponder>();
+		pauseLocation = 0l;
 		
 	}
 	
