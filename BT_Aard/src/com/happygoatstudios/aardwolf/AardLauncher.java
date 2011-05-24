@@ -21,7 +21,7 @@ public class AardLauncher extends Activity {
         Intent launch = new Intent(windowAction);
         launch.putExtra("DISPLAY","Aardwolf RPG");
         launch.putExtra("HOST", "aardmud.org");
-        launch.putExtra("PORT", "4444");
+        launch.putExtra("PORT", "7777");
         //launch.putExtra("LAUNCH_MODE","com.happygoatstudios.bt");
         
         SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO",0);

@@ -52,6 +52,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -157,7 +158,8 @@ public class StellarService extends Service {
 	}
 	
 	public void onCreate() {
-		
+		//TODO: WAIT FOR DEBUGGER
+		//Debug.waitForDebugger();
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
 		host = BAD_HOST;
@@ -3555,6 +3557,7 @@ public class StellarService extends Service {
 	}
 	
 	private void DoTimerStart(String timer,Integer loud) {
+		//Debug.waitForDebugger();
 		TimerData data = the_settings.getTimers().get(timer);
 		if(data == null || timerTasks.containsKey(timer)) {
 			//no timer with that ordinal,or it is already started
