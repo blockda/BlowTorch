@@ -206,7 +206,7 @@ public class MainWindow extends Activity {
 		}
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
-		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", 1);
+		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getResources().getDisplayMetrics().density));
 		
 		setContentView(R.layout.window_layout);
 		
