@@ -9,6 +9,11 @@ public class ConfigurationLoader {
 		return context.getResources().getString(id);
 	}
 	
+	public static int getAboutDialogResource(Context context) {
+		int id = context.getResources().getIdentifier("about_dialog", "layout", context.getPackageName());
+		return id;
+	}
+	
     public static boolean isTestMode(Context context) {
     	if(getConfigurationValue("testMode",context).equals("true")) {
     		return true;

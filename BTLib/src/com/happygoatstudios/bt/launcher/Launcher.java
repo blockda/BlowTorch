@@ -496,6 +496,15 @@ public class Launcher extends Activity implements ReadyListener {
 		
 	}
 	
+	public static boolean isOutDated(Context c) {
+		
+		//version number is major.minor.rev.[test]
+		//method, load up version string, split on the "." character, convert parts to a number
+		
+		
+		return false;
+	}
+	
 	public void onStart() {
 		super.onStart();
 		//if(noConnections) {

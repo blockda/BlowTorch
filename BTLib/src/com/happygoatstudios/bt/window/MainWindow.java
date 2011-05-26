@@ -1217,6 +1217,7 @@ public class MainWindow extends Activity {
 		menu.add(0, 901, 0, "Reconnect");
 		menu.add(0, 902, 0, "Disconnect");
 		menu.add(0, 903, 0, "Quit");
+		menu.add(0, 906, 0, "Help/About");
 		
 		
 		
@@ -1228,7 +1229,12 @@ public class MainWindow extends Activity {
 	
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
+		
 		switch(item.getItemId()) {
+		case 906: //Help/About
+			AboutDialog abtdialog = new AboutDialog(this);
+			abtdialog.show();
+			break;
 		case 905: //speedwalk config
 			SpeedWalkConfigurationDialog swDialog = new SpeedWalkConfigurationDialog(this,service);
 			swDialog.show();
