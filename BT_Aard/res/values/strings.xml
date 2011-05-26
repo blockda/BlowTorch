@@ -9,4 +9,6 @@
 	<string name="packageName">com.happygoatstudios.aardwolf</string>
 	<string name="exportDirectory">Aardwolf</string>
 	<string name="terminalTypeString">BlowTorch-Aard</string>
+	<string name="aard_desc">Aardwolf is a unique free multi-player role playing game (MUD). This environment lets you assume the role of a character from hundreds of race and guild combinations then interact with other players and the inhabitants of a virtual world.</string>
+	<string name="blowtorch_desc">BlowTorch is a terminal client for mobile phones that is used to connect and communicate with computers across the internet.</string>
 </resources>
