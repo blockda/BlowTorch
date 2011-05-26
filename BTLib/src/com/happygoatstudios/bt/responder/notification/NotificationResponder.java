@@ -40,7 +40,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	public NotificationResponder() {
 		super(RESPONDER_TYPE.NOTIFICATION);
 		message = "Custom Message!";
-		title = "BlowTorch Triggered";
+		title = "Title Message";
 		useDefaultSound = true;
 		soundPath ="";
 		useDefaultLight = true;
