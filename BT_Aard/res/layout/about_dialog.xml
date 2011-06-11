@@ -35,8 +35,10 @@
   	  <Button
   		android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
+  		android:layout_marginTop="5dip"
   		android:layout_marginLeft="30dip"
   		android:layout_marginRight="30dip"
+  		android:layout_marginBottom="10dip"
   		android:id="@+id/aardwolf_button"
   		android:text="Visit the Aardwolf website"/> 
   	<RelativeLayout
@@ -72,6 +74,7 @@
   	 	android:id="@+id/blowtorch_button"
   		android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
+  		android:layout_marginTop="5dip"
   		android:layout_marginLeft="30dip"
   		android:layout_marginRight="30dip"
   		android:text="Visit the BlowTorch website"/> 
