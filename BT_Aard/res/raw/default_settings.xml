@@ -26,7 +26,7 @@
       <button xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".loadset cleared" />
     </buttonset>
     <buttonset setName="cleared">
-      <button xPos="95" yPos="24" width="90" label="Buttons" command=".loadset default" moveMethod="2" labelSize="21" />
+      <button xPos="95" yPos="24" width="90" label="ACTIONS" command=".loadset default" moveMethod="2" labelSize="21" />
     </buttonset>
     <selectedset>cleared</selectedset>
   </buttonsets>
