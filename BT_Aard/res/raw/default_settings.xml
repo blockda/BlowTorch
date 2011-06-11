@@ -23,10 +23,12 @@
       <button xPos="24" yPos="130" label="D" command="down" flipCommand="open d" moveMethod="2" labelSize="24" />
       <button xPos="130" yPos="130" label="LOOK" command="look" moveMethod="2" />
       <button xPos="130" yPos="24" label="SCORE" command="score" moveMethod="2" />
-      <button
-		xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
+      <button xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".loadset cleared" />
     </buttonset>
-    <selectedset>default</selectedset>
+    <buttonset setName="cleared">
+      <button xPos="95" yPos="24" width="90" label="Buttons" command=".loadset default" moveMethod="2" labelSize="21" />
+    </buttonset>
+    <selectedset>cleared</selectedset>
   </buttonsets>
   <triggers />
   <timers />
