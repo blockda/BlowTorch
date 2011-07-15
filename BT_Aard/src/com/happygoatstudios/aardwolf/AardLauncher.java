@@ -19,12 +19,12 @@ public class AardLauncher extends Activity {
         String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this);
         
         Intent launch = new Intent(windowAction);
+        //launch.putExtra("DISPLAY","Aardwolf RPG");
+        //launch.putExtra("HOST", "aardmud.org");
+        //launch.putExtra("PORT", "7777");
         launch.putExtra("DISPLAY","Aardwolf RPG");
-        launch.putExtra("HOST", "aardmud.org");
-        launch.putExtra("PORT", "7777");
-        /*launch.putExtra("DISPLAY","Aardwolf RPG");
-        launch.putExtra("HOST", "192.168.1.105");
-        launch.putExtra("PORT", "23");*/
+        launch.putExtra("HOST", "thedragonball.net");
+        launch.putExtra("PORT", "1901");
         //launch.putExtra("LAUNCH_MODE","com.happygoatstudios.bt");
         
         SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO",0);
