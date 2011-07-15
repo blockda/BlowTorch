@@ -62,6 +62,12 @@ public class Processor {
 		if (data == null) {
 			return null;
 		}
+		
+		if(data.length == 1) {
+			if(data[0] == IAC) {
+				return null; //nothing to do here.
+			}
+		}
 
 		ByteBuffer buff = null;
 		if(holdover == null) {buff = ByteBuffer.allocate(data.length); }

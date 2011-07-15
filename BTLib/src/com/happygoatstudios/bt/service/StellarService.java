@@ -3692,10 +3692,11 @@ public class StellarService extends Service {
 		//mNM.cancel(5545);
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
-		Notification note = new Notification(resId,"BlowTorch Disconnected",System.currentTimeMillis());
+		CharSequence brandName = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+		Notification note = new Notification(resId,brandName + " Disconnected",System.currentTimeMillis());
 		String defaultmsg = "Click to reconnect: "+ host +":"+ port;
 		Context context = getApplicationContext();
-		CharSequence contentTitle = "BlowTorch Disconnected";
+		CharSequence contentTitle = brandName + " Disconnected";
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = null;
 		if(message != null && !message.equals("")) {
