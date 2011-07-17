@@ -9,4 +9,5 @@
 	<string name="packageName">com.happygoatstudios.bttest</string>
 	<string name="exportDirectory">BlowTorch</string>
 	<string name="terminalTypeString">BlowTorch</string>
+	<string name="blowtorch_desc">BlowTorch is a mobile terminal emulator with features that aide in playing text based adventure games (MUDs). For more information on the capabilities of this client, please visit the online documentation.</string>
 </resources>
