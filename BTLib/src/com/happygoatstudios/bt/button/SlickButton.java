@@ -28,6 +28,9 @@ public class SlickButton extends View {
 	private Handler dispatcher = null;
 	private Handler deleter = null;
 	
+	private boolean lockEdit = false;
+	private boolean lockMove = false;
+	
 	private int fullScreenShift = 0;
 	private boolean drawRound = true;
 	
@@ -98,8 +101,10 @@ public class SlickButton extends View {
 					moving = false;
 					nudged = false;
 					hasfocus = false;
-					Message deleme = deleter.obtainMessage(ByteView.MSG_DELETEBUTTON, SlickButton.this);
-					deleter.sendMessage(deleme);
+					if(!lockEdit) {
+						Message deleme = deleter.obtainMessage(ByteView.MSG_DELETEBUTTON, SlickButton.this);
+						deleter.sendMessage(deleme);
+					}
 					//dispatcher.
 					break;
 				}
@@ -318,8 +323,12 @@ public class SlickButton extends View {
 			start_y = touchy;
 			//schedule message for moving
 			if(!disableEditing) {
-				myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1000);
-				myhandler.sendEmptyMessageDelayed(MSG_DELETE, 2000);
+				//if(lockMove) {
+					myhandler.sendEmptyMessageDelayed(MSG_BEGINMOVE, 1000);
+				//}
+				//if(lockEdit) {
+					myhandler.sendEmptyMessageDelayed(MSG_DELETE, 2000);
+				//}
 			}
 			save_x = data.getX();
 			save_y = data.getY();
@@ -333,8 +342,10 @@ public class SlickButton extends View {
 		if(e.getAction() == MotionEvent.ACTION_MOVE) {
 			if(moving) {
 				if(data.MOVE_STATE == SlickButtonData.MOVE_FREE) {
-					data.setX(touchx);
-					data.setY(touchy);
+					if(!lockMove) {
+						data.setX(touchx);
+						data.setY(touchy);
+					}
 					updateRect();
 					//this.invalidate();
 					newstate = DISPLAY_STATE.MOVING;
@@ -342,13 +353,17 @@ public class SlickButton extends View {
 					//compute nudge
 					int tmpx = touchx - start_x;
 					int tmpy = touchy - start_y;
-					data.setX(save_x + tmpx / 10);
-					data.setY(save_y + tmpy / 10);
+					if(!lockMove) {
+						data.setX(save_x + tmpx / 10);
+						data.setY(save_y + tmpy / 10);
+					}
 					updateRect();
+					
 					//double dist = 
 					nudged = true;
 					newstate = DISPLAY_STATE.MOVING;
 					//this.invalidate();
+					
 				}
 			}
 			int diff_x = touchx - start_x;
@@ -391,7 +406,9 @@ public class SlickButton extends View {
 			nudged = false;
 			
 			if(!orig_data.equals(this.data)) {
-				iHaveChanged(orig_data);
+				if(!lockEdit) {
+					iHaveChanged(orig_data);
+				}
 			}
 			
 			//this.invalidate();
@@ -637,6 +654,22 @@ public class SlickButton extends View {
 
 	public boolean isDisableEditing() {
 		return disableEditing;
+	}
+
+	public void setLockEdit(boolean lockEdit) {
+		this.lockEdit = lockEdit;
+	}
+
+	public boolean isLockEdit() {
+		return lockEdit;
+	}
+
+	public void setLockMove(boolean lockMove) {
+		this.lockMove = lockMove;
+	}
+
+	public boolean isLockMove() {
+		return lockMove;
 	}
 	
 

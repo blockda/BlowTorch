@@ -63,6 +63,8 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
+
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
@@ -1984,6 +1986,82 @@ public class StellarService extends Service {
 			}
 		}
 
+		@Override
+		public void setTriggerEnabled(boolean enabled,String key)
+				throws RemoteException {
+			synchronized(the_settings) {
+				the_settings.getTriggers().get(key).setEnabled(enabled);
+				buildTriggerData();
+				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			}
+		}
+
+		@Override
+		public void setButtonSetLocked(boolean locked, String key)
+				throws RemoteException {
+			synchronized(the_settings) {
+				ColorSetSettings settings = the_settings.getSetSettings().get(key);
+				if(settings != null) {
+					//Log.e("SERVICE","SETTING SET: " + key + " lock state: " + locked);
+					settings.setLocked(locked);
+					myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+					reloadButtonSet(key);
+				}
+			}
+		}
+
+		@Override
+		public boolean isButtonSetLocked(String key) throws RemoteException {
+			synchronized(the_settings) {
+				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
+				if(tmp != null) {
+					//Log.e("SERVICE","SET " + key + " queried for lock state: " + tmp.isLocked() );
+					return tmp.isLocked();
+				} else {
+					return false;
+				}
+			}
+		}
+
+		@Override
+		public boolean isButtonSetLockedMoveButtons(String key)
+				throws RemoteException {
+			synchronized(the_settings) {
+				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
+				if(tmp != null) {
+					return tmp.isLockMoveButtons();
+				} else {
+					return ColorSetSettings.DEFAULT_LOCKMOVEBUTTONS;
+				}
+			}
+		}
+
+		@Override
+		public boolean isButtonSetLockedNewButtons(String key)
+				throws RemoteException {
+			synchronized(the_settings) {
+				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
+				if(tmp != null) {
+					return tmp.isLockNewButtons();
+				} else {
+					return ColorSetSettings.DEFAULT_LOCKNEWBUTTONS;
+				}
+			}
+		}
+
+		@Override
+		public boolean isButtonSetLockedEditButtons(String key)
+				throws RemoteException {
+			synchronized(the_settings) {
+				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
+				if(tmp != null) {
+					return tmp.isLockEditButtons();
+				} else {
+					return ColorSetSettings.DEFAULT_LOCKEDITBUTTONS;
+				}
+			}
+		}
+
 		
 		
 	};
@@ -2383,12 +2461,14 @@ public class StellarService extends Service {
 			for(TriggerData trigger: the_settings.getTriggers().values()) {
 				if((trigger.isFireOnce() && !trigger.isFired()) || !trigger.isFireOnce()) {
 					//Log.e("SERVICE","WORKING ON TRIGGER:" + trigger.getName());
-					has_triggers = true;
 					
-					if(trigger.isInterpretAsRegex()) {
-						trigger_string.append("(" + trigger.getPattern() + ")|");
-					} else {
-						trigger_string.append("(\\Q" + trigger.getPattern() + "\\E)|");
+					if(trigger.isEnabled()) {
+						has_triggers = true;
+						if(trigger.isInterpretAsRegex()) {
+							trigger_string.append("(" + trigger.getPattern() + ")|");
+						} else {
+							trigger_string.append("(\\Q" + trigger.getPattern() + "\\E)|");
+						}
 					}
 				}
 			}
@@ -3312,6 +3392,20 @@ public class StellarService extends Service {
 		//Spannable processed = the_processor.DoProcess(data);
 		Message dofinal = myhandler.obtainMessage(MESSAGE_DOFINALDISPATCH,rawData);
 		myhandler.sendMessage(dofinal);
+	}
+	
+	private void reloadButtonSet(String setname) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).reloadButtons(setname);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		callbacks.finishBroadcast();
 	}
 	
 

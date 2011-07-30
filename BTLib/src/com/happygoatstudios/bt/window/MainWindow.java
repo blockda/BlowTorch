@@ -669,6 +669,11 @@ public class MainWindow extends Activity {
 									if(!service.isRoundButtons()) {
 										new_button.setDrawRound(false);
 									}
+									
+									if(service.isButtonSetLocked(service.getLastSelectedSet())) {
+										new_button.setLockEdit(service.isButtonSetLockedEditButtons(service.getLastSelectedSet()));
+										new_button.setLockMove(service.isButtonSetLockedMoveButtons(service.getLastSelectedSet()));
+									}
 									modb.addView(new_button);
 								}
 							} else {
@@ -728,6 +733,16 @@ public class MainWindow extends Activity {
 					}
 					break;
 				case MESSAGE_ADDBUTTON:
+					
+					try {
+						if(service.isButtonSetLocked(service.getLastSelectedSet()) && service.isButtonSetLockedNewButtons(service.getLastSelectedSet())) {
+							return;
+						}
+					} catch (RemoteException e4) {
+						
+						e4.printStackTrace();
+					}
+					
 					SlickButtonData tmp = new SlickButtonData();
 					tmp.setX(msg.arg1);
 					tmp.setY(msg.arg2);
@@ -764,7 +779,18 @@ public class MainWindow extends Activity {
 					if(isFullScreen) {
 						tmp.setY(msg.arg2 - statusBarHeight);
 						new_button.setFullScreenShift(statusBarHeight);
-					} 
+					}
+					
+					
+					try {
+						new_button.setLockEdit(service.isButtonSetLockedEditButtons(service.getLastSelectedSet()));
+						new_button.setLockMove(service.isButtonSetLockedMoveButtons(service.getLastSelectedSet()));
+						
+					} catch (RemoteException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					}
+					
 					
 					try {
 						if(!service.isRoundButtons()) {

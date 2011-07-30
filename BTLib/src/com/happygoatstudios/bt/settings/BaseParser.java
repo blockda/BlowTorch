@@ -75,6 +75,10 @@ public class BaseParser {
 	static final String ATTR_BUTTONWIDTH = "buttonWidth";
 	static final String ATTR_BUTTONHEIGHT = "buttonHeight";
 	static final String ATTR_SETNAME = "setName";
+	static final String ATTR_LOCKED = "locked";
+	static final String ATTR_LOCKNEWBUTTONS = "disableNewButtons";
+	static final String ATTR_LOCKMOVEBUTTONS = "disableMoveButtons";
+	static final String ATTR_LOCKEDITBUTTONS = "disableEditButtons";
 	static final String TAG_BUTTON = "button";
 	static final String ATTR_XPOS = "xPos";
 	static final String ATTR_YPOS = "yPos";
@@ -100,6 +104,7 @@ public class BaseParser {
 	static final String ATTR_TRIGGERLITERAL = "interpretLiteral";
 	static final String ATTR_TRIGGERONCE = "fireOnce";
 	static final String ATTR_TRIGGERHIDDEN = "hidden";
+	static final String ATTR_TRIGGERENEABLED = "enabled";
 	
 	static final String ATTR_FIRETYPE = "fireWhen";
 	
