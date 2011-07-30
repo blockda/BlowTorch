@@ -7,25 +7,38 @@ import java.util.List;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.ui.RealTranslateAnimation;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 public class TriggerSelectionDialog extends Dialog {
 
@@ -33,6 +46,7 @@ public class TriggerSelectionDialog extends Dialog {
 	private IStellarService service;
 	private List<TriggerItem> entries;
 	private TriggerListAdapter adapter;
+	private int lastSelectedIndex = -1;
 	
 	public TriggerSelectionDialog(Context context,IStellarService the_service) {
 		super(context);
@@ -54,10 +68,71 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		list.setScrollbarFadingEnabled(false);
 		
-		list.setOnItemClickListener(new EditTriggerListener());
-		list.setOnItemLongClickListener(new DeleteTriggerListener());
+		list.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+		//list.setOnItemClickListener(new EditTriggerListener());
+		//list.setOnItemLongClickListener(new DeleteTriggerListener());
+		//list.setFocusable(false);
+		//list.setFocusableInTouchMode(false);
+		
 		//list.setOnI
-		//attempt to fish out the trigger list.	
+		//attempt to fish out the trigger list.
+		
+		/*list.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				Log.e("WINDOW","LISTVIEW HAS FOCUS");
+			}
+			
+		});*/
+		//list.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+		list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			@Override
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				arg0.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+				for(int i = 0;i<adapter.getCount();i++) {
+					int first = arg0.getFirstVisiblePosition();
+					int last = arg0.getLastVisiblePosition();
+					int index = i;
+					boolean dostuff = false;
+					if(first <= index && index <= last) {
+						index = index - first;
+						dostuff = true;
+					} else if (index >= last) {
+						//dont care.
+					} 
+					//if(arg0.getChildAt(i) != null) {
+					if(dostuff) {
+						arg0.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(false);
+						//arg0.getChildAt(i).findViewById(R.id.toolbar_tab).s(false);
+						if(i==arg2) {
+							arg0.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(true);
+						}
+					}
+					//}
+					
+				}
+				lastSelectedIndex = arg2;
+				arg1.findViewById(R.id.toolbar_tab).requestFocus();
+				
+				Log.e("LIST","SELECTED ELEMENT:" + arg2);
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				// TODO Auto-generated method stub
+				
+				Log.e("LIST","NOTHING SELECTED");
+				
+			}
+		});
+		
+		list.setOnFocusChangeListener(new ListFocusFixerListener());
+		
+		list.setSelector(R.drawable.transparent);
+		
 		
 		list.setEmptyView(findViewById(R.id.trigger_empty));
 		buildList();
@@ -73,6 +148,7 @@ public class TriggerSelectionDialog extends Dialog {
 		});
 		
 		
+		
 		Button cancelbutton = (Button)findViewById(R.id.trigger_cancel_button);
 		
 		cancelbutton.setOnClickListener(new View.OnClickListener() {
@@ -86,6 +162,38 @@ public class TriggerSelectionDialog extends Dialog {
 		
 	}
 	
+	public class ListFocusFixerListener implements View.OnFocusChangeListener {
+		@Override
+		public void onFocusChange(View v, boolean hasFocus) {
+			if(hasFocus) {
+				for(int i=0;i<adapter.getCount();i++) {
+					View view = list.getChildAt(i);
+					if(view != null)  {
+						view.findViewById(R.id.toolbar_tab).setFocusable(false);
+					}
+				}
+				if(lastSelectedIndex < 0) {
+					
+				} else {
+					Log.e("LIST","SETTING FOCUS ON:" + lastSelectedIndex);
+					int index = lastSelectedIndex;
+					int first = list.getFirstVisiblePosition();
+					int last = list.getLastVisiblePosition();
+					if(first <= index && index <= last) {
+						index = index - first;
+					} else {
+						index = list.getFirstVisiblePosition();
+					}
+					list.setSelection(lastSelectedIndex);
+					list.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(true);
+					list.getChildAt(index).findViewById(R.id.toolbar_tab).requestFocus();
+				}
+				
+			}
+			Log.e("FOCUS","FOCUS CHANGE LISTENER FIRE, focus is " + hasFocus);
+		}
+	}
+	
 	public void onStart() {
 		/*if(noTriggers) {
 			Toast t = Toast.makeText(TriggerSelectionDialog.this.getContext(), "No triggers loaded. Click below to create new Triggers.", Toast.LENGTH_LONG);
@@ -93,79 +201,164 @@ public class TriggerSelectionDialog extends Dialog {
 		}*/
 	}
 	
-	private class EditTriggerListener implements AdapterView.OnItemClickListener {
+	public class DeleteButtonListener implements View.OnClickListener {
 
-		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-				long arg3) {
-			TriggerItem entry = adapter.getItem(arg2);
-			//launch the trigger editor with this item.
-			try {
-				//TriggerData data = (TriggerData) (service.getTriggerData()).get(entry.extra);
-				TriggerData data = service.getTrigger(entry.extra);
-				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
-				editor.show();
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
+		private int entry = -1;
+		ViewFlipper flip = null;
+		private int animateDistance = 0;
+		public DeleteButtonListener(int element,ViewFlipper flip,int animateDistance) {
+			entry = element;
+			this.flip = flip;
+			this.animateDistance = animateDistance;
 		}
 		
-	};
-	
-	private class DeleteTriggerListener implements OnItemLongClickListener {
-
-		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
-				int arg2, long arg3) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerSelectionDialog.this.getContext());
-			builder.setTitle("Edit or Delete Trigger?");
-			DeleteTriggerFinishListener delete_me = new DeleteTriggerFinishListener(arg2);
-			builder.setNeutralButton("Delete",delete_me);
-			builder.setNegativeButton("Cancel", delete_me);
-			builder.setPositiveButton("Edit", delete_me);
-			AlertDialog dialog = builder.create();
-			dialog.show();
+		@Override
+		public void onClick(View v) {
 			
-			return true;
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerSelectionDialog.this.getContext());
+			builder.setTitle("Delete Trigger");
+			builder.setMessage("Confirm Delete?");
+			builder.setPositiveButton("Delete", new ReallyDeleteTriggerListener(flip,animateDistance,entry));
+			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			builder.setIcon(android.R.drawable.ic_dialog_alert);
+			AlertDialog d = builder.create();
+			d.show();
+			
+			
+			
+			//arg0.dismiss();
 		}
 		
 	}
 	
-	private class DeleteTriggerFinishListener implements DialogInterface.OnClickListener {
-
-		private int position;
-		
-		public DeleteTriggerFinishListener(int i) {
-			position = i;
+	public class ReallyDeleteTriggerListener implements DialogInterface.OnClickListener {
+		ViewFlipper flip = null;
+		int animateDistance = 0;
+		int entry = -1;
+		public ReallyDeleteTriggerListener(ViewFlipper flip,int animateDistance,int entry) {
+			this.flip = flip;
+			this.animateDistance = animateDistance;
+			this.entry = entry;
+		}
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			// TODO Auto-generated method stub
+			dialog.dismiss();
+			Animation a = new TranslateAnimation(0, animateDistance, 0, 0);
+			a.setDuration(800);
+			a.setAnimationListener(new DeleteAnimationListener(entry));
+			//list.setOnFocusChangeListener(null);
+			//list.setFocusable(false);
+			flip.setOutAnimation(a);
+			flip.showNext();
 		}
 		
-		public void onClick(DialogInterface arg0, int arg1) {
-			switch(arg1) {
-			case DialogInterface.BUTTON_NEUTRAL:
-				//attempt delete
-				try {
-					service.deleteTrigger(entries.get(position).extra);
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				buildList();
-				arg0.dismiss();
-				
-				break;
-			case DialogInterface.BUTTON_NEGATIVE:
-				arg0.dismiss();
-				break;
-			case DialogInterface.BUTTON_POSITIVE:
-				TriggerItem entry = adapter.getItem(position);
-				//launch the trigger editor with this item.
-				try {
-					TriggerData data = service.getTrigger(entry.extra);
+	}
+	
+	public class DeleteAnimationListener implements Animation.AnimationListener {
 
-					TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
-					editor.show();
+		int entry = -1;
+		public DeleteAnimationListener(int entry) {
+			this.entry = entry;
+		}
+		
+		@Override
+		public void onAnimationEnd(Animation animation) {
+			list.setOnFocusChangeListener(null);
+			list.setFocusable(false);
+			try {
+				service.deleteTrigger(entries.get(entry).extra);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			triggerModifier.sendMessageDelayed(triggerModifier.obtainMessage(104), 10);
+		}
+
+		@Override
+		public void onAnimationRepeat(Animation animation) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onAnimationStart(Animation animation) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	
+	public class ModifyButtonListener implements View.OnClickListener {
+		private int index = -1;
+		public ModifyButtonListener(int entry) {
+			this.index = entry;
+		}
+		@Override
+		public void onClick(View v) {
+			TriggerItem entry = adapter.getItem(index);
+			//launch the trigger editor with this item.
+			try {
+				
+				TriggerData data = service.getTrigger(entry.extra);
+
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
+				editor.show();
+				
+				
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public class ToggleButtonListener implements View.OnClickListener {
+
+		private int index = -1;
+		ImageView icon = null;
+		String key = null;
+	
+		public ToggleButtonListener(int index,ImageView icon,String key) {
+			this.index = index;
+			this.icon = icon;
+			this.key = key;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			TriggerItem entry = adapter.getItem(index);
+			//View top = list.getChildAt(index);
+			//ViewFlipper flip = top.findViewById(R.id.flipper);
+			ImageButton b = (ImageButton)v;
+			if(entry.enabled) {
+				b.setImageResource(R.drawable.toolbar_toggleoff_button);
+				try {
+					service.setTriggerEnabled(false,key);
 				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				break;
+				entry.enabled = false;
+				
+				icon.setImageResource(R.drawable.toolbar_mini_disabled);
+			} else {
+				b.setImageResource(R.drawable.toolbar_toggleon_button);
+				try {
+					service.setTriggerEnabled( true,key);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				entry.enabled = true;
+				icon.setImageResource(R.drawable.toolbar_mini_enabled);
 			}
+			
 		}
 		
 	}
@@ -173,9 +366,12 @@ public class TriggerSelectionDialog extends Dialog {
 	
 	@SuppressWarnings("unchecked")
 	private void buildList() {
+		//list.setOnItemSelectedListener(null);
 		if(adapter != null) {
 			adapter.clear();
 		}
+		entries.clear();
+		//adapter.notifyDataSetInvalidated();
 		HashMap<String, TriggerData> trigger_list = null;
 		try {
 			trigger_list = (HashMap<String, TriggerData>) service.getTriggerData();
@@ -188,19 +384,80 @@ public class TriggerSelectionDialog extends Dialog {
 				TriggerItem t = new TriggerItem();
 				t.name = data.getName();
 				t.extra = data.getPattern();
+				t.enabled = data.isEnabled();
+				
 				entries.add(t);
 			}
 		}
+		//adapter.clear();
+		//adapter = null;
 		
-		adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
-		list.setAdapter(adapter);
+		//list.removeAllViews();
+		if(adapter == null) {
+			
+			adapter = new TriggerListAdapter(list.getContext(),R.layout.trigger_selection_list_row,entries);
+			list.setAdapter(adapter);
+		}
+		
+		
+		//list.setOnFocusChangeListener(new ListFocusFixerListener());
 		adapter.sort(new ItemSorter());
+		adapter.notifyDataSetInvalidated();
 	}
 	
 	private Handler triggerEditorDoneHandler = new Handler() {
+		
 		public void handleMessage(Message msg) {
-			//refresh the list because it's done.
-			buildList();
+			switch(msg.what) {
+			case 102:
+				scrollToSelection(msg.arg1);
+				break;
+			case 100:
+				//refresh the list because it's done.
+				//TriggerItem e = adapter.getItem(lastSelectedIndex);
+				TriggerData d = (TriggerData)msg.obj;
+				TriggerItem tmp = new TriggerItem();
+				tmp.name = d.getName();
+				tmp.extra = d.getPattern();
+				tmp.enabled = true; //TODO: set this to the actual setting when implemented.
+				
+				list.setFocusable(false);
+				list.setOnFocusChangeListener(null);
+				buildList();
+				list.setOnFocusChangeListener(new ListFocusFixerListener());
+				list.setFocusable(true);
+				//re-select the index.
+				
+				int index = adapter.getPosition(tmp);
+				this.sendMessageDelayed(this.obtainMessage(102, index, 0),1);
+				//scrollToSelection(index);
+				//find the index of the new child.
+				//View v = list.getChildAt(lastSelectedIndex);
+				/*list.invalidate();
+				
+				int childcount = list.getChildCount();
+				View tmpView = list.getChildAt(index);
+				list.setSelection(index);
+				ViewFlipper f = (ViewFlipper)tmpView.findViewById(R.id.flipper);
+				
+				f.setInAnimation(new TranslateAnimation(0,0,0,0));
+				
+				f.showNext();
+				list.getChildAt(index).findViewById(R.id.toolbar_tab_close).requestFocus();*/
+				break;
+			case 101:
+				//refresh the list because it's done.
+				//TriggerItem e = adapter.getItem(lastSelectedIndex);
+				list.setFocusable(false);
+				list.setOnFocusChangeListener(null);
+				buildList();
+				list.setOnFocusChangeListener(new ListFocusFixerListener());
+				list.setFocusable(true);
+				
+				
+				break;
+			}
+			
 		}
 	};
 
@@ -218,22 +475,208 @@ public class TriggerSelectionDialog extends Dialog {
 			View v = convertView;
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				v = li.inflate(R.layout.trigger_selection_list_row,null);
+				v = li.inflate(R.layout.better_list_row,null);
 			}
 			
+			RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
+			root.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
 			TriggerItem e = entries.get(pos);
 			
 			if(e != null) {
-				TextView label = (TextView)v.findViewById(R.id.trigger_title);
-				TextView extra = (TextView)v.findViewById(R.id.trigger_extra);
+				TextView label = (TextView)v.findViewById(R.id.infoTitle);
+				TextView extra = (TextView)v.findViewById(R.id.infoExtended);
 				
 				label.setText(e.name);
 				extra.setText(e.extra);
 				
 			}
 			
+			v.findViewById(R.id.spacer).setVisibility(View.INVISIBLE);
+			
+			
+			ImageView iv = (ImageView) v.findViewById(R.id.icon);
+			if(e.enabled) {
+				iv.setImageResource(R.drawable.toolbar_mini_enabled);
+			} else {
+				iv.setImageResource(R.drawable.toolbar_mini_disabled);
+			}
+			//int totalWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_holder).getWidth();
+			//int tabWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_tab).getWidth();
+			//ViewFlipper flip = (ViewFlipper) v.findViewById(R.id.flipper);
+			//flip.showNext();
+			
+			//v.findViewById(R.id.toolbar_tab).setOnClickListener(new ToolbarTabOpenListener(v,(ViewFlipper)v.findViewById(R.id.flipper)));
+			
+			//v.findViewById(R.id.toolbar_tab_close).setOnClickListener(new ToolbarTabCloseListener(v,(ViewFlipper)v.findViewById(R.id.flipper)));
+			
+			//make and populate utility buttons buttons.
+			
+			ImageButton toggle = new ImageButton(TriggerSelectionDialog.this.getContext());
+			ImageButton modify = new ImageButton(TriggerSelectionDialog.this.getContext());
+			ImageButton delete = new ImageButton(TriggerSelectionDialog.this.getContext());
+			
+			//LayoutParams params = LinearLayout.
+			//params.height = LayoutParams.WRAP_CONTENT;
+			//params.width = LayoutParams.WRAP_CONTENT;
+			//params.
+			LinearLayout.LayoutParams params = (new LinearLayout.LayoutParams( LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+			params.setMargins(0, 0, 0, 0);
+			//params.
+			//params.
+			//toggle.setM
+			
+			toggle.setLayoutParams(params);
+			modify.setLayoutParams(params);
+			delete.setLayoutParams(params);
+			
+			toggle.setPadding(0, 0, 0, 0);
+			modify.setPadding(0, 0, 0, 0);
+			delete.setPadding(0, 0, 0, 0);
+			if(e.enabled) {
+				toggle.setImageResource(R.drawable.toolbar_toggleon_button);
+			} else {
+				toggle.setImageResource(R.drawable.toolbar_toggleoff_button);
+			}
+			modify.setImageResource(R.drawable.toolbar_modify_button);
+			delete.setImageResource(R.drawable.toolbar_delete_button);
+			
+			//toggle.setIm
+			
+			toggle.setBackgroundColor(0x0000000000);
+			modify.setBackgroundColor(0);
+			delete.setBackgroundColor(0);
+			
+			toggle.setOnKeyListener(theButtonKeyListener);
+			modify.setOnKeyListener(theButtonKeyListener);
+			delete.setOnKeyListener(theButtonKeyListener);
+			
+			
+			//toggle.setOnClickListener(new ToggleButtonListener(pos));
+			//modify.setOnClickListener(new ModifyButtonListener(pos));
+			//delete.setOnClickListener(new DeleteButtonListener(pos,v.findViewById(R.id.flipper),width));
+			//get the holder.
+			LinearLayout holder = (LinearLayout) v.findViewById(R.id.button_holder);
+			holder.removeAllViews();
+			holder.addView(toggle);
+			holder.addView(modify);
+			holder.addView(delete);
+			
+			int width = toggle.getDrawable().getIntrinsicWidth() + delete.getDrawable().getIntrinsicWidth() + modify.getDrawable().getIntrinsicWidth();
+			
+			toggle.setOnClickListener(new ToggleButtonListener(pos,iv,e.extra));
+			modify.setOnClickListener(new ModifyButtonListener(pos));
+			delete.setOnClickListener(new DeleteButtonListener(pos,(ViewFlipper)v.findViewById(R.id.flipper),width));
+			
+			v.findViewById(R.id.toolbar_tab).setOnClickListener(new ToolbarTabOpenListener(v,(ViewFlipper)v.findViewById(R.id.flipper),width,pos));
+			
+			v.findViewById(R.id.toolbar_tab_close).setOnClickListener(new ToolbarTabCloseListener(v,(ViewFlipper)v.findViewById(R.id.flipper),width,v.findViewById(R.id.toolbar_tab)));
+			v.findViewById(R.id.toolbar_tab_close).setOnKeyListener(theButtonKeyListener);
+			
+			v.findViewById(R.id.toolbar_tab).setOnFocusChangeListener(new View.OnFocusChangeListener() {
+				
+				@Override
+				public void onFocusChange(View v, boolean hasFocus) {
+					if(hasFocus) {
+						v.setFocusable(true);
+						v.setFocusableInTouchMode(true);
+					} else {
+						v.setFocusable(false);
+						v.setFocusableInTouchMode(false);
+					}
+				}
+			});
+			
 			return v;
 			
+		}
+		
+	}
+	
+	public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListener();
+	
+	public class ToolBarButtonKeyListener implements View.OnKeyListener {
+
+		@Override
+		public boolean onKey(View v, int keyCode, KeyEvent event) {
+			if(keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+				return true;
+			}
+			return false;
+		}
+		
+	}
+	
+	public class ToolbarTabOpenListener implements View.OnClickListener {
+		View parent = null;
+		ViewFlipper targetFlipper = null;
+		int toolbarLength = 0;
+		private int index;
+		
+		public ToolbarTabOpenListener(View parent, ViewFlipper targetFlipper, int toolBarWidth,int index) {
+			this.parent = parent;
+			this.targetFlipper = targetFlipper;
+			toolbarLength = toolBarWidth;
+			this.index = index;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			//v.requestFocus();
+			lastSelectedIndex = this.index;
+			
+			//int targetWidth = 100;
+			Animation ai = new TranslateAnimation(toolbarLength, 0, 0, 0);
+			ai.setDuration(800);
+			
+			targetFlipper.setInAnimation(ai);
+			
+			Animation ao = new TranslateAnimation(0, toolbarLength, 0, 0);
+			ao.setDuration(800);
+			
+			targetFlipper.setOutAnimation(ao);
+			
+			targetFlipper.showNext();
+			
+			parent.findViewById(R.id.toolbar_tab_close).requestFocus();
+		}
+		
+	}
+	
+	public class ToolbarTabCloseListener implements View.OnClickListener {
+		View viewToFocus = null;
+		View parent = null;
+		ViewFlipper targetFlipper = null;
+		int toolbarLength = 0;
+		public ToolbarTabCloseListener(View parent, ViewFlipper targetFlipper, int toolBarWidth,View viewToFocus) {
+			this.parent = parent;
+			this.viewToFocus = viewToFocus;
+			this.targetFlipper = targetFlipper;
+			toolbarLength = toolBarWidth;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			//int totalWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_holder).getWidth();
+			//int tabWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_tab).getWidth();
+			
+			//int targetWidth = TriggerSelectionDialog.this.findViewById(R.id.button_holder).getWidth();
+			
+			Animation ao = new TranslateAnimation(0, toolbarLength, 0, 0);
+			ao.setDuration(800);
+			//a.setFillBefore(true);
+			//a.setFillAfter(false);
+			targetFlipper.setOutAnimation(ao);
+			
+			Animation ai = new TranslateAnimation(toolbarLength, 0, 0, 0);
+			ai.setDuration(800);
+			//a.setFillBefore(true);
+			//a.setFillAfter(false);
+			targetFlipper.setInAnimation(ai);
+			targetFlipper.showNext();
+			
+			//parent.findViewById(R.id.toolbar_tab).requestFocus();
+			viewToFocus.setFocusable(true);
+			viewToFocus.requestFocus();
 		}
 		
 	}
@@ -248,8 +691,26 @@ public class TriggerSelectionDialog extends Dialog {
 	}
 	
 	public class TriggerItem {
+		public boolean enabled;
 		String name;
 		String extra;
+		
+		public TriggerItem() {
+			name = "";
+			extra = "";
+			enabled = true;
+		}
+		
+		public boolean equals(Object o) {
+			if(o == this) return true;
+			
+			if(!(o instanceof TriggerItem)) return false;
+			TriggerItem tmp = (TriggerItem)o;
+			if(!this.name.equals(tmp.name)) return false;
+			if(!this.extra.equals(tmp.extra)) return false;
+			if(this.enabled != tmp.enabled) return false;
+			return true;
+		}
 	}
 	
 	public static final int MESSAGE_NEW_TRIGGER = 100;
@@ -259,6 +720,12 @@ public class TriggerSelectionDialog extends Dialog {
 	public Handler triggerModifier = new Handler() {
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
+			case 104:
+				finishDelete();
+				break;
+			case 103:
+				finishScroll(msg.arg1);
+				break;
 			case MESSAGE_NEW_TRIGGER:
 				TriggerData tmp = (TriggerData)msg.obj;
 				//attempt to modify service
@@ -289,6 +756,49 @@ public class TriggerSelectionDialog extends Dialog {
 			}
 		}
 	};
+	
+	protected void finishDelete() {
+		buildList();
+		list.setFocusable(true);
+		list.setOnFocusChangeListener(new ListFocusFixerListener());
+	}
+
+	protected void scrollToSelection(int index) {
+		//list.invalidate();
+		
+		int childcount = list.getChildCount();
+		list.setSelection(index);
+		//list.poin
+		triggerModifier.sendMessageDelayed(triggerModifier.obtainMessage(103,index,0),10);
+		
+	}
+	
+	protected void finishScroll(int index) {
+		int first = list.getFirstVisiblePosition();
+		int last = list.getLastVisiblePosition();
+		if(first <= index && index <= last) {
+			index = index - first;
+		}
+		
+		
+		View tmpView = list.getChildAt(index);
+		if(tmpView != null) {
+		
+			ViewFlipper f = (ViewFlipper)tmpView.findViewById(R.id.flipper);
+			LinearLayout holder = (LinearLayout)tmpView.findViewById(R.id.button_holder);
+			int width = 0;
+			for(int i = 0;i<holder.getChildCount();i++) {
+				ImageButton b = (ImageButton)holder.getChildAt(i);
+				width += b.getDrawable().getIntrinsicWidth();
+			}
+			Animation a = new TranslateAnimation(width,0,0,0);
+			a.setDuration(800);
+			f.setInAnimation(a);
+			
+			f.showNext();
+			list.getChildAt(index).findViewById(R.id.toolbar_tab_close).requestFocus();
+		}
+	}
 	
 	
 	
