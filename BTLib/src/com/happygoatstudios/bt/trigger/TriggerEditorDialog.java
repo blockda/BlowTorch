@@ -314,6 +314,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
+				finish_with.sendMessageDelayed(finish_with.obtainMessage(100,the_trigger),10);
 			} else {	
 				the_trigger.setName(title.getText().toString());
 				the_trigger.setPattern(pattern.getText().toString());
@@ -323,8 +324,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
+				finish_with.sendEmptyMessage(101);
 			}
-			finish_with.sendEmptyMessage(100);
+			
 			TriggerEditorDialog.this.dismiss();
 		}
 		

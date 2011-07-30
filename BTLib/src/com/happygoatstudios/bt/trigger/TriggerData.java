@@ -22,6 +22,8 @@ public class TriggerData implements Parcelable {
 	
 	private boolean hidden = false;
 	
+	private boolean enabled = true;
+	
 	private List<TriggerResponder> responders;
 	
 	
@@ -32,6 +34,7 @@ public class TriggerData implements Parcelable {
 		responders = new ArrayList<TriggerResponder>();
 		fireOnce = false;
 		hidden = false;
+		enabled = true;
 	}
 	
 	public TriggerData copy() {
@@ -41,6 +44,7 @@ public class TriggerData implements Parcelable {
 		tmp.interpretAsRegex = this.interpretAsRegex;
 		tmp.fireOnce = this.fireOnce;
 		tmp.hidden = this.hidden;
+		tmp.enabled = this.enabled;
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
@@ -57,6 +61,7 @@ public class TriggerData implements Parcelable {
 		if(test.interpretAsRegex != this.interpretAsRegex) return false;
 		if(test.fireOnce != this.fireOnce) return false;
 		if(test.hidden != this.hidden) return false;
+		if(test.enabled != this.enabled) return false;
 		Iterator<TriggerResponder> test_responders = test.responders.iterator();
 		Iterator<TriggerResponder> my_responders = this.responders.iterator();
 		while(test_responders.hasNext()) {
@@ -91,6 +96,7 @@ public class TriggerData implements Parcelable {
 		setInterpretAsRegex( (in.readInt() == 1) ? true : false);
 		setFireOnce ((in.readInt() == 1) ? true : false);
 		setHidden( (in.readInt() == 1) ? true : false);
+		setEnabled( (in.readInt() == 1) ? true : false);
 		int numresponders = in.readInt();
 		for(int i = 0;i<numresponders;i++) {
 			int type = in.readInt();
@@ -125,6 +131,7 @@ public class TriggerData implements Parcelable {
 		out.writeInt( interpretAsRegex ? 1 : 0);
 		out.writeInt(fireOnce ? 1 : 0);
 		out.writeInt(hidden ? 1 : 0);
+		out.writeInt(enabled ? 1 : 0);
 		//out.writeP
 		out.writeInt(responders.size());
 		for(TriggerResponder responder : responders) {
@@ -187,6 +194,14 @@ public class TriggerData implements Parcelable {
 
 	public boolean isHidden() {
 		return hidden;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
 	}
 
 }

@@ -142,4 +142,10 @@ interface IStellarService {
 	int getHyperLinkColor();
 	void setHyperLinkEnabled(boolean pIn);
 	boolean isHyperLinkEnabled();
+	void setTriggerEnabled(boolean enabled,String key);
+	void setButtonSetLocked(boolean locked,String key);
+	boolean isButtonSetLocked(String key);
+	boolean isButtonSetLockedMoveButtons(String key);
+	boolean isButtonSetLockedNewButtons(String key);
+	boolean isButtonSetLockedEditButtons(String key);
 }

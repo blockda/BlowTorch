@@ -102,7 +102,6 @@ public class HyperSettings {
 	private HashMap<String,TimerData> Timers = new HashMap<String,TimerData>();
 	private HashMap<String,DirectionData> Directions = new HashMap<String,DirectionData>();
 	
-	
 	private String lastSelected = "default";
 	enum WRAP_MODE {
 		NONE,
@@ -313,7 +312,10 @@ public class HyperSettings {
 				if(setdefaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) out.attribute("", BaseParser.ATTR_BUTTONWIDTH, new Integer(setdefaults.getButtonWidth()).toString());
 				if(setdefaults.getLabelSize() != SlickButtonData.DEFAULT_LABEL_SIZE) out.attribute("", BaseParser.ATTR_LABELSIZE, new Integer(setdefaults.getLabelSize()).toString());
 				if(setdefaults.getFlipLabelColor() != SlickButtonData.DEFAULT_FLIPLABEL_COLOR) out.attribute("", BaseParser.ATTR_FLIPLABELCOLOR, Integer.toHexString(setdefaults.getFlipLabelColor()));
-				
+				if(setdefaults.isLocked() != ColorSetSettings.DEFAULT_LOCKED) out.attribute("", BaseParser.ATTR_LOCKED, setdefaults.isLocked() ? "true" : "false");
+				if(setdefaults.isLockNewButtons() != ColorSetSettings.DEFAULT_LOCKNEWBUTTONS) out.attribute("", BaseParser.ATTR_LOCKNEWBUTTONS, setdefaults.isLockNewButtons() ? "true" : "false");
+				if(setdefaults.isLockMoveButtons() != ColorSetSettings.DEFAULT_LOCKMOVEBUTTONS) out.attribute("", BaseParser.ATTR_LOCKMOVEBUTTONS, setdefaults.isLockMoveButtons() ? "true" : "false");
+				if(setdefaults.isLockEditButtons() != ColorSetSettings.DEFAULT_LOCKEDITBUTTONS) out.attribute("", BaseParser.ATTR_LOCKEDITBUTTONS, setdefaults.isLockEditButtons() ? "true" : "false");
 				Vector<SlickButtonData> the_set = data.getButtonSets().get(key);
 				
 				for(SlickButtonData button : the_set) {
@@ -356,6 +358,7 @@ public class HyperSettings {
 				out.attribute("", BaseParser.ATTR_TRIGGERLITERAL, trigger.isInterpretAsRegex() ? "true" : "false");
 				out.attribute("", BaseParser.ATTR_TRIGGERONCE, trigger.isFireOnce() ? "true" : "false");
 				if(trigger.isHidden())  out.attribute("", BaseParser.ATTR_TRIGGERHIDDEN, "true");
+				out.attribute("", BaseParser.ATTR_TRIGGERENEABLED, trigger.isEnabled() ? "true" : "false");
 				
 				OutputResponders(out,trigger.getResponders());
 				/*for(TriggerResponder responder : trigger.getResponders()) {

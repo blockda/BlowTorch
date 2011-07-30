@@ -7,6 +7,16 @@
 		<item name="android:windowIsFloating">true</item>
 	</style>
 	
+<style name="ListFont" parent="@android:style/Widget.ListView">
+    <item name="android:textColor">#ccc</item>
+    <item name="android:textColorPrimary">#ccc</item>
+    <item name="android:textColorSecondary">#ccc</item>
+    <item name="android:textColorTertiary">#ccc</item>
+    <item name="android:textColorPrimaryInverse">#ccc</item>
+    <item name="android:textColorSecondaryInverse">#ccc</item>
+    <item name="android:textColorTertiaryInverse">#ccc</item>
+    <item name="android:typeface">sans</item>
+</style>
 
 
 </resources>

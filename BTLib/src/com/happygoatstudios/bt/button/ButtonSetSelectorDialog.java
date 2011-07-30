@@ -18,17 +18,26 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ViewFlipper;
 
 public class ButtonSetSelectorDialog extends Dialog {
 
@@ -38,6 +47,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 	HashMap<String,Integer> data;
 	ConnectionAdapter adapter;
 	IStellarService service;
+	ListView list = null;
 	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IStellarService the_service) {
 		super(context);
 		dispater = reportto;
@@ -63,7 +73,14 @@ public class ButtonSetSelectorDialog extends Dialog {
 		}
 		
 		for(String key : data.keySet()) {
-			entries.add(new ButtonEntry(key,data.get(key)));
+			ButtonEntry tmp = new ButtonEntry(key,data.get(key));
+			try {
+				tmp.locked = service.isButtonSetLocked(key);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			entries.add(tmp);
 		}
 		
 		if(data.size() == 0) {
@@ -76,7 +93,8 @@ public class ButtonSetSelectorDialog extends Dialog {
 		lv.setAdapter(adapter);
 		lv.setTextFilterEnabled(true);
 		
-		lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
+		//Button
+		//lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
 	}
 	
 	public void onCreate(Bundle b) {
@@ -139,7 +157,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 			}
 		});
 		
-		lv.setOnItemClickListener(new OnItemClickListener() {
+		/*lv.setOnItemClickListener(new OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
@@ -152,10 +170,86 @@ public class ButtonSetSelectorDialog extends Dialog {
 				
 			}
 			
+		});*/
+		
+		//lv.setOnItemLongClickListener(new ButtonSetEditorOpener());
+		lv.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			@Override
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				arg0.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+				for(int i = 0;i<adapter.getCount();i++) {
+					int first = arg0.getFirstVisiblePosition();
+					int last = arg0.getLastVisiblePosition();
+					int index = i;
+					boolean dostuff = false;
+					if(first <= index && index <= last) {
+						index = index - first;
+						dostuff = true;
+					} else if (index >= last) {
+						//dont care.
+					} 
+					//if(arg0.getChildAt(i) != null) {
+					if(dostuff) {
+						arg0.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(false);
+						//arg0.getChildAt(i).findViewById(R.id.toolbar_tab).s(false);
+						if(i==arg2) {
+							arg0.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(true);
+						}
+					}
+					//}
+					
+				}
+				lastSelectedIndex = arg2;
+				arg1.findViewById(R.id.toolbar_tab).requestFocus();
+				
+				//Log.e("LIST","SELECTED ELEMENT:" + arg2);
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				// TODO Auto-generated method stub
+				
+				//Log.e("LIST","NOTHING SELECTED");
+				
+			}
 		});
+		lv.setOnFocusChangeListener(new ListFocusFixerListener());
+		list = lv;
 		
-		lv.setOnItemLongClickListener(new ButtonSetEditorOpener());
-		
+	}
+	
+	public class ListFocusFixerListener implements View.OnFocusChangeListener {
+		@Override
+		public void onFocusChange(View v, boolean hasFocus) {
+			if(hasFocus) {
+				for(int i=0;i<adapter.getCount();i++) {
+					View view = list.getChildAt(i);
+					if(view != null)  {
+						view.findViewById(R.id.toolbar_tab).setFocusable(false);
+					}
+				}
+				if(lastSelectedIndex < 0) {
+					
+				} else {
+					//Log.e("LIST","SETTING FOCUS ON:" + lastSelectedIndex);
+					int index = lastSelectedIndex;
+					int first = list.getFirstVisiblePosition();
+					int last = list.getLastVisiblePosition();
+					if(first <= index && index <= last) {
+						index = index - first;
+					} else {
+						index = list.getFirstVisiblePosition();
+					}
+					list.setSelection(lastSelectedIndex);
+					list.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(true);
+					list.getChildAt(index).findViewById(R.id.toolbar_tab).requestFocus();
+				}
+				
+			}
+			//Log.e("FOCUS","FOCUS CHANGE LISTENER FIRE, focus is " + hasFocus);
+		}
 	}
 	
 	public void onStart() {
@@ -289,14 +383,107 @@ public class ButtonSetSelectorDialog extends Dialog {
 			View v = convertView;
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				v = li.inflate(R.layout.buttonset_selection_list_row,null);
+				v = li.inflate(R.layout.better_list_row,null);
 			}
 			
 			ButtonEntry e = items.get(pos);
 			
 			if(e != null) {
-				TextView label = (TextView)v.findViewById(R.id.buttonset_title);
-				TextView extra = (TextView)v.findViewById(R.id.buttonset_extra);
+				
+				//set up the view
+				RelativeLayout root = (RelativeLayout)v.findViewById(R.id.root);
+				root.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+				
+				v.findViewById(R.id.spacer).setVisibility(View.INVISIBLE);
+				
+				ImageView iv = (ImageView) v.findViewById(R.id.icon);
+				if(e.locked) {
+					iv.setImageResource(R.drawable.toolbar_mini_locked);
+					iv.setVisibility(View.VISIBLE);
+				} else {
+					iv.setVisibility(View.INVISIBLE);
+				}
+				
+				ImageView icon = (ImageView) v.findViewById(R.id.icon);
+				if(e.locked) {
+					icon.setImageResource(R.drawable.toolbar_mini_locked);
+					icon.setVisibility(View.VISIBLE);
+				} else {
+					icon.setVisibility(View.INVISIBLE);
+				}
+				
+				ImageButton load = new ImageButton(ButtonSetSelectorDialog.this.getContext());
+				ImageButton lock = new ImageButton(ButtonSetSelectorDialog.this.getContext());
+				ImageButton modify = new ImageButton(ButtonSetSelectorDialog.this.getContext());
+				ImageButton delete = new ImageButton(ButtonSetSelectorDialog.this.getContext());
+				
+				LinearLayout.LayoutParams params = (new LinearLayout.LayoutParams( LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+				params.setMargins(0, 0, 0, 0);
+				
+				load.setLayoutParams(params);
+				lock.setLayoutParams(params);
+				modify.setLayoutParams(params);
+				delete.setLayoutParams(params);
+				
+				load.setPadding(0,0,0,0);
+				lock.setPadding(0,0,0,0);
+				modify.setPadding(0,0,0,0);
+				delete.setPadding(0,0,0,0);
+				
+				load.setImageResource(R.drawable.toolbar_load_button);
+				if(e.locked) {
+					lock.setImageResource(R.drawable.toolbar_locked_button);
+				} else {
+					lock.setImageResource(R.drawable.toolbar_unlocked_button);
+				}
+				modify.setImageResource(R.drawable.toolbar_modify_button);
+				delete.setImageResource(R.drawable.toolbar_delete_button);
+				
+				load.setBackgroundColor(0);
+				lock.setBackgroundColor(0);
+				modify.setBackgroundColor(0);
+				delete.setBackgroundColor(0);
+				
+				load.setOnKeyListener(theButtonKeyListener);
+				lock.setOnKeyListener(theButtonKeyListener);
+				modify.setOnKeyListener(theButtonKeyListener);
+				delete.setOnKeyListener(theButtonKeyListener);
+				
+				LinearLayout holder = (LinearLayout)v.findViewById(R.id.button_holder);
+				holder.removeAllViews();
+				holder.addView(load);
+				holder.addView(lock);
+				holder.addView(modify);
+				holder.addView(delete);
+				
+				int width = load.getDrawable().getIntrinsicWidth() + lock.getDrawable().getIntrinsicWidth() + modify.getDrawable().getIntrinsicWidth() + delete.getDrawable().getIntrinsicWidth();
+				
+				load.setOnClickListener(new LoadButtonListener(pos));
+				lock.setOnClickListener(new LockButtonListener(pos,icon));
+				modify.setOnClickListener(new ModifyButtonListener(pos));
+				delete.setOnClickListener(new DeleteButtonListener(pos,(ViewFlipper)v.findViewById(R.id.flipper),width));
+				
+				v.findViewById(R.id.toolbar_tab).setOnClickListener(new ToolbarTabOpenListener(v,(ViewFlipper)v.findViewById(R.id.flipper),width,pos));
+				
+				v.findViewById(R.id.toolbar_tab_close).setOnClickListener(new ToolbarTabCloseListener(v,(ViewFlipper)v.findViewById(R.id.flipper),width,v.findViewById(R.id.toolbar_tab)));
+				v.findViewById(R.id.toolbar_tab_close).setOnKeyListener(theButtonKeyListener);
+				
+				v.findViewById(R.id.toolbar_tab).setOnFocusChangeListener(new View.OnFocusChangeListener() {
+					
+					@Override
+					public void onFocusChange(View v, boolean hasFocus) {
+						if(hasFocus) {
+							v.setFocusable(true);
+							v.setFocusableInTouchMode(true);
+						} else {
+							v.setFocusable(false);
+							v.setFocusableInTouchMode(false);
+						}
+					}
+				});
+				
+				TextView label = (TextView)v.findViewById(R.id.infoTitle);
+				TextView extra = (TextView)v.findViewById(R.id.infoExtended);
 				
 				label.setText(e.name);
 				extra.setText("Contains " + e.entries + " buttons.");
@@ -315,6 +502,263 @@ public class ButtonSetSelectorDialog extends Dialog {
 		}
 		
 	}
+	
+	public class LoadButtonListener implements View.OnClickListener {
+
+		private int index = -1;
+		public LoadButtonListener(int index) {
+			this.index = index;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			ButtonEntry item = entries.get(index);
+			Message changebuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,item.name);
+			dispater.sendMessage(changebuttonset);
+			ButtonSetSelectorDialog.this.dismiss();
+		}
+		
+	}
+	
+	public class LockButtonListener implements View.OnClickListener {
+		private int index = -1;
+		private ImageView icon = null;
+		public LockButtonListener(int index,ImageView icon) {
+			this.index = index;
+			this.icon = icon;
+		}
+		@Override
+		public void onClick(View v) {
+			ButtonEntry item = entries.get(index);
+			//TODO: actually lock the set.
+			
+			if(item.locked) {
+				//unlock
+				try {
+					service.setButtonSetLocked(false, item.name);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				ImageView iv = (ImageView)v;
+				iv.setImageResource(R.drawable.toolbar_unlocked_button);
+				icon.setVisibility(View.INVISIBLE);
+				item.locked = false;
+			} else {
+				//lock
+				try {
+					service.setButtonSetLocked(true, item.name);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				ImageView iv = (ImageView)v;
+				iv.setImageResource(R.drawable.toolbar_locked_button);
+				icon.setVisibility(View.VISIBLE);
+				icon.setImageResource(R.drawable.toolbar_mini_locked);
+				item.locked = true;
+			}
+		}
+		
+	}
+	
+	public class ModifyButtonListener implements View.OnClickListener {
+		private int index = -1;
+		public ModifyButtonListener(int index) {
+			this.index = index;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			ButtonEntry entry = adapter.getItem(index);
+			ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
+			editor.show();
+		}
+		
+	}
+	
+	public class DeleteButtonListener implements View.OnClickListener {
+
+		private int entry = -1;
+		ViewFlipper flip = null;
+		private int animateDistance = 0;
+		public DeleteButtonListener(int element,ViewFlipper flip,int animateDistance) {
+			this.entry = element;
+			this.flip = flip;
+			this.animateDistance = animateDistance;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
+			builder.setTitle("Delete Button Set");
+			builder.setMessage("Confirm Delete?");
+			builder.setPositiveButton("Delete", new ReallyDeleteTriggerListener(flip,animateDistance,entry));
+			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			builder.setIcon(android.R.drawable.ic_dialog_alert);
+			AlertDialog d = builder.create();
+			d.show();
+		}
+		
+	}
+	
+	public class ReallyDeleteTriggerListener implements DialogInterface.OnClickListener {
+		ViewFlipper flip = null;
+		int animateDistance = 0;
+		int entry = -1;
+		public ReallyDeleteTriggerListener(ViewFlipper flip,int animateDistance,int entry) {
+			this.flip = flip;
+			this.animateDistance = animateDistance;
+			this.entry = entry;
+		}
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			// TODO Auto-generated method stub
+			dialog.dismiss();
+			Animation a = new TranslateAnimation(0, animateDistance, 0, 0);
+			a.setDuration(800);
+			a.setAnimationListener(new DeleteAnimationListener(entry));
+			//list.setOnFocusChangeListener(null);
+			//list.setFocusable(false);
+			flip.setOutAnimation(a);
+			flip.showNext();
+		}
+		
+	}
+	
+	public class DeleteAnimationListener implements Animation.AnimationListener {
+
+		int entry = -1;
+		public DeleteAnimationListener(int entry) {
+			this.entry = entry;
+		}
+		
+		@Override
+		public void onAnimationEnd(Animation animation) {
+			list.setOnFocusChangeListener(null);
+			list.setFocusable(false);
+			try {
+				service.deleteButtonSet(entries.get(entry).name);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			/*Message delset = dispater.obtainMessage(MainWindow.MESSAGE_DELETEBUTTONSET);
+			delset.obj = (entries.get(picked)).name;
+			dispater.sendMessage(delset);*/
+			editordonelistenr.sendMessageDelayed(editordonelistenr.obtainMessage(104), 10);
+		}
+
+		@Override
+		public void onAnimationRepeat(Animation animation) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onAnimationStart(Animation animation) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	
+	public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListener();
+	
+	public class ToolBarButtonKeyListener implements View.OnKeyListener {
+
+		@Override
+		public boolean onKey(View v, int keyCode, KeyEvent event) {
+			if(keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+				return true;
+			}
+			return false;
+		}
+		
+	}
+	
+	public class ToolbarTabOpenListener implements View.OnClickListener {
+		View parent = null;
+		ViewFlipper targetFlipper = null;
+		int toolbarLength = 0;
+		private int index;
+		
+		public ToolbarTabOpenListener(View parent, ViewFlipper targetFlipper, int toolBarWidth,int index) {
+			this.parent = parent;
+			this.targetFlipper = targetFlipper;
+			toolbarLength = toolBarWidth;
+			this.index = index;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			//v.requestFocus();
+			lastSelectedIndex = this.index;
+			
+			//int targetWidth = 100;
+			Animation ai = new TranslateAnimation(toolbarLength, 0, 0, 0);
+			ai.setDuration(800);
+			
+			targetFlipper.setInAnimation(ai);
+			
+			Animation ao = new TranslateAnimation(0, toolbarLength, 0, 0);
+			ao.setDuration(800);
+			
+			targetFlipper.setOutAnimation(ao);
+			
+			targetFlipper.showNext();
+			
+			parent.findViewById(R.id.toolbar_tab_close).requestFocus();
+		}
+		
+	}
+	
+	private int lastSelectedIndex = -1;
+	
+	public class ToolbarTabCloseListener implements View.OnClickListener {
+		View viewToFocus = null;
+		View parent = null;
+		ViewFlipper targetFlipper = null;
+		int toolbarLength = 0;
+		public ToolbarTabCloseListener(View parent, ViewFlipper targetFlipper, int toolBarWidth,View viewToFocus) {
+			this.parent = parent;
+			this.viewToFocus = viewToFocus;
+			this.targetFlipper = targetFlipper;
+			toolbarLength = toolBarWidth;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			//int totalWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_holder).getWidth();
+			//int tabWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_tab).getWidth();
+			
+			//int targetWidth = TriggerSelectionDialog.this.findViewById(R.id.button_holder).getWidth();
+			
+			Animation ao = new TranslateAnimation(0, toolbarLength, 0, 0);
+			ao.setDuration(800);
+			//a.setFillBefore(true);
+			//a.setFillAfter(false);
+			targetFlipper.setOutAnimation(ao);
+			
+			Animation ai = new TranslateAnimation(toolbarLength, 0, 0, 0);
+			ai.setDuration(800);
+			//a.setFillBefore(true);
+			//a.setFillAfter(false);
+			targetFlipper.setInAnimation(ai);
+			targetFlipper.showNext();
+			
+			//parent.findViewById(R.id.toolbar_tab).requestFocus();
+			viewToFocus.setFocusable(true);
+			viewToFocus.requestFocus();
+		}
+		
+	}
+	
 	
 	private class ButtonSetEditorOpener implements ListView.OnItemLongClickListener {
 
@@ -345,13 +789,35 @@ public class ButtonSetSelectorDialog extends Dialog {
 	boolean setSettingsHaveChanged = false;
 	private Handler editordonelistenr = new Handler() {
 		public void handleMessage(Message msg) {
+			switch(msg.what) {
+			case 104:
+				finishDelete();
+				break;
+			case 100:
+				//entry no name change;
+				//int index = lastSelectedIndex;
+				setSettingsHaveChanged = true;
+				ButtonSetSelectorDialog.this.buildList();
+				break;
+			case 101:
+				//edited entry;
+				
+				setSettingsHaveChanged = true;
+				ButtonSetSelectorDialog.this.buildList();
+				break;
+			}
 			//handle the thing comin back;
 			//if we got this, it means some settings have changed, and we should reload the button set when we are done regardless if it is the one already selected, or cancelled.
-			setSettingsHaveChanged = true;
-			ButtonSetSelectorDialog.this.buildList();
+
 			//Log.e("EDITOR","REBUILDING LIST");
 		}
 	};
+	
+	protected void finishDelete() {
+		buildList();
+		list.setFocusable(true);
+		list.setOnFocusChangeListener(new ListFocusFixerListener());
+	}
 	
 	private class EntryCompare implements Comparator<ButtonEntry> {
 
@@ -366,6 +832,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 	private class ButtonEntry {
 		public String name;
 		public Integer entries;
+		boolean locked = false;
 		
 		//public ButtonEntry() {
 		//	name = "";
@@ -375,6 +842,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 		public ButtonEntry(String n,Integer e) {
 			name = n;
 			entries = e;
+			locked = false;
 		}
 		
 		public boolean equals(Object test) {
@@ -390,6 +858,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 			boolean retval = true;
 			if(!(this.name.equals(bt.name))) retval = false;
 			if(this.entries.intValue() != bt.entries.intValue()) retval = false;
+			if(this.locked != bt.locked) retval = false;
 			return retval;
 		}
 	}

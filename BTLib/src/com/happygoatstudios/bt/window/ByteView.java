@@ -51,7 +51,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 	private double fling_velocity;
 	boolean buttondropstarted=false;
 	boolean increadedPriority = false;
-	
+	boolean lockButtonMoves = false;
+	boolean lockButtonEdits = false;
 	//private RelativeLayout parent_layout = null;
 
 	private View new_text_in_buffer_indicator = null;
@@ -1293,6 +1294,22 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 
 	public boolean isDisableEditing() {
 		return disableEditing;
+	}
+
+	public boolean isLockButtonMoves() {
+		return lockButtonMoves;
+	}
+
+	public void setLockButtonMoves(boolean lockButtonMoves) {
+		this.lockButtonMoves = lockButtonMoves;
+	}
+
+	public boolean isLockButtonEdits() {
+		return lockButtonEdits;
+	}
+
+	public void setLockButtonEdits(boolean lockButtonEdits) {
+		this.lockButtonEdits = lockButtonEdits;
 	}
 	
 	
