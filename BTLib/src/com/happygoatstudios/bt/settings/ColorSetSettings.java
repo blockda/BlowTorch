@@ -15,6 +15,15 @@ public class ColorSetSettings implements Parcelable {
 	private int buttonWidth;
 	private int labelSize;
 	private int flipLabelColor;
+	private boolean locked;
+	private boolean lockNewButtons;
+	private boolean lockMoveButtons;
+	private boolean lockEditButtons;
+	
+	public static final boolean DEFAULT_LOCKED = false;
+	public static final boolean DEFAULT_LOCKNEWBUTTONS = true;
+	public static final boolean DEFAULT_LOCKMOVEBUTTONS = false;
+	public static final boolean DEFAULT_LOCKEDITBUTTONS = false;
 	
 	public ColorSetSettings() {
 		toDefautls();
@@ -30,6 +39,10 @@ public class ColorSetSettings implements Parcelable {
 		tmp.buttonWidth = this.buttonWidth;
 		tmp.labelSize = this.labelSize;
 		tmp.flipLabelColor = this.flipLabelColor;
+		tmp.locked = this.locked;
+		tmp.lockNewButtons = this.lockNewButtons;
+		tmp.lockMoveButtons = this.lockMoveButtons;
+		tmp.lockEditButtons = this.lockEditButtons;
 		return tmp;
 	}
 	
@@ -42,6 +55,10 @@ public class ColorSetSettings implements Parcelable {
 		buttonHeight = SlickButtonData.DEFAULT_BUTTON_HEIGHT;
 		labelSize = SlickButtonData.DEFAULT_LABEL_SIZE;
 		flipLabelColor = SlickButtonData.DEFAULT_FLIPLABEL_COLOR;
+		locked = ColorSetSettings.DEFAULT_LOCKED;
+		lockNewButtons = ColorSetSettings.DEFAULT_LOCKNEWBUTTONS;
+		lockMoveButtons = ColorSetSettings.DEFAULT_LOCKMOVEBUTTONS;
+		lockEditButtons = ColorSetSettings.DEFAULT_LOCKEDITBUTTONS;
 	}
 	
 	public boolean equals(Object o) {
@@ -61,6 +78,10 @@ public class ColorSetSettings implements Parcelable {
 		if(this.labelSize != test.labelSize) return false;
 		if(this.buttonHeight != test.buttonHeight) return false;
 		if(this.buttonWidth != test.buttonWidth) return false;
+		if(this.locked != test.locked) return false;
+		if(this.lockNewButtons != test.lockNewButtons) return false;
+		if(this.lockMoveButtons != test.lockMoveButtons) return false;
+		if(this.lockEditButtons != test.lockEditButtons) return false;
 		return true;
 	}
 
@@ -161,6 +182,10 @@ public class ColorSetSettings implements Parcelable {
 		d.writeInt(buttonWidth);
 		d.writeInt(labelSize);
 		d.writeInt(flipLabelColor);
+		d.writeInt(locked ? 1 : 0);
+		d.writeInt(lockNewButtons ? 1 : 0);
+		d.writeInt(lockMoveButtons ? 1 : 0);
+		d.writeInt(lockEditButtons ? 1 : 0);
 	}
 	
 	public void readFromParcel(Parcel in) {
@@ -172,6 +197,58 @@ public class ColorSetSettings implements Parcelable {
 		buttonWidth = in.readInt();
 		labelSize = in.readInt();
 		flipLabelColor = in.readInt();
+		if(in.readInt() == 1) {
+			locked = true;
+		} else {
+			locked = false;
+		}
+		if(in.readInt() == 1) {
+			lockNewButtons = true;
+		} else {
+			lockNewButtons = false;
+		}
+		if(in.readInt() == 1) {
+			lockMoveButtons = true;
+		} else {
+			lockMoveButtons = false;
+		}
+		if(in.readInt() == 1) {
+			lockEditButtons = true;
+		} else {
+			lockEditButtons = false;
+		}
+	}
+
+	public void setLocked(boolean locked) {
+		this.locked = locked;
+	}
+
+	public boolean isLocked() {
+		return locked;
+	}
+
+	public void setLockNewButtons(boolean lockNewButtons) {
+		this.lockNewButtons = lockNewButtons;
+	}
+
+	public boolean isLockNewButtons() {
+		return lockNewButtons;
+	}
+
+	public void setLockMoveButtons(boolean lockMoveButtons) {
+		this.lockMoveButtons = lockMoveButtons;
+	}
+
+	public boolean isLockMoveButtons() {
+		return lockMoveButtons;
+	}
+
+	public void setLockEditButtons(boolean lockEditButtons) {
+		this.lockEditButtons = lockEditButtons;
+	}
+
+	public boolean isLockEditButtons() {
+		return lockEditButtons;
 	}
 
 

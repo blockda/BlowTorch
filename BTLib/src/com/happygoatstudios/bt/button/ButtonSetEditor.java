@@ -16,6 +16,7 @@ import android.os.RemoteException;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ScrollView;
 
@@ -34,6 +35,10 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 	
 	ColorSetSettings newsettings;
 	ColorSetSettings oldsettings;
+	
+	CheckBox lockNewButtons = null;
+	CheckBox lockMoveButtons = null;
+	CheckBox lockEditButtons = null;
 	
 	Handler notifychanged = null;
 	
@@ -70,6 +75,16 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		flipColor = (Button)findViewById(R.id.btnset_flippedcolor);
 		labelColor = (Button)findViewById(R.id.btnset_labelcolor);
 		flipLabelColor = (Button)findViewById(R.id.btnset_fliplabelcolor);
+		
+		lockNewButtons = (CheckBox)findViewById(R.id.locknewbuttons);
+		lockMoveButtons = (CheckBox)findViewById(R.id.lockmovebuttons);
+		lockEditButtons = (CheckBox)findViewById(R.id.lockeditbuttons);
+		
+		
+		lockNewButtons.setChecked(oldsettings.isLockNewButtons());
+		lockMoveButtons.setChecked(oldsettings.isLockMoveButtons());
+		lockEditButtons.setChecked(oldsettings.isLockEditButtons());
+		
 		
 		nameEditor = (EditText)findViewById(R.id.name);
 		nameEditor.setText(set);
@@ -178,6 +193,10 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				newsettings.setButtonWidth(Integer.parseInt(buttonWidth.getText().toString()));
 				newsettings.setLabelSize(Integer.parseInt(labelSize.getText().toString()));
 				
+				newsettings.setLockNewButtons(lockNewButtons.isChecked());
+				newsettings.setLockMoveButtons(lockMoveButtons.isChecked());
+				newsettings.setLockEditButtons(lockEditButtons.isChecked());
+				
 				if(!(nameEditor.getText().toString().equals(set))) {
 					try {
 						service.updateAndRenameSet(set, nameEditor.getText().toString(), newsettings);
@@ -185,7 +204,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					notifychanged.sendEmptyMessage(100);
+					notifychanged.sendMessage(notifychanged.obtainMessage(101,nameEditor.getText().toString()));
 					ButtonSetEditor.this.dismiss();
 					return;
 				} 

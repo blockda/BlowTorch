@@ -237,6 +237,11 @@ public class HyperSAXParser extends BaseParser {
 				setinfo.setButtonHeight( (attributes.getValue("",ATTR_BUTTONHEIGHT) == null) ? SlickButtonData.DEFAULT_BUTTON_HEIGHT : new Integer(attributes.getValue("",ATTR_BUTTONHEIGHT)));
 				setinfo.setLabelSize( (attributes.getValue("",ATTR_LABELSIZE)==null) ? SlickButtonData.DEFAULT_LABEL_SIZE : new Integer(attributes.getValue("",ATTR_LABELSIZE)));
 				setinfo.setFlipLabelColor( (attributes.getValue("",ATTR_FLIPLABELCOLOR) == null ? SlickButtonData.DEFAULT_FLIPLABEL_COLOR : new BigInteger((attributes.getValue("",ATTR_FLIPLABELCOLOR)),16).intValue()));
+				setinfo.setLocked( (attributes.getValue("",ATTR_LOCKED) == null) ? ColorSetSettings.DEFAULT_LOCKED : (attributes.getValue("",ATTR_LOCKED).equals("true")) ? true : false);
+				setinfo.setLockNewButtons( (attributes.getValue("",ATTR_LOCKNEWBUTTONS) == null) ? ColorSetSettings.DEFAULT_LOCKNEWBUTTONS : (attributes.getValue("",ATTR_LOCKNEWBUTTONS).equals("true")) ? true : false);
+				setinfo.setLockMoveButtons( (attributes.getValue("",ATTR_LOCKMOVEBUTTONS) == null) ? ColorSetSettings.DEFAULT_LOCKMOVEBUTTONS : (attributes.getValue("",ATTR_LOCKMOVEBUTTONS).equals("true")) ? true : false);
+				setinfo.setLockEditButtons( (attributes.getValue("",ATTR_LOCKEDITBUTTONS) == null) ? ColorSetSettings.DEFAULT_LOCKEDITBUTTONS : (attributes.getValue("",ATTR_LOCKEDITBUTTONS).equals("true")) ? true : false);
+				
 				colorsets.put(button_set_name.toString(), setinfo.copy());
 			}
 			
@@ -327,6 +332,8 @@ public class HyperSAXParser extends BaseParser {
 				current_trigger.setInterpretAsRegex( attr.getValue("",ATTR_TRIGGERLITERAL).equals("true") ? true : false);
 				current_trigger.setFireOnce(attr.getValue("",ATTR_TRIGGERONCE).equals("true") ? true : false);
 				current_trigger.setHidden( (attr.getValue("",ATTR_TRIGGERHIDDEN) == null) ? false : (attr.getValue("",ATTR_TRIGGERHIDDEN)).equals("true") ? true : false);
+				current_trigger.setEnabled( (attr.getValue("",ATTR_TRIGGERENEABLED) == null) ? true : (attr.getValue("",ATTR_TRIGGERENEABLED)).equals("true") ? true : false);
+				
 				current_trigger.setResponders(new ArrayList<TriggerResponder>());
 			}
 			
