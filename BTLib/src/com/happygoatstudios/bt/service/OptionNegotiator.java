@@ -3,6 +3,8 @@ package com.happygoatstudios.bt.service;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import android.util.Log;
+
 public class OptionNegotiator {
 	
 	private int columns = 80;
@@ -29,6 +31,7 @@ public class OptionNegotiator {
 	byte IAC_DO = (byte)0xFD; //253
 	byte IAC_DONT = (byte)0xFE; //254
 	final byte COMPRESS2 = (byte)0x56; //86
+	final byte GMCP = (byte)201;
 	final byte SUPPRESS_GOAHEAD = (byte)0x03;
 	public byte[] processCommand(byte first,byte second,byte third) {
 	    	
@@ -59,6 +62,10 @@ public class OptionNegotiator {
 	    			response = IAC_DO;
 	    			break;
 	    		case SUPPRESS_GOAHEAD:
+	    			response = IAC_DO;
+	    			break;
+	    		case GMCP:
+	    			Log.e("GMCP","IAC WILL GMP RECIEVED, RESPONDING DO");
 	    			response = IAC_DO;
 	    			break;
 	    		default:
@@ -156,6 +163,9 @@ public class OptionNegotiator {
     		byte[] compressstart = new byte[1];
     		compressstart[0] = TC.COMPRESS2;
     		return compressstart;
+    	case GMCP:
+    		return new byte[] { TC.GMCP };
+    		//break;
     	default:
     	}
     	
