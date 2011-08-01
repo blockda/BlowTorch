@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.service;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class TC {
@@ -25,6 +26,7 @@ public class TC {
 	final static byte NAWS = 0x1F; //31 -- NAWS, negotiate window size
 	final static byte ECHO = 0x01;
 	final static byte TTYPE = 0x18;
+	final static byte GMCP = (byte)201;
 	
 	public static String getByteName(byte in) {
 		String output = "";
@@ -102,6 +104,23 @@ public class TC {
 					ret += "SEND IAC SE";
 					return ret;
 				}
+			case GMCP:
+				ByteBuffer t = ByteBuffer.wrap(in);
+				if(in.length > 5) { //has to be if valid gmcp message IAC SB GMCP <lotsofdata> IAC SE
+					byte[] data = new byte[in.length -5];
+					t.rewind();
+					t.position(3);
+					t.get(data,0,in.length-5);
+					try {
+						ret += new String(data,"UTF-8");
+						ret += " IAC SE";
+						return ret;
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				break;
 			case NAWS:
 				ret +=  Integer.toString(0x0000FF&in[3]) + " " + 
 						    Integer.toString(0x000000FF&in[4]) + " " +

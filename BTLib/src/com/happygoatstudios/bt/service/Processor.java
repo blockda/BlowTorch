@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.service;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
@@ -8,6 +9,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 
 public class Processor {
@@ -72,7 +74,7 @@ public class Processor {
 		ByteBuffer buff = null;
 		if(holdover == null) {buff = ByteBuffer.allocate(data.length); }
 		else { buff = ByteBuffer.allocate(data.length + holdover.length); buff.put(holdover); holdover = null; }
-		ByteBuffer opbuf = ByteBuffer.allocate(30);
+		ByteBuffer opbuf = ByteBuffer.allocate(data.length*2);
 
 		int count = 0; // count of the number of bytes in the buffer;
 		for (int i = 0; i < data.length; i++) {
@@ -100,7 +102,7 @@ public class Processor {
 									done = true;
 								}
 							} else {
-								opbuf.put(data[j]);
+								//opbuf.put(data[j]);
 								j++;
 							}
 						}
@@ -226,7 +228,9 @@ public class Processor {
 				//naws has started.
 				disaptchNawsString();
 			}
+			
 		}
+		
 		//Log.e("PROCESSOR","SENDING RESPONSE:" + TC.decodeInt(new String(resp,encoding), encoding));
 		//message format: IN:[WILL ECHO] OUT:[DONT ECHO] //background.
 		Bundle b = sb.getData();
@@ -241,6 +245,10 @@ public class Processor {
 		sb.setData(b);
 		reportto.sendMessage(sb);
 		
+		if(action == TC.WILL && option == TC.GMCP) {
+			//so we are responding accordingly, but we want to "initialize" the gmcp
+			initGMCP();
+		}
 		
 	}
 	
@@ -269,6 +277,18 @@ public class Processor {
 
 		if (sub_r[0] == compressresp[0]) {
 			return true;
+		} else if(sub_r[0] == TC.GMCP) {
+			//TODO: GMCP SUBNEGOTIATION RESPONSE CAUGHT HERE!!!!!!!!
+			String message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
+			Log.e("GMCP","RECIEVED GMCP: " + message);
+			if(debugTelnet) {
+				message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
+				reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
+				
+				
+				
+			}
+			return false;
 		} else {
 			String message = null;
 			if(debugTelnet) {
@@ -324,6 +344,68 @@ public class Processor {
 
 	public void reset() {
 		opthandler.reset();
+	}
+	
+	public void initGMCP() {
+		String hello = "core.hello {\"client\": \"BlowTorch\"," +
+			"\"version\": \"1.4\"}";
+		String support = "core.supports.set [\"core 1\",\"char 1\"]";
+		try {
+			byte[] hellob = getGMCPResponse(hello);
+			byte[] supportb = getGMCPResponse(support);
+			
+			String out_hello = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(hellob) + "]" + Colorizer.telOptColorEnd + "\n";
+			String out_support = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(supportb) + "]" + Colorizer.telOptColorEnd + "\n";
+			
+			Message hm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Bundle bh = hm.getData();
+			bh.putByteArray("THE_DATA",hellob);
+			bh.putString("DEBUG_MESSAGE", out_hello);
+			hm.setData(bh);
+			reportto.sendMessage(hm);
+			
+			Message sm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Bundle bs = sm.getData();
+			bs.putByteArray("THE_DATA",supportb);
+			bs.putString("DEBUG_MESSAGE", out_support);
+			sm.setData(bs);
+			reportto.sendMessage(sm);
+		
+		} catch (UnsupportedEncodingException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+}
+	}
+	
+	public byte[] getGMCPResponse(String str) throws UnsupportedEncodingException {
+		//check for IAC in the string.
+		int iaccount = 0;
+		byte[] tmp = str.getBytes("ISO-8859-1");
+		for(int i=0;i<tmp.length;i++) {
+			if(tmp[i] == TC.IAC) {
+				iaccount++;
+			}
+		}
+		
+		
+		byte[] resp = new byte[str.getBytes("ISO-8859-1").length + 5 + iaccount];
+		resp[0] = TC.IAC;
+		resp[1] = TC.SB;
+		resp[2] = TC.GMCP;
+		resp[resp.length-1] = TC.SE;
+		resp[resp.length-2] = TC.IAC;
+		int j=3;
+		for(int i=0;i<(tmp.length);i++) {
+			resp[j] = tmp[i];
+			if(tmp[i] == TC.IAC) {
+				resp[j+1] = TC.IAC;
+				j++;
+			}
+			j++;
+		}
+		
+		
+		return resp;
 	}
 
 	
