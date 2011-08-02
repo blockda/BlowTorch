@@ -135,6 +135,9 @@ public class StellarService extends Service {
 	public static final int MESSAGE_DEBUGTELNET = 509;
 	protected static final int MESSAGE_DOBUTTONRELOAD = 510;
 	public static final int MESSAGE_MCCPFATALERROR = 511;
+	public static final int MESSAGE_VITALS = 6001;
+	public static final int MESSAGE_MAXVITALS = 6002;
+	public static final int MESSAGE_ENEMYHP = 60003;
 	public boolean sending = false;
 	String settingslocation = "test_settings2.xml";
 	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
@@ -213,6 +216,15 @@ public class StellarService extends Service {
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_ENEMYHP:
+					StellarService.this.setEnemyHealth(msg.arg1);
+					break;
+				case MESSAGE_VITALS:
+					StellarService.this.doVitals(msg.arg1,msg.arg2);
+					break;
+				case MESSAGE_MAXVITALS:
+					StellarService.this.doMaxVitals(msg.arg1,msg.arg2);
+					break;
 				case MESSAGE_DOBUTTONRELOAD:
 					DispatchButtonLoad((String)msg.obj);
 					break;
@@ -594,6 +606,45 @@ public class StellarService extends Service {
 		}
 	}
 	
+	protected void setEnemyHealth(int arg1) {
+		int N = callbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).updateEnemy(arg1);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		callbacks.finishBroadcast();
+	}
+
+	protected void doMaxVitals(int arg1, int arg2) {
+		int N = callbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).updateMaxVitals(arg1, arg2, 0);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		callbacks.finishBroadcast();
+	}
+
+	protected void doVitals(int arg1, int arg2) {
+		int N = callbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).updateVitals(arg1, arg2, 0);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		callbacks.finishBroadcast();
+	}
+
 	public void onDestroy() {
 		//Log.e("SERV","ON DESTROY CALLED!");
 		saveXmlSettings(settingslocation);
