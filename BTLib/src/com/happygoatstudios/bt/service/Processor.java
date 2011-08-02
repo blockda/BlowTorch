@@ -2,6 +2,10 @@ package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
 
@@ -288,6 +292,38 @@ public class Processor {
 				
 				
 			}
+			byte[] foo = new byte[negotiation.length-5];
+			ByteBuffer wrap = ByteBuffer.wrap(negotiation);
+			wrap.rewind();
+			wrap.position(3);
+			wrap.get(foo, 0, negotiation.length-5);
+			try {
+				String whole = new String(foo,"UTF-8");
+				int split = whole.indexOf(" ");
+				String module = whole.substring(0, split);
+				String data = whole.substring(split+1, whole.length());
+				JSONObject jo = new JSONObject(data);
+				
+				Log.e("GMCP","MODULE NAME: " + module);
+				String output = "";
+				Iterator<String> it = jo.keys();
+				while(it.hasNext()) {
+					String tmp = it.next();
+					String dat = jo.getString(tmp);
+					output += " ["+tmp+"=>"+dat+"] ";
+				}
+				Log.e("GMCP","DATA: " + output);
+				//jo.
+				
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
 			return false;
 		} else {
 			String message = null;
