@@ -120,6 +120,9 @@ public class MainWindow extends Activity {
 	private static final int MESSAGE_RENAWS = 885;
 	public final static int MESSAGE_LAUNCHURL = 886;
 	protected static final int MESSAGE_CLEARALLBUTTONS = 887;
+	protected static final int MESSAGE_MAXVITALS = 100000;
+	protected static final int MESSAGE_VITALS = 1000001;
+	protected static final int MESSAGE_ENEMYHP = 1000002;
 	
 	//private TextTree tree = new TextTree();
 
@@ -158,6 +161,10 @@ public class MainWindow extends Activity {
 	Boolean settingsLoaded = false; //synchronize or try to mitigate failures of writing button data, or failures to read data
 	Boolean serviceConnected = false;
 	Boolean isResumed = false;
+	
+	Bar health = null;
+	Bar mana = null;
+	Bar enemy = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -228,6 +235,16 @@ public class MainWindow extends Activity {
         
         screen2.setZOrderOnTop(false);
         screen2.setOnTouchListener(gestureListener);
+        
+        health = (Bar)findViewById(R.id.health);
+        mana = (Bar)findViewById(R.id.mana);
+        enemy = (Bar)findViewById(R.id.enemy);
+        health.setColor(0xFF00FF00);
+        mana.setColor(0xFF0000FF);
+        
+        enemy.setValue(10);
+        mana.setValue(90);
+        health.setValue(10);
 		
         EditText input_box = (EditText)findViewById(R.id.textinput);
         
@@ -333,6 +350,38 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_ENEMYHP:
+					int enemyval = msg.arg1;
+					if(msg.arg1 > -1) {
+						enemy.setColor(0xFFFF0000);
+						enemy.setValue(enemyval);
+					} else {
+						enemy.setColor(0xFF000000);
+						enemy.setValue(100);
+					}
+					enemy.invalidate();
+					break;
+				case MESSAGE_VITALS:
+					int hp = msg.getData().getInt("hp");
+					int mp = msg.getData().getInt("mp");
+					//int maxmoves = msg.getData().getInt("maxmoves");
+					
+					health.setValue(hp);
+					mana.setValue(mp);
+					
+					health.invalidate();
+					break;
+				case MESSAGE_MAXVITALS:
+					int maxhp = msg.getData().getInt("maxhp");
+					int maxmp = msg.getData().getInt("maxmp");
+					//int maxmoves = msg.getData().getInt("maxmoves");
+					
+					health.setMax(maxhp);
+					mana.setMax(maxmp);
+					
+					health.invalidate();
+					
+					break;
 				case MESSAGE_CLEARALLBUTTONS:
 					try {
 						ClearButtonsImplementation();
@@ -2334,6 +2383,30 @@ public class MainWindow extends Activity {
 		
 		public void clearAllButtons() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_CLEARALLBUTTONS);
+		}
+		
+		public void updateMaxVitals(int hp, int mana, int moves) {
+			Message msg = myhandler.obtainMessage(MESSAGE_MAXVITALS);
+			Bundle b = msg.getData();
+			b.putInt("maxhp", hp);
+			b.putInt("maxmp", mana);
+			b.putInt("maxmoves", moves);
+			msg.setData(b);
+			myhandler.sendMessage(msg);
+		}
+		public void updateVitals(int hp, int mana, int moves) {
+			Message msg = myhandler.obtainMessage(MESSAGE_VITALS);
+			Bundle b = msg.getData();
+			b.putInt("hp", hp);
+			b.putInt("mp", mana);
+			b.putInt("moves", moves);
+			msg.setData(b);
+			myhandler.sendMessage(msg);
+		}
+
+		@Override
+		public void updateEnemy(int hp) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_ENEMYHP,hp,0));
 		}
 	};
 }

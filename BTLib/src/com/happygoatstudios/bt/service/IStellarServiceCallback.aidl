@@ -21,4 +21,7 @@ interface IStellarServiceCallback {
 	void doLineBreak(int i);
 	void reloadButtons(String setName);
 	void clearAllButtons();
+	void updateMaxVitals(int hp, int mana, int moves);
+	void updateVitals(int hp,int mana,int moves);
+	void updateEnemy(int hp);
 }
