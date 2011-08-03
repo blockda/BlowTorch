@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:orientation="vertical">
+		<ScrollView
+			android:layout_width="fill_parent"
+			android:layout_height="20dip"
+			android:layout_alignParentBottom="true"
+			android:id="@+id/buttons">
+			<LinearLayout
+				android:layout_height="20dip"
+				android:layout_width="fill_parent"
+				android:background="#FFAA0000">
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="20dip"
+					style="@style/BinButtonStyle"
+					android:text="Position"
+					android:id="@+id/toggle"/>
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="20dip"
+					style="@style/BinButtonStyle"
+					android:text="Done"
+					android:id="@+id/done"/>
+				<Button
+					android:layout_width="wrap_content"
+					android:layout_height="20dip"
+					style="@style/BinButtonStyle"
+					android:text="Cancel"
+					android:id="@+id/cancel"/>
+			</LinearLayout>
+		</ScrollView>
+		<com.happygoatstudios.bt.window.TouchCatcher
+			android:layout_height="fill_parent"
+			android:layout_width="fill_parent"
+			android:layout_alignParentTop="true"
+			android:layout_above="@+id/buttons"
+			android:id="@+id/touchcatch"/>
+		
+		
+		
+</RelativeLayout>

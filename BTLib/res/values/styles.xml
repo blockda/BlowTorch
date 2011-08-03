@@ -18,5 +18,13 @@
     <item name="android:typeface">sans</item>
 </style>
 
+<style name="BinButtonStyle" parent="@android:style/Widget.Button">
+	<item name="android:textSize">13dip</item>
+	<item name="android:textColor">#FFAAAAAA</item>
+	<item name="android:background">#FF330000</item>
+	<item name="android:layout_marginLeft">5dip</item>
+	<item name="android:layout_marginRight">5dip</item>
+</style>
+
 
 </resources>
