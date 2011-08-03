@@ -76,7 +76,7 @@ public class GMCPData {
 				if(!(o instanceof HashMap<?,?>)) { Log.e("GMCP","WARNING! KEY: " + key + " is not a hashmap!"); }
 				HashMap<String,Object> map = (HashMap<String,Object>)o;
 				//Iterator<String> keys = object.keys();
-				insertData(object, node,module);
+				insertData(object, map,module);
 				//for(String key : object.keys())
 			} else {
 				//still more modules.
