@@ -32,6 +32,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.text.InputType;
+import android.util.Log;
 //import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -162,9 +163,7 @@ public class MainWindow extends Activity {
 	Boolean serviceConnected = false;
 	Boolean isResumed = false;
 	
-	Bar health = null;
-	Bar mana = null;
-	Bar enemy = null;
+	VitalsView vitals = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -236,15 +235,17 @@ public class MainWindow extends Activity {
         screen2.setZOrderOnTop(false);
         screen2.setOnTouchListener(gestureListener);
         
-        health = (Bar)findViewById(R.id.health);
-        mana = (Bar)findViewById(R.id.mana);
-        enemy = (Bar)findViewById(R.id.enemy);
-        health.setColor(0xFF00FF00);
-        mana.setColor(0xFF0000FF);
+        vitals = (VitalsView) this.findViewById(R.id.vitals);
         
-        enemy.setValue(10);
-        mana.setValue(90);
-        health.setValue(10);
+        //health = (Bar)vitals.findViewById(R.id.health);
+        //mana = (Bar)vitals.findViewById(R.id.mana);
+        //enemy = (Bar)vitals.findViewById(R.id.enemy);
+        //health.setColor(0xFF00FF00);
+        //mana.setColor(0xFF0000FF);
+        
+        //enemy.setValue(10);
+        //mana.setValue(90);
+        //health.setValue(10);
 		
         EditText input_box = (EditText)findViewById(R.id.textinput);
         
@@ -352,34 +353,40 @@ public class MainWindow extends Activity {
 				switch(msg.what) {
 				case MESSAGE_ENEMYHP:
 					int enemyval = msg.arg1;
-					if(msg.arg1 > -1) {
+					/*if(msg.arg1 > -1) {
 						enemy.setColor(0xFFFF0000);
 						enemy.setValue(enemyval);
 					} else {
 						enemy.setColor(0xFF000000);
 						enemy.setValue(100);
-					}
-					enemy.invalidate();
+					}*/
+					vitals.updateEnemyVal(msg.arg1);
+					//enemy.invalidate();
 					break;
 				case MESSAGE_VITALS:
 					int hp = msg.getData().getInt("hp");
 					int mp = msg.getData().getInt("mp");
 					//int maxmoves = msg.getData().getInt("maxmoves");
 					
-					health.setValue(hp);
+					/*health.setValue(hp);
 					mana.setValue(mp);
 					
-					health.invalidate();
+					health.invalidate();*/
+					//Log.e("LSDF","SETTING VITALS");
+					vitals.updateVitals(hp, mp);
 					break;
 				case MESSAGE_MAXVITALS:
 					int maxhp = msg.getData().getInt("maxhp");
 					int maxmp = msg.getData().getInt("maxmp");
 					//int maxmoves = msg.getData().getInt("maxmoves");
 					
-					health.setMax(maxhp);
+					/*health.setMax(maxhp);
 					mana.setMax(maxmp);
 					
-					health.invalidate();
+					health.invalidate();*/
+					//Log.e("LSDF","SETTING MAX");
+					vitals.updateMaxVitals(maxhp,maxmp);
+					vitals.invalidate();
 					
 					break;
 				case MESSAGE_CLEARALLBUTTONS:
@@ -670,15 +677,7 @@ public class MainWindow extends Activity {
 					} catch (RemoteException e3) {
 						throw new RuntimeException(e3);
 					}
-					RelativeLayout clearb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-					int pos = clearb.indexOfChild(screen2);
-					int count = clearb.getChildCount();
-					if(pos == 0) {
-						clearb.removeViews(1, count-1);
-					} else {
-						clearb.removeViews(0,pos);
-						clearb.removeViews(pos+1,count - pos);
-					}
+					removeButtonsFromHolder();
 					makeFakeButton();
 					showNoButtonMessage(true);
 					
@@ -693,14 +692,7 @@ public class MainWindow extends Activity {
 						
 						if(newset != null) {
 							
-							int posm = modb.indexOfChild(screen2);
-							int countm = modb.getChildCount();
-							if(posm == 0) {
-								modb.removeViews(1, countm-1);
-							} else {
-								modb.removeViews(0,posm);
-								modb.removeViews(posm+1,countm - posm);
-							}
+							removeButtonsFromHolder();
 							
 							if(newset.size() > 0) {
 								for(SlickButtonData tmp : newset) {
@@ -1134,19 +1126,21 @@ public class MainWindow extends Activity {
 		}
 	}
 	
+	protected void initVitals() {
+		//RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.vitals);
+		
+		//layout.addView(vitals);
+		//layout.invalidate();
+		
+	}
+	
 	protected void ClearButtonsImplementation() throws RemoteException {
 		//find the button holder, nuke the buttons, find the button set that sent the "clear all" and make a button with a link back to that set, and then position that button.
 		//TODO: impl
 		RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.slickholder);
 		screen2.setDisableEditing(true);
-		int posm = layout.indexOfChild(screen2);
-		int countm = layout.getChildCount();
-		if(posm == 0) {
-			layout.removeViews(1, countm-1);
-		} else {
-			layout.removeViews(0,posm);
-			layout.removeViews(posm+1,countm - posm);
-		}
+		
+		removeButtonsFromHolder();
 		
 		String lastSet = service.getLastSelectedSet();
 		
@@ -1289,6 +1283,7 @@ public class MainWindow extends Activity {
 		menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 905, 0 ,"Speedwalk Directions");
+		menu.add(0,907,0,"Vitals Options");
 		menu.add(0, 901, 0, "Reconnect");
 		menu.add(0, 902, 0, "Disconnect");
 		menu.add(0, 903, 0, "Quit");
@@ -1306,6 +1301,10 @@ public class MainWindow extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		
 		switch(item.getItemId()) {
+		case 907:
+			FloatingVitalMoveDialog mvdialog = new FloatingVitalMoveDialog(this,vitals);
+			mvdialog.show();
+			break;
 		case 906: //Help/About
 			AboutDialog abtdialog = new AboutDialog(this);
 			abtdialog.show();
@@ -2093,14 +2092,7 @@ public class MainWindow extends Activity {
 			
 			RelativeLayout button_layout = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 			
-			int posl = button_layout.indexOfChild(screen2);
-			int countl = button_layout.getChildCount();
-			if(posl == 0) {
-				button_layout.removeViews(1, countl-1);
-			} else {
-				button_layout.removeViews(0,posl);
-				button_layout.removeViews(posl+1,countl - posl);
-			}
+			removeButtonsFromHolder();
 			
 			if(buttons != null) {
 				if(buttons.size() > 0) {
@@ -2247,6 +2239,20 @@ public class MainWindow extends Activity {
 		}
 		return font;
 	}
+
+	private void removeButtonsFromHolder() {
+		RelativeLayout clearb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
+		int slick = clearb.indexOfChild(screen2);
+		int vital = clearb.indexOfChild(vitals);
+		int count = clearb.getChildCount();
+		
+		for(int i=0;i<clearb.getChildCount();i++) {
+			if(i != slick && i != vital) {
+				clearb.removeViewAt(i);
+			}
+		}
+	}
+
 
 	private IStellarServiceCallback.Stub the_callback = new IStellarServiceCallback.Stub() {
 
