@@ -5,31 +5,13 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
     
-    <LinearLayout
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:orientation="vertical"
-		android:layout_alignParentBottom="true"
-		android:id="@+id/bars">
-		<com.happygoatstudios.bt.window.Bar
-			android:layout_width="fill_parent"
-			android:layout_height="6dip"
-			android:id="@+id/health"/>
-		<com.happygoatstudios.bt.window.Bar
-			android:layout_width="fill_parent"
-			android:layout_height="6dip"
-			android:id="@+id/mana"/>
-		<com.happygoatstudios.bt.window.Bar
-			android:layout_width="fill_parent"
-			android:layout_height="6dip"
-			android:id="@+id/enemy"/>
-	</LinearLayout>
+
 
 <RelativeLayout
 	android:layout_height="20dip"
 	android:layout_width="wrap_content"
 	android:id="@+id/input_bar"
-	android:layout_above="@id/bars"
+	android:layout_alignParentBottom="true"
 	android:layout_alignParentLeft="true">
 	
     <LinearLayout
@@ -135,12 +117,22 @@
     				    
     				<com.happygoatstudios.bt.window.ByteView
     					android:id="@+id/slickview"
+    					android:layout_alignParentTop="true"
     					android:layout_width="fill_parent"
+    					android:layout_alignParentLeft="true"
     					android:layout_height="fill_parent"
     					android:layout_marginLeft = "0px"
     					android:layout_marginTop= "0px"/>
-    					
+    				<com.happygoatstudios.bt.window.VitalsView
+    					android:id="@+id/vitals"
+    					android:layout_width="fill_parent"
+    					android:layout_alignParentTop="true"
+    					android:layout_alignParentLeft="true"
+    					android:layout_height="fill_parent"
+    					android:layout_marginLeft = "0px"
+    					android:layout_marginTop= "0px"/>
     				</RelativeLayout>
+    				
     					
     <!--	</ScrollView> -->
     	<!-- <ScrollView

@@ -31,7 +31,7 @@ public class Processor {
 		mContext = pContext;
 		String ttype = ConfigurationLoader.getConfigurationValue("terminalTypeString", mContext);
 		opthandler = new OptionNegotiator(ttype);
-
+		gmcp = new GMCPData(useme);
 		setEncoding(pEncoding);
 	}
 
@@ -285,13 +285,13 @@ public class Processor {
 			//TODO: GMCP SUBNEGOTIATION RESPONSE CAUGHT HERE!!!!!!!!
 			//String message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
 			//Log.e("GMCP","RECIEVED GMCP: " + message);
-			/*if(debugTelnet) {
-				message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
+			if(debugTelnet) {
+				String message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
 				reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
 				
 				
 				
-			}*/
+			}
 			byte[] foo = new byte[negotiation.length-5];
 			ByteBuffer wrap = ByteBuffer.wrap(negotiation);
 			wrap.rewind();
@@ -303,7 +303,7 @@ public class Processor {
 				String module = whole.substring(0, split);
 				String data = whole.substring(split+1, whole.length());
 				JSONObject jo = new JSONObject(data);
-				
+				gmcp.absorb(module, jo);
 				//Log.e("GMCP","MODULE NAME: " + module);
 				//String output = "";
 				//Iterator<String> it = jo.keys();
@@ -313,7 +313,8 @@ public class Processor {
 				//	output += " ["+tmp+"=>"+dat+"] ";
 				//}
 				//Log.e("GMCP","DATA: " + output);
-				if(module.equals("char.vitals")) {
+				//TODO: THIS IS WHERE THE ACTUAL WORK IS DONE TO SEND MUD DATA.
+				/*if(module.equals("char.vitals")) {
 					int hp = jo.getInt("hp");
 					int mp = jo.getInt("mana");
 					reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_VITALS, hp, mp));
@@ -324,12 +325,12 @@ public class Processor {
 				} else if(module.equals("char.status")) {
 					int value = -1;
 					if(!jo.getString("enemy").equals("")) {
-						Log.e("LOG","SENDING ENEMY STATE");
+						//Log.e("LOG","SENDING ENEMY STATE");
 						value = jo.getInt("enemypct");
 						
 					}
 					reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_ENEMYHP, value, 0));
-				}
+				}*/
 				//jo.
 				
 			} catch (UnsupportedEncodingException e) {
@@ -461,7 +462,12 @@ public class Processor {
 		return resp;
 	}
 
-	
+	public void dumpGMCP() {
+		// TODO Auto-generated method stub
+		gmcp.dumpCache();
+	}
+
+	GMCPData gmcp = null;
 
 }
 

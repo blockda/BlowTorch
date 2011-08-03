@@ -182,6 +182,7 @@ public class StellarService extends Service {
 		SpeedwalkCommand swcmd = new SpeedwalkCommand();
 		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
 		ClearButtonsCommand cbcmd = new ClearButtonsCommand();
+		DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
@@ -194,6 +195,8 @@ public class StellarService extends Service {
 		specialcommands.put(swcmd.commandName, swcmd);
 		specialcommands.put(lbcmd.commandName, lbcmd);
 		specialcommands.put(cbcmd.commandName, cbcmd);
+		specialcommands.put(dmpcmd.commandName,dmpcmd);
+		
 		
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
 		settingslocation = prefs.getString("SETTINGS_PATH", "");
@@ -3201,6 +3204,33 @@ public class StellarService extends Service {
 			return null;
 		}
 	}
+	
+	private class DumpGMCPCommand extends SpecialCommand {
+		public DumpGMCPCommand() {
+			this.commandName = "dumpgmcp";
+		}
+		
+		public Object execute(Object o) {
+			/*String str = (String)o;
+			if(the_settings.getButtonSets().containsKey(str)) {
+				//load that set.
+				int N = callbacks.beginBroadcast();
+				for(int i=0;i<N;i++) {
+					try {
+						callbacks.getBroadcastItem(i).reloadButtons(str);
+					} catch (RemoteException e) {
+					}
+				}
+				callbacks.finishBroadcast();
+			} else {
+				//invalid key
+				DispatchToast("Button Set: \"" + str + "\" does not exist.",false);
+			}*/
+			the_processor.dumpGMCP();
+			return null;
+		}
+	}
+	
 	
 	private class SpeedwalkCommand extends SpecialCommand {
 		
