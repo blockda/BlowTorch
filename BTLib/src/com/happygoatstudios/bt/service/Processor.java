@@ -302,8 +302,16 @@ public class Processor {
 				int split = whole.indexOf(" ");
 				String module = whole.substring(0, split);
 				String data = whole.substring(split+1, whole.length());
-				JSONObject jo = new JSONObject(data);
-				gmcp.absorb(module, jo);
+				try {
+					JSONObject jo = new JSONObject(data);
+					gmcp.absorb(module, jo);
+				} catch (JSONException e) {
+					Log.e("GMCP","GMCP PARSING FOR: " + data);
+					Log.e("GMCP","REASON: " + e.getMessage());
+					e.printStackTrace();
+					//Log.e("GMCP","STACK: " + e.);
+				}
+				
 				//Log.e("GMCP","MODULE NAME: " + module);
 				//String output = "";
 				//Iterator<String> it = jo.keys();
@@ -334,9 +342,6 @@ public class Processor {
 				//jo.
 				
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
