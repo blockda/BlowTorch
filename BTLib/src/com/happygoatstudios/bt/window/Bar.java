@@ -3,63 +3,105 @@ package com.happygoatstudios.bt.window;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
-public class Bar extends View {
+public class Bar {
 
 	private Paint mPaint = null;
 	private int min = 0;
 	private int max = 100;
 	private int value = 50;
+	private Rect rect = null;
+	private float density = 1.0f;
+	private Rect draw = null;
+	private Paint border = null;
+	private Paint background = null;
+	//private Point origin = null;
 	
-	
-	public Bar(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		init();
-		// TODO Auto-generated constructor stub
-	}
 
-	public Bar(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		init();
-		// TODO Auto-generated constructor stub
+	private void init(Context c) {
+		//Log.e("BAR","BAR CREATED");
+		mPaint = new Paint();
+		mPaint.setColor(0xFFFF0000);
+		border = new Paint();
+		border.setColor(0xFF888888);
+		//Point origin = new Point();
+		background = new Paint();
+		background.setColor(0xFF1A1A1A);
+		//border.setColor(0x00000000);
+		border.setStyle(Paint.Style.STROKE);
+		density = c.getResources().getDisplayMetrics().density;
+		//mPaint.setStrokeWidth(2*density);
+		border.setStrokeWidth(2*density);
+		rect = new Rect();
+		rect.top = 0;
+		rect.left = 0;
+		rect.bottom = (int) (6 * density);
+		rect.right = (int) (250 * density);
 	}
 
 	public Bar(Context context) {
-				super(context);
+				//super(context);
 				
-				init();
+				init(context);
 	}
 	
-	public void onDraw(Canvas c) {
-		Rect r = new Rect();
+	public void draw(Canvas c) {
+		if(draw == null) {
+			
+			draw = new Rect();
+		}
+		/*Rect r = new Rect();
 		r.bottom = (int) (6 * this.getContext().getResources().getDisplayMetrics().density);
 		r.top = 0;
-		r.right = c.getWidth();
-		r.left = 0;
+		r.right = this.getWidth();
+		r.left = 0;*/
 		
-		int width = r.right - r.left;
-		int height = r.bottom - r.top;
+		draw.top = this.rect.top;
+		draw.bottom = this.rect.bottom;
+		draw.left = this.rect.left;//, measureSpec)
+		
+		int width = this.rect.right - this.rect.left;
+		int height = this.rect.bottom - this.rect.top;
+		int value = this.value;
+		if(value < 0) {
+			value = 0;
+		}
 		if(width > height) {
 			float percent = (float)value / (float)max;
 			int newWidth = (int) (width * percent);
-			r.right = r.left + newWidth;
+			draw.right = draw.left + newWidth;
 		} else {
 			
 		}
 		
+		c.drawRect(this.rect, background);
 		
-		c.drawRect(r, mPaint);
+		c.drawRect(draw, mPaint);
 		
-	}
-	
-	private void init() {
-		//Log.e("BAR","BAR CREATED");
-		mPaint = new Paint();
-		mPaint.setColor(0xFFFF0000);
+		c.drawRect(this.rect, border);
+		
+		for(int i=1;i<4;i++) {
+			if(width > height)
+			{
+				float quarter = width * 0.25f;
+				Point p1 = new Point();
+				Point p2 = new Point();
+				p1.x = (int) (quarter*i);
+				p1.y = this.rect.top;
+				
+				p2.x = (int)(quarter*i);
+				p2.y = this.rect.bottom;
+				c.drawLine(p1.x, p1.y, p2.x, p2.y, border);
+			} else {
+				
+			}
+		} 
+		
 	}
 	
 	public void setColor(int color) {
@@ -92,7 +134,22 @@ public class Bar extends View {
 		return min;
 	}
 	
+	public int getHeight() {
+		return (int) (Math.abs(this.rect.bottom - this.rect.top));
+	}
 	
+	public int getWidth() {
+		return (int) (Math.abs(this.rect.left - this.rect.right));
+	}
+
+	public int getRight() {
+		// TODO Auto-generated method stub
+		return this.rect.right;
+	}
+	
+	public void setRight(int right) {
+		this.rect.right = right;
+	}
 		
 	
 	
