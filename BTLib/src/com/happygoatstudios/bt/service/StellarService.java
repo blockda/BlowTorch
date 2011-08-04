@@ -36,6 +36,11 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//import org.keplerproject.luajava.LuaState;
+//import org.keplerproject.luajava.LuaStateFactory;
+import org.keplerproject.luajava.LuaException;
+import org.keplerproject.luajava.LuaState;
+import org.keplerproject.luajava.LuaStateFactory;
 import org.xml.sax.SAXException;
 
 import android.app.Notification;
@@ -145,6 +150,10 @@ public class StellarService extends Service {
 	Timer the_timer = new Timer("BLOWTORCH_TIMER",true);
 	HashMap<String,TimerExtraTask> timerTasks = new HashMap<String,TimerExtraTask>();
 	
+	static {
+		System.loadLibrary("luajava-1.1");
+	}
+	
 	public void onLowMemory() {
 		//Log.e("SERVICE","The service has been requested to shore up memory usage, potentially going to be killed.");
 	}
@@ -159,12 +168,49 @@ public class StellarService extends Service {
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		}
 		
+		//lol, here we go.
+		
+		//L.
+		
 		return Service.START_STICKY;
 	}
+	
+	LuaState theInterpreter = null;
 	
 	public void onCreate() {
 		//TODO: WAIT FOR DEBUGGER
 		//Debug.waitForDebugger();
+		Log.e("LUA","STARTING UP");
+		theInterpreter = LuaStateFactory.newLuaState();
+		theInterpreter.openLibs();
+		//LtheInterpreter.openIo();
+		//theInterpreter.openBase();
+		//L.pushInteger(432);
+		/*try {
+			L.pushObjectValue(43);
+		} catch (LuaException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		L.setGlobal("st");
+		int result = L.LdoString("do\n\tif st == nil then\n\t\t return 64 \n\telse\n\t\t return 24\n\tdone\n end\n");
+		if(result == 0) {
+			// val = L.lget
+			//L.L
+			//val = L.
+		} else {
+			Log.e("FSF",L.toString(-1));
+		}*/
+		//L.LloadString("return 3");
+		//L.L
+		
+		//Log.e("LUA","LUA RESULT:" + result);
+		//L.c
+		//LuaState L = LuaStateFactory.newLuaState();
+		//L.openLibs();
+		//L.
+		//L.LdoString("print(\"Hello World from Lua!\");");
+		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
 		host = BAD_HOST;
@@ -183,6 +229,7 @@ public class StellarService extends Service {
 		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
 		ClearButtonsCommand cbcmd = new ClearButtonsCommand();
 		DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
+		LuaCommand luacmd = new LuaCommand();
 		specialcommands.put(colordebug.commandName, colordebug);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
@@ -196,6 +243,7 @@ public class StellarService extends Service {
 		specialcommands.put(lbcmd.commandName, lbcmd);
 		specialcommands.put(cbcmd.commandName, cbcmd);
 		specialcommands.put(dmpcmd.commandName,dmpcmd);
+		specialcommands.put(luacmd.commandName, luacmd);
 		
 		
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
@@ -3227,6 +3275,49 @@ public class StellarService extends Service {
 				DispatchToast("Button Set: \"" + str + "\" does not exist.",false);
 			}*/
 			the_processor.dumpGMCP();
+			return null;
+		}
+	}
+	
+	private class LuaCommand extends SpecialCommand {
+		public LuaCommand() {
+			this.commandName = "lua";
+		}
+		
+		public Object execute(Object o) {
+			
+			String str = (String)o;
+			
+			int result = theInterpreter.LdoString(str);
+			if(result == 0) {
+				try {
+					//StellarService.this.doDispatchNoProcess("\nFuckin Lua. How does it work?!\n".getBytes("ISO-8859-1"));
+					if(theInterpreter.toString(1) != null) {
+						StellarService.this.doDispatchNoProcess(theInterpreter.toString(1).getBytes("ISO-8859-1"));
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//success
+			} else {
+				
+				try {
+					StellarService.this.doDispatchNoProcess(("\n"+theInterpreter.toString(-1)+"\n").getBytes("ISO-8859-1"));
+				} catch (RemoteException e) {
+					
+					e.printStackTrace();
+				} catch (UnsupportedEncodingException e) {
+					
+					e.printStackTrace();
+				}
+			}
+			
+			
+			
 			return null;
 		}
 	}
