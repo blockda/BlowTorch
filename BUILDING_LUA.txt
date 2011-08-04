@@ -1,0 +1,29 @@
+COMPILING LUAJAVA FOR ANDROID FOR BLOWTORCH FOR SCRIPTING!!!
+
+pre step- ensure java is accessible from windows 
+
+Step 1: Obtain sources for luajava-1.1 and lua-5.1 (or so)
+
+Step 2: Unpack folders
+
+Step 3: Open WINDOWS_CMD, and browse to luajava-1.1
+
+Step 4: Create luajava-1.1\src\gen for generated .class files
+
+Step 4: build the classes with this command-
+javac -sourcepath .\src\java\ .\src\java\org\keplerproject\luajava\*.java
+
+Step 5: execute same command with warning supression. -Xlint to suppress warnings.
+
+Step 6: build the jar file.
+6a) move to src\java for appropriate classpathing while building.
+
+6b) execute to build the .jar--->>  jar cvf ../../luajava.jar ./org/keplerproject/luajava/*.class
+
+6c) move back two dirs, ../../ (luajava-1.1 root)
+
+7) generate luajava.h header.
+> javah -o src/c/luajava.h -classpath "path\to\luajava.jar" org.keplerproject.luajava.LuaState
+
+8) COPY STUFF OVER TO MAKE THE ANDROID NDK PROJECT. make luajava-1.1/jni/
+
