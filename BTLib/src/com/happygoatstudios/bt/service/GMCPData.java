@@ -8,7 +8,11 @@ import java.util.List;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.happygoatstudios.bt.window.StatusGroupData;
+
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class GMCPData {
@@ -38,7 +42,7 @@ public class GMCPData {
 		for(String key : watchList.keySet()) {
 			watchList.put(key,falseVal);
 		}
-		putData(module,o,data);
+		putData(module,o,data,"");
 		
 		boolean didTrigger = false;
 		for(String key : watchList.keySet()) {
@@ -48,16 +52,55 @@ public class GMCPData {
 			}
 		}
 		if(didTrigger) {
-			Log.e("GMCP","WATCH LIST TRIGGERED");
+			//Log.e("GMCP","WATCH LIST TRIGGERED");
+			StatusGroupData data = new StatusGroupData();
+			
+			boolean enemyZero = false;
 			for(int i =0;i<list.data.size();i++) {
-				Log.e("GMCPDUMP",list.data.get(i) + ": " + this.get(list.data.get(i)));
+				//Log.e("GMCPDUMP",list.data.get(i) + ": " + this.get(list.data.get(i)));
+				//data.addInt((this.get(list.data.get(i)));
+				if(list.data.get(i).equals("char.status.enemy")) {
+					//if(this.get(list.data.get(i)).equals("")) {
+					if(this.get(list.data.get(i)) != null && this.get(list.data.get(i)).equals("")) {
+						enemyZero = true;
+					}
+				}
 			}
+			
+			int hp,mp,maxhp,maxmana,enemy = 0;
+			//Integer ihp,imp,imaxhp,imaxmana = 0;
+			hp = (this.get("char.vitals.hp") == null) ? 100 : (Integer)this.get("char.vitals.hp");
+			mp = (this.get("char.vitals.mana") == null) ? 100 : (Integer)this.get("char.vitals.mana");
+			maxhp = (this.get("char.maxstats.maxhp") == null) ? 100 : (Integer)this.get("char.maxstats.maxhp");
+			maxmana = (this.get("char.maxstats.maxmana") == null) ? 100 : (Integer)this.get("char.maxstats.maxmana");
+			enemy = (this.get("char.status.enemypct") == null) ? 0 : (Integer)this.get("char.status.enemypct");
+			
+			Message m = reporter.obtainMessage(StellarService.MESSAGE_FOO);
+			//if(this.get(list.data.MESSget(i))
+			Bundle b = m.getData();
+			b.putInt("HP", hp);
+			b.putInt("MP", mp);
+			b.putInt("MAXHP", maxhp);
+			b.putInt("MAXMANA", maxmana);
+			
+			if(enemyZero) {
+				b.putInt("ENEMY", 0);
+			} else {
+				b.putInt("ENEMY", enemy);
+			}
+			m.setData(b);
+			reporter.sendMessage(m);
+			
 		}
 	};
 	
-	public void putData(String module,JSONObject object,HashMap<String,Object> node) {
+	public void putData(String module,JSONObject object,HashMap<String,Object> node,String previous) {
 		String key = "";
 		String rest = "";
+		String dotChar = "";
+		if(!previous.equals("")) {
+			dotChar = ".";
+		}
 		int index = module.indexOf(".");
 		
 		if(index > 0) {
@@ -76,22 +119,22 @@ public class GMCPData {
 				if(!(o instanceof HashMap<?,?>)) { Log.e("GMCP","WARNING! KEY: " + key + " is not a hashmap!"); }
 				HashMap<String,Object> map = (HashMap<String,Object>)o;
 				//Iterator<String> keys = object.keys();
-				insertData(object, map,module);
+				insertData(object, map,previous+dotChar+key);
 				//for(String key : object.keys())
 			} else {
 				//still more modules.
-				putData(rest,object,(HashMap<String,Object>)node.get(key));
+				putData(rest,object,(HashMap<String,Object>)node.get(key),previous+dotChar+key);
 			}
 		} else {
 			if(rest.equals("")) {
 				HashMap<String,Object> newnode = new HashMap<String,Object>();
 				node.put(key, newnode);
 				//putData(rest,object,newnode);
-				insertData(object, newnode,module);
+				insertData(object, newnode,previous+dotChar+key);
 			} else {
 				HashMap<String,Object> newnode = new HashMap<String,Object>();
 				node.put(key, newnode);
-				putData(rest,object,newnode);
+				putData(rest,object,newnode,previous+dotChar+key);
 			}
 			
 			
@@ -111,6 +154,7 @@ public class GMCPData {
 	
 	private Object getData(String path,HashMap<String,Object> node) {
 		int index = path.indexOf(".");
+		
 		String key = "";
 		String rest = "";
 		if(index > 0) {
@@ -147,7 +191,12 @@ public class GMCPData {
 				intVal = object.getInt(tmp);
 				anInt = true;
 			} catch (JSONException e) {
-				
+				try {
+					strVal = object.getString(tmp);
+				} catch (JSONException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			
 			if(node.containsKey(tmp)) {
@@ -156,24 +205,31 @@ public class GMCPData {
 				if(obj != null && obj instanceof Integer) {
 					if(!anInt) { Log.e("GMCP","WARNING: REPLACING KEY " + tmp + " stored value is an int, incoming data: " + strVal + " is not."); }
 					Integer value = (Integer)obj;
-					if(value.intValue() != intVal) {
+					if((value.intValue() != intVal)) {
 						node.put(tmp, intVal);
-						watchList.put(completePath + "." + tmp, trueVal);
-						//trigger = true;
+						if(watchList.containsKey(completePath+"."+tmp)) {
+							Log.e("DUMP",completePath + "." + tmp + " caused watchlist to fire." + "int: " + value + " intval:" + intVal);
+							
+							watchList.put(completePath + "." + tmp, trueVal);
+						}//trigger = true;
 					}
 					
 				} else {
 					String str = (String)node.get(tmp);
 					if(str != null && !str.equals(strVal)) {
 						node.put(tmp, new String(strVal));
-						watchList.put(completePath + "." + tmp, trueVal);
+						if(watchList.containsKey(completePath + "." + tmp)) {
+							Log.e("DUMP",completePath + "." + tmp + " caused watchlist to fire." + "str: " + str + " strval:" + strVal);
+							
+							watchList.put(completePath + "." + tmp, trueVal);
+						}
 						//trigger = true;
 					} else {
-						if(anInt) {
+						/*if(anInt) {
 							node.put(tmp, new Integer(intVal));
 						} else {
 							node.put(tmp, new String(strVal));
-						}
+						}*/
 					}
 				}
 				/*if(trigger) {
@@ -184,8 +240,14 @@ public class GMCPData {
 			} else {
 				if(anInt) {
 					node.put(tmp, new Integer(intVal));
+					if(watchList.containsKey(completePath + "." + tmp)) {
+						watchList.put(completePath + "." + tmp, trueVal);
+					}
 				} else {
-					node.put(tmp, strVal);
+					node.put(tmp, new String(strVal));
+					if(watchList.containsKey(completePath + "." + tmp)) {
+						watchList.put(completePath + "." + tmp, trueVal);
+					}
 				}
 			}
 		}
@@ -216,7 +278,7 @@ public class GMCPData {
 				
 			} else {
 				//dump value
-				Log.e("GMCP",cur + "." + key + ": " + map.get(key));
+				Log.e("GMCP",cur + "." + key + ": " + map.get(key).toString());
 			}
 		}
 	}

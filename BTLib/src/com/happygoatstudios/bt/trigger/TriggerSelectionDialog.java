@@ -88,7 +88,6 @@ public class TriggerSelectionDialog extends Dialog {
 		//list.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
 		list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
-			@Override
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				arg0.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
@@ -120,7 +119,6 @@ public class TriggerSelectionDialog extends Dialog {
 				Log.e("LIST","SELECTED ELEMENT:" + arg2);
 			}
 
-			@Override
 			public void onNothingSelected(AdapterView<?> arg0) {
 				// TODO Auto-generated method stub
 				
@@ -163,7 +161,6 @@ public class TriggerSelectionDialog extends Dialog {
 	}
 	
 	public class ListFocusFixerListener implements View.OnFocusChangeListener {
-		@Override
 		public void onFocusChange(View v, boolean hasFocus) {
 			if(hasFocus) {
 				for(int i=0;i<adapter.getCount();i++) {
@@ -212,7 +209,6 @@ public class TriggerSelectionDialog extends Dialog {
 			this.animateDistance = animateDistance;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			
 			
@@ -222,7 +218,6 @@ public class TriggerSelectionDialog extends Dialog {
 			builder.setPositiveButton("Delete", new ReallyDeleteTriggerListener(flip,animateDistance,entry));
 			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 				
-				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					dialog.dismiss();
 				}
@@ -247,7 +242,6 @@ public class TriggerSelectionDialog extends Dialog {
 			this.animateDistance = animateDistance;
 			this.entry = entry;
 		}
-		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			// TODO Auto-generated method stub
 			dialog.dismiss();
@@ -269,7 +263,6 @@ public class TriggerSelectionDialog extends Dialog {
 			this.entry = entry;
 		}
 		
-		@Override
 		public void onAnimationEnd(Animation animation) {
 			list.setOnFocusChangeListener(null);
 			list.setFocusable(false);
@@ -281,13 +274,11 @@ public class TriggerSelectionDialog extends Dialog {
 			triggerModifier.sendMessageDelayed(triggerModifier.obtainMessage(104), 10);
 		}
 
-		@Override
 		public void onAnimationRepeat(Animation animation) {
 			// TODO Auto-generated method stub
 			
 		}
 
-		@Override
 		public void onAnimationStart(Animation animation) {
 			// TODO Auto-generated method stub
 			
@@ -300,7 +291,6 @@ public class TriggerSelectionDialog extends Dialog {
 		public ModifyButtonListener(int entry) {
 			this.index = entry;
 		}
-		@Override
 		public void onClick(View v) {
 			TriggerItem entry = adapter.getItem(index);
 			//launch the trigger editor with this item.
@@ -330,7 +320,6 @@ public class TriggerSelectionDialog extends Dialog {
 			this.key = key;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			TriggerItem entry = adapter.getItem(index);
 			//View top = list.getChildAt(index);
@@ -574,7 +563,6 @@ public class TriggerSelectionDialog extends Dialog {
 			
 			v.findViewById(R.id.toolbar_tab).setOnFocusChangeListener(new View.OnFocusChangeListener() {
 				
-				@Override
 				public void onFocusChange(View v, boolean hasFocus) {
 					if(hasFocus) {
 						v.setFocusable(true);
@@ -596,7 +584,6 @@ public class TriggerSelectionDialog extends Dialog {
 	
 	public class ToolBarButtonKeyListener implements View.OnKeyListener {
 
-		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
 			if(keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
 				return true;
@@ -619,7 +606,6 @@ public class TriggerSelectionDialog extends Dialog {
 			this.index = index;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			//v.requestFocus();
 			lastSelectedIndex = this.index;
@@ -654,7 +640,6 @@ public class TriggerSelectionDialog extends Dialog {
 			toolbarLength = toolBarWidth;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			//int totalWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_holder).getWidth();
 			//int tabWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_tab).getWidth();

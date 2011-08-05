@@ -38,7 +38,9 @@ import java.util.regex.Pattern;
 
 //import org.keplerproject.luajava.LuaState;
 //import org.keplerproject.luajava.LuaStateFactory;
+import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
+import org.keplerproject.luajava.LuaObject;
 import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 import org.xml.sax.SAXException;
@@ -143,6 +145,7 @@ public class StellarService extends Service {
 	public static final int MESSAGE_VITALS = 6001;
 	public static final int MESSAGE_MAXVITALS = 6002;
 	public static final int MESSAGE_ENEMYHP = 60003;
+	public static final int MESSAGE_FOO = 600004;
 	public boolean sending = false;
 	String settingslocation = "test_settings2.xml";
 	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
@@ -175,14 +178,52 @@ public class StellarService extends Service {
 		return Service.START_STICKY;
 	}
 	
-	LuaState theInterpreter = null;
+	private class LogFunction extends JavaFunction {
+		Handler the_handler = null;
+		public LogFunction(Handler h,LuaState L) {
+			super(L);
+			the_handler = h;
+			// TODO Auto-generated constructor stub
+		}
+		@Override
+		public int execute() throws LuaException {
+			
+			the_handler.sendMessage(the_handler.obtainMessage(101010101,this.getParam(2).getString()));
+			
+			return 0;
+		}
+		
+	}
 	
+	private class GMCPFunction extends JavaFunction {
+		Processor proc = null;
+		public GMCPFunction(Processor proc,LuaState L) {
+			super(L);
+			this.proc = proc;
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//L.pushObjectValue(proc.)
+			L.pushObjectValue(proc.getGMCPValue(this.getParam(2).getString()));
+			return 0;
+		}
+		
+	}
+	
+	LuaState L = null;
+	String theLuaString = null;
 	public void onCreate() {
 		//TODO: WAIT FOR DEBUGGER
 		//Debug.waitForDebugger();
-		Log.e("LUA","STARTING UP");
-		theInterpreter = LuaStateFactory.newLuaState();
-		theInterpreter.openLibs();
+		
+		/*try {
+			theInterpreter.pushObjectValue(theLuaString);
+		} catch (LuaException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		theInterpreter.setGlobal("foo");*/
 		//LtheInterpreter.openIo();
 		//theInterpreter.openBase();
 		//L.pushInteger(432);
@@ -266,7 +307,31 @@ public class StellarService extends Service {
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
+				
 				switch(msg.what) {
+				case MESSAGE_FOO:
+					Bundle biz = msg.getData();
+					int hp = biz.getInt("HP");
+					int mp = biz.getInt("MP");
+					int maxhp = biz.getInt("MAXHP");
+					int maxmp = biz.getInt("MAXMANA");
+					int enemy = biz.getInt("ENEMY");
+					
+					StellarService.this.dispatchHPUpdateV2(hp,mp,maxhp,maxmp,enemy);
+					break;
+				case 101010101:
+					String str = "\n"+(String)msg.obj+"\n";
+					//Log.e("LUA","OMFG CALLED FROM LUA:" + str);
+					try {
+						doDispatchNoProcess(str.getBytes("ISO-8859-1"));
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (UnsupportedEncodingException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					break;
 				case MESSAGE_ENEMYHP:
 					StellarService.this.setEnemyHealth(msg.arg1);
 					break;
@@ -642,6 +707,34 @@ public class StellarService extends Service {
 			
 		};
 		
+		//TODO: Lua bootstrap
+		Log.e("LUA","STARTING UP");
+		L = LuaStateFactory.newLuaState();
+		L.openLibs();
+		
+		//L.newTable();
+		//L.pushValue(-1);
+		//L.setGlobal("eg");
+		//("Note");
+		//theLuaString = "i'm defined in java.";
+		
+		
+		LogFunction logger = new LogFunction(myhandler,L);
+		try {
+			logger.register("Note");
+			
+		} catch (LuaException e) {
+			e.printStackTrace();
+		}
+		try {
+			L.pushJavaFunction(logger);
+			
+		} catch (LuaException e1) {
+			e1.printStackTrace();
+		}
+		
+		//L.setTable(-3);
+		
 		//populate the timer_actions hash so we can parse arguments.
 		timer_actions = new ArrayList<String>();
 		timer_actions.add("play");
@@ -657,13 +750,24 @@ public class StellarService extends Service {
 		}
 	}
 	
+	protected void dispatchHPUpdateV2(int hp,int mp,int maxhp,int maxmana, int enemy) {
+		int N = callbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).updateVitals2(hp,mp,maxhp,maxmana,enemy);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		callbacks.finishBroadcast();
+	}
+
 	protected void setEnemyHealth(int arg1) {
 		int N = callbacks.beginBroadcast();
 		for(int i=0;i<N;i++) {
 			try {
 				callbacks.getBroadcastItem(i).updateEnemy(arg1);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -676,7 +780,6 @@ public class StellarService extends Service {
 			try {
 				callbacks.getBroadcastItem(i).updateMaxVitals(arg1, arg2, 0);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -689,7 +792,6 @@ public class StellarService extends Service {
 			try {
 				callbacks.getBroadcastItem(i).updateVitals(arg1, arg2, 0);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -2088,7 +2190,6 @@ public class StellarService extends Service {
 			}
 		}
 
-		@Override
 		public void setTriggerEnabled(boolean enabled,String key)
 				throws RemoteException {
 			synchronized(the_settings) {
@@ -2098,7 +2199,6 @@ public class StellarService extends Service {
 			}
 		}
 
-		@Override
 		public void setButtonSetLocked(boolean locked, String key)
 				throws RemoteException {
 			synchronized(the_settings) {
@@ -2112,7 +2212,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@Override
+		
 		public boolean isButtonSetLocked(String key) throws RemoteException {
 			synchronized(the_settings) {
 				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
@@ -2125,7 +2225,6 @@ public class StellarService extends Service {
 			}
 		}
 
-		@Override
 		public boolean isButtonSetLockedMoveButtons(String key)
 				throws RemoteException {
 			synchronized(the_settings) {
@@ -2138,7 +2237,6 @@ public class StellarService extends Service {
 			}
 		}
 
-		@Override
 		public boolean isButtonSetLockedNewButtons(String key)
 				throws RemoteException {
 			synchronized(the_settings) {
@@ -2151,7 +2249,7 @@ public class StellarService extends Service {
 			}
 		}
 
-		@Override
+		
 		public boolean isButtonSetLockedEditButtons(String key)
 				throws RemoteException {
 			synchronized(the_settings) {
@@ -3288,25 +3386,36 @@ public class StellarService extends Service {
 			
 			String str = (String)o;
 			
-			int result = theInterpreter.LdoString(str);
+			int result = L.LdoString(str);
 			if(result == 0) {
-				try {
+				//try {
 					//StellarService.this.doDispatchNoProcess("\nFuckin Lua. How does it work?!\n".getBytes("ISO-8859-1"));
-					if(theInterpreter.toString(1) != null) {
-						StellarService.this.doDispatchNoProcess(theInterpreter.toString(1).getBytes("ISO-8859-1"));
+					//if(theInterpreter.toString(1) != null) {
+					//	StellarService.this.doDispatchNoProcess(theInterpreter.toString(1).getBytes("ISO-8859-1"));
+					//}
+					LuaObject obj = L.getLuaObject("foo");
+					Log.e("LUA","FOO OBJECT:"+obj.getString());
+					try {
+						StellarService.this.doDispatchNoProcess(str.getBytes("ISO-8859-1"));
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-				} catch (RemoteException e) {
+				//} catch (RemoteException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (UnsupportedEncodingException e) {
+				//	e.printStackTrace();
+				//} catch (UnsupportedEncodingException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				//	e.printStackTrace();
+				//}
 				//success
 			} else {
 				
 				try {
-					StellarService.this.doDispatchNoProcess(("\n"+theInterpreter.toString(-1)+"\n").getBytes("ISO-8859-1"));
+					StellarService.this.doDispatchNoProcess(("\n"+L.toString(-1)+"\n").getBytes("ISO-8859-1"));
 				} catch (RemoteException e) {
 					
 					e.printStackTrace();
@@ -3937,6 +4046,16 @@ public class StellarService extends Service {
 				
 				the_processor.setDebugTelnet(the_settings.isDebugTelnet());
 			}
+			
+			GMCPFunction gmcp = new GMCPFunction(the_processor,L);
+			try {
+				gmcp.register("gmcp");
+				L.pushJavaFunction(gmcp);
+			} catch (LuaException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			
 			isConnected = true;
 			

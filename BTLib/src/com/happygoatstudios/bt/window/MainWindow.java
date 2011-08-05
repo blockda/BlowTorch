@@ -124,6 +124,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_MAXVITALS = 100000;
 	protected static final int MESSAGE_VITALS = 1000001;
 	protected static final int MESSAGE_ENEMYHP = 1000002;
+	protected static final int MESSAGE_VITALS2 = 1000003;
 	
 	//private TextTree tree = new TextTree();
 
@@ -351,6 +352,17 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_VITALS2:
+				{
+					Bundle biz = msg.getData();
+					int hp = biz.getInt("HP");
+					int mp = biz.getInt("MP");
+					int maxhp = biz.getInt("MAXHP");
+					int maxmana = biz.getInt("MAXMANA");
+					int enemy = biz.getInt("ENEMY");
+					vitals.updateAllVitals(hp,mp,maxhp,maxmana,enemy);
+				}
+					break;
 				case MESSAGE_ENEMYHP:
 					int enemyval = msg.arg1;
 					/*if(msg.arg1 > -1) {
@@ -2410,9 +2422,23 @@ public class MainWindow extends Activity {
 			myhandler.sendMessage(msg);
 		}
 
-		@Override
 		public void updateEnemy(int hp) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_ENEMYHP,hp,0));
+		}
+
+		public void updateVitals2(int hp, int mp, int maxhp, int maxmana,
+				int enemy) throws RemoteException {
+			Message m = myhandler.obtainMessage(MESSAGE_VITALS2);
+			//if(this.get(list.data.MESSget(i))
+			Bundle b = m.getData();
+			b.putInt("HP", hp);
+			b.putInt("MP", mp);
+			b.putInt("MAXHP", maxhp);
+			b.putInt("MAXMANA", maxmana);
+			b.putInt("ENEMY",enemy);
+			
+			m.setData(b);
+			myhandler.sendMessage(m);
 		}
 	};
 }
