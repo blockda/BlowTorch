@@ -17,7 +17,6 @@ public class StatusGroupData implements Parcelable {
 		data.add(new Integer(value));
 	}
 	
-	@Override
 	public int describeContents() {
 		// TODO Auto-generated method stub
 		return 0;
@@ -47,7 +46,6 @@ public class StatusGroupData implements Parcelable {
 		}
 	}
 
-	@Override
 	public void writeToParcel(Parcel p, int arg1) {
 		p.writeInt(data.size());
 		for(int i=0;i<data.size();i++) {

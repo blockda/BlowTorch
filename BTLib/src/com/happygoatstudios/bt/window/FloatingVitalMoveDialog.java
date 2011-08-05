@@ -39,7 +39,6 @@ public class FloatingVitalMoveDialog extends Dialog {
 		((Button)findViewById(R.id.toggle)).setText("SIZE");
 		findViewById(R.id.toggle).setOnClickListener(new View.OnClickListener() {
 			
-			@Override
 			public void onClick(View v) {
 				EDIT_MODE newmode = EDIT_MODE.POSITION;
 				switch(mode) {
