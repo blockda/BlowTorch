@@ -405,6 +405,10 @@ public class Processor {
 		opthandler.reset();
 	}
 	
+	public Object getGMCPValue(String str) {
+		return gmcp.get(str);
+	}
+	
 	public void initGMCP() {
 		String hello = "core.hello {\"client\": \"BlowTorch\"," +
 			"\"version\": \"1.4\"}";

@@ -10,6 +10,7 @@ public class StatusBarWatchList {
 		data.add("char.vitals.hp");
 		data.add("char.maxstats.maxmana");
 		data.add("char.vitals.mana");
+		data.add("char.status.enemy");
 		data.add("char.status.enemypct");
 	}
 }
