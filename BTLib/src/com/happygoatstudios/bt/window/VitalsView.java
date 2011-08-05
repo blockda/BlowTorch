@@ -99,20 +99,28 @@ public class VitalsView extends View implements FloatingVitalMoveDialog.CustomLi
 		this.invalidate();
 	}
 
-	@Override
 	public void onMove(int dx, int dy) {
 		origin.x += dx;
 		origin.y += dy;
 		this.invalidate();
 	}
 
-	@Override
 	public void onSize(int dx, int dy) {
 		this.enemy.setRight(this.enemy.getRight() + dx);
 		this.mana.setRight(this.mana.getRight() + dx);
 		this.health.setRight(this.health.getRight() + dx);
 		this.invalidate();
 		
+	}
+
+	public void updateAllVitals(int hp, int mp, int maxhp, int maxmana,
+			int enemy2) {
+		this.enemy.setValue(enemy2);
+		this.health.setMax(maxhp);
+		this.mana.setMax(maxmana);
+		this.health.setValue(hp);
+		this.mana.setValue(mp);
+		this.invalidate();
 	}
 
 	

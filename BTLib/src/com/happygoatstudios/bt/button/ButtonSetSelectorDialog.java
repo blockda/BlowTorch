@@ -175,7 +175,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 		//lv.setOnItemLongClickListener(new ButtonSetEditorOpener());
 		lv.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
-			@Override
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				arg0.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
@@ -207,7 +206,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 				//Log.e("LIST","SELECTED ELEMENT:" + arg2);
 			}
 
-			@Override
 			public void onNothingSelected(AdapterView<?> arg0) {
 				// TODO Auto-generated method stub
 				
@@ -221,7 +219,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 	}
 	
 	public class ListFocusFixerListener implements View.OnFocusChangeListener {
-		@Override
 		public void onFocusChange(View v, boolean hasFocus) {
 			if(hasFocus) {
 				for(int i=0;i<adapter.getCount();i++) {
@@ -470,7 +467,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 				
 				v.findViewById(R.id.toolbar_tab).setOnFocusChangeListener(new View.OnFocusChangeListener() {
 					
-					@Override
 					public void onFocusChange(View v, boolean hasFocus) {
 						if(hasFocus) {
 							v.setFocusable(true);
@@ -510,7 +506,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.index = index;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			ButtonEntry item = entries.get(index);
 			Message changebuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,item.name);
@@ -527,7 +522,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.index = index;
 			this.icon = icon;
 		}
-		@Override
 		public void onClick(View v) {
 			ButtonEntry item = entries.get(index);
 			//TODO: actually lock the set.
@@ -568,7 +562,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.index = index;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			ButtonEntry entry = adapter.getItem(index);
 			ButtonSetEditor editor = new ButtonSetEditor(ButtonSetSelectorDialog.this.getContext(),service,entry.name,editordonelistenr);
@@ -588,7 +581,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.animateDistance = animateDistance;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
 			builder.setTitle("Delete Button Set");
@@ -596,7 +588,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			builder.setPositiveButton("Delete", new ReallyDeleteTriggerListener(flip,animateDistance,entry));
 			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 				
-				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					dialog.dismiss();
 				}
@@ -617,7 +608,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.animateDistance = animateDistance;
 			this.entry = entry;
 		}
-		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			// TODO Auto-generated method stub
 			dialog.dismiss();
@@ -639,7 +629,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.entry = entry;
 		}
 		
-		@Override
 		public void onAnimationEnd(Animation animation) {
 			list.setOnFocusChangeListener(null);
 			list.setFocusable(false);
@@ -654,13 +643,11 @@ public class ButtonSetSelectorDialog extends Dialog {
 			editordonelistenr.sendMessageDelayed(editordonelistenr.obtainMessage(104), 10);
 		}
 
-		@Override
 		public void onAnimationRepeat(Animation animation) {
 			// TODO Auto-generated method stub
 			
 		}
 
-		@Override
 		public void onAnimationStart(Animation animation) {
 			// TODO Auto-generated method stub
 			
@@ -672,7 +659,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 	
 	public class ToolBarButtonKeyListener implements View.OnKeyListener {
 
-		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
 			if(keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
 				return true;
@@ -695,7 +681,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			this.index = index;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			//v.requestFocus();
 			lastSelectedIndex = this.index;
@@ -732,7 +717,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 			toolbarLength = toolBarWidth;
 		}
 		
-		@Override
 		public void onClick(View v) {
 			//int totalWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_holder).getWidth();
 			//int tabWidth = TriggerSelectionDialog.this.findViewById(R.id.toolbar_tab).getWidth();
