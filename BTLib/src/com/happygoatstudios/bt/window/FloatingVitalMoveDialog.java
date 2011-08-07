@@ -67,6 +67,11 @@ public class FloatingVitalMoveDialog extends Dialog {
 		
 	}
 	
+	public void onBackPressed() {
+		listener.saveSettings();
+		this.dismiss();
+	}
+	
 	
 
 	
@@ -74,6 +79,7 @@ public class FloatingVitalMoveDialog extends Dialog {
 	public interface CustomListener {
 		public void onMove(int dx,int dy);
 		public void onSize(int dx,int dy);
+		public void saveSettings();
 	}
 	
 

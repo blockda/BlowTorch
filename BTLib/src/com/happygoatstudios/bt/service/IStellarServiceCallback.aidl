@@ -25,4 +25,5 @@ interface IStellarServiceCallback {
 	void updateVitals(int hp,int mana,int moves);
 	void updateEnemy(int hp);
 	void updateVitals2(int hp,int mp,int maxhp, int maxmana,int enemy);
+	void luaOmg(int stateIndex);
 }
