@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.keplerproject.luajava.LuaState;
+import org.keplerproject.luajava.LuaStateFactory;
+
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -55,6 +58,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -125,6 +129,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_VITALS = 1000001;
 	protected static final int MESSAGE_ENEMYHP = 1000002;
 	protected static final int MESSAGE_VITALS2 = 1000003;
+	protected static final int MESSAGE_TESTLUA = 100004;
 	
 	//private TextTree tree = new TextTree();
 
@@ -243,7 +248,22 @@ public class MainWindow extends Activity {
         //enemy = (Bar)vitals.findViewById(R.id.enemy);
         //health.setColor(0xFF00FF00);
         //mana.setColor(0xFF0000FF);
-        
+        SharedPreferences vc = this.getSharedPreferences("VITALS_CONF", Context.MODE_PRIVATE);
+        boolean run = vc.getBoolean("HASRUN", false);
+        if(!run) {
+        	SharedPreferences.Editor ed = vc.edit();
+        	ed.putBoolean("HASRUN", true);
+        	vitals.autoPosition();
+        	vitals.savePosition(ed);
+        	ed.commit();
+        	
+        } else {
+        	int left = vc.getInt("LEFT", 0);
+        	int right = vc.getInt("RIGHT", 150);;
+        	int top = vc.getInt("TOP", 0);
+        	int bottom = vc.getInt("BOTTOM", 0);
+        	vitals.setRect(left,right,top,bottom);
+        }
         //enemy.setValue(10);
         //mana.setValue(90);
         //health.setValue(10);
@@ -344,14 +364,16 @@ public class MainWindow extends Activity {
 			}
 		});
         
-        
-
 		
 		//assign my handler
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_TESTLUA:
+					LuaState exist = LuaStateFactory.getExistingState(msg.arg1);
+					exist.LdoString("Note(\"Fooooooo\")");
+					break;
 				case MESSAGE_VITALS2:
 				{
 					Bundle biz = msg.getData();
@@ -2258,11 +2280,13 @@ public class MainWindow extends Activity {
 		int vital = clearb.indexOfChild(vitals);
 		int count = clearb.getChildCount();
 		
-		for(int i=0;i<clearb.getChildCount();i++) {
-			if(i != slick && i != vital) {
-				clearb.removeViewAt(i);
-			}
-		}
+		
+		clearb.removeViews(2, count-2);
+		//for(View v : clearb.getChildAt(index))
+		
+		/*clearb.removeAllViews();
+		clearb.addView(screen2, 0);
+		clearb.addView(vitals,1);*/
 	}
 
 
@@ -2440,5 +2464,10 @@ public class MainWindow extends Activity {
 			m.setData(b);
 			myhandler.sendMessage(m);
 		}
+		
+		public void luaOmg(int stateIndex) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TESTLUA,stateIndex,0));
+		}
 	};
+	
 }

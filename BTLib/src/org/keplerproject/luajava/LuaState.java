@@ -106,6 +106,13 @@ public class LuaState
     luajava_open(luaState, stateId);
     this.stateId = stateId;
   }
+  
+  /**
+   * Returns this state's index value.
+   */
+  public int getStateId() {
+	  return this.stateId;
+  }
 
   /**
    * Receives a existing state and initializes it
