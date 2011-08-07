@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -119,6 +120,7 @@ public class GMCPData {
 				if(!(o instanceof HashMap<?,?>)) { Log.e("GMCP","WARNING! KEY: " + key + " is not a hashmap!"); }
 				HashMap<String,Object> map = (HashMap<String,Object>)o;
 				//Iterator<String> keys = object.keys();
+				map.clear();
 				insertData(object, map,previous+dotChar+key);
 				//for(String key : object.keys())
 			} else {
@@ -187,57 +189,38 @@ public class GMCPData {
 			int intVal = 0;
 			String strVal = "";
 			boolean anInt = false;
+			boolean skip = false;
+			//if(object.)
 			try {
-				intVal = object.getInt(tmp);
-				anInt = true;
-			} catch (JSONException e) {
-				try {
-					strVal = object.getString(tmp);
-				} catch (JSONException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				
+				JSONObject sub = object.getJSONObject(tmp);
+				//if we are here it means we have a sub array.
+				Log.e("GMCP","RE-RECURSING FOR GMCP KEY: " + tmp);
+				if(node.containsKey(tmp)) {
+					node.remove(tmp);
 				}
+				HashMap<String,Object> newnode = new HashMap<String,Object>();
+				node.put(tmp, newnode);
+				insertData(sub,newnode,completePath+"."+tmp);
+				//return;
+				skip = true;
+			} catch(JSONException e) {
+				//not a sub array
 			}
-			
-			if(node.containsKey(tmp)) {
-				//boolean trigger = false;
-				Object obj = node.get(tmp);
-				if(obj != null && obj instanceof Integer) {
-					if(!anInt) { Log.e("GMCP","WARNING: REPLACING KEY " + tmp + " stored value is an int, incoming data: " + strVal + " is not."); }
-					Integer value = (Integer)obj;
-					if((value.intValue() != intVal)) {
-						node.put(tmp, intVal);
-						if(watchList.containsKey(completePath+"."+tmp)) {
-							Log.e("DUMP",completePath + "." + tmp + " caused watchlist to fire." + "int: " + value + " intval:" + intVal);
-							
-							watchList.put(completePath + "." + tmp, trueVal);
-						}//trigger = true;
-					}
-					
-				} else {
-					String str = (String)node.get(tmp);
-					if(str != null && !str.equals(strVal)) {
-						node.put(tmp, new String(strVal));
-						if(watchList.containsKey(completePath + "." + tmp)) {
-							Log.e("DUMP",completePath + "." + tmp + " caused watchlist to fire." + "str: " + str + " strval:" + strVal);
-							
-							watchList.put(completePath + "." + tmp, trueVal);
-						}
-						//trigger = true;
-					} else {
-						/*if(anInt) {
-							node.put(tmp, new Integer(intVal));
-						} else {
-							node.put(tmp, new String(strVal));
-						}*/
+			if(!skip) {
+				try {
+					intVal = object.getInt(tmp);
+					anInt = true;
+				} catch (JSONException e) {
+					try {
+						strVal = object.getString(tmp);
+					} catch (JSONException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
 				}
-				/*if(trigger) {
-					if(watchList.containsKey(completePath + "." + key)) {
-						watchList.put(completePath + "." + key, trueVal);
-					}
-				}*/
-			} else {
+				
+				
 				if(anInt) {
 					node.put(tmp, new Integer(intVal));
 					if(watchList.containsKey(completePath + "." + tmp)) {
@@ -250,6 +233,7 @@ public class GMCPData {
 					}
 				}
 			}
+			
 		}
 	}
 	
@@ -281,6 +265,32 @@ public class GMCPData {
 				Log.e("GMCP",cur + "." + key + ": " + map.get(key).toString());
 			}
 		}
+	}
+
+	public HashMap<String, Object> getTable(String path) {
+		// TODO Auto-generated method stub
+		String parts[] = path.split(".");
+		String working_path = parts[0];
+		
+		return findNextTable(parts[0],parts,0,data);
+		
+		// null;
+	}
+	
+	private HashMap<String,Object> findNextTable(String key,String[] parts,int index,HashMap<String,Object> node) {
+		
+		if(node.containsKey(key)) {
+			if(index == parts.length-1) {
+				//this is the table we asked for
+				return (HashMap<String,Object>)node.get(key);
+			} else {
+				index = index+1;
+				findNextTable(parts[index],parts,index,(HashMap<String,Object>)node.get(key));
+			}
+		} else {
+			return null;
+		}
+		return null;
 	}
 	
 }

@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import org.json.JSONException;
@@ -409,10 +410,17 @@ public class Processor {
 		return gmcp.get(str);
 	}
 	
+	public HashMap<String,Object> getGMCPTable(String path) {
+		
+		//String parts[] = path.split(".");
+		
+		return gmcp.getTable(path);
+	}
+	
 	public void initGMCP() {
 		String hello = "core.hello {\"client\": \"BlowTorch\"," +
 			"\"version\": \"1.4\"}";
-		String support = "core.supports.set [\"core 1\",\"char 1\"]";
+		String support = "core.supports.set [\"core 1\",\"char 1\",\"room 1\"]";
 		try {
 			byte[] hellob = getGMCPResponse(hello);
 			byte[] supportb = getGMCPResponse(support);
