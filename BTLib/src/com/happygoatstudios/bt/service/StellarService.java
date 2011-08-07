@@ -4,14 +4,18 @@ package com.happygoatstudios.bt.service;
 
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -45,14 +49,20 @@ import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 import org.xml.sax.SAXException;
 
+import android.R;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -195,6 +205,25 @@ public class StellarService extends Service {
 		
 	}
 	
+	private class RowFunction extends JavaFunction {
+		Handler the_handler = null;
+		public RowFunction(Handler h,LuaState L) {
+			super(L);
+			the_handler = h;
+			// TODO Auto-generated constructor stub
+		}
+		@Override
+		public int execute() throws LuaException {
+			
+			String param1 = this.getParam(2).getString();
+			String param2 = this.getParam(3).getString();
+			
+			L.pushObjectValue(new String[] {param1,param2});
+			return 1;
+		}
+		
+	}
+	
 	private class GMCPFunction extends JavaFunction {
 		Processor proc = null;
 		public GMCPFunction(Processor proc,LuaState L) {
@@ -211,6 +240,8 @@ public class StellarService extends Service {
 		
 	}
 	
+	SQLiteDatabase database = null;
+	SQLiteHelper helper = null;
 	private class TriggerFunction extends JavaFunction {
 		HyperSettings settings = null;
 		public TriggerFunction(HyperSettings the_settings, LuaState L) {
@@ -711,14 +742,64 @@ public class StellarService extends Service {
 		
 		LogFunction logger = new LogFunction(myhandler,L);
 		TriggerFunction trig = new TriggerFunction(the_settings,L);
+		RowFunction row = new RowFunction(myhandler,L);
 		try {
 			logger.register("Note");
 			trig.register("trigger");
+			row.register("row");
 			
 		} catch (LuaException e) {
 			e.printStackTrace();
 		}
 		
+		//File file = new File(this.getResources().openRawResource(R.));
+		try {
+			InputStream stream = this.getAssets().open("utils.lua");
+			byte buf[] = new byte[stream.available()];
+			stream.read(buf);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			bos.write(buf);
+			stream.close();
+			String luaString = bos.toString("ISO-8859-1");
+			int result = L.LdoString(luaString);
+			if(result != 0) {
+					String debug = L.toString(-1);
+					Log.e("LUA",(L.toString(-1)));
+			}
+			bos.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		helper = new SQLiteHelper(this.getApplicationContext());
+		database = helper.getWritableDatabase();
+		
+		ContentValues cv = new ContentValues();
+		//cv.put("_id", 5);
+		//cv.put("name", "foobar room");
+		//database.execSQL("INSERT INTO rooms WHERE id=3,name=\"foobar\";");
+		//database.insert("rooms",null, cv);
+		
+		Cursor cur = database.query("rooms", new String[] { "_id","name"}, null,null, null, null,null);
+		
+		do {
+			//if(!cur.isFirst()) {
+			//	cur.moveToNext();
+			//}
+			cur.moveToNext();
+			int id = cur.getInt(0);
+			String name = cur.getString(1);
+			Log.e("SQL","SQL IS:" + id + " name:" + name);
+			
+		} while(!cur.isLast());
+		cur.close();
+		L.pushJavaObject(database);
+		L.setGlobal("db");
+		//database.exe
+		//database.que
+		
+		//database.close();
 		//populate the timer_actions hash so we can parse arguments.
 		timer_actions = new ArrayList<String>();
 		timer_actions.add("play");
@@ -732,6 +813,32 @@ public class StellarService extends Service {
 				DoTimerStart(t.getOrdinal().toString(),0);
 			}
 		}
+	}
+	
+	protected class SQLiteHelper extends SQLiteOpenHelper {
+
+		private static final String DATABASE_NAME = "btdb";
+		private static final int VERSION = 1;
+		
+		private static final String CREATE_TABLE = "" +
+							"CREATE TABLE rooms (_id integer PRIMARY KEY, name TEXT NOT NULL);" + 
+							"";
+		public SQLiteHelper(Context context) {
+			super(context, DATABASE_NAME, null, VERSION);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public void onCreate(SQLiteDatabase arg0) {
+			arg0.execSQL(CREATE_TABLE);
+		}
+
+		@Override
+		public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
+			// TODO Auto-generated method stub
+			arg0.execSQL("DROP TABLE IF EXISTS rooms");
+		}
+		
 	}
 	
 	protected void dispatchHPUpdateV2(int hp,int mp,int maxhp,int maxmana, int enemy) {
@@ -2802,7 +2909,8 @@ public class StellarService extends Service {
 					
 					//5 - alias replacement				
 					if(d.cmdString != null && !d.cmdString.equals("")) {
-						byte[] tmp = DoAliasReplacement(d.cmdString.getBytes(the_settings.getEncoding()));
+						Boolean reprocess = true;
+						byte[] tmp = DoAliasReplacement(d.cmdString.getBytes(the_settings.getEncoding()),reprocess);
 						String tmpstr = new String(tmp,the_settings.getEncoding());
 						//if(tmpstr)
 						if(!d.cmdString.equals(tmpstr)) {
@@ -2817,8 +2925,10 @@ public class StellarService extends Service {
 							for(String alias_cmd : alias_cmds) {
 								iterator.add(alias_cmd);
 							}
-							for(int ax=0;ax<alias_cmds.length;ax++) {
-								iterator.previous();
+							if(reprocess) {
+								for(int ax=0;ax<alias_cmds.length;ax++) {
+									iterator.previous();
+								}
 							}
 						
 						} else {
@@ -3241,7 +3351,8 @@ public class StellarService extends Service {
 			}
 			
 			try {
-				text = new String(DoAliasReplacement(text.getBytes(the_settings.getEncoding())),the_settings.getEncoding());
+				Boolean foo = new Boolean(true);
+				text = new String(DoAliasReplacement(text.getBytes(the_settings.getEncoding()),foo),the_settings.getEncoding());
 			} catch (UnsupportedEncodingException e1) {
 				throw new RuntimeException(e1);
 			}
@@ -3837,13 +3948,14 @@ public class StellarService extends Service {
 		callbacks.finishBroadcast();
 	}
 	
+	
 	Pattern alias_replace = Pattern.compile(joined_alias.toString());
 	Matcher alias_replacer = alias_replace.matcher("");
 	Matcher alias_recursive = alias_replace.matcher("");
 	
 	Pattern whiteSpace = Pattern.compile("\\s");
 	
-	private byte[] DoAliasReplacement(byte[] input) {
+	private byte[] DoAliasReplacement(byte[] input,Boolean reprocess) {
 		if(joined_alias.length() > 0) {
 
 			//Pattern to_replace = Pattern.compile(joined_alias.toString());
@@ -3892,20 +4004,52 @@ public class StellarService extends Service {
 			StringBuffer buffertemp = new StringBuffer();
 			if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
 				boolean recursivefound = false;
+				boolean eatTail = false;
 				do {
 					recursivefound = false;
+					
 					//Matcher recursivematch = to_replace.matcher(replaced.toString());
 					alias_recursive.reset(replaced.toString());
 					buffertemp.setLength(0);
 					while(alias_recursive.find()) {
 						recursivefound = true;
 						AliasData replace_with = the_settings.getAliases().get(alias_recursive.group(0));
-						alias_recursive.appendReplacement(buffertemp, replace_with.getPost());
+						if(replace_with.getPre().startsWith("^") && ! replace_with.getPre().endsWith("$")) {
+							ToastResponder r = new ToastResponder();
+							String[] tParts = null;
+							
+							String tmpInput = replaced.toString();
+							int index = tmpInput.indexOf(";");
+							String rest = "";
+							if(index > -1) {
+								rest = tmpInput.substring(index+1,tmpInput.length());
+								tmpInput = tmpInput.substring(0,index);
+							}
+							String sepchar = "";
+							if(rest.length()>0) {
+								sepchar = ";";
+							}
+							tParts = whiteSpace.split(tmpInput);
+							
+							HashMap<String,String> map = new HashMap<String,String>();
+							for(int i=0;i<tParts.length;i++) {
+								map.put(Integer.toString(i), tParts[i]);
+							} 
+							eatTail = true;
+							alias_recursive.appendReplacement(buffertemp, r.translate(replace_with.getPost(),map) + sepchar +rest);
+							reprocess = false;
+						} else {
+							alias_recursive.appendReplacement(buffertemp, replace_with.getPost());
+						}
+						
 					}
 					if(recursivefound) {
-						alias_recursive.appendTail(buffertemp);
+						if(!eatTail) {
+							alias_recursive.appendTail(buffertemp);
+						}
 						replaced.setLength(0);
 						replaced.append(buffertemp);
+						
 					}
 				} while(recursivefound == true);
 			}
