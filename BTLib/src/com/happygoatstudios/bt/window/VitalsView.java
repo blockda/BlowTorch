@@ -3,6 +3,8 @@ package com.happygoatstudios.bt.window;
 import com.happygoatstudios.bt.R;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.util.AttributeSet;
@@ -20,6 +22,8 @@ public class VitalsView extends View implements FloatingVitalMoveDialog.CustomLi
 	Bar enemy = null;
 	float density = 1.0f;
 	Point origin = new Point();
+	private int width;
+	private int height;
 	
 	public VitalsView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -121,6 +125,38 @@ public class VitalsView extends View implements FloatingVitalMoveDialog.CustomLi
 		this.health.setValue(hp);
 		this.mana.setValue(mp);
 		this.invalidate();
+	}
+
+	public void autoPosition() {
+		// TODO Auto-generated method stub
+		origin.x = (int) (this.getContext().getResources().getDisplayMetrics().widthPixels - enemy.getWidth() - 2*density);
+		origin.y = 0;
+	}
+
+	public void savePosition(Editor ed) {
+		ed.putInt("LEFT", origin.x);
+		ed.putInt("TOP", origin.y);
+		ed.putInt("BOTTOM", enemy.getHeight()*3);
+		ed.putInt("RIGHT", origin.x + enemy.getWidth());
+	}
+
+	public void setRect(int left, int right, int top, int bottom) {
+		this.origin.x = left;
+		this.origin.y = top;
+		this.width = right-left;
+		this.height = bottom-top;
+		enemy.setRight(width);
+		health.setRight(width);
+		mana.setRight(width);
+	}
+	
+	public void saveSettings() {
+		SharedPreferences.Editor ed = this.getContext().getSharedPreferences("VITALS_CONF", Context.MODE_PRIVATE).edit();
+		ed.putInt("LEFT", origin.x);
+		ed.putInt("TOP", origin.y);
+		ed.putInt("BOTTOM", enemy.getHeight()*3);
+		ed.putInt("RIGHT", origin.x + enemy.getWidth());
+		ed.commit();
 	}
 
 	
