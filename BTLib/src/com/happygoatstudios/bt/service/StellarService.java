@@ -211,46 +211,38 @@ public class StellarService extends Service {
 		
 	}
 	
+	private class TriggerFunction extends JavaFunction {
+		HyperSettings settings = null;
+		public TriggerFunction(HyperSettings the_settings, LuaState L) {
+			super(L);
+			settings = the_settings;
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//attempt to access trigger data.
+			
+			//synchronized(the_settings) {
+				String key = this.getParam(2).getString();
+				Log.e("LUA","ATTEMPTING TO RETURN TRIGGER: " + key);
+				TriggerData dat = settings.getTriggers().get(key);
+				if(dat == null) {
+					L.pushNil();
+				} else {
+					L.pushObjectValue(dat);
+				}
+			//}
+			
+			return 1;
+		}
+		
+	}
+	
 	LuaState L = null;
 	String theLuaString = null;
 	public void onCreate() {
-		//TODO: WAIT FOR DEBUGGER
-		//Debug.waitForDebugger();
-		
-		/*try {
-			theInterpreter.pushObjectValue(theLuaString);
-		} catch (LuaException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		theInterpreter.setGlobal("foo");*/
-		//LtheInterpreter.openIo();
-		//theInterpreter.openBase();
-		//L.pushInteger(432);
-		/*try {
-			L.pushObjectValue(43);
-		} catch (LuaException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		L.setGlobal("st");
-		int result = L.LdoString("do\n\tif st == nil then\n\t\t return 64 \n\telse\n\t\t return 24\n\tdone\n end\n");
-		if(result == 0) {
-			// val = L.lget
-			//L.L
-			//val = L.
-		} else {
-			Log.e("FSF",L.toString(-1));
-		}*/
-		//L.LloadString("return 3");
-		//L.L
-		
-		//Log.e("LUA","LUA RESULT:" + result);
-		//L.c
-		//LuaState L = LuaStateFactory.newLuaState();
-		//L.openLibs();
-		//L.
-		//L.LdoString("print(\"Hello World from Lua!\");");
+
+
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
@@ -271,6 +263,7 @@ public class StellarService extends Service {
 		ClearButtonsCommand cbcmd = new ClearButtonsCommand();
 		DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
 		LuaCommand luacmd = new LuaCommand();
+		Lua2Command lua2cmd = new Lua2Command();
 		specialcommands.put(colordebug.commandName, colordebug);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
 		specialcommands.put(timercmd.commandName, timercmd);
@@ -285,6 +278,8 @@ public class StellarService extends Service {
 		specialcommands.put(cbcmd.commandName, cbcmd);
 		specialcommands.put(dmpcmd.commandName,dmpcmd);
 		specialcommands.put(luacmd.commandName, luacmd);
+		
+		specialcommands.put(lua2cmd.commandName,lua2cmd);
 		
 		
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
@@ -707,33 +702,22 @@ public class StellarService extends Service {
 			
 		};
 		
+		
 		//TODO: Lua bootstrap
 		Log.e("LUA","STARTING UP");
 		L = LuaStateFactory.newLuaState();
 		L.openLibs();
-		
-		//L.newTable();
-		//L.pushValue(-1);
-		//L.setGlobal("eg");
-		//("Note");
-		//theLuaString = "i'm defined in java.";
-		
+
 		
 		LogFunction logger = new LogFunction(myhandler,L);
+		TriggerFunction trig = new TriggerFunction(the_settings,L);
 		try {
 			logger.register("Note");
+			trig.register("trigger");
 			
 		} catch (LuaException e) {
 			e.printStackTrace();
 		}
-		try {
-			L.pushJavaFunction(logger);
-			
-		} catch (LuaException e1) {
-			e1.printStackTrace();
-		}
-		
-		//L.setTable(-3);
 		
 		//populate the timer_actions hash so we can parse arguments.
 		timer_actions = new ArrayList<String>();
@@ -865,6 +849,12 @@ public class StellarService extends Service {
 		}
 		buildAliases();
 		buildTriggerData();
+		
+		
+		
+		
+		//L.pushJavaObject(((the_settings.getAliases())));
+		//L.setGlobal("foo");
 		
 	}
 	
@@ -2600,6 +2590,10 @@ public class StellarService extends Service {
 		alias_replacer = alias_replace.matcher("");
 		alias_recursive = alias_replace.matcher("");
 		//Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
+		
+		
+			
+		
 	}
 	
 	
@@ -3431,7 +3425,31 @@ public class StellarService extends Service {
 		}
 	}
 	
-	
+	private class Lua2Command extends SpecialCommand {
+		public Lua2Command() {
+			this.commandName = "lua2";
+		}
+		
+		public Object execute(Object o) {
+			
+			
+			int N = callbacks.beginBroadcast();
+			
+			for(int i=0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).luaOmg(L.getStateId());
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			callbacks.finishBroadcast();
+			
+			
+			return null;
+		}
+	}
 	private class SpeedwalkCommand extends SpecialCommand {
 		
 		
