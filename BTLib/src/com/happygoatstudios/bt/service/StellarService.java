@@ -205,6 +205,40 @@ public class StellarService extends Service {
 		
 	}
 	
+	private class FieldFunction extends JavaFunction {
+
+		public FieldFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			//LuaObject o = this.getParam(2);
+			//o.
+			//Log.e("LUA","FIELD FUNCTION CALLED WITH " + n + " paramters");
+			L.pushNil();
+			//boolean clean = false;
+			ContentValues cv = new ContentValues();
+			while(L.next(2) != 0) {
+				//clean = true;
+				String id = L.toString(-2);
+				String name = L.toString(-1);
+				Log.e("LUA",id + " <==> " +name);
+				cv.put(id, name);
+				L.pop(1);
+			}
+			
+			L.pop(1);
+			L.pushJavaObject(cv);
+			
+			return 1;
+			
+		}
+		
+	}
+	
 	private class RowFunction extends JavaFunction {
 		Handler the_handler = null;
 		public RowFunction(Handler h,LuaState L) {
@@ -234,8 +268,57 @@ public class StellarService extends Service {
 		@Override
 		public int execute() throws LuaException {
 			//L.pushObjectValue(proc.)
-			L.pushObjectValue(proc.getGMCPValue(this.getParam(2).getString()));
-			return 0;
+			//L.pushObjectValue(proc.getGMCPValue(this.getParam(2).getString()));
+			//ok, so we need to check and see if what we want is a table.
+			String args = this.getParam(2).getString();
+			
+			String parts[] = args.split(".");
+			
+			
+			
+			HashMap<String,Object> tmp = proc.getGMCPTable(args);
+			if(tmp == null) {
+				//somehow return
+			} else {
+				//begin iterative lua dump.
+				dumpNode(tmp,"");
+			}
+			
+			return 1;
+			//return 0;
+		}
+		
+		private void dumpNode(HashMap<String,Object> node,String key) {
+			if(!key.equals("")) {
+				this.L.pushString(key);
+			}
+			this.L.newTable();
+			
+			for(String tmp : node.keySet()) {
+				
+				
+				Object o = node.get(tmp);
+				if(o instanceof HashMap) {
+					//we recurse
+					Log.e("GMCPDUMP","DUMPING SUB TABLE");
+					dumpNode((HashMap<String,Object>)o,tmp);
+				} else {
+					this.L.pushString(tmp);
+					if(o instanceof String) {
+						this.L.pushString((String)o);
+					}
+					if(o instanceof Integer) {	
+						this.L.pushInteger((Integer)o);
+					}
+					this.L.setTable(-3);
+				}
+			}
+			if(!key.equals("")) {
+				this.L.setTable(-3);
+			}
+			//this.L.setTable(-3);
+			
+			
 		}
 		
 	}
@@ -734,70 +817,7 @@ public class StellarService extends Service {
 		};
 		
 		
-		//TODO: Lua bootstrap
-		Log.e("LUA","STARTING UP");
-		L = LuaStateFactory.newLuaState();
-		L.openLibs();
-
 		
-		LogFunction logger = new LogFunction(myhandler,L);
-		TriggerFunction trig = new TriggerFunction(the_settings,L);
-		RowFunction row = new RowFunction(myhandler,L);
-		try {
-			logger.register("Note");
-			trig.register("trigger");
-			row.register("row");
-			
-		} catch (LuaException e) {
-			e.printStackTrace();
-		}
-		
-		//File file = new File(this.getResources().openRawResource(R.));
-		try {
-			InputStream stream = this.getAssets().open("utils.lua");
-			byte buf[] = new byte[stream.available()];
-			stream.read(buf);
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bos.write(buf);
-			stream.close();
-			String luaString = bos.toString("ISO-8859-1");
-			int result = L.LdoString(luaString);
-			if(result != 0) {
-					String debug = L.toString(-1);
-					Log.e("LUA",(L.toString(-1)));
-			}
-			bos.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		helper = new SQLiteHelper(this.getApplicationContext());
-		database = helper.getWritableDatabase();
-		
-		ContentValues cv = new ContentValues();
-		//cv.put("_id", 5);
-		//cv.put("name", "foobar room");
-		//database.execSQL("INSERT INTO rooms WHERE id=3,name=\"foobar\";");
-		//database.insert("rooms",null, cv);
-		
-		Cursor cur = database.query("rooms", new String[] { "_id","name"}, null,null, null, null,null);
-		
-		do {
-			//if(!cur.isFirst()) {
-			//	cur.moveToNext();
-			//}
-			cur.moveToNext();
-			int id = cur.getInt(0);
-			String name = cur.getString(1);
-			Log.e("SQL","SQL IS:" + id + " name:" + name);
-			
-		} while(!cur.isLast());
-		cur.close();
-		L.pushJavaObject(database);
-		L.setGlobal("db");
-		//database.exe
-		//database.que
 		
 		//database.close();
 		//populate the timer_actions hash so we can parse arguments.
@@ -821,8 +841,13 @@ public class StellarService extends Service {
 		private static final int VERSION = 1;
 		
 		private static final String CREATE_TABLE = "" +
-							"CREATE TABLE rooms (_id integer PRIMARY KEY, name TEXT NOT NULL);" + 
+							"CREATE TABLE rooms (_id integer PRIMARY KEY," +
+							"name TEXT NOT NULL,"+
+							"zone TEXT NOT NULL,"+
+							"terrain TEXT NOT NULL,"+
+							"details TEXT);" + 
 							"";
+		
 		public SQLiteHelper(Context context) {
 			super(context, DATABASE_NAME, null, VERSION);
 			// TODO Auto-generated constructor stub
@@ -863,6 +888,77 @@ public class StellarService extends Service {
 			}
 		}
 		callbacks.finishBroadcast();
+	}
+	
+	protected void initLua() {
+		//TODO: Lua bootstrap
+				Log.e("LUA","STARTING UP");
+				L = LuaStateFactory.newLuaState();
+				L.openLibs();
+
+				
+				LogFunction logger = new LogFunction(myhandler,L);
+				TriggerFunction trig = new TriggerFunction(the_settings,L);
+				RowFunction row = new RowFunction(myhandler,L);
+				GMCPFunction gmcp = new GMCPFunction(the_processor,L);
+				FieldFunction field = new FieldFunction(L);
+				try {
+					logger.register("Note");
+					trig.register("trigger");
+					row.register("row");
+					field.register("fields");
+					gmcp.register("gmcpTable");
+					
+				} catch (LuaException e) {
+					e.printStackTrace();
+				}
+				
+				//File file = new File(this.getResources().openRawResource(R.));
+				try {
+					InputStream stream = this.getAssets().open("utils.lua");
+					byte buf[] = new byte[stream.available()];
+					stream.read(buf);
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					bos.write(buf);
+					stream.close();
+					String luaString = bos.toString("ISO-8859-1");
+					int result = L.LdoString(luaString);
+					if(result != 0) {
+							String debug = L.toString(-1);
+							Log.e("LUA",(L.toString(-1)));
+					}
+					bos.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				helper = new SQLiteHelper(this.getApplicationContext());
+				database = helper.getWritableDatabase();
+				
+				ContentValues cv = new ContentValues();
+				//cv.put("_id", 5);
+				//cv.put("name", "foobar room");
+				//database.execSQL("INSERT INTO rooms WHERE id=3,name=\"foobar\";");
+				//database.insert("rooms",null, cv);
+				//database.in
+				Cursor cur = database.query("rooms", new String[] { "_id","name"}, null,null, null, null,null);
+				
+				do {
+					//if(!cur.isFirst()) {
+					//	cur.moveToNext();
+					//}
+					cur.moveToNext();
+					int id = cur.getInt(0);
+					String name = cur.getString(1);
+					Log.e("SQL","SQL IS:" + id + " name:" + name);
+					
+				} while(!cur.isLast());
+				cur.close();
+				L.pushJavaObject(database);
+				L.setGlobal("db");
+				//database.exe
+				//database.que
 	}
 
 	protected void doMaxVitals(int arg1, int arg2) {
@@ -4209,15 +4305,7 @@ public class StellarService extends Service {
 				the_processor.setDebugTelnet(the_settings.isDebugTelnet());
 			}
 			
-			GMCPFunction gmcp = new GMCPFunction(the_processor,L);
-			try {
-				gmcp.register("gmcp");
-				L.pushJavaFunction(gmcp);
-			} catch (LuaException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
+			//GMCPFunction gmcp = new GMCPFunction(the_processor,L);
 			
 			isConnected = true;
 			
@@ -4229,6 +4317,8 @@ public class StellarService extends Service {
 		} catch (ProtocolException e) {
 			DispatchDialog("Protocol Exception: " + e.getMessage());
 		}
+		
+		initLua();
 
 		
 
