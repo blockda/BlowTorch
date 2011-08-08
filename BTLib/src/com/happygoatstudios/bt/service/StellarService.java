@@ -156,6 +156,7 @@ public class StellarService extends Service {
 	public static final int MESSAGE_MAXVITALS = 6002;
 	public static final int MESSAGE_ENEMYHP = 60003;
 	public static final int MESSAGE_FOO = 600004;
+	public static final int MESSAGE_UPDATEROOMINFO = 6000343;
 	public boolean sending = false;
 	String settingslocation = "test_settings2.xml";
 	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
@@ -219,6 +220,7 @@ public class StellarService extends Service {
 			//o.
 			//Log.e("LUA","FIELD FUNCTION CALLED WITH " + n + " paramters");
 			L.pushNil();
+			
 			//boolean clean = false;
 			ContentValues cv = new ContentValues();
 			while(L.next(2) != 0) {
@@ -226,10 +228,10 @@ public class StellarService extends Service {
 				String id = L.toString(-2);
 				String name = L.toString(-1);
 				Log.e("LUA",id + " <==> " +name);
+				
 				cv.put(id, name);
 				L.pop(1);
 			}
-			
 			L.pop(1);
 			L.pushJavaObject(cv);
 			
@@ -249,11 +251,32 @@ public class StellarService extends Service {
 		@Override
 		public int execute() throws LuaException {
 			
-			String param1 = this.getParam(2).getString();
-			String param2 = this.getParam(3).getString();
 			
-			L.pushObjectValue(new String[] {param1,param2});
+			int n = L.getTop();
+			String[] str = new String[n-1];
+			for(int i=2;i<=n;i++) {
+				str[i-2]=L.toString(i);
+			}
+			
+			
+			//L.pop(n-1);
+			
+			L.pushJavaObject(str);
+			
 			return 1;
+			//ArrayList<String>
+			//L.pushNil();
+			
+			//while(L.next(2) != 0) {
+			//	String id = L.toString(-2);
+			//	String name = L.toString(-1);
+				
+			//}
+			//String param1 = this.getParam(2).getString();
+			//String param2 = this.getParam(3).getString();
+			
+			//L.pushObjectValue(new String[] {param1,param2});
+			//return 1;
 		}
 		
 	}
@@ -272,7 +295,7 @@ public class StellarService extends Service {
 			//ok, so we need to check and see if what we want is a table.
 			String args = this.getParam(2).getString();
 			
-			String parts[] = args.split(".");
+			//String parts[] = args.split(".");
 			
 			
 			
@@ -283,7 +306,7 @@ public class StellarService extends Service {
 				//begin iterative lua dump.
 				dumpNode(tmp,"");
 			}
-			
+			//should be one table on top of the stack.
 			return 1;
 			//return 0;
 		}
@@ -308,7 +331,8 @@ public class StellarService extends Service {
 						this.L.pushString((String)o);
 					}
 					if(o instanceof Integer) {	
-						this.L.pushInteger((Integer)o);
+						//TODO: apparantly there is no _pushInteger implementation. wtfxors.
+						this.L.pushString(((Integer)o).toString());
 					}
 					this.L.setTable(-3);
 				}
@@ -418,6 +442,10 @@ public class StellarService extends Service {
 			public void handleMessage(Message msg) {
 				
 				switch(msg.what) {
+				case MESSAGE_UPDATEROOMINFO:
+					Log.e("ROOM","ATTEMPTING TO CALL LUA");
+					updateRoomInfo();
+					break;
 				case MESSAGE_FOO:
 					Bundle biz = msg.getData();
 					int hp = biz.getInt("HP");
@@ -425,6 +453,7 @@ public class StellarService extends Service {
 					int maxhp = biz.getInt("MAXHP");
 					int maxmp = biz.getInt("MAXMANA");
 					int enemy = biz.getInt("ENEMY");
+					
 					
 					StellarService.this.dispatchHPUpdateV2(hp,mp,maxhp,maxmp,enemy);
 					break;
@@ -838,15 +867,24 @@ public class StellarService extends Service {
 	protected class SQLiteHelper extends SQLiteOpenHelper {
 
 		private static final String DATABASE_NAME = "btdb";
-		private static final int VERSION = 1;
+		private static final int VERSION = 2;
 		
-		private static final String CREATE_TABLE = "" +
+		private static final String ROOM_TABLE = "" +
 							"CREATE TABLE rooms (_id integer PRIMARY KEY," +
 							"name TEXT NOT NULL,"+
 							"zone TEXT NOT NULL,"+
 							"terrain TEXT NOT NULL,"+
-							"details TEXT);" + 
-							"";
+							"details TEXT,"+
+							"cont_id integer NOT NULL,"+
+							"x integer NOT NULL," +
+							"y integer NOT NULL," +
+							"cont_room integer NOT NULL);";
+		
+		
+		private static final String EXIT_TABLE = ""+
+						"CREATE TABLE exits(_id integer PRIMARY KEY autoincrement,"+
+						"command TEXT NOT NULL," + 
+						"destination integer NOT NULL);";
 		
 		public SQLiteHelper(Context context) {
 			super(context, DATABASE_NAME, null, VERSION);
@@ -855,13 +893,15 @@ public class StellarService extends Service {
 
 		@Override
 		public void onCreate(SQLiteDatabase arg0) {
-			arg0.execSQL(CREATE_TABLE);
+			arg0.execSQL(ROOM_TABLE);
+			arg0.execSQL(EXIT_TABLE);
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase arg0, int arg1, int arg2) {
 			// TODO Auto-generated method stub
 			arg0.execSQL("DROP TABLE IF EXISTS rooms");
+			arg0.execSQL("DROP TABLE IF EXISTS exits");
 		}
 		
 	}
@@ -936,25 +976,6 @@ public class StellarService extends Service {
 				helper = new SQLiteHelper(this.getApplicationContext());
 				database = helper.getWritableDatabase();
 				
-				ContentValues cv = new ContentValues();
-				//cv.put("_id", 5);
-				//cv.put("name", "foobar room");
-				//database.execSQL("INSERT INTO rooms WHERE id=3,name=\"foobar\";");
-				//database.insert("rooms",null, cv);
-				//database.in
-				Cursor cur = database.query("rooms", new String[] { "_id","name"}, null,null, null, null,null);
-				
-				do {
-					//if(!cur.isFirst()) {
-					//	cur.moveToNext();
-					//}
-					cur.moveToNext();
-					int id = cur.getInt(0);
-					String name = cur.getString(1);
-					Log.e("SQL","SQL IS:" + id + " name:" + name);
-					
-				} while(!cur.isLast());
-				cur.close();
 				L.pushJavaObject(database);
 				L.setGlobal("db");
 				//database.exe
@@ -4518,6 +4539,14 @@ public class StellarService extends Service {
 			}
 		}
 		return (int)fontSize;
+	}
+
+	private void updateRoomInfo() {
+		//L.pushString("updateRoomInfo");
+		L.getGlobal("updateRoomInfo");
+		
+		L.call(0, 0);
+		//L.p
 	}
 
 }

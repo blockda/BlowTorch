@@ -53,6 +53,10 @@ public class GMCPData {
 			}
 		}
 		if(didTrigger) {
+			if(module.equals("room.info")) {
+				reporter.sendEmptyMessage(StellarService.MESSAGE_UPDATEROOMINFO);
+				return;
+			}
 			//Log.e("GMCP","WATCH LIST TRIGGERED");
 			StatusGroupData data = new StatusGroupData();
 			
@@ -121,7 +125,11 @@ public class GMCPData {
 				HashMap<String,Object> map = (HashMap<String,Object>)o;
 				//Iterator<String> keys = object.keys();
 				map.clear();
+				
 				insertData(object, map,previous+dotChar+key);
+				if(watchList.containsKey(previous+dotChar+key)) {
+					watchList.put(previous+dotChar+key, true);
+				}
 				//for(String key : object.keys())
 			} else {
 				//still more modules.
@@ -132,7 +140,11 @@ public class GMCPData {
 				HashMap<String,Object> newnode = new HashMap<String,Object>();
 				node.put(key, newnode);
 				//putData(rest,object,newnode);
+				
 				insertData(object, newnode,previous+dotChar+key);
+				if(watchList.containsKey(previous+dotChar+key)) {
+					watchList.put(previous+dotChar+key, true);
+				}
 			} else {
 				HashMap<String,Object> newnode = new HashMap<String,Object>();
 				node.put(key, newnode);
@@ -223,14 +235,14 @@ public class GMCPData {
 				
 				if(anInt) {
 					node.put(tmp, new Integer(intVal));
-					if(watchList.containsKey(completePath + "." + tmp)) {
-						watchList.put(completePath + "." + tmp, trueVal);
-					}
+					//if(watchList.containsKey(completePath + "." + tmp)) {
+					//	watchList.put(completePath + "." + tmp, trueVal);
+					//}
 				} else {
 					node.put(tmp, new String(strVal));
-					if(watchList.containsKey(completePath + "." + tmp)) {
-						watchList.put(completePath + "." + tmp, trueVal);
-					}
+					//if(watchList.containsKey(completePath + "." + tmp)) {
+					//	watchList.put(completePath + "." + tmp, trueVal);
+					//}
 				}
 			}
 			
@@ -269,10 +281,11 @@ public class GMCPData {
 
 	public HashMap<String, Object> getTable(String path) {
 		// TODO Auto-generated method stub
-		String parts[] = path.split(".");
+		String[] parts = path.split("\\.");
+		Log.e("LUA","GETTING GMCP TABLE FOR: " + path + " broken piece has " + parts.length + " parts.");
 		String working_path = parts[0];
 		
-		return findNextTable(parts[0],parts,0,data);
+		return findNextTable(working_path,parts,0,data);
 		
 		// null;
 	}
@@ -285,12 +298,12 @@ public class GMCPData {
 				return (HashMap<String,Object>)node.get(key);
 			} else {
 				index = index+1;
-				findNextTable(parts[index],parts,index,(HashMap<String,Object>)node.get(key));
+				return findNextTable(parts[index],parts,index,(HashMap<String,Object>)node.get(key));
 			}
 		} else {
 			return null;
 		}
-		return null;
+		//return null;
 	}
 	
 }
