@@ -8,6 +8,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.keplerproject.luajava.LuaState;
 
 import com.happygoatstudios.bt.window.StatusGroupData;
 
@@ -21,7 +22,8 @@ public class GMCPData {
 	HashMap<String,Object> data = null;
 	Handler reporter = null;
 	StatusBarWatchList list = null;
-	public GMCPData(Handler reporter) {
+	LuaState L = null;
+	public GMCPData(Handler reporter,LuaState L) {
 		data = new HashMap<String,Object>();
 		watchList = new HashMap<String,Boolean>();
 		list = new StatusBarWatchList();
@@ -32,6 +34,7 @@ public class GMCPData {
 			watchList.put(str, falseVal);
 		}
 		this.reporter = reporter;
+		this.L = L;
 	}
 	
 	Boolean falseVal = new Boolean(false);
@@ -54,7 +57,11 @@ public class GMCPData {
 		}
 		if(didTrigger) {
 			if(module.equals("room.info")) {
-				reporter.sendEmptyMessage(StellarService.MESSAGE_UPDATEROOMINFO);
+				//reporter.sendEmptyMessage(StellarService.MESSAGE_UPDATEROOMINFO);
+				//ok, so instead of trying to send messages, we are just going to intervene the Lua runtime directly.
+				L.getGlobal("updateRoomInfo");
+				dumpNodeToLua("", this.getTable("room.info"));
+				L.call(1, 0);
 				return;
 			}
 			//Log.e("GMCP","WATCH LIST TRIGGERED");
@@ -207,7 +214,7 @@ public class GMCPData {
 				
 				JSONObject sub = object.getJSONObject(tmp);
 				//if we are here it means we have a sub array.
-				Log.e("GMCP","RE-RECURSING FOR GMCP KEY: " + tmp);
+				//Log.e("GMCP","RE-RECURSING FOR GMCP KEY: " + tmp);
 				if(node.containsKey(tmp)) {
 					node.remove(tmp);
 				}
@@ -282,7 +289,7 @@ public class GMCPData {
 	public HashMap<String, Object> getTable(String path) {
 		// TODO Auto-generated method stub
 		String[] parts = path.split("\\.");
-		Log.e("LUA","GETTING GMCP TABLE FOR: " + path + " broken piece has " + parts.length + " parts.");
+		//Log.e("LUA","GETTING GMCP TABLE FOR: " + path + " broken piece has " + parts.length + " parts.");
 		String working_path = parts[0];
 		
 		return findNextTable(working_path,parts,0,data);
@@ -304,6 +311,39 @@ public class GMCPData {
 			return null;
 		}
 		//return null;
+	}
+	
+	private void dumpNodeToLua(String key,HashMap<String,Object> node) {
+		if(!key.equals("")) {
+			this.L.pushString(key);
+		}
+		this.L.newTable();
+		
+		for(String tmp : node.keySet()) {
+			
+			Object o = node.get(tmp);
+			if(o instanceof HashMap) {
+				//we recurse
+				//Log.e("GMCPDUMP","DUMPING SUB TABLE");
+				dumpNodeToLua(tmp,(HashMap<String,Object>)o);
+			} else {
+				this.L.pushString(tmp);
+				if(o instanceof String) {
+					this.L.pushString((String)o);
+				}
+				if(o instanceof Integer) {	
+					//TODO: apparantly there is no _pushInteger implementation. wtfxors.
+					this.L.pushString(((Integer)o).toString());
+				}
+				this.L.setTable(-3);
+			}
+		}
+		if(!key.equals("")) {
+			this.L.setTable(-3);
+		}
+		//this.L.setTable(-3);
+		
+		
 	}
 	
 }
