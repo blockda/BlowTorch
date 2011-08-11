@@ -227,7 +227,7 @@ public class StellarService extends Service {
 				//clean = true;
 				String id = L.toString(-2);
 				String name = L.toString(-1);
-				Log.e("LUA",id + " <==> " +name);
+				//Log.e("LUA",id + " <==> " +name);
 				
 				cv.put(id, name);
 				L.pop(1);
@@ -323,7 +323,7 @@ public class StellarService extends Service {
 				Object o = node.get(tmp);
 				if(o instanceof HashMap) {
 					//we recurse
-					Log.e("GMCPDUMP","DUMPING SUB TABLE");
+					//Log.e("GMCPDUMP","DUMPING SUB TABLE");
 					dumpNode((HashMap<String,Object>)o,tmp);
 				} else {
 					this.L.pushString(tmp);
@@ -434,6 +434,7 @@ public class StellarService extends Service {
 		settingslocation = prefsname + ".xml";
 		loadXmlSettings(prefsname +".xml");
 		
+		
 		buffer_tree.setLineBreakAt(80); //this doesn't really matter
 		buffer_tree.setEncoding(the_settings.getEncoding());
 		buffer_tree.setMaxLines(the_settings.getMaxLines());
@@ -443,7 +444,7 @@ public class StellarService extends Service {
 				
 				switch(msg.what) {
 				case MESSAGE_UPDATEROOMINFO:
-					Log.e("ROOM","ATTEMPTING TO CALL LUA");
+					//Log.e("ROOM","ATTEMPTING TO CALL LUA");
 					updateRoomInfo();
 					break;
 				case MESSAGE_FOO:
@@ -883,6 +884,7 @@ public class StellarService extends Service {
 		
 		private static final String EXIT_TABLE = ""+
 						"CREATE TABLE exits(_id integer PRIMARY KEY autoincrement,"+
+						"room integer NOT NULL," +
 						"command TEXT NOT NULL," + 
 						"destination integer NOT NULL);";
 		
@@ -893,8 +895,8 @@ public class StellarService extends Service {
 
 		@Override
 		public void onCreate(SQLiteDatabase arg0) {
-			arg0.execSQL(ROOM_TABLE);
-			arg0.execSQL(EXIT_TABLE);
+			//arg0.execSQL(ROOM_TABLE);
+			//arg0.execSQL(EXIT_TABLE);
 		}
 
 		@Override
@@ -903,7 +905,6 @@ public class StellarService extends Service {
 			arg0.execSQL("DROP TABLE IF EXISTS rooms");
 			arg0.execSQL("DROP TABLE IF EXISTS exits");
 		}
-		
 	}
 	
 	protected void dispatchHPUpdateV2(int hp,int mp,int maxhp,int maxmana, int enemy) {
@@ -932,10 +933,7 @@ public class StellarService extends Service {
 	
 	protected void initLua() {
 		//TODO: Lua bootstrap
-				Log.e("LUA","STARTING UP");
-				L = LuaStateFactory.newLuaState();
-				L.openLibs();
-
+				
 				
 				LogFunction logger = new LogFunction(myhandler,L);
 				TriggerFunction trig = new TriggerFunction(the_settings,L);
@@ -975,7 +973,7 @@ public class StellarService extends Service {
 				
 				helper = new SQLiteHelper(this.getApplicationContext());
 				database = helper.getWritableDatabase();
-				
+				//helper.
 				L.pushJavaObject(database);
 				L.setGlobal("db");
 				//database.exe
@@ -4316,8 +4314,11 @@ public class StellarService extends Service {
 			
 			//show notification
 			showNotification();
-			
-			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding(),this.getApplicationContext());
+			Log.e("LUA","STARTING UP");
+			L = LuaStateFactory.newLuaState();
+			L.openLibs();
+
+			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding(),this.getApplicationContext(),L);
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();

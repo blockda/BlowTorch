@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.keplerproject.luajava.LuaState;
 
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
 
@@ -26,13 +27,13 @@ public class Processor {
 	private String encoding = null;
 	private Context mContext = null;
 	public Processor(Handler useme, IStellarService.Stub theserv,
-			String pEncoding,Context pContext) {
+			String pEncoding,Context pContext,LuaState L) {
 		reportto = useme;
 
 		mContext = pContext;
 		String ttype = ConfigurationLoader.getConfigurationValue("terminalTypeString", mContext);
 		opthandler = new OptionNegotiator(ttype);
-		gmcp = new GMCPData(useme);
+		gmcp = new GMCPData(useme,L);
 		setEncoding(pEncoding);
 	}
 
