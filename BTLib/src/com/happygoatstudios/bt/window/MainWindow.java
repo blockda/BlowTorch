@@ -1,5 +1,8 @@
 package com.happygoatstudios.bt.window;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
@@ -44,6 +47,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
@@ -210,6 +214,8 @@ public class MainWindow extends Activity {
 		
 	};
 	
+	LuaState L = null;
+	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		
@@ -243,6 +249,9 @@ public class MainWindow extends Activity {
         
         vitals = (VitalsView) this.findViewById(R.id.vitals);
         
+        //TODO: init lua
+        
+		
         //health = (Bar)vitals.findViewById(R.id.health);
         //mana = (Bar)vitals.findViewById(R.id.mana);
         //enemy = (Bar)vitals.findViewById(R.id.enemy);
@@ -1755,6 +1764,40 @@ public class MainWindow extends Activity {
 			}*/
 			//servicestarted = true;
 		}
+		
+		
+		
+L = LuaStateFactory.newLuaState();
+        
+        L.openLibs();
+        
+        //TODO: load helper functions and the such.
+        ViewGroup vg = (ViewGroup)findViewById(R.id.slickholder);
+        
+        LuaWindow lua = new LuaWindow(this,L,400,400);
+        
+        
+        Log.e("LUA","STARTING UP LUA FOR THE WINDOW");
+        vg.addView(lua);
+        
+        try {
+			InputStream stream = this.getAssets().open("windowutils.lua");
+			byte buf[] = new byte[stream.available()];
+			stream.read(buf);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			bos.write(buf);
+			stream.close();
+			String luaString = bos.toString("ISO-8859-1");
+			int result = L.LdoString(luaString);
+			if(result != 0) {
+					String debug = L.toString(-1);
+					Log.e("LUA",(L.toString(-1)));
+			}
+			bos.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	public void onDestroy() {
 		if(isBound) {
@@ -2281,7 +2324,9 @@ public class MainWindow extends Activity {
 		int count = clearb.getChildCount();
 		
 		
-		clearb.removeViews(2, count-2);
+		clearb.removeViews(3, count-3);
+		
+		
 		//for(View v : clearb.getChildAt(index))
 		
 		/*clearb.removeAllViews();
