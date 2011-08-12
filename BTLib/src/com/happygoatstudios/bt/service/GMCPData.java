@@ -56,14 +56,14 @@ public class GMCPData {
 			}
 		}
 		if(didTrigger) {
-			if(module.equals("room.info")) {
+			/*if(module.equals("room.info")) {
 				//reporter.sendEmptyMessage(StellarService.MESSAGE_UPDATEROOMINFO);
 				//ok, so instead of trying to send messages, we are just going to intervene the Lua runtime directly.
 				L.getGlobal("updateRoomInfo");
 				dumpNodeToLua("", this.getTable("room.info"));
 				L.call(1, 0);
 				return;
-			}
+			}*/
 			//Log.e("GMCP","WATCH LIST TRIGGERED");
 			StatusGroupData data = new StatusGroupData();
 			
