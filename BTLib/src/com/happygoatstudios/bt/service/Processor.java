@@ -421,7 +421,7 @@ public class Processor {
 	public void initGMCP() {
 		String hello = "core.hello {\"client\": \"BlowTorch\"," +
 			"\"version\": \"1.4\"}";
-		String support = "core.supports.set [\"core 1\",\"char 1\",\"room 1\"]";
+		String support = "core.supports.set [\"core 1\",\"char 1\"]";
 		try {
 			byte[] hellob = getGMCPResponse(hello);
 			byte[] supportb = getGMCPResponse(support);

@@ -9,6 +9,6 @@ public class StatusBarWatchList {
 		data.add("char.vitals");
 		data.add("char.maxstats");
 		data.add("char.status");
-		data.add("room.info");
+		//data.add("room.info");
 	}
 }

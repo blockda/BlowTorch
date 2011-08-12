@@ -6,7 +6,6 @@
     android:layout_height="fill_parent">
     
     
-
 <RelativeLayout
 	android:layout_height="40dip"
 	android:layout_width="wrap_content"
@@ -114,7 +113,14 @@
     					android:layout_height="fill_parent"
     					android:layout_marginLeft = "0px"
     					android:layout_marginTop= "0px"/>
-    					
+    				<com.happygoatstudios.bt.window.VitalsView
+    					android:id="@+id/vitals"
+    					android:layout_width="fill_parent"
+    					android:layout_alignParentTop="true"
+    					android:layout_alignParentLeft="true"
+    					android:layout_height="fill_parent"
+    					android:layout_marginLeft = "0px"
+    					android:layout_marginTop= "0px"/>
     				</RelativeLayout>
     					
     <!--	</ScrollView> -->
