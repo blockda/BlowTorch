@@ -35,7 +35,7 @@ function updateRoomInfo(room)
 	--Note("Starting room save")
 	local vals_tmp = {uid=room.num,name=room.name,area=room.zone,terrain=room.terrain,info=room.details,x=room.coord.x,y=room.coord.y}
 	local vals = fields(vals_tmp)
-	db:beginTransaction()
+	
 	db:insert("rooms",nil,vals)
 	--Note("Room Inserted - Doing Exits")
 	
@@ -48,8 +48,6 @@ function updateRoomInfo(room)
 			Note("Not mapping exits. Room: "..room.num.." is a maze.")
 		end
 	end
-	db:setTransactionSuccessful()
-	db:commit()
 	--Note("exits finished")
 
 end
@@ -177,7 +175,7 @@ end
       CREATE TABLE IF NOT EXISTS rooms (
       _id        INTEGER PRIMARY KEY AUTOINCREMENT,
       uid           TEXT NOT NULL,   -- vnum or how the MUD identifies the room
-      name          TEXT,            -- name o.f room
+      name          TEXT,            -- name of room
       area          TEXT,            -- which area
       building      TEXT,            -- which building it is in
       terrain       TEXT,            -- eg. road OR water

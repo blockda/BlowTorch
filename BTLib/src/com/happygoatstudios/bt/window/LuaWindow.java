@@ -46,7 +46,7 @@ public class LuaWindow extends View {
 		
 		
 		l.setTextSize(26.0f);
-		surface.drawText("Lua Window, drawing from java", 30, 30, l);
+		//surface.drawText("Lua Window, drawing from java", 30, 30, l);
 		
 	}
 	
