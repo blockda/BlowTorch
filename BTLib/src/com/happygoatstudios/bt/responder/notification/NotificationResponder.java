@@ -3,6 +3,8 @@ package com.happygoatstudios.bt.responder.notification;
 import java.io.File;
 import java.util.HashMap;
 
+import org.keplerproject.luajava.LuaState;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -182,7 +184,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	//vp[3] = 200;
 	
 	@Override
-	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
+	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {

@@ -38,6 +38,8 @@ import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.TriggerResponder.RESPONDER_TYPE;
 import com.happygoatstudios.bt.responder.ack.*;
 import com.happygoatstudios.bt.responder.notification.*;
+import com.happygoatstudios.bt.responder.script.ScriptResponder;
+import com.happygoatstudios.bt.responder.script.ScriptResponderEditor;
 import com.happygoatstudios.bt.responder.toast.*;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.validator.Validator;
@@ -369,6 +371,8 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				label.setText("Toast Message: " + ((ToastResponder)responder).getMessage());
 			} else if(responder.getType() == RESPONDER_TYPE.ACK){
 				label.setText("Ack With: " + ((AckResponder)responder).getAckWith());
+			} else if(responder.getType() == RESPONDER_TYPE.SCRIPT) {
+				label.setText("Function: " + ((ScriptResponder)responder).getFunction());
 			}
 			label.setGravity(Gravity.CENTER);
 			label.setSingleLine(true);
@@ -468,6 +472,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				AckResponderEditor aedit = new AckResponderEditor(TriggerEditorDialog.this.getContext(),(AckResponder)responder.copy(),TriggerEditorDialog.this);
 				aedit.show();
 				break;
+			case SCRIPT:
+				ScriptResponderEditor sedit = new ScriptResponderEditor(TriggerEditorDialog.this.getContext(),(ScriptResponder)responder.copy(),TriggerEditorDialog.this);
+				sedit.show();
 			default:
 				break;
 			}
@@ -556,7 +563,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 
 		public void onClick(View v) {
 			//give out a list of options
-			CharSequence[] items = {"Notification","Toast Message","Ack With"};
+			CharSequence[] items = {"Notification","Toast Message","Ack With","Script"};
 			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
 			builder.setTitle("Type:");
 			
@@ -619,6 +626,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			AckResponderEditor aedit = new AckResponderEditor(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
 			aedit.show();
 			break; //ack
+		case 3:
+			ScriptResponderEditor edit = new ScriptResponderEditor(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
+			edit.show();
 		default:
 			break;
 		}

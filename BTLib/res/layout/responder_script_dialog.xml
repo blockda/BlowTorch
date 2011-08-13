@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newscriptresponderlayout"
+  android:layout_width="300dip"
+  android:layout_height="150dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="SCRIPT RESPONDER"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+    <Button
+    	android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:id="@+id/cancel"
+  		android:layout_alignParentBottom="true"
+  		android:layout_alignParentRight="true"
+  		android:text="Cancel" />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Done"
+  	android:id="@+id/done"
+  	android:layout_toLeftOf="@id/cancel"
+  	android:layout_alignParentBottom="true"/>
+  
+  <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_above="@id/done" android:layout_below="@id/titlebar">
+  <TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="*">
+  	<TableRow>
+  		<TextView android:text="Execute Script Function:"/>
+  	</TableRow>
+  		<EditText android:id="@+id/function" android:singleLine="true"/>
+  </TableLayout>
+  </LinearLayout>
+
+  
+</RelativeLayout>
