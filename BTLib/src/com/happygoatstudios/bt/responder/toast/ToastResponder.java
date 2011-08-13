@@ -2,6 +2,8 @@ package com.happygoatstudios.bt.responder.toast;
 
 import java.util.HashMap;
 
+import org.keplerproject.luajava.LuaState;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Parcel;
@@ -77,7 +79,7 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 
 	@Override
 	public void doResponse(Context c, String displayname, int triggernumber,
-			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap) {
+			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
 				return;

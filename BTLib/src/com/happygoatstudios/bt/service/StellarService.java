@@ -85,6 +85,7 @@ import android.util.Log;
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
@@ -376,6 +377,89 @@ public class StellarService extends Service {
 		
 	}
 	
+	private class ServerSendFunction extends JavaFunction {
+		//HyperSettings settings = null;
+		public ServerSendFunction(LuaState L) {
+			super(L);
+			//settings = the_settings;
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//attempt to access trigger data.
+			
+			//synchronized(the_settings) {
+				String key = this.getParam(2).getString();
+				
+				try {
+					StellarService.this.myhandler.sendMessage(StellarService.this.myhandler.obtainMessage(MESSAGE_SENDDATA, key.getBytes(the_settings.getEncoding())));
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//Log.e("LUA","ATTEMPTING TO RETURN TRIGGER: " + key);
+				/*TriggerData dat = settings.getTriggers().get(key);
+				if(dat == null) {
+					L.pushNil();
+				} else {
+					L.pushObjectValue(dat);
+				}*/
+			//}
+			
+			return 1;
+		}
+		
+	}
+	
+	private class NewTriggerFunction extends JavaFunction {
+
+		public NewTriggerFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			//expected arguments.
+			//label
+			//pattern
+			//literal
+			//fireonce
+			//responders
+			
+			//TODO:CHECK INPUT, RETURN BAD ERROR
+			
+			String label = this.getParam(2).getString();
+			String pattern = this.getParam(3).getString();
+			Boolean literal = this.getParam(4).getBoolean();
+			String function = this.getParam(5).getString();
+			//Boolean fireonce = this.getParam(5).getBoolean();
+			//ArrayList<TriggerResponder> responders = (ArrayList<TriggerResponder>)this.getParam(7).getObject();
+			
+			StellarService.this.makeTmpScriptTrigger(label,pattern,literal,function);
+			return 0;
+		}
+		
+	}
+	
+	private class DeleteTriggerFunction extends JavaFunction {
+
+		public DeleteTriggerFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String name = this.getParam(2).getString();
+			deleteTrigger(name);
+			return 0;
+		}
+
+		
+	}
+	
 	LuaState L = null;
 	String theLuaString = null;
 	public void onCreate() {
@@ -532,7 +616,7 @@ public class StellarService extends Service {
 							t.setFired(false);
 						}
 					}
-					buildTriggerData();
+					//buildTriggerData();
 					if(the_processor != null) { the_processor.reset();  }// corner case. Not sure how to make this null.//2/16/2008 -- Fix for NullPointerException found in StellarService$handler
 					
 					try {
@@ -865,6 +949,38 @@ public class StellarService extends Service {
 		}
 	}
 	
+	public void makeTmpScriptTrigger(String label,String pattern,Boolean literal,String function) {
+		ScriptResponder r = new ScriptResponder();
+		r.setFunction(function);
+		ArrayList<TriggerResponder> list = new ArrayList<TriggerResponder>();
+		list.add(r);
+		makeNewTrigger(label,pattern,literal,false,list,true,false);
+	}
+	
+	public void makeNewTrigger(String label, String pattern, Boolean literal,
+			Boolean fireonce, ArrayList<TriggerResponder> responders,Boolean hidden,boolean save) {
+		synchronized(the_settings) {
+			TriggerData tmp = new TriggerData();
+			tmp.setPattern(pattern);
+			tmp.setName(label);
+			tmp.setEnabled(true);
+			tmp.setFireOnce(fireonce);
+			tmp.setInterpretAsRegex(!literal);
+			tmp.setResponders(responders);
+			tmp.setHidden(hidden);
+			tmp.setSave(save);
+			
+			the_settings.getTriggers().put(pattern, tmp);
+			
+		}
+	}
+	
+	public void deleteTrigger(String label) {
+		synchronized(the_settings) {
+			the_settings.getTriggers().remove(label);
+		}
+	}
+
 	protected class SQLiteHelper extends SQLiteOpenHelper {
 
 		private static final String DATABASE_NAME = "btdb";
@@ -940,13 +1056,18 @@ public class StellarService extends Service {
 				RowFunction row = new RowFunction(myhandler,L);
 				GMCPFunction gmcp = new GMCPFunction(the_processor,L);
 				FieldFunction field = new FieldFunction(L);
+				DeleteTriggerFunction dtrig = new DeleteTriggerFunction(L);
+				NewTriggerFunction ntrig = new NewTriggerFunction(L);
+				ServerSendFunction send = new ServerSendFunction(L);
 				try {
 					logger.register("Note");
 					trig.register("trigger");
 					row.register("row");
 					field.register("fields");
 					gmcp.register("gmcpTable");
-					
+					ntrig.register("NewTrigger");
+					dtrig.register("DeleteTrigger");
+					send.register("send");
 				} catch (LuaException e) {
 					e.printStackTrace();
 				}
@@ -1070,7 +1191,7 @@ public class StellarService extends Service {
 			loadDefaultDirections();
 		}
 		buildAliases();
-		buildTriggerData();
+		//buildTriggerData();
 		
 		
 		
@@ -1661,7 +1782,7 @@ public class StellarService extends Service {
 					dispatchXMLError(message);
 				} finally {
 					buildAliases();
-					buildTriggerData();
+					//buildTriggerData();
 				}
 			}
 
@@ -1742,7 +1863,7 @@ public class StellarService extends Service {
 				the_settings.getTriggers().remove(which);
 				
 			}
-			buildTriggerData();
+			//buildTriggerData();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			
 		}
@@ -1751,10 +1872,10 @@ public class StellarService extends Service {
 		public void newTrigger(TriggerData data) throws RemoteException {
 			
 			synchronized(the_settings) {
-				the_settings.getTriggers().put(data.getPattern(), data);
+				the_settings.getTriggers().put(data.getName(), data);
 				
 			}
-			buildTriggerData();
+			//buildTriggerData();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
@@ -1763,13 +1884,13 @@ public class StellarService extends Service {
 				throws RemoteException {
 			
 			synchronized(the_settings) {
-				the_settings.getTriggers().remove(from.getPattern());
-				the_settings.getTriggers().put(to.getPattern(), to);
+				the_settings.getTriggers().remove(from.getName());
+				the_settings.getTriggers().put(to.getName(), to);
 				//for(TriggerResponder responder : to.getResponders()) {
 				//	Log.e("SERVICE","MODIFIED TRIGGER, RESPONDER NOW: "+ responder.getFireType().getString());
 				//}
 			}
-			buildTriggerData();
+			//buildTriggerData();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
@@ -2406,7 +2527,7 @@ public class StellarService extends Service {
 				throws RemoteException {
 			synchronized(the_settings) {
 				the_settings.getTriggers().get(key).setEnabled(enabled);
-				buildTriggerData();
+				//buildTriggerData();
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 			}
 		}
@@ -2858,7 +2979,7 @@ public class StellarService extends Service {
 		} 
 	}
 	
-	Pattern trigger_regex = Pattern.compile("");
+	/*Pattern trigger_regex = Pattern.compile("");
 	Matcher trigger_matcher = trigger_regex.matcher("");
 	private StringBuffer trigger_string = new StringBuffer();
 	private Boolean has_triggers = false;
@@ -2896,7 +3017,7 @@ public class StellarService extends Service {
 			trigger_matcher = trigger_regex.matcher("");
 		} 
 		//Log.e("SERVICE","TRIGGER STRING NOW:" + trigger_string.toString());
-	}
+	}*/
 	
 	//private boolean isWifiLocked = false;
 	private WifiManager.WifiLock the_wifi_lock = null;
@@ -3941,7 +4062,7 @@ public class StellarService extends Service {
 	StringBuffer tempBuffer = new StringBuffer();
 	Matcher colorStripper = colordata.matcher("");
 	public void dispatchFinish(byte[] rawData) throws UnsupportedEncodingException {
-		
+		regexp_test.setLength(0);
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
 		//if(firstDispatch)
@@ -3964,16 +4085,57 @@ public class StellarService extends Service {
 		buffer_tree.addBytesImplSimple(rawData);
 		buffer_tree.prune();
 		
-		if(trigger_string.length() < 1) {
+		if(the_settings.getTriggers().size() < 1) {
 			return; //return without processing, if there are no triggers.
 		}
 		
 		colorStripper = colorStripper.reset(new String(rawData,the_settings.getEncoding()));
 		regexp_test.append(colorStripper.replaceAll(""));
 		
-		boolean rebuildTriggers = false;
+		//boolean rebuildTriggers = false;
 		
-		if(has_triggers) {
+		//here we go
+		//TODO: NEW TRIGGER PROCESSING
+		
+		HashMap<String,TriggerData> map = the_settings.getTriggers();
+		for(String pattern : map.keySet()) {
+			TriggerData tmp = map.get(pattern);
+			if(tmp.isEnabled()) {
+				/*Pattern p = null;
+				Matcher m = null;
+				if(tmp.isInterpretAsRegex()) {
+					//actually literal
+					p = Pattern.compile(tmp.getPattern(),Pattern.MULTILINE);
+					
+				} else {
+					p = Pattern.compile("\\Q"+tmp.getPattern()+"\\E",Pattern.MULTILINE);
+				}
+				m = p.matcher(regexp_test);
+				*/
+				tmp.getMatcher().reset(regexp_test);
+				//Matcher m = tmp.getCompiledPattern().matcher(regexp_test);
+				if(tmp.getMatcher().find()) {
+					if(tmp.isFired()) {
+						//already fired
+					} else {
+						if(tmp.isFireOnce()) {
+							tmp.setFired(true);
+						}
+						captureMap.clear();
+						
+						for(int i=0;i<=tmp.getMatcher().groupCount();i++) {
+							captureMap.put(Integer.toString(i), tmp.getMatcher().group(i));
+						}
+						for(TriggerResponder responder : tmp.getResponders()) {
+							responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap,L,tmp.getName());
+						}
+					}
+					//do responders
+				}
+			}
+		}
+		
+		/*if(has_triggers) {
 			
 			trigger_matcher.reset(regexp_test);
 			hasListener = isWindowShowing();
@@ -4026,7 +4188,7 @@ public class StellarService extends Service {
 				rebuildTriggers = false;
 				buildTriggerData();
 			}
-		}
+		}*/
 		
 		regexp_test.setLength(0);
 		
@@ -4203,7 +4365,7 @@ public class StellarService extends Service {
 			
 			hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
-				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null);
+				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null,L,data.getName());
 			}
 		}
 	}
