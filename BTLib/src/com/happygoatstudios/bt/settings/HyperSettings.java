@@ -17,6 +17,7 @@ import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
+import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
@@ -352,6 +353,7 @@ public class HyperSettings {
 			out.startTag("",BaseParser.TAG_TRIGGERS);
 			
 			for(TriggerData trigger : data.getTriggers().values()) {
+				if(trigger.isSave()) {
 				out.startTag("", BaseParser.TAG_TRIGGER);
 				out.attribute("", BaseParser.ATTR_TRIGGERTITLE, trigger.getName());
 				out.attribute("", BaseParser.ATTR_TRIGGERPATTERN, trigger.getPattern());
@@ -361,62 +363,8 @@ public class HyperSettings {
 				out.attribute("", BaseParser.ATTR_TRIGGERENEABLED, trigger.isEnabled() ? "true" : "false");
 				
 				OutputResponders(out,trigger.getResponders());
-				/*for(TriggerResponder responder : trigger.getResponders()) {
-					switch(responder.getType()) {
-					case NOTIFICATION:
-						NotificationResponder notify = (NotificationResponder)responder;
-						out.startTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
-						out.attribute("", BaseParser.ATTR_NOTIFICATIONTITLE,notify.getTitle());
-						out.attribute("", BaseParser.ATTR_NOTIFICATIONMESSAGE, notify.getMessage());
-						out.attribute("", BaseParser.ATTR_FIRETYPE, notify.getFireType().getString() );
-						if(notify.isUseDefaultSound()) {
-							out.attribute("", BaseParser.ATTR_USEDEFAULTSOUND, "true");
-							out.attribute("", BaseParser.ATTR_SOUNDPATH, notify.getSoundPath());
-						} else {
-							out.attribute("", BaseParser.ATTR_USEDEFAULTSOUND, "false");
-						}
-						
-						if(notify.isUseDefaultLight()) {
-							out.attribute("", BaseParser.ATTR_USEDEFAULTLIGHT, "true");
-							out.attribute("", BaseParser.ATTR_LIGHTCOLOR, Integer.toHexString(notify.getColorToUse()));
-						} else {
-							out.attribute("", BaseParser.ATTR_USEDEFAULTLIGHT, "false");
-						}
-						
-						if(notify.isUseDefaultVibrate()) {
-							out.attribute("", BaseParser.ATTR_USEDEFAULTVIBRATE, "true");
-							out.attribute("", BaseParser.ATTR_VIBRATELENGTH, Integer.toString(notify.getVibrateLength()));
-						} else {
-							out.attribute("", BaseParser.ATTR_USEDEFAULTVIBRATE, "false");
-						}
-						
-						out.attribute("", BaseParser.ATTR_NEWNOTIFICATION, (notify.isSpawnNewNotification()) ? "true" : "false");
-						out.attribute("", BaseParser.ATTR_USEONGOING, (notify.isUseOnGoingNotification()) ? "true" : "false");
-						out.endTag("", BaseParser.TAG_NOTIFICATIONRESPONDER);
-						break;
-					case TOAST:
-						ToastResponder toasty = (ToastResponder)responder;
-						out.startTag("", BaseParser.TAG_TOASTRESPONDER);
-						out.attribute("", BaseParser.ATTR_TOASTMESSAGE, toasty.getMessage());
-						out.attribute("", BaseParser.ATTR_TOASTDELAY, new Integer(toasty.getDelay()).toString());
-						out.attribute("", BaseParser.ATTR_FIRETYPE, toasty.getFireType().getString());
-						out.endTag("", BaseParser.TAG_TOASTRESPONDER);
-						break;
-					case ACK:
-						AckResponder ack = (AckResponder)responder;
-						out.startTag("", BaseParser.TAG_ACKRESPONDER);
-						out.attribute("", BaseParser.ATTR_ACKWITH, ack.getAckWith());
-						out.attribute("", BaseParser.ATTR_FIRETYPE, ack.getFireType().getString());
-						out.endTag("", BaseParser.TAG_ACKRESPONDER);
-						break;
-					default:
-						break;
-					}
-					
-				}*/
-				
-				
 				out.endTag("", BaseParser.TAG_TRIGGER);
+				}
 			}
 			
 			out.endTag("",BaseParser.TAG_TRIGGERS);
@@ -497,6 +445,13 @@ public class HyperSettings {
 				out.attribute("", BaseParser.ATTR_ACKWITH, ack.getAckWith());
 				out.attribute("", BaseParser.ATTR_FIRETYPE, ack.getFireType().getString());
 				out.endTag("", BaseParser.TAG_ACKRESPONDER);
+				break;
+			case SCRIPT:
+				ScriptResponder scr = (ScriptResponder)responder;
+				out.startTag("", BaseParser.TAG_SCRIPTRESPONDER);
+				out.attribute("", BaseParser.ATTR_FUNCTION, scr.getFunction());
+				out.attribute("", BaseParser.ATTR_FIRETYPE, scr.getFireType().getString());
+				out.endTag("", BaseParser.TAG_SCRIPTRESPONDER);
 				break;
 			default:
 				break;
