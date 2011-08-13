@@ -127,6 +127,8 @@ public class BaseParser {
 	static final String TAG_ACKRESPONDER = "ack";
 	static final String ATTR_ACKWITH = "with";
 	
+	static final String TAG_SCRIPTRESPONDER = "script";
+	static final String ATTR_FUNCTION = "function";
 	
 	//haven't had a new settings group in a real long time.
 	static final String TAG_TIMERS = "timers";
@@ -152,6 +154,8 @@ public class BaseParser {
 	public static final String TAG_ENTRY = "entry";
 	public static final String ATTR_DIRECTION = "dir";
 	public static final String ATTR_COMMAND = "cmd";
+	
+
 	
 	final String path;
 	Context mContext;

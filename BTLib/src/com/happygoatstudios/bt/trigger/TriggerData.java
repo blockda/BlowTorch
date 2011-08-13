@@ -3,10 +3,13 @@ package com.happygoatstudios.bt.trigger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
+import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -24,8 +27,13 @@ public class TriggerData implements Parcelable {
 	
 	private boolean enabled = true;
 	
+	private boolean save = true;
+	
 	private List<TriggerResponder> responders;
 	
+	private Pattern p = null;
+	private Matcher m = null;
+	//private Matcher m = null;
 	
 	public TriggerData() {
 		name = "";
@@ -35,6 +43,7 @@ public class TriggerData implements Parcelable {
 		fireOnce = false;
 		hidden = false;
 		enabled = true;
+		buildData();
 	}
 	
 	public TriggerData copy() {
@@ -48,10 +57,23 @@ public class TriggerData implements Parcelable {
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
-		
+		tmp.buildData();
 		return tmp;
 	}
 	
+	private void buildData() {
+		if(this.interpretAsRegex) {
+			this.p = Pattern.compile(pattern,Pattern.MULTILINE);
+		} else {
+			this.p = Pattern.compile("\\Q"+pattern+"\\E",Pattern.MULTILINE);
+		}
+		this.m = p.matcher("");
+	}
+	
+	public Matcher getMatcher() {
+		return m;
+	}
+
 	public boolean equals(Object o) {
 		if(o == this) return true;
 		if(!(o instanceof TriggerData)) return false;
@@ -87,6 +109,7 @@ public class TriggerData implements Parcelable {
 	
 	public TriggerData(Parcel in) {
 		readFromParcel(in);
+		buildData();
 	}
 	
 	public void readFromParcel(Parcel in) {
@@ -115,6 +138,11 @@ public class TriggerData implements Parcelable {
 				AckResponder ack = in.readParcelable(com.happygoatstudios.bt.responder.ack.AckResponder.class.getClassLoader());
 				
 				responders.add(ack);
+				break;
+			case TriggerResponder.RESPONDER_TYPE_SCRIPT:
+				ScriptResponder scr = in.readParcelable(com.happygoatstudios.bt.responder.script.ScriptResponder.class.getClassLoader());
+				
+				responders.add(scr);
 				break;
 			}
 		}
@@ -150,6 +178,7 @@ public class TriggerData implements Parcelable {
 
 	public void setPattern(String pattern) {
 		this.pattern = pattern;
+		buildData();
 	}
 
 	public String getPattern() {
@@ -158,6 +187,7 @@ public class TriggerData implements Parcelable {
 
 	public void setInterpretAsRegex(boolean interpretAsRegex) {
 		this.interpretAsRegex = interpretAsRegex;
+		buildData();
 	}
 
 	public boolean isInterpretAsRegex() {
@@ -203,5 +233,21 @@ public class TriggerData implements Parcelable {
 	public boolean isEnabled() {
 		return enabled;
 	}
+	
+	public Pattern getCompiledPattern() {
+		return p;
+	}
+	//public boolean matches(CharSequence text) {
+		//m.reset(text);
+
+	public void setSave(boolean save) {
+		this.save = save;
+	}
+
+	public boolean isSave() {
+		return save;
+	}
+		
+	//}
 
 }

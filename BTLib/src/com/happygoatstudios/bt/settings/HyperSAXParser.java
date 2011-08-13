@@ -17,6 +17,7 @@ import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
+import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
@@ -68,6 +69,9 @@ public class HyperSAXParser extends BaseParser {
 		Element timerNotificationResponder = timer.getChild(TAG_NOTIFICATIONRESPONDER);
 		Element timerToastResponder = timer.getChild(TAG_TOASTRESPONDER);
 		Element timerAckResponder = timer.getChild(TAG_ACKRESPONDER);
+		
+		Element scriptResponder = trigger.getChild(TAG_SCRIPTRESPONDER);
+		Element timerScriptResponder = timer.getChild(TAG_SCRIPTRESPONDER);
 		
 		final HashMap<String,AliasData> aliases_read = new HashMap<String,AliasData>();
 		final HashMap<String,Vector<SlickButtonData>> buttons = new HashMap<String,Vector<SlickButtonData>>();
@@ -341,11 +345,12 @@ public class HyperSAXParser extends BaseParser {
 		
 		notificationResponder.setStartElementListener(new NotificationElementListener(new TriggerData()));
 		ackResponder.setStartElementListener(new AckElementListener(new TriggerData()));
-		toastResponder.setStartElementListener(new ToastElementListener(new TriggerData()));		
+		toastResponder.setStartElementListener(new ToastElementListener(new TriggerData()));
+		scriptResponder.setStartElementListener(new ScriptElementListener(new TriggerData()));
 		trigger.setEndElementListener(new EndElementListener() {
 
 			public void end() {
-				tmp.getTriggers().put(current_trigger.getPattern(), current_trigger.copy());
+				tmp.getTriggers().put(current_trigger.getName(), current_trigger.copy());
 			}
 			
 		});
@@ -379,7 +384,7 @@ public class HyperSAXParser extends BaseParser {
 		timerNotificationResponder.setStartElementListener(new NotificationElementListener(new TimerData()));
 		timerAckResponder.setStartElementListener(new AckElementListener(new TimerData()));
 		timerToastResponder.setStartElementListener(new ToastElementListener(new TimerData()));
-		
+		timerScriptResponder.setStartElementListener(new ScriptElementListener(new TimerData()));
 		
 		
 		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
@@ -422,6 +427,44 @@ public class HyperSAXParser extends BaseParser {
 				current_timer.getResponders().add(toast);
 			}
 		}
+	}
+	
+	private class ScriptElementListener implements StartElementListener {
+
+		private Object type;
+		public ScriptElementListener(Object addto) {
+			type = addto;
+		}
+		
+		public void start(Attributes attributes) {
+			// TODO Auto-generated method stub
+			ScriptResponder scr = new ScriptResponder();
+			scr.setFunction(attributes.getValue("",ATTR_FUNCTION));
+			
+			String fireType = attributes.getValue("",ATTR_FIRETYPE);
+			if(fireType==null) fireType="";
+			
+			if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
+				scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
+			} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
+				scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
+			} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
+				scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+			} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
+				scr.setFireType(FIRE_WHEN.WINDOW_NEVER);
+			} else {
+				scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
+			}
+			
+			if(type instanceof TriggerData) {
+				current_trigger.getResponders().add(scr);
+			}
+			
+			if(type instanceof TimerData) {
+				current_timer.getResponders().add(scr);
+			}
+		}
+		
 	}
 	
 	private class AckElementListener implements StartElementListener {
