@@ -17,7 +17,7 @@ import android.view.View;
 public class LuaWindow extends View {
 	LuaState L = null;
 	DrawFunction draw = null;
-	LuaPaint l = new LuaPaint();
+	LuaPaint l = null;
 	public LuaWindow(Context context,LuaState L,int width,int height) {
 		super(context);
 		
@@ -31,7 +31,7 @@ public class LuaWindow extends View {
 		}
 		
 		bmp = Bitmap.createBitmap(width,height,Config.ARGB_8888);
-		surface = new Canvas(bmp);
+		surface = new LuaCanvas(bmp);
 		//Bitmap.cre
 		L.pushJavaObject(surface);
 		L.setGlobal("canvas");
@@ -40,6 +40,8 @@ public class LuaWindow extends View {
 		surface.drawColor(0x00000000);
 		
 		//surface.drawRe
+		l = new LuaPaint(this.getContext().getResources().getDisplayMetrics().density);
+		
 		L.pushJavaObject(l);
 		L.setGlobal("paint");
 		l.setColor(0xFF00FF00);
@@ -74,7 +76,7 @@ public class LuaWindow extends View {
 	}
 	
 	Bitmap bmp = null;
-	Canvas surface = null;
+	LuaCanvas surface = null;
 	Paint p = new Paint();
 	//boolean dirty = false;
 	public void onDraw(Canvas c) {

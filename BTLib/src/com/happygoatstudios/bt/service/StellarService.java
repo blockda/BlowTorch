@@ -4054,7 +4054,9 @@ public class StellarService extends Service {
 		callbacks.finishBroadcast();
 	}
 	
-
+	long parseTotal = 0;
+	int parseTarget = 10;
+	int parseCurrent = 0;
 	HashMap<String,String> captureMap = new HashMap<String,String>();
 	//private int bufferLineCount = 0;
 	private Pattern bufferLine = Pattern.compile(".*\n");
@@ -4093,25 +4095,16 @@ public class StellarService extends Service {
 		regexp_test.append(colorStripper.replaceAll(""));
 		
 		//boolean rebuildTriggers = false;
-		
+		hasListener = isWindowShowing();
 		//here we go
 		//TODO: NEW TRIGGER PROCESSING
+		
+		long start = java.lang.System.currentTimeMillis();
 		
 		HashMap<String,TriggerData> map = the_settings.getTriggers();
 		for(String pattern : map.keySet()) {
 			TriggerData tmp = map.get(pattern);
 			if(tmp.isEnabled()) {
-				/*Pattern p = null;
-				Matcher m = null;
-				if(tmp.isInterpretAsRegex()) {
-					//actually literal
-					p = Pattern.compile(tmp.getPattern(),Pattern.MULTILINE);
-					
-				} else {
-					p = Pattern.compile("\\Q"+tmp.getPattern()+"\\E",Pattern.MULTILINE);
-				}
-				m = p.matcher(regexp_test);
-				*/
 				tmp.getMatcher().reset(regexp_test);
 				//Matcher m = tmp.getCompiledPattern().matcher(regexp_test);
 				if(tmp.getMatcher().find()) {
@@ -4133,6 +4126,33 @@ public class StellarService extends Service {
 					//do responders
 				}
 			}
+		}
+		long end = java.lang.System.currentTimeMillis();
+		long dur = end - start;
+		if(parseCurrent == parseTarget -1) {
+			parseTotal += dur;
+			double avg = ((double)parseTotal/(double)parseTarget);
+			//Log.e("REGEXP","AVG PARSE DURATION FOR "+parseTarget+" iterations: " + Double.toString(avg));
+			
+			//this.the_processor.in
+			int tqlp = callbacks.beginBroadcast();
+			for(int i=0;i<tqlp;i++) {
+				try {
+					callbacks.getBroadcastItem(i).updateTriggerDebugString("Avg. Parse Time: " + Double.toString(avg) + "msec.");
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+			callbacks.finishBroadcast();
+			
+			parseCurrent = 0;
+			parseTotal = 0;
+			//Log.e("REGEXP","")
+		} else {
+			parseTotal += dur;
+			parseCurrent += 1;
 		}
 		
 		/*if(has_triggers) {
