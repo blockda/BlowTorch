@@ -26,4 +26,5 @@ interface IStellarServiceCallback {
 	void updateEnemy(int hp);
 	void updateVitals2(int hp,int mp,int maxhp, int maxmana,int enemy);
 	void luaOmg(int stateIndex);
+	void updateTriggerDebugString(String str);
 }

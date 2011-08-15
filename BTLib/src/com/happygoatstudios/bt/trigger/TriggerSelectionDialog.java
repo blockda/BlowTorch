@@ -296,7 +296,7 @@ public class TriggerSelectionDialog extends Dialog {
 			//launch the trigger editor with this item.
 			try {
 				
-				TriggerData data = service.getTrigger(entry.extra);
+				TriggerData data = service.getTrigger(entry.name);
 
 				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler);
 				editor.show();
@@ -552,7 +552,7 @@ public class TriggerSelectionDialog extends Dialog {
 			
 			int width = toggle.getDrawable().getIntrinsicWidth() + delete.getDrawable().getIntrinsicWidth() + modify.getDrawable().getIntrinsicWidth();
 			
-			toggle.setOnClickListener(new ToggleButtonListener(pos,iv,e.extra));
+			toggle.setOnClickListener(new ToggleButtonListener(pos,iv,e.name));
 			modify.setOnClickListener(new ModifyButtonListener(pos));
 			delete.setOnClickListener(new DeleteButtonListener(pos,(ViewFlipper)v.findViewById(R.id.flipper),width));
 			
