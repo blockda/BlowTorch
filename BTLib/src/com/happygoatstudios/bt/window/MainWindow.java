@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.keplerproject.luajava.JavaFunction;
+import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 
@@ -134,6 +136,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_ENEMYHP = 1000002;
 	protected static final int MESSAGE_VITALS2 = 1000003;
 	protected static final int MESSAGE_TESTLUA = 100004;
+	protected static final int MESSAGE_TRIGGERSTR = 100005;
 	
 	//private TextTree tree = new TextTree();
 
@@ -215,6 +218,20 @@ public class MainWindow extends Activity {
 	};
 	
 	LuaState L = null;
+	class LuaWindowDrawFunction extends JavaFunction {
+
+		public LuaWindowDrawFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			MainWindow.this.lwin.invalidate();
+			return 0;
+		}
+		
+	}
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
@@ -379,9 +396,14 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_TRIGGERSTR:
+					L.getGlobal("drawTrigger");
+					L.pushString((String)msg.obj);
+					L.call(1, 0);
+					break;
 				case MESSAGE_TESTLUA:
-					LuaState exist = LuaStateFactory.getExistingState(msg.arg1);
-					exist.LdoString("Note(\"Fooooooo\")");
+					//LuaState exist = LuaStateFactory.getExistingState(msg.arg1);
+					//exist.LdoString("Note(\"Fooooooo\")");
 					break;
 				case MESSAGE_VITALS2:
 				{
@@ -1744,6 +1766,8 @@ public class MainWindow extends Activity {
 			settingsDialogRun = true;
 		}
 	}
+	
+	LuaWindow lwin = null;
 
 	public void onStart() {
 		super.onStart();
@@ -1767,18 +1791,24 @@ public class MainWindow extends Activity {
 		
 		
 		
-L = LuaStateFactory.newLuaState();
+		L = LuaStateFactory.newLuaState();
         
         L.openLibs();
         
         //TODO: load helper functions and the such.
         ViewGroup vg = (ViewGroup)findViewById(R.id.slickholder);
         
-        LuaWindow lua = new LuaWindow(this,L,400,400);
+        lwin = new LuaWindow(this,L,400,400);
         
-        
+        LuaWindowDrawFunction dfunc = new LuaWindowDrawFunction(L);
+        try {
+			dfunc.register("updateWindow");
+		} catch (LuaException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
         Log.e("LUA","STARTING UP LUA FOR THE WINDOW");
-        vg.addView(lua);
+        vg.addView(lwin);
         
         try {
 			InputStream stream = this.getAssets().open("windowutils.lua");
@@ -2512,6 +2542,10 @@ L = LuaStateFactory.newLuaState();
 		
 		public void luaOmg(int stateIndex) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TESTLUA,stateIndex,0));
+		}
+
+		public void updateTriggerDebugString(String str) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TRIGGERSTR,str));
 		}
 	};
 	
