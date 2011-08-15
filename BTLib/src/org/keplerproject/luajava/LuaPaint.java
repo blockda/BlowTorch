@@ -3,12 +3,15 @@ package org.keplerproject.luajava;
 import java.math.BigInteger;
 
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
 import android.util.Log;
 
 public class LuaPaint extends Paint {
-	
-	 public LuaPaint() {
+	 float density = 1.0f;
+	 public LuaPaint(float density) {
 		 super();
+		 this.density = density;
 	 }
 	 
 	 public void setColor(int color) {
@@ -23,6 +26,14 @@ public class LuaPaint extends Paint {
 		 Log.e("LUA","ATTEMPTING TO SET LUA PATINT TO: "+Long.toHexString(l) + " int:" + l);
 		 
 		 super.setColor((int)l);
+	 }
+	 
+	 public float density() {
+		 return density;
+	 }
+	 
+	 public Mode getPorterDuffModeClear() {
+		 return PorterDuff.Mode.CLEAR;
 	 }
 	
 }
