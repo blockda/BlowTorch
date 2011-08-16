@@ -1833,6 +1833,8 @@ public class StellarService extends Service {
 					button.setFromSetSettings(input, oldsettings);
 				}
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DOBUTTONRELOAD,theSet));
+				
 				//need to go through all the button in the set and update the values.
 			}
 			
@@ -2540,7 +2542,9 @@ public class StellarService extends Service {
 					//Log.e("SERVICE","SETTING SET: " + key + " lock state: " + locked);
 					settings.setLocked(locked);
 					myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-					reloadButtonSet(key);
+					if(key == the_settings.getLastSelected()) {
+						reloadButtonSet(key);
+					}
 				}
 			}
 		}
