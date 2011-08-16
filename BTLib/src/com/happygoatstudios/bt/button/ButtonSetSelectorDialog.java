@@ -14,10 +14,12 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -92,10 +94,18 @@ public class ButtonSetSelectorDialog extends Dialog {
 		
 		lv.setAdapter(adapter);
 		lv.setTextFilterEnabled(true);
-		
+		adapter.notifyDataSetInvalidated();
 		//Button
 		//lv.setSelection(entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set))));
+		
+		//lv.b
 	}
+	
+	int selectedIndex = 0;
+	
+	/*public void onStart() {
+		lv.setSelection(selectedIndex);
+	}*/
 	
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
@@ -252,9 +262,20 @@ public class ButtonSetSelectorDialog extends Dialog {
 	public void onStart() {
 		super.onStart();
 		if(noSets) {
-			Toast t = Toast.makeText(ButtonSetSelectorDialog.this.getContext(), "No butt sets loaded. Click below to create new Button Sets.", Toast.LENGTH_LONG);
+			Toast t = Toast.makeText(ButtonSetSelectorDialog.this.getContext(), "No button sets loaded. Click below to create new Button Sets.", Toast.LENGTH_LONG);
 			t.show();
 		}
+		adapter.notifyDataSetInvalidated();
+		//selectedIndex = entries.indexOf(new ButtonEntry(selected_set,data.get(selected_set)));
+		for(int i=0;i<adapter.getCount();i++) {
+			if(adapter.getItem(i).name.equals(selected_set)) {
+				selectedIndex = i;
+			}
+		}
+		
+		Log.e("VIEW","Attempting to set selection to:" + selectedIndex);
+		((ListView)findViewById(R.id.buttonset_list)).setSelection(selectedIndex);
+
 	}
 	
 	public void onBackPressed() {
@@ -381,6 +402,15 @@ public class ButtonSetSelectorDialog extends Dialog {
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = li.inflate(R.layout.better_list_row,null);
+			} else {
+				//need to make sure that the list view has 
+				//attempt to get viewflipper.
+				ViewFlipper f = (ViewFlipper) v.findViewById(R.id.flipper);
+				if (f.getCurrentView().getId() == R.id.toolbar_holder_open) {
+					f.setInAnimation(new TranslateAnimation(0,0,0,0));
+					f.setOutAnimation(new TranslateAnimation(0,0,0,0));
+					f.showNext();
+				}
 			}
 			
 			ButtonEntry e = items.get(pos);
@@ -483,13 +513,15 @@ public class ButtonSetSelectorDialog extends Dialog {
 				
 				label.setText(e.name);
 				extra.setText("Contains " + e.entries + " buttons.");
-				
+				RelativeLayout r = (RelativeLayout)v.findViewById(R.id.root);
 				if(e.name.equals(selected_set)) {
-					label.setBackgroundColor(0xAA888888);
-					extra.setBackgroundColor(0xAA888888);
+					label.setBackgroundColor(0x00888888);
+					extra.setBackgroundColor(0x00888888);
+					r.setBackgroundColor(0xAA707070);
 				} else {
-					label.setBackgroundColor(0xAA333333);
-					extra.setBackgroundColor(0xAA333333);
+					label.setBackgroundColor(0x00333333);
+					extra.setBackgroundColor(0x00333333);
+					r.setBackgroundColor(0xAA333333);
 				}
 			}
 			
@@ -743,33 +775,6 @@ public class ButtonSetSelectorDialog extends Dialog {
 		
 	}
 	
-	
-	private class ButtonSetEditorOpener implements ListView.OnItemLongClickListener {
-
-		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
-				int arg2, long arg3) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(ButtonSetSelectorDialog.this.getContext());
-			builder.setTitle("Edit/Delete Button Set");
-			builder.setMessage("Attempting to modify or delete " + entries.get(arg2).name + " button set.");
-			builder.setPositiveButton("Edit", new ModifySetDefaultsListener(arg2));
-			
-			builder.setNeutralButton("Delete", new DeleteSetListener(arg2));
-			
-			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-				}
-			});
-			
-			AlertDialog dialog = builder.create();
-			dialog.show();
-			
-			return false;
-		}
-		
-	}
-	
 	boolean setSettingsHaveChanged = false;
 	private Handler editordonelistenr = new Handler() {
 		public void handleMessage(Message msg) {
@@ -788,6 +793,7 @@ public class ButtonSetSelectorDialog extends Dialog {
 				
 				setSettingsHaveChanged = true;
 				ButtonSetSelectorDialog.this.buildList();
+				
 				break;
 			}
 			//handle the thing comin back;
