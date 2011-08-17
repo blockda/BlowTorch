@@ -1,19 +1,30 @@
 package com.happygoatstudios.bt.service;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ProtocolException;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 
 
@@ -23,7 +34,9 @@ public class DataPumper extends Thread {
 		//private OutputStream writer = null;
 		private Handler reportto = null;
 		private boolean compressed = false;
-		private Handler myhandler = null;
+		public Handler handler = null;
+		
+		
 		//private InflaterInputStream decomp_stream = null;
 		
 		private Inflater decompress = null;
@@ -38,25 +51,156 @@ public class DataPumper extends Thread {
 		final static public int MESSAGE_NOCOMPRESS = 106;
 		public static final int MESSAGE_THROTTLE = 108;
 		public static final int MESSAGE_NOTHROTTLE = 109;
+		//protected static final int MESSAGE_WRITETOSERVER = 110;
 	
 		private boolean throttle = false;
 		
-		public DataPumper(InputStream istream,OutputStream ostream,Handler useme) {
+		public void sendData(byte[] data) {
+			Message msg = writerThread.outhandler.obtainMessage(OutputWriterThread.MESSAGE_SEND,data);
+			writerThread.outhandler.sendMessage(msg);
+		}
+		
+		class OutputWriterThread extends Thread {
+			protected static final int MESSAGE_END = 101;
+			protected static final int MESSAGE_SEND = 102;
+			BufferedOutputStream writer = null;
+			public Handler outhandler = null;
+			public OutputWriterThread(BufferedOutputStream stream) {
+				writer = stream;
+			}
+			public void run() {
+				Looper.prepare();
+				outhandler = new Handler() {
+					public void handleMessage(Message msg) {
+						switch(msg.what) {
+						case MESSAGE_SEND:
+							//this will always be the same thing.
+							byte[] data = (byte[])msg.obj;
+							
+							try {
+								writer.write(data);
+								writer.flush();
+							} catch (IOException e1) {
+								DispatchDialog(e1.getMessage());
+								connected = false;
+							}
+						break;
+						case MESSAGE_END:
+							this.getLooper().quit();
+						}
+					}
+				};
+				Looper.loop();
+			}
+		}
+		private OutputWriterThread writerThread = null;
+		private String host = "";
+		private int port = 23;
+		
+		public DataPumper(String host,int port,Handler useme) {
+			this.host = host;
+			this.port = port;
+			
+			reportto = useme;
+		}
+		
+		private Socket the_socket = null;
+		public void init()  {
+			//Debug.waitForDebugger();
+			this.setName("DataPumper");
+			//TODO: MAKE CONNECTION STARTUP CODE HERE.
+			InetAddress addr = null;
+			
+			
+			sendWarning(new String(Colorizer.colorCyanBright+"Attempting connection to: "+ Colorizer.colorYeollowBright + host + ":"+port+"\n"+Colorizer.colorCyanBright+"Timeout set to 14 seconds."+Colorizer.colorWhite+"\n"));
+			
+			try {
+				addr = InetAddress.getByName(host);
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				DispatchDialog("Unknown Host: " + e.getMessage());
+				return;
+				//e.printStackTrace();
+			}
+			
+			String ip = addr.getHostAddress();
+			
+			if(ip.equals(host)) {
+				//it was an ip, don't display it.
+			} else {
+				//handler.handle
+				sendWarning(Colorizer.colorCyanBright+"Looked up: "+Colorizer.colorYeollowBright + ip +Colorizer.colorCyanBright+ " for "+Colorizer.colorYeollowBright+host+Colorizer.colorWhite+"\n");
+			}
+			
+			the_socket = new Socket();
+			//SocketAddress adr = new InetSocketAddress(addr,port);
+			
+			try {
+				
+				the_socket = new Socket();
+				SocketAddress adr = new InetSocketAddress(addr,port);
+				the_socket.connect(adr,14000);
+				sendWarning(Colorizer.colorCyanBright+"Connected to: "+Colorizer.colorYeollowBright+host+Colorizer.colorCyanBright+"!"+Colorizer.colorWhite+"\n");
+				
+				the_socket.setSendBufferSize(1024);
+				writerThread = new OutputWriterThread(new BufferedOutputStream(the_socket.getOutputStream()));
+				writerThread.start();
+				
+				connected = true;
+				reader = new BufferedInputStream(the_socket.getInputStream());
+				decompress = new Inflater(false);
+			} catch (SocketException e) {
+				DispatchDialog("Socket Exception: " + e.getMessage());
+				//Log.e("SERVICE","NET FAILURE:" + e.getMessage());
+			} catch (SocketTimeoutException e) {
+				DispatchDialog("Operation timed out.");
+			} catch (ProtocolException e) {
+				DispatchDialog("Protocol Exception: " + e.getMessage());
+			} catch(IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		private void DispatchDialog(String str) {
+			reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_DODIALOG,str));
+		}
+		/*public DataPumper(InputStream istream,OutputStream ostream,Handler useme) {
 			reader = new BufferedInputStream(istream);
 			//writer = new BufferedOutputStream(ostream);
 			//writer = ostream;
 			reportto = useme;
 			decompress = new Inflater(false);
 			//decomp = new ZStream();
+			writer=ostream;
 			this.setName("DataPumper");
+		}*/
+		
+		public void sendWarning(String str) {
+			reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,(str)));
+			
 		}
 	
 		public void run() {
 			Looper.prepare();
-			
-			myhandler = new Handler() {
+			init();
+			handler = new Handler() {
 				public void handleMessage(Message msg) {
+					//boolean doRestart = true;
 					switch(msg.what) {
+					
+					/*case MESSAGE_WRITETOSERVER:
+						//Log.e("DAN0","DEPERATLY TRYING TO WRITE TO THE SERVER");
+						byte[] data = (byte[])msg.obj;
+						
+						try {
+							writer.write(data);
+							writer.flush();
+						} catch (IOException e1) {
+							DispatchDialog(e1.getMessage());
+							connected = false;
+						}
+						//doRestart = false;
+						break;*/
 					case MESSAGE_THROTTLE:
 						//Log.e("PUMPER","DATA PUMP THROTTLING");
 						throttle = true;
@@ -82,6 +226,16 @@ public class DataPumper extends Thread {
 						//break;
 					case MESSAGE_END:
 						//Log.e("PUMP","PUMP QUITTING!");
+						
+						try {
+							writerThread.outhandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+							//writer.close();
+							reader.close();
+							the_socket.close();
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 						this.getLooper().quit();
 						break;
 					case MESSAGE_INITXFER:
@@ -89,7 +243,7 @@ public class DataPumper extends Thread {
 						//myhandler.sendMessageDelayed(tmp, 50);
 						break;
 					case MESSAGE_ENDXFER:
-						myhandler.removeMessages(MESSAGE_RETRIEVE);
+						handler.removeMessages(MESSAGE_RETRIEVE);
 						break;
 					case MESSAGE_COMPRESS:
 						try {
@@ -104,24 +258,25 @@ public class DataPumper extends Thread {
 						break;
 					}
 					
+					//if(!restart)
 					//keep the pump flowing.
-					if(!myhandler.hasMessages(MESSAGE_RETRIEVE)) {
+					if(!handler.hasMessages(MESSAGE_RETRIEVE)) {
 						//only send if there are no messages already in queue.
 						if(!throttle) {
-							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 100);
+							handler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 100);
 						} else {
-							myhandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 1500);
+							handler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 1500);
 						}
 					}
 				}
 			};
-			
+			handler.sendEmptyMessage(MESSAGE_RETRIEVE);
 			Looper.loop();
 		}
 		
-		public Handler getHandler() {
+		/*public Handler getHandler() {
 			return myhandler;
-		}
+		}*/
 		
 		private void useCompression(byte[] input) throws UnsupportedEncodingException {
 			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
@@ -167,7 +322,9 @@ public class DataPumper extends Thread {
 				} catch (IOException e) {
 					//throw new RuntimeException(e);
 					reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+					connected = false;
 					return;
+					
 				}
 				if(numtoread < 1) {
 					//no data to read
@@ -177,11 +334,14 @@ public class DataPumper extends Thread {
 						if(reader.read() == -1) {
 							//Log.e("PUMP","END OF STREAM");
 							reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+							connected = false;
 						} else {
 							reader.reset();
 						}
 					} catch (IOException e) { 
+						e.printStackTrace();
 						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+						connected = false;
 						return;
 					}
 					
@@ -196,6 +356,7 @@ public class DataPumper extends Thread {
 					} catch (IOException e) {
 						//throw new RuntimeException(e);
 						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+						connected = false;
 					}
 					//Log.e("PUMP","READ (string): " + new String(data));
 					//Log.e("PUMP","READ (hex): " + toHex(data));
@@ -331,8 +492,14 @@ public class DataPumper extends Thread {
 		}
 
 	private boolean doCorrupt = false;
+	private boolean connected = false;;
 	public void corruptMe() {
 		doCorrupt = true;
+	}
+
+	public boolean isConnected() {
+		// TODO Auto-generated method stub
+		return connected ;
 	}
 		
 }

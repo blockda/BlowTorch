@@ -109,7 +109,7 @@ public class StellarService extends Service {
 	RemoteCallbackList<IStellarServiceCallback> callbacks = new RemoteCallbackList<IStellarServiceCallback>();
 	HyperSettings the_settings = new HyperSettings();
 	NotificationManager mNM;
-	OutputStream output_writer = null;
+	//OutputStream output_writer = null;
 	Processor the_processor = null;
 	Object sendlock = new Object();
 	protected int bindCount = 0;
@@ -158,6 +158,7 @@ public class StellarService extends Service {
 	public static final int MESSAGE_ENEMYHP = 60003;
 	public static final int MESSAGE_FOO = 600004;
 	public static final int MESSAGE_UPDATEROOMINFO = 6000343;
+	public static final int MESSAGE_DODIALOG = 512;
 	public boolean sending = false;
 	String settingslocation = "test_settings2.xml";
 	com.happygoatstudios.bt.window.TextTree buffer_tree = new com.happygoatstudios.bt.window.TextTree();
@@ -464,14 +465,12 @@ public class StellarService extends Service {
 	String theLuaString = null;
 	public void onCreate() {
 
-
+		//Debug.waitForDebugger();
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
 		host = BAD_HOST;
 		port = BAD_PORT;
-		
-		
 		ColorDebugCommand colordebug = new ColorDebugCommand();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
 		TimerCommand timercmd = new TimerCommand();
@@ -527,6 +526,9 @@ public class StellarService extends Service {
 			public void handleMessage(Message msg) {
 				
 				switch(msg.what) {
+				case MESSAGE_DODIALOG:
+					DispatchDialog((String)msg.obj);
+					break;
 				case MESSAGE_UPDATEROOMINFO:
 					//Log.e("ROOM","ATTEMPTING TO CALL LUA");
 					updateRoomInfo();
@@ -808,7 +810,7 @@ public class StellarService extends Service {
 					showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
-					pump.getHandler().sendMessage(pump.getHandler().obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
+					pump.handler.sendMessage(pump.handler.obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
@@ -826,14 +828,14 @@ public class StellarService extends Service {
 						}
 					}
 					
-					try {
-						if(output_writer != null) {
-							output_writer.write(obytes);
-							output_writer.flush();
+					//try {
+						if(pump != null) {
+							pump.sendData(obytes);
+							//output_writer.flush();
 						}
-					} catch (IOException e2) {
-						throw new RuntimeException(e2);
-					}
+					//} catch (IOException e2) {
+					//	throw new RuntimeException(e2);
+					//}
 					break;
 				case MESSAGE_SENDDATA:
 					
@@ -875,16 +877,19 @@ public class StellarService extends Service {
 							buf.rewind();
 							buf.get(tosend,0,count);
 							
-							if(output_writer != null) {
-								output_writer.write(tosend);
-								output_writer.flush();
+							if(pump.isConnected()) {
+								//output_writer.write(tosend);
+								//output_writer.flush();
+								pump.sendData(tosend);
+								//pump.handler.sendMessage(datasend);
 							} else {
 								doDispatchNoProcess(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
 							}
 						} else {
 							if(d.cmdString.equals("") && d.visString == null) {
-								output_writer.write(crlf.getBytes(the_settings.getEncoding()));
-								output_writer.flush();
+								pump.sendData(crlf.getBytes(the_settings.getEncoding()));
+								//pump.handler.sendMessage(datasend);
+								//output_writer.flush();
 								d.visString = "\n";
 							}
 						}
@@ -1315,17 +1320,17 @@ public class StellarService extends Service {
 	
 	private void doThrottleBackgroundImpl() {
 		if(pump == null) return;
-		if(pump.getHandler() == null) return;
+		if(pump.handler == null) return;
 		if(the_settings == null) return;
 		
 		synchronized(the_settings) {
 			if(the_settings.isThrottleBackground()) {
 				if(!hasListener && pump != null) {
-					if(pump.getHandler() != null) 
-						pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_THROTTLE);
+					if(pump.handler != null) 
+						pump.handler.sendEmptyMessage(DataPumper.MESSAGE_THROTTLE);
 				} else {
-					if(pump.getHandler() != null)
-						pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_NOTHROTTLE);
+					if(pump.handler != null)
+						pump.handler.sendEmptyMessage(DataPumper.MESSAGE_NOTHROTTLE);
 				}
 			}
 		}
@@ -4428,7 +4433,7 @@ public class StellarService extends Service {
 			return; //dont' start 
 		}
 		
-		if(debug) {
+		/*if(debug) {
 			return;
 		}
 		
@@ -4497,7 +4502,18 @@ public class StellarService extends Service {
 			}
 			
 			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_INITXFER);
-			
+			*/
+		
+			pump = new DataPumper(host,port,myhandler);
+			pump.start();
+			synchronized(this) {
+				try {
+					this.wait(500);
+					//give the pump some time sto start up
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				} 
+			}
 			//show notification
 			showNotification();
 			Log.e("LUA","STARTING UP");
@@ -4517,14 +4533,14 @@ public class StellarService extends Service {
 			
 			isConnected = true;
 			
-		} catch (SocketException e) {
+		/*} catch (SocketException e) {
 			DispatchDialog("Socket Exception: " + e.getMessage());
 			//Log.e("SERVICE","NET FAILURE:" + e.getMessage());
 		} catch (SocketTimeoutException e) {
 			DispatchDialog("Operation timed out.");
 		} catch (ProtocolException e) {
 			DispatchDialog("Protocol Exception: " + e.getMessage());
-		}
+		}*/
 		
 		initLua();
 
@@ -4644,27 +4660,28 @@ public class StellarService extends Service {
 	
 	public void killNetThreads() {
 		if(pump != null) {
-			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
+			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
 			pump = null;
 		}
 		
-		if(output_writer != null) {
-			try {
+		//if(pump != null) {
+			/*try {
 				output_writer.close();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}	
-			output_writer = null;
-		}
+			
+			output_writer = null;*/
+		//}
 		
-		if(the_socket != null) {
+		/*if(the_socket != null) {
 			try {
 				the_socket.close();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 			the_socket = null;
-		}
+		}*/
 	}
 	boolean showdcmessage = false;
 	public void doShutdown() {
