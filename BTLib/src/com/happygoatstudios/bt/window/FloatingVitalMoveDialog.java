@@ -31,6 +31,7 @@ public class FloatingVitalMoveDialog extends Dialog {
 	
 	public void onCreate(Bundle b) {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		this.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
 		this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 		this.setContentView(R.layout.blank);
