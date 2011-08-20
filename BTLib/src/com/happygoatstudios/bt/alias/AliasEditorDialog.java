@@ -56,7 +56,7 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 		if(input != null) {
 			//load aliases
 			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-			this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
+			this.getWindow().setBackgroundDrawableResource(R.drawable.hyperframe);
 			
 			setContentView(R.layout.alias_dialog);
 			

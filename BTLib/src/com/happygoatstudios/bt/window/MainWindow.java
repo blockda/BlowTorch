@@ -17,10 +17,12 @@ import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,6 +33,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -42,6 +45,7 @@ import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.util.Log;
 //import android.util.Log;
+import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -50,6 +54,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
@@ -60,11 +65,13 @@ import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,6 +82,7 @@ import com.happygoatstudios.bt.button.ButtonEditorDialog;
 import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
 import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.button.manager.ButtonManagerDialog;
 import com.happygoatstudios.bt.service.*;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
@@ -235,7 +243,9 @@ public class MainWindow extends Activity {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		
+		this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+		//this.requestWindowFeature(Window.FEATURE_ACTION_MODE_OVERLAY);
+		//this
 		if(ConfigurationLoader.isTestMode(this)) {
 			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		}
@@ -1341,19 +1351,23 @@ public class MainWindow extends Activity {
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		//MenuItem tmp = null;
-		menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
-		menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers);
-		menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers);
-		menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options);
-		menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
+		menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 905, 0 ,"Speedwalk Directions");
 		menu.add(0,907,0,"Vitals Options");
+		menu.add(0,912,0,"Button Manager");
 		menu.add(0, 901, 0, "Reconnect");
 		menu.add(0, 902, 0, "Disconnect");
 		menu.add(0, 903, 0, "Quit");
 		menu.add(0, 906, 0, "Help/About");
-		
+		menu.add(0,908,0,"Fragment Test");
+		menu.add(0,909,0,"Navigation Test");
+		menu.add(0,910,0,"Even more.");
+		menu.add(0,911,0,"Oh oh oh overflow!");
 		
 		
 		return true;
@@ -1366,6 +1380,54 @@ public class MainWindow extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		
 		switch(item.getItemId()) {
+		case 912:
+			ButtonManagerDialog bm = new ButtonManagerDialog("name",service,this);
+			bm.show();
+			break;
+		case 909:
+			
+		case 908:
+			//this.getActionBar().hide();
+			this.startActionMode(new ActionMode.Callback() {
+				
+				public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+					// TODO Auto-generated method stub
+					return false;
+				}
+				
+				public void onDestroyActionMode(ActionMode mode) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+					// TODO Auto-generated method stub
+					mode.setTitle("Fragment Test");
+					menu.add("Fooooo");
+					menu.add("Bar");
+					MainWindow.this.getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+					SpinnerAdapter test = ArrayAdapter.createFromResource(MainWindow.this, R.array.hfmodes, android.R.layout.simple_spinner_dropdown_item);
+					ActionBar.OnNavigationListener nav = new ActionBar.OnNavigationListener() {
+						
+						public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+							// TODO Auto-generated method stub
+							Toast.makeText(MainWindow.this, "item: " + itemPosition + " selected.", Toast.LENGTH_SHORT).show();
+							return true;
+						}
+					};
+					MainWindow.this.getActionBar().setListNavigationCallbacks(test, nav);
+					//break;
+					//mode.
+					return true;
+					//return false;
+				}
+				
+				public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+					// TODO Auto-generated method stub
+					return false;
+				}
+			});
+			break;
 		case 907:
 			FloatingVitalMoveDialog mvdialog = new FloatingVitalMoveDialog(this,vitals);
 			mvdialog.show();
@@ -1776,6 +1838,16 @@ public class MainWindow extends Activity {
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.TEST;
 		}*/
+		this.getActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
+		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME);
+		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+		this.getActionBar().addOnMenuVisibilityListener(new ActionBar.OnMenuVisibilityListener() {
+			
+			public void onMenuVisibilityChanged(boolean isVisible) {
+				Log.e("FRAG","VISIBILITY  " + isVisible);
+			}
+		});
+		
 		
 		if(!isServiceRunning()) {
 			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
