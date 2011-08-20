@@ -11,6 +11,7 @@ import com.happygoatstudios.bt.service.Colorizer;
 import com.happygoatstudios.bt.window.TextTree.Line;
 import com.happygoatstudios.bt.window.TextTree.Unit;
 
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -173,9 +174,20 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		calculateCharacterFeatures(width,height);
 		//Log.e("BYTE","SURFACE CHANGED");
 		doDelayedDraw(0);
+		ObjectAnimator.ofInt(this, "tWidth", WINDOW_WIDTH, WINDOW_WIDTH-300,WINDOW_WIDTH, WINDOW_WIDTH-300,WINDOW_WIDTH).setDuration(10000).start();
 	}
 	
 	//private int leftOver = 0;
+	
+	public void setTWidth(int height) {
+		WINDOW_WIDTH=height;
+		//the_tree.se
+		calculateCharacterFeatures(WINDOW_WIDTH,WINDOW_HEIGHT);
+	}
+	
+	public int getTWidth() {
+		return WINDOW_WIDTH;
+	}
 	
 	public void calculateCharacterFeatures(int width,int height) {
 		
@@ -213,6 +225,8 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 		//Log.e("SERVICE","ON SURFACE CREATED: started draw thread.");
 		windowShowing = true;
+		
+		
 	}
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
