@@ -89,6 +89,8 @@ import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.plugin.Plugin;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
@@ -463,8 +465,42 @@ public class StellarService extends Service {
 	
 	LuaState L = null;
 	String theLuaString = null;
+	
+	Plugin plugin = null;
+	
 	public void onCreate() {
 
+		PluginParser pparser = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",this.getApplicationContext());
+		try {
+			plugin = new Plugin(pparser.load());
+		} catch (FileNotFoundException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		} catch (IOException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		} catch (SAXException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		}
+		
+		Log.e("PLUG","ALIAS COUNT:" + plugin.getSettings().getAliases().size());
+		for(String d : plugin.getSettings().getAliases().keySet()) {
+			AliasData a = plugin.getSettings().getAliases().get(d);
+			Log.e("PLUG","ALIAS: pre=" + a.getPre() + " post=" + a.getPost());
+		}
+		Log.e("PLUG","TRIGGER COUNT:" + plugin.getSettings().getTriggers().size());
+		for(String d : plugin.getSettings().getTriggers().keySet()) {
+			TriggerData t = plugin.getSettings().getTriggers().get(d);
+			Log.e("PLUG","TRIGGER: name="+t.getName() + " p="+t.getPattern() + " has " + t.getResponders().size() + " responders.");
+		}
+		Log.e("PLUG","TIMER COUNT:" + plugin.getSettings().getTimers().size());
+		
+		for(String d : plugin.getSettings().getTimers().keySet()) {
+			TimerData t = plugin.getSettings().getTimers().get(d);
+			Log.e("PLUG","TIMER: name="+t.getName()+" dur="+t.getSeconds()+ " has " + t.getResponders().size() + " responders.");
+		}
+		//plugin 
 		//Debug.waitForDebugger();
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);

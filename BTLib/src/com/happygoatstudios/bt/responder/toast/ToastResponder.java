@@ -1,8 +1,10 @@
 package com.happygoatstudios.bt.responder.toast;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.keplerproject.luajava.LuaState;
+import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
 import android.os.Handler;
@@ -134,6 +136,12 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 
 	public int getDelay() {
 		return delay;
+	}
+
+	@Override
+	public void saveResponderToXML(XmlSerializer out)
+			throws IllegalArgumentException, IllegalStateException, IOException {
+		ToastResponderParser.saveToastResponderToXML(out, this);
 	}
 
 	
