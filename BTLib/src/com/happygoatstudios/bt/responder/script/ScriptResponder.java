@@ -1,8 +1,10 @@
 package com.happygoatstudios.bt.responder.script;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.keplerproject.luajava.LuaState;
+import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
 import android.os.Handler;
@@ -121,6 +123,13 @@ public class ScriptResponder extends TriggerResponder {
 		if(!this.function.equals(tmp.function)) return false;
 		if(this.getFireType() != tmp.getFireType()) return false;
 		return true;
+	}
+
+	@Override
+	public void saveResponderToXML(XmlSerializer out)
+			throws IllegalArgumentException, IllegalStateException, IOException {
+		ScriptResponderParser.saveScriptResponderToXML(out, this);
+		
 	}
 	
 

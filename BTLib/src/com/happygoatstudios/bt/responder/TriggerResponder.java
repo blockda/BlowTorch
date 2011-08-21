@@ -1,10 +1,12 @@
 package com.happygoatstudios.bt.responder;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.keplerproject.luajava.LuaState;
+import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
 import android.os.Handler;
@@ -176,6 +178,8 @@ public abstract class TriggerResponder implements Parcelable {
 		}
 		
 	}
+
+	public abstract void saveResponderToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException;
 	
 	
 	
