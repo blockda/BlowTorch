@@ -1,9 +1,11 @@
 package com.happygoatstudios.bt.responder.ack;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 
 import org.keplerproject.luajava.LuaState;
+import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
 import android.os.Handler;
@@ -128,6 +130,11 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 
 	public String getAckWith() {
 		return ackWith;
+	}
+
+	@Override
+	public void saveResponderToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		AckResponderParser.saveResponderToXML(out, this);
 	}
 
 	/*@Override

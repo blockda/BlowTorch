@@ -1,9 +1,11 @@
 package com.happygoatstudios.bt.responder.notification;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.keplerproject.luajava.LuaState;
+import org.xmlpull.v1.XmlSerializer;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -396,6 +398,11 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 
 	public int getVibrateLength() {
 		return vibrateLength;
+	}
+
+	@Override
+	public void saveResponderToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		NotificationResponderParser.saveNotificationResponderToXML(out, this);
 	}
 
 }

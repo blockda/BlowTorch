@@ -16,7 +16,19 @@ public class Plugin {
 	private PluginSettings settings = null;
 	
 	public Plugin() {
-		settings = new PluginSettings();
+		setSettings(new PluginSettings());
+	}
+	
+	public Plugin(PluginSettings settings) {
+		this.settings = settings;
+	}
+
+	public void setSettings(PluginSettings settings) {
+		this.settings = settings;
+	}
+
+	public PluginSettings getSettings() {
+		return settings;
 	}
 	
 	
