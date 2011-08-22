@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.responder.notification;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
 import org.xmlpull.v1.XmlSerializer;
@@ -20,6 +21,7 @@ import android.os.Parcelable;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
+import com.happygoatstudios.bt.window.TextTree;
 
 import dalvik.system.PathClassLoader;
 
@@ -186,7 +188,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	//vp[3] = 200;
 	
 	@Override
-	public void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
+	public void doResponse(Context c,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {

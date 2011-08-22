@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 import org.keplerproject.luajava.LuaState;
 import org.xmlpull.v1.XmlSerializer;
 
+import com.happygoatstudios.bt.window.TextTree;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -20,12 +22,16 @@ public abstract class TriggerResponder implements Parcelable {
 	public static final int RESPONDER_TYPE_NOTIFICATION = 102;
 	public static final int RESPONDER_TYPE_ACK = 103;
 	public static final int RESPONDER_TYPE_SCRIPT = 104;
+	public static final int RESPONDER_TYPE_COLOR = 105;
+	public static final int RESPONDER_TYPE_REPLACE = 106;
 	
 	public enum RESPONDER_TYPE {
 		NOTIFICATION(RESPONDER_TYPE_NOTIFICATION),
 		TOAST(RESPONDER_TYPE_TOAST),
 		ACK(RESPONDER_TYPE_ACK),
-		SCRIPT(RESPONDER_TYPE_SCRIPT);
+		SCRIPT(RESPONDER_TYPE_SCRIPT), 
+		REPLACE(RESPONDER_TYPE_REPLACE),
+		COLOR(RESPONDER_TYPE_COLOR);
 		
 		private int value;
 		
@@ -124,7 +130,7 @@ public abstract class TriggerResponder implements Parcelable {
 		//Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
-	public abstract void doResponse(Context c,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name);
+	public abstract void doResponse(Context c,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name);
 	public abstract TriggerResponder copy();
 	//public abstract void writeToParcel(Parcel in,int args);
 
