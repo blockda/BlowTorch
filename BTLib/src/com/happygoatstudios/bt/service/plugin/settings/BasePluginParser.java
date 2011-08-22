@@ -29,6 +29,9 @@ public class BasePluginParser {
 	public static final String ATTR_TRIGGERONCE = "fireOnce";
 	public static final String ATTR_TRIGGERHIDDEN = "hidden";
 	public static final String ATTR_TRIGGERENEABLED = "enabled";
+	public static final String ATTR_SEQUENCE = "sequence";
+	public static final String ATTR_GROUP = "group";
+	public static final String ATTR_KEEPEVALUATING = "keepEvaluating";
 	
 	
 	public static final String TAG_TIMERS = "timers";
@@ -62,6 +65,8 @@ public class BasePluginParser {
 	
 	public static final String TAG_SCRIPTRESPONDER = "script";
 	public static final String ATTR_FUNCTION = "function";
+	
+	public static final String TAG_REPLACERESPONDER = "replace";
 	
 	//public static final String TAG_PLUGIN = "plugin";
 	///static final String 

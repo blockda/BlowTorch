@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.responder.ack;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
 import org.xmlpull.v1.XmlSerializer;
@@ -15,6 +16,7 @@ import android.os.Parcelable;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.StellarService;
+import com.happygoatstudios.bt.window.TextTree;
 
 public class AckResponder extends TriggerResponder implements Parcelable {
 
@@ -53,7 +55,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	String crlf = cr.toString() + lf.toString();
 
 	@Override
-	public void doResponse(Context c, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;

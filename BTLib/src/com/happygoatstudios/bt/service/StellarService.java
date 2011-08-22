@@ -85,8 +85,10 @@ import android.util.Log;
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.TriggerResponder.RESPONDER_TYPE;
 import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
+import com.happygoatstudios.bt.responder.replace.ReplaceResponder;
 import com.happygoatstudios.bt.service.IStellarServiceCallback;
 import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.service.plugin.Plugin;
@@ -100,6 +102,7 @@ import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerExtraTask;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.trigger.TriggerData;
+import com.happygoatstudios.bt.window.TextTree;
 
 import dalvik.system.PathClassLoader;
 
@@ -469,39 +472,7 @@ public class StellarService extends Service {
 	Plugin plugin = null;
 	
 	public void onCreate() {
-
-		PluginParser pparser = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",this.getApplicationContext());
-		try {
-			plugin = new Plugin(pparser.load());
-		} catch (FileNotFoundException e5) {
-			// TODO Auto-generated catch block
-			e5.printStackTrace();
-		} catch (IOException e5) {
-			// TODO Auto-generated catch block
-			e5.printStackTrace();
-		} catch (SAXException e5) {
-			// TODO Auto-generated catch block
-			e5.printStackTrace();
-		}
 		
-		Log.e("PLUG","ALIAS COUNT:" + plugin.getSettings().getAliases().size());
-		for(String d : plugin.getSettings().getAliases().keySet()) {
-			AliasData a = plugin.getSettings().getAliases().get(d);
-			Log.e("PLUG","ALIAS: pre=" + a.getPre() + " post=" + a.getPost());
-		}
-		Log.e("PLUG","TRIGGER COUNT:" + plugin.getSettings().getTriggers().size());
-		for(String d : plugin.getSettings().getTriggers().keySet()) {
-			TriggerData t = plugin.getSettings().getTriggers().get(d);
-			Log.e("PLUG","TRIGGER: name="+t.getName() + " p="+t.getPattern() + " has " + t.getResponders().size() + " responders.");
-		}
-		Log.e("PLUG","TIMER COUNT:" + plugin.getSettings().getTimers().size());
-		
-		for(String d : plugin.getSettings().getTimers().keySet()) {
-			TimerData t = plugin.getSettings().getTimers().get(d);
-			Log.e("PLUG","TIMER: name="+t.getName()+" dur="+t.getSeconds()+ " has " + t.getResponders().size() + " responders.");
-		}
-		//plugin 
-		//Debug.waitForDebugger();
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
@@ -971,7 +942,7 @@ public class StellarService extends Service {
 			
 		};
 		
-		
+
 		
 		
 		//database.close();
@@ -988,6 +959,64 @@ public class StellarService extends Service {
 				DoTimerStart(t.getOrdinal().toString(),0);
 			}
 		}
+	}
+	
+	private void pluginTest() {
+		//TODO: plugin test
+Debug.waitForDebugger();
+		
+		PluginParser pparser = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",this.getApplicationContext());
+		try {
+			plugin = new Plugin(pparser.load());
+		} catch (FileNotFoundException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		} catch (IOException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		} catch (SAXException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		}
+		
+		Log.e("PLUG","ALIAS COUNT:" + plugin.getSettings().getAliases().size());
+		for(String d : plugin.getSettings().getAliases().keySet()) {
+			AliasData a = plugin.getSettings().getAliases().get(d);
+			Log.e("PLUG","ALIAS: pre=" + a.getPre() + " post=" + a.getPost());
+		}
+		Log.e("PLUG","TRIGGER COUNT:" + plugin.getSettings().getTriggers().size());
+		for(String d : plugin.getSettings().getTriggers().keySet()) {
+			TriggerData t = plugin.getSettings().getTriggers().get(d);
+			Log.e("PLUG","TRIGGER: name="+t.getName() + " p="+t.getPattern() + " has " + t.getResponders().size() + " responders.");
+			for(TriggerResponder r : t.getResponders()) {
+				if(r.getType() == RESPONDER_TYPE.REPLACE) {
+					Log.e("PLUG","REPLACE RESPONDER FOUND:" + ((ReplaceResponder)r).getWith() + " fireType="+r.getFireType().getString());
+				}
+			}
+		}
+		Log.e("PLUG","TIMER COUNT:" + plugin.getSettings().getTimers().size());
+		
+		for(String d : plugin.getSettings().getTimers().keySet()) {
+			TimerData t = plugin.getSettings().getTimers().get(d);
+			Log.e("PLUG","TIMER: name="+t.getName()+" dur="+t.getSeconds()+ " has " + t.getResponders().size() + " responders.");
+		}
+		//plugin 
+		//Debug.waitForDebugger();
+		
+		
+		
+		//attempt to query the match against the new plugin.
+				TextTree testTree = new TextTree();
+				try {
+					testTree.addBytesImpl("What be thy name, adventurer?".getBytes("ISO-8859-1"));
+					plugin.process(testTree, this, true, myhandler, display);
+					testTree.updateMetrics();
+					String xformed = new String(testTree.dumpToBytes(true),"ISO-8859-1");
+					Log.e("PLUG","INPUT AFTER PLUGIN RUN: \n" + xformed);
+				} catch (UnsupportedEncodingException e5) {
+					// TODO Auto-generated catch block
+					e5.printStackTrace();
+				}
 	}
 	
 	public void makeTmpScriptTrigger(String label,String pattern,Boolean literal,String function) {
@@ -4066,7 +4095,7 @@ public class StellarService extends Service {
 	
 	
 	//Colorizer colorer = new Colorizer();
-	Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
+	public static Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
 	StringBuffer regexp_test = new StringBuffer();
 	Vector<String> test_set = new Vector<String>();
 	
@@ -4097,6 +4126,12 @@ public class StellarService extends Service {
 		}
 		
 		callbacks.finishBroadcast();
+	}
+	
+	private static int notificationCount = 100;
+	public static int getNotificationId() {
+		notificationCount += 1;
+		return new Integer(notificationCount);
 	}
 	
 	long parseTotal = 0;
@@ -4165,7 +4200,7 @@ public class StellarService extends Service {
 							captureMap.put(Integer.toString(i), tmp.getMatcher().group(i));
 						}
 						for(TriggerResponder responder : tmp.getResponders()) {
-							responder.doResponse(this, display, trigger_count++, hasListener, myhandler,captureMap,L,tmp.getName());
+							responder.doResponse(this, null,null,null,display, trigger_count++, hasListener, myhandler,captureMap,L,tmp.getName());
 						}
 					}
 					//do responders
@@ -4430,7 +4465,7 @@ public class StellarService extends Service {
 			
 			hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
-				responder.doResponse(StellarService.this.getApplicationContext(), display, trigger_count++, hasListener, myhandler, null,L,data.getName());
+				responder.doResponse(StellarService.this.getApplicationContext(),null,null,null, display, trigger_count++, hasListener, myhandler, null,L,data.getName());
 			}
 		}
 	}
@@ -4580,7 +4615,7 @@ public class StellarService extends Service {
 		
 		initLua();
 
-		
+		pluginTest();
 
 	}
 	
