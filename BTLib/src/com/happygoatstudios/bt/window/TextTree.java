@@ -634,6 +634,18 @@ public class TextTree {
 		}
 	}*/
 	
+	public void updateMetrics() {
+		brokenLineCount = 0;
+		totalbytes = 0;
+		ListIterator<Line> iterator = mLines.listIterator(mLines.size());
+		while(iterator.hasPrevious()) {
+			Line l = iterator.previous();
+			l.updateData();
+			totalbytes += l.bytes;
+			brokenLineCount += l.breaks + 1;
+		}
+	}
+	
 	private void addLine(Line l) {
 		l.updateData();
 		brokenLineCount += l.breaks + 1;
@@ -787,6 +799,10 @@ public class TextTree {
 			}
 		}
 
+		public final Text newText(String str) {
+			return new Text(str);
+		}
+		
 		private int breakAt(ListIterator<Unit> i, Unit u, int amount, int length) {
 			int charsinline;
 			boolean removed;
@@ -886,6 +902,9 @@ public class TextTree {
 		protected byte[] bin;
 		private boolean link = false;
 		
+		//public Text copy() {
+		//	return null;
+		//}
 		public Text() {
 			data = "";
 			charcount = 0;
@@ -955,6 +974,8 @@ public class TextTree {
 		
 		
 	}
+	
+	
 	
 	private class Tab extends Unit {
 		//protected String data;
@@ -1116,20 +1137,21 @@ public class TextTree {
 		return buf.toString();
 	}
 	
-	public static String deColorLine(Line line) {
-		StringBuffer buf = new StringBuffer();
+	private static StringBuffer stripColor = new StringBuffer();
+	public static StringBuffer deColorLine(Line line) {
+		stripColor.setLength(0);
 		for(Unit u : line.getData()) {
 			if(u instanceof Text) {
-				buf.append(((Text)u).data);
+				stripColor.append(((Text)u).data);
 			}
 			
 			if(u instanceof NewLine) {
-				buf.append("\n");
+				stripColor.append("\n");
 			}
 			
 		}
 		
-		return buf.toString();
+		return stripColor;
 	}
 
 	public void setMaxLines(int maxLines) {

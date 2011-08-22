@@ -28,7 +28,9 @@ public class TriggerData implements Parcelable {
 	private boolean enabled = true;
 	
 	private boolean save = true;
-	
+	private int sequence = DEFAULT_SEQUENCE;
+	private boolean keepEvaluating = DEFAULT_KEEPEVAL;
+	private String group = DEFAULT_GROUP;
 	private List<TriggerResponder> responders;
 	
 	private Pattern p = null;
@@ -43,6 +45,9 @@ public class TriggerData implements Parcelable {
 		fireOnce = false;
 		hidden = false;
 		enabled = true;
+		sequence = DEFAULT_SEQUENCE;
+		group = DEFAULT_GROUP;
+		keepEvaluating = DEFAULT_KEEPEVAL;
 		buildData();
 	}
 	
@@ -54,6 +59,9 @@ public class TriggerData implements Parcelable {
 		tmp.fireOnce = this.fireOnce;
 		tmp.hidden = this.hidden;
 		tmp.enabled = this.enabled;
+		tmp.sequence = this.sequence;
+		tmp.group = this.group;
+		tmp.keepEvaluating = this.keepEvaluating;
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
@@ -84,6 +92,9 @@ public class TriggerData implements Parcelable {
 		if(test.fireOnce != this.fireOnce) return false;
 		if(test.hidden != this.hidden) return false;
 		if(test.enabled != this.enabled) return false;
+		if(test.sequence != this.sequence) return false;
+		if(test.group != this.group) return false;
+		if(test.keepEvaluating != this.keepEvaluating) return false;
 		Iterator<TriggerResponder> test_responders = test.responders.iterator();
 		Iterator<TriggerResponder> my_responders = this.responders.iterator();
 		while(test_responders.hasNext()) {
@@ -106,7 +117,9 @@ public class TriggerData implements Parcelable {
 			return new TriggerData[arg0];
 		}
 	};
-	
+	public static final int DEFAULT_SEQUENCE = 10;
+	public static final String DEFAULT_GROUP = "";
+	public static final boolean DEFAULT_KEEPEVAL = true;
 	public TriggerData(Parcel in) {
 		readFromParcel(in);
 		buildData();
@@ -120,6 +133,9 @@ public class TriggerData implements Parcelable {
 		setFireOnce ((in.readInt() == 1) ? true : false);
 		setHidden( (in.readInt() == 1) ? true : false);
 		setEnabled( (in.readInt() == 1) ? true : false);
+		setSequence((in.readInt()));
+		setGroup(in.readString());
+		setKeepEvaluating((in.readInt() == 1) ? true : false);
 		int numresponders = in.readInt();
 		for(int i = 0;i<numresponders;i++) {
 			int type = in.readInt();
@@ -160,7 +176,9 @@ public class TriggerData implements Parcelable {
 		out.writeInt(fireOnce ? 1 : 0);
 		out.writeInt(hidden ? 1 : 0);
 		out.writeInt(enabled ? 1 : 0);
-		//out.writeP
+		out.writeInt(sequence);
+		out.writeString(group);
+		out.writeInt(keepEvaluating ? 1 : 0);
 		out.writeInt(responders.size());
 		for(TriggerResponder responder : responders) {
 			out.writeInt(responder.getType().getIntVal());
@@ -246,6 +264,30 @@ public class TriggerData implements Parcelable {
 
 	public boolean isSave() {
 		return save;
+	}
+
+	public int getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(int sequence) {
+		this.sequence = sequence;
+	}
+
+	public boolean isKeepEvaluating() {
+		return keepEvaluating;
+	}
+
+	public void setKeepEvaluating(boolean keepEvaluating) {
+		this.keepEvaluating = keepEvaluating;
+	}
+
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String group) {
+		this.group = group;
 	}
 		
 	//}

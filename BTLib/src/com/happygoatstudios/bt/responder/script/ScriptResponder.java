@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.responder.script;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
 import org.xmlpull.v1.XmlSerializer;
@@ -13,6 +14,7 @@ import android.os.Parcelable;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
+import com.happygoatstudios.bt.window.TextTree;
 
 public class ScriptResponder extends TriggerResponder {
 
@@ -88,7 +90,7 @@ public class ScriptResponder extends TriggerResponder {
 	};
 
 	@Override
-	public void doResponse(Context c, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap,LuaState L,String name) {
 		
