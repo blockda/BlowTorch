@@ -68,6 +68,12 @@ public class BasePluginParser {
 	
 	public static final String TAG_REPLACERESPONDER = "replace";
 	
+	public static final String TAG_COLORACTION = "color";
+	
+	public static final String TAG_GAGACTION = "gag";
+	public static final String ATTR_GAGLOG = "fromLog";
+	public static final String ATTR_GAGOUTPUT = "fromOuput";
+	
 	//public static final String TAG_PLUGIN = "plugin";
 	///static final String 
 	

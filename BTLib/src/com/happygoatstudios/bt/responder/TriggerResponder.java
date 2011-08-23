@@ -24,6 +24,7 @@ public abstract class TriggerResponder implements Parcelable {
 	public static final int RESPONDER_TYPE_SCRIPT = 104;
 	public static final int RESPONDER_TYPE_COLOR = 105;
 	public static final int RESPONDER_TYPE_REPLACE = 106;
+	public static final int RESPONDER_TYPE_GAG = 107;
 	
 	public enum RESPONDER_TYPE {
 		NOTIFICATION(RESPONDER_TYPE_NOTIFICATION),
@@ -31,8 +32,8 @@ public abstract class TriggerResponder implements Parcelable {
 		ACK(RESPONDER_TYPE_ACK),
 		SCRIPT(RESPONDER_TYPE_SCRIPT), 
 		REPLACE(RESPONDER_TYPE_REPLACE),
-		COLOR(RESPONDER_TYPE_COLOR);
-		
+		COLOR(RESPONDER_TYPE_COLOR),
+		GAG(RESPONDER_TYPE_GAG);
 		private int value;
 		
 		private RESPONDER_TYPE(int i) {
