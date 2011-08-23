@@ -96,7 +96,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			
 			//so here we go, meat of the replacer code.
 			int start = matched.start();
-			int end = matched.end();
+			int end = matched.end()-1;
 			
 			Iterator<TextTree.Unit> it = line.getIterator();
 			
@@ -116,14 +116,18 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 				boolean done = false;
 				if(u instanceof TextTree.Text) {
 					TextTree.Text t = (TextTree.Text)u;
-					working += t.getString().length();
+					working += t.getString().length()-1; //compute string index character into the matched string.
+					
+					working += 1; //move the working index to the next spot
 					if(working >= start) {
+						//splitAt = working - start;
 						splitAt = working - start;
 						//break;
 						done = true;
-						if(working > end) {
+						int endofunit = start+(t.getString().length()-1);
+						if(end < endofunit) {
 							preEmptiveChop = true;
-							preEmptiveChopAt = working-end;
+							preEmptiveChopAt = (start+(t.getString().length()-1))-end;
 						}
 						
 					} else {
@@ -141,7 +145,8 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			
 			//so if we are here, it means we have found the beginning of the matched trigger pattern.
 			if(splitAt > 0) {
-				Unit text = line.newText(matched.group(0).substring(0,splitAt));
+				
+				Unit text = line.newText(((Text)u).getString().substring(0,((Text)u).getString().length()-splitAt));
 				newLine.add(text);
 			}
 			
@@ -150,8 +155,9 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			
 			if(preEmptiveChop) {
 				//means that the matched group landed entirely within a textual unit.
-				int length = matched.group(0).length();
-				newLine.add(line.newText(matched.group(0).substring(length-preEmptiveChopAt,length)));
+				int length = ((Text)u).getString().length();
+				String str = ((Text)u).getString().substring(length-preEmptiveChopAt,length);
+				newLine.add(line.newText(str));
 			} else {
 			
 				//finish up, still working with original sequence.
@@ -162,8 +168,8 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 					boolean done = false;
 					if(tmp instanceof TextTree.Text) {
 						working += ((Text)tmp).getString().length();
-						if(working >= end) {
-							chopAt = working - end;
+						if(working > end) {
+							chopAt = working - end -1;
 							done = true;
 						}
 					}
@@ -173,9 +179,9 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 				}
 				
 				if(chopAt > 0) {
-					int length = matched.group(0).length();
-					Unit chop = line.newText(matched.group(0).substring(length-chopAt,length));
-					//Unit foo = line.newText(str)
+					int length = ((Text)tmp).getString().length();
+					Unit chop = line.newText(((Text)tmp).getString().substring(length-chopAt,length));
+					newLine.add(chop);
 				}
 			}
 			if(it.hasNext()) {
