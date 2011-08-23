@@ -90,7 +90,8 @@ public class Plugin {
 			//StringBuffer tmp = TextTree.deColorLine(l);
 			//test this line against each trigger.
 			for(TriggerData t : triggers) {
-				t.getMatcher().reset(TextTree.deColorLine(l));
+				String str = TextTree.deColorLine(l).toString();
+				t.getMatcher().reset(str);
 				while(t.getMatcher().find() && keepEvaluating) {
 					if(t.isFireOnce() && t.isFired()) {
 						//do nothiong
