@@ -17,6 +17,7 @@ import android.os.Parcelable;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.window.TextTree;
+import com.happygoatstudios.bt.window.TextTree.Color;
 import com.happygoatstudios.bt.window.TextTree.Line;
 import com.happygoatstudios.bt.window.TextTree.Text;
 import com.happygoatstudios.bt.window.TextTree.Unit;
@@ -53,7 +54,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 			HashMap<String, String> captureMap, LuaState L, String name) {
 		//well. this is sort of duplication of effort from the replacer action. but whatever.
 		int start = matched.start();
-		int end = matched.end();
+		int end = matched.end()-1;
 		
 		Unit u = null;
 		ListIterator<Unit> it = line.getIterator();
@@ -70,12 +71,20 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 			boolean done = false;
 			if(u instanceof TextTree.Text) {
 				Text t = (Text)u;
+				int startofunit = working;
+				int endofunit = working + t.getString().length()-1;
+				
 				working += t.getString().length();
-				if(working >= start) {
-					splitAt = working - start;
+				
+				if(startofunit <= start) {
+					//pre-emptive replace. replaced text is entirely contained in the text unit
+					splitAt = start - startofunit;
 					
 					done = true;
-					//int endofunit = 
+					if(endofunit >= end) {
+						preEmptiveChop = true;
+						preEmptiveChopAt = endofunit-end;
+					}
 				}
 			}
 			
@@ -84,8 +93,61 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 			}
 		}
 		
+		if(splitAt > 0) {
+			Text pre = line.newText(((Text)u).getString().substring(0,splitAt));
+			newLine.add(pre);
+		}
 		
+		//here is where we would insert replaced text if this were a replacer.
+		//instead, this is where we insert a new color unit denoting which color we would like.
+		newLine.add(line.newColor(color));
 		
+		if(preEmptiveChop) {
+			int length = ((Text)u).getString().length();
+			Text post = line.newText(((Text)u).getString().substring(length-preEmptiveChopAt,length));
+			//insert bleed color to complete the "text color change"
+			newLine.add(post);
+		} else {
+			//normal "find and chop" procedure.
+			boolean done = false;
+			int chopAt = 0;
+			Unit chop = null;
+			while(it.hasNext()) {
+				chop = it.next();
+				if(chop instanceof Text) {
+					Text t = (Text)chop;
+					int startofunit = working;
+					int endofunit = startofunit + t.getString().length()-1;
+					if(end <= endofunit) {
+						chopAt = endofunit - end;
+						done = true;
+					}
+				}
+				if(done) {
+					break;
+				}
+			}
+			
+			if(chopAt > 0) {
+				int length = ((Text)u).getString().length();
+				Text post = line.newText(((Text)u).getString().substring(length-chopAt,length));
+				//insert bleed color
+				newLine.add(post);
+			}
+		}
+		
+		//finish out units if there are any.
+		while(it.hasNext()) {
+			newLine.add(it.next());
+		}
+		
+		//here is where we would do tree pruning/data updating.
+		
+		//set line's data
+		line.setData(newLine);
+		
+		//return
+		return;
 	}
 
 	@Override

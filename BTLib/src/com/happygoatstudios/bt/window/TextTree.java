@@ -803,6 +803,22 @@ public class TextTree {
 			return new Text(str);
 		}
 		
+		/*public final Color newColor(int c) { //constructs a new xterm256 color.
+			//byte[] x = new byte[6];
+			//x[0] = ESC;
+			//x[1] = BRACKET;
+			//x[2] = 38
+		}*/
+		
+		public Color newColor(int color)
+		{
+			Color c = new Color();
+			c.operations.add(38);
+			c.operations.add(5);
+			c.operations.add(color);
+			return c;
+		}
+		
 		private int breakAt(ListIterator<Unit> i, Unit u, int amount, int length) {
 			int charsinline;
 			boolean removed;
@@ -1017,6 +1033,7 @@ public class TextTree {
 			//this.charcount = data.length();
 			operations.add(new Integer(0));
 		}
+		
 		
 		//public Color(String input) {
 			//data = input;
