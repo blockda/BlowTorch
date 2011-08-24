@@ -174,7 +174,7 @@ public class ByteView extends SurfaceView implements SurfaceHolder.Callback {
 		calculateCharacterFeatures(width,height);
 		//Log.e("BYTE","SURFACE CHANGED");
 		doDelayedDraw(0);
-		ObjectAnimator.ofInt(this, "tWidth", WINDOW_WIDTH, WINDOW_WIDTH-300,WINDOW_WIDTH, WINDOW_WIDTH-300,WINDOW_WIDTH).setDuration(10000).start();
+		//ObjectAnimator.ofInt(this, "tWidth", WINDOW_WIDTH, WINDOW_WIDTH-300,WINDOW_WIDTH, WINDOW_WIDTH-300,WINDOW_WIDTH).setDuration(10000).start();
 	}
 	
 	//private int leftOver = 0;

@@ -105,7 +105,7 @@ public class Plugin {
 							captureMap.put(Integer.toString(i), t.getMatcher().group(i));
 						}
 						for(TriggerResponder responder : t.getResponders()) {
-							responder.doResponse(service.getApplicationContext(),l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName());
+							responder.doResponse(service.getApplicationContext(),input,l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName());
 						}
 						if(!t.isKeepEvaluating()) {
 							keepEvaluating = false;

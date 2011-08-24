@@ -14,6 +14,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.window.TextTree;
@@ -48,7 +49,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c, Line line, Matcher matched,
+	public void doResponse(Context c, TextTree tree,Line line, Matcher matched,
 			Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name) {
@@ -57,6 +58,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		int end = matched.end()-1;
 		
 		Unit u = null;
+		line.resetIterator();
 		ListIterator<Unit> it = line.getIterator();
 		
 		LinkedList<Unit> newLine = new LinkedList<Unit>();
@@ -76,7 +78,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 				
 				working += t.getString().length();
 				
-				if(startofunit <= start) {
+				if(endofunit >= start) {
 					//pre-emptive replace. replaced text is entirely contained in the text unit
 					splitAt = start - startofunit;
 					
@@ -85,7 +87,11 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 						preEmptiveChop = true;
 						preEmptiveChopAt = endofunit-end;
 					}
+				} else {
+					newLine.add(u);
 				}
+			} else {
+				newLine.add(u);
 			}
 			
 			if(done) {
@@ -101,11 +107,12 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		//here is where we would insert replaced text if this were a replacer.
 		//instead, this is where we insert a new color unit denoting which color we would like.
 		newLine.add(line.newColor(color));
-		
+		newLine.add(line.newText(matched.group(0)));
 		if(preEmptiveChop) {
 			int length = ((Text)u).getString().length();
 			Text post = line.newText(((Text)u).getString().substring(length-preEmptiveChopAt,length));
 			//insert bleed color to complete the "text color change"
+			newLine.add(tree.getBleedColor());
 			newLine.add(post);
 		} else {
 			//normal "find and chop" procedure.
@@ -118,6 +125,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 					Text t = (Text)chop;
 					int startofunit = working;
 					int endofunit = startofunit + t.getString().length()-1;
+					working += t.getString().length();
 					if(end <= endofunit) {
 						chopAt = endofunit - end;
 						done = true;
@@ -129,9 +137,10 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 			}
 			
 			if(chopAt > 0) {
-				int length = ((Text)u).getString().length();
-				Text post = line.newText(((Text)u).getString().substring(length-chopAt,length));
+				int length = ((Text)chop).getString().length();
+				Text post = line.newText(((Text)chop).getString().substring(length-chopAt,length));
 				//insert bleed color
+				newLine.add(line.newColor(color));
 				newLine.add(post);
 			}
 		}
@@ -145,6 +154,14 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		
 		//set line's data
 		line.setData(newLine);
+		line.resetIterator();
+		it = line.getIterator();
+		while(it.hasNext()) {
+			Unit a = it.next();
+			if(a instanceof Color) {
+				Log.e("COLORIZE","OMG WE REPLACED COLOR");
+			}
+		}
 		
 		//return
 		return;
