@@ -8,6 +8,8 @@ import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponderParser;
+import com.happygoatstudios.bt.responder.color.ColorActionParser;
+import com.happygoatstudios.bt.responder.gag.GagActionParser;
 import com.happygoatstudios.bt.responder.notification.NotificationResponderParser;
 import com.happygoatstudios.bt.responder.replace.ReplaceParser;
 import com.happygoatstudios.bt.responder.script.ScriptResponderParser;
@@ -55,6 +57,9 @@ public final class TriggerParser {
 		NotificationResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
 		ScriptResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
 		ReplaceParser.registerListeners(trigger, settings, new TriggerData(), current_trigger);
+		ColorActionParser.registerListeners(trigger, settings, current_trigger);
+		GagActionParser.registerListeners(trigger, settings, current_trigger);
+		
 	}
 	
 	public static void saveTriggerToXML(XmlSerializer out,TriggerData trigger) throws IllegalArgumentException, IllegalStateException, IOException {
