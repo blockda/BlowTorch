@@ -115,8 +115,7 @@
     					android:layout_y="0px">
     				
     				    
-    				<fragment
-    					android:name="com.happygoatstudios.bt.window.ByteView"
+    				<com.happygoatstudios.bt.window.ByteView
     					android:id="@+id/slickview"
     					android:layout_alignParentTop="true"
     					android:layout_width="fill_parent"
