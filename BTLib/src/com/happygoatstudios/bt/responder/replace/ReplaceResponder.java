@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
@@ -87,7 +88,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name) {
 			if(line == null || matched == null) {
@@ -98,8 +99,11 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			int start = matched.start();
 			int end = matched.end()-1;
 			
-			Iterator<TextTree.Unit> it = line.getIterator();
-			
+			ListIterator<TextTree.Unit> it = line.getIterator();
+			//reset iterator to begginig of line.
+			while(it.hasPrevious()) {
+				it.previous();
+			}
 			String replaced = this.translate(this.getWith(), captureMap);
 			
 			//TextTree.Line newLine = new TextTree.Line();
@@ -116,18 +120,20 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 				boolean done = false;
 				if(u instanceof TextTree.Text) {
 					TextTree.Text t = (TextTree.Text)u;
-					working += t.getString().length()-1; //compute string index character into the matched string.
+					int startofunit = working;
+					int endofunit = startofunit + t.getString().length()-1;
 					
-					working += 1; //move the working index to the next spot
-					if(working >= start) {
+					working += t.getString().length();
+					
+					if(endofunit >= start) {
 						//splitAt = working - start;
-						splitAt = working - start;
+						splitAt = start - startofunit;
 						//break;
 						done = true;
-						int endofunit = start+(t.getString().length()-1);
-						if(end < endofunit) {
+						//int endofunit = start+(t.getString().length()-1);
+						if(endofunit >= end) {
 							preEmptiveChop = true;
-							preEmptiveChopAt = (start+(t.getString().length()-1))-end;
+							preEmptiveChopAt = endofunit-end;
 						}
 						
 					} else {
@@ -146,7 +152,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			//so if we are here, it means we have found the beginning of the matched trigger pattern.
 			if(splitAt > 0) {
 				
-				Unit text = line.newText(((Text)u).getString().substring(0,((Text)u).getString().length()-splitAt));
+				Unit text = line.newText(((Text)u).getString().substring(0,splitAt));
 				newLine.add(text);
 			}
 			
@@ -167,9 +173,12 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 					tmp = it.next();
 					boolean done = false;
 					if(tmp instanceof TextTree.Text) {
+						Text t = (Text)tmp;
+						int startofunit = working;
+						int endofunit = working+t.getString().length()-1;
 						working += ((Text)tmp).getString().length();
-						if(working > end) {
-							chopAt = working - end -1;
+						if(end <= endofunit) {
+							chopAt = endofunit - end;
 							done = true;
 						}
 					}

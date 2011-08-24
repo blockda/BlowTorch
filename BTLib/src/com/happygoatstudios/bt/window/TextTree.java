@@ -25,6 +25,8 @@ public class TextTree {
 	//public Handler addTextHandler = null;
 	private boolean linkify = true;
 	
+	private static LinkedList<Integer> bleedColor = new LinkedList<Integer>();
+	
 	private int MAX_LINES = 300;
 	
 	private String encoding = "ISO-8859-1";
@@ -59,6 +61,8 @@ public class TextTree {
 		mLines = new LinkedList<Line>();
 		//LinkedList<Unit> list = new LinkedList<Unit>();
 		//addTextHandler = new AddTextHandler();
+		bleedColor.add(37);
+		bleedColor.add(0);
 	}
 	
 	
@@ -145,8 +149,10 @@ public class TextTree {
 					finalVal += placeMap.get(j) * Math.pow(10, placeMap.size()-1-j);
 				}
 				placeMap.clear();
+				
 				tmp.addLast(new Integer(finalVal));
 				//tmp.addLast(new Integer(working));
+				bleedColor = tmp;
 				return tmp;
 				//end
 			case b0:
@@ -816,6 +822,21 @@ public class TextTree {
 			c.operations.add(38);
 			c.operations.add(5);
 			c.operations.add(color);
+			c.bytecount = 1 + 1 + 2 + 1 + 1 + 1 + (Integer.toString(color)).length() + 1;
+			//           ESC  [  38   ;   5   ;   color data, can be up to 3           m
+			String foo = null;
+			try {
+				foo = new String(new byte[]{ESC},encoding) + "[38;5;"+color+"m";
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				c.bin = foo.getBytes(encoding);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			return c;
 		}
 		
@@ -892,6 +913,9 @@ public class TextTree {
 					totalchars += u.charcount;
 				}
 			}
+			
+			theIterator = null;
+			theIterator = mData.listIterator(0);
 		}
 		
 		
@@ -1031,10 +1055,13 @@ public class TextTree {
 		public Color() {
 			//data = "[0m";
 			//this.charcount = data.length();
-			operations.add(new Integer(0));
+			operations = new ArrayList<Integer>();
+			//operations.add(new Integer(0));
 		}
 		
-		
+		public void setOperations(ArrayList<Integer> ops) {
+			this.operations = ops;
+		}
 		//public Color(String input) {
 			//data = input;
 			//this.charcount = data.length();
@@ -1217,6 +1244,48 @@ public class TextTree {
 
 	public boolean isLinkify() {
 		return linkify;
+	}
+
+	public void setBleedColor(Color c) {
+		bleedColor = new LinkedList<Integer>(c.getOperations());
+	}
+
+	public Color getBleedColor() {
+		Color c = new Color();
+		c.setOperations(new ArrayList<Integer>((LinkedList<Integer>)bleedColor.clone()));
+		StringBuffer b = new StringBuffer();
+		try {
+			b.append(new String(new byte[]{ESC},encoding));
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		b.append("[");
+		Iterator<Integer> it = c.getOperations().iterator();
+		while(it.hasNext()) {
+			Integer i = it.next();
+			b.append(i);
+			if(it.hasNext()) {
+				b.append(";");
+			} else {
+				b.append("m");
+			}
+			
+			
+		}
+		try {
+			c.bin = b.toString().getBytes(encoding);
+			c.bytecount = c.bin.length;
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		b.setLength(0);
+		b = null;
+		//c.bin = (ESC + "[" )
+		
+		return c;
 	}
 	
 }

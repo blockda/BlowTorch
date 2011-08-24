@@ -961,9 +961,26 @@ public class StellarService extends Service {
 		}
 	}
 	
+	
+	private void initPlugins() {
+		//Debug.waitForDebugger();
+		PluginParser pparser = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",this.getApplicationContext());
+		try {
+			plugin = new Plugin(pparser.load());
+		} catch (FileNotFoundException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		} catch (IOException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		} catch (SAXException e5) {
+			// TODO Auto-generated catch block
+			e5.printStackTrace();
+		}
+	}
 	private void pluginTest() {
 		//TODO: plugin test
-Debug.waitForDebugger();
+
 		
 		PluginParser pparser = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",this.getApplicationContext());
 		try {
@@ -4096,7 +4113,7 @@ Debug.waitForDebugger();
 	
 	//Colorizer colorer = new Colorizer();
 	public static Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
-	StringBuffer regexp_test = new StringBuffer();
+	//StringBuffer regexp_test = new StringBuffer();
 	Vector<String> test_set = new Vector<String>();
 	
 	boolean firstDispatch = true;
@@ -4142,37 +4159,24 @@ Debug.waitForDebugger();
 	private Pattern bufferLine = Pattern.compile(".*\n");
 	Matcher bufferLineMatch = bufferLine.matcher("");
 	StringBuffer tempBuffer = new StringBuffer();
-	Matcher colorStripper = colordata.matcher("");
+	//Matcher colorStripper = colordata.matcher("");
 	public void dispatchFinish(byte[] rawData) throws UnsupportedEncodingException {
-		regexp_test.setLength(0);
+		//regexp_test.setLength(0);
 		//String htmlText = colorer.htmlColorize(data);
 		//Log.e("SERV","MADE SOME HTML:"+htmlText);
 		//if(firstDispatch)
 		if(rawData == null || rawData.length == 0) { return;}
 		//callbacks.
-		final int N = callbacks.beginBroadcast();
-		int final_count = N;
-	
-		for(int i = 0;i<N;i++) {
-			try {
-				if(callbacks.getBroadcastItem(i).isWindowShowing()) {
-					callbacks.getBroadcastItem(i).rawDataIncoming(rawData);
-				}
-			} catch (RemoteException e) {
-				//just need to catch it, don't need to care, the list maintains itself apparently.
-				final_count = final_count - 1;
-			}
-		}
-		callbacks.finishBroadcast();
-		buffer_tree.addBytesImplSimple(rawData);
-		buffer_tree.prune();
 		
-		if(the_settings.getTriggers().size() < 1) {
+		//buffer_tree.addBytesImplSimple(rawData);
+		//buffer_tree.prune();
+		
+		/*if(the_settings.getTriggers().size() < 1) {
 			return; //return without processing, if there are no triggers.
-		}
+		}*/
 		
-		colorStripper = colorStripper.reset(new String(rawData,the_settings.getEncoding()));
-		regexp_test.append(colorStripper.replaceAll(""));
+		//colorStripper = colorStripper.reset(new String(rawData,the_settings.getEncoding()));
+		//regexp_test.append(colorStripper.replaceAll(""));
 		
 		//boolean rebuildTriggers = false;
 		hasListener = isWindowShowing();
@@ -4180,7 +4184,7 @@ Debug.waitForDebugger();
 		//TODO: NEW TRIGGER PROCESSING
 		
 		long start = java.lang.System.currentTimeMillis();
-		
+		/*
 		HashMap<String,TriggerData> map = the_settings.getTriggers();
 		for(String pattern : map.keySet()) {
 			TriggerData tmp = map.get(pattern);
@@ -4200,13 +4204,40 @@ Debug.waitForDebugger();
 							captureMap.put(Integer.toString(i), tmp.getMatcher().group(i));
 						}
 						for(TriggerResponder responder : tmp.getResponders()) {
-							responder.doResponse(this, null,null,null,display, trigger_count++, hasListener, myhandler,captureMap,L,tmp.getName());
+							responder.doResponse(this,null, null,null,null,display, trigger_count++, hasListener, myhandler,captureMap,L,tmp.getName());
 						}
 					}
 					//do responders
 				}
 			}
+		}*/
+		
+		//new parsing routine.
+		TextTree tmp = new TextTree();
+		tmp.setBleedColor(buffer_tree.getBleedColor());
+		tmp.addBytesImpl(rawData);
+		plugin.process(tmp, this, hasListener, myhandler, display);
+		tmp.updateMetrics();
+		byte[] dump = tmp.dumpToBytes(false);
+		Log.e("DUMP","PROCESSED: \n" + new String(dump,the_settings.getEncoding()));
+		buffer_tree.addBytesImpl(dump);
+		
+		final int N = callbacks.beginBroadcast();
+		int final_count = N;
+	
+		for(int i = 0;i<N;i++) {
+			try {
+				if(callbacks.getBroadcastItem(i).isWindowShowing()) {
+					callbacks.getBroadcastItem(i).rawDataIncoming(dump);
+				}
+			} catch (RemoteException e) {
+				//just need to catch it, don't need to care, the list maintains itself apparently.
+				final_count = final_count - 1;
+			}
 		}
+		callbacks.finishBroadcast();
+		
+		
 		long end = java.lang.System.currentTimeMillis();
 		long dur = end - start;
 		if(parseCurrent == parseTarget -1) {
@@ -4290,7 +4321,7 @@ Debug.waitForDebugger();
 			}
 		}*/
 		
-		regexp_test.setLength(0);
+		//regexp_test.setLength(0);
 		
 	}
 	
@@ -4465,7 +4496,7 @@ Debug.waitForDebugger();
 			
 			hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
-				responder.doResponse(StellarService.this.getApplicationContext(),null,null,null, display, trigger_count++, hasListener, myhandler, null,L,data.getName());
+				responder.doResponse(StellarService.this.getApplicationContext(),null,null,null,null, display, trigger_count++, hasListener, myhandler, null,L,data.getName());
 			}
 		}
 	}
@@ -4615,11 +4646,12 @@ Debug.waitForDebugger();
 		
 		initLua();
 
-		pluginTest();
-
+		//pluginTest();
+		initPlugins();
 	}
 	
 	private void ShowDisconnectedNotification(String message) {
+		
 		
 		//mNM.cancel(5545);
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());

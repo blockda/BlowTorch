@@ -1351,11 +1351,20 @@ public class MainWindow extends Activity {
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		//MenuItem tmp = null;
-		menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		if(supportsActionBar()) {
+			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		} else {
+			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
+			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers);
+			menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers);
+			menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options);
+			menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
+			
+		}
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 905, 0 ,"Speedwalk Directions");
 		menu.add(0,907,0,"Vitals Options");
@@ -1388,6 +1397,7 @@ public class MainWindow extends Activity {
 			
 		case 908:
 			//this.getActionBar().hide();
+			if(supportsActionBar()) {
 			this.startActionMode(new ActionMode.Callback() {
 				
 				public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
@@ -1427,6 +1437,7 @@ public class MainWindow extends Activity {
 					return false;
 				}
 			});
+			}
 			break;
 		case 907:
 			FloatingVitalMoveDialog mvdialog = new FloatingVitalMoveDialog(this,vitals);
@@ -1557,6 +1568,18 @@ public class MainWindow extends Activity {
 	}
 	
 	
+	private boolean supportsActionBar() {
+		try {
+			this.getClass().getMethod("getActionBar", null);
+			return true;
+		} catch(NoSuchMethodException e) {
+			return false;
+		}
+		//if(this.getClass().getM)
+		//return false;
+	}
+
+
 	Handler extporthandler = new Handler() {
 		public void handleMessage(Message msg) {
 			//so we are kludging out the new button set dialog to just be a "string enterer" dialog.
@@ -1838,6 +1861,7 @@ public class MainWindow extends Activity {
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.TEST;
 		}*/
+		if(supportsActionBar()) {
 		this.getActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
 		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME);
 		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
@@ -1847,6 +1871,7 @@ public class MainWindow extends Activity {
 				Log.e("FRAG","VISIBILITY  " + isVisible);
 			}
 		});
+		}
 		
 		
 		if(!isServiceRunning()) {

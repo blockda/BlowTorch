@@ -90,7 +90,7 @@ public class ScriptResponder extends TriggerResponder {
 	};
 
 	@Override
-	public void doResponse(Context c,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap,LuaState L,String name) {
 		

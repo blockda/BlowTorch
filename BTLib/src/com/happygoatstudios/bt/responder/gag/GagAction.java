@@ -13,6 +13,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.window.TextTree;
 import com.happygoatstudios.bt.window.TextTree.Line;
 
 public class GagAction extends TriggerResponder implements Parcelable {
@@ -40,7 +41,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c, Line line, Matcher matched,
+	public void doResponse(Context c, TextTree tree,Line line, Matcher matched,
 			Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name) {

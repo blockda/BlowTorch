@@ -131,7 +131,7 @@ public abstract class TriggerResponder implements Parcelable {
 		//Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
-	public abstract void doResponse(Context c,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name);
+	public abstract void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name);
 	public abstract TriggerResponder copy();
 	//public abstract void writeToParcel(Parcel in,int args);
 
