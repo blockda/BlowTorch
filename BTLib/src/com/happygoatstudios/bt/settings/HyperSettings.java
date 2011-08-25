@@ -55,7 +55,6 @@ public class HyperSettings {
 	private String hapticFeedbackOnPress = "auto";
 	private String hapticFeedbackOnFlip = "none";
 	private boolean roundButtons = true;
-	private boolean showFitMessage = true;
 	
 	private boolean keepScreenOn = true;
 	private boolean vibrateOnBell = true;
@@ -74,8 +73,6 @@ public class HyperSettings {
 	private boolean AttemptSuggestions = false;
 	
 	private String encoding = "ISO-8859-1";
-	
-	private String SaveLocation = "none";
 	
 	private boolean SemiIsNewLine = true;
 	private boolean ProcessPeriod = true;
@@ -152,13 +149,13 @@ public class HyperSettings {
 		return FontPath;
 	}
 
-	public void setSaveLocation(String saveLocation) {
+	/*public void setSaveLocation(String saveLocation) {
 		SaveLocation = saveLocation;
 	}
 
 	public String getSaveLocation() {
 		return SaveLocation;
-	}
+	}*/
 
 	public void setSemiIsNewLine(boolean semiIsNewLine) {
 		SemiIsNewLine = semiIsNewLine;
@@ -720,13 +717,13 @@ public class HyperSettings {
 		return removeExtraColor;
 	}
 
-	public void setShowFitMessage(boolean showFitMessage) {
+	/*public void setShowFitMessage(boolean showFitMessage) {
 		this.showFitMessage = showFitMessage;
 	}
 
 	public boolean isShowFitMessage() {
 		return showFitMessage;
-	}
+	}*/
 
 	public void setEchoAliasUpdates(boolean echoAliasUpdates) {
 		this.echoAliasUpdates = echoAliasUpdates;
