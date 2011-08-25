@@ -109,23 +109,23 @@ import dalvik.system.PathClassLoader;
 
 public class StellarService extends Service {
 
-	public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
-	TreeMap<String, String> aliases = new TreeMap<String, String>();
+	//public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
+	//TreeMap<String, String> aliases = new TreeMap<String, String>();
 	RemoteCallbackList<IStellarServiceCallback> callbacks = new RemoteCallbackList<IStellarServiceCallback>();
-	HyperSettings the_settings = new HyperSettings();
+	//HyperSettings the_settings = new HyperSettings();
 	NotificationManager mNM;
 	//OutputStream output_writer = null;
-	Processor the_processor = null;
-	Object sendlock = new Object();
+	//Processor the_processor = null;
+	//Object sendlock = new Object();
 	protected int bindCount = 0;
-	InetAddress the_addr = null;
-	String host;
-	int port;
-	String display;
-	final int BAD_PORT = 999999;
-	final String BAD_HOST = "NOTSETYET";
-	Socket the_socket = null;
-	DataPumper pump = null;
+	//InetAddress the_addr = null;
+	//String host;
+	//int port;
+	//String display;
+	//final int BAD_PORT = 999999;
+	//final String BAD_HOST = "NOTSETYET";
+	//Socket the_socket = null;
+	//DataPumper pump = null;
 	Handler myhandler = null;
 	public int trigger_count = 5555;
 	final static public int MESSAGE_PROCESS = 102;
@@ -397,12 +397,12 @@ public class StellarService extends Service {
 			//synchronized(the_settings) {
 				String key = this.getParam(2).getString();
 				
-				try {
-					StellarService.this.myhandler.sendMessage(StellarService.this.myhandler.obtainMessage(MESSAGE_SENDDATA, key.getBytes(the_settings.getEncoding())));
-				} catch (UnsupportedEncodingException e) {
+				//try {
+					//StellarService.this.myhandler.sendMessage(StellarService.this.myhandler.obtainMessage(MESSAGE_SENDDATA, key.getBytes(the_settings.getEncoding())));
+				//} catch (UnsupportedEncodingException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				//	e.printStackTrace();
+				//}
 				//Log.e("LUA","ATTEMPTING TO RETURN TRIGGER: " + key);
 				/*TriggerData dat = settings.getTriggers().get(key);
 				if(dat == null) {
@@ -443,7 +443,7 @@ public class StellarService extends Service {
 			//Boolean fireonce = this.getParam(5).getBoolean();
 			//ArrayList<TriggerResponder> responders = (ArrayList<TriggerResponder>)this.getParam(7).getObject();
 			
-			StellarService.this.makeTmpScriptTrigger(label,pattern,literal,function);
+			//StellarService.this.makeTmpScriptTrigger(label,pattern,literal,function);
 			return 0;
 		}
 		
@@ -459,7 +459,7 @@ public class StellarService extends Service {
 		@Override
 		public int execute() throws LuaException {
 			String name = this.getParam(2).getString();
-			deleteTrigger(name);
+			//deleteTrigger(name);
 			return 0;
 		}
 
@@ -476,33 +476,33 @@ public class StellarService extends Service {
 		
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		mNM.cancel(5546);
-		host = BAD_HOST;
-		port = BAD_PORT;
+		//host = BAD_HOST;
+		//port = BAD_PORT;
 		ColorDebugCommand colordebug = new ColorDebugCommand();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
-		TimerCommand timercmd = new TimerCommand();
+		//TimerCommand timercmd = new TimerCommand();
 		BellCommand bellcmd = new BellCommand();
-		FullScreenCommand fscmd = new FullScreenCommand();
+		//FullScreenCommand fscmd = new FullScreenCommand();
 		KeyBoardCommand kbcmd = new KeyBoardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
 		SpeedwalkCommand swcmd = new SpeedwalkCommand();
-		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
+		//LoadButtonsCommand lbcmd = new LoadButtonsCommand();
 		ClearButtonsCommand cbcmd = new ClearButtonsCommand();
 		DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
 		LuaCommand luacmd = new LuaCommand();
 		Lua2Command lua2cmd = new Lua2Command();
 		specialcommands.put(colordebug.commandName, colordebug);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
-		specialcommands.put(timercmd.commandName, timercmd);
+		//specialcommands.put(timercmd.commandName, timercmd);
 		specialcommands.put(bellcmd.commandName, bellcmd);
-		specialcommands.put(fscmd.commandName, fscmd);
+		//specialcommands.put(fscmd.commandName, fscmd);
 		specialcommands.put(kbcmd.commandName, kbcmd);
 		specialcommands.put("kb", kbcmd);
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
 		specialcommands.put(swcmd.commandName, swcmd);
-		specialcommands.put(lbcmd.commandName, lbcmd);
+		//specialcommands.put(lbcmd.commandName, lbcmd);
 		specialcommands.put(cbcmd.commandName, cbcmd);
 		specialcommands.put(dmpcmd.commandName,dmpcmd);
 		specialcommands.put(luacmd.commandName, luacmd);
@@ -522,12 +522,12 @@ public class StellarService extends Service {
 		String prefsname = replacebadchars.replaceAll("");
 		prefsname = prefsname.replaceAll("/", "");
 		settingslocation = prefsname + ".xml";
-		loadXmlSettings(prefsname +".xml");
+		//loadXmlSettings(prefsname +".xml");
 		
 		
-		buffer_tree.setLineBreakAt(80); //this doesn't really matter
-		buffer_tree.setEncoding(the_settings.getEncoding());
-		buffer_tree.setMaxLines(the_settings.getMaxLines());
+		//buffer_tree.setLineBreakAt(80); //this doesn't really matter
+		//buffer_tree.setEncoding(the_settings.getEncoding());
+		//buffer_tree.setMaxLines(the_settings.getMaxLines());
 		
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -576,20 +576,6 @@ public class StellarService extends Service {
 				case MESSAGE_DOBUTTONRELOAD:
 					DispatchButtonLoad((String)msg.obj);
 					break;
-				case MESSAGE_DEBUGTELNET:
-					if(the_processor != null) {
-						the_processor.setDebugTelnet((Boolean)msg.obj);
-					}
-					break;
-				case MESSAGE_PROCESSORWARNING:
-					try {
-						doDispatchNoProcess(((String)msg.obj).getBytes(the_settings.getEncoding()));
-					} catch (RemoteException e4) {
-						throw new RuntimeException(e4);
-					} catch (UnsupportedEncodingException e4) {
-						throw new RuntimeException(e4);
-					}
-					break;
 				case MESSAGE_MCCPFATALERROR:
 					Message endCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
 					Bundle eb = endCompress.getData();
@@ -597,21 +583,16 @@ public class StellarService extends Service {
 					eb.putByteArray("THE_DATA", ec_neg);
 					endCompress.setData(eb);
 					this.sendMessage(endCompress);
-					try {
+					/*try {
 						StellarService.this.doDispatchNoProcess(new String("\n\n" + Colorizer.colorRed + "MCCP Data Format Error - Attempting to restart MCCP\nSome data may be lost. Reconnect if compression is not restarted automatically." + Colorizer.colorWhite + "\n\n").getBytes(the_settings.getEncoding()));
 					} catch (RemoteException e4) {
 						e4.printStackTrace();
 					} catch (UnsupportedEncodingException e4) {
 						e4.printStackTrace();
-					}
-					//Message startCompress = this.obtainMessage(MESSAGE_SENDOPTIONDATA);
-					//Bundle sb = endCompress.getData();
+					}*/
 					byte[] sc_neg = new byte[] { TC.IAC , TC.WILL , TC.COMPRESS2 };
-					//sb.putByteArray("THE_DATA", sc_neg);
-					//sb.putString("DEBUG_MESSAGE", "\nIAC DO COMPRESS2 - Sent\n");
-					//startCompress.setData(sb);
-					//this.sendMessageDelayed(startCompress,20);
-					the_processor.RawProcess(sc_neg);
+					
+					//the_processor.RawProcess(sc_neg);
 					break;
 				case MESSAGE_DODISCONNECT:
 					killNetThreads();
@@ -619,16 +600,16 @@ public class StellarService extends Service {
 					isConnected = false;
 					break;
 				case MESSAGE_RECONNECT:
-					killNetThreads();
+					/*killNetThreads();
 					for(TriggerData t : the_settings.getTriggers().values()) {
 						if(t.isFireOnce()) {
 							t.setFired(false);
 						}
-					}
+					}*/
 					//buildTriggerData();
-					if(the_processor != null) { the_processor.reset();  }// corner case. Not sure how to make this null.//2/16/2008 -- Fix for NullPointerException found in StellarService$handler
+					//if(the_processor != null) { the_processor.reset();  }// corner case. Not sure how to make this null.//2/16/2008 -- Fix for NullPointerException found in StellarService$handler
 					
-					try {
+					/*try {
 						doStartup();
 					} catch (UnknownHostException e3) {
 						throw new RuntimeException(e3);
@@ -636,7 +617,7 @@ public class StellarService extends Service {
 						throw new RuntimeException(e3);
 					} catch (IOException e3) {
 						throw new RuntimeException(e3);
-					}
+					}*/
 					
 					
 					break;
@@ -648,25 +629,13 @@ public class StellarService extends Service {
 					isConnected = false;
 					break;
 				case MESSAGE_DISPLAYPARAMS:
-					if(the_processor != null) {
+					/*if(the_processor != null) {
 						the_processor.setDisplayDimensions(msg.arg1, msg.arg2);
 						the_processor.disaptchNawsString();
-					}
-					break;
-				case MESSAGE_BELLINC:
-					//bell recieved.
-					if(the_settings.isVibrateOnBell()) {
-						doVibrateBell();
-					}
-					if(the_settings.isNotifyOnBell()) {
-						doNotifyBell();
-					}
-					if(the_settings.isDisplayOnBell()) {
-						doDisplayBell();
-					}
+					}*/
 					break;
 				case MESSAGE_TIMERINFO:
-					if(timerTasks.containsKey((String)msg.obj)) {
+					/*if(timerTasks.containsKey((String)msg.obj)) {
 						TimerExtraTask t = timerTasks.get((String)msg.obj);
 						//calculate time, ugh, can't we do this somewhere else.
 						long then = t.getStarttime();
@@ -675,10 +644,10 @@ public class StellarService extends Service {
 						DispatchToast("Timer " + (String)msg.obj + ": " + Long.toString(secleft) + " seconds left.",false);
 					} else {
 						DispatchToast("Timer " + (String)msg.obj + " not running.",false);
-					}
+					}*/
 					break;
 				case MESSAGE_TIMERRESET:
-					if(timerTasks.containsKey((String)msg.obj)) {
+					/*if(timerTasks.containsKey((String)msg.obj)) {
 						TimerExtraTask t = timerTasks.get((String)msg.obj);
 						t.cancel();
 						the_timer.purge();
@@ -713,12 +682,12 @@ public class StellarService extends Service {
 					if(msg.arg2 == 50) {
 						//send message.
 						DispatchToast("Timer " + (String)msg.obj + " reset.",false);
-					}
+					}*/
 					break;
 				case MESSAGE_TIMERPAUSE:
 					
 					//check to see if the timer exists in the timertasks.
-					if(timerTasks.containsKey((String)msg.obj)) {
+					/*if(timerTasks.containsKey((String)msg.obj)) {
 						TimerExtraTask t = timerTasks.get((String)msg.obj);
 						long current = System.currentTimeMillis();
 						long start = t.getStarttime();
@@ -739,15 +708,16 @@ public class StellarService extends Service {
 						//send message.
 						DispatchToast("Timer " + (String)msg.obj + " paused.",false);
 					}
+					*/
 					break;
 				case MESSAGE_TIMERSTART:
 					
-					DoTimerStart((String)msg.obj,msg.arg2);
+					//DoTimerStart((String)msg.obj,msg.arg2);
 					
 					
 					break;
 				case MESSAGE_TIMERFIRED:
-					String ordinal = Integer.toString(msg.arg1);
+					/*String ordinal = Integer.toString(msg.arg1);
 					DoTimerResponders(ordinal);
 					TimerData td = the_settings.getTimers().get(ordinal);
 					if(td != null) {
@@ -759,10 +729,10 @@ public class StellarService extends Service {
 							td.setPlaying(false);
 						}
 					}
-					
+					*/
 					break;
 				case MESSAGE_SAVEXML:
-					saveXmlSettings(settingslocation);
+					//saveXmlSettings(settingslocation);
 					break;
 				case MESSAGE_HANDLEWIFI:
 					Boolean state = (Boolean) msg.obj;
@@ -773,7 +743,7 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_THROTTLEEVENT:
-					doThrottleBackgroundImpl();
+					//doThrottleBackgroundImpl();
 					break;
 				case MESSAGE_COMPRESSIONREQUESTED:
 					break;
@@ -791,8 +761,8 @@ public class StellarService extends Service {
 					
 					break;
 				case MESSAGE_END:
-					pump.stop();
-					doShutdown();
+					//pump.stop();
+					//doShutdown();
 					break;
 				case MESSAGE_PROCESS:
 					try {
@@ -811,40 +781,18 @@ public class StellarService extends Service {
 					}
 					break;
 				case MESSAGE_SETDATA:
-					host = msg.getData().getString("HOST");
-					port = msg.getData().getInt("PORT");
-					display = msg.getData().getString("DISPLAY");					
-					showNotification();
+					//host = msg.getData().getString("HOST");
+					//port = msg.getData().getInt("PORT");
+					//display = msg.getData().getString("DISPLAY");					
+					//showNotification();
 					break;
 				case MESSAGE_STARTCOMPRESS:
-					pump.handler.sendMessage(pump.handler.obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
+					//pump.handler.sendMessage(pump.handler.obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
 					break;
 				case MESSAGE_ENDCOMPRESS:
 					break;
-				case MESSAGE_SENDOPTIONDATA:
-					Bundle b = msg.getData();
-					byte[] obytes = b.getByteArray("THE_DATA");
-					String message = b.getString("DEBUG_MESSAGE");
-					if(message != null) {
-						try {
-							doDispatchNoProcess(message.getBytes(the_settings.getEncoding()));
-						} catch (RemoteException e) {
-							e.printStackTrace();
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
-						}
-					}
-					
-					//try {
-						if(pump != null) {
-							pump.sendData(obytes);
-							//output_writer.flush();
-						}
-					//} catch (IOException e2) {
-					//	throw new RuntimeException(e2);
-					//}
-					break;
-				case MESSAGE_SENDDATA:
+				
+				/*case MESSAGE_SENDDATA:
 					
 					byte[] bytes = (byte[]) msg.obj;
 					
@@ -918,7 +866,7 @@ public class StellarService extends Service {
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-					break;
+					break;*/
 				case MESSAGE_REQUESTBUFFER:
 					try {
 						sendBuffer();
@@ -947,7 +895,7 @@ public class StellarService extends Service {
 		
 		//database.close();
 		//populate the timer_actions hash so we can parse arguments.
-		timer_actions = new ArrayList<String>();
+		/*timer_actions = new ArrayList<String>();
 		timer_actions.add("play");
 		timer_actions.add("pause");
 		timer_actions.add("reset");
@@ -958,7 +906,7 @@ public class StellarService extends Service {
 			if(t.isPlaying()) {
 				DoTimerStart(t.getOrdinal().toString(),0);
 			}
-		}
+		}*/
 	}
 	
 	
@@ -978,7 +926,8 @@ public class StellarService extends Service {
 			e5.printStackTrace();
 		}
 	}
-	private void pluginTest() {
+	
+	/*private void pluginTest() {
 		//TODO: plugin test
 
 		
@@ -1034,17 +983,17 @@ public class StellarService extends Service {
 					// TODO Auto-generated catch block
 					e5.printStackTrace();
 				}
-	}
+	}*/
 	
-	public void makeTmpScriptTrigger(String label,String pattern,Boolean literal,String function) {
+	/*public void makeTmpScriptTrigger(String label,String pattern,Boolean literal,String function) {
 		ScriptResponder r = new ScriptResponder();
 		r.setFunction(function);
 		ArrayList<TriggerResponder> list = new ArrayList<TriggerResponder>();
 		list.add(r);
 		makeNewTrigger(label,pattern,literal,false,list,true,false);
-	}
+	}*/
 	
-	public void makeNewTrigger(String label, String pattern, Boolean literal,
+	/*public void makeNewTrigger(String label, String pattern, Boolean literal,
 			Boolean fireonce, ArrayList<TriggerResponder> responders,Boolean hidden,boolean save) {
 		synchronized(the_settings) {
 			TriggerData tmp = new TriggerData();
@@ -1066,7 +1015,7 @@ public class StellarService extends Service {
 		synchronized(the_settings) {
 			the_settings.getTriggers().remove(label);
 		}
-	}
+	}*/
 
 	protected class SQLiteHelper extends SQLiteOpenHelper {
 
@@ -1139,19 +1088,19 @@ public class StellarService extends Service {
 				
 				
 				LogFunction logger = new LogFunction(myhandler,L);
-				TriggerFunction trig = new TriggerFunction(the_settings,L);
+				//TriggerFunction trig = new TriggerFunction(the_settings,L);
 				RowFunction row = new RowFunction(myhandler,L);
-				GMCPFunction gmcp = new GMCPFunction(the_processor,L);
+				//GMCPFunction gmcp = new GMCPFunction(the_processor,L);
 				FieldFunction field = new FieldFunction(L);
 				DeleteTriggerFunction dtrig = new DeleteTriggerFunction(L);
 				NewTriggerFunction ntrig = new NewTriggerFunction(L);
 				ServerSendFunction send = new ServerSendFunction(L);
 				try {
 					logger.register("Note");
-					trig.register("trigger");
+					//trig.register("trigger");
 					row.register("row");
 					field.register("fields");
-					gmcp.register("gmcpTable");
+					//gmcp.register("gmcpTable");
 					ntrig.register("NewTrigger");
 					dtrig.register("DeleteTrigger");
 					send.register("send");
@@ -1214,7 +1163,8 @@ public class StellarService extends Service {
 
 	public void onDestroy() {
 		//Log.e("SERV","ON DESTROY CALLED!");
-		saveXmlSettings(settingslocation);
+		//saveXmlSettings(settingslocation);
+		//TODO: save connection settings.
 		//saveAliases();
 		doShutdown();
 	}
@@ -1242,7 +1192,7 @@ public class StellarService extends Service {
 	
 	
 
-	public void saveXmlSettings(String filename) {
+	/*public void saveXmlSettings(String filename) {
 		try {
 			FileOutputStream fos = this.openFileOutput(filename,Context.MODE_PRIVATE);
 			fos.write(HyperSettings.writeXml2(the_settings).getBytes());
@@ -1252,9 +1202,9 @@ public class StellarService extends Service {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
+	}*/
 	
-	public void loadXmlSettings(String filename) {
+	/*public void loadXmlSettings(String filename) {
 		
 		HyperSAXParser parser = new HyperSAXParser(filename,this);
 		
@@ -1286,7 +1236,7 @@ public class StellarService extends Service {
 		//L.pushJavaObject(((the_settings.getAliases())));
 		//L.setGlobal("foo");
 		
-	}
+	}*/
 	
 	private HyperSettings loadDefaultSettings() {
 		HyperSettings tmp = null;
@@ -1337,18 +1287,7 @@ public class StellarService extends Service {
 		return tmp;
 	}
 	
-	private void loadDefaultDirections() {
-		HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
-		tmp.put("n", new DirectionData("n","n"));
-		tmp.put("e", new DirectionData("e","e"));
-		tmp.put("s", new DirectionData("s","s"));
-		tmp.put("w", new DirectionData("w","w"));
-		tmp.put("h", new DirectionData("h","nw"));
-		tmp.put("j", new DirectionData("j","ne"));
-		tmp.put("k", new DirectionData("k","sw"));
-		tmp.put("l", new DirectionData("l","se"));
-		the_settings.setDirections(tmp);
-	}
+	
 	
 	private void doVibrateBell() {
 		Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
@@ -1356,7 +1295,7 @@ public class StellarService extends Service {
 	}
 	
 	private int bellcount = 3344;
-	private void doNotifyBell() { 
+	/*private void doNotifyBell() { 
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
 		Notification note = new Notification(resId,"Alert!",System.currentTimeMillis());
@@ -1383,7 +1322,7 @@ public class StellarService extends Service {
 		//this.startForeground(5545, note);
 		
 		mNM.notify(bellcount,note);
-	}
+	}*/
 	
 	private void doDisplayBell() {
 		final int N = callbacks.beginBroadcast();
@@ -1400,7 +1339,7 @@ public class StellarService extends Service {
 	
 
 	
-	private void doThrottleBackgroundImpl() {
+	/*private void doThrottleBackgroundImpl() {
 		if(pump == null) return;
 		if(pump.handler == null) return;
 		if(the_settings == null) return;
@@ -1417,7 +1356,7 @@ public class StellarService extends Service {
 			}
 		}
 		
-	}
+	}*/
 	
 	Object binderCookie = new Object();
 	Boolean hasListener = false;
@@ -1492,15 +1431,15 @@ public class StellarService extends Service {
 			
 			//ENTER GIANT SYNCHRONIZATION STEP
 			if(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
-				synchronized(sendlock) {
+				//synchronized(sendlock) {
 					while(myhandler.hasMessages(StellarService.MESSAGE_SENDDATA)) {
-						try {
-							sendlock.wait();
-						} catch (InterruptedException e) {
-							throw new RuntimeException(e);
-						}
+						//try {
+							//sendlock.wait();
+						//} catch (InterruptedException e) {
+						//	throw new RuntimeException(e);
+						//}
 					}
-				}
+				//}
 			}
 			Message msg = myhandler.obtainMessage(StellarService.MESSAGE_SENDDATA,seq);
 			myhandler.sendMessage(msg);
@@ -1547,24 +1486,24 @@ public class StellarService extends Service {
 
 		public void addAlias(AliasData d) throws RemoteException {
 			
-			the_settings.getAliases().put(d.getPre(), d);
-			buildAliases();
-			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			//the_settings.getAliases().put(d.getPre(), d);
+			//buildAliases();
+			//myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
 		public Map<String, AliasData> getAliases() throws RemoteException {
-			
-			return the_settings.getAliases();
+			return null;
+			//return the_settings.getAliases();
 		}
 
 
 		@SuppressWarnings("unchecked")
 		public void setAliases(@SuppressWarnings("rawtypes") Map map) throws RemoteException {
 			
-			the_settings.getAliases().clear();
-			the_settings.setAliases(new HashMap<String,AliasData>(map));
-			buildAliases();
+			//the_settings.getAliases().clear();
+			//the_settings.setAliases(new HashMap<String,AliasData>(map));
+			//buildAliases();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
@@ -1572,10 +1511,10 @@ public class StellarService extends Service {
 		public void addButton(String targetset, SlickButtonData newButton)
 				throws RemoteException {
 			
-			synchronized(the_settings) {
-				the_settings.getButtonSets().get(targetset).add(newButton);
-				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			//synchronized(the_settings) {
+				//the_settings.getButtonSets().get(targetset).add(newButton);
+				//myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			//}
 			
 	
 		}
@@ -1585,42 +1524,42 @@ public class StellarService extends Service {
 		public void removeButton(String targetset, SlickButtonData buttonToNuke)
 				throws RemoteException {
 			
-			synchronized(the_settings) {
-				the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
-				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}	
+			//synchronized(the_settings) {
+				//the_settings.getButtonSets().get(targetset).remove(buttonToNuke);
+				//myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			//}	
 		}
 
 
 		public void setFontName(String name) throws RemoteException {
 		
-			synchronized(the_settings) {
-				the_settings.setFontName(name);
-			}
+			//synchronized(the_settings) {
+				//the_settings.setFontName(name);
+			//}
 		}
 
 
 		public void setFontPath(String path) throws RemoteException {
 			
-			synchronized(the_settings) {
-				the_settings.setFontPath(path);
-			}
+			//synchronized(the_settings) {
+			//	the_settings.setFontPath(path);
+			//}
 		}
 
 
 		public void setFontSize(int size) throws RemoteException {
 			
-			synchronized(the_settings) {
-				the_settings.setLineSize(size);
-			}
+			//synchronized(the_settings) {
+			//	the_settings.setLineSize(size);
+			//}
 		}
 
 
 		public void setFontSpaceExtra(int size) throws RemoteException {
 			
-			synchronized(the_settings) {
-				the_settings.setLineSpaceExtra(size);
-			}
+			//synchronized(the_settings) {
+			//	the_settings.setLineSpaceExtra(size);
+			//}
 		}
 
 
@@ -1632,33 +1571,34 @@ public class StellarService extends Service {
 
 		public void setSemiOption(boolean boolsAreNewline)
 				throws RemoteException {
-			synchronized(the_settings) {
-				the_settings.setSemiIsNewLine(boolsAreNewline);
-			}
+			//synchronized(the_settings) {
+			//	the_settings.setSemiIsNewLine(boolsAreNewline);
+			//}
 		}
 
 
 		public List<SlickButtonData> getButtonSet(String setname)
 				throws RemoteException {
-			synchronized(the_settings) {
-				String orig_set = the_settings.getLastSelected();
-				the_settings.setLastSelected(setname);
-				Vector<SlickButtonData> tmp = the_settings.getButtonSets().get(setname);
-				if(tmp == null) {
+			//synchronized(the_settings) {
+				//String orig_set = the_settings.getLastSelected();
+				//the_settings.setLastSelected(setname);
+				//Vector<SlickButtonData> tmp = the_settings.getButtonSets().get(setname);
+				//if(tmp == null) {
 					//Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " but got null");
-					the_settings.setLastSelected(orig_set);
-				} else {
+				//	the_settings.setLastSelected(orig_set);
+				//} else {
 					//Log.e("SERVICE","WINDOW REQUESTED BUTTONSET: " + setname + " and am returning real data");
-				}
-				return tmp;
-			}
+				//}
+				//return tmp;
+			return null;
+			//}
 		}
 
 
 		public List<String> getButtonSetNames() throws RemoteException {
 			
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				ArrayList<String> keys = new ArrayList<String>();
 			
 				for(String key : the_settings.getButtonSets().keySet()) {
@@ -1666,14 +1606,15 @@ public class StellarService extends Service {
 				}
 			
 			return keys;
-			}
+			}*/
+			return null;
 		}
 
 
 		public void modifyButton(String targetset, SlickButtonData orig,
 				SlickButtonData mod) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				
 				int loc = the_settings.getButtonSets().get(targetset).indexOf(orig);
 				
@@ -1682,7 +1623,7 @@ public class StellarService extends Service {
 				the_settings.getButtonSets().get(targetset).add(loc,mod); //insert mod in its place
 				//the_settings.getButtonSets().get(targetset).
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			}*/
 			
 			//Log.e("SERVICE","MODIFYING BUTTON " + orig.toString() + " FROM BUTTONSET: " + targetset + " with " + mod.toString() + ", now contains " + the_settings.getButtonSets().get(targetset).size() + " buttons.");
 			//Vector<SlickButtonData> buttons = the_settings.getButtonSets().get(targetset);
@@ -1694,42 +1635,43 @@ public class StellarService extends Service {
 
 		public void addNewButtonSet(String name) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setLastSelected(name);
 				the_settings.getButtonSets().put(name, new Vector<SlickButtonData>());
 				ColorSetSettings def_colorset = new ColorSetSettings();
 				def_colorset.toDefautls();
 				the_settings.getSetSettings().put(name, def_colorset);
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			}*/
 			
 		}
 
 
 		public List<String> getButtonSets() throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				Set<String> keys = the_settings.getAliases().keySet();
 				return new ArrayList<String>(keys);
-			}
+			}*/
+			return null;
 		}
 
 
 		public int clearButtonSet(String name) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				int count = the_settings.getButtonSets().get(name).size();
 				the_settings.getButtonSets().get(name).removeAllElements();
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 				return count;
-			}
-			
+			}*/
+			return 0;
 		}
 
 
 		public int deleteButtonSet(String name) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				int count = the_settings.getButtonSets().get(name).size();
 				if(name.equals("default")) {
 					//cannot delete default button set, only clear it
@@ -1743,73 +1685,79 @@ public class StellarService extends Service {
 					return count;
 				}
 				
-			}
+			}*/
+			return 0;
 		}
 
 
 		@SuppressWarnings({ "rawtypes" })
 		public Map getButtonSetListInfo() throws RemoteException {
 			
-			HashMap<String,Integer> tmp = new HashMap<String,Integer>();
+			/*HashMap<String,Integer> tmp = new HashMap<String,Integer>();
 			
 			synchronized(the_settings) {
 				for(String key : the_settings.getButtonSets().keySet()) {
 					tmp.put(key, the_settings.getButtonSets().get(key).size());
 				}
-			}
+			}*/
 			
-			return tmp;
+			return null;
 		}
 		
 		public String getLastSelectedSet() throws RemoteException {
-			synchronized(the_settings) {
-				return the_settings.getLastSelected();
-			}
+			//synchronized(the_settings) {
+			//	return the_settings.getLastSelected();
+			//}
+			return null;
 		}
 
 
 		public void setMaxLines(int keepcount) throws RemoteException {
 			
-			synchronized(the_settings) {
-				the_settings.setMaxLines(keepcount);
-				buffer_tree.setMaxLines(keepcount);
-			}
+			//synchronized(the_settings) {
+			//	the_settings.setMaxLines(keepcount);
+			//	buffer_tree.setMaxLines(keepcount);
+			//}
 			
 		}
 		
 		public int getMaxLines() throws RemoteException {
-			synchronized(the_settings) {
-				return the_settings.getMaxLines();
-			}
+			//synchronized(the_settings) {
+			//	return the_settings.getMaxLines();
+			//}
+			return 0;
 		}
 
 
 		public int getFontSize() throws RemoteException {
 			
-			synchronized(the_settings) {
-				
-				return the_settings.getLineSize();
-			}
+			//synchronized(the_settings) {
+			
+			//	return the_settings.getLineSize();
+			//}
+			return 0;
 		}
 
 
 		public int getFontSpaceExtra() throws RemoteException {
 			
-			synchronized(the_settings) {
-				return the_settings.getLineSpaceExtra();
-			}
+			//synchronized(the_settings) {
+			//	return the_settings.getLineSpaceExtra();
+			//}
+			return 0;
 		}
 
 
 		public String getFontName() throws RemoteException {
-			synchronized(the_settings) {
-				return the_settings.getFontName();
-			}
+			//synchronized(the_settings) {
+			//	return the_settings.getFontName();
+			//}
+			return null;
 		}
 
 
 		public void ExportSettingsToPath(String path) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//FileOutputStream tmp = null;
 				
 				try {
@@ -1851,12 +1799,12 @@ public class StellarService extends Service {
 				} catch(Exception e) {
 					throw new RuntimeException(e);
 				}
-			}
+			}*/
 			
 		}
 		
 		public void LoadSettingsFromPath(String path) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				HyperSAXParser loader = new HyperSAXParser(path,StellarService.this);
 				try {
 					the_settings = loader.load();
@@ -1873,40 +1821,39 @@ public class StellarService extends Service {
 				}
 			}
 
-			sendInitOk();
+			sendInitOk();*/
 		}
 
 
 		public void resetSettings() throws RemoteException {
-			synchronized(the_settings) {
-				the_settings = loadDefaultSettings();
-			}
-			sendInitOk();
+			//synchronized(the_settings) {
+			//	the_settings = loadDefaultSettings();
+			//}
+			//sendInitOk();
 		}
 
 
 		public ColorSetSettings getCurrentColorSetDefaults()
 				throws RemoteException {
 			
-			synchronized(the_settings) {
-				return the_settings.getSetSettings().get(the_settings.getLastSelected());
-			}
+			return null;
 		}
 
 
 		public ColorSetSettings getColorSetDefaultsForSet(String theSet)
 				throws RemoteException {
 			
-			synchronized(the_settings) {
-				return the_settings.getSetSettings().get(theSet);
-			}
+			//synchronized(the_settings) {
+			//	return the_settings.getSetSettings().get(theSet);
+			//}
+			return null;
 		}
 
 
 		public void setColorSetDefaultsForSet(String theSet,ColorSetSettings input)
 				throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//back up old set to use for the button update.
 				ColorSetSettings oldsettings = the_settings.getSetSettings().get(theSet);
 				
@@ -1924,15 +1871,15 @@ public class StellarService extends Service {
 				
 				//need to go through all the button in the set and update the values.
 			}
-			
+			*/
 		}
 
 
 		public void setProcessPeriod(boolean value) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setProcessPeriod(value);
-			}
+			}*/
 			
 		}
 
@@ -1940,191 +1887,209 @@ public class StellarService extends Service {
 		@SuppressWarnings({ "rawtypes" })
 		public Map getTriggerData() throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getTriggers();
-			}
+			}*/
+			return null;
 		}
 
 
 		public void deleteTrigger(String which) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.getTriggers().remove(which);
 				
 			}
 			//buildTriggerData();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			
+			*/
 		}
 
 
 		public void newTrigger(TriggerData data) throws RemoteException {
-			
+			/*
 			synchronized(the_settings) {
 				the_settings.getTriggers().put(data.getName(), data);
 				
 			}
 			//buildTriggerData();
 			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			*/
 		}
 
 
 		public void updateTrigger(TriggerData from, TriggerData to)
 				throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.getTriggers().remove(from.getName());
 				the_settings.getTriggers().put(to.getName(), to);
 				//for(TriggerResponder responder : to.getResponders()) {
 				//	Log.e("SERVICE","MODIFIED TRIGGER, RESPONDER NOW: "+ responder.getFireType().getString());
 				//}
-			}
+			}*/
 			//buildTriggerData();
-			myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
+			//myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
 		}
 
 
 		public TriggerData getTrigger(String pattern) throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				
 				return the_settings.getTriggers().get(pattern);
-			}
+			}*/
+			return null;
 		}
 
 
 		public boolean getUseExtractUI() throws RemoteException {
 			
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isUseExtractUI();
 				
-			}
+			}*/
+			return false;
 		}
 
 
 		public void setThrottleBackground(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				
 				the_settings.setThrottleBackground(use);
-			}
+			}*/
 		}
 
 
 		public void setUseExtractUI(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setUseExtractUI(use);
 				
-			}
+			}*/
 		}
 
 		public boolean isProcessPeriod() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isProcessPeriod();
 				
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isSemiNewline() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isSemiIsNewLine();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isThrottleBackground() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isThrottleBackground();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isKeepWifiActive() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isKeepWifiActive();
-			}
+			}*/
+			return false;
 		}
 
 		public void setKeepWifiActive(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setKeepWifiActive(use);
 				Message keepalive = myhandler.obtainMessage(MESSAGE_HANDLEWIFI);
 				keepalive.obj = new Boolean(use);
 				myhandler.sendMessage(keepalive);
-			}
+			}*/
 		}
 
 		public boolean isAttemptSuggestions() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isAttemptSuggestions();
-			}
+			}*/
+			return false;
 		}
 
 		public void setAttemptSuggestions(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setAttemptSuggestions(use);
-			}
+			}*/
 		}
 
 		public boolean isKeepLast() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isKeepLast();
-			}
+			}*/
+			return false;
 		}
 
 		public void setKeepLast(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setKeepLast(use);
-			}
+			}*/
 		}
 
 		public boolean isBackSpaceBugFix() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isBackspaceBugFix();
-			}
+			}*/
+			return false;
 		}
 
 		public void setBackSpaceBugFix(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setBackspaceBugFix(use);
-			}
+			}*/
+			
 		}
 
 		public boolean isAutoLaunchEditor() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isAutoLaunchButtonEdtior();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isDisableColor() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isDisableColor();
-			}
+			}*/
+			return false;
 		}
 
 		public void setAutoLaunchEditor(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setAutoLaunchButtonEdtior(use);
-			}
+			}*/
 		}
 
 		public void setDisableColor(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setDisableColor(use);
-			}
+			}*/
+			//return false;
 		}
 
 		public String HapticFeedbackMode() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getHapticFeedbackMode();
 			}
+			*/
+			return null;
 		}
 
 		public void setHapticFeedbackMode(String use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setHapticFeedbackMode(use);
-			}
+			}*/
+			//return false;
 		}
 
 		public String getAvailableSet() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//String result = "";
 				Set<String> keyset = the_settings.getButtonSets().keySet();
 				if(keyset.contains("default")) {
@@ -2133,35 +2098,39 @@ public class StellarService extends Service {
 				} else {
 					return "";
 				}
-			}
+			}*/
+			return null;
 		}
 
 		public String getHFOnFlip() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getHapticFeedbackOnFlip();
-			}
+			}*/
+			return null;
 		}
 
 		public String getHFOnPress() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getHapticFeedbackOnPress();
-			}
+			}*/
+			return null;
 		}
 
 		public void setHFOnFlip(String use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setHapticFeedbackOnFlip(use);
-			}
+			}*/
+			//return null;
 		}
 
 		public void setHFOnPress(String use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setHapticFeedbackOnPress(use);
-			}
+			}*/
 		}
 
 		public TimerData getTimer(String ordinal) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//set up the timer before actually passing it, as it might have a playing item in the queue.
 				TimerData the_timer = the_settings.getTimers().get(ordinal);
 				TimerExtraTask t = null;
@@ -2177,12 +2146,13 @@ public class StellarService extends Service {
 					the_timer.setPlaying(false);
 				}
 				return the_timer;
-			}
+			}*/
+			return null;
 		}
 
 		@SuppressWarnings({ "rawtypes" })
 		public Map getTimers() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//updat the timer table
 				for(TimerData timer : the_settings.getTimers().values()) {
 					if(timerTasks.containsKey(timer.getOrdinal().toString())) {
@@ -2199,7 +2169,8 @@ public class StellarService extends Service {
 				}
 				
 				return the_settings.getTimers();
-			}
+			}*/
+			return null;
 		}
 
 		public void pauseTimer(String ordinal) throws RemoteException {
@@ -2219,16 +2190,16 @@ public class StellarService extends Service {
 		}
 
 		public void addTimer(TimerData newtimer) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//Log.e("SERVICE","SERVICE GOT NEW TIMER");
 				newtimer.reset();
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			}*/
 		}
 
 		public void removeTimer(TimerData deltimer) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				if(timerTasks.containsKey(deltimer.getOrdinal().toString())) {
 					TimerExtraTask t = timerTasks.get(deltimer.getOrdinal().toString());
 					t.cancel();
@@ -2252,12 +2223,12 @@ public class StellarService extends Service {
 					ordinal = ordinal+1;
 				}
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			}*/
 		}
 
 		public void updateTimer(TimerData old, TimerData newtimer)
 				throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//make sure that any running timers are stopped.
 				if(timerTasks.containsKey(old.getOrdinal().toString())) {
 					TimerExtraTask t = timerTasks.get(old.getOrdinal().toString());
@@ -2269,19 +2240,20 @@ public class StellarService extends Service {
 				newtimer.reset();
 				the_settings.getTimers().put(newtimer.getOrdinal().toString(), newtimer);
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			}*/
 		}
 
 		public int getNextTimerOrdinal() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				//list should always be sorted.
 				return the_settings.getTimers().size();
-			}
+			}*/
+			return 0;
 		}
 
 		@SuppressWarnings({ "rawtypes" })
 		public Map getTimerProgressWad() throws RemoteException {
-			HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
+		/*	HashMap<String,TimerProgress> tmp = new HashMap<String,TimerProgress>();
 			
 			for(TimerData timer : the_settings.getTimers().values()) {
 				if(timerTasks.containsKey(timer.getOrdinal().toString())) {
@@ -2304,98 +2276,109 @@ public class StellarService extends Service {
 				}
 			}
 			
-			return tmp;
+			return tmp;*/
+			return null;
 		}
 
 		public String getEncoding() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getEncoding();
-			}
+			}*/
+			return null;
 		}
 
 		public void setEncoding(String input) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setEncoding(input);
 				the_processor.setEncoding(input);
 				buffer_tree.setEncoding(input);
-			}
+			}*/
+			
 		}
 		
 		public String getConnectedTo() throws RemoteException {
-			return host + ":" + Integer.toString(port);
-
+			//return host + ":" + Integer.toString(port);
+			return null;
 		}
 
 		public boolean isDisplayOnBell() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isDisplayOnBell();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isKeepScreenOn() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isKeepScreenOn();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isLocalEcho() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isLocalEcho();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isNotifyOnBell() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isNotifyOnBell();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isVibrateOnBell() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isVibrateOnBell();
-			}
+			}*/
+			return false;
 		}
 
 		public void setDisplayOnBell(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setDisplayOnBell(use);
-			}
+			}*/
+			//return false;
 		}
 
 		public void setKeepScreenOn(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setKeepScreenOn(use);
-			}
+			}*/
 		}
 
 		public void setLocalEcho(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setLocalEcho(use);
-			}
+			}*/
 		}
 
 		public void setNotifyOnBell(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setNotifyOnBell(use);
-			}
+			}*/
+			
 		}
 
 		public void setVibrateOnBell(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setVibrateOnBell(use);
-			}
+			}*/
 		}
 
 		public boolean isFullScreen() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isFullScreen();
-			}
+			}*/
+			return false;
 		}
 
 		public void setFullScreen(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setFullScreen(use);
-			}
+			}*/
 		}
 
 		@SuppressWarnings({ "rawtypes" })
@@ -2433,80 +2416,87 @@ public class StellarService extends Service {
 		}
 
 		public boolean isRoundButtons() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isRoundButtons();
-			}
+			}*/
+			return false;
 		}
 
 		public void setRoundButtons(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setRoundButtons(use);
-			}
+			}*/
 		}
 
 		public int getBreakAmount() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getBreakAmount();
-			}
+			}*/
+			return 0;
 		}
 
 		public int getOrientation() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getOrientation();
-			}
+			}*/
+			return 0;
 		}
 
 		public boolean isWordWrap() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isWordWrap();
-			}
+			}*/
+			return false;
 		}
 
 		public void setBreakAmount(int pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setBreakAmount(pIn);
-			}
+			}*/
+			
 		}
 
 		public void setOrientation(int pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setOrientation(pIn);
-			}
+			}*/
 		}
 
 		public void setWordWrap(boolean pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setWordWrap(pIn);
-			}
+			}*/
 		}
 
 		public boolean isDebugTelnet() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isDebugTelnet();
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isRemoveExtraColor() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isRemoveExtraColor();
-			}
+			}*/
+			return false;
 		}
 
 		public void setDebugTelnet(boolean pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setDebugTelnet(pIn);
 				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DEBUGTELNET,new Boolean(pIn)));
-			}
+			}*/
 		}
 
 		public void setRemoveExtraColor(boolean pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setRemoveExtraColor(pIn);
-			}
+			}*/
 		}
 
 		public void updateAndRenameSet(String oldSet, String newSet, ColorSetSettings settings) throws RemoteException {
-			String currentlyUsed = null;
+			/*String currentlyUsed = null;
 			synchronized(the_settings) {
 				currentlyUsed = the_settings.getLastSelected();
 				//update references
@@ -2536,94 +2526,101 @@ public class StellarService extends Service {
 				//we have to load it anyway in case buttons in that set have been updated to go to the new page.
 				myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DOBUTTONRELOAD,currentlyUsed));
 			}
+			*/
 		}
 
 		
 		public boolean isEchoAliasUpdate() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isEchoAliasUpdates();
-			}
+			}*/
+			return false;
 		}
 
 		
 		public void setEchoAliasUpdate(boolean use) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setEchoAliasUpdates(use);
-			}
+			}*/
 		}
 
 		@SuppressWarnings("rawtypes")
 		public Map getDirectionData() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getDirections();
-			}
+			}*/
+			return null;
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void setDirectionData(Map data) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setDirections((HashMap<String,DirectionData>)data);
-			}
+			}*/
+			
 		}
 
 		
 		public void setHyperLinkMode(String pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
 					if(mode.getValue().equals(pIn)) {
 						the_settings.setHyperLinkMode(mode);
 					}
 				}
-			}
+			}*/
 		}
 
 		
 		public String getHyperLinkMode() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getHyperLinkMode().getValue();
-			}
+			}*/
+			return null;
 		}
 
 		
 		public void setHyperLinkColor(int pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setHyperLinkColor(pIn);
-			}
+			}*/
 		}
 
 		
 		public int getHyperLinkColor() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.getHyperLinkColor();
-			}
+			}*/
+			return 0;
 		}
 
 		//@Override
 		public void setHyperLinkEnabled(boolean pIn) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.setHyperLinkEnabled(pIn);
-			}
+			}*/
 		}
 
 		//@Override
 		public boolean isHyperLinkEnabled() throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				return the_settings.isHyperLinkEnabled();
-			}
+			}*/
+			return false;
 		}
 
 		public void setTriggerEnabled(boolean enabled,String key)
 				throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				the_settings.getTriggers().get(key).setEnabled(enabled);
 				//buildTriggerData();
 				myhandler.sendEmptyMessage(MESSAGE_SAVEXML);
-			}
+			}*/
 		}
 
 		public void setButtonSetLocked(boolean locked, String key)
 				throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				ColorSetSettings settings = the_settings.getSetSettings().get(key);
 				if(settings != null) {
 					//Log.e("SERVICE","SETTING SET: " + key + " lock state: " + locked);
@@ -2633,12 +2630,12 @@ public class StellarService extends Service {
 						reloadButtonSet(key);
 					}
 				}
-			}
+			}*/
 		}
 
 		
 		public boolean isButtonSetLocked(String key) throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
 				if(tmp != null) {
 					//Log.e("SERVICE","SET " + key + " queried for lock state: " + tmp.isLocked() );
@@ -2646,44 +2643,48 @@ public class StellarService extends Service {
 				} else {
 					return false;
 				}
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isButtonSetLockedMoveButtons(String key)
 				throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
 				if(tmp != null) {
 					return tmp.isLockMoveButtons();
 				} else {
 					return ColorSetSettings.DEFAULT_LOCKMOVEBUTTONS;
 				}
-			}
+			}*/
+			return false;
 		}
 
 		public boolean isButtonSetLockedNewButtons(String key)
 				throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
 				if(tmp != null) {
 					return tmp.isLockNewButtons();
 				} else {
 					return ColorSetSettings.DEFAULT_LOCKNEWBUTTONS;
 				}
-			}
+			}*/
+			return false;
 		}
 
 		
 		public boolean isButtonSetLockedEditButtons(String key)
 				throws RemoteException {
-			synchronized(the_settings) {
+			/*synchronized(the_settings) {
 				ColorSetSettings tmp = the_settings.getSetSettings().get(key);
 				if(tmp != null) {
 					return tmp.isLockEditButtons();
 				} else {
 					return ColorSetSettings.DEFAULT_LOCKEDITBUTTONS;
 				}
-			}
+			}*/
+			return false;
 		}
 
 		
@@ -2701,7 +2702,7 @@ public class StellarService extends Service {
 	Character lf = new Character((char)10);
 	String crlf = cr.toString() + lf.toString();
 	
-	public String ProcessCommands(String input) {
+	/*public String ProcessCommands(String input) {
 		
 		
 		
@@ -2966,7 +2967,7 @@ public class StellarService extends Service {
 			//Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);
 			
 		}
-	}
+	}*/
 	
 	public Bundle CountNewLine(String ISOLATINstring,int maxlines) {
 		
@@ -2996,7 +2997,7 @@ public class StellarService extends Service {
 		return dat;
 	}
 	
-	StringBuffer joined_alias = new StringBuffer();
+	/*StringBuffer joined_alias = new StringBuffer();
 	private void buildAliases() {
 		joined_alias.setLength(0);
 		
@@ -3028,7 +3029,7 @@ public class StellarService extends Service {
 		
 			
 		
-	}
+	}*/
 	
 	
 	
@@ -3181,7 +3182,7 @@ public class StellarService extends Service {
 		}
 		callbacks.finishBroadcast();
 	}
-	
+	/*
 	StringBuffer dataToServer = new StringBuffer();
 	StringBuffer dataToWindow = new StringBuffer();
 	private Data ProcessOutputData(String out) throws UnsupportedEncodingException {
@@ -3298,7 +3299,7 @@ public class StellarService extends Service {
 		
 		return d;
 	}
-	
+	*/
 	public class SpecialCommand {
 		public String commandName;
 		public SpecialCommand() {
@@ -3354,7 +3355,7 @@ public class StellarService extends Service {
 				errormessage += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";
 				
 				try {
-					doDispatchNoProcess(errormessage.getBytes(the_settings.getEncoding()));
+					doDispatchNoProcess(errormessage.getBytes("ISO-8859-1"));
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				} catch (UnsupportedEncodingException e) {
@@ -3392,7 +3393,7 @@ public class StellarService extends Service {
 			success += Colorizer.colorWhite +"\n";
 			
 			try {
-				doDispatchNoProcess(success.getBytes(the_settings.getEncoding()));
+				doDispatchNoProcess(success.getBytes("ISO-8859-1"));
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
@@ -3441,7 +3442,7 @@ public class StellarService extends Service {
 	
 	ArrayList<String> timer_actions;
 	
-	private class TimerCommand extends SpecialCommand {
+	/*private class TimerCommand extends SpecialCommand {
 		
 		public TimerCommand() {
 			this.commandName = "timer";
@@ -3538,7 +3539,7 @@ public class StellarService extends Service {
 			return null;
 			
 		}
-	}
+	}*/
 	
 	private class BellCommand extends SpecialCommand {
 		public BellCommand() {
@@ -3553,7 +3554,7 @@ public class StellarService extends Service {
 		}
 	}
 	
-	private class FullScreenCommand extends SpecialCommand {
+	/*private class FullScreenCommand extends SpecialCommand {
 		public FullScreenCommand() {
 			this.commandName = "togglefullscreen";
 		}
@@ -3572,7 +3573,7 @@ public class StellarService extends Service {
 			callbacks.finishBroadcast();
 			return null;
 		}
-	}
+	}*/
 	
 	private class KeyBoardCommand extends SpecialCommand {
 		public KeyBoardCommand() {
@@ -3617,7 +3618,7 @@ public class StellarService extends Service {
 							"\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n" +
 							"\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\n" +
 							"\".kb flush\" will transmit the text currently in the box.\n" +
-							"The cursor is always moved to the end of the new text.").getBytes(the_settings.getEncoding()));
+							"The cursor is always moved to the end of the new text.").getBytes("ISO-8859-1"));
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				} catch (UnsupportedEncodingException e) {
@@ -3677,12 +3678,8 @@ public class StellarService extends Service {
 				}
 			}
 			
-			try {
-				Boolean foo = new Boolean(true);
-				text = new String(DoAliasReplacement(text.getBytes(the_settings.getEncoding()),foo),the_settings.getEncoding());
-			} catch (UnsupportedEncodingException e1) {
-				throw new RuntimeException(e1);
-			}
+			Boolean foo = new Boolean(true);
+			//text = new String(DoAliasReplacement(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
 			
 			final int N = callbacks.beginBroadcast();
 			for(int i = 0;i<N;i++) {
@@ -3709,7 +3706,7 @@ public class StellarService extends Service {
 			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
 			String msg = "\n" + Colorizer.colorRed + "Disconnected." + Colorizer.colorWhite + "\n";
 			try {
-				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+				doDispatchNoProcess(msg.getBytes("ISO-8859-1"));
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
@@ -3729,7 +3726,7 @@ public class StellarService extends Service {
 			myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
 			String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
 			try {
-				doDispatchNoProcess(msg.getBytes(the_settings.getEncoding()));
+				doDispatchNoProcess(msg.getBytes("ISO-8859-1"));
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			} catch (UnsupportedEncodingException e) {
@@ -3758,7 +3755,7 @@ public class StellarService extends Service {
 		
 	}
 	
-	private class LoadButtonsCommand extends SpecialCommand {
+	/*private class LoadButtonsCommand extends SpecialCommand {
 		public LoadButtonsCommand() {
 			this.commandName = "loadset";
 		}
@@ -3781,7 +3778,7 @@ public class StellarService extends Service {
 			}
 			return null;
 		}
-	}
+	}*/
 	
 	private class DumpGMCPCommand extends SpecialCommand {
 		public DumpGMCPCommand() {
@@ -3789,22 +3786,8 @@ public class StellarService extends Service {
 		}
 		
 		public Object execute(Object o) {
-			/*String str = (String)o;
-			if(the_settings.getButtonSets().containsKey(str)) {
-				//load that set.
-				int N = callbacks.beginBroadcast();
-				for(int i=0;i<N;i++) {
-					try {
-						callbacks.getBroadcastItem(i).reloadButtons(str);
-					} catch (RemoteException e) {
-					}
-				}
-				callbacks.finishBroadcast();
-			} else {
-				//invalid key
-				DispatchToast("Button Set: \"" + str + "\" does not exist.",false);
-			}*/
-			the_processor.dumpGMCP();
+			
+			//the_processor.dumpGMCP();
 			return null;
 		}
 	}
@@ -3915,7 +3898,7 @@ public class StellarService extends Service {
 							"Example:\n" +
 							"\".run 3desw2n\", will send d;d;d;e;s;w;n;n to the server.\n" +
 							"\".run jlk3n3j\", will send se;nw;sw;n;n;n;se;se;se to the server.\n"+
-							"\".run 3ds,open door,3w\" will send d;d;d;s;open door;w;w;w to the server.\n").getBytes(the_settings.getEncoding()));
+							"\".run 3ds,open door,3w\" will send d;d;d;s;open door;w;w;w to the server.\n").getBytes("ISO-8859-1"));
 				} catch (RemoteException ef) {
 					ef.printStackTrace();
 				} catch (UnsupportedEncodingException ea) {
@@ -3958,10 +3941,10 @@ public class StellarService extends Service {
 							buf.append(crlf);
 						} else {
 							//check if the testVal has a mapping in the table
-							if(the_settings.getDirections().containsKey(testVal)) {
+							/*if(the_settings.getDirections().containsKey(testVal)) {
 								valid = true;
 								respString = the_settings.getDirections().get(testVal).getCommand();
-							}
+							}*/
 						}
 						
 						
@@ -4048,7 +4031,7 @@ public class StellarService extends Service {
 							try {
 								doDispatchNoProcess(getErrorMessage("Invalid direction in command:","."+commandName + " " +str+"\n" +
 										tmpb.toString() + "\n" + 
-										"At location " + errlength + ", " + bit).getBytes(the_settings.getEncoding()));
+										"At location " + errlength + ", " + bit).getBytes("ISO-8859-1"));
 							} catch (RemoteException ef) {
 								ef.printStackTrace();
 							} catch (UnsupportedEncodingException ea) {
@@ -4120,15 +4103,15 @@ public class StellarService extends Service {
 	
 	public void dispatch(byte[] data) throws RemoteException, UnsupportedEncodingException {
 		
-		byte[] rawData = the_processor.RawProcess(data);
+		//byte[] rawData = the_processor.RawProcess(data);
 		//changing this to send data to the window, then process the triggers.
 		//if(firstDispatch)
-		if(rawData == null) {
+		//if(rawData == null) {
 			return;
-		}
+		//}
 		//Spannable processed = the_processor.DoProcess(data);
-		Message dofinal = myhandler.obtainMessage(MESSAGE_DOFINALDISPATCH,rawData);
-		myhandler.sendMessage(dofinal);
+		//Message dofinal = myhandler.obtainMessage(MESSAGE_DOFINALDISPATCH,rawData);
+		//myhandler.sendMessage(dofinal);
 	}
 	
 	private void reloadButtonSet(String setname) {
@@ -4216,10 +4199,10 @@ public class StellarService extends Service {
 		TextTree tmp = new TextTree();
 		tmp.setBleedColor(buffer_tree.getBleedColor());
 		tmp.addBytesImpl(rawData);
-		plugin.process(tmp, this, hasListener, myhandler, display);
+		//plugin.process(tmp, this, hasListener, myhandler, display);
 		tmp.updateMetrics();
 		byte[] dump = tmp.dumpToBytes(false);
-		Log.e("DUMP","PROCESSED: \n" + new String(dump,the_settings.getEncoding()));
+		//Log.e("DUMP","PROCESSED: \n" + new String(dump,the_settings.getEncoding()));
 		buffer_tree.addBytesImpl(dump);
 		
 		final int N = callbacks.beginBroadcast();
@@ -4374,14 +4357,14 @@ public class StellarService extends Service {
 	}
 	
 	
-	Pattern alias_replace = Pattern.compile(joined_alias.toString());
-	Matcher alias_replacer = alias_replace.matcher("");
-	Matcher alias_recursive = alias_replace.matcher("");
+	//Pattern alias_replace = Pattern.compile(joined_alias.toString());
+	//Matcher alias_replacer = alias_replace.matcher("");
+	//Matcher alias_recursive = alias_replace.matcher("");
 	
-	Pattern whiteSpace = Pattern.compile("\\s");
+	//Pattern whiteSpace = Pattern.compile("\\s");
 	
-	private byte[] DoAliasReplacement(byte[] input,Boolean reprocess) {
-		if(joined_alias.length() > 0) {
+	/*private byte[] DoAliasReplacement(byte[] input,Boolean reprocess) {
+		//if(joined_alias.length() > 0) {
 
 			//Pattern to_replace = Pattern.compile(joined_alias.toString());
 			byte[] retval = null;
@@ -4492,9 +4475,9 @@ public class StellarService extends Service {
 		} else {
 			return input;
 		}
-	}
+	}*/
 	
-	private void DoTimerResponders(String ordinal) {
+	/*private void DoTimerResponders(String ordinal) {
 		synchronized(the_settings) {
 			
 			//just a precaution, 
@@ -4543,14 +4526,14 @@ public class StellarService extends Service {
 				DispatchToast("Timer " + timer + " started.",false);
 			}
 		}
-	}
+	}*/
 	
 	boolean debug = false;
 	
 	public void doStartup() throws UnknownHostException, IOException, RemoteException {
-		if(host == BAD_HOST || port == BAD_PORT) {
-			return; //dont' start 
-		}
+		//if(host == BAD_HOST || port == BAD_PORT) {
+		//	return; //dont' start 
+		//}
 		
 		/*if(debug) {
 			return;
@@ -4623,34 +4606,34 @@ public class StellarService extends Service {
 			pump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_INITXFER);
 			*/
 		
-			pump = new DataPumper(host,port,myhandler);
-			pump.start();
-			synchronized(this) {
-				try {
-					this.wait(500);
-					//give the pump some time sto start up
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				} 
-			}
+			//pump = new DataPumper(host,port,myhandler);
+			//pump.start();
+			//synchronized(this) {
+			//	try {
+			//		this.wait(500);
+			//		//give the pump some time sto start up
+			//	} catch (InterruptedException e) {
+			//		throw new RuntimeException(e);
+			//	} 
+			//}
 			//show notification
-			showNotification();
-			Log.e("LUA","STARTING UP");
-			L = LuaStateFactory.newLuaState();
-			L.openLibs();
+			//showNotification();
+			//Log.e("LUA","STARTING UP");
+			//L = LuaStateFactory.newLuaState();
+			//L.openLibs();
 
-			the_processor = new Processor(myhandler,the_settings.getEncoding(),this.getApplicationContext(),L);
-			synchronized(the_settings) {
-				if(the_settings.isKeepWifiActive()) {
-					EnableWifiKeepAlive();
-				}
+			//the_processor = new Processor(myhandler,the_settings.getEncoding(),this.getApplicationContext(),L);
+			//synchronized(the_settings) {
+			//	if(the_settings.isKeepWifiActive()) {
+			//		EnableWifiKeepAlive();
+			//	}
 				
-				the_processor.setDebugTelnet(the_settings.isDebugTelnet());
-			}
+			//	the_processor.setDebugTelnet(the_settings.isDebugTelnet());
+			//}
 			
 			//GMCPFunction gmcp = new GMCPFunction(the_processor,L);
 			
-			isConnected = true;
+			//isConnected = true;
 			
 		/*} catch (SocketException e) {
 			DispatchDialog("Socket Exception: " + e.getMessage());
@@ -4675,7 +4658,7 @@ public class StellarService extends Service {
 		
 		CharSequence brandName = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
 		Notification note = new Notification(resId,brandName + " Disconnected",System.currentTimeMillis());
-		String defaultmsg = "Click to reconnect: "+ host +":"+ port;
+		//String defaultmsg = "Click to reconnect: "+ host +":"+ port;
 		Context context = getApplicationContext();
 		CharSequence contentTitle = brandName + " Disconnected";
 		//CharSequence contentText = "Hello World!";
@@ -4683,7 +4666,7 @@ public class StellarService extends Service {
 		if(message != null && !message.equals("")) {
 			contentText = message;
 		} else {
-			contentText = defaultmsg;
+			//contentText = defaultmsg;
 		}
 		Intent notificationIntent = null;
 		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
@@ -4709,23 +4692,23 @@ public class StellarService extends Service {
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
-		notificationIntent.putExtra("DISPLAY",display);
-		notificationIntent.putExtra("HOST", host);
-		notificationIntent.putExtra("PORT", Integer.toString(port));
+		//notificationIntent.putExtra("DISPLAY",display);
+		//notificationIntent.putExtra("HOST", host);
+		//notificationIntent.putExtra("PORT", Integer.toString(port));
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = resId;
 		Pattern invalidchars = Pattern.compile("\\W"); 
-		Matcher replacebadchars = invalidchars.matcher(display);
-		String prefsname = replacebadchars.replaceAll("") + ".PREFS";
-		SharedPreferences sprefs = this.getSharedPreferences(prefsname,0);
-		SharedPreferences.Editor editor = sprefs.edit();
-		editor.putBoolean("CONNECTED", false);
-		editor.putBoolean("FINISHSTART", true);
-		editor.commit();
-		editor.commit();
+		//Matcher replacebadchars = invalidchars.matcher(display);
+		//String prefsname = replacebadchars.replaceAll("") + ".PREFS";
+		//SharedPreferences sprefs = this.getSharedPreferences(prefsname,0);
+		//SharedPreferences.Editor editor = sprefs.edit();
+		//editor.putBoolean("CONNECTED", false);
+		//editor.putBoolean("FINISHSTART", true);
+		//editor.commit();
+		//editor.commit();
 		this.stopForeground(true);
 		mNM.notify(5546,note);
 		showdcmessage = true;
@@ -4741,7 +4724,7 @@ public class StellarService extends Service {
 		Context context = getApplicationContext();
 		
 		CharSequence contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
-		CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
+		//CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
 		Intent notificationIntent = null;
 		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
 		notificationIntent = new Intent(windowAction);
@@ -4766,11 +4749,11 @@ public class StellarService extends Service {
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
-		notificationIntent.putExtra("DISPLAY", display);
+		//notificationIntent.putExtra("DISPLAY", display);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = resId;
 		note.flags = Notification.FLAG_ONGOING_EVENT;
 		this.startForeground(5545, note);
@@ -4779,10 +4762,10 @@ public class StellarService extends Service {
 	}
 	
 	public void killNetThreads() {
-		if(pump != null) {
-			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
-			pump = null;
-		}
+		//if(pump != null) {
+		//	pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+		//	pump = null;
+		//}
 		
 		//if(pump != null) {
 			/*try {
