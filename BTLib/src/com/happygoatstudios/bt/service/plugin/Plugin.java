@@ -90,29 +90,31 @@ public class Plugin {
 			//StringBuffer tmp = TextTree.deColorLine(l);
 			//test this line against each trigger.
 			for(TriggerData t : triggers) {
-				String str = TextTree.deColorLine(l).toString();
-				t.getMatcher().reset(str);
-				while(t.getMatcher().find() && keepEvaluating) {
-					if(t.isFireOnce() && t.isFired()) {
-						//do nothiong
-					} else {
-						if(t.isFireOnce()) {
-							t.setFired(true);
+				if(t.isEnabled()) {
+					String str = TextTree.deColorLine(l).toString();
+					t.getMatcher().reset(str);
+					while(t.getMatcher().find() && keepEvaluating) {
+						if(t.isFireOnce() && t.isFired()) {
+							//do nothiong
+						} else {
+							if(t.isFireOnce()) {
+								t.setFired(true);
+							}
+							
+							captureMap.clear();
+							for(int i=0;i<=t.getMatcher().groupCount();i++) {
+								captureMap.put(Integer.toString(i), t.getMatcher().group(i));
+							}
+							for(TriggerResponder responder : t.getResponders()) {
+								responder.doResponse(service.getApplicationContext(),input,l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName());
+							}
+							if(!t.isKeepEvaluating()) {
+								keepEvaluating = false;
+								break;
+							}
+							
+							
 						}
-						
-						captureMap.clear();
-						for(int i=0;i<=t.getMatcher().groupCount();i++) {
-							captureMap.put(Integer.toString(i), t.getMatcher().group(i));
-						}
-						for(TriggerResponder responder : t.getResponders()) {
-							responder.doResponse(service.getApplicationContext(),input,l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName());
-						}
-						if(!t.isKeepEvaluating()) {
-							keepEvaluating = false;
-							break;
-						}
-						
-						
 					}
 				}
 			}
