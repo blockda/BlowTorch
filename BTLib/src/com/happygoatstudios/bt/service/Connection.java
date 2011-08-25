@@ -118,8 +118,7 @@ public class Connection {
 	}
 	
 	protected void DoDisconnect(Object object) {
-		// TODO Auto-generated method stub
-		
+		//TODO: if window showing, show disconnection.
 	}
 
 	protected void killNetThreads() {
