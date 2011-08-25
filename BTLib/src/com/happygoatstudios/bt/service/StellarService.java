@@ -3169,7 +3169,7 @@ public class StellarService extends Service {
 	}
 	
 	
-	private void DispatchDialog(String message) {
+	public void DispatchDialog(String message) {
 		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			try {
@@ -4325,6 +4325,23 @@ public class StellarService extends Service {
 		
 	}
 	
+	public void sendRawDataToWindow(byte[] raw) {
+		final int N = callbacks.beginBroadcast();
+		int final_count = N;
+	
+		for(int i = 0;i<N;i++) {
+			try {
+				if(callbacks.getBroadcastItem(i).isWindowShowing()) {
+					callbacks.getBroadcastItem(i).rawDataIncoming(raw);
+				}
+			} catch (RemoteException e) {
+				//just need to catch it, don't need to care, the list maintains itself apparently.
+				final_count = final_count - 1;
+			}
+		}
+		callbacks.finishBroadcast();
+	}
+	
 	public void doDispatchNoProcess(byte[] data) throws RemoteException{
 		
 		buffer_tree.addBytesImplSimple(data);
@@ -4622,7 +4639,7 @@ public class StellarService extends Service {
 			L = LuaStateFactory.newLuaState();
 			L.openLibs();
 
-			the_processor = new Processor(myhandler,mBinder,the_settings.getEncoding(),this.getApplicationContext(),L);
+			the_processor = new Processor(myhandler,the_settings.getEncoding(),this.getApplicationContext(),L);
 			synchronized(the_settings) {
 				if(the_settings.isKeepWifiActive()) {
 					EnableWifiKeepAlive();

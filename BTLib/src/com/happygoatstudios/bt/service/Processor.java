@@ -26,7 +26,7 @@ public class Processor {
 
 	private String encoding = null;
 	private Context mContext = null;
-	public Processor(Handler useme, IStellarService.Stub theserv,
+	public Processor(Handler useme,
 			String pEncoding,Context pContext,LuaState L) {
 		reportto = useme;
 
