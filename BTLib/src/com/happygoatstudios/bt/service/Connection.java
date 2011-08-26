@@ -15,8 +15,18 @@ import java.util.regex.Pattern;
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
-import com.happygoatstudios.bt.service.StellarService.Data;
-import com.happygoatstudios.bt.service.StellarService.SpecialCommand;
+import com.happygoatstudios.bt.service.function.BellCommand;
+import com.happygoatstudios.bt.service.function.ClearButtonCommand;
+import com.happygoatstudios.bt.service.function.DirtyExitCommand;
+import com.happygoatstudios.bt.service.function.DisconnectCommand;
+import com.happygoatstudios.bt.service.function.FullScreenCommand;
+import com.happygoatstudios.bt.service.function.KeyboardCommand;
+import com.happygoatstudios.bt.service.function.LoadButtonsCommand;
+import com.happygoatstudios.bt.service.function.ReconnectCommand;
+import com.happygoatstudios.bt.service.function.SpecialCommand;
+import com.happygoatstudios.bt.service.function.ColorDebugCommand;
+import com.happygoatstudios.bt.service.function.SpeedwalkCommand;
+
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -46,7 +56,7 @@ public class Connection {
 	public final static int MESSAGE_DISCONNECTED = 8;
 	public static final int MESSAGE_MCCPFATALERROR = 9;
 	public final int MESSAGE_SENDDATA = 9;
-	Handler handler = null;
+	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
 	Processor processor = null;
@@ -59,7 +69,7 @@ public class Connection {
 	
 	StellarService service = null;
 	private boolean isConnected = false;
-	ConnectionSettingsPlugin the_settings = null;
+	public ConnectionSettingsPlugin the_settings = null;
 	
 	Character cr = new Character((char)13);
 	Character lf = new Character((char)10);
@@ -76,6 +86,37 @@ public class Connection {
 	Pattern whiteSpace = Pattern.compile("\\s");
 	
 	public Connection(String display,String host,int port,StellarService service) {
+		
+		ColorDebugCommand colordebug = new ColorDebugCommand();
+		DirtyExitCommand dirtyexit = new DirtyExitCommand();
+		//TimerCommand timercmd = new TimerCommand();
+		BellCommand bellcmd = new BellCommand();
+		FullScreenCommand fscmd = new FullScreenCommand();
+		KeyboardCommand kbcmd = new KeyboardCommand();
+		DisconnectCommand dccmd = new DisconnectCommand();
+		ReconnectCommand rccmd = new ReconnectCommand();
+		SpeedwalkCommand swcmd = new SpeedwalkCommand();
+		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
+		ClearButtonCommand cbcmd = new ClearButtonCommand();
+		//DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
+		//LuaCommand luacmd = new LuaCommand();
+		//Lua2Command lua2cmd = new Lua2Command();
+		specialcommands.put(colordebug.commandName, colordebug);
+		specialcommands.put(dirtyexit.commandName, dirtyexit);
+		//specialcommands.put(timercmd.commandName, timercmd);
+		specialcommands.put(bellcmd.commandName, bellcmd);
+		specialcommands.put(fscmd.commandName, fscmd);
+		specialcommands.put(kbcmd.commandName, kbcmd);
+		specialcommands.put("kb", kbcmd);
+		specialcommands.put(dccmd.commandName, dccmd);
+		specialcommands.put(rccmd.commandName, rccmd);
+		specialcommands.put(swcmd.commandName, swcmd);
+		specialcommands.put(lbcmd.commandName, lbcmd);
+		specialcommands.put(cbcmd.commandName, cbcmd);
+		//specialcommands.put(dmpcmd.commandName,dmpcmd);
+		//specialcommands.put(luacmd.commandName, luacmd);
+		
+		//specialcommands.put(lua2cmd.commandName,lua2cmd);
 		
 		this.display = display;
 		this.host = host;
@@ -255,7 +296,7 @@ public class Connection {
 		if(raw == null) return;
 		
 		working.setBleedColor(buffer.getBleedColor());
-		working.addBytesImpl(data);
+		working.addBytesImpl(raw);
 		for(Plugin p : plugins) {
 			p.process(working, service, true, handler, display);
 			working.updateMetrics();
@@ -274,7 +315,7 @@ public class Connection {
 		//service.DispatchDialog(str);
 	}
 
-	protected void sendDataToWindow(String message) {
+	public void sendDataToWindow(String message) {
 		/*try {
 			//TODO: use encoding setting.
 			service.doDispatchNoProcess(message.getBytes("ISO-8859-1"));
@@ -285,7 +326,7 @@ public class Connection {
 		}*/
 	}
 	
-	protected void sendBytesToWindow(byte[] data) {
+	public void sendBytesToWindow(byte[] data) {
 		//service.sendRawDataToWindow(data);
 		int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
@@ -532,7 +573,7 @@ public class Connection {
 						} else if(specialcommands.containsKey(alias)){
 							//Log.e("SERVICE","SERVICE FOUND SPECIAL COMMAND: " + alias);
 							SpecialCommand command = specialcommands.get(alias);
-							data = (Data) command.execute(argument);
+							data = (Data) command.execute(argument,this);
 							return data;
 						} else {
 							//format error message.
@@ -732,7 +773,7 @@ public class Connection {
 		
 	}
 	
-	RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
+	public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
 	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
 
 		public void registerCallback(IConnectionBinderCallback c)
@@ -781,8 +822,7 @@ public class Connection {
 		}
 
 		public void sendData(byte[] seq) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			handler.sendMessage(handler.obtainMessage(MESSAGE_SENDDATA, seq));
 		}
 
 		public void saveSettings() throws RemoteException {
@@ -1230,7 +1270,7 @@ public class Connection {
 
 		public String getEncoding() throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			return the_settings.getEncoding();
 		}
 
 		public void setEncoding(String input) throws RemoteException {

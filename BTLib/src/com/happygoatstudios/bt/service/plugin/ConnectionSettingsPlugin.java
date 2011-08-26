@@ -64,7 +64,7 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 	private boolean backspaceBugFix = false;
 	
 	
-	private boolean debugTelnet = false;
+	private boolean debugTelnet = true;
 	private boolean removeExtraColor = true;
 	
 	private LINK_MODE hyperLinkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
