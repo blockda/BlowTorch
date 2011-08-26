@@ -1,7 +1,7 @@
 package com.happygoatstudios.bt.service;
 
 import com.happygoatstudios.bt.button.SlickButtonData;
-import com.happygoatstudios.bt.service.IStellarServiceCallback;
+import com.happygoatstudios.bt.service.IStellarServiceCallback_BAK;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
@@ -11,9 +11,9 @@ import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.alias.AliasData;
 
-interface IStellarService {
-	void registerCallback(IStellarServiceCallback c);
-	void unregisterCallback(IStellarServiceCallback c);
+interface IStellarService_BAK {
+	void registerCallback(IStellarServiceCallback_BAK c);
+	void unregisterCallback(IStellarServiceCallback_BAK c);
 	int getPid();
 	void initXfer();
 	void endXfer();

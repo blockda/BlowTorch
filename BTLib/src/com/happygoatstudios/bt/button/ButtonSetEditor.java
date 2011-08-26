@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.button.ButtonEditorDialog.COLOR_FIELDS;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.validator.Validator;
 
@@ -42,9 +42,9 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 	
 	Handler notifychanged = null;
 	
-	IStellarService service;
+	IConnectionBinder service;
 	String set;
-	public ButtonSetEditor(Context context,IStellarService the_service,String selected_set,Handler use_this_handler) {
+	public ButtonSetEditor(Context context,IConnectionBinder the_service,String selected_set,Handler use_this_handler) {
 		super(context);
 		service = the_service;
 		set = selected_set;

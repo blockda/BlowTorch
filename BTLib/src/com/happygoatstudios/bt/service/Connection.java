@@ -6,36 +6,45 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.alias.AliasData;
+import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.StellarService.Data;
 import com.happygoatstudios.bt.service.StellarService.SpecialCommand;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
+import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
+import com.happygoatstudios.bt.timer.TimerData;
+import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.window.TextTree;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class Connection {
 	//base "connection class"
 	public final int MESSAGE_STARTUP = 1;
-	public final int MESSAGE_STARTCOMPRESS = 2;
-	public final int MESSAGE_PROCESSORWARNING = 3;
-	public final int MESSAGE_SENDOPTIONDATA = 4;
-	public final int MESSAGE_BELLINC = 5;
-	public final int MESSAGE_DODIALOG = 6;
-	public final int MESSAGE_PROCESS = 7;
-	public final int MESSAGE_DISCONNECTED = 8;
+	public final static int MESSAGE_STARTCOMPRESS = 2;
+	public final static int MESSAGE_PROCESSORWARNING = 3;
+	public final static int MESSAGE_SENDOPTIONDATA = 4;
+	public final static int MESSAGE_BELLINC = 5;
+	public final static int MESSAGE_DODIALOG = 6;
+	public final static int MESSAGE_PROCESS = 7;
+	public final static int MESSAGE_DISCONNECTED = 8;
+	public static final int MESSAGE_MCCPFATALERROR = 9;
 	public final int MESSAGE_SENDDATA = 9;
 	Handler handler = null;
 	ArrayList<Plugin> plugins = null;
@@ -205,7 +214,7 @@ public class Connection {
 				}
 			}
 		};
-		
+		the_settings = new ConnectionSettingsPlugin();
 		//private void loadDefaultDirections() {
 			HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
 			tmp.put("n", new DirectionData("n","n"));
@@ -219,7 +228,7 @@ public class Connection {
 			the_settings.setDirections(tmp);
 		//}
 		//load plugins.
-		the_settings = new ConnectionSettingsPlugin();
+		
 		//TODO: load plugins.
 		
 		buffer = new TextTree();
@@ -227,7 +236,7 @@ public class Connection {
 		
 		//TODO: set TextTree encoding options.
 		
-		handler.sendEmptyMessage(MESSAGE_STARTUP);
+		//handler.sendEmptyMessage(MESSAGE_STARTUP);
 	}
 	
 	protected void DoDisconnect(Object object) {
@@ -262,25 +271,42 @@ public class Connection {
 	}
 	
 	protected void DispatchDialog(String str) {
-		service.DispatchDialog(str);
+		//service.DispatchDialog(str);
 	}
 
 	protected void sendDataToWindow(String message) {
-		try {
+		/*try {
 			//TODO: use encoding setting.
 			service.doDispatchNoProcess(message.getBytes("ISO-8859-1"));
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	protected void sendBytesToWindow(byte[] data) {
-		service.sendRawDataToWindow(data);
+		//service.sendRawDataToWindow(data);
+		int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).rawDataIncoming(data);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		callbacks.finishBroadcast();
+		
 	}
 
 	private void doStartup() {
+		//int tmpPort = 0;
+		//String host = "";
+		//String display = "";
+		loadConnectionData();
+		
 		pump = new DataPumper(host,port,handler);
 		pump.start();
 		
@@ -288,6 +314,23 @@ public class Connection {
 		
 		//show notification somehow.
 		isConnected = true;
+	}
+	
+	private void loadConnectionData() {
+		int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				port = callbacks.getBroadcastItem(i).getPort();
+				host = callbacks.getBroadcastItem(i).getHost();
+				display = callbacks.getBroadcastItem(i).getDisplay();
+				
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//host = callbacks.getBroadcastItem(i))
+		}
+		callbacks.finishBroadcast();
 	}
 	
 	StringBuffer dataToServer = new StringBuffer();
@@ -688,5 +731,708 @@ public class Connection {
 			
 		
 	}
+	
+	RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
+	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
+
+		public void registerCallback(IConnectionBinderCallback c)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			if(c != null) {
+				callbacks.register(c);
+				if(pump == null) {
+					Log.e("SERVICE","STARTING UP CONNECTION");
+					doStartup();
+					
+				}
+			}
+		}
+
+		public void unregisterCallback(IConnectionBinderCallback c)
+				throws RemoteException {
+			if(c !=  null) {
+				callbacks.unregister(c);
+			}
+		}
+
+		public int getPid() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void initXfer() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void endXfer() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean hasBuffer() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isConnected() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void sendData(byte[] seq) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void saveSettings() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setNotificationText(CharSequence seq)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setConnectionData(String host, int port, String display)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void beginCompression() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void stopCompression() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void requestBuffer() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void saveBuffer(byte[] buffer) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addAlias(AliasData a) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public List getSystemCommands() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Map getAliases() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setAliases(Map map) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setFontSize(int size) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getFontSize() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void setFontSpaceExtra(int size) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getFontSpaceExtra() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void setFontName(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public String getFontName() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setFontPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setMaxLines(int keepcount) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getMaxLines() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void setSemiOption(boolean bools_are_newline)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addButton(String targetset, SlickButtonData new_button)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void removeButton(String targetset,
+				SlickButtonData button_to_nuke) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public List<SlickButtonData> getButtonSet(String setname)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public List<String> getButtonSetNames() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void modifyButton(String targetset, SlickButtonData orig,
+				SlickButtonData mod) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addNewButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public List<String> getButtonSets() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public int deleteButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public int clearButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public Map getButtonSetListInfo() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getLastSelectedSet() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void LoadSettingsFromPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void ExportSettingsToPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void resetSettings() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public ColorSetSettings getCurrentColorSetDefaults()
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public ColorSetSettings getColorSetDefaultsForSet(String the_set)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setColorSetDefaultsForSet(String the_set,
+				ColorSetSettings input) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setProcessPeriod(boolean value) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public Map getTriggerData() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Map getDirectionData() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setDirectionData(Map data) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void newTrigger(TriggerData data) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void updateTrigger(TriggerData from, TriggerData to)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void deleteTrigger(String which) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public TriggerData getTrigger(String pattern) throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setUseExtractUI(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean getUseExtractUI() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setThrottleBackground(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isThrottleBackground() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isProcessPeriod() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isEchoAliasUpdate() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setEchoAliasUpdate(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isSemiNewline() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setKeepWifiActive(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isKeepWifiActive() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setAttemptSuggestions(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isAttemptSuggestions() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setKeepLast(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isKeepLast() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isBackSpaceBugFix() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setBackSpaceBugFix(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isAutoLaunchEditor() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setAutoLaunchEditor(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isDisableColor() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setDisableColor(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public String HapticFeedbackMode() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setHapticFeedbackMode(String use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public String getAvailableSet() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getHFOnPress() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getHFOnFlip() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setHFOnPress(String use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setHFOnFlip(String use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setDisplayDimensions(int rows, int cols)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void reconnect() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public Map getTimers() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public TimerData getTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void startTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void pauseTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void stopTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void resetTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void updateTimer(TimerData old, TimerData newtimer)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addTimer(TimerData newtimer) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void removeTimer(TimerData deltimer) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getNextTimerOrdinal() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public Map getTimerProgressWad() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getEncoding() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setEncoding(String input) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public String getConnectedTo() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public boolean isKeepScreenOn() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setKeepScreenOn(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isLocalEcho() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setLocalEcho(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isVibrateOnBell() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setVibrateOnBell(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isNotifyOnBell() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setNotifyOnBell(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isDisplayOnBell() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setDisplayOnBell(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isFullScreen() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setFullScreen(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isRoundButtons() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setRoundButtons(boolean use) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getBreakAmount() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public int getOrientation() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public boolean isWordWrap() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setBreakAmount(int pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setOrientation(int pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setWordWrap(boolean pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isRemoveExtraColor() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isDebugTelnet() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setRemoveExtraColor(boolean pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setDebugTelnet(boolean pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void updateAndRenameSet(String oldSet, String newSet,
+				ColorSetSettings settings) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setHyperLinkMode(String pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public String getHyperLinkMode() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setHyperLinkColor(int pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getHyperLinkColor() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void setHyperLinkEnabled(boolean pIn) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isHyperLinkEnabled() throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void setTriggerEnabled(boolean enabled, String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setButtonSetLocked(boolean locked, String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isButtonSetLocked(String key) throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isButtonSetLockedMoveButtons(String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isButtonSetLockedNewButtons(String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isButtonSetLockedEditButtons(String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+	};
 	
 }

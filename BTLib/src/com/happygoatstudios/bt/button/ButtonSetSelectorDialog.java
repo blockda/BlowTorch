@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.window.MainWindow;
 
 import android.app.AlertDialog;
@@ -48,9 +48,9 @@ public class ButtonSetSelectorDialog extends Dialog {
 	String selected_set;
 	HashMap<String,Integer> data;
 	ConnectionAdapter adapter;
-	IStellarService service;
+	IConnectionBinder service;
 	ListView list = null;
-	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IStellarService the_service) {
+	public ButtonSetSelectorDialog(Context context,Handler reportto,HashMap<String,Integer> datai,String selectedset,IConnectionBinder the_service) {
 		super(context);
 		dispater = reportto;
 		selected_set = selectedset;

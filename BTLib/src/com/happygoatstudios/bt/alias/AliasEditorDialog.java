@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.AlertDialog;
@@ -42,9 +42,9 @@ public class AliasEditorDialog extends Dialog implements NewAliasDialogDoneListe
 	//AliasDialogDoneListener reporto = null;
 	HashMap<String,AliasData> input;
 	
-	IStellarService service;
+	IConnectionBinder service;
 
-	public AliasEditorDialog(Context context,HashMap<String,AliasData> pinput,IStellarService pService) {
+	public AliasEditorDialog(Context context,HashMap<String,AliasData> pinput,IConnectionBinder pService) {
 		super(context);
 		//reporto = useme;
 		input = pinput;
