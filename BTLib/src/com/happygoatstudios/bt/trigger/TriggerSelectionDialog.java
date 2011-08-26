@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.ui.RealTranslateAnimation;
 
 import android.app.AlertDialog;
@@ -43,12 +43,12 @@ import android.widget.ViewFlipper;
 public class TriggerSelectionDialog extends Dialog {
 
 	private ListView list;
-	private IStellarService service;
+	private IConnectionBinder service;
 	private List<TriggerItem> entries;
 	private TriggerListAdapter adapter;
 	private int lastSelectedIndex = -1;
 	
-	public TriggerSelectionDialog(Context context,IStellarService the_service) {
+	public TriggerSelectionDialog(Context context,IConnectionBinder the_service) {
 		super(context);
 		service = the_service;
 		entries = new ArrayList<TriggerItem>();

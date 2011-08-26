@@ -64,14 +64,11 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 		}
 		
 		Message msg = null;
-		try {
-			//Log.e("ACKRESPONDER","RESPONDING WITH: " + this.getAckWith());
-			String xformed = AckResponder.this.translate(this.getAckWith(), captureMap);
-			//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
-			msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
+		//Log.e("ACKRESPONDER","RESPONDING WITH: " + this.getAckWith());
+		String xformed = AckResponder.this.translate(this.getAckWith(), captureMap);
+		//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
+		//TODO: make ack responder actually ack
+		//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
 		
 		dispatcher.sendMessage(msg);
 		

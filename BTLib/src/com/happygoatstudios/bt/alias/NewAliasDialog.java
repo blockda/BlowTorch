@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.Dialog;
@@ -31,10 +31,10 @@ public class NewAliasDialog extends Dialog {
 	NewAliasDialogDoneListener reportto = null;
 	AliasData original_alias = null;
 	int old_pos = 0;
-	IStellarService service;
+	IConnectionBinder service;
 	List<String> cant_name;
 	
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,IStellarService pService,List<String> invalid_names) {
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,IConnectionBinder pService,List<String> invalid_names) {
 		super(context);
 		reportto = useme;
 		service = pService;
@@ -359,7 +359,7 @@ public class NewAliasDialog extends Dialog {
 	}
 	
 	boolean isEditor = false;
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,AliasData old_alias,IStellarService pService,List<String> invalid_names) {
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,AliasData old_alias,IConnectionBinder pService,List<String> invalid_names) {
 		super(context);
 		isEditor=true;
 		reportto = useme;
