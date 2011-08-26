@@ -87,21 +87,21 @@ public class GMCPData {
 			maxmana = (this.get("char.maxstats.maxmana") == null) ? 100 : (Integer)this.get("char.maxstats.maxmana");
 			enemy = (this.get("char.status.enemypct") == null) ? 0 : (Integer)this.get("char.status.enemypct");
 			
-			Message m = reporter.obtainMessage(StellarService.MESSAGE_FOO);
+			//Message m = reporter.obtainMessage(StellarService.MESSAGE_FOO);
 			//if(this.get(list.data.MESSget(i))
-			Bundle b = m.getData();
-			b.putInt("HP", hp);
-			b.putInt("MP", mp);
-			b.putInt("MAXHP", maxhp);
-			b.putInt("MAXMANA", maxmana);
+			//Bundle b = m.getData();
+			//b.putInt("HP", hp);
+			//b.putInt("MP", mp);
+			//b.putInt("MAXHP", maxhp);
+			//b.putInt("MAXMANA", maxmana);
 			
-			if(enemyZero) {
+			/*if(enemyZero) {
 				b.putInt("ENEMY", 0);
 			} else {
 				b.putInt("ENEMY", enemy);
 			}
 			m.setData(b);
-			reporter.sendMessage(m);
+			reporter.sendMessage(m);*/
 			
 		}
 	};

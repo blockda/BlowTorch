@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -34,7 +34,7 @@ import android.widget.AdapterView.OnItemClickListener;
 public class TimerSelectionDialog extends Dialog {
 
 	private ListView list;
-	private IStellarService service;
+	private IConnectionBinder service;
 	private List<TimerItem> entries;
 	private TimerListAdapter adapter;
 	
@@ -49,7 +49,7 @@ public class TimerSelectionDialog extends Dialog {
 	public int selected = -1;
 	
 	//private TableLayout button_row;
-	public TimerSelectionDialog(Context context,IStellarService the_service) {
+	public TimerSelectionDialog(Context context,IConnectionBinder the_service) {
 		super(context);
 		service = the_service;
 		entries = new ArrayList<TimerItem>();

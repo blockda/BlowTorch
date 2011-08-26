@@ -144,11 +144,11 @@ public class Processor {
 							b.rewind();
 							reportto.sendMessageAtFrontOfQueue(reportto
 									.obtainMessage(
-											StellarService.MESSAGE_STARTCOMPRESS,
+											Connection.MESSAGE_STARTCOMPRESS,
 											b.array()));
 							if(debugTelnet) {
 								String message = "\n"+Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.telOptColorEnd+"\n";
-								reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
+								reportto.sendMessageDelayed(reportto.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,message), 1);
 							}
 							byte[] trunc = new byte[count];
 							buff.rewind();
@@ -204,7 +204,7 @@ public class Processor {
 				}
 				break;
 			case BELL:
-				reportto.sendEmptyMessage(StellarService.MESSAGE_BELLINC);
+				reportto.sendEmptyMessage(Connection.MESSAGE_BELLINC);
 				break;
 			case CARRIAGE:
 				//strip carriage returns
@@ -228,7 +228,7 @@ public class Processor {
 		
 		//Log.e("PROCESSOR","GOT COMMAND:" + "IAC|" + TC.decodeInt(new String(new byte[]{action},encoding),encoding) + "|"+ TC.decodeInt(new String(new byte[]{option},encoding), encoding));
 		byte[] resp = opthandler.processCommand(IAC, action, option);
-		Message sb = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA,resp);
+		Message sb = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA,resp);
 		if(resp.length > 2) {
 			if(resp[2] == TC.NAWS) {
 				//naws has started.
@@ -289,7 +289,7 @@ public class Processor {
 			//Log.e("GMCP","RECIEVED GMCP: " + message);
 			if(debugTelnet) {
 				String message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
-				reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,message), 1);
+				reportto.sendMessageDelayed(reportto.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,message), 1);
 				
 				
 				
@@ -357,7 +357,7 @@ public class Processor {
 				message += Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(sub_r) + "]" + Colorizer.telOptColorEnd + "\n";
 				//reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message));
 			}
-			Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Message sbm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle b = sbm.getData();
 			b.putByteArray("THE_DATA",sub_r);
 			b.putString("DEBUG_MESSAGE", message);
@@ -389,7 +389,7 @@ public class Processor {
 			return;
 		}
 		//Log.e("PROCESSOR","DISPATCHING NAWS");
-		Message sbm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+		Message sbm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 		Bundle b = sbm.getData();
 		b.putByteArray("THE_DATA", nawsout);
 		
@@ -429,14 +429,14 @@ public class Processor {
 			String out_hello = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(hellob) + "]" + Colorizer.telOptColorEnd + "\n";
 			String out_support = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(supportb) + "]" + Colorizer.telOptColorEnd + "\n";
 			
-			Message hm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Message hm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle bh = hm.getData();
 			bh.putByteArray("THE_DATA",hellob);
 			bh.putString("DEBUG_MESSAGE", out_hello);
 			hm.setData(bh);
 			reportto.sendMessage(hm);
 			
-			Message sm = reportto.obtainMessage(StellarService.MESSAGE_SENDOPTIONDATA);
+			Message sm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle bs = sm.getData();
 			bs.putByteArray("THE_DATA",supportb);
 			bs.putString("DEBUG_MESSAGE", out_support);

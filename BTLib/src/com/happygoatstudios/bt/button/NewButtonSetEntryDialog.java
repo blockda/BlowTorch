@@ -3,7 +3,7 @@ package com.happygoatstudios.bt.button;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.validator.Validator;
 import com.happygoatstudios.bt.window.MainWindow;
 
@@ -21,9 +21,9 @@ import android.widget.EditText;
 public class NewButtonSetEntryDialog extends Dialog {
 
 	Handler dispatcher = null;
-	IStellarService service = null;
+	IConnectionBinder service = null;
 	
-	public NewButtonSetEntryDialog(Context context,Handler reportto,IStellarService theService) {
+	public NewButtonSetEntryDialog(Context context,Handler reportto,IConnectionBinder theService) {
 		super(context);
 		dispatcher = reportto;
 		service = theService;

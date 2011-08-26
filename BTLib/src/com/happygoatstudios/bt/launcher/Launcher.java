@@ -69,7 +69,7 @@ import android.widget.Toast;
 
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
 
 import dalvik.system.PathClassLoader;
@@ -99,7 +99,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	LauncherSettings launcher_settings;
 	
-	IStellarService service;
+	IConnectionBinder service;
 	
 	/*public enum LAUNCH_MODE {
 		FREE,
@@ -658,7 +658,11 @@ public class Launcher extends Activity implements ReadyListener {
 
 		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
 			
-			service = IStellarService.Stub.asInterface(arg1); //turn the binder into something useful
+			if(arg1 == null) {
+				return;
+			}
+			
+			service = IConnectionBinder.Stub.asInterface(arg1); //turn the binder into something useful
 			
 			String test = "";
 			String against = launch.getHostName() +":"+ launch.getPortString();
@@ -677,7 +681,7 @@ public class Launcher extends Activity implements ReadyListener {
 					
 					public void onClick(DialogInterface dialog, int which) {
 						Launcher.this.unbindService(mConnection);
-						stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
+						stopService(new Intent(com.happygoatstudios.bt.service.IConnectionBinder.class.getName()));
 						DoNewStartup();
 					}
 				});

@@ -165,7 +165,7 @@ public class MainWindow extends Activity {
 	Handler myhandler = null;
 	//boolean servicestarted = false;
 	
-	IStellarService service = null;
+	IConnectionBinder service = null;
 	Processor the_processor = null;
 	private int statusBarHeight = 1;
 	//GestureDetector gestureDetector = null;
@@ -189,7 +189,7 @@ public class MainWindow extends Activity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 
 		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
-			service = IStellarService.Stub.asInterface(arg1); //turn the binder into something useful
+			service = IConnectionBinder.Stub.asInterface(arg1); //turn the binder into something useful
 			
 			//register callback
 			try {
@@ -1179,6 +1179,13 @@ public class MainWindow extends Activity {
 			}*/
 			
 			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
+			Intent startAction = new Intent(serviceBindAction);
+			//startAction.putExtra(name, value)
+			//Bundle b = startAction.getExtras();
+			startAction.putExtra("DISPLAY", "aardwolf");
+			startAction.putExtra("PORT", 4010);
+			startAction.putExtra("HOST", "aardmud.org");
+			
 			this.startService(new Intent(serviceBindAction));
 			//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			//servicestarted = true;
@@ -1733,45 +1740,17 @@ public class MainWindow extends Activity {
 	}
 	
 	private boolean isServiceRunning() {
-	/*	ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
-    	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
-    	boolean found = false;
-    	for(RunningServiceInfo service : services) {
-    		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
-    		//service.service.
-    		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
-    			//service is running, don't do anything.
-    			found = true;
-    		} else {
-
-    			
-    		}
-    	}
-		return found;*/
-	ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
-	List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
-	boolean found = false;
-	String serviceProcessName = "com.happygoatstudios.bt" + ConfigurationLoader.getConfigurationValue("serviceProcessName", this);
-	for(RunningServiceInfo service : services) {
-		//Log.e("LAUNCHER","FOUND:" + service.service.getClassName());
-		//service.service.
-		if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
-			//service is running, don't do anything.
-			//Log.e(":Launcher","Service lives in: " + service.process);
-			/*if(mode == LAUNCH_MODE.FREE) {
-				
-				if(service.process.equals("com.happygoatstudios.btfree:stellar_free")) found = true;
-			} else if(mode == LAUNCH_MODE.TEST) {
-				if(service.process.equals("com.happygoatstudios.bttest:stellar_test")) found = true;
-			}*/
-			if(service.process.equals(serviceProcessName)) found = true;
-			
-		} else {
-
-			
+	
+		ActivityManager activityManager = (ActivityManager)MainWindow.this.getSystemService(Context.ACTIVITY_SERVICE);
+		List<RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+		boolean found = false;
+		String serviceProcessName = "com.happygoatstudios.bt" + ConfigurationLoader.getConfigurationValue("serviceProcessName", this);
+		for(RunningServiceInfo service : services) {
+			if(com.happygoatstudios.bt.service.StellarService.class.getName().equals(service.service.getClassName())) {
+				if(service.process.equals(serviceProcessName)) found = true;
+			}
 		}
-	}
-	return found;
+		return found;
 	}
 	
 	private boolean isServiceConnected() {
@@ -2462,7 +2441,7 @@ public class MainWindow extends Activity {
 	}
 
 
-	private IStellarServiceCallback.Stub the_callback = new IStellarServiceCallback.Stub() {
+	private IConnectionBinderCallback.Stub the_callback = new IConnectionBinderCallback.Stub() {
 
 		public void dataIncoming(byte[] seq) throws RemoteException {
 			Message msg = myhandler.obtainMessage(MESSAGE_PROCESS);
@@ -2643,6 +2622,21 @@ public class MainWindow extends Activity {
 
 		public void updateTriggerDebugString(String str) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_TRIGGERSTR,str));
+		}
+
+		public int getPort() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 6555;
+		}
+
+		public String getHost() throws RemoteException {
+			// TODO Auto-generated method stub
+			return "aardmud.net";
+		}
+
+		public String getDisplay() throws RemoteException {
+			// TODO Auto-generated method stub
+			return "fooo";
 		}
 	};
 	

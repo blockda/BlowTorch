@@ -4,7 +4,7 @@ package com.happygoatstudios.bt.speedwalk;
 import java.util.HashMap;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.Dialog;
@@ -24,19 +24,19 @@ public class SpeedWalkDirectionEditorDialog extends Dialog {
 	DirectionEditorDoneListener doneListener = null;
 	DirectionData oldData = null;
 	
-	IStellarService service = null;
+	IConnectionBinder service = null;
 	
 	EditText direction = null;
 	EditText command = null;
 	
-	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,IStellarService service) {
+	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,IConnectionBinder service) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		this.doneListener = doneListener;
 		this.service = service;
 	}
 	
-	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,DirectionData old,IStellarService service) {
+	public SpeedWalkDirectionEditorDialog(Context context,DirectionEditorDoneListener doneListener,DirectionData old,IConnectionBinder service) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		this.doneListener = doneListener;

@@ -23,9 +23,10 @@ public class TimerExtraTask extends TimerTask {
 	public void run() {
 		starttime = System.currentTimeMillis();
 		//we need to send the dispatch message and reset the start time if this is a repeater.
-		Message timerproc = dispatcher.obtainMessage(StellarService.MESSAGE_TIMERFIRED);
-		timerproc.arg1 = ordinal;
-		dispatcher.sendMessage(timerproc);
+		//Message timerproc = dispatcher.obtainMessage(StellarService.MESSAGE_TIMERFIRED);
+		//timerproc.arg1 = ordinal;
+		//dispatcher.sendMessage(timerproc);
+		//TODO: make timer actually fire.
 	}
 
 	public void setStarttime(long starttime) {

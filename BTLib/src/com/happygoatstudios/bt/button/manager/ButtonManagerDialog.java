@@ -1,7 +1,7 @@
 package com.happygoatstudios.bt.button.manager;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -11,11 +11,11 @@ import android.view.Window;
 import android.view.WindowManager;
 
 public class ButtonManagerDialog extends Dialog {
-	IStellarService service = null;
+	IConnectionBinder service = null;
 	String set = "";
 	
 	
-	public ButtonManagerDialog(String set, IStellarService service, Context context) {
+	public ButtonManagerDialog(String set, IConnectionBinder service, Context context) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		this.set = set;
