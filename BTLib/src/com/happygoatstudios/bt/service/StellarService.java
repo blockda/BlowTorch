@@ -91,6 +91,7 @@ import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.responder.replace.ReplaceResponder;
 //import com.happygoatstudios.bt.service.IStellarServiceCallback;
 //import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.function.SpecialCommand;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -479,36 +480,7 @@ public class StellarService extends Service {
 		//mNM.cancel(5546);
 		//host = BAD_HOST;
 		//port = BAD_PORT;
-		ColorDebugCommand colordebug = new ColorDebugCommand();
-		DirtyExitCommand dirtyexit = new DirtyExitCommand();
-		//TimerCommand timercmd = new TimerCommand();
-		BellCommand bellcmd = new BellCommand();
-		//FullScreenCommand fscmd = new FullScreenCommand();
-		KeyBoardCommand kbcmd = new KeyBoardCommand();
-		DisconnectCommand dccmd = new DisconnectCommand();
-		ReconnectCommand rccmd = new ReconnectCommand();
-		SpeedwalkCommand swcmd = new SpeedwalkCommand();
-		//LoadButtonsCommand lbcmd = new LoadButtonsCommand();
-		ClearButtonsCommand cbcmd = new ClearButtonsCommand();
-		DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
-		LuaCommand luacmd = new LuaCommand();
-		Lua2Command lua2cmd = new Lua2Command();
-		specialcommands.put(colordebug.commandName, colordebug);
-		specialcommands.put(dirtyexit.commandName, dirtyexit);
-		//specialcommands.put(timercmd.commandName, timercmd);
-		specialcommands.put(bellcmd.commandName, bellcmd);
-		//specialcommands.put(fscmd.commandName, fscmd);
-		specialcommands.put(kbcmd.commandName, kbcmd);
-		specialcommands.put("kb", kbcmd);
-		specialcommands.put(dccmd.commandName, dccmd);
-		specialcommands.put(rccmd.commandName, rccmd);
-		specialcommands.put(swcmd.commandName, swcmd);
-		//specialcommands.put(lbcmd.commandName, lbcmd);
-		specialcommands.put(cbcmd.commandName, cbcmd);
-		specialcommands.put(dmpcmd.commandName,dmpcmd);
-		specialcommands.put(luacmd.commandName, luacmd);
-		
-		specialcommands.put(lua2cmd.commandName,lua2cmd);
+
 		
 		
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
@@ -1598,145 +1570,14 @@ public class StellarService extends Service {
 		return d;
 	}
 	*/
-	public class SpecialCommand {
-		public String commandName;
-		public SpecialCommand() {
-			//nothing really to do here
-		}
-		public Object execute(Object o) {
-			//this is to be overridden.
-			return null;
-		}
-		
-		
-	}
-	public class Data {
-		public String cmdString;
-		public String visString;
-		public Data() {
-			cmdString = "";
-			visString = "";
-		}
-	}
 	
-	private class ColorDebugCommand extends SpecialCommand{
-		public ColorDebugCommand() {
-			commandName = "colordebug";
-		}
-		public Object execute(Object o) {
-			//Log.e("WINDOW","EXECUTING COLOR DEBUG COMMAND WITH STRING ARGUMENT: " + (String)o);
-			String arg = (String)o;
-			Integer iarg = 0;
-			boolean failed = false;
-			
-			try {
-				iarg = Integer.parseInt(arg);
-			} catch (NumberFormatException e) {
-				//invalid number
-				failed = true;
-				//errormessage += "\"colordebug\" special command is unable to use the argument: " + arg + "\n";
-				//errormessage += "Acceptable arguments are 0, 1, 2 or 3\n";
-			}
-			if(iarg < 0 || iarg > 3) {
-				//invalid number
-				failed = true;
-			}
-			
-			if(failed) {
-				String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
-				if(arg.equals("")) {
-					errormessage += "\"colordebug\" special command requires an argument.\n";
-				} else {
-					errormessage += "\"colordebug\" special command is unable to use the argument: " + arg + "\n";
-				}
-				errormessage += "Acceptable arguments are 0, 1, 2 or 3\n";
-				errormessage += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";
-				
-				try {
-					doDispatchNoProcess(errormessage.getBytes("ISO-8859-1"));
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
-				}
-				
-				return null;
-			}
-			//if we are here we are good to go.
-//			final int N = callbacks.beginBroadcast();
-//			for(int i = 0;i<N;i++) {
-//				try {
-//					callbacks.getBroadcastItem(i).executeColorDebug(iarg);
-//				} catch (RemoteException e) {
-//					throw new RuntimeException(e);
-//				}
-//				//notify listeners that data can be read
-//			}
-//			callbacks.finishBroadcast();
-			
-			//so with the color debug mode set, we should probably dispatch a message to them.
-			String success = "\n" + Colorizer.colorRed + "Color Debug Mode " + iarg + " activated. ";
-			if(iarg == 0) {
-				success = "\n" + Colorizer.colorRed + "Normal color processing resumed." ;
-			} else if(iarg == 1) {
-				success += "(color enabled, color codes shown)";
-			} else if(iarg == 2) {
-				success += "(color disabled, color codes shown)";
-			} else if(iarg == 3) {
-				success += "(color disabled, color codes not shown)";
-			} else {
-				success += "(this argument shouldn't happen, contact developer)";
-			}
-			
-			success += Colorizer.colorWhite +"\n";
-			
-			try {
-				doDispatchNoProcess(success.getBytes("ISO-8859-1"));
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
-			
-			return null;
-		}
-		
-	}
+
 	
-	/*private class BrokenColor extends SpecialCommand {
-		public BrokenColor() {
-			this.commandName = "brokencolor";
-		}
-		
-		public void execute(Object o) {
-			String testmessage = Colorizer.debugString;
-			try {
-				doDispatchNoProcess(testmessage.getBytes());
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}*/
 	
-	private class DirtyExitCommand extends SpecialCommand {
-		public DirtyExitCommand() {
-			this.commandName = "closewindow";
-		}
-//		public Object execute(Object o) {
-//			
-//			final int N = callbacks.beginBroadcast();
-//			for(int i = 0;i<N;i++) {
-//				try {
-//					callbacks.getBroadcastItem(i).invokeDirtyExit();
-//				} catch (RemoteException e) {
-//					throw new RuntimeException(e);
-//				}
-//				//notify listeners that data can be read
-//			}
-//			callbacks.finishBroadcast();
-//			return null;
-//		}
-	}
+	
+	
+	
+
 	
 	ArrayList<String> timer_actions;
 	
@@ -1839,257 +1680,31 @@ public class StellarService extends Service {
 		}
 	}*/
 	
-	private class BellCommand extends SpecialCommand {
-		public BellCommand() {
-			this.commandName = "dobell";
-		}
-		public Object execute(Object o) {
-			
-			//myhandler.sendEmptyMessage(MESSAGE_BELLINC);
-			
-			return null;
-			
-		}
-	}
+
 	
-	/*private class FullScreenCommand extends SpecialCommand {
-		public FullScreenCommand() {
-			this.commandName = "togglefullscreen";
-		}
-		public Object execute(Object o) {
-			
-			
-			final int N = callbacks.beginBroadcast();
-			for(int i = 0;i<N;i++) {
-				try {
-					callbacks.getBroadcastItem(i).setScreenMode(!the_settings.isFullScreen());
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				//notify listeners that data can be read
-			}
-			callbacks.finishBroadcast();
-			return null;
-		}
-	}*/
+
 	
-	private class KeyBoardCommand extends SpecialCommand {
-		public KeyBoardCommand() {
-			this.commandName = "keyboard";
-			//alternate short form, kb.
-		}
-		public Object execute(Object o) {
-			
-			//DO ALIAS/VARIABLE TRANSFORMATIONS!!!
-			//ACTUALLY, I THINK THE TRANSFORM STEP
-			//IS DONE BEFORE SPECIAL COMMAND PARSING.
-			
-			//command format.
-			//.kb message - set keyboard text.
-			//.kb add message - append message to current keyboard.
-			//.kb popup message - set keyboard text and popup.
-			//.kb add popop message - append message and popup.
-			//.kb popup add message - same as prev, but with syntax swapped.
-			//.kb flush message - send the keyboard.
-			//.kb close - closes the keyboard
-			//.kb clear - clears any text in the keyboard
-			//.kb - print the kb help message.
-			boolean failed = false;
-			if(o==null) {
-				//fail, print kb
-				failed = true;
-			} else if(((String)o).equals("")) {
-				//fail, print kb.
-				failed = true;
-			}
-			
-			if(failed) {
-				try {
-					doDispatchNoProcess(getErrorMessage("Keyboard (kb) special command usage:",".kb options message\n" +
-							"Options are as follows:\n" +
-							"add,popup,flush,close,clear\n"+
-							"add and popup are optional flags that will append text or popup the window when supplied.\n" +
-							"flush sends the current text in the input window to the server.\n" +
-							"close will close the keyboard if it is open.\n"+
-							"clear will erase any text that is currently in the input window.\n" +
-							"Example:\n" +
-							"\".kb popup reply \" will put \"reply \" into the input bar and pop up the keyboard.\n" +
-							"\".kb add foo\" will append foo to the current text in the input box and not pop up the keyboard.\n" +
-							"\".kb flush\" will transmit the text currently in the box.\n" +
-							"The cursor is always moved to the end of the new text.").getBytes("ISO-8859-1"));
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
-				}
-				return null;
-			}
-			
-			Pattern p = Pattern.compile("^\\s*(add|popup|flush|close|clear){0,1}\\s*(add\\s+|popup\\s+|flush\\s+){0,1}(.*)$");
-			Matcher m = p.matcher((String)o);
-			String operation1 = "";
-			String operation2 = "";
-			String text = "";
-			if(m.matches()) {
-				//match
-				operation1 = m.group(1);
-				operation2 = m.group(2);
-				text = m.group(3);
-			} else {
-				//shouldn't ever not match.
-			}
-			boolean doadd = false;
-			boolean dopopup = false;
-			boolean doflush = false;
-			boolean doclear = false;
-			boolean doclose = false;
-			
-			if(operation1 != null && !operation1.equals("")) {
-				operation1 = operation1.replaceAll("\\s", "");
-				if(operation1.equalsIgnoreCase("add")) {
-					doadd = true;
-				}
-				if(operation1.equalsIgnoreCase("popup")) {
-					dopopup = true;
-				}
-			}
-			if(operation2 != null && !operation2.equals("")) {
-				operation2 = operation2.replaceAll("\\s", "");
-				if(operation2.equalsIgnoreCase("add")) {
-					doadd = true;
-				}
-				if(operation2.equalsIgnoreCase("popup")) {
-					dopopup = true;
-				}
-			}
-			
-			if(operation1 != null && !operation1.equals("")) {
-				
-				if(operation1.equalsIgnoreCase("flush")) {
-					doflush = true;
-				}
-				if(operation1.equalsIgnoreCase("clear")) {
-					doclear = true;
-				}
-				if(operation1.equalsIgnoreCase("close")) {
-					doclose = true;
-				}
-			}
-			
-			Boolean foo = new Boolean(true);
-			//text = new String(DoAliasReplacement(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
-			
-//			final int N = callbacks.beginBroadcast();
-//			for(int i = 0;i<N;i++) {
-//				try {
-//					callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush,doclear,doclose);
-//				} catch (RemoteException e) {
-//					throw new RuntimeException(e);
-//				}
-//				//notify listeners that data can be read
-//			}
-//			callbacks.finishBroadcast();
-//			return null;
-			return null;
-		}
-	}
 	
-	private class DisconnectCommand extends SpecialCommand {
-		
-		public DisconnectCommand() {
-			this.commandName = "disconnect";
-		}
-		public Object execute(Object o) {
-			
-			
-			//myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
-			String msg = "\n" + Colorizer.colorRed + "Disconnected." + Colorizer.colorWhite + "\n";
-			try {
-				doDispatchNoProcess(msg.getBytes("ISO-8859-1"));
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
-			return null;
-		}
-	}
 	
-	private class ReconnectCommand extends SpecialCommand {
-		public ReconnectCommand() {
-			this.commandName = "reconnect";
-		}
-		public Object execute(Object o) {
-			
-			
-			//myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
-			String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
-			try {
-				doDispatchNoProcess(msg.getBytes("ISO-8859-1"));
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
-			return null;
-		}
-	}
+
 	
-	private class ClearButtonsCommand extends SpecialCommand {
-		public ClearButtonsCommand() {
-			this.commandName = "clearbuttons";
-		}
-		
+
+	
+
+	
+
+	
+//	private class DumpGMCPCommand extends SpecialCommand {
+//		public DumpGMCPCommand() {
+//			this.commandName = "dumpgmcp";
+//		}
+//		
 //		public Object execute(Object o) {
-//			int N = callbacks.beginBroadcast();
-//			for(int i = 0;i<N;i++) {
-//				try {
-//					callbacks.getBroadcastItem(i).clearAllButtons();
-//				} catch (RemoteException e) {
-//				}
-//			}
-//			callbacks.finishBroadcast();
+//			
+//			//the_processor.dumpGMCP();
 //			return null;
 //		}
-		
-	}
-	
-	/*private class LoadButtonsCommand extends SpecialCommand {
-		public LoadButtonsCommand() {
-			this.commandName = "loadset";
-		}
-		
-		public Object execute(Object o) {
-			String str = (String)o;
-			if(the_settings.getButtonSets().containsKey(str)) {
-				//load that set.
-				int N = callbacks.beginBroadcast();
-				for(int i=0;i<N;i++) {
-					try {
-						callbacks.getBroadcastItem(i).reloadButtons(str);
-					} catch (RemoteException e) {
-					}
-				}
-				callbacks.finishBroadcast();
-			} else {
-				//invalid key
-				DispatchToast("Button Set: \"" + str + "\" does not exist.",false);
-			}
-			return null;
-		}
-	}*/
-	
-	private class DumpGMCPCommand extends SpecialCommand {
-		public DumpGMCPCommand() {
-			this.commandName = "dumpgmcp";
-		}
-		
-		public Object execute(Object o) {
-			
-			//the_processor.dumpGMCP();
-			return null;
-		}
-	}
+//	}
 	
 	private class LuaCommand extends SpecialCommand {
 		public LuaCommand() {
@@ -2170,186 +1785,7 @@ public class StellarService extends Service {
 			return null;
 		}
 	}
-	private class SpeedwalkCommand extends SpecialCommand {
-		
-		
-		
-		public SpeedwalkCommand() {
-			this.commandName = "run";
-		}
-		public Object execute(Object o) {
-			String str = (String)o;
-			
-			Character cr = new Character((char)13);
-			Character lf = new Character((char)10);
-			String crlf = cr.toString() + lf.toString();
-			//str will be of the form, 3d2enewsnu3d32wijkl
-			//direction ordinals are now configurable.
-			
-			if(str.equals("") || str.equals(" ")) {
-				try {
-					doDispatchNoProcess(getErrorMessage("Speedwalk (run) special command usage:",".run directions\n" +
-							"Direction ordinal to command mappings are editable, press MENU->More->Speedwalk Configuration for more info. The default mapping is as follows:\n" +
-							" n: north\n e: east\n s: south\n w: west\n u: up\n d: down\n h: northwest\n j: northeast\n k: southwest\n l: southeast\n"+
-							"directions may be prefeced with an integer value to run that many times.\n" +
-							"Commands may be inserted into the direction stream with commas,\n" +
-							"directions may be resumed by entering another comma followed by directions.\n" +
-							"Example:\n" +
-							"\".run 3desw2n\", will send d;d;d;e;s;w;n;n to the server.\n" +
-							"\".run jlk3n3j\", will send se;nw;sw;n;n;n;se;se;se to the server.\n"+
-							"\".run 3ds,open door,3w\" will send d;d;d;s;open door;w;w;w to the server.\n").getBytes("ISO-8859-1"));
-				} catch (RemoteException ef) {
-					ef.printStackTrace();
-				} catch (UnsupportedEncodingException ea) {
-					throw new RuntimeException(ea);
-				}
-				return null;
-				
-			}
 
-			StringBuffer buf = new StringBuffer();
-			boolean commanding = false;
-			LinkedList<Integer> runtable = new LinkedList<Integer>();
-			for(int i=0;i<str.length();i++) {
-				char theChar = str.charAt(i);
-				String bit = String.valueOf(theChar);
-				if(commanding) {
-					if(bit.equals(",")) {
-						commanding = false;
-						buf.append(crlf);
-					} else {
-						buf.append(bit);
-					}
-				} else {
-					
-				
-					try {
-						int num = Integer.parseInt(bit);
-						runtable.add(num);
-						//place += 1;
-						//runlength = (runlength *10) + runlength * num;
-					} catch (NumberFormatException e) {
-						//got exception, this is a direction or an invalid character.
-						boolean valid = false;
-						String respString = "";
-						
-						//make "theChar" a string
-						String testVal = Character.toString(theChar);
-						if(testVal.equals(",")) {
-							commanding = true;
-							buf.append(crlf);
-						} else {
-							//check if the testVal has a mapping in the table
-							/*if(the_settings.getDirections().containsKey(testVal)) {
-								valid = true;
-								respString = the_settings.getDirections().get(testVal).getCommand();
-							}*/
-						}
-						
-						
-						/*switch(theChar) {
-						case 'n':
-							respString = "n";
-							valid = true;
-							break;
-						case 'e':
-							respString = "e";
-							valid = true;
-							break;
-						case 's':
-							respString = "s";
-							valid = true;
-							break;
-						case 'w':
-							respString = "w";
-							valid = true;
-							break;
-						case 'u':
-							respString = "u";
-							valid = true;
-							break;
-						case 'd':
-							respString = "d";
-							valid = true;
-							break;
-						case 'h':
-							respString = "ne";
-							valid = true;
-							break;
-						case 'j':
-							respString = "se";
-							valid = true;
-							break;
-						case 'k':
-							respString = "sw";
-							valid = true;
-							break;
-						case 'l':
-							respString = "nw";
-							valid = true;
-							break;
-						case ',':
-							commanding = true;
-							buf.append(crlf);
-							break;
-						default:
-							
-						
-						}*/
-						
-						if(valid) {
-							//compute the run length.
-							int run = 1;
-							int tmpPlace = runtable.size()-1;
-							if(runtable.size() > 0) {
-								run = 0;
-								for(Integer tmp : runtable) {
-									run += Math.pow(10,tmpPlace) * tmp;
-									tmpPlace--;
-								}
-							}
-							
-							for(int j=0;j<run;j++) {
-								//if(j == run-1) {
-								//	buf.append(respString);
-								//} else {
-									buf.append(respString+crlf);
-								//}
-							}
-							
-							runtable.clear();
-							
-						} else if(!valid && !commanding) {
-							//bail with error,
-							int errlength = i + 5;
-							StringBuffer tmpb = new StringBuffer();
-							for(int a=0;a<errlength;a++) {
-								tmpb.append("-");
-							}
-							tmpb.append("^");
-							try {
-								doDispatchNoProcess(getErrorMessage("Invalid direction in command:","."+commandName + " " +str+"\n" +
-										tmpb.toString() + "\n" + 
-										"At location " + errlength + ", " + bit).getBytes("ISO-8859-1"));
-							} catch (RemoteException ef) {
-								ef.printStackTrace();
-							} catch (UnsupportedEncodingException ea) {
-								throw new RuntimeException(ea);
-							}
-							return null;
-						}
-					}
-				}
-			}
-			
-			Data d = new Data();
-			d.cmdString = buf.toString();
-			d.cmdString = d.cmdString.substring(0, d.cmdString.length()-2); //strip trailing crlf
-			d.visString = ".run " + str;
-			
-			return d;
-		}
-	}
 	
 	private boolean isWindowShowing() {
 		boolean result = false;
@@ -2379,15 +1815,7 @@ public class StellarService extends Service {
 		callbacks.finishBroadcast();
 	}*/
 	
-	private String getErrorMessage(String arg1,String arg2) {
-		
-		String errormessage = "\n" + Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
-		errormessage += arg1 + "\n";
-		errormessage += arg2 + "\n";
-		//errormessage += "Acceptable arguments are 0, 1, 2 or 3\n";
-		errormessage += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";
-		return errormessage;
-	}
+
 	
 	private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();
 	
