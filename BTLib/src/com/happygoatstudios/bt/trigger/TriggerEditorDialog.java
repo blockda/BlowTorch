@@ -41,7 +41,7 @@ import com.happygoatstudios.bt.responder.notification.*;
 import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.script.ScriptResponderEditor;
 import com.happygoatstudios.bt.responder.toast.*;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.validator.Validator;
 
 public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener{
@@ -53,7 +53,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	private TriggerData original_trigger;
 	private boolean isEditor = false;
 	
-	private IStellarService service;
+	private IConnectionBinder service;
 	
 	private Handler finish_with;
 	
@@ -63,7 +63,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	HashMap<Integer,Integer> checkopens;
 	HashMap<Integer,Integer> checkclosed;
 	
-	public TriggerEditorDialog(Context context,TriggerData input,IStellarService pService,Handler finisher) {
+	public TriggerEditorDialog(Context context,TriggerData input,IConnectionBinder pService,Handler finisher) {
 		super(context);
 		
 		service = pService;

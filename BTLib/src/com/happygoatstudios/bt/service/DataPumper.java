@@ -162,7 +162,7 @@ public class DataPumper extends Thread {
 		}
 		
 		private void DispatchDialog(String str) {
-			reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_DODIALOG,str));
+			reportto.sendMessage(reportto.obtainMessage(Connection.MESSAGE_DODIALOG,str));
 		}
 		/*public DataPumper(InputStream istream,OutputStream ostream,Handler useme) {
 			reader = new BufferedInputStream(istream);
@@ -176,7 +176,7 @@ public class DataPumper extends Thread {
 		}*/
 		
 		public void sendWarning(String str) {
-			reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING,(str)));
+			reportto.sendMessage(reportto.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(str)));
 			
 		}
 	
@@ -291,7 +291,7 @@ public class DataPumper extends Thread {
 				//}
 				byte[] data = DoDecompress(input);
 				if(data == null) return;
-				Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,data); //get a send data message.
+				Message msg = reportto.obtainMessage(Connection.MESSAGE_PROCESS,data); //get a send data message.
 				//either we woke up or the processor was ready.
 				synchronized(reportto) {
 					reportto.sendMessage(msg); //report to mom and dad.
@@ -321,7 +321,7 @@ public class DataPumper extends Thread {
 					numtoread = reader.available();
 				} catch (IOException e) {
 					//throw new RuntimeException(e);
-					reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+					reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
 					connected = false;
 					return;
 					
@@ -333,14 +333,14 @@ public class DataPumper extends Thread {
 					try {
 						if(reader.read() == -1) {
 							//Log.e("PUMP","END OF STREAM");
-							reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+							reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
 							connected = false;
 						} else {
 							reader.reset();
 						}
 					} catch (IOException e) { 
 						e.printStackTrace();
-						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+						reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
 						connected = false;
 						return;
 					}
@@ -355,7 +355,7 @@ public class DataPumper extends Thread {
 					
 					} catch (IOException e) {
 						//throw new RuntimeException(e);
-						reportto.sendEmptyMessage(StellarService.MESSAGE_DISCONNECTED);
+						reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
 						connected = false;
 					}
 					//Log.e("PUMP","READ (string): " + new String(data));
@@ -377,7 +377,7 @@ public class DataPumper extends Thread {
 					
 
 					if(reportto != null) {
-						Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,data); //get a send data message.
+						Message msg = reportto.obtainMessage(Connection.MESSAGE_PROCESS,data); //get a send data message.
 						//either we woke up or the processor was ready.
 						synchronized(reportto) {
 							reportto.sendMessage(msg); //report to mom and dad.
@@ -440,7 +440,7 @@ public class DataPumper extends Thread {
 					//} 
 					//Log.e("BTPUMP","ATTEMPTING MCCP RENEGOTIATION DUE TO:\n" + e.getMessage());
 					//compressed = false;
-					reportto.sendEmptyMessage(StellarService.MESSAGE_MCCPFATALERROR);
+					reportto.sendEmptyMessage(Connection.MESSAGE_MCCPFATALERROR);
 					//return;
 					compressed = false;
 					corrupted = true;
@@ -458,7 +458,7 @@ public class DataPumper extends Thread {
 					//String remains = new String(b.array(),"ISO-8859-1");
 					
 					if(reportto != null) {
-						Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,b.array()); //get a send data message.
+						Message msg = reportto.obtainMessage(Connection.MESSAGE_PROCESS,b.array()); //get a send data message.
 						//either we woke up or the processor was ready.
 						synchronized(reportto) {
 							reportto.sendMessage(msg); //report to mom and dad.

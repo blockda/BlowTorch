@@ -1,7 +1,6 @@
 package com.happygoatstudios.bt.service;
 
-
-interface IStellarServiceCallback {
+interface IConnectionBinderCallback {
 	boolean isWindowShowing();
 	void dataIncoming(inout byte[] seq);
 	void processedDataIncoming(CharSequence seq);
@@ -27,4 +26,7 @@ interface IStellarServiceCallback {
 	void updateVitals2(int hp,int mp,int maxhp, int maxmana,int enemy);
 	void luaOmg(int stateIndex);
 	void updateTriggerDebugString(String str);
+	int getPort();
+	String getHost();
+	String getDisplay();
 }

@@ -13,7 +13,7 @@ import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.notification.NotificationResponderEditor;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponderEditor;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.validator.Validator;
 
 import android.app.AlertDialog;
@@ -46,7 +46,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 	private TimerData the_timer;
 	private TimerData orig_timer;
 	
-	private IStellarService service;
+	private IConnectionBinder service;
 	
 	private Handler finish_with;
 	
@@ -59,7 +59,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 	
 	private boolean isEditor = false;
 	
-	public TimerEditorDialog(Context c,TimerData input,IStellarService pService,Handler reportto) {
+	public TimerEditorDialog(Context c,TimerData input,IConnectionBinder pService,Handler reportto) {
 		super(c);
 		service = pService;
 		finish_with = reportto;

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.service.IStellarService;
+import com.happygoatstudios.bt.service.IConnectionBinder;
 
 //import android.R;
 import android.app.Dialog;
@@ -23,10 +23,10 @@ import android.widget.TextView;
 
 public class SpeedWalkConfigurationDialog extends Dialog implements DirectionEditorDoneListener {
 
-	IStellarService service;
+	IConnectionBinder service;
 	DirectionAdapter adapter = null;
 	
-	public SpeedWalkConfigurationDialog(Context context,IStellarService service) {
+	public SpeedWalkConfigurationDialog(Context context,IConnectionBinder service) {
 		super(context);
 		this.service = service;
 		// TODO Auto-generated constructor stub
