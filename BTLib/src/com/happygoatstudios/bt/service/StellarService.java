@@ -2348,6 +2348,16 @@ public class StellarService extends Service {
 	private HashMap<String,Connection> connections = null;
 	String connectionClutch = "";
 	
+	public void onRebind(Intent i) {
+		Log.e("LOG","REBIND CALLED");
+		
+	}
+	
+	public boolean onUnbind(Intent i) {
+		super.onUnbind(i);
+		return true;
+	}
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		Debug.waitForDebugger();
