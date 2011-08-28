@@ -49,17 +49,7 @@ public class ColorDebugCommand extends SpecialCommand {
 			return null;
 		}
 		//if we are here we are good to go.
-		final int N = c.callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				c.callbacks.getBroadcastItem(i).executeColorDebug(iarg);
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			//notify listeners that data can be read
-		}
-		c.callbacks.finishBroadcast();
-		
+		c.service.doExecuteColorDebug(iarg);
 		//so with the color debug mode set, we should probably dispatch a message to them.
 		String success = "\n" + Colorizer.colorRed + "Color Debug Mode " + iarg + " activated. ";
 		if(iarg == 0) {

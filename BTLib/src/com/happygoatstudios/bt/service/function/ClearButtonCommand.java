@@ -10,14 +10,7 @@ public class ClearButtonCommand extends SpecialCommand {
 	}
 	
 	public Object execute(Object o,Connection c) {
-		int N = c.callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				c.callbacks.getBroadcastItem(i).clearAllButtons();
-			} catch (RemoteException e) {
-			}
-		}
-		c.callbacks.finishBroadcast();
+		c.service.doClearAllButtons();
 		return null;
 	}
 	

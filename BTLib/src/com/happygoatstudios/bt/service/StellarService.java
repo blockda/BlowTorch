@@ -92,6 +92,7 @@ import com.happygoatstudios.bt.responder.replace.ReplaceResponder;
 //import com.happygoatstudios.bt.service.IStellarServiceCallback;
 //import com.happygoatstudios.bt.service.IStellarService;
 import com.happygoatstudios.bt.service.function.SpecialCommand;
+import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -109,6 +110,10 @@ import dalvik.system.PathClassLoader;
 
 
 public class StellarService extends Service {
+
+	protected static final int MESSAGE_STARTUP = 0;
+	protected static final int MESSAGE_NEWCONENCTION = 1;
+	protected static final int MESSAGE_SWITCH = 2;
 
 	//public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	//TreeMap<String, String> aliases = new TreeMap<String, String>();
@@ -471,7 +476,7 @@ public class StellarService extends Service {
 	String theLuaString = null;
 	
 	Plugin plugin = null;
-	
+	Handler handler = null;
 	public void onCreate() {
 		//Debug.waitingForDebugger();
 		connections = new HashMap<String,Connection>();
@@ -496,7 +501,48 @@ public class StellarService extends Service {
 		//prefsname = prefsname.replaceAll("/", "");
 		//settingslocation = prefsname + ".xml";
 		//loadXmlSettings(prefsname +".xml");
-		
+		handler = new Handler() {
+			public void handleMessage(Message msg) {
+				switch(msg.what) {
+				case MESSAGE_STARTUP:
+					connections.get(connectionClutch).handler.sendEmptyMessage(Connection.MESSAGE_STARTUP);
+					break;
+				case MESSAGE_NEWCONENCTION:
+					Bundle b = msg.getData();
+					String display = b.getString("DISPLAY");
+					String host = b.getString("HOST");
+					int port = b.getInt("PORT");
+					
+					Connection c = connections.get(display);
+					if(c != null) {
+						//c.host = host;
+						//c.port = port;
+						//c.display = display;
+						for(Connection tmp : connections.values()) {
+							tmp.deactivate();
+						}
+						c.activate();
+						the_settings = c.the_settings;
+					} else {
+						//make new conneciton.
+						c = new Connection(display,host,port,StellarService.this);
+						connectionClutch = display;
+						for(Connection tmp : connections.values()) {
+							//Connection off = connections.ge
+							tmp.deactivate();
+						}
+						connections.put(connectionClutch, c);
+						the_settings = c.the_settings;
+						c.activate();
+						
+					}
+					break;
+				case MESSAGE_SWITCH:
+					switchTo((String)msg.obj);
+					break;
+				}
+			}
+		};
 		
 		//buffer_tree.setLineBreakAt(80); //this doesn't really matter
 		//buffer_tree.setEncoding(the_settings.getEncoding());
@@ -2360,43 +2406,33 @@ public class StellarService extends Service {
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
-		Debug.waitForDebugger();
 		Log.e("SERVICE","onBind Called");
-		
-		//return mBinder;
-		//if(arg0 == null) {
-		//	return null;
-		//}
-		//Bundle b = arg0.getExtras();
-		//if(b == null) {
-		//	return null;
-		//}
-		
-		SharedPreferences p = this.getSharedPreferences("CONNECT_TO", Context.MODE_PRIVATE);
-		String display = p.getString("CONNECT_TO", "DEFAUT");
-		//edit.commit();
-		Log.e("LOG","ATTEMPTING CONNECTION TO:" + display);
-		Connection currentConnection = connections.get(display);
-		if(currentConnection != null) {
-			connectionClutch = display;
-			return currentConnection.mBinder;
-			
-		} else {
-			connectionClutch = display;
-			//return startConnection(b.getString("DISPLAY"),b.getString("HOST"),b.getInt("PORT"));
-			Connection c = new Connection(connectionClutch,"not",8784,this);
-			//connectionClutch = "fsdfsfd";
-			connections.put(connectionClutch, c);
-			return c.mBinder;
-		}
+		return mBinder;
+//		SharedPreferences p = this.getSharedPreferences("CONNECT_TO", Context.MODE_PRIVATE);
+//		String display = p.getString("CONNECT_TO", "DEFAUT");
+//		//edit.commit();
+//		Log.e("LOG","ATTEMPTING CONNECTION TO:" + display);
+//		Connection currentConnection = connections.get(display);
+//		if(currentConnection != null) {
+//			connectionClutch = display;
+//			return currentConnection.mBinder;
+//			
+//		} else {
+//			connectionClutch = display;
+//			
+//			Connection c = new Connection(connectionClutch,"not",8784,this);
+//			
+//			connections.put(connectionClutch, c);
+//			return c.mBinder;
+//		}
 	}
 	
-	IBinder startConnection(String display, String host, int port) {
+	/*IBinder startConnection(String display, String host, int port) {
 		Connection c = new Connection(display,host,port,this);
 		connectionClutch = display;
 		connections.put(connectionClutch, c);
 		return c.mBinder;
-	}
+	}*/
 
 	private int calculate80CharFontSize() {
 		int windowWidth = this.getResources().getDisplayMetrics().widthPixels;
@@ -2439,8 +2475,20 @@ public class StellarService extends Service {
 	public void setClutch(String connection) {
 		// TODO Auto-generated method stub
 		connectionClutch = connection;
+		for(Connection c : connections.values()) {
+			c.deactivate();
+		}
+		Connection tmp = connections.get(connection);
+		if(tmp == null) {
+			//dispatch error.
+		} else {
+			the_settings = tmp.the_settings;
+			tmp.activate();
+		}
+		
 	}
 
+	ConnectionSettingsPlugin the_settings = null;
 	public void switchTo(String display) {
 		setClutch(display);
 	}
@@ -2456,5 +2504,792 @@ public class StellarService extends Service {
 		}
 		
 	}*/
+	
+	public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
+	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
+
+		public void registerCallback(IConnectionBinderCallback c)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			if(c != null) {
+				callbacks.register(c);
+				//if(pump == null) {
+					Log.e("SERVICE","STARTING UP CONNECTION");
+					//doStartup();
+					
+				//}
+			}
+		}
+
+		public void unregisterCallback(IConnectionBinderCallback c)
+				throws RemoteException {
+			if(c !=  null) {
+				callbacks.unregister(c);
+			}
+		}
+
+		public int getPid() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void initXfer() throws RemoteException {
+			//handler.sendEmptyMessage(MESSAGE_STARTUP);
+			
+			handler.sendEmptyMessage(MESSAGE_STARTUP);
+		}
+
+		public void endXfer() throws RemoteException {
+			//doStartup();
+		}
+
+		public boolean hasBuffer() throws RemoteException {
+			Connection c = connections.get(connectionClutch);
+			if(c == null) {
+				//dispatch error
+			} else {
+				if(c.buffer.getBrokenLineCount() > 0) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public boolean isConnected() throws RemoteException {
+			if(connections.size() < 1) {
+				return false;
+			}
+			return connections.get(connectionClutch).isConnected;
+		}
+
+		public void sendData(byte[] seq) throws RemoteException {
+			Handler handler = connections.get(connectionClutch).handler;
+			handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_SENDDATA, seq));
+		}
+
+		public void saveSettings() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setNotificationText(CharSequence seq)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setConnectionData(String host, int port, String display)
+				throws RemoteException {
+			Message msg = handler.obtainMessage(MESSAGE_NEWCONENCTION);
+			Bundle b = msg.getData();
+			b.putString("DISPLAY",display);//, value)
+			b.putString("HOST",host);
+			b.putInt("PORT",port);
+			msg.setData(b);
+			handler.sendMessage(msg);
+			
+		}
+
+		public void beginCompression() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void stopCompression() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void requestBuffer() throws RemoteException {
+			Connection c = connections.get(connectionClutch);
+			if(c == null) {
+				//dispatch error.
+				return;
+			} 
+			int N = callbacks.beginBroadcast();
+			for(int i=0;i<N;i++) {
+				synchronized(c.buffer) {
+					callbacks.getBroadcastItem(i).rawDataIncoming(c.buffer.dumpToBytes(true));
+				}
+			}
+			callbacks.finishBroadcast();
+		}
+
+		public void saveBuffer(byte[] buffer) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addAlias(AliasData a) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public List getSystemCommands() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Map getAliases() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setAliases(Map map) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setFontSize(int size) throws RemoteException {
+			the_settings.setLineSize(size);
+		}
+
+		public int getFontSize() throws RemoteException {
+			
+			return the_settings.getLineSize();
+		}
+
+		public void setFontSpaceExtra(int size) throws RemoteException {
+			
+			the_settings.setLineSpaceExtra(size);
+		}
+
+		public int getFontSpaceExtra() throws RemoteException {
+			
+			return the_settings.getLineSpaceExtra();
+		}
+
+		public void setFontName(String name) throws RemoteException {
+			the_settings.setFontName(name);
+		}
+
+		public String getFontName() throws RemoteException {
+			
+			return the_settings.getFontName();
+		}
+
+		public void setFontPath(String path) throws RemoteException {
+			the_settings.setFontPath(path);
+		}
+
+		public void setMaxLines(int keepcount) throws RemoteException {
+			the_settings.setMaxLines(keepcount);
+		}
+
+		public int getMaxLines() throws RemoteException {
+			return the_settings.getMaxLines();
+		}
+
+		public void setSemiOption(boolean bools_are_newline)
+				throws RemoteException {
+			the_settings.setSemiIsNewLine(bools_are_newline);
+		}
+
+		public void addButton(String targetset, SlickButtonData new_button)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void removeButton(String targetset,
+				SlickButtonData button_to_nuke) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public List<SlickButtonData> getButtonSet(String setname)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public List<String> getButtonSetNames() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void modifyButton(String targetset, SlickButtonData orig,
+				SlickButtonData mod) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addNewButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public List<String> getButtonSets() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public int deleteButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public int clearButtonSet(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public Map getButtonSetListInfo() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getLastSelectedSet() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void LoadSettingsFromPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void ExportSettingsToPath(String path) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void resetSettings() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public ColorSetSettings getCurrentColorSetDefaults()
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public ColorSetSettings getColorSetDefaultsForSet(String the_set)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setColorSetDefaultsForSet(String the_set,
+				ColorSetSettings input) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setProcessPeriod(boolean value) throws RemoteException {
+			the_settings.setProcessPeriod(value);
+		}
+
+		public Map getTriggerData() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public Map getDirectionData() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setDirectionData(Map data) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void newTrigger(TriggerData data) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void updateTrigger(TriggerData from, TriggerData to)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void deleteTrigger(String which) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public TriggerData getTrigger(String pattern) throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setUseExtractUI(boolean use) throws RemoteException {
+			the_settings.setUseExtractUI(use);
+		}
+
+		public boolean getUseExtractUI() throws RemoteException {
+		
+			return the_settings.isUseExtractUI();
+		}
+
+		public void setThrottleBackground(boolean use) throws RemoteException {
+			the_settings.setThrottleBackground(use);
+		}
+
+		public boolean isThrottleBackground() throws RemoteException {
+			return the_settings.isThrottleBackground();
+		}
+
+		public boolean isProcessPeriod() throws RemoteException {
+			return the_settings.isProcessPeriod();
+		}
+
+		public boolean isEchoAliasUpdate() throws RemoteException {
+			return the_settings.isEchoAliasUpdates();
+		}
+
+		public void setEchoAliasUpdate(boolean use) throws RemoteException {
+			the_settings.setEchoAliasUpdates(use);
+		}
+
+		public boolean isSemiNewline() throws RemoteException {
+			return the_settings.isSemiIsNewLine();
+		}
+
+		public void setKeepWifiActive(boolean use) throws RemoteException {
+			the_settings.setKeepWifiActive(use);
+		}
+
+		public boolean isKeepWifiActive() throws RemoteException {
+			return the_settings.isKeepWifiActive();
+		}
+
+		public void setAttemptSuggestions(boolean use) throws RemoteException {
+			the_settings.setAttemptSuggestions(use);
+		}
+
+		public boolean isAttemptSuggestions() throws RemoteException {
+			return the_settings.isAttemptSuggestions();
+		}
+
+		public void setKeepLast(boolean use) throws RemoteException {
+			the_settings.setKeepLast(use);
+		}
+
+		public boolean isKeepLast() throws RemoteException {
+			return the_settings.isKeepLast();
+		}
+
+		public boolean isBackSpaceBugFix() throws RemoteException {
+			return the_settings.isBackspaceBugFix();
+		}
+
+		public void setBackSpaceBugFix(boolean use) throws RemoteException {
+			the_settings.setBackspaceBugFix(use);
+		}
+
+		public boolean isAutoLaunchEditor() throws RemoteException {
+			return the_settings.isAutoLaunchButtonEdtior();
+		}
+
+		public void setAutoLaunchEditor(boolean use) throws RemoteException {
+			the_settings.setAutoLaunchButtonEdtior(use);
+		}
+
+		public boolean isDisableColor() throws RemoteException {
+			return the_settings.isDisableColor();
+			
+		}
+
+		public void setDisableColor(boolean use) throws RemoteException {
+			the_settings.setDisableColor(use);
+		}
+
+		public String HapticFeedbackMode() throws RemoteException {
+			return the_settings.getHapticFeedbackMode();
+		}
+
+		public void setHapticFeedbackMode(String use) throws RemoteException {
+			the_settings.setHapticFeedbackMode(use);
+		}
+
+		public String getAvailableSet() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getHFOnPress() throws RemoteException {
+			return the_settings.getHapticFeedbackOnPress();
+		}
+
+		public String getHFOnFlip() throws RemoteException {
+			return the_settings.getHapticFeedbackOnFlip();
+		}
+
+		public void setHFOnPress(String use) throws RemoteException {
+			the_settings.setHapticFeedbackOnPress(use);
+		}
+
+		public void setHFOnFlip(String use) throws RemoteException {
+			the_settings.setHapticFeedbackOnFlip(use);
+		}
+
+		public void setDisplayDimensions(int rows, int cols)
+				throws RemoteException {
+			Connection c = connections.get(connectionClutch);
+			if(c == null) {
+				//dispatch error.
+			}
+			
+			c.processor.setDisplayDimensions(rows, cols);
+		}
+
+		public void reconnect() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public Map getTimers() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public TimerData getTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void startTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void pauseTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void stopTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void resetTimer(String ordinal) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void updateTimer(TimerData old, TimerData newtimer)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void addTimer(TimerData newtimer) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void removeTimer(TimerData deltimer) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getNextTimerOrdinal() throws RemoteException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public Map getTimerProgressWad() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public String getEncoding() throws RemoteException {
+			// TODO Auto-generated method stub
+			return the_settings.getEncoding();
+		}
+
+		public void setEncoding(String input) throws RemoteException {
+			the_settings.setEncoding(input);
+		}
+
+		public String getConnectedTo() throws RemoteException {
+			return connectionClutch;
+		}
+		
+		
+
+		public boolean isKeepScreenOn() throws RemoteException {
+			return the_settings.isKeepScreenOn();
+		}
+
+		public void setKeepScreenOn(boolean use) throws RemoteException {
+			the_settings.setKeepScreenOn(use);
+		}
+
+		public boolean isLocalEcho() throws RemoteException {
+			return the_settings.isLocalEcho();
+		}
+
+		public void setLocalEcho(boolean use) throws RemoteException {
+			the_settings.setLocalEcho(use);
+		}
+
+		public boolean isVibrateOnBell() throws RemoteException {
+			return the_settings.isVibrateOnBell();
+		}
+
+		public void setVibrateOnBell(boolean use) throws RemoteException {
+			the_settings.setVibrateOnBell(use);
+		}
+
+		public boolean isNotifyOnBell() throws RemoteException {
+			return the_settings.isNotifyOnBell();
+		}
+
+		public void setNotifyOnBell(boolean use) throws RemoteException {
+			the_settings.setNotifyOnBell(use);
+		}
+
+		public boolean isDisplayOnBell() throws RemoteException {
+			return the_settings.isDisplayOnBell();
+		}
+
+		public void setDisplayOnBell(boolean use) throws RemoteException {
+			the_settings.setDisplayOnBell(use);
+		}
+
+		public boolean isFullScreen() throws RemoteException {
+			return the_settings.isFullScreen();
+		}
+
+		public void setFullScreen(boolean use) throws RemoteException {
+			the_settings.setFullScreen(use);
+		}
+
+		public boolean isRoundButtons() throws RemoteException {
+			return the_settings.isRoundButtons();
+		}
+
+		public void setRoundButtons(boolean use) throws RemoteException {
+			the_settings.setRoundButtons(use);
+		}
+
+		public int getBreakAmount() throws RemoteException {
+			return the_settings.getBreakAmount();
+		}
+
+		public int getOrientation() throws RemoteException {
+			return the_settings.getOrientation();
+		}
+
+		public boolean isWordWrap() throws RemoteException {
+			return the_settings.isWordWrap();
+		}
+
+		public void setBreakAmount(int pIn) throws RemoteException {
+			the_settings.setBreakAmount(pIn);
+		}
+
+		public void setOrientation(int pIn) throws RemoteException {
+			the_settings.setOrientation(pIn);
+		}
+
+		public void setWordWrap(boolean pIn) throws RemoteException {
+			the_settings.setWordWrap(pIn);
+		}
+
+		public boolean isRemoveExtraColor() throws RemoteException {
+			return the_settings.isRemoveExtraColor();
+		}
+
+		public boolean isDebugTelnet() throws RemoteException {
+			return the_settings.isDebugTelnet();
+		}
+
+		public void setRemoveExtraColor(boolean pIn) throws RemoteException {
+			the_settings.setRemoveExtraColor(pIn);
+		}
+
+		public void setDebugTelnet(boolean pIn) throws RemoteException {
+			the_settings.setDebugTelnet(pIn);
+		}
+
+		public void updateAndRenameSet(String oldSet, String newSet,
+				ColorSetSettings settings) throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setHyperLinkMode(String pIn) throws RemoteException {
+			//the_settings.setHyperLinkMode(hyperLinkMode);
+		}
+
+		public String getHyperLinkMode() throws RemoteException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void setHyperLinkColor(int pIn) throws RemoteException {
+			the_settings.setHyperLinkColor(pIn);
+		}
+
+		public int getHyperLinkColor() throws RemoteException {
+			return the_settings.getHyperLinkColor();
+		}
+
+		public void setHyperLinkEnabled(boolean pIn) throws RemoteException {
+			the_settings.setHyperLinkEnabled(pIn);
+		}
+
+		public boolean isHyperLinkEnabled() throws RemoteException {
+			return the_settings.isHyperLinkEnabled();
+		}
+
+		public void setTriggerEnabled(boolean enabled, String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void setButtonSetLocked(boolean locked, String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public boolean isButtonSetLocked(String key) throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isButtonSetLockedMoveButtons(String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isButtonSetLockedNewButtons(String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public boolean isButtonSetLockedEditButtons(String key)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void startNewConnection(String host, int port, String display)
+				throws RemoteException {
+			//StellarService.this.startConnection(display,host,port);
+		}
+
+		public void switchTo(String display) throws RemoteException {
+			handler.sendMessage(handler.obtainMessage(MESSAGE_SWITCH,display));
+		}
+
+		public boolean isConnectedTo(String display) throws RemoteException {
+			return connections.keySet().contains(display);
+				//return true;
+			//}
+		}
+	};
+
+	public void sendRawDataToWindow(byte[] data) {
+		//service.sendRawDataToWindow(data);
+		int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).rawDataIncoming(data);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		callbacks.finishBroadcast();
+		
+	}
+
+		public boolean isWindowConnected() {
+			boolean showing = false;
+			int N = callbacks.beginBroadcast();
+			for(int i =0;i<N;i++) {
+				try {
+					showing = callbacks.getBroadcastItem(i).isWindowShowing();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(showing) {
+					break;
+				}
+			}
+			callbacks.finishBroadcast();
+			return showing;
+		}
+
+		public void doClearAllButtons() {
+			
+			int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).clearAllButtons();
+				} catch (RemoteException e) {
+				}
+			}
+			callbacks.finishBroadcast();
+			//return null;
+		}
+
+		public void doExecuteColorDebug(Integer iarg) {
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).executeColorDebug(iarg);
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+			
+		}
+
+		public void doDirtyExit() {
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).invokeDirtyExit();
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+		}
+
+		public void doExecuteFullscreen() {
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).setScreenMode(!the_settings.isFullScreen());
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+		}
+
+		public void doShowKeyboard(String text,boolean dopopup,boolean doadd,boolean doflush,boolean doclear,boolean doclose) {
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush,doclear,doclose);
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+		}
 
 }
