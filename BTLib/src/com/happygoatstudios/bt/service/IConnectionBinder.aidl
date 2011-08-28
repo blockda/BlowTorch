@@ -11,8 +11,10 @@ import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.alias.AliasData;
 interface IConnectionBinder {
+	void switchTo(String display);
 	void registerCallback(IConnectionBinderCallback c);
 	void unregisterCallback(IConnectionBinderCallback c);
+	void startNewConnection(String host,int port,String display);
 	int getPid();
 	void initXfer();
 	void endXfer();
