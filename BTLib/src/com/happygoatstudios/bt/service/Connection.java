@@ -46,7 +46,7 @@ import android.util.Log;
 
 public class Connection {
 	//base "connection class"
-	public final int MESSAGE_STARTUP = 1;
+	public final static int MESSAGE_STARTUP = 1;
 	public final static int MESSAGE_STARTCOMPRESS = 2;
 	public final static int MESSAGE_PROCESSORWARNING = 3;
 	public final static int MESSAGE_SENDOPTIONDATA = 4;
@@ -55,7 +55,7 @@ public class Connection {
 	public final static int MESSAGE_PROCESS = 7;
 	public final static int MESSAGE_DISCONNECTED = 8;
 	public static final int MESSAGE_MCCPFATALERROR = 9;
-	public final int MESSAGE_SENDDATA = 9;
+	public final static int MESSAGE_SENDDATA = 9;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
@@ -68,7 +68,7 @@ public class Connection {
 	int port;
 	
 	public StellarService service = null;
-	private boolean isConnected = false;
+	boolean isConnected = false;
 	public ConnectionSettingsPlugin the_settings = null;
 	
 	Character cr = new Character((char)13);
@@ -328,17 +328,9 @@ public class Connection {
 	
 	public void sendBytesToWindow(byte[] data) {
 		//service.sendRawDataToWindow(data);
-		int N = callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				callbacks.getBroadcastItem(i).rawDataIncoming(data);
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		if(activated) {
+			service.sendRawDataToWindow(data);
 		}
-		
-		callbacks.finishBroadcast();
 		
 	}
 
@@ -358,7 +350,7 @@ public class Connection {
 		
 	}
 	
-	private void loadConnectionData() {
+	/*private void loadConnectionData() {
 		int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			try {
@@ -373,7 +365,7 @@ public class Connection {
 			//host = callbacks.getBroadcastItem(i))
 		}
 		callbacks.finishBroadcast();
-	}
+	}*/
 	
 	StringBuffer dataToServer = new StringBuffer();
 	StringBuffer dataToWindow = new StringBuffer();
@@ -774,8 +766,8 @@ public class Connection {
 		
 	}
 	
-	public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
-	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
+	//public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
+	/*IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
 
 		public void registerCallback(IConnectionBinderCallback c)
 				throws RemoteException {
@@ -1428,40 +1420,55 @@ public class Connection {
 		public void switchTo(String display) throws RemoteException {
 			Connection.this.service.switchTo(display);
 		}
-	};
+	};*/
 
 	public void switchTo(String connection) {
 		//
-		if(isWindowConnected()) {
-			int N = callbacks.beginBroadcast();
-			for(int i =0;i<N;i++) {
-				try {
-					callbacks.getBroadcastItem(i).switchTo(connection);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			callbacks.finishBroadcast();
-		}
+		service.switchTo(connection);
+//		if(isWindowConnected()) {
+//			int N = callbacks.beginBroadcast();
+//			for(int i =0;i<N;i++) {
+//				try {
+//					callbacks.getBroadcastItem(i).switchTo(connection);
+//				} catch (RemoteException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//			callbacks.finishBroadcast();
+//		}
 	}
 
 	private boolean isWindowConnected() {
-		boolean showing = false;
-		int N = callbacks.beginBroadcast();
-		for(int i =0;i<N;i++) {
-			try {
-				showing = callbacks.getBroadcastItem(i).isWindowShowing();
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if(showing) {
-				break;
-			}
-		}
-		callbacks.finishBroadcast();
-		return showing;
+		return service.isWindowConnected();
 	}
+//		boolean showing = false;
+//		int N = callbacks.beginBroadcast();
+//		for(int i =0;i<N;i++) {
+//			try {
+//				showing = callbacks.getBroadcastItem(i).isWindowShowing();
+//			} catch (RemoteException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			if(showing) {
+//				break;
+//			}
+//		}
+//		callbacks.finishBroadcast();
+//		return showing;
+//	}
+
+	public void deactivate() {
+		// TODO Auto-generated method stub
+		activated = false;
+	}
+
+	public void activate() {
+		// TODO Auto-generated method stub
+		activated = true;
+	}
+	
+	boolean activated = false;
 	
 }

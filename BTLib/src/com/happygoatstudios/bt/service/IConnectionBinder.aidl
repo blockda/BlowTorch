@@ -20,6 +20,7 @@ interface IConnectionBinder {
 	void endXfer();
 	boolean hasBuffer();
 	boolean isConnected();
+	boolean isConnectedTo(String display);
 	void sendData(in byte[] seq);
 	void saveSettings();
 	void setNotificationText(CharSequence seq);
