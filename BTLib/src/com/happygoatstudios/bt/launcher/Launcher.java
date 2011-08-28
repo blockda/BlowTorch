@@ -626,14 +626,14 @@ public class Launcher extends Activity implements ReadyListener {
 	    	
 	    	//check to see if the service is actually running
 	    	
-	    	boolean found = isServiceRunning();
+	    	//boolean found = isServiceRunning();
 	    	
-	    	if(!found) {
+	    	//if(!found) {
     			//service is not running, reset the values in the shared prefs that the window uses to keep track of weather or not to finish init routines.
     			//kill all whitespace in the display name.
 	    		launch = muc.copy();
 	    		DoNewStartup();
-	    	} else {
+	    	/*} else {
 	    		//service exists, we should figure out the name of what it is playing.
 	    		//Log.e("LAUNCHER","SERVICE IS RUNNING");
 	    		launch = muc.copy();
@@ -641,12 +641,9 @@ public class Launcher extends Activity implements ReadyListener {
 	    		
 	    		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
 	    		bindService(new Intent(action),mConnection,0);
-	    		/*if(mode == LAUNCH_MODE.FREE) {
-	    			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_NORMAL"), mConnection, 0); //do not auto create
-	    		} else {
-	    			bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
-	    		}*/
-	    	}
+	    		
+	    	}*/
+	    	//}
 	    	
 		}
 

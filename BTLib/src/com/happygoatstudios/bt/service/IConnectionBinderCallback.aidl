@@ -29,4 +29,5 @@ interface IConnectionBinderCallback {
 	int getPort();
 	String getHost();
 	String getDisplay();
+	void switchTo(String connection);
 }
