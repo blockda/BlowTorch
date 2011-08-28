@@ -473,7 +473,7 @@ public class StellarService extends Service {
 	Plugin plugin = null;
 	
 	public void onCreate() {
-		Debug.waitingForDebugger();
+		//Debug.waitingForDebugger();
 		connections = new HashMap<String,Connection>();
 		
 		//mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -2346,7 +2346,7 @@ public class StellarService extends Service {
 	//}
 	
 	private HashMap<String,Connection> connections = null;
-	private String connectionClutch = "";
+	String connectionClutch = "";
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -2354,26 +2354,34 @@ public class StellarService extends Service {
 		Log.e("SERVICE","onBind Called");
 		
 		//return mBinder;
-		if(arg0 == null) {
-			return null;
-		}
+		//if(arg0 == null) {
+		//	return null;
+		//}
 		//Bundle b = arg0.getExtras();
 		//if(b == null) {
 		//	return null;
 		//}
-		Connection currentConnection = connections.get(connectionClutch);
+		
+		SharedPreferences p = this.getSharedPreferences("CONNECT_TO", Context.MODE_PRIVATE);
+		String display = p.getString("CONNECT_TO", "DEFAUT");
+		//edit.commit();
+		Log.e("LOG","ATTEMPTING CONNECTION TO:" + display);
+		Connection currentConnection = connections.get(display);
 		if(currentConnection != null) {
+			connectionClutch = display;
 			return currentConnection.mBinder;
+			
 		} else {
+			connectionClutch = display;
 			//return startConnection(b.getString("DISPLAY"),b.getString("HOST"),b.getInt("PORT"));
-			Connection c = new Connection("foo","not",8784,this);
+			Connection c = new Connection(connectionClutch,"not",8784,this);
 			//connectionClutch = "fsdfsfd";
-			//connections.put(connectionClutch, c);
+			connections.put(connectionClutch, c);
 			return c.mBinder;
 		}
 	}
 	
-	private IBinder startConnection(String display, String host, int port) {
+	IBinder startConnection(String display, String host, int port) {
 		Connection c = new Connection(display,host,port,this);
 		connectionClutch = display;
 		connections.put(connectionClutch, c);
@@ -2417,5 +2425,26 @@ public class StellarService extends Service {
 		}
 		return (int)fontSize;
 	}
+
+	public void setClutch(String connection) {
+		// TODO Auto-generated method stub
+		connectionClutch = connection;
+	}
+
+	public void switchTo(String display) {
+		setClutch(display);
+	}
+
+	/*public void startNewConnection(String host, int port, String display) {
+		Connection c = connections.get(display);
+		if(c == null) { //should be.
+			Connection tmp = new Connection(display,host,port,this);
+			//tmp.
+			//tmp.
+			connections.put(display, tmp);
+			
+		}
+		
+	}*/
 
 }

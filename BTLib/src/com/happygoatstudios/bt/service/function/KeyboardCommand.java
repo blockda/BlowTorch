@@ -106,18 +106,23 @@ public class KeyboardCommand extends SpecialCommand {
 		}
 		
 		Boolean foo = new Boolean(true);
-		//text = new String(DoAliasReplacement(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
+		try {
+			text = new String(c.DoAliasReplacement(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-//		final int N = callbacks.beginBroadcast();
-//		for(int i = 0;i<N;i++) {
-//			try {
-//				callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush,doclear,doclose);
-//			} catch (RemoteException e) {
-//				throw new RuntimeException(e);
-//			}
-//			//notify listeners that data can be read
-//		}
-//		callbacks.finishBroadcast();
+		final int N = c.callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				c.callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush,doclear,doclose);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		c.callbacks.finishBroadcast();
 //		return null;
 		return null;
 	}

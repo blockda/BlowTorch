@@ -145,6 +145,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_VITALS2 = 1000003;
 	protected static final int MESSAGE_TESTLUA = 100004;
 	protected static final int MESSAGE_TRIGGERSTR = 100005;
+	protected static final int MESSAGE_SWITCH = 888;
 	
 	//private TextTree tree = new TextTree();
 
@@ -406,6 +407,26 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_SWITCH:
+					//mConnection.
+					MainWindow.this.unbindService(mConnection);
+					
+					//MainWindow.this.bin
+					String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", MainWindow.this);
+					SharedPreferences.Editor edit = MainWindow.this.getSharedPreferences("CONNECT_TO", Context.MODE_PRIVATE).edit();
+					edit.putString("CONNECT_TO", MainWindow.this.getIntent().getStringExtra("DISPLAY"));
+					edit.commit();
+					MainWindow.this.bindService(new Intent(serviceBindAction),mConnection, 0);
+					//MainWindow.this.bindService(n, conn, flags)
+					
+					
+					try {
+						service.requestBuffer();
+					} catch (RemoteException e7) {
+						// TODO Auto-generated catch block
+						e7.printStackTrace();
+					}
+					break;
 				case MESSAGE_TRIGGERSTR:
 					L.getGlobal("drawTrigger");
 					L.pushString((String)msg.obj);
@@ -1973,6 +1994,9 @@ public class MainWindow extends Activity {
 				//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_TEST"));
 				this.bindService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()+".MODE_TEST"), mConnection, 0);
 			}*/
+			SharedPreferences.Editor edit = MainWindow.this.getSharedPreferences("CONNECT_TO", Context.MODE_PRIVATE).edit();
+			edit.putString("CONNECT_TO", MainWindow.this.getIntent().getStringExtra("DISPLAY"));
+			edit.commit();
 			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
 			this.bindService(new Intent(serviceBindAction),mConnection, 0);
 			
@@ -1981,6 +2005,22 @@ public class MainWindow extends Activity {
 
 		} else {
 			//request buffer.
+			
+			Intent i = this.getIntent();
+			Log.e("LOG","RESUMING WINDOW WITH INTENT: display="+i.getStringExtra("DISPLAY")+" host="+i.getStringExtra("HOST")+" port="+i.getStringExtra("PORT"));
+			String display = i.getStringExtra("DISPLAY");
+			
+			try {
+				if(!service.getConnectedTo().equals(display)) {
+					Log.e("LOG","ATTEMPTING TO SWITCH TO: " + display);
+					service.switchTo(display);
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
 			try {
 				loadSettings();
 				if(service.hasBuffer()) {
@@ -2024,8 +2064,14 @@ public class MainWindow extends Activity {
 		}
 		
 		if(isServiceConnected()) {
-			return;
-		}
+			try {
+				if(myintent.getStringExtra("DISPLAY").equals(service.getConnectedTo()));
+				return;
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} //else we need to start up a new connection.
 		
 		String host = myintent.getStringExtra("HOST");
 		String port = myintent.getStringExtra("PORT");
@@ -2625,18 +2671,28 @@ public class MainWindow extends Activity {
 		}
 
 		public int getPort() throws RemoteException {
-			// TODO Auto-generated method stub
-			return 6555;
+			Intent i= MainWindow.this.getIntent();
+			
+			return (new Integer(i.getStringExtra("HOST")).intValue());
 		}
 
 		public String getHost() throws RemoteException {
 			// TODO Auto-generated method stub
-			return "aardmud.net";
+			Intent i= MainWindow.this.getIntent();
+			
+			return i.getStringExtra("HOST");
+			
 		}
 
 		public String getDisplay() throws RemoteException {
 			// TODO Auto-generated method stub
-			return "fooo";
+			Intent i= MainWindow.this.getIntent();
+			
+			return i.getStringExtra("DISPLAY");
+		}
+
+		public void switchTo(String connection) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_SWITCH,connection));
 		}
 	};
 	
