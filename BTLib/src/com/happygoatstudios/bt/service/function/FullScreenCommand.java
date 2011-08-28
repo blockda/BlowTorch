@@ -12,16 +12,7 @@ public class FullScreenCommand extends SpecialCommand {
 	public Object execute(Object o,Connection c) {
 		
 		
-		final int N = c.callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				c.callbacks.getBroadcastItem(i).setScreenMode(!c.the_settings.isFullScreen());
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			//notify listeners that data can be read
-		}
-		c.callbacks.finishBroadcast();
+		c.service.doExecuteFullscreen();
 		return null;
 	}
 }

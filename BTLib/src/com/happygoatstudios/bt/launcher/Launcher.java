@@ -112,12 +112,30 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	//make this save a change
 	boolean dowhatsnew = false;
+	private boolean supportsActionBar() {
+		try {
+			this.getClass().getMethod("getActionBar", null);
+			return true;
+		} catch(NoSuchMethodException e) {
+			return false;
+		}
+		//if(this.getClass().getM)
+		//return false;
+	}
+	
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		//Log.e("LAUNCHER","Launched from package: " + this.getPackageName());
 		//determine launch mode
 		//Intent intent = this.getIntent();
+		if(supportsActionBar()) {
+			
+		} else {
+			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		}
+		
+		
 		launcher_source = this.getIntent().getStringExtra("LAUNCH_MODE");
 		if(launcher_source == null) {
 			//Log.e("BlowTorch","Launcher not provided a valid launch source. Finishing.");
