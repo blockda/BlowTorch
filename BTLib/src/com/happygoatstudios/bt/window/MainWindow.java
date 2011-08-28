@@ -244,7 +244,12 @@ public class MainWindow extends Activity {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+		if(supportsActionBar()) {
+			this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+		} else {
+			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		}
+		
 		//this.requestWindowFeature(Window.FEATURE_ACTION_MODE_OVERLAY);
 		//this
 		if(ConfigurationLoader.isTestMode(this)) {
@@ -2049,29 +2054,43 @@ public class MainWindow extends Activity {
 	
 	private void finishInitializiation() {
 		Intent myintent = this.getIntent();
-		
-		
-		try {
-			if(service.hasBuffer()) {
-				//Log.e("WINDOW","REQUESTING BUFFER");
-				setHyperLinkSettings();
-				service.requestBuffer();
-			} else {
-				//Log.e("WINDOW","SERVICE RESPONDED THAT IT HAS NO BUFFER");
-			}
-		} catch (RemoteException e2) {
-			e2.printStackTrace();
-		}
-		
-		if(isServiceConnected()) {
+		String display = myintent.getStringExtra("DISPLAY");
+		/*if(isServiceConnected()) {
 			try {
-				if(myintent.getStringExtra("DISPLAY").equals(service.getConnectedTo()));
-				return;
+				
+				String test = service.getConnectedTo();
+				if(display.equals(test)) {
+					return;
+				} else {
+					//if(service.isConnectedTo(display)) {
+					//	service.switchTo(display);
+					//}
+				}
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} //else we need to start up a new connection.
+		} //else we need to start up a new connection.*/
+		
+		try {
+			if(service.isConnected()) {
+				if(service.isConnectedTo(display)) {
+					if(service.hasBuffer()) {
+						//Log.e("WINDOW","REQUESTING BUFFER");
+						setHyperLinkSettings();
+						service.requestBuffer();
+					} 
+					return;
+				}
+			else {
+				
+			}
+			}
+		} catch (RemoteException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
 		
 		String host = myintent.getStringExtra("HOST");
 		String port = myintent.getStringExtra("PORT");

@@ -113,16 +113,7 @@ public class KeyboardCommand extends SpecialCommand {
 			e.printStackTrace();
 		}
 		
-		final int N = c.callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				c.callbacks.getBroadcastItem(i).showKeyBoard(text,dopopup,doadd,doflush,doclear,doclose);
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			//notify listeners that data can be read
-		}
-		c.callbacks.finishBroadcast();
+		c.service.doShowKeyboard(text,dopopup,doadd,doflush,doclear,doclose);
 //		return null;
 		return null;
 	}
