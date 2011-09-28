@@ -6,7 +6,7 @@ public class MudConnection {
 	private String hostname;
 	private String port;
 	private String lastPlayed = "never";
-	
+	private boolean connected = false;
 	public MudConnection copy() {
 		MudConnection tmp = new MudConnection();
 		
@@ -14,6 +14,7 @@ public class MudConnection {
 		tmp.hostname = this.hostname;
 		tmp.port = this.port;
 		tmp.lastPlayed = this.lastPlayed;
+		
 		
 		return tmp;
 	}
@@ -61,5 +62,13 @@ public class MudConnection {
 
 	public String getLastPlayed() {
 		return lastPlayed;
+	}
+
+	public void setConnected(boolean connected) {
+		this.connected = connected;
+	}
+
+	public boolean isConnected() {
+		return connected;
 	}
 }

@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.responder.script;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
@@ -11,6 +12,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
@@ -90,11 +92,22 @@ public class ScriptResponder extends TriggerResponder {
 	};
 
 	@Override
-	public void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap,LuaState L,String name) {
+			
+			/*L.pushNil();
+			while(L.next(LuaState.LUA_GLOBALSINDEX) != 0) {
+				String two = L.typeName(L.type(-2));
+				String one = L.typeName(L.type(-1));
+				Log.e("LUA","value: " + two + " data: " + one);
+			}*/
 		
 			L.getGlobal(function);
+			if(!L.isFunction(L.getTop())) {
+				Log.e("LUA",function + " is not a function.");
+			}
+			
 			//this is a relativly straightforward matter, push the arguments a la mushclient.
 			L.pushString(name);
 			L.newTable();
@@ -104,7 +117,10 @@ public class ScriptResponder extends TriggerResponder {
 				L.setTable(-3);
 			}
 			
-			L.call(2, 0);
+			//L.call(2, 0);
+			if(L.pcall(2,1,0) != 0) {
+				Log.e("FOO","Error running("+function+"): " + L.getLuaObject(-1).getString());
+			}
 			//return 2;
 			
 	}

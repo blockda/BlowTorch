@@ -30,4 +30,6 @@ interface IConnectionBinderCallback {
 	String getHost();
 	String getDisplay();
 	void switchTo(String connection);
+	void reloadBuffer();
+	void loadWindowSettings();
 }
