@@ -15,6 +15,7 @@ public class PluginSettings {
 	private HashMap<String,AliasData> aliases = null;
 	private HashMap<String,TriggerData> triggers = null;
 	private HashMap<String,TimerData> timers = null;
+	private HashMap<String,String> scripts = null;
 	
 	//LuaState L = null;
 	public PluginSettings() {
@@ -26,6 +27,7 @@ public class PluginSettings {
 		setAliases(new HashMap<String,AliasData>());
 		setTriggers(new HashMap<String,TriggerData>());
 		setTimers(new HashMap<String,TimerData>());
+		setScripts(new HashMap<String,String>());
 		//L = LuaStateFactory.newLuaState();
 	}
 	
@@ -77,5 +79,15 @@ public class PluginSettings {
 
 	public String getAuthor() {
 		return author;
+	}
+
+
+	public void setScripts(HashMap<String,String> scripts) {
+		this.scripts = scripts;
+	}
+
+
+	public HashMap<String,String> getScripts() {
+		return scripts;
 	}
 }

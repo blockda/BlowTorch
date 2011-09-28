@@ -4,6 +4,7 @@ import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaPaint;
 import org.keplerproject.luajava.LuaState;
+import org.keplerproject.luajava.LuaStateFactory;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -18,10 +19,11 @@ public class LuaWindow extends View {
 	LuaState L = null;
 	DrawFunction draw = null;
 	LuaPaint l = null;
-	public LuaWindow(Context context,LuaState L,int width,int height) {
+	public LuaWindow(Context context,int x,int y,int width,int height) {
 		super(context);
 		
-		this.L = L;
+		this.L = LuaStateFactory.newLuaState();
+		initLua();
 		draw = new DrawFunction(L);
 		try {
 			draw.register("draw");
@@ -36,6 +38,8 @@ public class LuaWindow extends View {
 		L.pushJavaObject(surface);
 		L.setGlobal("canvas");
 		
+		L.pushJavaObject(this);
+		L.setGlobal("view");
 		
 		surface.drawColor(0x00000000);
 		
@@ -52,6 +56,12 @@ public class LuaWindow extends View {
 		
 	}
 	
+	private void initLua() {
+		L.openLibs();
+		
+		
+	}
+
 	class DrawFunction extends JavaFunction {
 
 		public DrawFunction(LuaState L) {

@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.service;
 
 import com.happygoatstudios.bt.service.IConnectionBinderCallback;
+import com.happygoatstudios.bt.service.IWindowCallback;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.trigger.TriggerData;
@@ -11,8 +12,9 @@ import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.alias.AliasData;
 interface IConnectionBinder {
+	List getConnections();
 	void switchTo(String display);
-	void registerCallback(IConnectionBinderCallback c);
+	void registerCallback(IConnectionBinderCallback c,String host,int port,String display);
 	void unregisterCallback(IConnectionBinderCallback c);
 	void startNewConnection(String host,int port,String display);
 	int getPid();
@@ -150,4 +152,7 @@ interface IConnectionBinder {
 	boolean isButtonSetLockedMoveButtons(String key);
 	boolean isButtonSetLockedNewButtons(String key);
 	boolean isButtonSetLockedEditButtons(String key);
+	List getWindowTokens();
+	void registerWindowCallback(String name,IWindowCallback callback);
+	void unregisterWindowCallback(String name,IWindowCallback callback);
 }
