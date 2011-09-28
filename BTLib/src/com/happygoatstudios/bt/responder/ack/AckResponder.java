@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.responder.ack;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
@@ -15,6 +16,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.StellarService;
 import com.happygoatstudios.bt.window.TextTree;
 
@@ -55,7 +57,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	String crlf = cr.toString() + lf.toString();
 
 	@Override
-	public void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
@@ -68,7 +70,12 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 		String xformed = AckResponder.this.translate(this.getAckWith(), captureMap);
 		//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
 		//TODO: make ack responder actually ack
-		//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
+		try {
+			msg = dispatcher.obtainMessage(Connection.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		dispatcher.sendMessage(msg);
 		

@@ -49,7 +49,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c, TextTree tree,Line line, Matcher matched,
+	public void doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, Matcher matched,
 			Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name) {

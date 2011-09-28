@@ -726,6 +726,34 @@ public class Launcher extends Activity implements ReadyListener {
 		
 	};
 	
+	private ServiceConnection connectionChecker = new ServiceConnection() {
+
+		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
+			IConnectionBinder tmp = IConnectionBinder.Stub.asInterface(arg1);
+			try {
+				connectedList = (List<String>)tmp.getConnections();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			Launcher.this.unbindService(connectionChecker);
+			//buildList();
+			if(connectedList != null) {
+				for(int i=0;i<apdapter.getCount();i++) {
+					apdapter.getItem(i).setConnected(connectedList.contains(apdapter.getItem(i).getDisplayName()));
+				}
+			}
+			
+			apdapter.notifyDataSetInvalidated();
+		}
+
+		public void onServiceDisconnected(ComponentName name) {
+			
+		}
+		
+	};
+	
+	List<String> connectedList = null;
 	
 	
 	public final int MSG_DELETECONNECTION = 101;
@@ -1169,13 +1197,21 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	private void buildList() {
 		apdapter.clear();
+		
+		
 		for(MudConnection m : launcher_settings.getList().values()) {
+			
+			
 			apdapter.add(m);
 		}
 		
 		apdapter.sort(ccmp);
 		
-		apdapter.notifyDataSetChanged();
+		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+		bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		
+		//apdapter.notifyDataSetChanged();
+		//this.bindService(service, conn, flags)
 	}
 	
 	private void saveXML() {
@@ -1382,6 +1418,10 @@ public class Launcher extends Activity implements ReadyListener {
 				}
 				if(host != null) {
 					host.setText("\t"  + m.getHostName() + ":" + m.getPortString());
+				}
+				
+				if(m.isConnected()) {
+					title.setTextColor(0xFFFF0000);
 				}
 				//if(port != null) {
 				//	port.setText(" Port: " + m.getPortString());

@@ -9,6 +9,8 @@ import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.happygoatstudios.bt.window.TextTree.Line;
+
 public class TextTree {
 	
 	public static final String urlFinderString = "(http://.+\\b)|(www\\..+\\b)"; 
@@ -1286,6 +1288,10 @@ public class TextTree {
 		//c.bin = (ESC + "[" )
 		
 		return c;
+	}
+
+	public void appendLine(Line line) {
+		mLines.add(line);
 	}
 	
 }

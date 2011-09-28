@@ -146,6 +146,8 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_TESTLUA = 100004;
 	protected static final int MESSAGE_TRIGGERSTR = 100005;
 	protected static final int MESSAGE_SWITCH = 888;
+	protected static final int MESSAGE_RELOADBUFFER = 889;
+	protected static final int MESSAGE_INITIALIZEWINDOWS = 890;
 	
 	//private TextTree tree = new TextTree();
 
@@ -171,7 +173,7 @@ public class MainWindow extends Activity {
 	private int statusBarHeight = 1;
 	//GestureDetector gestureDetector = null;
 	OnTouchListener gestureListener = null;
-	ByteView screen2 = null;
+	//ByteView screen2 = null;
 	CommandKeeper history = null;
 	ImageButton test_button = null;
 	ImageButton up_button_c = null;
@@ -194,7 +196,10 @@ public class MainWindow extends Activity {
 			
 			//register callback
 			try {
-				service.registerCallback(the_callback);
+				String display = MainWindow.this.getIntent().getStringExtra("DISPLAY");
+				String host = MainWindow.this.getIntent().getStringExtra("HOST");
+				int port = Integer.parseInt(MainWindow.this.getIntent().getStringExtra("PORT"));
+				service.registerCallback(the_callback,host,port,display);
 				
 			} catch (RemoteException e) {
 				//do nothing here, as there isn't much we can do
@@ -204,7 +209,7 @@ public class MainWindow extends Activity {
 				serviceConnected.notify();
 				serviceConnected = true;
 			}
-			finishInitializiation();
+			//finishInitializiation();
 			
 		}
 
@@ -226,22 +231,7 @@ public class MainWindow extends Activity {
 		
 	};
 	
-	LuaState L = null;
-	class LuaWindowDrawFunction extends JavaFunction {
-
-		public LuaWindowDrawFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			MainWindow.this.lwin.invalidate();
-			return 0;
-		}
-		
-	}
-	
+	private LayerManager mLayers = null;
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		if(supportsActionBar()) {
@@ -263,13 +253,13 @@ public class MainWindow extends Activity {
 		
 		history = new CommandKeeper(10);
         
-        screen2 = (ByteView)findViewById(R.id.slickview);
+        //screen2 = (ByteView)findViewById(R.id.slickview);
         //RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         //screen2.setParentLayout(l);
         View fill2 = (View)findViewById(R.id.filler2);
         fill2.setFocusable(false);
         fill2.setClickable(false);
-        screen2.setNewTextIndicator(fill2);
+        //screen2.setNewTextIndicator(fill2);
         
         Animation alphaout = new AlphaAnimation(1.0f,0.0f);
         alphaout.setDuration(100);
@@ -277,8 +267,8 @@ public class MainWindow extends Activity {
         alphaout.setFillAfter(true);
         fill2.startAnimation(alphaout);
         
-        screen2.setZOrderOnTop(false);
-        screen2.setOnTouchListener(gestureListener);
+        //screen2.setZOrderOnTop(false);
+        //screen2.setOnTouchListener(gestureListener);
         
         vitals = (VitalsView) this.findViewById(R.id.vitals);
         
@@ -346,7 +336,7 @@ public class MainWindow extends Activity {
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER && event.getAction() == KeyEvent.ACTION_UP) {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
-					screen2.jumpToZero();
+					//screen2.jumpToZero();
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
 					return true;
@@ -384,7 +374,7 @@ public class MainWindow extends Activity {
 				
 				if(((event.getKeyCode() == KeyEvent.KEYCODE_ENTER || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER) && event.getAction() == KeyEvent.ACTION_UP)) {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
-					screen2.jumpToZero();
+					//screen2.jumpToZero();
 
 					if(actionId == EditorInfo.IME_ACTION_DONE) {
 							return true;
@@ -412,6 +402,25 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_INITIALIZEWINDOWS:
+					MainWindow.this.initLayers();
+					
+					try {
+						service.initXfer();
+					} catch (RemoteException e5) {
+						// TODO Auto-generated catch block
+						e5.printStackTrace();
+					}
+					break;
+				case MESSAGE_RELOADBUFFER:
+					//screen2.clearAllText();
+					try {
+						service.requestBuffer();
+					} catch (RemoteException e8) {
+						
+						e8.printStackTrace();
+					}
+					break;
 				case MESSAGE_SWITCH:
 					//mConnection.
 					MainWindow.this.unbindService(mConnection);
@@ -428,14 +437,11 @@ public class MainWindow extends Activity {
 					try {
 						service.requestBuffer();
 					} catch (RemoteException e7) {
-						// TODO Auto-generated catch block
 						e7.printStackTrace();
 					}
 					break;
 				case MESSAGE_TRIGGERSTR:
-					L.getGlobal("drawTrigger");
-					L.pushString((String)msg.obj);
-					L.call(1, 0);
+					
 					break;
 				case MESSAGE_TESTLUA:
 					//LuaState exist = LuaStateFactory.getExistingState(msg.arg1);
@@ -516,12 +522,13 @@ public class MainWindow extends Activity {
 					}
 					break;
 				case MESSAGE_RENAWS:
-					try {
-						service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
-					} catch (RemoteException e5) {
+					//try {
+						//TODO: NAWS WORK
+						//service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
+					//} catch (RemoteException e5) {
 						
-						e5.printStackTrace();
-					}
+						//e5.printStackTrace();
+					//}
 					break;
 				case MESSAGE_CLEARINPUTWINDOW:
 					ClearKeyboard();
@@ -531,7 +538,7 @@ public class MainWindow extends Activity {
 					HideKeyboard();
 					break;
 				case MESSAGE_LINEBREAK:
-					screen2.setLineBreaks((Integer)msg.obj);
+					//screen2.setLineBreaks((Integer)msg.obj);
 					break;
 				case MESSAGE_SENDBUTTONDATA:
 					
@@ -544,7 +551,7 @@ public class MainWindow extends Activity {
 						
 						e.printStackTrace();
 					}
-					screen2.jumpToZero();
+					//screen2.jumpToZero();
 					break;
 				case MESSAGE_DODISCONNECT:
 					//Log.e("WINDOW","SHOW MESSAGE");
@@ -620,7 +627,8 @@ public class MainWindow extends Activity {
 							
 						}
 						MainWindow.this.findViewById(R.id.window_container).requestLayout();
-						screen2.doDelayedDraw(100);
+						//screen2.doDelayedDraw(100);
+						
 					}
 					
 					//try {
@@ -742,7 +750,8 @@ public class MainWindow extends Activity {
 					break;
 				case MESSAGE_COLORDEBUG:
 					//execute color debug.
-					screen2.setColorDebugMode(msg.arg1);
+					//screen2.setColorDebugMode(msg.arg1);
+					//TODO: COLOR DEBUG MODE
 					break;
 				case MESSAGE_XMLERROR:
 					//got an xml error, need to display it.
@@ -786,7 +795,7 @@ public class MainWindow extends Activity {
 				case MESSAGE_CHANGEBUTTONSET:
 					RelativeLayout modb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 					//get the new list
-					screen2.setDisableEditing(false);
+					//screen2.setDisableEditing(false);
 					try {
 						
 						List<SlickButtonData> newset = service.getButtonSet((String)msg.obj);
@@ -853,7 +862,6 @@ public class MainWindow extends Activity {
 					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
-					//TODO: SETTINGS LOAD PLACE
 					loadSettings();
 					break;
 				case ByteView.MSG_DELETEBUTTON:
@@ -929,7 +937,6 @@ public class MainWindow extends Activity {
 						new_button.setLockMove(service.isButtonSetLockedMoveButtons(service.getLastSelectedSet()));
 						
 					} catch (RemoteException e4) {
-						// TODO Auto-generated catch block
 						e4.printStackTrace();
 					}
 					
@@ -1032,12 +1039,12 @@ public class MainWindow extends Activity {
 					break;
 				case MESSAGE_RAWINC:
 					
-					screen2.addBytes((byte[])msg.obj, false);
+					//screen2.addBytes((byte[])msg.obj, false);
 					
 					break;
 				case MESSAGE_BUFFINC:
 					
-					screen2.addBytes((byte[])msg.obj,true);
+					//screen2.addBytes((byte[])msg.obj,true);
 					break;
 				case MESSAGE_SENDDATAOUT:
 					try {
@@ -1046,7 +1053,7 @@ public class MainWindow extends Activity {
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-					screen2.jumpToZero();
+					//screen2.jumpToZero();
 					
 					
 					break;
@@ -1118,7 +1125,7 @@ public class MainWindow extends Activity {
 
 					public void onClick(View arg0) {
 						myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
-						screen2.jumpToZero();
+						//screen2.jumpToZero();
 					}
 					
 				});
@@ -1152,9 +1159,9 @@ public class MainWindow extends Activity {
 			}
 		});
 		
-		screen2.setDispatcher(myhandler);
-		screen2.setButtonHandler(myhandler);
-		screen2.setInputType(input_box);
+		//screen2.setDispatcher(myhandler);
+		//screen2.setButtonHandler(myhandler);
+		//screen2.setInputType(input_box);
 		//input_box.bringToFront();
 		//icicile is out, prefs are in
 		
@@ -1246,7 +1253,7 @@ public class MainWindow extends Activity {
 		//find the button holder, nuke the buttons, find the button set that sent the "clear all" and make a button with a link back to that set, and then position that button.
 		//TODO: impl
 		RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.slickholder);
-		screen2.setDisableEditing(true);
+		//screen2.setDisableEditing(true);
 		
 		removeButtonsFromHolder();
 		
@@ -1272,10 +1279,10 @@ public class MainWindow extends Activity {
 		
 		float margin = 7.0f;
 		float density = this.getResources().getDisplayMetrics().density;
-		float xPos = screen2.getWidth() - ((data.getWidth() * density)/2) - (margin * density);
-		float yPos = screen2.getHeight() - ((data.getHeight() * density)/2)- (margin * density);
-		data.setX((int)xPos);
-		data.setY((int)yPos);
+		//float xPos = screen2.getWidth() - ((data.getWidth() * density)/2) - (margin * density);
+		//float yPos = screen2.getHeight() - ((data.getHeight() * density)/2)- (margin * density);
+		//data.setX((int)xPos);
+		//data.setY((int)yPos);
 		
 		SlickButton newButt = new SlickButton(this,0,0);
 		newButt.setData(data);
@@ -1434,17 +1441,14 @@ public class MainWindow extends Activity {
 			this.startActionMode(new ActionMode.Callback() {
 				
 				public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-					// TODO Auto-generated method stub
 					return false;
 				}
 				
 				public void onDestroyActionMode(ActionMode mode) {
-					// TODO Auto-generated method stub
 					
 				}
 				
 				public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-					// TODO Auto-generated method stub
 					mode.setTitle("Fragment Test");
 					menu.add("Fooooo");
 					menu.add("Bar");
@@ -1453,7 +1457,6 @@ public class MainWindow extends Activity {
 					ActionBar.OnNavigationListener nav = new ActionBar.OnNavigationListener() {
 						
 						public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-							// TODO Auto-generated method stub
 							Toast.makeText(MainWindow.this, "item: " + itemPosition + " selected.", Toast.LENGTH_SHORT).show();
 							return true;
 						}
@@ -1466,7 +1469,6 @@ public class MainWindow extends Activity {
 				}
 				
 				public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-					// TODO Auto-generated method stub
 					return false;
 				}
 			});
@@ -1555,7 +1557,7 @@ public class MainWindow extends Activity {
 				edit.putInt("BREAK_AMOUNT", service.getBreakAmount());
 				edit.putInt("ORIENTATION", service.getOrientation());
 				edit.putBoolean("WORD_WRAP",service.isWordWrap());
-				edit.putInt("CALCULATED_WIDTH", screen2.CALCULATED_ROWSINWINDOW);
+				//edit.putInt("CALCULATED_WIDTH", screen2.CALCULATED_ROWSINWINDOW);
 				
 				edit.putBoolean("REMOVE_EXTRA_COLOR", service.isRemoveExtraColor());
 				edit.putBoolean("DEBUG_TELNET", service.isDebugTelnet());
@@ -1857,7 +1859,7 @@ public class MainWindow extends Activity {
 		}
 	}
 	
-	LuaWindow lwin = null;
+	//LuaWindow lwin = null;
 
 	public void onStart() {
 		super.onStart();
@@ -1891,45 +1893,6 @@ public class MainWindow extends Activity {
 			//servicestarted = true;
 		}
 		
-		
-		
-		L = LuaStateFactory.newLuaState();
-        
-        L.openLibs();
-        
-        //TODO: load helper functions and the such.
-        ViewGroup vg = (ViewGroup)findViewById(R.id.slickholder);
-        
-        lwin = new LuaWindow(this,L,400,400);
-        
-        LuaWindowDrawFunction dfunc = new LuaWindowDrawFunction(L);
-        try {
-			dfunc.register("updateWindow");
-		} catch (LuaException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-        Log.e("LUA","STARTING UP LUA FOR THE WINDOW");
-        vg.addView(lwin);
-        
-        try {
-			InputStream stream = this.getAssets().open("windowutils.lua");
-			byte buf[] = new byte[stream.available()];
-			stream.read(buf);
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bos.write(buf);
-			stream.close();
-			String luaString = bos.toString("ISO-8859-1");
-			int result = L.LdoString(luaString);
-			if(result != 0) {
-					String debug = L.toString(-1);
-					Log.e("LUA",(L.toString(-1)));
-			}
-			bos.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	public void onDestroy() {
 		if(isBound) {
@@ -1977,7 +1940,7 @@ public class MainWindow extends Activity {
 		//Log.e("WINDOW","onDestroy()");
 		windowShowing = false;
 		//screen2.pauseDrawing();
-		screen2.clearAllText();
+		//screen2.clearAllText();
 		isResumed = false;
 		super.onPause();
 	}
@@ -2042,7 +2005,7 @@ public class MainWindow extends Activity {
 		}
 		
 		//screen2.resumeDrawing();
-		screen2.doDelayedDraw(0);
+		//screen2.doDelayedDraw(0);
 		isResumed = true;
 		super.onResume();
 	}
@@ -2052,73 +2015,12 @@ public class MainWindow extends Activity {
 		super.onDestroy();
 	}
 	
-	private void finishInitializiation() {
-		Intent myintent = this.getIntent();
-		String display = myintent.getStringExtra("DISPLAY");
-		/*if(isServiceConnected()) {
-			try {
-				
-				String test = service.getConnectedTo();
-				if(display.equals(test)) {
-					return;
-				} else {
-					//if(service.isConnectedTo(display)) {
-					//	service.switchTo(display);
-					//}
-				}
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} //else we need to start up a new connection.*/
-		
-		try {
-			if(service.isConnected()) {
-				if(service.isConnectedTo(display)) {
-					if(service.hasBuffer()) {
-						//Log.e("WINDOW","REQUESTING BUFFER");
-						setHyperLinkSettings();
-						service.requestBuffer();
-					} 
-					return;
-				}
-			else {
-				
-			}
-			}
-		} catch (RemoteException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		
-		
-		String host = myintent.getStringExtra("HOST");
-		String port = myintent.getStringExtra("PORT");
-		
-		//for now we are going to override:
-		//host = "aardmud.org";
-		//port = "4010";
-		
-		
-		while(service == null) {
-			host = "aardmud.org"; //waste time till onServiceConnected is called.
-		}
-		
-		
-		try {
-			service.setConnectionData(host, new Integer(port).intValue(),myintent.getStringExtra("DISPLAY"));
-		} catch (NumberFormatException e1) {
-			e1.printStackTrace();
-		} catch (RemoteException e1) {
-			
-		}
-		
-		
-		//connect up the service and start pumping data
-		try {
-			service.initXfer();
-		} catch (RemoteException e) {
-			//e.printStackTrace();
+	
+	private void initLayers() {
+		if(mLayers == null) {
+			RelativeLayout holder = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
+			mLayers = new LayerManager(service,this,holder);
+			mLayers.initiailize();
 		}
 	}
 	
@@ -2133,17 +2035,18 @@ public class MainWindow extends Activity {
 		//HyperSettings.LINK_MODE mode = HyperSettings.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 		for(HyperSettings.LINK_MODE m : HyperSettings.LINK_MODE.values()) {
 			if(m.getValue().equals(hyperLinkMode)) {
-				screen2.setLinkMode(m);
+				//screen2.setLinkMode(m);
 			}
 		}
 		
-		screen2.setLinkColor(hyperLinkColor);
-		screen2.setLinksEnabled(hyperLinkEnabled);
+		//screen2.setLinkColor(hyperLinkColor);
+		//screen2.setLinksEnabled(hyperLinkEnabled);
 	}
 	
 	private void loadSettings() {
 		//TODO: NEW LOAD SETTINGS PLACE
-		if(!isResumed || !screen2.loaded()) {
+		//if(!isResumed || !screen2.loaded()) {
+		if(!isResumed) {
 			myhandler.sendEmptyMessageDelayed(MESSAGE_LOADSETTINGS, 50);
 			return;
 		}
@@ -2292,13 +2195,13 @@ public class MainWindow extends Activity {
 			String str = service.getHyperLinkMode();
 			for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
 				if(mode.getValue().equals(str)) {
-					screen2.setLinkMode(mode);
+					//screen2.setLinkMode(mode);
 				}
 			}
 			
-			screen2.setLinkColor(service.getHyperLinkColor());
+			//screen2.setLinkColor(service.getHyperLinkColor());
 			
-			screen2.setLinksEnabled(service.isHyperLinkEnabled());
+			//screen2.setLinksEnabled(service.isHyperLinkEnabled());
 			
 			if(service.isFullScreen()) {
 			    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -2314,9 +2217,9 @@ public class MainWindow extends Activity {
 			input_box.setKeepScreenOn(service.isKeepScreenOn());
 		
 			
-			screen2.setEncoding(service.getEncoding());
+			//screen2.setEncoding(service.getEncoding());
 			
-			screen2.setCullExtraneous(service.isRemoveExtraColor());
+			//screen2.setCullExtraneous(service.isRemoveExtraColor());
 			
 			//int or = MainWindow.this.getRequestedOrientation();
 			switch(service.getOrientation()) {
@@ -2332,8 +2235,8 @@ public class MainWindow extends Activity {
 			default:
 				break;
 			}
-			screen2.setWordWrap(service.isWordWrap());
-			screen2.setLineBreaks(service.getBreakAmount());
+			//screen2.setWordWrap(service.isWordWrap());
+			//screen2.setLineBreaks(service.getBreakAmount());
 			
 			//current_button_views.clear();
 			List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
@@ -2371,16 +2274,16 @@ public class MainWindow extends Activity {
 			
 			//screen2.setFontSize(service.getFontSize());
 			//screen2.setLineSpace(service.getFontSpaceExtra());
-			screen2.setCharacterSizes(service.getFontSize(), service.getFontSpaceExtra());
-			screen2.setMaxLines(service.getMaxLines());
+			//screen2.setCharacterSizes(service.getFontSize(), service.getFontSpaceExtra());
+			//screen2.setMaxLines(service.getMaxLines());
 			
 			//get the font name 
 			String tmpname = service.getFontName();
 			//Typeface font = loadFontFromName(tmpname);
 			
-			screen2.setFont(loadFontFromName(tmpname));
-			
-			service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
+			//screen2.setFont(loadFontFromName(tmpname));
+			//TODO: NAWS-ACTION
+			//service.setDisplayDimensions(screen2.CALCULATED_LINESINWINDOW, screen2.CALCULATED_ROWSINWINDOW);
 			
 			//if(fontSizeChanged) {
 			//	screen2.reBreakBuffer();
@@ -2426,9 +2329,9 @@ public class MainWindow extends Activity {
 			//handle disable color
 			if(service.isDisableColor()) {
 				//set the slick view debug mode to 3.
-				screen2.setColorDebugMode(3);
+				//screen2.setColorDebugMode(3);
 			} else {
-				screen2.setColorDebugMode(0);
+				//screen2.setColorDebugMode(0);
 			}
 			//handle overridehf.
 			overrideHF = service.HapticFeedbackMode();
@@ -2455,6 +2358,8 @@ public class MainWindow extends Activity {
 		} catch (RemoteException e1) {
 			throw new RuntimeException(e1);
 		}
+		
+		initLayers();
 	}
 	
 	private Typeface loadFontFromName(String name) {
@@ -2490,7 +2395,7 @@ public class MainWindow extends Activity {
 
 	private void removeButtonsFromHolder() {
 		RelativeLayout clearb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-		int slick = clearb.indexOfChild(screen2);
+		//int slick = clearb.indexOfChild(screen2);
 		int vital = clearb.indexOfChild(vitals);
 		int count = clearb.getChildCount();
 		
@@ -2712,6 +2617,14 @@ public class MainWindow extends Activity {
 
 		public void switchTo(String connection) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_SWITCH,connection));
+		}
+
+		public void reloadBuffer() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_RELOADBUFFER);
+		}
+
+		public void loadWindowSettings() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_INITIALIZEWINDOWS);
 		}
 	};
 	
