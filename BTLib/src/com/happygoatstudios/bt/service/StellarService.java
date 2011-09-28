@@ -478,7 +478,9 @@ public class StellarService extends Service {
 	Plugin plugin = null;
 	Handler handler = null;
 	public void onCreate() {
-		//Debug.waitingForDebugger();
+		
+		Debug.waitingForDebugger();
+		
 		connections = new HashMap<String,Connection>();
 		
 		//mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -506,6 +508,14 @@ public class StellarService extends Service {
 				switch(msg.what) {
 				case MESSAGE_STARTUP:
 					connections.get(connectionClutch).handler.sendEmptyMessage(Connection.MESSAGE_STARTUP);
+					/*callbacks.beginBroadcast();
+					try {
+						callbacks.getBroadcastItem(0).loadWindowSettings();
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					callbacks.finishBroadcast();*/
 					break;
 				case MESSAGE_NEWCONENCTION:
 					Bundle b = msg.getData();
@@ -553,7 +563,7 @@ public class StellarService extends Service {
 	}	
 	
 	
-	private void initPlugins() {
+	/*private void initPlugins() {
 		//Debug.waitForDebugger();
 		PluginParser pparser = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",this.getApplicationContext());
 		try {
@@ -567,8 +577,12 @@ public class StellarService extends Service {
 		} catch (SAXException e5) {
 			// TODO Auto-generated catch block
 			e5.printStackTrace();
+		} catch (LuaException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-	}
+	}*/
 	
 	/*private void pluginTest() {
 		//TODO: plugin test
@@ -2233,7 +2247,7 @@ public class StellarService extends Service {
 		initLua();
 
 		//pluginTest();
-		initPlugins();
+		//initPlugins();
 	}
 	
 	private void ShowDisconnectedNotification(String message) {
@@ -2491,8 +2505,19 @@ public class StellarService extends Service {
 	ConnectionSettingsPlugin the_settings = null;
 	public void switchTo(String display) {
 		setClutch(display);
+		int N = callbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).loadSettings();
+				callbacks.getBroadcastItem(i).reloadBuffer();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		callbacks.finishBroadcast();
 	}
-
+	
 	/*public void startNewConnection(String host, int port, String display) {
 		Connection c = connections.get(display);
 		if(c == null) { //should be.
@@ -2508,7 +2533,7 @@ public class StellarService extends Service {
 	public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
 	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
 
-		public void registerCallback(IConnectionBinderCallback c)
+		public void registerCallback(IConnectionBinderCallback c,String host,int port,String display)
 				throws RemoteException {
 			// TODO Auto-generated method stub
 			if(c != null) {
@@ -2518,6 +2543,17 @@ public class StellarService extends Service {
 					//doStartup();
 					
 				//}
+				//String host = c.getHost();
+				//String display = c.getDisplay();
+				//int port = c.getPort();
+				if(!connections.containsKey(display)) {
+					this.setConnectionData(host, port, display);
+					//this.initXfer();
+				}
+				
+				c.loadWindowSettings();
+				
+				//do the work to start up a connection.	
 			}
 		}
 
@@ -2544,14 +2580,14 @@ public class StellarService extends Service {
 		}
 
 		public boolean hasBuffer() throws RemoteException {
-			Connection c = connections.get(connectionClutch);
+			/*Connection c = connections.get(connectionClutch);
 			if(c == null) {
 				//dispatch error
 			} else {
 				if(c.buffer.getBrokenLineCount() > 0) {
 					return true;
 				}
-			}
+			}*/
 			return false;
 		}
 
@@ -2601,7 +2637,7 @@ public class StellarService extends Service {
 		}
 
 		public void requestBuffer() throws RemoteException {
-			Connection c = connections.get(connectionClutch);
+			/*Connection c = connections.get(connectionClutch);
 			if(c == null) {
 				//dispatch error.
 				return;
@@ -2612,7 +2648,7 @@ public class StellarService extends Service {
 					callbacks.getBroadcastItem(i).rawDataIncoming(c.buffer.dumpToBytes(true));
 				}
 			}
-			callbacks.finishBroadcast();
+			callbacks.finishBroadcast();*/
 		}
 
 		public void saveBuffer(byte[] buffer) throws RemoteException {
@@ -3189,6 +3225,31 @@ public class StellarService extends Service {
 			return connections.keySet().contains(display);
 				//return true;
 			//}
+		}
+
+		public List getConnections() throws RemoteException {
+			List<String> tmp = new ArrayList<String>();
+			for(String key : connections.keySet()) {
+				tmp.add(key);
+			}
+			return tmp;
+		}
+
+		public List getWindowTokens() throws RemoteException {
+			if(connections == null || connections.size() == 0) return null;
+			return connections.get(connectionClutch).getWindows();
+		}
+
+		public void registerWindowCallback(String name,IWindowCallback callback)
+				throws RemoteException {
+			Log.e("SERVICE","ATTEMPTING TO SET WINDOW CALLBACK FOR:" + connectionClutch);
+			connections.get(connectionClutch).registerWindowCallback(name, callback);
+		}
+
+		public void unregisterWindowCallback(String name,
+				IWindowCallback callback) throws RemoteException {
+			connections.get(connectionClutch).unregisterWindowCallback(name,callback);
+			
 		}
 	};
 

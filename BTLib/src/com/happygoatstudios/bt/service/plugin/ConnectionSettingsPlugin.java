@@ -2,10 +2,25 @@ package com.happygoatstudios.bt.service.plugin;
 
 import java.util.HashMap;
 
+import org.keplerproject.luajava.LuaException;
 
+
+import android.os.Handler;
+
+import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 
 public class ConnectionSettingsPlugin extends Plugin {
+	public ConnectionSettingsPlugin(Handler h) throws LuaException {
+		super(h);
+		
+	}
+	
+	public ConnectionSettingsPlugin(PluginSettings settings,Handler h) throws LuaException {
+		super(settings,h);
+		
+	}
+
 	public static enum LINK_MODE {
 		BACKGROUND ( "background"),
 		HIGHLIGHT ("highlight"),

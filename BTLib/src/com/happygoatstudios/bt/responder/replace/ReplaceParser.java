@@ -13,6 +13,7 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 
 import android.sax.Element;
 import android.sax.TextElementListener;
+import android.util.Log;
 
 public final class ReplaceParser {
 	public static void registerListeners(Element root,final PluginSettings settings,final Object obj,final TriggerData current_trigger) {
@@ -20,6 +21,10 @@ public final class ReplaceParser {
 		r.setTextElementListener(new TextElementListener() {
 			private ReplaceResponder r = new ReplaceResponder();
 			public void start(Attributes a) {
+				//if( != null && a.getValue("",BasePluginParser.ATTR_DESTINATION) != null) {
+					r.setRetarget(a.getValue("",BasePluginParser.ATTR_RETARGET));
+
+				
 				String fireType = a.getValue("",BasePluginParser.ATTR_FIRETYPE);
 				if(fireType == null) fireType = "";
 				//Log.e("PARSER","ACK TAG READ, FIRETYPE IS:" + fireType);
@@ -48,8 +53,12 @@ public final class ReplaceParser {
 	public static void saveReplaceResponderToXML(XmlSerializer out,
 			ReplaceResponder r) throws IllegalArgumentException, IllegalStateException, IOException {
 		out.startTag("", BasePluginParser.TAG_REPLACERESPONDER);
-		out.attribute("", BasePluginParser.ATTR_FIRETYPE, r.getFireType().getString());
 		
+		out.attribute("", BasePluginParser.ATTR_FIRETYPE, r.getFireType().getString());
+		if(r.getRetarget() != null) {
+			out.attribute("", BasePluginParser.ATTR_RETARGET, r.getRetarget());
+			//out.attribute("", BasePluginParser.ATTR_DESTINATION, r.getWindowTarget());
+		}
 		out.text(r.getWith());
 		
 		out.endTag("", BasePluginParser.TAG_REPLACERESPONDER);

@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.responder.toast;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.LuaState;
@@ -82,7 +83,7 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {

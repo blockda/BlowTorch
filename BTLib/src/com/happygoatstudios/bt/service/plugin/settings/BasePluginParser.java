@@ -32,6 +32,7 @@ public class BasePluginParser {
 	public static final String ATTR_SEQUENCE = "sequence";
 	public static final String ATTR_GROUP = "group";
 	public static final String ATTR_KEEPEVALUATING = "keepEvaluating";
+	public static final String ATTR_SCRIPT = "script";
 	
 	
 	public static final String TAG_TIMERS = "timers";
@@ -67,6 +68,8 @@ public class BasePluginParser {
 	public static final String ATTR_FUNCTION = "function";
 	
 	public static final String TAG_REPLACERESPONDER = "replace";
+	public static final String ATTR_RETARGET = "retarget";
+	public static final String ATTR_DESTINATION = "dest";
 	
 	public static final String TAG_COLORACTION = "color";
 	
@@ -74,6 +77,7 @@ public class BasePluginParser {
 	public static final String ATTR_GAGLOG = "fromLog";
 	public static final String ATTR_GAGOUTPUT = "fromOuput";
 	
+	public static final String TAG_SCRIPT = "script";
 	//public static final String TAG_PLUGIN = "plugin";
 	///static final String 
 	

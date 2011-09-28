@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.responder;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,7 +132,7 @@ public abstract class TriggerResponder implements Parcelable {
 		//Log.e("RESPONDER","REMOVED " + in.getString() + " FIRE TYPE NOW " + fireType.getString());
 	}
 	
-	public abstract void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name);
+	public abstract void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) throws IteratorModifiedException;
 	public abstract TriggerResponder copy();
 	//public abstract void writeToParcel(Parcel in,int args);
 

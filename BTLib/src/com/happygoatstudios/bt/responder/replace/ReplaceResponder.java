@@ -11,13 +11,18 @@ import org.keplerproject.luajava.LuaState;
 import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
+import com.happygoatstudios.bt.responder.IteratorModifiedException;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
+import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.window.TextTree;
 import com.happygoatstudios.bt.window.TextTree.Text;
 import com.happygoatstudios.bt.window.TextTree.Unit;
@@ -25,15 +30,21 @@ import com.happygoatstudios.bt.window.TextTree.Unit;
 public class ReplaceResponder extends TriggerResponder implements Parcelable {
 
 	private String with;
+	private String retarget = null;
+	//private String windowTarget;
 	
 	public ReplaceResponder(RESPONDER_TYPE pType) {
 		super(pType);
 		setWith(null);
+		setRetarget(null);
+		//setWindowTarget(null);
 	}
 
 	public ReplaceResponder() {
 		super(RESPONDER_TYPE.REPLACE);
 		setWith(null);
+		setRetarget(null);
+		//setWindowTarget(null);
 	}
 	
 	public ReplaceResponder(Parcel source) {
@@ -45,6 +56,14 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	private void readFromParcel(Parcel in) {
 		this.with = in.readString();
 		String fireType = in.readString();
+		int ret = in.readInt();
+		if(ret == 0) {
+			//windowTarget = null;
+			retarget = null;
+		} else {
+			retarget = in.readString();
+			//retarget = true;
+		}
 		if(fireType.equals(FIRE_WINDOW_OPEN)) {
 			setFireType(FIRE_WHEN.WINDOW_OPEN);
 		} else if (fireType.equals(FIRE_WINDOW_CLOSED)) {
@@ -63,6 +82,8 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 		ReplaceResponder tmp = new ReplaceResponder();
 		tmp.with = this.with;
 		tmp.setFireType(this.getFireType());
+		tmp.setRetarget(this.getRetarget());
+		//tmp.setWindowTarget(this.getWindowTarget());
 		return tmp;
 	}
 	
@@ -73,7 +94,8 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 		ReplaceResponder a = this;
 		if(!a.getWith().equals(b.getWith())) return false;
 		if(a.getFireType() != b.getFireType()) return false;
-	
+		if(a.getRetarget() != b.getRetarget()) return false;
+		//if(!a.getWindowTarget().equals(b.getWindowTarget())) return false;
 		return true;
 	}
 	
@@ -85,12 +107,18 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	public void writeToParcel(Parcel p, int arg1) {
 		p.writeString(with);
 		p.writeString(this.getFireType().getString());
+		if(retarget != null) {
+			p.writeInt(1);
+			p.writeString(retarget);
+		} else {
+			p.writeInt(0);
+		}
 	}
 
 	@Override
-	public void doResponse(Context c,TextTree tree,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
-			HashMap<String, String> captureMap, LuaState L, String name) {
+			HashMap<String, String> captureMap, LuaState L, String name) throws IteratorModifiedException {
 			if(line == null || matched == null) {
 				return;
 			}
@@ -201,6 +229,36 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			
 			line.setData(newLine);
 			line.updateData();
+			
+			if(retarget != null) {
+				int previndex = iterator.previousIndex();
+				int bcount = tree.getBrokenLineCount();
+				try {
+					tree.getLines().remove(lineNumber);
+					
+				} catch (Exception e){
+					e.printStackTrace();
+				}
+				//tree.getLines().re
+				tree.updateMetrics();
+				
+				
+				int b_acount = tree.getBrokenLineCount();
+				//Log.e("REPLAC")
+				Log.e("REPLACE","RETARGETING TO: " + retarget + " original: " + bcount + " after: "+b_acount);
+				Message msg = dispatcher.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);
+				Bundle b = msg.getData();
+				b.putString("TARGET", retarget);
+				msg.setData(b);
+				dispatcher.sendMessage(msg);
+				
+				if(iterator.hasPrevious()) {
+					iterator = tree.getLines().listIterator(previndex+1);
+					IteratorModifiedException e = new IteratorModifiedException(iterator);
+					throw e;
+				}
+			}
+			
 	}
 
 	@Override
@@ -227,6 +285,14 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 
 	public void setWith(String with) {
 		this.with = with;
+	}
+
+	public void setRetarget(String retarget) {
+		this.retarget = retarget;
+	}
+
+	public String getRetarget() {
+		return retarget;
 	}
 
 }
