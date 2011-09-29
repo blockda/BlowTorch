@@ -331,6 +331,11 @@ public class Connection {
 		mapwin.setBufferText(true);
 		mWindows.add(mapwin);
 		
+		WindowToken luawin = new WindowToken("lua_window",880,577,400,100,"windowscript","plugin");
+		
+		mWindows.add(luawin);
+		
+		
 		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext());
 		Plugin tmpPlug = null;
 		try {
@@ -1008,6 +1013,19 @@ public class Connection {
 	public List<WindowToken> getWindows() {
 		// TODO Auto-generated method stub
 		return mWindows;
+	}
+
+	public String getScript(String plugin, String name) {
+		for(Plugin p : plugins) {
+			if(p.getSettings().getName().equals(plugin)) {
+				if(p.getSettings().getScripts().containsKey(name)) {
+					return p.getSettings().getScripts().get(name);
+				} else {
+					return "";
+				}
+			}
+		}
+		return "";
 	}
 
 	
