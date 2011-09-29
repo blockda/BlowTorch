@@ -3251,6 +3251,12 @@ public class StellarService extends Service {
 			connections.get(connectionClutch).unregisterWindowCallback(name,callback);
 			
 		}
+
+		public String getScript(String plugin, String name)
+				throws RemoteException {
+			return connections.get(connectionClutch).getScript(plugin,name);
+			//return null;
+		}
 	};
 
 	public void sendRawDataToWindow(byte[] data) {

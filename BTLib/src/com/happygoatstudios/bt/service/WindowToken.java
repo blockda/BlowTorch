@@ -24,7 +24,8 @@ public class WindowToken implements Parcelable {
 	
 	private TYPE type = TYPE.NORMAL;
 	
-	private String scriptPath;
+	private String scriptName;
+	private String pluginName;
 	
 	public WindowToken(String name,int x,int y,int width,int height) {
 		type = TYPE.NORMAL;
@@ -33,18 +34,20 @@ public class WindowToken implements Parcelable {
 		this.y = y;
 		this.width = width;
 		this.height = height;
-		this.scriptPath = null;
+		this.scriptName = null;
+		this.pluginName = null;
 		buffer = new TextTree();
 	}
 	
-	public WindowToken(String name,int x,int y,int width,int height,String scriptPath) {
+	public WindowToken(String name,int x,int y,int width,int height,String scriptName,String pluginName) {
 		type = TYPE.SCRIPT;
 		this.name = name;
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
-		this.scriptPath = scriptPath;
+		this.scriptName = scriptName;
+		this.pluginName = pluginName;
 	}
 	
 
@@ -57,7 +60,8 @@ public class WindowToken implements Parcelable {
 		setBufferText((p.readInt()==0) ? false : true);
 		int script = p.readInt();
 		if(script != 1) {
-			scriptPath = null;
+			scriptName = null;
+			pluginName = null;
 			type = TYPE.NORMAL;
 			byte[] buf = p.createByteArray();
 			buffer = new TextTree();
@@ -70,19 +74,20 @@ public class WindowToken implements Parcelable {
 			Log.e("PARCEL","WINDOWTOKEN RECONSTITUTING: " + buffer.getBrokenLineCount() + " lines.");
 			
 		} else {
-			scriptPath = p.readString();
+			scriptName = p.readString();
+			pluginName = p.readString();
 			type = TYPE.SCRIPT;
 			
 		}
 	}
 
-	public void setScriptPath(String scriptPath) {
+	/*public void setScriptPath(String scriptPath) {
 		this.scriptPath = scriptPath;
 	}
 
 	public String getScriptPath() {
 		return scriptPath;
-	}
+	}*/
 
 	public void setType(TYPE type) {
 		this.type = type;
@@ -148,9 +153,10 @@ public class WindowToken implements Parcelable {
 		} else {
 			p.writeInt(0);
 		}
-		if(scriptPath != null) {
+		if(scriptName != null) {
 			p.writeInt(1);
-			p.writeString(scriptPath);
+			p.writeString(scriptName);
+			p.writeString(pluginName);
 		} else {
 			p.writeInt(0);
 			Log.e("PARCEL","WINDOWTOKEN DUMPING: " + buffer.getBrokenLineCount() + " lines.");
@@ -172,6 +178,20 @@ public class WindowToken implements Parcelable {
 
 	public boolean isBufferText() {
 		return bufferText;
+	}
+	public void setScriptName(String scriptName) {
+		this.scriptName = scriptName;
+	}
+
+	public String getScriptName() {
+		return scriptName;
+	}
+	public void setPluginName(String pluginName) {
+		this.pluginName = pluginName;
+	}
+
+	public String getPluginName() {
+		return pluginName;
 	}
 	public static final Parcelable.Creator<WindowToken> CREATOR = new Parcelable.Creator<WindowToken>() {
 

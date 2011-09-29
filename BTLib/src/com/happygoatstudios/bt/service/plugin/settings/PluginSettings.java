@@ -17,6 +17,8 @@ public class PluginSettings {
 	private HashMap<String,TimerData> timers = null;
 	private HashMap<String,String> scripts = null;
 	
+	
+	
 	//LuaState L = null;
 	public PluginSettings() {
 		

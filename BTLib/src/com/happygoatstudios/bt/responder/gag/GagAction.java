@@ -54,7 +54,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 			//iterator.pr
 			int prevloc = -1;
 			if(iterator.hasPrevious()) {
-				Log.e("GAG","PREVIOUS INDEX:" + iterator.previousIndex());
+				//Log.e("GAG","PREVIOUS INDEX:" + iterator.previousIndex());
 				prevloc = iterator.previousIndex();
 			}
 			tree.getLines().remove(lineNumber);
@@ -63,12 +63,12 @@ public class GagAction extends TriggerResponder implements Parcelable {
 			if(retarget != null) {
 				Message msg = dispatcher.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);
 				Bundle b = msg.getData();
-				Log.e("GAG","SENDING DATA TO ("+retarget+"): " + TextTree.deColorLine(line));
+				//Log.e("GAG","SENDING DATA TO ("+retarget+"): " + TextTree.deColorLine(line));
 				b.putString("TARGET", retarget);
 				msg.setData(b);
 				dispatcher.sendMessage(msg);
 			} else {
-				Log.e("GAG","NOT RETARGETING TO: " + retarget);
+				//Log.e("GAG","NOT RETARGETING TO: " + retarget);
 			}
 			
 			if(iterator.hasPrevious()) {
