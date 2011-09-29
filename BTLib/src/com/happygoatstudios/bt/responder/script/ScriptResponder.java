@@ -106,6 +106,7 @@ public class ScriptResponder extends TriggerResponder {
 			L.getGlobal(function);
 			if(!L.isFunction(L.getTop())) {
 				Log.e("LUA",function + " is not a function.");
+				return;
 			}
 			
 			//this is a relativly straightforward matter, push the arguments a la mushclient.

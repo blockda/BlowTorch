@@ -37,6 +37,7 @@ public class Plugin {
 	LuaState L = null;
 	private PluginSettings settings = null;
 	Handler mHandler = null;
+	//private String mName = null;
 	
 	public Plugin(Handler h) throws LuaException {
 		setSettings(new PluginSettings());
@@ -82,6 +83,7 @@ public class Plugin {
 
 	public void setSettings(PluginSettings settings) {
 		this.settings = settings;
+		
 	}
 
 	public PluginSettings getSettings() {
@@ -184,7 +186,7 @@ public class Plugin {
 	
 	public void initScripts() {
 		for(String script : settings.getScripts().keySet()) {
-			Log.e("LUA","ATTEMPTING TO LOAD:" + script + "\n" + settings.getScripts().get(script));
+			//Log.e("LUA","ATTEMPTING TO LOAD:" + script + "\n" + settings.getScripts().get(script));
 			int ret =L.LdoString(settings.getScripts().get(script));
 			if(ret != 0) {
 				Log.e("LUA","PROBLEM LOADING SCRIPT:" + L.getLuaObject(-1).getString());

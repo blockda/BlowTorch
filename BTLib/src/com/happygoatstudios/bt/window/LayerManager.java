@@ -54,6 +54,7 @@ public class LayerManager {
 					break;
 				case SCRIPT:
 					initLuaWindow(w);
+					
 					break;
 				default:
 					break;
@@ -66,8 +67,27 @@ public class LayerManager {
 	
 	private void initLuaWindow(WindowToken w) {
 		View v = mRootLayout.findViewWithTag(w.getName());
-		if(v != null) {
-			LuaWindow tmp = new LuaWindow(mContext);
+		if(v == null) {
+			
+			
+			LuaWindow tmp = new LuaWindow(mContext,w.getName(),w.getX(),w.getY(),w.getWidth(),w.getHeight());
+			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			
+			tmp.setLayoutParams(p);
+			tmp.setTag(w.getName());
+			
+			try {
+				String body = mService.getScript(w.getPluginName(),w.getScriptName());
+				//TODO: this needs to be much harderly error checked.
+				tmp.loadScript(body);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			mRootLayout.addView(tmp);
 		}
 	}
 
@@ -106,12 +126,22 @@ public class LayerManager {
 		for(Object x : mWindows) {
 			if(x instanceof WindowToken) {
 				WindowToken w = (WindowToken)x;
-				ByteView tmp = (ByteView) mRootLayout.findViewWithTag(w.getName());
-				try {
-					mService.unregisterWindowCallback(w.getName(),tmp.getCallback());
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				View tmp = mRootLayout.findViewWithTag(w.getName());
+				if(tmp instanceof ByteView) {
+					try {
+						mService.unregisterWindowCallback(w.getName(),((ByteView)tmp).getCallback());
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+				if(tmp instanceof LuaWindow) {
+					try {
+						mService.unregisterWindowCallback(w.getName(), ((LuaWindow)tmp).getCallback());
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
