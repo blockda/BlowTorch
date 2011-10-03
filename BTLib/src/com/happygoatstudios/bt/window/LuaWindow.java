@@ -14,6 +14,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -35,16 +36,25 @@ public class LuaWindow extends View {
 	int mHeight;
 	String mName;
 	Handler mHandler;
+	Rect mBounds = null;
 	
+	boolean constrictWindow = false;
 	public LuaWindow(Context context,String name,int x,int y,int width,int height) {
 		super(context);
 		
 		this.L = LuaStateFactory.newLuaState();
 		
-		mAnchorTop = y;
-		mAnchorLeft = x;
-		mWidth = width;
-		mHeight = height;
+		if(x == 0 && y ==0 && width==0 && height == 0) {
+			constrictWindow = false;
+		} else {
+			constrictWindow = true;
+			mAnchorTop = y;
+			mAnchorLeft = x;
+			mWidth = width;
+			mHeight = height;
+		}
+		mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
+		
 		mName = name;
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -97,24 +107,38 @@ public class LuaWindow extends View {
 		
 	}
 	
+	protected void onMeasure(int widthSpec,int heightSpec) {
+		setMeasuredDimension(MeasureSpec.getSize(widthSpec),MeasureSpec.getSize(heightSpec));
+		if(!constrictWindow) {
+			mAnchorTop = 0;
+			mAnchorLeft = 0;
+			mWidth = MeasureSpec.getSize(widthSpec);
+			mHeight = MeasureSpec.getSize(heightSpec);
+		}
+	}
+
 	private void initLua() {
 		L.openLibs();
 		
 		InvalidateFunction iv = new InvalidateFunction(L);
 		DebugFunction df = new DebugFunction(L);
+		BoundsFunction bf = new BoundsFunction(L);
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
+			bf.register("getBounds");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		
 	}
 	
 	public boolean onTouchEvent(MotionEvent e) {
 		boolean retval = false;
 		
-		e.offsetLocation(-mAnchorLeft, -mAnchorTop);
+		//e.offsetLocation(-mAnchorLeft, -mAnchorTop);
 		
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
@@ -174,12 +198,17 @@ public class LuaWindow extends View {
 		c.clipRect(mAnchorLeft, mAnchorTop, mAnchorLeft+mWidth, mAnchorTop+mHeight);
 		c.translate(mAnchorLeft, mAnchorTop);
 		
-		c.drawRect(0,0,mWidth,mHeight, clearme);
+		//c.drawRect(0,0,mWidth,mHeight, clearme);
 		//L.getG
-		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
-		L.remove(-2);
-		
+		//L.getGlobal("tracer");
+		//if(L.isFunction(L.getTop())) {
+			//use this function
+		//} else {
+			//L.remove(L.getTop());
+			L.getGlobal("debug");
+			L.getField(L.getTop(), "traceback");
+			L.remove(-2);
+		//}
 		
 		L.getGlobal("OnDraw");
 		if(L.isFunction(L.getTop())) {
@@ -191,7 +220,7 @@ public class LuaWindow extends View {
 			if(ret != 0) {
 				Log.e("LUAWINDOW","Error calling OnDraw: " + L.getLuaObject(-1).toString());
 			} else {
-				Log.e("LUAWINDOW","OnDraw success!");
+				//Log.e("LUAWINDOW","OnDraw success!");
 			}
 		}
 		
@@ -232,9 +261,28 @@ public class LuaWindow extends View {
 	};
 
 	public void loadScript(String body) {
+		
+		int retv = L.LdoString("function tracer()\n"+
+				"	local info = debuginfo.getinfo(1,\"Sl\")\n"+
+				"	if(not info) then\n"+
+				"		return \"No debug information available.\"\n"+
+				"	else\n"+
+				"       debug(\"%s:%d\",info.short_src,info.currentline)\n"+
+				"		return string.format(\"[%s]:%d\",info.short_src,info.currentline)\n"+
+				"	end\n"+
+				"end\n\n");
+		if(retv != 0) {
+			Log.e("LUAWINDOW","Foo chan boo. Problem with custom tracer function.\n"+L.getLuaObject(L.getTop()).getString());
+		} else {
+			Log.e("LUAWINDOW","Custom tracer loaded.");
+		}
+		
+		
 		int ret = L.LdoString(body);
 		if(ret != 0) {
 			Log.e("LUAWINDOW","Error Loading Script: "+L.getLuaObject(L.getTop()).getString());
+		} else {
+			Log.e("LUAWINDOW","Loaded script body for: " + mName);
 		}
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
@@ -244,7 +292,7 @@ public class LuaWindow extends View {
 		if(L.isFunction(L.getTop())) {
 			int tmp = L.pcall(0, 1, -3);
 			if(tmp != 0) {
-				Log.e("LUAWINDOW","Calling onDraw: "+L.getLuaObject(-1).getString());
+				Log.e("LUAWINDOW","Calling OnCreate: "+L.getLuaObject(-1).getString());
 			} else {
 				Log.e("LUAWINDOW","OnCreate Success!");
 			}
@@ -280,4 +328,34 @@ public class LuaWindow extends View {
 		}
 		
 	}
+	
+	private class BoundsFunction extends JavaFunction {
+
+		public BoundsFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			this.L.pushJavaObject(mBounds);
+			return 1;
+		}
+		
+	}
+	
+	/*private class TraceFunction extends JavaFunction {
+
+		public TraceFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			return 1;
+		}
+		
+	}*/
 }
