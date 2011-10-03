@@ -55,6 +55,8 @@ public class Plugin {
 
 	private void initLua() throws LuaException {
 		//need to set up global functions, it all goes here.
+		L.openLibs();
+		
 		TriggerEnabledFunction tef = new TriggerEnabledFunction(L,this,mHandler);
 		tef.register("TriggerEnabled");
 		L.pushJavaObject(settings.getTriggers());

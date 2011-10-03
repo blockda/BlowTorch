@@ -69,7 +69,6 @@ public class LayerManager {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
 			
-			
 			LuaWindow tmp = new LuaWindow(mContext,w.getName(),w.getX(),w.getY(),w.getWidth(),w.getHeight());
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
