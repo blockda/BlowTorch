@@ -335,6 +335,8 @@ public class Connection {
 		
 		mWindows.add(luawin);
 		
+		WindowToken bwin = new WindowToken("button_window",0,0,0,0,"buttonwindow","plugin");
+		mWindows.add(bwin);
 		
 		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext());
 		Plugin tmpPlug = null;
