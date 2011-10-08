@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -34,6 +35,7 @@ import android.content.res.Configuration;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -148,6 +150,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_SWITCH = 888;
 	protected static final int MESSAGE_RELOADBUFFER = 889;
 	protected static final int MESSAGE_INITIALIZEWINDOWS = 890;
+	public static final int MESSAGE_ADDOPTIONCALLBACK = 891;
 	
 	//private TextTree tree = new TextTree();
 
@@ -188,6 +191,55 @@ public class MainWindow extends Activity {
 	Boolean isResumed = false;
 	
 	VitalsView vitals = null;
+	
+	ArrayList<ScriptOptionCallback> scriptCallbacks = new ArrayList<ScriptOptionCallback>();
+	
+	private class ScriptOptionCallback {
+		private String window;
+		private String title;
+		private String callback;
+		private Drawable drawable;
+		
+		public ScriptOptionCallback() 
+		{
+			setWindow("");
+			setTitle("");
+			setCallback("");
+			setDrawable(null);
+		}
+		
+		public ScriptOptionCallback(String pWin,String title,String callback,Drawable res) {
+			setWindow(pWin);
+			setTitle(title);
+			setCallback(callback);
+			setDrawable(res);
+		}
+		
+		public void setWindow(String window) {
+			this.window = window;
+		}
+		public String getWindow() {
+			return window;
+		}
+		public String getTitle() {
+			return title;
+		}
+		public void setTitle(String title) {
+			this.title = title; 
+		}
+		public void setCallback(String callback) {
+			this.callback = callback;
+		}
+		public String getCallback() {
+			return callback;
+		}
+		public void setDrawable(Drawable drawable) {
+			this.drawable = drawable;
+		}
+		public Drawable getDrawable() {
+			return drawable;
+		}
+	}
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -402,7 +454,31 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_ADDOPTIONCALLBACK:
+					Bundle datab = msg.getData();
+//					String pWin,String title,String callback,Drawable res
+					ScriptOptionCallback cb = null;
+					if(msg.obj instanceof Drawable) {
+						cb = new ScriptOptionCallback(datab.getString("window"),
+								datab.getString("title"),
+								datab.getString("funcName"),
+								(Drawable)msg.obj);
+					} else {
+						cb = new ScriptOptionCallback(datab.getString("window"),
+								datab.getString("title"),
+								datab.getString("funcName"),
+								null);
+					}
+					scriptCallbacks.add(0, cb);
+					if(supportsActionBar()) {
+						MainWindow.this.invalidateOptionsMenu();
+					}
+					break;
 				case MESSAGE_INITIALIZEWINDOWS:
+					scriptCallbacks.clear();
+					if(supportsActionBar()) {
+						MainWindow.this.invalidateOptionsMenu();
+					}
 					MainWindow.this.initLayers();
 					
 					try {
@@ -1389,15 +1465,41 @@ public class MainWindow extends Activity {
 		}
 	}
 	
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		menu.clear();
+		onCreateOptionsMenu(menu);
+		return true;
+	}
+	
 	public boolean onCreateOptionsMenu(Menu menu) {
 		//MenuItem tmp = null;
 		if(supportsActionBar()) {
+			for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
+				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
+				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
+					hurdur.setIcon(scriptCallbacks.get(i-1000).getDrawable());
+					hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+				} else {
+					hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+				}
+			}
+			
 			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		} else {
+			
+			for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
+				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
+				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
+					hurdur.setIcon(scriptCallbacks.get(i-1000).getDrawable());
+					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+				} else {
+					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+				}
+			}
 			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
 			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers);
 			menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers);
@@ -1413,10 +1515,7 @@ public class MainWindow extends Activity {
 		menu.add(0, 902, 0, "Disconnect");
 		menu.add(0, 903, 0, "Quit");
 		menu.add(0, 906, 0, "Help/About");
-		menu.add(0,908,0,"Fragment Test");
-		menu.add(0,909,0,"Navigation Test");
-		menu.add(0,910,0,"Even more.");
-		menu.add(0,911,0,"Oh oh oh overflow!");
+		menu.add(0, 908,0,"Reload Settings");
 		
 		
 		return true;
@@ -1427,56 +1526,25 @@ public class MainWindow extends Activity {
 	
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
+		if(item.getItemId() >= 1000) {
+			//script callback
+			ScriptOptionCallback callback = scriptCallbacks.get(1000-item.getItemId());
+			mLayers.callScript(callback.getWindow(),callback.getCallback());
+			return true;
+		}
 		
 		switch(item.getItemId()) {
+		case 908:
+			try {
+				service.reloadSettings();
+			} catch (RemoteException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+			break;
 		case 912:
 			ButtonManagerDialog bm = new ButtonManagerDialog("name",service,this);
 			bm.show();
-			break;
-		case 909:
-			
-		case 908:
-			//this.getActionBar().hide();
-			if(supportsActionBar()) {
-			this.startActionMode(new ActionMode.Callback() {
-				
-				public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-					return false;
-				}
-				
-				public void onDestroyActionMode(ActionMode mode) {
-					
-				}
-				
-				public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-					mode.setTitle("Fragment Test");
-					menu.add("Fooooo");
-					menu.add("Bar");
-					MainWindow.this.getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-					SpinnerAdapter test = ArrayAdapter.createFromResource(MainWindow.this, R.array.hfmodes, android.R.layout.simple_spinner_dropdown_item);
-					ActionBar.OnNavigationListener nav = new ActionBar.OnNavigationListener() {
-						
-						public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-							Toast.makeText(MainWindow.this, "item: " + itemPosition + " selected.", Toast.LENGTH_SHORT).show();
-							return true;
-						}
-					};
-					MainWindow.this.getActionBar().setListNavigationCallbacks(test, nav);
-					//break;
-					//mode.
-					return true;
-					//return false;
-				}
-				
-				public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-					return false;
-				}
-			});
-			}
-			break;
-		case 907:
-			FloatingVitalMoveDialog mvdialog = new FloatingVitalMoveDialog(this,vitals);
-			mvdialog.show();
 			break;
 		case 906: //Help/About
 			AboutDialog abtdialog = new AboutDialog(this);
@@ -2019,7 +2087,9 @@ public class MainWindow extends Activity {
 	private void initLayers() {
 		if(mLayers == null) {
 			RelativeLayout holder = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-			mLayers = new LayerManager(service,this,holder);
+			mLayers = new LayerManager(service,this,holder,myhandler);
+			mLayers.initiailize();
+		} else {
 			mLayers.initiailize();
 		}
 	}
