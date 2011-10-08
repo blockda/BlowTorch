@@ -109,6 +109,7 @@ public class ByteView extends View {
 	private static final int MESSAGE_DRAW = 117;
 
 	protected static final int MESSAGE_FLUSHBUFFER = 118;
+	protected static final int MESSAGE_SHUTDOWN = 119;
 	private boolean disableEditing = false;
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
@@ -121,11 +122,13 @@ public class ByteView extends View {
 	Object token = new Object(); //token for synchronization.
 
 	private int myWidth = -1;
+	LayerManager mManager = null;
 	
-	public ByteView(Context context) {
+	public ByteView(Context context,LayerManager manager) {
 		super(context);
 		//getHolder().addCallback(this);
 		init();
+		mManager = manager;
 	}
 	
 	public ByteView(Context context,AttributeSet attrib) {
@@ -230,6 +233,9 @@ public class ByteView extends View {
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_SHUTDOWN:
+					ByteView.this.shutdown();
+					break;
 				case MESSAGE_FLUSHBUFFER:
 					ByteView.this.flushBuffer();
 					break;
@@ -296,6 +302,10 @@ public class ByteView extends View {
 //	
 	//private int leftOver = 0;
 	
+	protected void shutdown() {
+		mManager.shutdown(this);
+	}
+
 	public void setTWidth(int height) {
 		WINDOW_WIDTH=height;
 		//the_tree.se
@@ -667,7 +677,7 @@ public class ByteView extends View {
 		Paint b = new Paint();
 		b.setColor(0xFF0A0A0A);
 		//c.drawColor(0xFF0A0A0A); //fill with black
-		c.drawRect(clip,b);
+		c.drawRect(0,0,clip.right-clip.left,clip.top-clip.bottom,b);
 		p.setTypeface(PREF_FONT);
 		p.setAntiAlias(true);
 		p.setTextSize(PREF_FONTSIZE);
@@ -1513,6 +1523,10 @@ public class ByteView extends View {
 
 		public void redraw() throws RemoteException {
 			mHandler.sendEmptyMessage(ByteView.MESSAGE_FLUSHBUFFER);
+		}
+
+		public void shutdown() throws RemoteException {
+			mHandler.sendEmptyMessage(MESSAGE_SHUTDOWN);
 		}
 		
 	};

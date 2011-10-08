@@ -1,7 +1,10 @@
 package com.happygoatstudios.bt.window;
 
+import java.util.ArrayList;
+
 import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
+import org.keplerproject.luajava.LuaObject;
 import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 
@@ -12,6 +15,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
@@ -23,8 +27,11 @@ import android.text.method.Touch;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.content.DialogInterface.OnClickListener;
 
 public class LuaWindow extends View {
+	protected static final int MESSAGE_SHUTDOWN = 2;
+
 	protected final int MESSAGE_REDRAW = 1;
 	
 	LuaState L = null;
@@ -37,11 +44,21 @@ public class LuaWindow extends View {
 	String mName;
 	Handler mHandler;
 	Rect mBounds = null;
-	
+	Context mContext = null;
+	Handler mainHandler = null;
+	LayerManager mManager = null;
 	boolean constrictWindow = false;
-	public LuaWindow(Context context,String name,int x,int y,int width,int height) {
+	public LuaWindow(Context context,LayerManager manager,String name,int x,int y,int width,int height,Handler mainWindowHandler) {
 		super(context);
-		
+		try {
+			Class di = Class.forName("android.content.DialogInterface$OnClickListener");
+		} catch (ClassNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		mManager = manager;
+		mContext = context;
+		this.mainHandler = mainWindowHandler;
 		this.L = LuaStateFactory.newLuaState();
 		
 		if(x == 0 && y ==0 && width==0 && height == 0) {
@@ -59,6 +76,9 @@ public class LuaWindow extends View {
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_SHUTDOWN:
+					LuaWindow.this.shutdown();
+					break;
 				case MESSAGE_REDRAW:
 					LuaWindow.this.invalidate();
 					break;
@@ -73,7 +93,7 @@ public class LuaWindow extends View {
 		clearme.setColor(0x00000000);
 		clearme.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 		
-		/*draw = new DrawFunction(L);
+		DrawFunction draw = new DrawFunction(L);
 		try {
 			draw.register("draw");
 		} catch (LuaException e) {
@@ -81,30 +101,57 @@ public class LuaWindow extends View {
 			e.printStackTrace();
 		}
 		
-		bmp = Bitmap.createBitmap(width,height,Config.ARGB_8888);
-		surface = new LuaCanvas(bmp);
-		//Bitmap.cre
-		L.pushJavaObject(surface);
-		L.setGlobal("canvas");
+		
 		
 		L.pushJavaObject(this);
 		L.setGlobal("view");
 		
-		surface.drawColor(0x00000000);
+		//surface.drawColor(0x00000000);
 		
 		//surface.drawRe
-		l = new LuaPaint(this.getContext().getResources().getDisplayMetrics().density);
+		//l = new LuaPaint(this.getContext().getResources().getDisplayMetrics().density);
 		
-		L.pushJavaObject(l);
-		L.setGlobal("paint");
-		l.setColor(0xFF00FF00);
+		//L.pushJavaObject(l);
+		//L.setGlobal("paint");
+		//l.setColor(0xFF00FF00);
 		
 		
-		l.setTextSize(26.0f);
+		//l.setTextSize(26.0f);
 		//surface.drawText("Lua Window, drawing from java", 30, 30, l);
-		*/
+		
 		 
 		
+	}
+	
+	
+	
+	public String getName() {
+		return mName;
+	}
+	
+	protected void shutdown() {
+		mManager.shutdown(this);
+	}
+
+	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
+		if(bmp != null) {
+			bmp.recycle();
+			bmp = null;
+			surface = null;
+		}
+			//bmp = Bitmap.createBitmap(w,h,Config.ARGB_8888);
+		//} else {
+		if(constrictWindow) {
+			bmp = Bitmap.createBitmap(mWidth,mHeight,Config.ARGB_8888);
+		} else {
+			bmp = Bitmap.createBitmap(w,h,Config.ARGB_8888);
+		}
+		//}
+			
+		surface = new LuaCanvas(bmp);
+		//Bitmap.cre
+		L.pushJavaObject(surface);
+		L.setGlobal("canvas");
 	}
 	
 	protected void onMeasure(int widthSpec,int heightSpec) {
@@ -123,10 +170,14 @@ public class LuaWindow extends View {
 		InvalidateFunction iv = new InvalidateFunction(L);
 		DebugFunction df = new DebugFunction(L);
 		BoundsFunction bf = new BoundsFunction(L);
+		OptionsMenuFunction omf = new OptionsMenuFunction(L);
+		TableAdapterFunction taf = new TableAdapterFunction(L);
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
 			bf.register("getBounds");
+			omf.register("addOptionCallback");
+			taf.register("getTableAdapter");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -163,7 +214,7 @@ public class LuaWindow extends View {
 		
 	}
 
-	/*class DrawFunction extends JavaFunction {
+	class DrawFunction extends JavaFunction {
 
 		public DrawFunction(LuaState L) {
 			super(L);
@@ -177,7 +228,7 @@ public class LuaWindow extends View {
 			return 0;
 		}
 		
-	}*/
+	}
 	
 	/*public void onCreate(Bundle b) {
 		//ooh, lua window booding up. 	
@@ -186,10 +237,10 @@ public class LuaWindow extends View {
 		
 	}*/
 	
-	/*Bitmap bmp = null;
+	Bitmap bmp = null;
 	LuaCanvas surface = null;
 	Paint p = new Paint();
-	//boolean dirty = false;*/
+	//boolean dirty = false;
 	Paint clearme = new Paint();
 	
 	public void onDraw(Canvas c) {
@@ -198,22 +249,16 @@ public class LuaWindow extends View {
 		c.clipRect(mAnchorLeft, mAnchorTop, mAnchorLeft+mWidth, mAnchorTop+mHeight);
 		c.translate(mAnchorLeft, mAnchorTop);
 		
-		//c.drawRect(0,0,mWidth,mHeight, clearme);
-		//L.getG
-		//L.getGlobal("tracer");
-		//if(L.isFunction(L.getTop())) {
-			//use this function
-		//} else {
-			//L.remove(L.getTop());
-			L.getGlobal("debug");
-			L.getField(L.getTop(), "traceback");
-			L.remove(-2);
-		//}
+		c.drawBitmap(bmp, 0, 0, null);
+		/*L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
 		
 		L.getGlobal("OnDraw");
 		if(L.isFunction(L.getTop())) {
 			L.pushJavaObject(c);
-			//L.pushString("canvas");
+			
 			
 			
 			int ret = L.pcall(1, 1, -3);
@@ -222,7 +267,7 @@ public class LuaWindow extends View {
 			} else {
 				//Log.e("LUAWINDOW","OnDraw success!");
 			}
-		}
+		}*/
 		
 		c.restore();
 		/*if(bmp != null) {
@@ -257,6 +302,10 @@ public class LuaWindow extends View {
 		
 		public String getName() throws RemoteException {
 			return mName;
+		}
+
+		public void shutdown() throws RemoteException {
+			mHandler.sendEmptyMessage(MESSAGE_SHUTDOWN);
 		}
 	};
 
@@ -344,6 +393,75 @@ public class LuaWindow extends View {
 		
 	}
 	
+	private class OptionsMenuFunction extends JavaFunction {
+
+		public OptionsMenuFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String funcName = this.getParam(2).getString();
+			String title = this.getParam(3).getString();
+			
+			
+			
+			
+			Object o = null;
+			LuaObject tmp = this.getParam(4);
+			if(tmp != null && tmp.isJavaObject()) {
+				o = tmp.getObject();
+			}
+			
+			//Handler h = 
+			Message msg = mainHandler.obtainMessage(MainWindow.MESSAGE_ADDOPTIONCALLBACK);
+			if(o != null) msg.obj = o;
+			Bundle b = msg.getData();
+			b.putString("funcName", funcName);
+			b.putString("title", title);
+			b.putString("window", mName);
+			msg.setData(b);
+			mainHandler.sendMessage(msg);
+			return 0;
+		}
+		
+	}
+	
+	private class TableAdapterFunction extends JavaFunction {
+
+		public TableAdapterFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String table = this.getParam(2).getString();
+			String viewFunc = this.getParam(3).getString();
+			TableAdapter tb = new TableAdapter(this.L,table,viewFunc);
+			L.pushJavaObject(tb);
+			return 1;
+		}
+		
+	}
+	
+
+
+	public void callFunction(String callback) {
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(callback);
+		if(L.isFunction(L.getTop())) {
+			int tmp = L.pcall(0, 1, -3);
+			if(tmp != 0) {
+				Log.e("LUAWINDOW","Error calling script callback: "+L.getLuaObject(-1).getString());
+			}
+		}
+	}
+	
 	/*private class TraceFunction extends JavaFunction {
 
 		public TraceFunction(LuaState L) {
@@ -358,4 +476,8 @@ public class LuaWindow extends View {
 		}
 		
 	}*/
+
+	
+	
+	
 }
