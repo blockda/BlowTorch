@@ -114,6 +114,7 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_STARTUP = 0;
 	protected static final int MESSAGE_NEWCONENCTION = 1;
 	protected static final int MESSAGE_SWITCH = 2;
+	protected static final int MESSAGE_RELOADSETTINGS = 3;
 
 	//public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	//TreeMap<String, String> aliases = new TreeMap<String, String>();
@@ -506,6 +507,10 @@ public class StellarService extends Service {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_RELOADSETTINGS:
+					connections.get(connectionClutch).reloadSettings();
+					reloadWindows();
+					break;
 				case MESSAGE_STARTUP:
 					connections.get(connectionClutch).handler.sendEmptyMessage(Connection.MESSAGE_STARTUP);
 					/*callbacks.beginBroadcast();
@@ -2530,6 +2535,22 @@ public class StellarService extends Service {
 		
 	}*/
 	
+	public void reloadWindows() {
+		int N = callbacks.beginBroadcast();
+		
+		for(int i=0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(0).loadWindowSettings();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		callbacks.finishBroadcast();
+		
+	}
+	
 	public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
 	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
 
@@ -3256,6 +3277,11 @@ public class StellarService extends Service {
 				throws RemoteException {
 			return connections.get(connectionClutch).getScript(plugin,name);
 			//return null;
+		}
+
+		public void reloadSettings() throws RemoteException {
+			handler.sendEmptyMessage(MESSAGE_RELOADSETTINGS);
+			
 		}
 	};
 

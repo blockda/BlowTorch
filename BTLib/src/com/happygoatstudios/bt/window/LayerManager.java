@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.window;
 import java.util.List;
 
 import android.content.Context;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -18,7 +19,10 @@ public class LayerManager {
 	
 	RelativeLayout mRootLayout = null;
 	
-	public LayerManager(IConnectionBinder service, Context context, RelativeLayout root) {
+	Handler rootHandler = null;
+	
+	public LayerManager(IConnectionBinder service, Context context, RelativeLayout root,Handler rootHandler) {
+		this.rootHandler = rootHandler;
 		mContext = context;
 		mService = service;
 		mRootLayout = root;
@@ -28,6 +32,8 @@ public class LayerManager {
 		//ask the service for all the current windows for the connection.
 		//List<WindowToken> windows =  null;
 		//make windows in the order they are given, attach the callback and the view to the layout root.
+		mRootLayout.removeAllViews();
+		
 		try {
 			mWindows = mService.getWindowTokens();
 		} catch (RemoteException e) {
@@ -69,7 +75,7 @@ public class LayerManager {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
 			
-			LuaWindow tmp = new LuaWindow(mContext,w.getName(),w.getX(),w.getY(),w.getWidth(),w.getHeight());
+			LuaWindow tmp = new LuaWindow(mContext,this,w.getName(),w.getX(),w.getY(),w.getWidth(),w.getHeight(),rootHandler);
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -94,7 +100,7 @@ public class LayerManager {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
 			//need to initialize.
-			ByteView tmp = new ByteView(mContext);
+			ByteView tmp = new ByteView(mContext,this);
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -143,6 +149,31 @@ public class LayerManager {
 					}
 				}
 			}
+		}
+	}
+
+	public void callScript(String window, String callback) {
+		LuaWindow lview = (LuaWindow)mRootLayout.findViewWithTag(window);
+		if(lview != null) {
+			lview.callFunction(callback);
+		}
+	}
+
+	public void shutdown(ByteView byteView) {
+		try {
+			mService.unregisterWindowCallback(byteView.getName(), byteView.getCallback());
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void shutdown(LuaWindow luaWindow) {
+		try {
+			mService.unregisterWindowCallback(luaWindow.getName(), luaWindow.getCallback());
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	

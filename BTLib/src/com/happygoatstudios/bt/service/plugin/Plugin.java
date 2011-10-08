@@ -11,17 +11,23 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.regex.Matcher;
 
+import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
+import org.keplerproject.luajava.LuaObject;
 import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.responder.IteratorModifiedException;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.StellarService;
+import com.happygoatstudios.bt.service.WindowToken;
 import com.happygoatstudios.bt.service.plugin.function.DrawWindowFunction;
 import com.happygoatstudios.bt.service.plugin.function.NoteFunction;
 import com.happygoatstudios.bt.service.plugin.function.TriggerEnabledFunction;
@@ -68,6 +74,15 @@ public class Plugin {
 		DrawWindowFunction dwf = new DrawWindowFunction(L,this,mHandler);
 		dwf.register("DrawWindow");
 		
+		
+		WindowFunction wf = new WindowFunction(L);
+		ExecuteScriptFunction esf = new ExecuteScriptFunction(L);
+		MainWindowFunction mwf = new MainWindowFunction(L);
+		WindowBufferFunction wbf = new WindowBufferFunction(L);
+		wf.register("NewWindow");
+		mwf.register("MainWindowSize");
+		esf.register("ExecuteScript");
+		wbf.register("WindowBuffer");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -186,14 +201,154 @@ public class Plugin {
 		//return null;
 	}
 	
-	public void initScripts() {
+	public void initScripts(ArrayList<WindowToken> windows) {
+		//for(Script)
+		
+		
 		for(String script : settings.getScripts().keySet()) {
 			//Log.e("LUA","ATTEMPTING TO LOAD:" + script + "\n" + settings.getScripts().get(script));
-			int ret =L.LdoString(settings.getScripts().get(script));
-			if(ret != 0) {
-				Log.e("LUA","PROBLEM LOADING SCRIPT:" + L.getLuaObject(-1).getString());
+			if(script.equals("global")) {
+				int ret =L.LdoString(settings.getScripts().get(script));
+				if(ret != 0) {
+					Log.e("LUA","PROBLEM LOADING SCRIPT:" + L.getLuaObject(-1).getString());
+				}
 			}
 		}
+	}
+	
+	
+	private class WindowFunction extends JavaFunction {
+
+		public WindowFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String name = null;
+			int x = 0;
+			int y = 0;
+			int width = 0;
+			int height = 0;
+			String scriptName = null;
+			
+			LuaObject pName = this.getParam(2);
+			LuaObject pX = this.getParam(3);
+			LuaObject pY = this.getParam(4);
+			LuaObject pWidth = this.getParam(5);
+			LuaObject pHeight = this.getParam(6);
+			LuaObject pScriptName = this.getParam(7);
+			
+			if(pName.isString()) {
+				name = pName.getString();
+			} else {
+				//error
+			}
+			
+			if(pX.isNil() || pY.isNil() || pWidth.isNil() || pHeight.isNil()) {
+				//errror
+			}
+			
+			if(!pX.isNumber() || !pY.isNumber() || !pWidth.isNumber() || !pHeight.isNumber()) {
+				//error
+			}
+			
+			x = (int) pX.getNumber();
+			y = (int) pY.getNumber();
+			width = (int) pWidth.getNumber();
+			height = (int) pHeight.getNumber();
+			
+			if(!pScriptName.isNil() && pScriptName.isString()) {
+				scriptName = pScriptName.getString();
+			}
+			
+			if(pScriptName.isNil()) {
+				WindowToken tok = new WindowToken(name,x,y,width,height);
+				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
+			} else {
+				WindowToken tok = new WindowToken(name,x,y,width,height,scriptName,Plugin.this.getSettings().getName());
+				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
+			}
+			
+			return 0;
+		}
+		
+	}
+	
+	private class ExecuteScriptFunction extends JavaFunction {
+
+		public ExecuteScriptFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			String pName = this.getParam(2).getString();
+			String body = Plugin.this.getSettings().getScripts().get(pName);
+			if(body != null) {
+				L.LdoString(Plugin.this.getSettings().getScripts().get(pName));
+			} else {
+				//error
+				//L.pushString(bytes)
+				//L.error();
+			}
+			return 0;
+		}
+		
+	}
+	
+	private class MainWindowFunction extends JavaFunction {
+
+		public MainWindowFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			int x = (int) this.getParam(2).getNumber();
+			int y = (int) this.getParam(3).getNumber();
+			int width = (int) this.getParam(4).getNumber();
+			int height = (int) this.getParam(5).getNumber();
+			
+			Message msg = mHandler.obtainMessage(Connection.MESSAGE_MODMAINWINDOW);
+			Bundle b = msg.getData();
+			b.putInt("X", x);
+			b.putInt("Y", y);
+			b.putInt("WIDTH", width);
+			b.putInt("HEIGHT", height);
+			msg.setData(b);
+			mHandler.sendMessage(msg);
+			return 0;
+		}
+		
+	}
+	
+	private class WindowBufferFunction extends JavaFunction {
+
+		public WindowBufferFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String win = this.getParam(2).getString();
+			boolean set = this.getParam(3).getBoolean();
+			Log.e("PLUGIN","MODDING WINDOW("+win+") Buffer:"+set);
+			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_WINDOWBUFFER, set ? 1 : 0, 0, win));
+			
+			return 0;
+		}
+		
+	}
+
+	public void shutdown() {
+		// TODO Auto-generated method stub
+		L.close();
 	}
 	
 	
