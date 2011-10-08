@@ -5,4 +5,5 @@ interface IWindowCallback {
 	void rawDataIncoming(inout byte[] raw);
 	void redraw();
 	String getName();
+	void shutdown();
 }

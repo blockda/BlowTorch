@@ -14,7 +14,7 @@ public class WindowFragment extends Fragment {
 	}
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		view = new ByteView(this.getActivity()); 
+		//view = new ByteView(this.getActivity()); 
 		return view;
 		
 	}

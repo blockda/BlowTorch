@@ -44,6 +44,7 @@ import com.happygoatstudios.bt.window.TextTree.Line;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteCallbackList;
@@ -66,6 +67,9 @@ public class Connection {
 	public static final int MESSAGE_LINETOWINDOW = 10;
 	public static final int MESSAGE_LUANOTE = 11;
 	public static final int MESSAGE_DRAWINDOW = 12;
+	public static final int MESSAGE_NEWWINDOW = 13;
+	public static final int MESSAGE_MODMAINWINDOW = 14;
+	public static final int MESSAGE_WINDOWBUFFER = 15;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
@@ -139,6 +143,32 @@ public class Connection {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_WINDOWBUFFER:
+					boolean set = (msg.arg1 == 0) ? false : true;
+					//Debug.waitForDebugger();
+					
+					String name = (String)msg.obj;
+					Log.e("PLUGIN","TRING ACTUALLY MODDING WINDOW("+name+") Buffer:"+set);
+					
+					for(WindowToken tok : mWindows) {
+						if(tok.getName().equals(name)) {
+							Log.e("PLUGIN","ACTUALLY MODDING WINDOW("+name+") Buffer:"+set);
+							tok.setBufferText(set);
+						}
+					}
+					break;
+				case MESSAGE_MODMAINWINDOW:
+					WindowToken main = mWindows.get(0);
+					Bundle c = msg.getData();
+					main.setX(c.getInt("X"));
+					main.setY(c.getInt("Y"));
+					main.setWidth(c.getInt("WIDTH"));
+					main.setHeight(c.getInt("HEIGHT"));
+					break;
+				case MESSAGE_NEWWINDOW:
+					WindowToken tok = (WindowToken)msg.obj;
+					mWindows.add(tok);
+					break;
 				case MESSAGE_DRAWINDOW:
 					Connection.this.redrawWindow((String)msg.obj);
 					break;
@@ -315,10 +345,11 @@ public class Connection {
 		//TODO: initializie main window.
 		mWindows = new ArrayList<WindowToken>();
 		
-		WindowToken token = new WindowToken(MAIN_WINDOW,0,177,880,500);
+		//WindowToken token = new WindowToken(MAIN_WINDOW,0,177,880,500);
+		WindowToken token = new WindowToken(MAIN_WINDOW,0,0,0,0);
 		mWindows.add(token);
 		
-		WindowToken add = new WindowToken("chats",0,0,1280,177);
+		/*WindowToken add = new WindowToken("chats",0,0,1280,177);
 		try {
 			add.getBuffer().addBytesImpl("Omfg\nWe\nHAVE\nMINIWINDOW CHATTING OMFG OMGONGONGONGONGNGNG GN YEA YEAYEA\nAttempting to get lots of text for scrolling. This is a sentence\nOMG MOAR TEXT\nNEW NEW NEW\nMORE MORE MORE\nNOW NOW NOW".getBytes("UTF-8"));
 		} catch (UnsupportedEncodingException e) {
@@ -336,7 +367,56 @@ public class Connection {
 		mWindows.add(luawin);
 		
 		WindowToken bwin = new WindowToken("button_window",0,0,0,0,"buttonwindow","plugin");
-		mWindows.add(bwin);
+		mWindows.add(bwin);*/
+		loadSettings();
+		
+		
+		
+	}
+	
+	public void reloadSettings() {
+		//unhook all windows.
+		//while(mWindowCallbacks.)
+		int N = mWindowCallbacks.beginBroadcast();
+		
+		for(int i=0;i<N;i++) {
+			IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
+			
+			try {
+				if(!c.getName().equals(MAIN_WINDOW)) {
+					c.shutdown();
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		mWindowCallbacks.finishBroadcast();
+		loadSettings();
+		
+	}
+	
+	private void loadSettings() {
+		
+		if(mWindows.size() > 1) {
+			//must clear out old windows.
+			while(mWindows.size() > 1) {
+				mWindows.remove(mWindows.size()-1);
+			}
+		} //else {
+		WindowToken token = mWindows.get(0);
+		token.setX(0);
+		token.setY(0);
+		token.setWidth(0);
+		token.setHeight(0);
+		//}
+		
+		for(Plugin p : plugins) {
+			p.shutdown();
+			p = null;
+		}
+		plugins.clear();
 		
 		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext());
 		Plugin tmpPlug = null;
@@ -359,11 +439,10 @@ public class Connection {
 		}
 		
 		//plugins.
-		tmpPlug.initScripts();
+		tmpPlug.initScripts(mWindows);
+		//tmpPlug.initScripts();
 		
 		plugins.add(tmpPlug);
-		
-		
 	}
 	
 	protected void redrawWindow(String win) {
