@@ -60,25 +60,30 @@ public class LuaInvocationHandler implements InvocationHandler
 	  		return null;
 	  	}
 	  	
-	  	Class retType = method.getReturnType();
-	  	Object ret;
-
-	  	// Checks if returned type is void. if it is returns null.
-	  	if ( retType.equals( Void.class ) || retType.equals( void.class ) )
-	  	{
-	  		func.call( args , 0 );
-	  		ret = null;
+	  	try {
+		  	Class retType = method.getReturnType();
+		  	Object ret;
+	
+		  	// Checks if returned type is void. if it is returns null.
+		  	if ( retType.equals( Void.class ) || retType.equals( void.class ) )
+		  	{
+		  		func.call( args , 0 );
+		  		ret = null;
+		  	}
+		  	else
+		  	{
+		  		ret = func.call(args, 1)[0];
+		  		if( ret != null && ret instanceof Double )
+		  		{
+		  		  ret = LuaState.convertLuaNumber((Double) ret, retType);
+		  		}
+		  	}
+		  	
+		  	return ret;
+	  	} catch(LuaException e) {
+	  		e.printStackTrace();
 	  	}
-	  	else
-	  	{
-	  		ret = func.call(args, 1)[0];
-	  		if( ret != null && ret instanceof Double )
-	  		{
-	  		  ret = LuaState.convertLuaNumber((Double) ret, retType);
-	  		}
-	  	}
-	  	
-	  	return ret;
+	  	return null;
 	  }
   }
 }
