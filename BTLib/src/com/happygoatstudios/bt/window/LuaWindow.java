@@ -134,7 +134,7 @@ public class LuaWindow extends View {
 	}
 
 	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
-		if(bmp != null) {
+		/*if(bmp != null) {
 			bmp.recycle();
 			bmp = null;
 			surface = null;
@@ -151,7 +151,23 @@ public class LuaWindow extends View {
 		surface = new LuaCanvas(bmp);
 		//Bitmap.cre
 		L.pushJavaObject(surface);
-		L.setGlobal("canvas");
+		L.setGlobal("canvas");*/
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		L.getGlobal("OnSizeChanged");
+		if(L.getLuaObject(L.getTop()).isFunction()) {
+			L.pushString(Integer.toString(w));
+			L.pushString(Integer.toString(h));
+			L.pushString(Integer.toString(oldw));
+			L.pushString(Integer.toString(oldh));
+			int ret = L.pcall(4, 1, -6);
+			if(ret != 0) {
+				Log.e("LUAWINDOW","Window("+mName+"): " + L.getLuaObject(-1).getString());
+			}
+		} else {
+			Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
+		}
 	}
 	
 	protected void onMeasure(int widthSpec,int heightSpec) {
@@ -237,8 +253,8 @@ public class LuaWindow extends View {
 		
 	}*/
 	
-	Bitmap bmp = null;
-	LuaCanvas surface = null;
+	//Bitmap bmp = null;
+	//LuaCanvas surface = null;
 	Paint p = new Paint();
 	//boolean dirty = false;
 	Paint clearme = new Paint();
@@ -246,11 +262,12 @@ public class LuaWindow extends View {
 	public void onDraw(Canvas c) {
 		
 		c.save();
+		if(constrictWindow) {
 		c.clipRect(mAnchorLeft, mAnchorTop, mAnchorLeft+mWidth, mAnchorTop+mHeight);
 		c.translate(mAnchorLeft, mAnchorTop);
-		
-		c.drawBitmap(bmp, 0, 0, null);
-		/*L.getGlobal("debug");
+		}
+		//c.drawBitmap(bmp, 0, 0, null);
+		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
 		
@@ -267,7 +284,7 @@ public class LuaWindow extends View {
 			} else {
 				//Log.e("LUAWINDOW","OnDraw success!");
 			}
-		}*/
+		}
 		
 		c.restore();
 		/*if(bmp != null) {
@@ -311,20 +328,7 @@ public class LuaWindow extends View {
 
 	public void loadScript(String body) {
 		
-		int retv = L.LdoString("function tracer()\n"+
-				"	local info = debuginfo.getinfo(1,\"Sl\")\n"+
-				"	if(not info) then\n"+
-				"		return \"No debug information available.\"\n"+
-				"	else\n"+
-				"       debug(\"%s:%d\",info.short_src,info.currentline)\n"+
-				"		return string.format(\"[%s]:%d\",info.short_src,info.currentline)\n"+
-				"	end\n"+
-				"end\n\n");
-		if(retv != 0) {
-			Log.e("LUAWINDOW","Foo chan boo. Problem with custom tracer function.\n"+L.getLuaObject(L.getTop()).getString());
-		} else {
-			Log.e("LUAWINDOW","Custom tracer loaded.");
-		}
+		
 		
 		
 		int ret = L.LdoString(body);
@@ -455,7 +459,7 @@ public class LuaWindow extends View {
 		
 		L.getGlobal(callback);
 		if(L.isFunction(L.getTop())) {
-			int tmp = L.pcall(0, 1, -3);
+			int tmp = L.pcall(0, 1, -2);
 			if(tmp != 0) {
 				Log.e("LUAWINDOW","Error calling script callback: "+L.getLuaObject(-1).getString());
 			}
