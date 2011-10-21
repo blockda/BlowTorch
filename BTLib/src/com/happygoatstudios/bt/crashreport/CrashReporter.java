@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.text.format.Time;
+import android.util.Log;
 
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
@@ -51,7 +52,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 		printWriter.append(test_user + ": Test Version " + test_version + "\n");
 		
 		e.printStackTrace(printWriter);
-		
+		Log.e("CRASHREPORT","CRASH REPORT!:"+e.getMessage());
 		String reportmeat = result.toString();
 		printWriter.close();
 
