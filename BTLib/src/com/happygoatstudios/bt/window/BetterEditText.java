@@ -35,11 +35,13 @@ public class BetterEditText extends EditText {
 		} else {
 			if(BackSpaceBugFix) {
 				//Log.e("WINDOW","USING INPUTCONNECTIONWRAPPER");
-				attrs.imeOptions |= EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+				attrs.imeOptions |= EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_FULLSCREEN;
 				InputConnection tmp = super.onCreateInputConnection(attrs);
 				return new InputConnectionWrapper(tmp,true);
 			} else {
 				//Log.e("WINDOW","USING BASEINPUTCONNECTION");
+				attrs.imeOptions |= EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_FULLSCREEN;
+				attrs.inputType |= EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
 				return new BaseInputConnection(this,false);	
 			}
 		}	
@@ -65,6 +67,7 @@ public class BetterEditText extends EditText {
 
 	public void setBackSpaceBugFix(Boolean backSpaceBugFix) {
 		BackSpaceBugFix = backSpaceBugFix;
+		//BackSpaceBugFix = true;
 	}
 
 	public Boolean getBackSpaceBugFix() {

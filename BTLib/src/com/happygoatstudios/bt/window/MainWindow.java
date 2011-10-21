@@ -2283,7 +2283,8 @@ public class MainWindow extends Activity {
 
 			MainWindow.this.findViewById(R.id.window_container).requestLayout();
 			isFullScreen = service.isFullScreen();
-			EditText input_box = (EditText)findViewById(R.id.textinput);
+			BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+			input_box.setBackSpaceBugFix(true);
 			input_box.setKeepScreenOn(service.isKeepScreenOn());
 		
 			

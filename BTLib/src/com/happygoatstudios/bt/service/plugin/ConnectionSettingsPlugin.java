@@ -76,7 +76,7 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 	private boolean ThrottleBackground = false;
 	private boolean KeepWifiActive = true;
 	private boolean KeepLast = false;
-	private boolean backspaceBugFix = false;
+	private boolean backspaceBugFix = true;
 	
 	
 	private boolean debugTelnet = false;
