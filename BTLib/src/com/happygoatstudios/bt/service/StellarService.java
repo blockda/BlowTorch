@@ -3283,6 +3283,11 @@ public class StellarService extends Service {
 			handler.sendEmptyMessage(MESSAGE_RELOADSETTINGS);
 			
 		}
+
+		public void pluginXcallS(String plugin, String function, String str)
+				throws RemoteException {
+			connections.get(connectionClutch).pluginXcallS(plugin,function,str);
+		}
 	};
 
 	public void sendRawDataToWindow(byte[] data) {

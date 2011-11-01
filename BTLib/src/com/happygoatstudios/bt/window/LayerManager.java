@@ -75,7 +75,7 @@ public class LayerManager {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
 			
-			LuaWindow tmp = new LuaWindow(mContext,this,w.getName(),w.getX(),w.getY(),w.getWidth(),w.getHeight(),rootHandler);
+			LuaWindow tmp = new LuaWindow(mContext,this,w.getName(),w.getPluginName(),w.getX(),w.getY(),w.getWidth(),w.getHeight(),rootHandler);
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -87,6 +87,13 @@ public class LayerManager {
 				String body = mService.getScript(w.getPluginName(),w.getScriptName());
 				//TODO: this needs to be much harderly error checked.
 				tmp.loadScript(body);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			try {
+				mService.registerWindowCallback(w.getName(),tmp.getCallback());
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

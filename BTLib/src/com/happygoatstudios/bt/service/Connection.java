@@ -1,7 +1,9 @@
 package com.happygoatstudios.bt.service;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.regex.Pattern;
 
 import org.keplerproject.luajava.LuaException;
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
@@ -24,6 +27,7 @@ import com.happygoatstudios.bt.service.function.ClearButtonCommand;
 import com.happygoatstudios.bt.service.function.DirtyExitCommand;
 import com.happygoatstudios.bt.service.function.DisconnectCommand;
 import com.happygoatstudios.bt.service.function.FullScreenCommand;
+import com.happygoatstudios.bt.service.function.FunctionCallbackCommand;
 import com.happygoatstudios.bt.service.function.KeyboardCommand;
 import com.happygoatstudios.bt.service.function.LoadButtonsCommand;
 import com.happygoatstudios.bt.service.function.ReconnectCommand;
@@ -35,6 +39,7 @@ import com.happygoatstudios.bt.service.function.SwitchWindowCommand;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginSettings.PLUGIN_LOCATION;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
@@ -42,6 +47,7 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.window.TextTree;
 import com.happygoatstudios.bt.window.TextTree.Line;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Debug;
@@ -51,6 +57,7 @@ import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Xml;
 
 public class Connection {
 	//base "connection class"
@@ -70,6 +77,8 @@ public class Connection {
 	public static final int MESSAGE_NEWWINDOW = 13;
 	public static final int MESSAGE_MODMAINWINDOW = 14;
 	public static final int MESSAGE_WINDOWBUFFER = 15;
+	public static final int MESSAGE_ADDFUNCTIONCALLBACK = 16;
+	public static final int MESSAGE_WINDOWXCALLS = 17;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
@@ -143,6 +152,38 @@ public class Connection {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_WINDOWXCALLS:
+					//Bundle b = msg.getData();
+					Object o = msg.obj;
+					String token = msg.getData().getString("TOKEN");
+					String function = msg.getData().getString("FUNCTION");
+					try {
+						Connection.this.windowXCallS(token,function,o);
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					break;
+				case MESSAGE_ADDFUNCTIONCALLBACK:
+					Bundle data = msg.getData();
+					String id = data.getString("ID");
+					String command = data.getString("COMMAND");
+					String callback = data.getString("CALLBACK");
+					int pid = -1;
+					//Plugin pTarget = null;
+					for(int i=0;i<plugins.size();i++) {//p : plugins) {
+						Plugin p = plugins.get(i);
+						if(p.getName().equals(id)) {
+							pid = i;
+						}
+					}
+					if(pid != -1) {
+						FunctionCallbackCommand fcc = new FunctionCallbackCommand(pid,command,callback);
+						specialcommands.put(fcc.commandName, fcc);
+					} else {
+						//error.
+					}
+					break;
 				case MESSAGE_WINDOWBUFFER:
 					boolean set = (msg.arg1 == 0) ? false : true;
 					//Debug.waitForDebugger();
@@ -374,6 +415,20 @@ public class Connection {
 		
 	}
 	
+	protected void windowXCallS(String token, String function, Object o) throws RemoteException {
+		int N = mWindowCallbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
+			String name = c.getName();
+			if(c.getName().equals(token)) {
+				c.xcallS(function,(String)o);
+				i=N;
+			}
+		}
+		
+		mWindowCallbacks.finishBroadcast();
+	}
+
 	public void reloadSettings() {
 		//unhook all windows.
 		//while(mWindowCallbacks.)
@@ -417,12 +472,18 @@ public class Connection {
 			p = null;
 		}
 		plugins.clear();
-		
-		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext());
 		Plugin tmpPlug = null;
 		try {
 			tmpPlug = new Plugin(handler);
-			tmpPlug.setSettings(parse.load());
+		} catch (LuaException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext(),tmpPlug);
+		
+		try {
+			parse.load();
+			//tmpPlug.setSettings(parse.load());
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -432,14 +493,10 @@ public class Connection {
 		} catch (SAXException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (LuaException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new RuntimeException(e);
 		}
 		
 		//plugins.
-		tmpPlug.initScripts(mWindows);
+		//tmpPlug.initScripts(mWindows);
 		//tmpPlug.initScripts();
 		
 		plugins.add(tmpPlug);
@@ -1107,6 +1164,61 @@ public class Connection {
 			}
 		}
 		return "";
+	}
+
+	public void executeFunctionCallback(int id, String callback, String args) {
+		Plugin p = plugins.get(id);
+		p.execute(callback,args);
+		//Plugin p = 
+	}
+
+	public void pluginXcallS(String plugin, String function, String str) {
+		for(Plugin p : plugins) {
+			if(p.getName().equals(plugin)) {
+				p.xcallS(function,str);
+			}
+		}
+	}
+	
+	public void saveSettings(String filename)  {
+		try {
+			FileOutputStream fos = service.openFileOutput(filename,Context.MODE_PRIVATE);
+			
+			XmlSerializer out = Xml.newSerializer();
+			
+			StringWriter writer = new StringWriter();
+			
+			out.setOutput(writer);
+			
+			out.startDocument("UTF-8", true);
+			out.startTag("", "root");
+			
+			//fill in from plugins.
+			the_settings.outputXMLInternal(out);
+			
+			out.startTag("", "plugins");
+			for(Plugin p : plugins) {
+				//if(p.getSettings()Connection.)
+				if(p.getSettings().getLocationType() == PLUGIN_LOCATION.INTERNAL) {
+					p.outputXMLInternal(out);
+				} else {
+					p.outputXMLExternal(service);
+				}
+				
+			}
+			out.endTag("", "plugins");
+			out.endTag("","root");
+			out.endDocument();
+			
+			fos.write(writer.toString().getBytes());
+			
+			fos.close();
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		
 	}
 
 	

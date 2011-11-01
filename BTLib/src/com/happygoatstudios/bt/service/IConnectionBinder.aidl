@@ -157,4 +157,5 @@ interface IConnectionBinder {
 	void unregisterWindowCallback(String name,IWindowCallback callback);
 	String getScript(String plugin,String name);
 	void reloadSettings();
+	void pluginXcallS(String plugin,String function,String str);
 }

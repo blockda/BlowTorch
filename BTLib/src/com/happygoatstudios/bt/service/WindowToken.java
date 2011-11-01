@@ -16,6 +16,7 @@ public class WindowToken implements Parcelable {
 	private int height;
 	private boolean bufferText = false;
 	private TextTree buffer;
+	//private String owner;
 	
 	public enum TYPE {
 		NORMAL,
@@ -37,6 +38,7 @@ public class WindowToken implements Parcelable {
 		this.scriptName = null;
 		this.pluginName = null;
 		buffer = new TextTree();
+		//this.owner = owner;
 	}
 	
 	public WindowToken(String name,int x,int y,int width,int height,String scriptName,String pluginName) {
@@ -48,10 +50,12 @@ public class WindowToken implements Parcelable {
 		this.height = height;
 		this.scriptName = scriptName;
 		this.pluginName = pluginName;
+		//this.owner = owner;
 	}
 	
 
 	public WindowToken(Parcel p) {
+		//owner = p.readString();
 		name = p.readString();
 		x = p.readInt();
 		y = p.readInt();
@@ -143,6 +147,7 @@ public class WindowToken implements Parcelable {
 	}
 
 	public void writeToParcel(Parcel p, int arg1) {
+		//p.writeString(owner);
 		p.writeString(name);
 		p.writeInt(x);
 		p.writeInt(y);
@@ -193,6 +198,7 @@ public class WindowToken implements Parcelable {
 	public String getPluginName() {
 		return pluginName;
 	}
+	
 	public static final Parcelable.Creator<WindowToken> CREATOR = new Parcelable.Creator<WindowToken>() {
 
 		public WindowToken createFromParcel(Parcel arg0) {

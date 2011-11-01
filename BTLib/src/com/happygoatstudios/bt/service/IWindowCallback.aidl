@@ -6,4 +6,5 @@ interface IWindowCallback {
 	void redraw();
 	String getName();
 	void shutdown();
+	void xcallS(String function,String str);
 }

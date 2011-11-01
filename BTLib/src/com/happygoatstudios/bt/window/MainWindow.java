@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -151,6 +152,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_RELOADBUFFER = 889;
 	protected static final int MESSAGE_INITIALIZEWINDOWS = 890;
 	public static final int MESSAGE_ADDOPTIONCALLBACK = 891;
+	public static final int MESSAGE_PLUGINXCALLS = 892;
 	
 	//private TextTree tree = new TextTree();
 
@@ -288,6 +290,8 @@ public class MainWindow extends Activity {
 		super.onCreate(icicle);
 		if(supportsActionBar()) {
 			this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+			
 		} else {
 			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		}
@@ -454,6 +458,17 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_PLUGINXCALLS:
+					//Map map = (Map)msg.obj;
+					String plugin = msg.getData().getString("PLUGIN");
+					String function = msg.getData().getString("FUNCTION");
+					try {
+						service.pluginXcallS(plugin,function,(String)msg.obj);
+					} catch (RemoteException e9) {
+						// TODO Auto-generated catch block
+						e9.printStackTrace();
+					}
+					break;
 				case MESSAGE_ADDOPTIONCALLBACK:
 					Bundle datab = msg.getData();
 //					String pWin,String title,String callback,Drawable res
