@@ -12,6 +12,15 @@ public class PluginSettings {
 	private int id;
 	private String author;
 	
+	public enum PLUGIN_LOCATION {
+		INTERNAL,
+		EXTERNAL
+	}
+	
+	private String path = null;
+	
+	private PLUGIN_LOCATION locationType = PLUGIN_LOCATION.INTERNAL;
+	
 	private HashMap<String,AliasData> aliases = null;
 	private HashMap<String,TriggerData> triggers = null;
 	private HashMap<String,TimerData> timers = null;
@@ -91,5 +100,25 @@ public class PluginSettings {
 
 	public HashMap<String,String> getScripts() {
 		return scripts;
+	}
+
+
+	public void setLocationType(PLUGIN_LOCATION locationType) {
+		this.locationType = locationType;
+	}
+
+
+	public PLUGIN_LOCATION getLocationType() {
+		return locationType;
+	}
+
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+
+	public String getPath() {
+		return path;
 	}
 }

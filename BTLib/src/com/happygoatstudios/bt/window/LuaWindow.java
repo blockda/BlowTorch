@@ -1,6 +1,8 @@
 package com.happygoatstudios.bt.window;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
@@ -32,6 +34,10 @@ import android.content.DialogInterface.OnClickListener;
 public class LuaWindow extends View {
 	protected static final int MESSAGE_SHUTDOWN = 2;
 
+	//protected static final int MESSAGE_PROCESSXCALLT = 3;
+
+	public static final int MESSAGE_PROCESSXCALLS = 4;
+
 	protected final int MESSAGE_REDRAW = 1;
 	
 	LuaState L = null;
@@ -42,13 +48,14 @@ public class LuaWindow extends View {
 	int mWidth;
 	int mHeight;
 	String mName;
+	String mOwner;
 	Handler mHandler;
 	Rect mBounds = null;
 	Context mContext = null;
 	Handler mainHandler = null;
 	LayerManager mManager = null;
 	boolean constrictWindow = false;
-	public LuaWindow(Context context,LayerManager manager,String name,int x,int y,int width,int height,Handler mainWindowHandler) {
+	public LuaWindow(Context context,LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
 		super(context);
 		try {
 			Class di = Class.forName("android.content.DialogInterface$OnClickListener");
@@ -56,6 +63,7 @@ public class LuaWindow extends View {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		mOwner = owner;
 		mManager = manager;
 		mContext = context;
 		this.mainHandler = mainWindowHandler;
@@ -76,6 +84,9 @@ public class LuaWindow extends View {
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_PROCESSXCALLS:
+					LuaWindow.this.xcallS(msg.getData().getString("FUNCTION"),(String)msg.obj);
+					break;
 				case MESSAGE_SHUTDOWN:
 					LuaWindow.this.shutdown();
 					break;
@@ -125,6 +136,56 @@ public class LuaWindow extends View {
 	
 	
 	
+	protected void xcallS(String string, String str) {
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(string);
+		if(L.getLuaObject(-1).isFunction()) {
+			
+			//need to start iterating the given map, re-creating the table on the other side.
+			//pushTable("",obj);
+			L.pushString(str);
+			
+			int ret = L.pcall(1, 1, -3);
+			if(ret !=0) {
+				Log.e("LUAWINDOW","WindowXCallT Error:" + L.getLuaObject(-1).getString());
+			} else {
+				//success!
+			}
+			
+		} else {
+			
+		}
+	}
+	
+	private void pushTable(String key,Map<String,Object> map) {
+		if(!key.equals("")) {
+			L.pushString(key);
+		}
+		
+		L.newTable();
+		
+		for(String tmp : map.keySet()) {
+			Object o = map.get(tmp);
+			if(o instanceof Map) {
+				pushTable(tmp,(Map)o);
+			} else {
+				if(o instanceof String) {
+					L.pushString(tmp);
+					L.pushString((String)o);
+					L.setTable(-3);
+				}
+			}
+		}
+		if(!key.equals("")) {
+			L.setTable(-3);
+		}
+	}
+
+
+
 	public String getName() {
 		return mName;
 	}
@@ -188,12 +249,15 @@ public class LuaWindow extends View {
 		BoundsFunction bf = new BoundsFunction(L);
 		OptionsMenuFunction omf = new OptionsMenuFunction(L);
 		TableAdapterFunction taf = new TableAdapterFunction(L);
+		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
+		
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
 			bf.register("getBounds");
 			omf.register("addOptionCallback");
 			taf.register("getTableAdapter");
+			pxcf.register("PluginXCallS");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -324,6 +388,12 @@ public class LuaWindow extends View {
 		public void shutdown() throws RemoteException {
 			mHandler.sendEmptyMessage(MESSAGE_SHUTDOWN);
 		}
+
+		public void xcallS(String function, String str) throws RemoteException {
+			Message msg = mHandler.obtainMessage(MESSAGE_PROCESSXCALLS,str);
+			msg.getData().putString("FUNCTION", function);
+			mHandler.sendMessage(msg);
+		}
 	};
 
 	public void loadScript(String body) {
@@ -447,6 +517,82 @@ public class LuaWindow extends View {
 			L.pushJavaObject(tb);
 			return 1;
 		}
+		
+	}
+	
+	private class PluginXCallSFunction extends JavaFunction {
+		//HashMap<String,String> 
+		public PluginXCallSFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//String token = this.getParam(2).getString();
+			String function = this.getParam(2).getString();
+			LuaObject foo = this.getParam(3);
+			
+			
+			//--if(foo.isTable()) {
+			//	Log.e("DEBUG","ARGUMENT IS TABLE");
+			//}
+			//HashMap<String,Object> dump = dumpTable("t",3);
+			//
+			/*L.pushNil();
+			while(L.next(2) != 0) {
+				
+				String id = L.toString(-2);
+				LuaObject l = L.getLuaObject(-1);
+				if(l.isTable()) {
+					//need to dump more tables
+				} else {
+					
+				}
+			}*/
+			//mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_X, obj))
+			Message msg = mainHandler.obtainMessage(MainWindow.MESSAGE_PLUGINXCALLS,foo.getString());
+			
+			msg.getData().putString("PLUGIN",mOwner);
+			msg.getData().putString("FUNCTION", function);
+			
+			mainHandler.sendMessage(msg);
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+		public HashMap<String,Object> dumpTable(String tablePath,int idx) {
+			
+			HashMap<String,Object> tmp = new HashMap<String,Object>();
+			int counter = 1;
+			L.pushNil();
+			while(L.next(idx) != 0) {
+				//String id = L.toString(-2);
+				String id = null;
+				if(L.isNumber(-2)) {
+					id = Integer.toString(counter);
+					counter++;
+				} else if(L.isString(-2)) {
+					id = L.toString(-2);
+				}
+				LuaObject l = L.getLuaObject(-1);
+				if(l.isTable()) {
+					//need to dump more tables
+					tmp.put(id, dumpTable(tablePath+"."+id,L.getTop()));
+					//Log.e("PLUGIN","TABLE RECURSIVE DUMP:"+L.getTop()+":"+(L.getLuaObject(L.getTop()).toString()));
+				
+				} else {
+					//Log.e("PLUGIN","WXCALLT:"+tablePath+"|"+id+"<==>"+l.getString());
+					tmp.put(id, l.getString());
+				}
+				
+				L.pop(1);
+			}
+			
+			//L.pop(1);
+			return tmp;
+		}
+		
 		
 	}
 	

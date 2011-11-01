@@ -1,3 +1,57 @@
+--debugPrint("package path:"..package.path)
+package.path = "/mnt/sdcard/BlowTorch/?.lua"
+--debugPrint("package path:"..package.path)
+require("button")
+require("serialize")
+defaults = nil
+
+function loadButtons(args)
+
+	--debugPrint("WindowXCallS Succeeded!")
+	--for i,v in pairs(args) do
+	--	if(istable(v)) then
+	--	debugPrint(i.."=>"..v)
+	--end
+	--printTable("args",args)
+	local tmp = loadstring(args)()
+	printTable("defs",tmp.default)
+	--set up metatables.
+	--if(args.defaults == nil) then
+	defaults = BUTTONSET_DATA:new(tmp.default)
+	--setmetatable(BUTTON_DATA,defaults)
+	--BUTTON_DATA.__index = defaults
+	
+	--setmetatable(BUTTON_DATA,defaults)
+	BUTTON_DATA.__index = defaults
+	--defaults.__index = 
+	buttons = {}
+	--setmetatable(BUTTON_DATA,defaults)
+	for i,v in pairs(tmp.set) do
+		--debugPrint("PROCESSING NEW BUTTON"..i)
+		buttons[i] = BUTTON:new(v)
+	end
+	debugPrint(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
+	--for i,v in pairs(buttons) do
+	--	debugPrint("buuuuuton"..i)
+	--end
+	--buttons = foo
+	drawButtons()
+	invalidate()
+	--else
+	--end
+	
+end
+
+function printTable(key,o)
+	for i,v in pairs(o) do
+		if(type(v)=="table") then
+			printTable(key.."."..i,v)
+		else 
+			debugPrint(key.."."..i.."<==>"..v)
+		end
+	end
+end
+
 Bitmap = luajava.bindClass("android.graphics.Bitmap")
 BitmapConfig = luajava.bindClass("android.graphics.Bitmap$Config")
 PorterDuffMode = luajava.bindClass("android.graphics.PorterDuff$Mode")
@@ -74,15 +128,15 @@ function moveTouch.onTouch(v,e)
 			local dy = totalDelta.y
 			totalDelta.x = 0
 			totalDelta.y = 0
-			for i,b in ipairs(buttons) do
+			for i,b in pairs(buttons) do
 				if(b.selected == true) then
 					local r = b.rect
 					--r:offset(dx,dy)
-					b.x = b.x + dx
-					b.y = b.y + dy
+					b.data.x = b.data.x + dx
+					b.data.y = b.data.y + dy
 					b.selected = false
 					updateSelected(b,false)
-					updateRect(b)
+					b:updateRect()
 				end
 			end
 			drawButtons()
@@ -107,7 +161,7 @@ function enterMoveMode()
 	local x2 = 0
 	local y2 = 0
 	local first = true
-	for i,b in ipairs(buttons) do
+	for i,b in pairs(buttons) do
 		if(b.selected == true) then
 			local r = b.rect
 			if(first) then
@@ -153,9 +207,10 @@ function enterMoveMode()
 	moveCanvas:save()
 	moveCanvas:translate(40,40)
 	moveCanvas:translate(-1*x1,-1*y1)
-	for i,b in ipairs(buttons) do
+	for i,b in pairs(buttons) do
 		if(b.selected == true) then
-			drawButtonOn(b,moveCanvas)
+			b:draw(0,moveCanvas)
+			--debugPrint("debugprinting:"..x1.."x"..y1)
 			--moveCanvas:drawRect(b.rect,b.paintOpts)
 		end
 	end
@@ -178,7 +233,7 @@ function managerTouch.onTouch(v,e)
 			fingerdown = true
 			touchedbutton = b
 			touchedindex = index
-			debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.x,touchedbutton.y))
+			debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.data.x,touchedbutton.data.y))
 			--if(#buttons > 50 and not manage) then
 			--	aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
 				--aa = AlphaAnimation.new(1.0,0.0)
@@ -200,13 +255,13 @@ function managerTouch.onTouch(v,e)
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
 
 		--if(not manage
-		debugPrint("manager move move")
+		--debugPrint("manager move move")
 		if(prevevent == 0) then
 			prevevent = e:getEventTime()
 		else
 			now = e:getEventTime()
 			local elapsed = now - prevevent
-			if(elapsed > 30) then
+			if(elapsed > 10) then
 			--proceed
 				--debugPrint("processing move event")
 				prevevent = now
@@ -241,10 +296,9 @@ function managerTouch.onTouch(v,e)
 			local modx = (math.floor(e:getX()/gridwidth)*gridwidth)+(gridwidth/2)
 			local mody = (math.floor(e:getY()/gridwidth)*gridwidth)+(gridwidth/2)
 			
-			touchedbutton.x = modx
-			touchedbutton.y = mody
-			updateRect(touchedbutton)
-			--drawButton(touchedbutton)
+			touchedbutton.data.x = modx
+			touchedbutton.data.y = mody
+			touchedbutton:updateRect()
 			drawButtons()
 			invalidate()
 			return true
@@ -274,7 +328,7 @@ function managerTouch.onTouch(v,e)
 			--butt.width = gridwidth
 			--butt.height = gridwidth
 			--canvas:drawRoundRect(butt.rect,5,5,paint)
-			drawButton(butt)
+			butt:draw(0,buttonCanvas)
 			invalidate()
 			return true
 		end
@@ -306,6 +360,7 @@ function normalTouch.onTouch(v,e)
 	local y = e:getY()
 	
 	if(e:getAction() == MotionEvent.ACTION_DOWN) then
+		prevevent = 0
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
 			fingerdown = true
@@ -314,7 +369,7 @@ function normalTouch.onTouch(v,e)
 			clearButton(b)
 			normalTouchState = 1
 			clearButton(b)
-			drawButton(b,normalTouchState)
+			b:draw(normalTouchState,buttonCanvas)
 			invalidate()
 			return true
 		else
@@ -323,19 +378,34 @@ function normalTouch.onTouch(v,e)
 	end
 	
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
+		
+		if(prevevent == 0) then
+			prevevent = e:getEventTime()
+		else
+			now = e:getEventTime()
+			local elapsed = now - prevevent
+			if(elapsed > 60) then
+			--proceed
+				--debugPrint("processing move event")
+				prevevent = now
+			else
+				return true --consume but dont process.
+			end
+		end
+	
 		if(fingerdown) then
 			local r = touchedbutton.rect
 			if(r:contains(x,y)) then
 				if(normalTouchState ~= 1) then
 					normalTouchState = 1
 					clearButton(b)
-					drawButton(b,normalTouchState)
+					b:draw(normalTouchState,buttonCanvas)
 				end
 			else
 				if(normalTouchState ~= 2) then
 					normalTouchState = 2
 					clearButton(b)
-					drawButton(b,normalTouchState)
+					b:draw(normalTouchState,buttonCanvas)
 				end
 			end
 			invalidate()
@@ -357,7 +427,7 @@ function normalTouch.onTouch(v,e)
 			end
 			normalTouchState = 0
 			clearButton(touchedbutton)
-			drawButton(touchedbutton,normalTouchState)
+			touchedbutton:draw(normalTouchState,buttonCanvas)
 			invalidate()
 			return true
 		else
@@ -377,7 +447,7 @@ function updateSelected(b,sel)
 	if(sel) then
 		p:setShadowLayer(1,0,0,Color.WHITE)
 		b.selected = true
-		drawButton(b)
+		b:draw(0,buttonCanvas)
 	else
 		p:setShadowLayer(0,0,0,Color.WHITE)
 		b.selected = false
@@ -415,7 +485,7 @@ function checkIntersects()
 	dragRect:set(x1,y1,x2,y2)
 	local redrawscreen = false
 	anySelected = false
-	for i,b in ipairs(buttons) do
+	for i,b in pairs(buttons) do
 		local rect = b.rect
 			if(intersectMode == 0) then
 				if(RectFClass:intersects(dragRect,rect) or dragRect:contains(rect)) then
@@ -453,15 +523,7 @@ function checkIntersects()
 	end
 end
 
-button = {}
-button.x = 500
-button.y = 500
-button.width = 50
-button.height = 50
-button.text = "bar"
-button.rect = luajava.newInstance("android.graphics.RectF")
-button.paintOpts = luajava.new(PaintClass)
-button.selected = false
+
 buttons = {}
 
 --BitmapFactory = luajava.bindClass("android.graphics.BitmapFactory")
@@ -469,18 +531,6 @@ buttons = {}
 
 fingerdown = false
 manage = false
-
-button1 = {}
-button1.x = 200
-button1.y = 200
-button1.width = 100
-button1.height = 200
-button1.text = "foo"
-button1.rect = luajava.newInstance("android.graphics.RectF")
-button1.paintOpts = luajava.new(PaintClass)
-button1.selected = false
-table.insert(buttons,button)
-table.insert(buttons,button1)
 
 paint = luajava.new(PaintClass)
 paint:setAntiAlias(true)
@@ -506,7 +556,6 @@ managerCanvas = nil
 
 cpaint = luajava.new(PaintClass)
 cpaint:setARGB(0x00,0x00,0x00,0x00)
-xferMode = luajava.newInstance("android.graphics.PorterDuffXfermode",PorterDuffMode.CLEAR)
 cpaint:setXfermode(xferMode)
 
 checkchange = {}
@@ -527,6 +576,15 @@ function checkchange.onCheckedChanged(v,ischecked)
 		managerLayer = nil
 		manage = false
 		view:setOnTouchListener(normalTouch_cb)
+		
+		--save settings.
+		local tmp = {}
+		for i,b in pairs(buttons) do
+			tmp[i] = b.data
+		end
+		
+		PluginXCallS("saveButtons",serialize(tmp))
+		
 		--paint:setShadowLayer(0,0,0,Color.WHITE)
 	end
 	drawButtons()
@@ -686,10 +744,13 @@ function drawButtons()
 	--if(manage) then
 	--	canvas:drawBitmap(managerBitmap,0,0,nil)
 	--end
-
-	for i,b in ipairs(buttons) do
-		drawButton(b)
+	--local counter = 0
+	for i,b in pairs(buttons) do
+		--debugPrint("DRAWING BUTTON"..i)
+		b:draw(0,buttonCanvas)
+		--counter = counter + 1
 	end
+	--debugPrint("DRAWING "..counter.." BUTTONS")
 end
 
 function drawButtonsNoSelected()
@@ -704,59 +765,11 @@ function drawButtonsNoSelected()
 	--	canvas:drawBitmap(managerBitmap,0,0,nil)
 	--end
 
-	for i,b in ipairs(buttons) do
+	for i,b in pairs(buttons) do
 		if(b.selected ~= true) then
-			drawButton(b)
+			b:draw(0,buttonCanvas)
 		end
 	end
-end
-
-function drawButtonOn(b,canv)
-	local usestate = 0
-	local p = b.paintOpts
-	local canvas = canv
-	--if(state ~= nil) then
-	--	usestate = state
-	--end
-	
-	if(usestate == 0) then
-		p:setARGB(0x77,0x00,0x00,0xFF)
-	elseif(usestate == 1) then
-		p:setARGB(0x77,0x00,0xFF,0x00)
-	elseif(usestate == 2) then
-		p:setARGB(0x77,0xFF,0x00,0x00)
-	end
-	
-	
-	canvas:drawRoundRect(b.rect,5,5,b.paintOpts)
-	--c:drawBitmap(bmp,b.x,b.y,nil)
-	local tX = b.x - (tpaint:measureText(b.text)/2)
-	local tY = b.y + (tpaint:getTextSize()/2)
-	canvas:drawText(b.text,tX,tY,tpaint)
-end
-
-function drawButton(b,state)
-	local usestate = 0
-	local p = b.paintOpts
-	local canvas = buttonCanvas
-	if(state ~= nil) then
-		usestate = state
-	end
-	
-	if(usestate == 0) then
-		p:setARGB(0x77,0x00,0x00,0xFF)
-	elseif(usestate == 1) then
-		p:setARGB(0x77,0x00,0xFF,0x00)
-	elseif(usestate == 2) then
-		p:setARGB(0x77,0xFF,0x00,0x00)
-	end
-	
-	
-	canvas:drawRoundRect(b.rect,5,5,b.paintOpts)
-	--c:drawBitmap(bmp,b.x,b.y,nil)
-	local tX = b.x - (tpaint:measureText(b.text)/2)
-	local tY = b.y + (tpaint:getTextSize()/2)
-	canvas:drawText(b.text,tX,tY,tpaint)
 end
 
 function clearButton(b)
@@ -887,7 +900,7 @@ function OldTouchEvent(e)
 			--butt.width = gridwidth
 			--butt.height = gridwidth
 			--canvas:drawRoundRect(butt.rect,5,5,paint)
-			drawButton(butt)
+			butt:draw(0,buttonCanvas)
 			invalidate()
 			return true
 		end
@@ -965,24 +978,24 @@ end
 
 counter = 0
 
-function addButton(x,y) 
-	local newb = {}
-	newb.x = x
-	newb.y = y
-	newb.width = gridwidth-5
-	newb.height = gridwidth-5
-	newb.text = "newb"..counter
+function addButton(pX,pY) 
+	local newb = BUTTON:new({x=pX,y=pY,label="newb"})
+	--newb.x = x
+	--newb.y = y
+	newb.data.width = gridwidth-5
+	newb.data.height = gridwidth-5
+	newb.data.label = "newb"..counter
 	counter = counter+1
-	newb.rect = luajava.newInstance("android.graphics.RectF")
-	newb.paintOpts = luajava.new(PaintClass,paint)
-	newb.selected = false
-	updateRect(newb)
+	--newb.rect = luajava.newInstance("android.graphics.RectF")
+	--newb.paintOpts = luajava.new(PaintClass,paint)
+	--newb.selected = false
+	newb:updateRect()
 	table.insert(buttons,newb)
 	return newb
 end
 
 function buttonTouched(x,y)
-	for i,b in ipairs(buttons) do
+	for i,b in pairs(buttons) do
 		local z = b.rect
 		if(z:contains(x,y)) then
 			return true,b,i

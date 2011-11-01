@@ -34,7 +34,7 @@ public final class AliasParser {
 		});
 	}
 	
-	public static void saveAliasToXML(XmlSerializer out,AliasData data,PluginSettings settings) throws IllegalArgumentException, IllegalStateException, IOException {
+	public static void saveAliasToXML(XmlSerializer out,AliasData data) throws IllegalArgumentException, IllegalStateException, IOException {
 		out.startTag("", BasePluginParser.TAG_ALIAS);
 		out.attribute("", BasePluginParser.ATTR_PRE, data.getPre());
 		out.attribute("", BasePluginParser.ATTR_POST, data.getPost());

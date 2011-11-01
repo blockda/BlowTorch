@@ -14,10 +14,11 @@
 #
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(TARGET_ARCH_ABI),armeabi)
+
 include $(CLEAR_VARS)
 
 NDK_APPLICATION_MK=./Application.mk
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../../data/dan/lua-5.1.4/src
 LOCAL_MODULE    := luajava-1.1
 LOCAL_SRC_FILES :=  lapi.c \
 	lauxlib.c \
@@ -55,4 +56,49 @@ LOCAL_SRC_FILES :=  lapi.c \
 
 
 include $(BUILD_SHARED_LIBRARY)
+
+endif
+
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+include $(CLEAR_VARS)
+
+NDK_APPLICATION_MK=./Application.mk
+LOCAL_MODULE    := luajava-1.1
+LOCAL_SRC_FILES :=  lapi.c.neon \
+	lauxlib.c.neon \
+	lbaselib.c.neon \
+	lcode.c.neon \
+	ldblib.c.neon \
+	ldebug.c.neon \
+	ldo.c.neon \
+	ldump.c.neon \
+	lfunc.c.neon \
+	lgc.c.neon \
+	linit.c.neon \
+	liolib.c.neon \
+	llex.c.neon \
+	lmathlib.c.neon \
+	lmem.c.neon \
+	loadlib.c.neon \
+	lobject.c.neon \
+	lopcodes.c.neon \
+	loslib.c.neon \
+	lparser.c.neon \
+	lstate.c.neon \
+	lstring.c.neon \
+	lstrlib.c.neon \
+	ltable.c.neon \
+	ltablib.c.neon \
+	ltm.c.neon \
+	lundump.c.neon \
+	lvm.c.neon \
+	lzio.c.neon \
+	print.c.neon \
+	luajava.c.neon
+		    
+LOCAL_ARM_NEON := true
+
+include $(BUILD_SHARED_LIBRARY)
+
+endif
 
