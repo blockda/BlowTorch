@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.timer;
 import java.util.ArrayList;
 
 import org.xml.sax.Attributes;
+import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponderParser;
@@ -54,5 +55,9 @@ public final class TimerParser {
 		NotificationResponderParser.registerListeners(timer, settings, obj, current_trigger, current_timer);
 		ScriptResponderParser.registerListeners(timer, settings, obj, current_trigger, current_timer);
 	
+	}
+
+	public static void saveTimerToXML(XmlSerializer out, TimerData timer) {
+		//not implemented yet. simple serialization routine.
 	}
 }

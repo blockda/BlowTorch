@@ -1,5 +1,9 @@
 package com.happygoatstudios.bt.service.plugin;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +13,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import org.keplerproject.luajava.JavaFunction;
@@ -16,13 +21,17 @@ import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaObject;
 import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
+import org.xmlpull.v1.XmlSerializer;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.util.Xml;
 
 import com.happygoatstudios.bt.alias.AliasData;
+import com.happygoatstudios.bt.alias.AliasParser;
 import com.happygoatstudios.bt.responder.IteratorModifiedException;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.Connection;
@@ -33,7 +42,9 @@ import com.happygoatstudios.bt.service.plugin.function.NoteFunction;
 import com.happygoatstudios.bt.service.plugin.function.TriggerEnabledFunction;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.timer.TimerData;
+import com.happygoatstudios.bt.timer.TimerParser;
 import com.happygoatstudios.bt.trigger.TriggerData;
+import com.happygoatstudios.bt.trigger.TriggerParser;
 import com.happygoatstudios.bt.window.TextTree;
 
 public class Plugin {
@@ -44,6 +55,8 @@ public class Plugin {
 	private PluginSettings settings = null;
 	Handler mHandler = null;
 	//private String mName = null;
+	
+	
 	
 	public Plugin(Handler h) throws LuaException {
 		setSettings(new PluginSettings());
@@ -79,10 +92,16 @@ public class Plugin {
 		ExecuteScriptFunction esf = new ExecuteScriptFunction(L);
 		MainWindowFunction mwf = new MainWindowFunction(L);
 		WindowBufferFunction wbf = new WindowBufferFunction(L);
+		RegisterFunctionCallback rfc = new RegisterFunctionCallback(L);
+		DebugFunction df = new DebugFunction(L);
+		WindowXCallSFunction wxctf = new WindowXCallSFunction(L);
 		wf.register("NewWindow");
 		mwf.register("MainWindowSize");
 		esf.register("ExecuteScript");
 		wbf.register("WindowBuffer");
+		rfc.register("RegisterSpecialCommand");
+		df.register("debugPrint");
+		wxctf.register("WindowXCallS");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -97,6 +116,8 @@ public class Plugin {
 			Log.e("LUA","value: " + two + " data: " + one);
 		}*/
 	}
+	
+	//public void 
 
 	public void setSettings(PluginSettings settings) {
 		this.settings = settings;
@@ -205,7 +226,7 @@ public class Plugin {
 		//for(Script)
 		
 		
-		for(String script : settings.getScripts().keySet()) {
+		/*for(String script : settings.getScripts().keySet()) {
 			//Log.e("LUA","ATTEMPTING TO LOAD:" + script + "\n" + settings.getScripts().get(script));
 			if(script.equals("global")) {
 				int ret =L.LdoString(settings.getScripts().get(script));
@@ -213,7 +234,7 @@ public class Plugin {
 					Log.e("LUA","PROBLEM LOADING SCRIPT:" + L.getLuaObject(-1).getString());
 				}
 			}
-		}
+		}*/
 	}
 	
 	
@@ -345,11 +366,324 @@ public class Plugin {
 		}
 		
 	}
+	
+	private class RegisterFunctionCallback extends JavaFunction {
+
+		public RegisterFunctionCallback(LuaState L) {
+			super(L);
+			
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			LuaObject name = this.getParam(2);
+			LuaObject function = this.getParam(3);
+			
+			if(name == null) {
+				return 0;
+			}
+			
+			if(function == null) {
+				return 0;
+			}
+			
+			if(!name.isString()) {
+				return 0;
+			}
+			
+			if(!function.isString()) {
+				return 0;
+			}
+			//function.tos
+			String funcstring = function.getString();
+			Log.e("PLUGIN","SENDING FUNCTION:" + name + "("+funcstring+"): for inclusion into the global .command processor.");
+			
+			Message msg = mHandler.obtainMessage(Connection.MESSAGE_ADDFUNCTIONCALLBACK);
+			Bundle b = msg.getData();
+			b.putString("ID", settings.getName());
+			b.putString("COMMAND", name.getString());
+			b.putString("CALLBACK", funcstring);
+			msg.setData(b);
+			mHandler.sendMessage(msg);
+			return 0;
+		}
+		
+		
+		
+	}
+	
+	private class WindowXCallSFunction extends JavaFunction {
+		//HashMap<String,String> 
+		public WindowXCallSFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String token = this.getParam(2).getString();
+			String function = this.getParam(3).getString();
+			LuaObject foo = this.getParam(4);
+			
+			
+			//--if(foo.isTable()) {
+			//-	Log.e("DEBUG","ARGUMENT IS TABLE");
+			//}
+			//HashMap<String,Object> dump = dumpTable("t",4);
+			//
+			/*L.pushNil();
+			while(L.next(2) != 0) {
+				
+				String id = L.toString(-2);
+				LuaObject l = L.getLuaObject(-1);
+				if(l.isTable()) {
+					//need to dump more tables
+				} else {
+					
+				}
+			}*/
+			//mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_X, obj))
+			Message msg = mHandler.obtainMessage(Connection.MESSAGE_WINDOWXCALLS,foo.getString());
+			
+			msg.getData().putString("TOKEN",token);
+			msg.getData().putString("FUNCTION", function);
+			
+			mHandler.sendMessage(msg);
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+		public HashMap<String,Object> dumpTable(String tablePath,int idx) {
+			
+			HashMap<String,Object> tmp = new HashMap<String,Object>();
+			int counter = 1;
+			L.pushNil();
+			while(L.next(idx) != 0) {
+				//String id = L.toString(-2);
+				String id = null;
+				if(L.isNumber(-2)) {
+					id = Integer.toString(counter);
+					counter++;
+				} else if(L.isString(-2)) {
+					id = L.toString(-2);
+				}
+				LuaObject l = L.getLuaObject(-1);
+				if(l.isTable()) {
+					//need to dump more tables
+					tmp.put(id, dumpTable(tablePath+"."+id,L.getTop()));
+					//Log.e("PLUGIN","TABLE RECURSIVE DUMP:"+L.getTop()+":"+(L.getLuaObject(L.getTop()).toString()));
+				
+				} else {
+					//Log.e("PLUGIN","WXCALLT:"+tablePath+"|"+id+"<==>"+l.getString());
+					tmp.put(id, l.getString());
+				}
+				
+				L.pop(1);
+			}
+			
+			//L.pop(1);
+			return tmp;
+		}
+		
+		
+	}
+	
+	private class DebugFunction extends JavaFunction {
+
+		public DebugFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String foo = this.getParam(2).getString();
+			Log.e("LUAWINDOW","DEBUG:"+foo);
+			return 0;
+		}
+		
+	}
 
 	public void shutdown() {
 		// TODO Auto-generated method stub
 		L.close();
 	}
+
+	public String getName() {
+		// TODO Auto-generated method stub
+		return settings.getName();
+	}
+
+	public void execute(String callback,String args) {
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(callback);
+		L.pushString(args);
+		
+		int ret = L.pcall(1, 1, -3);
+		
+		if(ret != 0) {
+			Log.e("PLUGIN","Error calling function callback:"+settings.getName()+"("+callback+"):"+L.getLuaObject(-1).getString());
+		} else {
+			Log.e("PLUGIN","Successfuly called plugin function:"+settings.getName()+"("+callback+")");
+		}
+	}
+
+	public void xcallS(String function, String str) {
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(function);
+		if(L.getLuaObject(-1).isFunction()) {
+			//pushTable("",map);
+			L.pushString(str);
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("PLUGIN","PluginXCallS Error:" + L.getLuaObject(-1).getString());
+			} else {
+				//success
+			}
+		} else {
+			//error
+		}
+	}
 	
+	private void pushTable(String key,Map<String,Object> map) {
+		if(!key.equals("")) {
+			L.pushString(key);
+		}
+		
+		L.newTable();
+		
+		for(String tmp : map.keySet()) {
+			Object o = map.get(tmp);
+			if(o instanceof Map) {
+				pushTable(tmp,(Map)o);
+			} else {
+				if(o instanceof String) {
+					L.pushString(tmp);
+					L.pushString((String)o);
+					L.setTable(-3);
+				}
+			}
+		}
+		if(!key.equals("")) {
+			L.setTable(-3);
+		}
+	}
+
+	public LuaState getLuaState() {
+		// TODO Auto-generated method stub
+		return L;
+	}
 	
+	public void outputXMLInternal(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		//see if lua has a SaveXML method.
+		
+		L.getGlobal("saveXML");
+		if(L.getLuaObject(-1).isFunction()) {
+			//call it and allow plugin to dump settings to the main wad.
+			//need to dump plugin constants.
+			//then call lua.
+			out.startTag("", "plugin");
+			dumpPluginCommonData(out);
+			out.endTag("", "plugin");
+		}
+	}
+	
+	public void outputXMLExternal(StellarService service) {
+		L.getGlobal("saveXML");
+		if(L.getLuaObject(-1).isFunction()) {
+			//set up file for writing, calling saveXML.
+			try {
+				FileOutputStream fos = service.openFileOutput(settings.getPath(), Context.MODE_PRIVATE);
+				
+				XmlSerializer out = Xml.newSerializer();
+				
+				StringWriter writer = new StringWriter();
+				
+				out.setOutput(writer);
+				
+				out.startDocument("UTF-8", true);
+				
+				out.startTag("", "plugin");
+
+				dumpPluginCommonData(out);
+				
+				out.endTag("", "plugin");
+				out.endDocument();
+				
+				fos.write(writer.toString().getBytes());
+				
+				fos.close();
+				
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+		} else {
+			//no saveXML detected, no saving needed, as the next parse will just pick up the same info.
+	
+		}
+	}
+	
+	private void dumpPluginCommonData(XmlSerializer out) {
+		try{
+			out.attribute("", "author", settings.getAuthor());
+			out.attribute("", "name", settings.getName());
+			out.attribute("", "id", Integer.toString(settings.getId()));
+			
+		
+			//out.
+			//dump common/normal plugin data.
+			for(AliasData alias : settings.getAliases().values()) {
+				AliasParser.saveAliasToXML(out, alias);
+			}
+			
+			for(TriggerData trigger : settings.getTriggers().values()) {
+				TriggerParser.saveTriggerToXML(out, trigger);
+			}
+			
+			for(TimerData timer : settings.getTimers().values()) {
+				TimerParser.saveTimerToXML(out,timer);
+			}
+			
+			for(String script : settings.getScripts().keySet()) {
+				out.startTag("", "script");
+				out.attribute("", "name", script);
+				out.text(settings.getScripts().get(script));
+				out.endTag("", "script");
+			}
+			
+			L.pop(1);
+			L.getGlobal("debug");
+			L.getField(-1,"traceback");
+			L.remove(-2);
+			//L.pushJavaObject(out);
+			L.getGlobal("saveXML");
+			L.pushJavaObject(out);
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("PLUGIN","SaveXML Error:" + L.getLuaObject(-1).getString());
+				return;
+			}
+		
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }

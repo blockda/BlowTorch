@@ -3,6 +3,7 @@ package com.happygoatstudios.bt.service.plugin;
 import java.util.HashMap;
 
 import org.keplerproject.luajava.LuaException;
+import org.xmlpull.v1.XmlSerializer;
 
 
 import android.os.Handler;
@@ -401,5 +402,7 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 		WrapMode = wrapMode;
 	}
 
-	
+	public void outputXMLInternal(XmlSerializer out) {
+		//this is where we take our normal data and 
+	}
 }
