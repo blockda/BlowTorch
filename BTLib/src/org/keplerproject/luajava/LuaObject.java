@@ -404,6 +404,9 @@ public class LuaObject
 			if (!isFunction() && !isTable() && !isUserdata())
 				throw new LuaException("Invalid object. Not a function, table or userdata .");
 
+			L.getGlobal("debug");
+			L.getField(L.getTop(), "traceback");
+			L.remove(-2);
 			int top = L.getTop();
 			push();
 			int nargs;
@@ -418,9 +421,9 @@ public class LuaObject
 			}
 			else
 				nargs = 0;
-
-			int err = L.pcall(nargs, nres, 0);
-
+			//original line below
+			//int err = L.pcall(nargs, nres, 0);
+			int err = L.pcall(nargs, nres, (-2)-nargs);
 			if (err != 0)
 			{
 				String str;

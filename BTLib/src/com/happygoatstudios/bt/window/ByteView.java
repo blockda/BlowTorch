@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.Map;
 
 import com.happygoatstudios.bt.service.Colorizer;
 import com.happygoatstudios.bt.service.IWindowCallback;
@@ -677,6 +678,7 @@ public class ByteView extends View {
 		Paint b = new Paint();
 		b.setColor(0xFF0A0A0A);
 		//c.drawColor(0xFF0A0A0A); //fill with black
+		c.drawColor(0xFF0A0A0A);
 		c.drawRect(0,0,clip.right-clip.left,clip.top-clip.bottom,b);
 		p.setTypeface(PREF_FONT);
 		p.setAntiAlias(true);
@@ -1527,6 +1529,11 @@ public class ByteView extends View {
 
 		public void shutdown() throws RemoteException {
 			mHandler.sendEmptyMessage(MESSAGE_SHUTDOWN);
+		}
+
+		public void xcallS(String function, String str) throws RemoteException {
+			//this wont actually do anything, xcallT is a lua operation.
+			//at this point byteviews have no luas.
 		}
 		
 	};
