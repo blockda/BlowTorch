@@ -16,39 +16,9 @@ import android.sax.Element;
 import android.sax.StartElementListener;
 
 public class ScriptResponderParser {
-	public static void registerListeners(Element root,PluginSettings settings,final Object obj,final TriggerData current_trigger,final TimerData current_timer) {
+	public static void registerListeners(Element root,PluginSettings settings,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element script = root.getChild(BasePluginParser.TAG_SCRIPTRESPONDER);
-		script.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes a) {
-				ScriptResponder scr = new ScriptResponder();
-				scr.setFunction(a.getValue("",BasePluginParser.ATTR_FUNCTION));
-				
-				String fireType = a.getValue("",BasePluginParser.ATTR_FIRETYPE);
-				if(fireType==null) fireType="";
-				
-				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
-					scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
-				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
-					scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
-				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
-					scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
-					scr.setFireType(FIRE_WHEN.WINDOW_NEVER);
-				} else {
-					scr.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				}
-				
-				if(obj instanceof TriggerData) {
-					current_trigger.getResponders().add(scr);
-				}
-				
-				if(obj instanceof TimerData) {
-					current_timer.getResponders().add(scr);
-				}
-			}
-			
-		});
+		script.setStartElementListener(new ScriptElementListener(settings,obj,current_trigger,current_timer));
 	}
 	
 	public static void saveScriptResponderToXML(XmlSerializer out,ScriptResponder r) throws IllegalArgumentException, IllegalStateException, IOException {

@@ -307,7 +307,7 @@ debugPrint("custom loaded file go!")
 ]]>
   </script>
   <buttonsets>
-	<buttonset name="a" primaryColor="7799FF22">
+	<buttonset name="a" primaryColor="7799FF22" selectedColor="77FF3300" flipColor="770033FF">
 		<button label="smorp" x="200" y="400"/>
 		<button label="spliz" x="300" y="400"/>
 	</buttonset>
