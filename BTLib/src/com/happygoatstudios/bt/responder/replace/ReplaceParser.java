@@ -16,38 +16,9 @@ import android.sax.TextElementListener;
 import android.util.Log;
 
 public final class ReplaceParser {
-	public static void registerListeners(Element root,final PluginSettings settings,final Object obj,final TriggerData current_trigger) {
+	public static void registerListeners(Element root,PluginSettings settings,TriggerData current_trigger) {
 		Element r = root.getChild(BasePluginParser.TAG_REPLACERESPONDER);
-		r.setTextElementListener(new TextElementListener() {
-			private ReplaceResponder r = new ReplaceResponder();
-			public void start(Attributes a) {
-				//if( != null && a.getValue("",BasePluginParser.ATTR_DESTINATION) != null) {
-					r.setRetarget(a.getValue("",BasePluginParser.ATTR_RETARGET));
-
-				
-				String fireType = a.getValue("",BasePluginParser.ATTR_FIRETYPE);
-				if(fireType == null) fireType = "";
-				//Log.e("PARSER","ACK TAG READ, FIRETYPE IS:" + fireType);
-				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
-				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
-				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
-					r.setFireType(FIRE_WHEN.WINDOW_NEVER);
-				} else {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				}
-			}
-
-			public void end(String arg0) {
-				//ReplaceResponder r = new ReplaceResponder();
-				r.setWith(arg0);
-				current_trigger.getResponders().add(r.copy());
-			}
-			
-		});
+		r.setTextElementListener(new ReplaceElementListener(settings,current_trigger));
 	}
 
 	public static void saveReplaceResponderToXML(XmlSerializer out,

@@ -25,38 +25,16 @@ import android.sax.StartElementListener;
 public final class TriggerParser {
 	public static void registerListeners(Element root,final PluginSettings settings,final Object obj,final TriggerData current_trigger,final TimerData current_timer) {
 		Element trigger = root.getChild(BasePluginParser.TAG_TRIGGER);
-		trigger.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes a) {
-				// TODO Auto-generated method stub
-				current_trigger.setName(a.getValue("",BasePluginParser.ATTR_TRIGGERTITLE));
-				current_trigger.setPattern(a.getValue("",BasePluginParser.ATTR_TRIGGERPATTERN));
-				current_trigger.setInterpretAsRegex( a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL).equals("true") ? true : false);
-				current_trigger.setFireOnce(a.getValue("",BasePluginParser.ATTR_TRIGGERONCE).equals("true") ? true : false);
-				current_trigger.setHidden( (a.getValue("",BasePluginParser.ATTR_TRIGGERHIDDEN) == null) ? false : (a.getValue("",BasePluginParser.ATTR_TRIGGERHIDDEN)).equals("true") ? true : false);
-				current_trigger.setEnabled( (a.getValue("",BasePluginParser.ATTR_TRIGGERENEABLED) == null) ? true : (a.getValue("",BasePluginParser.ATTR_TRIGGERENEABLED)).equals("true") ? true : false);
-				current_trigger.setSequence( (a.getValue("",BasePluginParser.ATTR_SEQUENCE) == null) ? 10 : Integer.parseInt(a.getValue("",BasePluginParser.ATTR_SEQUENCE)));
-				current_trigger.setGroup( (a.getValue("",BasePluginParser.ATTR_GROUP) == null) ? "" : a.getValue("",BasePluginParser.ATTR_GROUP));
-				current_trigger.setKeepEvaluating((a.getValue("",BasePluginParser.ATTR_KEEPEVALUATING) == null) ? true : ("true".equals(a.getValue("",BasePluginParser.ATTR_KEEPEVALUATING))) ? true : false);
-				current_trigger.setResponders(new ArrayList<TriggerResponder>());
-				
-			}
-			
-		});
+		TriggerElementListener listener = new TriggerElementListener(settings,current_trigger);
 		
-		trigger.setEndElementListener(new EndElementListener() {
-
-			public void end() {
-				settings.getTriggers().put(current_trigger.getName(), current_trigger.copy());
-			}
-		
-		});
+		trigger.setElementListener(listener);
+		//trigger.sete
 		
 		AckResponderParser.registerListeners(trigger, settings, obj, current_timer, current_trigger);
 		ToastResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
 		NotificationResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
 		ScriptResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
-		ReplaceParser.registerListeners(trigger, settings, new TriggerData(), current_trigger);
+		ReplaceParser.registerListeners(trigger, settings, current_trigger);
 		ColorActionParser.registerListeners(trigger, settings, current_trigger);
 		GagActionParser.registerListeners(trigger, settings, current_trigger);
 		
@@ -80,7 +58,7 @@ public final class TriggerParser {
 			}
 			//OutputResponders(out,trigger.getResponders());
 			out.endTag("", BasePluginParser.TAG_TRIGGER);
-			}
+		}
 	}
 	
 	

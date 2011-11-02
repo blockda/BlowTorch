@@ -16,36 +16,9 @@ import android.sax.Element;
 import android.sax.StartElementListener;
 
 public final class AckResponderParser {
-	public static void registerListeners(Element root,final PluginSettings settings,final Object obj,final TimerData current_timer,final TriggerData current_trigger) {
+	public static void registerListeners(Element root,PluginSettings settings,Object obj,TimerData current_timer,TriggerData current_trigger) {
 		Element ack = root.getChild(BasePluginParser.TAG_ACKRESPONDER);
-		ack.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes a) {
-				AckResponder r = new AckResponder();
-				r.setAckWith(a.getValue("", BasePluginParser.ATTR_ACKWITH));
-				String fireType = a.getValue("",BasePluginParser.ATTR_FIRETYPE);
-				if(fireType == null) fireType = "";
-				//Log.e("PARSER","ACK TAG READ, FIRETYPE IS:" + fireType);
-				if(fireType.equals(TriggerResponder.FIRE_WINDOW_OPEN)) {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_OPEN);
-				} else if (fireType.equals(TriggerResponder.FIRE_WINDOW_CLOSED)) {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_CLOSED);
-				} else if (fireType.equals(TriggerResponder.FIRE_ALWAYS)) {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				} else if (fireType.equals(TriggerResponder.FIRE_NEVER)) {
-					r.setFireType(FIRE_WHEN.WINDOW_NEVER);
-				} else {
-					r.setFireType(TriggerResponder.FIRE_WHEN.WINDOW_BOTH);
-				}
-				
-				if(obj instanceof TriggerData) {
-					current_trigger.getResponders().add(r.copy());
-				} else if(obj instanceof TimerData) {
-					current_timer.getResponders().add(r.copy());
-				}
-			}
-			
-		});
+		ack.setStartElementListener(new AckElementListener(settings,new TriggerData(),current_trigger,current_timer));
 	}
 	
 	public static void saveResponderToXML(XmlSerializer out,AckResponder r) throws IllegalArgumentException, IllegalStateException, IOException {

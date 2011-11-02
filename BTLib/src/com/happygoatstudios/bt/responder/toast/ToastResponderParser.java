@@ -16,13 +16,7 @@ import android.sax.StartElementListener;
 public class ToastResponderParser {
 	public static void registerListeners(Element root,PluginSettings settings,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element toast = root.getChild(BasePluginParser.TAG_TOASTRESPONDER);
-		toast.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes a) {
-				
-			}
-			
-		});
+		toast.setStartElementListener(new ToastElementListener(settings,obj,current_trigger,current_timer));
 	}
 	
 	public static void saveToastResponderToXML(XmlSerializer out,ToastResponder r) throws IllegalArgumentException, IllegalStateException, IOException {
