@@ -14,19 +14,9 @@ import android.sax.Element;
 import android.sax.StartElementListener;
 
 public final class GagActionParser {
-	public static void registerListeners(Element root,final PluginSettings settings,final TriggerData current_trigger) {
+	public static void registerListeners(Element root,PluginSettings settings,TriggerData current_trigger) {
 		Element gag = root.getChild(BasePluginParser.TAG_GAGACTION);
-		gag.setStartElementListener(new StartElementListener() {
-
-			public void start(Attributes a) {
-				GagAction tmp = new GagAction();
-				tmp.setRetarget(a.getValue("",BasePluginParser.ATTR_RETARGET));
-				tmp.setGagLog((a.getValue("",BasePluginParser.ATTR_GAGLOG) == null) ? GagAction.DEFAULT_GAGLOG : (a.getValue("",BasePluginParser.ATTR_GAGLOG).equals("false")) ? false : true);
-				tmp.setGagOutput((a.getValue("",BasePluginParser.ATTR_GAGOUTPUT) == null) ? GagAction.DEFAULT_GAGOUTPUT : (a.getValue("",BasePluginParser.ATTR_GAGOUTPUT).equals("false")) ? false : true);
-				current_trigger.getResponders().add(tmp.copy());
-			}
-			
-		});
+		gag.setStartElementListener(new GagElementListener(settings,current_trigger));
 	}
 	
 	public static void saveGagActionToXML(XmlSerializer out,GagAction r) throws IllegalArgumentException, IllegalStateException, IOException {

@@ -7,7 +7,7 @@ import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
-public class PluginSettings {
+public class PluginSettings implements Cloneable {
 	private String name;
 	private int id;
 	private String author;

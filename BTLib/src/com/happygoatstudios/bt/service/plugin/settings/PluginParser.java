@@ -2,8 +2,10 @@ package com.happygoatstudios.bt.service.plugin.settings;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
+import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaState;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -18,7 +20,9 @@ import com.happygoatstudios.bt.trigger.TriggerParser;
 import com.happygoatstudios.bt.alias.AliasParser;
 
 import android.content.Context;
+import android.os.Handler;
 import android.sax.Element;
+import android.sax.EndElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
 import android.sax.TextElementListener;
@@ -27,13 +31,22 @@ import android.util.Xml;
 
 public class PluginParser extends BasePluginParser {
 
-	LuaState L = null;
-	Plugin p = null;
-	public PluginParser(String location, Context context,Plugin p) {
+	//chainsaw for more of a "plug-in group" parser.
+	
+	//LuaState L = null;
+	//Plugin p = null;
+	
+	ArrayList<Plugin> plugins = null;
+	PluginSettings tmp = null;
+	Handler serviceHandler = null;
+	
+	public PluginParser(String location, Context context,ArrayList<Plugin> plugins,Handler serviceHandler) {
 		super(location, context);
 		// TODO Auto-generated constructor stub
-		L = p.getLuaState();
-		this.p = p;
+		//L = p.getLuaState();
+		//this.p = p;
+		this.serviceHandler = serviceHandler;
+		this.plugins = plugins;
 	}
 	
 	final TimerData current_timer = new TimerData();
@@ -42,59 +55,65 @@ public class PluginParser extends BasePluginParser {
 	final String current_script_body = new String();
 	String current_script_name = new String();
 	
-	public PluginSettings load() throws FileNotFoundException, IOException, SAXException {
-		final PluginSettings tmp = new PluginSettings();
-		RootElement root = new RootElement("plugins");
-		attatchListeners(root,tmp);
+	public ArrayList<Plugin> load() throws FileNotFoundException, IOException, SAXException {
+		RootElement root = new RootElement("root");
+		tmp = new PluginSettings();
+		attatchListeners(root);
 		
 		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
-		tmp.setPath(path);
-		p.setSettings(tmp);
+		//tmp.setPath(path);
+		//p.setSettings(tmp);
 		//do alternate parsing for plugin data.
-		RootElement root2 = new RootElement("plugins");
-		Element data = root2.getChild(PluginParser.TAG_PLUGIN);
+		RootElement root2 = new RootElement("root");
+		Element data = root2.getChild(PluginParser.TAG_PLUGINS).getChild(PluginParser.TAG_PLUGIN);
 		
 		//upon encountering.
 		//ok, so here is now where bootstrapping happens.
 		//TODO: change this to something like "bootstrap" or ""
-		if(tmp.getScripts().containsKey("global")) {
-			//run this script.
-			L.getGlobal("debug");
-			L.getField(-1, "traceback");
-			L.remove(-2);
-			
-			String datas = tmp.getScripts().get("global");
-			L.LloadString(datas);
-			
-			
-			int ret = L.pcall(0, 1, -2);
-			if(ret != 0) {
-				Log.e("PLUGIN","Error in Bootstrap:"+L.getLuaObject(-1).getString());
-			} else {
-				//bootstrap success.
-				//i think i can use the existing traceback, but the pcall has left a nil on the stack
-				//L.pop(1);
-				L.getGlobal("debug");
-				L.getField(-1, "traceback");
-				L.remove(-2);
+		for(Plugin p : plugins) {
+			if(p.getSettings().getScripts().containsKey("global")) {
+				//run this script.
+				p.getLuaState().getGlobal("debug");
+				p.getLuaState().getField(-1, "traceback");
+				p.getLuaState().remove(-2);
 				
-				L.getGlobal("OnPrepareXML");
-				L.pushJavaObject(data);
-				int r2 = L.pcall(1, 1, -3);
-				if(r2 != 0) {
-					Log.e("PLUGIN","Error in OnPrepareXML"+L.getLuaObject(-1).getString());
+				String datas = p.getSettings().getScripts().get("global");
+				p.getLuaState().LloadString(datas);
+				
+				
+				int ret = p.getLuaState().pcall(0, 1, -2);
+				if(ret != 0) {
+					Log.e("PLUGIN","Error in Bootstrap:"+p.getLuaState().getLuaObject(-1).getString());
 				} else {
-					Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root2.getContentHandler());	
+					//bootstrap success.
+					//i think i can use the existing traceback, but the pcall has left a nil on the stack
+					//L.pop(1);
+					p.getLuaState().getGlobal("debug");
+					p.getLuaState().getField(-1, "traceback");
+					p.getLuaState().remove(-2);
+					
+					p.getLuaState().getGlobal("OnPrepareXML");
+					p.getLuaState().pushJavaObject(data);
+					int r2 = p.getLuaState().pcall(1, 1, -3);
+					if(r2 != 0) {
+						Log.e("PLUGIN","Error in OnPrepareXML"+p.getLuaState().getLuaObject(-1).getString());
+					} else {
+						
+					}
 				}
 			}
 		}
 		
+		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root2.getContentHandler());	
 		
-		return tmp;
+		
+		return plugins;
 	}
 	
-	private void attatchListeners(RootElement root,final PluginSettings tmp) {
-		Element plugin = root.getChild(BasePluginParser.TAG_PLUGIN);
+	protected void attatchListeners(RootElement root) {
+		Element pgroup = root.getChild(BasePluginParser.TAG_PLUGINS);
+		
+		Element plugin = pgroup.getChild(BasePluginParser.TAG_PLUGIN);
 		Element aliases = plugin.getChild(BasePluginParser.TAG_ALIASES);
 		Element triggers = plugin.getChild(BasePluginParser.TAG_TRIGGERS);
 		Element timers = plugin.getChild(BasePluginParser.TAG_TIMERS);
@@ -133,6 +152,7 @@ public class PluginParser extends BasePluginParser {
 		plugin.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes a) {
+				
 				tmp.setName(a.getValue("",BasePluginParser.ATTR_NAME));
 				tmp.setAuthor(a.getValue("",BasePluginParser.ATTR_AUTHOR));
 				tmp.setId(Integer.parseInt(a.getValue("",BasePluginParser.ATTR_ID)));
@@ -148,6 +168,29 @@ public class PluginParser extends BasePluginParser {
 			}
 			
 		});
+		
+		plugin.setEndElementListener(new EndElementListener() {
+
+			public void end() {
+				//construct the new plugin.
+				Plugin p;
+				try {
+					p = new Plugin(serviceHandler);
+					tmp.setPath(path);
+					p.setSettings(tmp);
+					
+					plugins.add(p);
+				} catch (LuaException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				tmp = new PluginSettings();
+				
+			}
+			
+		});
+		
+		
 	}
 	
 	

@@ -38,6 +38,7 @@ import com.happygoatstudios.bt.service.function.SwitchWindowCommand;
 
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
+import com.happygoatstudios.bt.service.plugin.settings.ConnectionSetttingsParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings.PLUGIN_LOCATION;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -355,23 +356,7 @@ public class Connection {
 				}
 			}
 		};
-		try {
-			the_settings = new ConnectionSettingsPlugin(handler);
-		} catch (LuaException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		//private void loadDefaultDirections() {
-			HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
-			tmp.put("n", new DirectionData("n","n"));
-			tmp.put("e", new DirectionData("e","e"));
-			tmp.put("s", new DirectionData("s","s"));
-			tmp.put("w", new DirectionData("w","w"));
-			tmp.put("h", new DirectionData("h","nw"));
-			tmp.put("j", new DirectionData("j","ne"));
-			tmp.put("k", new DirectionData("k","sw"));
-			tmp.put("l", new DirectionData("l","se"));
-			the_settings.setDirections(tmp);
+
 		//}
 		//load plugins.
 		
@@ -409,7 +394,7 @@ public class Connection {
 		
 		WindowToken bwin = new WindowToken("button_window",0,0,0,0,"buttonwindow","plugin");
 		mWindows.add(bwin);*/
-		loadSettings();
+		loadPlugins();
 		
 		
 		
@@ -448,11 +433,13 @@ public class Connection {
 		}
 		
 		mWindowCallbacks.finishBroadcast();
-		loadSettings();
+		
+		//loadSettings();
+		loadPlugins();
 		
 	}
 	
-	private void loadSettings() {
+	private void loadPlugins() {
 		
 		if(mWindows.size() > 1) {
 			//must clear out old windows.
@@ -466,23 +453,58 @@ public class Connection {
 		token.setWidth(0);
 		token.setHeight(0);
 		//}
-		
 		for(Plugin p : plugins) {
 			p.shutdown();
 			p = null;
 		}
 		plugins.clear();
-		Plugin tmpPlug = null;
+		//handle root settings
 		try {
-			tmpPlug = new Plugin(handler);
+			the_settings = null;
+			the_settings = new ConnectionSettingsPlugin(handler);
 		} catch (LuaException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext(),tmpPlug);
+		ArrayList<Plugin> tmpPlugs = new ArrayList<Plugin>();
+		Pattern invalidchars = Pattern.compile("\\W");
+		Matcher replacebadchars = invalidchars.matcher(this.display);
+		String prefsname = replacebadchars.replaceAll("");
+		prefsname = prefsname.replaceAll("/", "");
+		//String settingslocation = 
+		//loadXmlSettings(prefsname +".xml");
+		String rootPath = prefsname + ".xml";
+		ConnectionSetttingsParser csp = new ConnectionSetttingsParser(rootPath,service.getApplicationContext(),tmpPlugs,handler);
+		
+		tmpPlugs = csp.load();
+		the_settings = (ConnectionSettingsPlugin) tmpPlugs.get(0);
+		tmpPlugs.remove(0);
+		
+		plugins.addAll(tmpPlugs);
+		
+		//private void loadDefaultDirections() {
+		if(the_settings.getDirections().size() == 0) {
+			HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
+			tmp.put("n", new DirectionData("n","n"));
+			tmp.put("e", new DirectionData("e","e"));
+			tmp.put("s", new DirectionData("s","s"));
+			tmp.put("w", new DirectionData("w","w"));
+			tmp.put("h", new DirectionData("h","nw"));
+			tmp.put("j", new DirectionData("j","ne"));
+			tmp.put("k", new DirectionData("k","sw"));
+			tmp.put("l", new DirectionData("l","se"));
+			the_settings.setDirections(tmp);
+		}
+		
+		
+		
+		
+		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext(),plugins,handler);
 		
 		try {
-			parse.load();
+			ArrayList<Plugin> group = parse.load();
+			plugins.addAll(group);
+			
 			//tmpPlug.setSettings(parse.load());
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -499,7 +521,7 @@ public class Connection {
 		//tmpPlug.initScripts(mWindows);
 		//tmpPlug.initScripts();
 		
-		plugins.add(tmpPlug);
+		//plugins.add(tmpPlug);
 	}
 	
 	protected void redrawWindow(String win) {
