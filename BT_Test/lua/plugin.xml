@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<root>
 <plugins>
   <plugin author="Daniel Block" name="plugin" id="100">
   <triggers>
@@ -319,3 +320,4 @@ debugPrint("custom loaded file go!")
   </buttonsets>
   </plugin>
 </plugins>
+</root>
