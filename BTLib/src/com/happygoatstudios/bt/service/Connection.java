@@ -1,10 +1,14 @@
 package com.happygoatstudios.bt.service;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,12 +46,15 @@ import com.happygoatstudios.bt.service.plugin.settings.ConnectionSetttingsParser
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings.PLUGIN_LOCATION;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
+import com.happygoatstudios.bt.settings.HyperSAXParser;
+import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.window.TextTree;
 import com.happygoatstudios.bt.window.TextTree.Line;
 
+import android.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -459,13 +466,13 @@ public class Connection {
 		}
 		plugins.clear();
 		//handle root settings
-		try {
+		//try {
 			the_settings = null;
-			the_settings = new ConnectionSettingsPlugin(handler);
-		} catch (LuaException e1) {
+			//the_settings = new ConnectionSettingsPlugin(handler);
+		//} catch (LuaException e1) {
 			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		//	e1.printStackTrace();
+		//}
 		ArrayList<Plugin> tmpPlugs = new ArrayList<Plugin>();
 		Pattern invalidchars = Pattern.compile("\\W");
 		Matcher replacebadchars = invalidchars.matcher(this.display);
@@ -474,11 +481,90 @@ public class Connection {
 		//String settingslocation = 
 		//loadXmlSettings(prefsname +".xml");
 		String rootPath = prefsname + ".xml";
-		ConnectionSetttingsParser csp = new ConnectionSetttingsParser(rootPath,service.getApplicationContext(),tmpPlugs,handler);
+		String convertPath = prefsname + "v1.xml";
+		String newPath = prefsname + ".v2.xml";
+		//rootPath is the v1 settings file name.
+		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/";
+		File oldp = new File(internal+rootPath);
+		HyperSettings oldSettings = null;
+		if(oldp.exists()) {
+			HyperSAXParser old_parser = new HyperSAXParser(internal+rootPath,service.getApplicationContext());
+			try {
+				oldSettings = old_parser.load();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			oldp.renameTo(new File(convertPath));
+		}
+		
+		//check to see if the new settings file exists.
+		File newSettings = new File(newPath);
+		if(!newSettings.exists()) {
+			
+			//copy the defaults file to the new location and parse it.
+			try {
+				newSettings.createNewFile();
+				int resid = Connection.getResId("default_settings", service.getApplicationContext(), com.happygoatstudios.bt.R.raw.class);
+				InputStream defaultSettings = service.getResources().openRawResource(resid);
+				
+				OutputStream newSettingsFile = new FileOutputStream(newSettings);
+			
+				int read = 0;
+				byte[] bytes = new byte[1024];
+			 
+				while ((read = defaultSettings.read(bytes)) != -1) {
+					newSettingsFile.write(bytes, 0, read);
+				}
+				
+				defaultSettings.close();
+				newSettingsFile.flush();
+				newSettingsFile.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} 
+		
+		
+		ConnectionSetttingsParser csp = new ConnectionSetttingsParser(newPath,service.getApplicationContext(),tmpPlugs,handler);
 		
 		tmpPlugs = csp.load();
 		the_settings = (ConnectionSettingsPlugin) tmpPlugs.get(0);
 		tmpPlugs.remove(0);
+		
+		if(oldSettings != null) {
+			//import old settings.
+			the_settings.importV1Settings(oldSettings);
+			
+			//have to rip out seperate settings into the mainwindow token.
+			WindowToken main = mWindows.get(0);
+			//oldSettings.
+			
+			//PULL WINDOW RELATED OPTIONS OUT!!
+			oldSettings.isDisableColor();
+			oldSettings.isHyperLinkEnabled();
+			oldSettings.isWordWrap();
+			oldSettings.getFontName();
+			oldSettings.getBreakAmount();
+			oldSettings.getFontPath();
+			oldSettings.getMaxLines();
+			oldSettings.getWrapMode();
+			oldSettings.getLineSpaceExtra();
+			oldSettings.getLineSize();
+			
+			
+		}
 		
 		plugins.addAll(tmpPlugs);
 		
@@ -1243,6 +1329,15 @@ public class Connection {
 		
 	}
 
-	
+	public static int getResId(String variableName, Context context, Class<?> c) {
+
+	    try {
+	        Field idField = c.getDeclaredField(variableName);
+	        return idField.getInt(idField);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return -1;
+	    } 
+	}
 	
 }
