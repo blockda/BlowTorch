@@ -13,13 +13,13 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 
 public class ScriptElementListener implements StartElementListener {
 	
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
 	TriggerData current_trigger = null;
 	TimerData current_timer = null;
 	Object selector = null;
 	
-	public ScriptElementListener(PluginSettings settings,Object selector,TriggerData current_trigger,TimerData current_timer) {
-		this.settings = settings;
+	public ScriptElementListener(Object selector,TriggerData current_trigger,TimerData current_timer) {
+		//this.settings = settings;
 		this.current_trigger = current_trigger;
 		this.selector = selector;
 		this.current_timer = current_timer;

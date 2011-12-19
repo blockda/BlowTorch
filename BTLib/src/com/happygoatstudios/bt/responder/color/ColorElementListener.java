@@ -11,13 +11,13 @@ import android.sax.TextElementListener;
 
 public class ColorElementListener implements TextElementListener{
 
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
 	TriggerData current_trigger = null;
 	//TimerData current_timer = null;
 	//Object selector = null;
 	
-	public ColorElementListener(PluginSettings settings,TriggerData current_trigger) {
-		this.settings = settings;
+	public ColorElementListener(TriggerData current_trigger) {
+		//this.settings = settings;
 		//this.selector = selector;
 		//this.current_timer = current_timer;
 		this.current_trigger = current_trigger;

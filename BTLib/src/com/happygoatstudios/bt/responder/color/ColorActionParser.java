@@ -13,9 +13,9 @@ import android.sax.Element;
 import android.sax.TextElementListener;
 
 public final class ColorActionParser {
-	public static void registerListeners(Element root,PluginSettings settings,TriggerData current_trigger) {
+	public static void registerListeners(Element root,TriggerData current_trigger) {
 		Element color = root.getChild(BasePluginParser.TAG_COLORACTION);
-		color.setTextElementListener(new ColorElementListener(settings,current_trigger));
+		color.setTextElementListener(new ColorElementListener(current_trigger));
 	}
 	
 	public static void saveColorActionToXML(XmlSerializer out,ColorAction r) throws IllegalArgumentException, IllegalStateException, IOException {

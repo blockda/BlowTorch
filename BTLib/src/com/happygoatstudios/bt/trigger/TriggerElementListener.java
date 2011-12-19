@@ -6,6 +6,7 @@ import org.xml.sax.Attributes;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.plugin.settings.BasePluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 
 import android.sax.ElementListener;
@@ -13,11 +14,13 @@ import android.sax.StartElementListener;
 
 public class TriggerElementListener implements ElementListener {
 
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
+	PluginParser.NewItemCallback callback = null;
 	TriggerData current_trigger = null;
-	public TriggerElementListener(PluginSettings settings,TriggerData current_trigger) {
-		this.settings = settings;
+	public TriggerElementListener(PluginParser.NewItemCallback callback,TriggerData current_trigger) {
+		//this.settings = settings;
 		this.current_trigger = current_trigger;
+		this.callback = callback;
 	}
 	
 	public void start(Attributes a) {
@@ -36,7 +39,8 @@ public class TriggerElementListener implements ElementListener {
 	}
 
 	public void end() {
-		settings.getTriggers().put(current_trigger.getName(), current_trigger.copy());
+		//settings.getTriggers().put(current_trigger.getName(), current_trigger.copy());
+		callback.addTrigger(current_trigger.getName(), current_trigger.copy());
 	}
 
 }

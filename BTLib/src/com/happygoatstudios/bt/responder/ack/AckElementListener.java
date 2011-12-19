@@ -5,6 +5,7 @@ import org.xml.sax.Attributes;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.happygoatstudios.bt.service.plugin.settings.BasePluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
@@ -13,13 +14,15 @@ import android.sax.StartElementListener;
 
 public class AckElementListener implements StartElementListener {
 
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
+	//PluginParser.NewItemCallback callback = null;
 	TriggerData current_trigger = null;
 	TimerData current_timer = null;
 	Object selector = null;
 	
-	public AckElementListener(PluginSettings settings,Object selector,TriggerData current_trigger,TimerData current_timer) {
-		this.settings = settings;
+	public AckElementListener(Object selector,TriggerData current_trigger,TimerData current_timer) {
+		//this.settings = settings;
+		//this.callback = callback;
 		this.selector = selector;
 		this.current_timer = current_timer;
 		this.current_trigger = current_trigger;

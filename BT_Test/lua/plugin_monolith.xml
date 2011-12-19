@@ -1,78 +1,15 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <root>
 <plugins>
-	<plugin author="Daniel Block" name="chat_miniwindow" id="50">
-		<triggers>
-			<trigger title="chats" pattern="^\{.{3,}?\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
-				<replace retarget="chats"/>
-			</trigger>
-		</triggers>
-		<script name="bootstrap">
-			<![CDATA[
-				NewWindow("chats",0,0,1280,177)
-			]]>
-		</script>
-	</plugin>
-	<plugin author="Daniel Block" name="map_miniwindow" id="30">
-		<triggers>
-			<trigger title="map_capture" pattern="^.*$" enabled="false" interpretLiteral="true" fireOnce="false">
-				<gag retarget="map_window"/>
-			</trigger>
-			<trigger title="map_capture_start" pattern="^&lt;MAPSTART&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
-				<script function="startMapCapture" fireWhen="always"/>
-				<gag/>
-			</trigger>
-			<trigger title="map_capture_end" pattern="^&lt;MAPEND&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
-				<script function="endMapCapture" fireWhen="always"/>
-				<gag/>
-			</trigger>
-		</triggers>
-		<script name="bootstrap">
-			<![CDATA[
-ExecuteScript("map_window_work")
-NewWindow("map_window",880,177,400,400)
-WindowBuffer("map_window",true)
-			]]>
-		</script>
-		<script name="map_window_work">
-			<![CDATA[
-
-function startMapCapture() 
-	--Note("STARTING MAP CAPTURE")
-	TriggerEnabled("map_capture",true)
-end
-
-function endMapCapture() 
-	--Note("ENDING MAP CAPTURE")
-	TriggerEnabled("map_capture",false)
-	DrawWindow("map_window")
-end
-
-Note("plugin loaded")
-			]]>
-		</script>
-	</plugin>
-	<plugin author="Daniel Block" name="button_window" id="10">
-		<script name="bootstrap">
-			<![CDATA[
-			dofile("/mnt/sdcard/BlowTorch/buttonserver.lua")
-			NewWindow("button_window",0,0,0,0,"buttonwindow")
-			]]>
-		</script>
-		<script name="buttonwindow">
-			<![CDATA[
-dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
---debugPrint("custom loaded file go!")
-]]>
-  </script>
-	</plugin>
   <plugin author="Daniel Block" name="plugin" id="100">
   <triggers>
     <trigger sequence="10" title="autologin username" pattern="What be thy name, pleasent young fellow?" interpretLiteral="false" fireOnce="true" hidden="true" enabled="true">
       <toast message="autologin username" delay="1" fireWhen="windowOpen" />
 	  <ack with="stampede"/>
 	</trigger>
-
+	<trigger title="chats" pattern="^\{.{3,}?\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+		<replace retarget="chats"/>
+	</trigger>
     <trigger title="testmeo" pattern="adventurer" interpretLiteral="false" fireOnce="false" enabled="true" sequence="5">
 		<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
 	</trigger>
@@ -99,15 +36,25 @@ dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
       <toast message="you have been disarmed." delay="1" fireWhen="always" />
       <ack with="wield axe" fireWhen="always" />
 	</trigger>
-
+	<trigger title="map_capture" pattern="^.*$" enabled="false" interpretLiteral="true" fireOnce="false">
+		<gag retarget="map_window"/>
+	</trigger>
+	<trigger title="map_capture_start" pattern="^&lt;MAPSTART&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
+			<script function="startMapCapture" fireWhen="always"/>
+			<gag/>
+    </trigger>
+	<trigger title="map_capture_end" pattern="^&lt;MAPEND&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
+			<script function="endMapCapture" fireWhen="always"/>
+			<gag/>
+	</trigger>
 	
   </triggers>
-  <script name="bootstrap">
+  <script name="global">
 	  <![CDATA[
 --load scripts
-
+ExecuteScript("map_window_work")
 --only one so far.
-
+dofile("/mnt/sdcard/BlowTorch/buttonserver.lua")
 
 function testCommandHandler(args)
 	debugPrint("Inside the testCommandHandler yo, peep dis raw deal!"..args)
@@ -118,15 +65,32 @@ RegisterSpecialCommand("testcommand","testCommandHandler")
 --debugPrint("button server functions loaded")
 --set up windows.
 MainWindowSize(0,177,880,500)
-
-
+NewWindow("chats",0,0,1280,177)
+NewWindow("map_window",880,177,400,400)
+WindowBuffer("map_window",true)
 NewWindow("lua_window",880,577,400,100,"windowscript")
-
+NewWindow("button_window",0,0,0,0,"buttonwindow")
 
 --debugPrint("startup script loaded!")
 	  ]]>
   </script>
+  <script name="map_window_work">
+	  <![CDATA[
 
+function startMapCapture() 
+	--Note("STARTING MAP CAPTURE")
+	TriggerEnabled("map_capture",true)
+end
+
+function endMapCapture() 
+	--Note("ENDING MAP CAPTURE")
+	TriggerEnabled("map_capture",false)
+	DrawWindow("map_window")
+end
+
+Note("plugin loaded")
+	  ]]>
+  </script>
 
   <script name="windowscript">
 	  <![CDATA[
@@ -337,7 +301,12 @@ end
 
 	  ]]>
   </script>
-  
+  <script name="buttonwindow">
+<![CDATA[
+dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
+debugPrint("custom loaded file go!")
+]]>
+  </script>
   <buttonsets>
 	<buttonset name="a" primaryColor="7799FF22" selectedColor="77FF3300" flipColor="770033FF">
 		<button label="smorp" x="200" y="400"/>

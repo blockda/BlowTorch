@@ -6,17 +6,18 @@ import org.xml.sax.Attributes;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.service.plugin.settings.BasePluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 
 import android.sax.ElementListener;
 
 public class TimerElementListener implements ElementListener {
 
-	PluginSettings settings = null;
+	PluginParser.NewItemCallback callback = null;
 	TimerData current_timer = null;
 	
-	public TimerElementListener(PluginSettings settings,TimerData current_timer) {
-		this.settings = settings;
+	public TimerElementListener(PluginParser.NewItemCallback callback,TimerData current_timer) {
+		this.callback = callback;
 		this.current_timer = current_timer;
 	}
 	
@@ -37,8 +38,8 @@ public class TimerElementListener implements ElementListener {
 	}
 
 	public void end() {
-		settings.getTimers().put(current_timer.getName(), current_timer.copy());
-		
+		//settings.getTimers().put(current_timer.getName(), current_timer.copy());
+		callback.addTimer(current_timer.getName(), current_timer.copy());
 	}
 
 }

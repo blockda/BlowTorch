@@ -12,11 +12,11 @@ import android.sax.TextElementListener;
 
 public class ReplaceElementListener implements TextElementListener{
 
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
 	TriggerData current_trigger = null;
 	private ReplaceResponder r = new ReplaceResponder();
-	public ReplaceElementListener(PluginSettings settings,TriggerData current_trigger) {
-		this.settings = settings;
+	public ReplaceElementListener(TriggerData current_trigger) {
+		//this.settings = settings;
 		this.current_trigger = current_trigger;
 	}
 	

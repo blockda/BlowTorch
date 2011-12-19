@@ -71,32 +71,33 @@ public class PluginParser extends BasePluginParser {
 		//ok, so here is now where bootstrapping happens.
 		//TODO: change this to something like "bootstrap" or ""
 		for(Plugin p : plugins) {
-			if(p.getSettings().getScripts().containsKey("global")) {
+			if(p.getSettings().getScripts().containsKey("bootstrap")) {
 				//run this script.
-				p.getLuaState().getGlobal("debug");
-				p.getLuaState().getField(-1, "traceback");
-				p.getLuaState().remove(-2);
+				LuaState pL = p.getLuaState();
+				pL.getGlobal("debug");
+				pL.getField(-1, "traceback");
+				pL.remove(-2);
 				
-				String datas = p.getSettings().getScripts().get("global");
-				p.getLuaState().LloadString(datas);
+				String datas = p.getSettings().getScripts().get("bootstrap");
+				pL.LloadString(datas);
 				
 				
 				int ret = p.getLuaState().pcall(0, 1, -2);
 				if(ret != 0) {
-					Log.e("PLUGIN","Error in Bootstrap:"+p.getLuaState().getLuaObject(-1).getString());
+					Log.e("PLUGIN","Error in Bootstrap:"+pL.getLuaObject(-1).getString());
 				} else {
 					//bootstrap success.
 					//i think i can use the existing traceback, but the pcall has left a nil on the stack
 					//L.pop(1);
-					p.getLuaState().getGlobal("debug");
-					p.getLuaState().getField(-1, "traceback");
-					p.getLuaState().remove(-2);
+					pL.getGlobal("debug");
+					pL.getField(-1, "traceback");
+					pL.remove(-2);
 					
-					p.getLuaState().getGlobal("OnPrepareXML");
-					p.getLuaState().pushJavaObject(data);
-					int r2 = p.getLuaState().pcall(1, 1, -3);
+					pL.getGlobal("OnPrepareXML");
+					pL.pushJavaObject(data);
+					int r2 = pL.pcall(1, 1, -3);
 					if(r2 != 0) {
-						Log.e("PLUGIN","Error in OnPrepareXML"+p.getLuaState().getLuaObject(-1).getString());
+						Log.e("PLUGIN","Error in OnPrepareXML"+pL.getLuaObject(-1).getString());
 					} else {
 						
 					}
@@ -119,13 +120,13 @@ public class PluginParser extends BasePluginParser {
 		Element timers = plugin.getChild(BasePluginParser.TAG_TIMERS);
 		Element scripts = plugin.getChild(BasePluginParser.TAG_SCRIPT);
 		//Element alias = aliases.getChild(BasePluginParser.TAG_ALIAS);
-		AliasParser.registerListeners(aliases, tmp, current_alias);
+		AliasParser.registerListeners(aliases, newItemHandler, current_alias);
 		
 		//Element trigger = triggers.getChild(BasePluginParser.TAG_TRIGGER);
-		TriggerParser.registerListeners(triggers, tmp, new TriggerData(),current_trigger,current_timer);
+		TriggerParser.registerListeners(triggers, newItemHandler, new TriggerData(),current_trigger,current_timer);
 		
 		//Element timer = timers.getChild(BasePluginParser.TAG_TIMER);
-		TimerParser.registerListeners(timers, tmp, new TimerData(), current_trigger, current_timer);
+		TimerParser.registerListeners(timers, newItemHandler, new TimerData(), current_trigger, current_timer);
 		
 		scripts.setTextElementListener(new TextElementListener() {
 
@@ -193,5 +194,33 @@ public class PluginParser extends BasePluginParser {
 		
 	}
 	
+	public interface NewItemCallback {
+		public void addAlias(String key,AliasData a);
+		public void addTrigger(String key,TriggerData t);
+		public void addTimer(String key,TimerData t);
+		public void addScript(String name,String body);
+	}
+	
+	protected class NewItemHandler implements NewItemCallback {
+
+		public void addTrigger(String key, TriggerData t) {
+			PluginParser.this.tmp.getTriggers().put(key, t);
+		}
+
+		public void addTimer(String key, TimerData t) {
+			PluginParser.this.tmp.getTimers().put(key, t);
+		}
+
+		public void addScript(String name, String body) {
+			PluginParser.this.tmp.getScripts().put(name, body);
+		}
+
+		public void addAlias(String key, AliasData a) {
+			PluginParser.this.tmp.getAliases().put(key, a);
+		}
+		
+	}
+	
+	private NewItemHandler newItemHandler = new NewItemHandler();
 	
 }
