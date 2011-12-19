@@ -42,8 +42,25 @@ public class LayerManager {
 		}
 		
 		if(mWindows == null) {
-			Exception e = new Exception("No windows to show.");
-			throw new RuntimeException(e);
+			//Exception e = new Exception("No windows to show.");
+			//throw new RuntimeException(e);
+			synchronized(this) {
+				while(mWindows == null) {
+					try {
+						this.wait(30);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					try {
+						mWindows = mService.getWindowTokens();
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
 		} else {
 			//initialize windows.
 			for(Object x : mWindows) {

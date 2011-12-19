@@ -16,9 +16,9 @@ import android.sax.Element;
 import android.sax.StartElementListener;
 
 public class ScriptResponderParser {
-	public static void registerListeners(Element root,PluginSettings settings,Object obj,TriggerData current_trigger,TimerData current_timer) {
+	public static void registerListeners(Element root,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element script = root.getChild(BasePluginParser.TAG_SCRIPTRESPONDER);
-		script.setStartElementListener(new ScriptElementListener(settings,obj,current_trigger,current_timer));
+		script.setStartElementListener(new ScriptElementListener(obj,current_trigger,current_timer));
 	}
 	
 	public static void saveScriptResponderToXML(XmlSerializer out,ScriptResponder r) throws IllegalArgumentException, IllegalStateException, IOException {

@@ -17,9 +17,9 @@ import android.sax.Element;
 import android.sax.StartElementListener;
 
 public final class NotificationResponderParser {
-	public static void registerListeners(Element root,PluginSettings settings,Object obj,TriggerData current_trigger,TimerData current_timer) {
+	public static void registerListeners(Element root,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element note = root.getChild(BasePluginParser.TAG_NOTIFICATIONRESPONDER);
-		note.setStartElementListener(new NotificationElementListener(settings,obj,current_trigger,current_timer));
+		note.setStartElementListener(new NotificationElementListener(obj,current_trigger,current_timer));
 	}
 	
 	public static void saveNotificationResponderToXML(XmlSerializer out,NotificationResponder r) throws IllegalArgumentException, IllegalStateException, IOException {
