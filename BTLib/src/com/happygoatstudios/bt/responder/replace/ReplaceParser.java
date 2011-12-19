@@ -16,9 +16,9 @@ import android.sax.TextElementListener;
 import android.util.Log;
 
 public final class ReplaceParser {
-	public static void registerListeners(Element root,PluginSettings settings,TriggerData current_trigger) {
+	public static void registerListeners(Element root,TriggerData current_trigger) {
 		Element r = root.getChild(BasePluginParser.TAG_REPLACERESPONDER);
-		r.setTextElementListener(new ReplaceElementListener(settings,current_trigger));
+		r.setTextElementListener(new ReplaceElementListener(current_trigger));
 	}
 
 	public static void saveReplaceResponderToXML(XmlSerializer out,

@@ -9,6 +9,7 @@ import org.xmlpull.v1.XmlSerializer;
 import android.os.Handler;
 
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
+import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 
 public class ConnectionSettingsPlugin extends Plugin {
@@ -29,7 +30,7 @@ public class ConnectionSettingsPlugin extends Plugin {
 		HIGHLIGHT_COLOR_ONLY_BLAND ( "highlight_color_bland_only"),
 		NONE ( "none");
 		
-		private final String mode;
+		private final String mode;  
 		LINK_MODE(String str) {
 			mode = str;
 		}
@@ -404,5 +405,35 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 
 	public void outputXMLInternal(XmlSerializer out) {
 		//this is where we take our normal data and 
+	}
+
+	public void importV1Settings(HyperSettings oldSettings) {
+		//
+		this.getSettings().setAliases(oldSettings.getAliases());
+		this.getSettings().setTriggers(oldSettings.getTriggers());
+		this.getSettings().setTimers(oldSettings.getTimers());
+		
+		//somehow handle buttons.
+		this.setDirections(oldSettings.getDirections());
+		
+		//this.setWrapMode(oldSettings.getWrapMode());
+		this.setKeepLast(oldSettings.isKeepLast());
+		this.setRemoveExtraColor(oldSettings.isRemoveExtraColor());
+		this.setDebugTelnet(oldSettings.isDebugTelnet());
+		this.setAttemptSuggestions(oldSettings.isAttemptSuggestions());
+		this.setEncoding(oldSettings.getEncoding());
+		this.setDisplayOnBell(oldSettings.isDisplayOnBell());
+		this.setNotifyOnBell(oldSettings.isNotifyOnBell());
+		this.setVibrateOnBell(oldSettings.isVibrateOnBell());
+		this.setFullScreen(oldSettings.isFullScreen());
+		this.setKeepScreenOn(oldSettings.isKeepScreenOn());
+		this.setProcessPeriod(oldSettings.isProcessPeriod());
+		this.setOrientation(oldSettings.getOrientation());
+		this.setEchoAliasUpdates(oldSettings.isEchoAliasUpdates());
+		this.setUseExtractUI(oldSettings.isUseExtractUI());
+		this.setSemiIsNewLine(oldSettings.isSemiIsNewLine());
+		this.setLocalEcho(oldSettings.isLocalEcho());
+		//this.set
+		
 	}
 }

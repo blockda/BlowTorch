@@ -11,6 +11,7 @@ import com.happygoatstudios.bt.responder.notification.NotificationResponderParse
 import com.happygoatstudios.bt.responder.script.ScriptResponderParser;
 import com.happygoatstudios.bt.responder.toast.ToastResponderParser;
 import com.happygoatstudios.bt.service.plugin.settings.BasePluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
@@ -19,15 +20,15 @@ import android.sax.EndElementListener;
 import android.sax.StartElementListener;
 
 public final class TimerParser {
-	public static void registerListeners(Element root,PluginSettings settings,Object obj,TriggerData current_trigger,TimerData current_timer) {
+	public static void registerListeners(Element root,PluginParser.NewItemCallback callback,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element timer = root.getChild(BasePluginParser.TAG_TIMER);
-		timer.setStartElementListener(new TimerElementListener(settings,current_timer));
+		timer.setStartElementListener(new TimerElementListener(callback,current_timer));
 		
-		AckResponderParser.registerListeners(timer, settings, obj, current_timer, current_trigger);
-		ToastResponderParser.registerListeners(timer, settings, obj, current_trigger, current_timer);
-		NotificationResponderParser.registerListeners(timer, settings, obj, current_trigger, current_timer);
-		ScriptResponderParser.registerListeners(timer, settings, obj, current_trigger, current_timer);
-	
+		AckResponderParser.registerListeners(timer, obj, current_timer, current_trigger);
+		ToastResponderParser.registerListeners(timer, obj, current_trigger, current_timer);
+		NotificationResponderParser.registerListeners(timer, obj, current_trigger, current_timer);
+		ScriptResponderParser.registerListeners(timer, obj, current_trigger, current_timer);
+		
 	}
 
 	public static void saveTimerToXML(XmlSerializer out, TimerData timer) {

@@ -10,11 +10,11 @@ import android.sax.StartElementListener;
 
 public class GagElementListener implements StartElementListener {
 
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
 	TriggerData current_trigger = null;
 	
-	public GagElementListener(PluginSettings settings,TriggerData current_trigger) {
-		this.settings = settings;
+	public GagElementListener(TriggerData current_trigger) {
+		//this.settings = settings;
 		this.current_trigger = current_trigger;
 	}
 	

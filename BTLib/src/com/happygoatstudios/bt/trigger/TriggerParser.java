@@ -15,6 +15,7 @@ import com.happygoatstudios.bt.responder.replace.ReplaceParser;
 import com.happygoatstudios.bt.responder.script.ScriptResponderParser;
 import com.happygoatstudios.bt.responder.toast.ToastResponderParser;
 import com.happygoatstudios.bt.service.plugin.settings.BasePluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.timer.TimerData;
 
@@ -23,20 +24,20 @@ import android.sax.EndElementListener;
 import android.sax.StartElementListener;
 
 public final class TriggerParser {
-	public static void registerListeners(Element root,final PluginSettings settings,final Object obj,final TriggerData current_trigger,final TimerData current_timer) {
+	public static void registerListeners(Element root,PluginParser.NewItemCallback callback,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element trigger = root.getChild(BasePluginParser.TAG_TRIGGER);
-		TriggerElementListener listener = new TriggerElementListener(settings,current_trigger);
+		TriggerElementListener listener = new TriggerElementListener(callback,current_trigger);
 		
 		trigger.setElementListener(listener);
 		//trigger.sete
 		
-		AckResponderParser.registerListeners(trigger, settings, obj, current_timer, current_trigger);
-		ToastResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
-		NotificationResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
-		ScriptResponderParser.registerListeners(trigger, settings, obj, current_trigger, current_timer);
-		ReplaceParser.registerListeners(trigger, settings, current_trigger);
-		ColorActionParser.registerListeners(trigger, settings, current_trigger);
-		GagActionParser.registerListeners(trigger, settings, current_trigger);
+		AckResponderParser.registerListeners(trigger, obj, current_timer, current_trigger);
+		ToastResponderParser.registerListeners(trigger, obj, current_trigger, current_timer);
+		NotificationResponderParser.registerListeners(trigger, obj, current_trigger, current_timer);
+		ScriptResponderParser.registerListeners(trigger, obj, current_trigger, current_timer);
+		ReplaceParser.registerListeners(trigger, current_trigger);
+		ColorActionParser.registerListeners(trigger, current_trigger);
+		GagActionParser.registerListeners(trigger, current_trigger);
 		
 	}
 	

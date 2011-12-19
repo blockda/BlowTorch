@@ -129,6 +129,13 @@ public class Plugin {
 	}
 	private final HashMap<String,String> captureMap = new HashMap<String,String>();
 	public void process(TextTree input,StellarService service,boolean windowOpen,Handler pump,String display) {
+		if(this.settings.getName().equals("map_miniwindow")) {
+			//inspection
+			HashMap<String,TriggerData> triggers = this.settings.getTriggers();
+			Collection<TriggerData> c = triggers.values();
+			c.contains("foo");
+		}
+		
 		List<TriggerData> triggers = new ArrayList<TriggerData>(this.settings.getTriggers().values());
 		Collections.sort(triggers,new Comparator() {
 

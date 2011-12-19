@@ -15,13 +15,13 @@ import android.sax.StartElementListener;
 
 public class NotificationElementListener implements StartElementListener {
 
-	PluginSettings settings = null;
+	//PluginSettings settings = null;
 	TriggerData current_trigger = null;
 	TimerData current_timer = null;
 	Object selector = null;
 	
-	public NotificationElementListener(PluginSettings settings,Object selector,TriggerData current_trigger,TimerData current_timer) {
-		this.settings = settings;
+	public NotificationElementListener(Object selector,TriggerData current_trigger,TimerData current_timer) {
+		//this.settings = settings;
 		this.selector = selector;
 		this.current_timer = current_timer;
 		this.current_trigger = current_trigger;

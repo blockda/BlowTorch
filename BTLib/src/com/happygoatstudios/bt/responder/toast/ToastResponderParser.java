@@ -6,6 +6,7 @@ import org.xml.sax.Attributes;
 import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.service.plugin.settings.BasePluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
@@ -14,9 +15,9 @@ import android.sax.Element;
 import android.sax.StartElementListener;
 
 public class ToastResponderParser {
-	public static void registerListeners(Element root,PluginSettings settings,Object obj,TriggerData current_trigger,TimerData current_timer) {
+	public static void registerListeners(Element root,Object obj,TriggerData current_trigger,TimerData current_timer) {
 		Element toast = root.getChild(BasePluginParser.TAG_TOASTRESPONDER);
-		toast.setStartElementListener(new ToastElementListener(settings,obj,current_trigger,current_timer));
+		toast.setStartElementListener(new ToastElementListener(obj,current_trigger,current_timer));
 	}
 	
 	public static void saveToastResponderToXML(XmlSerializer out,ToastResponder r) throws IllegalArgumentException, IllegalStateException, IOException {
