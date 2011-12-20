@@ -484,11 +484,11 @@ public class Connection {
 		String convertPath = prefsname + "v1.xml";
 		String newPath = prefsname + ".v2.xml";
 		//rootPath is the v1 settings file name.
-		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/";
+		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/files/";
 		File oldp = new File(internal+rootPath);
 		HyperSettings oldSettings = null;
 		if(oldp.exists()) {
-			HyperSAXParser old_parser = new HyperSAXParser(internal+rootPath,service.getApplicationContext());
+			HyperSAXParser old_parser = new HyperSAXParser(rootPath,service.getApplicationContext());
 			try {
 				oldSettings = old_parser.load();
 			} catch (FileNotFoundException e) {
@@ -502,12 +502,12 @@ public class Connection {
 				e.printStackTrace();
 			}
 			
-			oldp.renameTo(new File(convertPath));
+			oldp.renameTo(new File(internal+convertPath));
 		}
 		
 		//check to see if the new settings file exists.
-		File newSettings = new File(newPath);
-		if(!newSettings.exists()) {
+		File newSettings = new File(internal+newPath);
+		if(!newSettings.exists()) { //if they have niether and old version or a new one.
 			
 			//copy the defaults file to the new location and parse it.
 			try {
