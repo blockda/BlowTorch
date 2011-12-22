@@ -3288,6 +3288,24 @@ public class StellarService extends Service {
 				throws RemoteException {
 			connections.get(connectionClutch).pluginXcallS(plugin,function,str);
 		}
+
+		public Map getPluginList() throws RemoteException {
+			
+			Connection c = connections.get(connectionClutch);
+			HashMap<String,String> list = new HashMap<String,String>();
+			
+			for(Plugin p : c.plugins) {
+				String info = "";
+				info += p.getTriggerCount() + " T, ";
+				info += p.getAliasCount() + " A, ";
+				info += p.getTimerCount() + " C, ";
+				info += p.getScriptCount() + " S, ";
+				info += p.getStorageType();
+				list.put(p.getName(), info);
+			}
+			
+			return list;
+		}
 	};
 
 	public void sendRawDataToWindow(byte[] data) {
