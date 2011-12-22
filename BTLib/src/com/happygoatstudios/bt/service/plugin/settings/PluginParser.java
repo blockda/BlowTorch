@@ -40,13 +40,23 @@ public class PluginParser extends BasePluginParser {
 	PluginSettings tmp = null;
 	Handler serviceHandler = null;
 	
-	public PluginParser(String location, Context context,ArrayList<Plugin> plugins,Handler serviceHandler) {
+	enum TYPE {
+		EXTERNAL,
+		INTERNAL
+	};
+	
+	protected TYPE type;
+	protected String shortName;
+	
+	public PluginParser(String location,String name, Context context,ArrayList<Plugin> plugins,Handler serviceHandler) {
 		super(location, context);
 		// TODO Auto-generated constructor stub
 		//L = p.getLuaState();
 		//this.p = p;
+		shortName = name;
 		this.serviceHandler = serviceHandler;
 		this.plugins = plugins;
+		type = TYPE.EXTERNAL;
 	}
 	
 	final TimerData current_timer = new TimerData();
@@ -71,6 +81,17 @@ public class PluginParser extends BasePluginParser {
 		//ok, so here is now where bootstrapping happens.
 		//TODO: change this to something like "bootstrap" or ""
 		for(Plugin p : plugins) {
+			//set up the stuff.
+			switch(type) {
+			case INTERNAL:
+				p.setFullPath(null);
+				p.setShortName(null);
+				break;
+			case EXTERNAL:
+				p.setFullPath(path);
+				p.setShortName(shortName);
+				break;
+			}
 			if(p.getSettings().getScripts().containsKey("bootstrap")) {
 				//run this script.
 				LuaState pL = p.getLuaState();
@@ -157,7 +178,7 @@ public class PluginParser extends BasePluginParser {
 				tmp.setName(a.getValue("",BasePluginParser.ATTR_NAME));
 				tmp.setAuthor(a.getValue("",BasePluginParser.ATTR_AUTHOR));
 				tmp.setId(Integer.parseInt(a.getValue("",BasePluginParser.ATTR_ID)));
-				if(a.getValue("","location") == null) {
+				/*if(a.getValue("","location") == null) {
 					tmp.setLocationType(PLUGIN_LOCATION.INTERNAL);
 				} else {
 					if(a.getValue("","location").equals("external")) {
@@ -165,6 +186,14 @@ public class PluginParser extends BasePluginParser {
 					} else {
 						tmp.setLocationType(PLUGIN_LOCATION.INTERNAL);
 					}
+				}*/
+				switch(type) {
+				case INTERNAL:
+					tmp.setLocationType(PLUGIN_LOCATION.INTERNAL);
+					break;
+				case EXTERNAL:
+					tmp.setLocationType(PLUGIN_LOCATION.EXTERNAL);
+					break;
 				}
 			}
 			

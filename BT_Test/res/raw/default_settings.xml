@@ -30,4 +30,7 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   </buttonsets>
   <triggers />
   <timers />
+  <plugins>
+  	<link file="plugin.xml"/>
+  </plugins>
 </root>
