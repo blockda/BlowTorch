@@ -55,8 +55,8 @@ public class Plugin {
 	private PluginSettings settings = null;
 	Handler mHandler = null;
 	//private String mName = null;
-	
-	
+	private String fullPath;
+	private String shortName;
 	
 	public Plugin(Handler h) throws LuaException {
 		setSettings(new PluginSettings());
@@ -691,6 +691,52 @@ public class Plugin {
 		
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void setFullPath(String fullPath) {
+		this.fullPath = fullPath;
+	}
+
+	public String getFullPath() {
+		return fullPath;
+	}
+
+	public void setShortName(String shortName) {
+		this.shortName = shortName;
+	}
+
+	public String getShortName() {
+		return shortName;
+	}
+	
+	public int getTriggerCount() {
+		return settings.getTriggers().size();
+	}
+	
+	public int getAliasCount() {
+		return settings.getAliases().size();
+	}
+	
+	public int getTimerCount() {
+		return settings.getTimers().size();
+	}
+	
+	public int getScriptCount() {
+		return settings.getScripts().size();
+	}
+	
+	public String getStorageType() {
+		switch(settings.getLocationType()) {
+		case INTERNAL:
+			return "INTERNAL";
+			//break;
+		case EXTERNAL:
+			return "EXTERNAL";
+			//break;
+		default:
+			return "OOPS";
+				//break;
 		}
 	}
 }

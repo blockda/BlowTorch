@@ -33,8 +33,9 @@ public class ConnectionSetttingsParser extends PluginParser {
 	ConnectionSettingsPlugin settings = null;
 	public ConnectionSetttingsParser(String location, Context context,
 			ArrayList<Plugin> plugins, Handler serviceHandler) {
-		super(location, context, plugins, serviceHandler);
+		super(location, null,context, plugins, serviceHandler);
 		// TODO Auto-generated constructor stub
+		type = TYPE.INTERNAL;
 	}
 
 	//overrided for awesome sake.
@@ -51,7 +52,9 @@ public class ConnectionSetttingsParser extends PluginParser {
 		Element aliases = root.getChild(BasePluginParser.TAG_ALIASES);
 		Element triggers = root.getChild(BasePluginParser.TAG_TRIGGERS);
 		Element timers = root.getChild(BasePluginParser.TAG_TIMERS);
-		//Element link = root.getChild("plugins").getChild("plugin");
+		Element plugins = root.getChild("plugins");
+		
+		Element link = plugins.getChild("link");
 		///Element timer = timers.getChild("timer");
 		//Element trigger = triggers.getChild("trigger");
 		//Element alias = aliases.getChild("alias");
@@ -84,13 +87,27 @@ public class ConnectionSetttingsParser extends PluginParser {
 			
 		});
 		
-		//link.setStartElementListener(new StartElementListener() {
+		plugins.setStartElementListener(new StartElementListener() {
 
-		//	public void start(Attributes a) {
-		//		
-		//	}
+			public void start(Attributes attributes) {
+				Log.e("PARSE","PLUGIN ELEMENT ENCOUNTERED");
+			}
 			
-		//});
+		});
+		
+		link.setStartElementListener(new StartElementListener() {
+
+			public void start(Attributes a) {
+				
+				if(a.getValue("", "file") != null) {
+					Log.e("XML","LINK NODE ENCOUNTERED");
+					String link = a.getValue("","file");
+					settings.getLinks().add(link);
+				}
+				//s
+			}
+			
+		});
 		
 		super.attatchListeners(root);
 		
