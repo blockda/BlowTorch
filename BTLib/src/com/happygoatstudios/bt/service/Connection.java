@@ -59,6 +59,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Debug;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteCallbackList;
@@ -481,7 +482,7 @@ public class Connection {
 		//String settingslocation = 
 		//loadXmlSettings(prefsname +".xml");
 		String rootPath = prefsname + ".xml";
-		String convertPath = prefsname + "v1.xml";
+		String convertPath = prefsname + ".v1.xml";
 		String newPath = prefsname + ".v2.xml";
 		//rootPath is the v1 settings file name.
 		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/files/";
@@ -507,7 +508,7 @@ public class Connection {
 		
 		//check to see if the new settings file exists.
 		File newSettings = new File(internal+newPath);
-		if(!newSettings.exists()) { //if they have niether and old version or a new one.
+		if(newSettings.exists()) { //if they have niether and old version or a new one.
 			
 			//copy the defaults file to the new location and parse it.
 			try {
@@ -582,27 +583,30 @@ public class Connection {
 			the_settings.setDirections(tmp);
 		}
 		
-		
-		
-		
-		PluginParser parse = new PluginParser("/mnt/sdcard/BlowTorch/plugin.xml",service.getApplicationContext(),plugins,handler);
-		
-		try {
-			ArrayList<Plugin> group = parse.load();
-			plugins.addAll(group);
-			
-			//tmpPlug.setSettings(parse.load());
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+			for(String link : the_settings.getLinks()) {
+				
+				String filename = Environment.getExternalStorageDirectory() + "/BlowTorch/" + link;
+				Log.e("XML","Attempting to load plugins from:" + filename);
+				PluginParser parse = new PluginParser(filename,link,service.getApplicationContext(),plugins,handler);
+				
+				try {
+					ArrayList<Plugin> group = parse.load();
+					plugins.addAll(group);
+					
+					//tmpPlug.setSettings(parse.load());
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SAXException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 		}
-		
 		//plugins.
 		//tmpPlug.initScripts(mWindows);
 		//tmpPlug.initScripts();
@@ -627,6 +631,7 @@ public class Connection {
 		mWindowCallbacks.finishBroadcast();
 	}
 
+	
 	protected void lineToWindow(String target, Line line) {
 		for(WindowToken w : mWindows) {
 			if(w.getName().equals(target)) {
@@ -1339,5 +1344,6 @@ public class Connection {
 	        return -1;
 	    } 
 	}
+	
 	
 }

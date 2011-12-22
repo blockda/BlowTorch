@@ -143,9 +143,9 @@ public class MainWindow extends Activity {
 	public final static int MESSAGE_LAUNCHURL = 886;
 	protected static final int MESSAGE_CLEARALLBUTTONS = 887;
 	protected static final int MESSAGE_MAXVITALS = 100000;
-	protected static final int MESSAGE_VITALS = 1000001;
-	protected static final int MESSAGE_ENEMYHP = 1000002;
-	protected static final int MESSAGE_VITALS2 = 1000003;
+	//protected static final int MESSAGE_VITALS = 1000001;
+	//protected static final int MESSAGE_ENEMYHP = 1000002;
+	//protected static final int MESSAGE_VITALS2 = 1000003;
 	protected static final int MESSAGE_TESTLUA = 100004;
 	protected static final int MESSAGE_TRIGGERSTR = 100005;
 	protected static final int MESSAGE_SWITCH = 888;
@@ -192,7 +192,7 @@ public class MainWindow extends Activity {
 	Boolean serviceConnected = false;
 	Boolean isResumed = false;
 	
-	VitalsView vitals = null;
+	//VitalsView vitals = null;
 	
 	ArrayList<ScriptOptionCallback> scriptCallbacks = new ArrayList<ScriptOptionCallback>();
 	
@@ -326,7 +326,7 @@ public class MainWindow extends Activity {
         //screen2.setZOrderOnTop(false);
         //screen2.setOnTouchListener(gestureListener);
         
-        vitals = (VitalsView) this.findViewById(R.id.vitals);
+        //vitals = (VitalsView) this.findViewById(R.id.vitals);
         
         //TODO: init lua
         
@@ -336,7 +336,7 @@ public class MainWindow extends Activity {
         //enemy = (Bar)vitals.findViewById(R.id.enemy);
         //health.setColor(0xFF00FF00);
         //mana.setColor(0xFF0000FF);
-        SharedPreferences vc = this.getSharedPreferences("VITALS_CONF", Context.MODE_PRIVATE);
+        /*SharedPreferences vc = this.getSharedPreferences("VITALS_CONF", Context.MODE_PRIVATE);
         boolean run = vc.getBoolean("HASRUN", false);
         if(!run) {
         	SharedPreferences.Editor ed = vc.edit();
@@ -351,12 +351,14 @@ public class MainWindow extends Activity {
         	int top = vc.getInt("TOP", 0);
         	int bottom = vc.getInt("BOTTOM", 0);
         	vitals.setRect(left,right,top,bottom);
-        }
+        }*/
         //enemy.setValue(10);
         //mana.setValue(90);
         //health.setValue(10);
 		
-        EditText input_box = (EditText)findViewById(R.id.textinput);
+        View v = findViewById(R.id.textinput);
+        EditText input_box = (EditText)v;
+        
         
         input_box.setOnKeyListener(new TextView.OnKeyListener() {
 
@@ -537,55 +539,6 @@ public class MainWindow extends Activity {
 				case MESSAGE_TESTLUA:
 					//LuaState exist = LuaStateFactory.getExistingState(msg.arg1);
 					//exist.LdoString("Note(\"Fooooooo\")");
-					break;
-				case MESSAGE_VITALS2:
-				{
-					Bundle biz = msg.getData();
-					int hp = biz.getInt("HP");
-					int mp = biz.getInt("MP");
-					int maxhp = biz.getInt("MAXHP");
-					int maxmana = biz.getInt("MAXMANA");
-					int enemy = biz.getInt("ENEMY");
-					vitals.updateAllVitals(hp,mp,maxhp,maxmana,enemy);
-				}
-					break;
-				case MESSAGE_ENEMYHP:
-					int enemyval = msg.arg1;
-					/*if(msg.arg1 > -1) {
-						enemy.setColor(0xFFFF0000);
-						enemy.setValue(enemyval);
-					} else {
-						enemy.setColor(0xFF000000);
-						enemy.setValue(100);
-					}*/
-					vitals.updateEnemyVal(msg.arg1);
-					//enemy.invalidate();
-					break;
-				case MESSAGE_VITALS:
-					int hp = msg.getData().getInt("hp");
-					int mp = msg.getData().getInt("mp");
-					//int maxmoves = msg.getData().getInt("maxmoves");
-					
-					/*health.setValue(hp);
-					mana.setValue(mp);
-					
-					health.invalidate();*/
-					//Log.e("LSDF","SETTING VITALS");
-					vitals.updateVitals(hp, mp);
-					break;
-				case MESSAGE_MAXVITALS:
-					int maxhp = msg.getData().getInt("maxhp");
-					int maxmp = msg.getData().getInt("maxmp");
-					//int maxmoves = msg.getData().getInt("maxmoves");
-					
-					/*health.setMax(maxhp);
-					mana.setMax(maxmp);
-					
-					health.invalidate();*/
-					//Log.e("LSDF","SETTING MAX");
-					vitals.updateMaxVitals(maxhp,maxmp);
-					vitals.invalidate();
-					
 					break;
 				case MESSAGE_CLEARALLBUTTONS:
 					try {
@@ -1531,6 +1484,7 @@ public class MainWindow extends Activity {
 		menu.add(0, 903, 0, "Quit");
 		menu.add(0, 906, 0, "Help/About");
 		menu.add(0, 908,0,"Reload Settings");
+		menu.add(0, 909, 0, "Plugins");
 		
 		
 		return true;
@@ -1549,6 +1503,10 @@ public class MainWindow extends Activity {
 		}
 		
 		switch(item.getItemId()) {
+		case 909:
+			PluginDialog pd = new PluginDialog(this,service);
+			pd.show();
+			break;
 		case 908:
 			try {
 				service.reloadSettings();
@@ -2482,7 +2440,7 @@ public class MainWindow extends Activity {
 	private void removeButtonsFromHolder() {
 		RelativeLayout clearb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 		//int slick = clearb.indexOfChild(screen2);
-		int vital = clearb.indexOfChild(vitals);
+		//int vital = clearb.indexOfChild(vitals);
 		int count = clearb.getChildCount();
 		
 		
@@ -2644,22 +2602,22 @@ public class MainWindow extends Activity {
 			myhandler.sendMessage(msg);
 		}
 		public void updateVitals(int hp, int mana, int moves) {
-			Message msg = myhandler.obtainMessage(MESSAGE_VITALS);
+			/*Message msg = myhandler.obtainMessage(MESSAGE_VITALS);
 			Bundle b = msg.getData();
 			b.putInt("hp", hp);
 			b.putInt("mp", mana);
 			b.putInt("moves", moves);
 			msg.setData(b);
-			myhandler.sendMessage(msg);
+			myhandler.sendMessage(msg);*/
 		}
 
 		public void updateEnemy(int hp) throws RemoteException {
-			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_ENEMYHP,hp,0));
+			//myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_ENEMYHP,hp,0));
 		}
 
 		public void updateVitals2(int hp, int mp, int maxhp, int maxmana,
 				int enemy) throws RemoteException {
-			Message m = myhandler.obtainMessage(MESSAGE_VITALS2);
+			/*Message m = myhandler.obtainMessage(MESSAGE_VITALS2);
 			//if(this.get(list.data.MESSget(i))
 			Bundle b = m.getData();
 			b.putInt("HP", hp);
@@ -2669,7 +2627,7 @@ public class MainWindow extends Activity {
 			b.putInt("ENEMY",enemy);
 			
 			m.setData(b);
-			myhandler.sendMessage(m);
+			myhandler.sendMessage(m);*/
 		}
 		
 		public void luaOmg(int stateIndex) throws RemoteException {

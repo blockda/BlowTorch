@@ -1,5 +1,6 @@
 package com.happygoatstudios.bt.service.plugin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.keplerproject.luajava.LuaException;
@@ -89,6 +90,8 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 	private boolean hyperLinkEnabled = true;
 	
 	private HashMap<String,DirectionData> Directions = new HashMap<String,DirectionData>();
+	private ArrayList<String> links = new ArrayList<String>();
+	
 	
 	private String lastSelected = "default";
 	enum WRAP_MODE {
@@ -435,5 +438,13 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 		this.setLocalEcho(oldSettings.isLocalEcho());
 		//this.set
 		
+	}
+
+	public void setLinks(ArrayList<String> links) {
+		this.links = links;
+	}
+
+	public ArrayList<String> getLinks() {
+		return links;
 	}
 }
