@@ -76,11 +76,11 @@ public class ByteView extends View {
 
 	
 	
-	private boolean constrictWindow = false;
-	private int constrictedHeight = 300;
-	private int constrictedWidth = 600;
-	private int anchorLeft = 100;
-	private int anchorTop = 100;
+	boolean constrictWindow = false;
+	int constrictedHeight = 300;
+	int constrictedWidth = 600;
+	int anchorLeft = 100;
+	int anchorTop = 100;
 	
 	
 	
