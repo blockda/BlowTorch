@@ -1,8 +1,10 @@
 package com.happygoatstudios.bt.window;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.view.View;
@@ -21,11 +23,29 @@ public class LayerManager {
 	
 	Handler rootHandler = null;
 	
+	public class Border {
+		Point p1;
+		Point p2;
+		public Border() {
+			p1 = new Point();
+			p2 = new Point();
+		}
+	}
+	
+	public ArrayList<Border> borders = new ArrayList<Border>();
+	
 	public LayerManager(IConnectionBinder service, Context context, RelativeLayout root,Handler rootHandler) {
 		this.rootHandler = rootHandler;
 		mContext = context;
 		mService = service;
 		mRootLayout = root;
+		
+		/*Border b = new Border();
+		b.p1.x = 0;
+		b.p2.x = 100;
+		b.p1.y = 0;
+		b.p2.y = 100;
+		borders.add(b);*/
 	}
 	
 	public void initiailize() {
@@ -116,6 +136,37 @@ public class LayerManager {
 				e.printStackTrace();
 			}
 			
+			//construct border.
+			Border top = new Border();
+			Border bottom = new Border();
+			Border left = new Border();
+			Border right = new Border();
+			
+			top.p1.x = tmp.mBounds.left;
+			top.p1.y = tmp.mBounds.top;
+			top.p2.x = tmp.mBounds.right;
+			top.p2.y = tmp.mBounds.top;
+			
+			bottom.p1.x = tmp.mBounds.left;
+			bottom.p1.y = tmp.mBounds.bottom;
+			bottom.p2.x = tmp.mBounds.right;
+			bottom.p2.y = tmp.mBounds.bottom;
+			
+			left.p1.x = tmp.mBounds.left;
+			left.p1.y = tmp.mBounds.top;
+			left.p2.x = tmp.mBounds.left;
+			left.p2.y = tmp.mBounds.bottom;
+			
+			right.p1.x = tmp.mBounds.right;
+			right.p1.y = tmp.mBounds.top;
+			right.p2.x = tmp.mBounds.right;
+			right.p2.y = tmp.mBounds.bottom;
+			
+			borders.add(top);
+			borders.add(bottom);
+			borders.add(left);
+			borders.add(right);
+			
 			mRootLayout.addView(tmp);
 		}
 	}
@@ -145,6 +196,38 @@ public class LayerManager {
 			tmp.addBytesImpl(w.getBuffer().dumpToBytes(false), true);
 			tmp.setTag(w.getName());
 			tmp.setName(w.getName());
+			
+			if(tmp.constrictWindow) {
+				Border top = new Border();
+				Border bottom = new Border();
+				Border left = new Border();
+				Border right = new Border();
+				
+				top.p1.x = tmp.anchorLeft;
+				top.p1.y = tmp.anchorTop;
+				top.p2.x = tmp.anchorLeft + tmp.constrictedWidth;
+				top.p2.y = tmp.anchorTop;
+				
+				bottom.p1.x = tmp.anchorLeft;
+				bottom.p1.y = tmp.anchorTop + tmp.constrictedHeight;
+				bottom.p2.x = tmp.anchorLeft + tmp.constrictedWidth;
+				bottom.p2.y = tmp.anchorTop + tmp.constrictedHeight;
+				
+				left.p1.x = tmp.anchorLeft;
+				left.p1.y = tmp.anchorTop;
+				left.p2.x = tmp.anchorLeft;
+				left.p2.y = tmp.anchorTop + tmp.constrictedHeight;
+				
+				right.p1.x = tmp.anchorLeft + tmp.constrictedWidth;
+				right.p1.y = tmp.anchorTop;
+				right.p2.x = tmp.anchorLeft + tmp.constrictedWidth;
+				right.p2.y = tmp.anchorTop + tmp.constrictedHeight;
+				
+				borders.add(top);
+				borders.add(bottom);
+				borders.add(left);
+				borders.add(right);
+			}
 			mRootLayout.addView(tmp);
 		} else {
 			//already exists.
