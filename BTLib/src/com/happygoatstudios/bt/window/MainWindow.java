@@ -2058,15 +2058,30 @@ public class MainWindow extends Activity {
 	
 	
 	private void initLayers() {
+		RelativeLayout holder = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
 		if(mLayers == null) {
-			RelativeLayout holder = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
+			
 			mLayers = new LayerManager(service,this,holder,myhandler);
 			mLayers.initiailize();
 		} else {
 			mLayers.initiailize();
 		}
+		
+		if(mBorderLayer == null) {
+			mBorderLayer = new BorderLayer(this,mLayers);
+			mBorderLayer.setTag(mBorderTag);
+			holder.addView(mBorderLayer);
+		} else {
+			//if(holder.findViewById())
+			View v = holder.findViewWithTag(mBorderTag);
+			if(v == null) {
+				holder.addView(mBorderLayer);
+			}
+		}
 	}
 	
+	private BorderLayer mBorderLayer = null;
+	private String mBorderTag = "BorderLayer";
 	private void setHyperLinkSettings() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		//boolean enabled = prefs.getBoolean("HYPERLINKS_ENABLED", true);
