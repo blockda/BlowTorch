@@ -569,6 +569,10 @@ public class Connection {
 		
 		plugins.addAll(tmpPlugs);
 		
+		for(Plugin p : plugins) {
+			pluginMap.put(p.getName(), p);
+		}
+		
 		//private void loadDefaultDirections() {
 		if(the_settings.getDirections().size() == 0) {
 			HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
@@ -592,6 +596,17 @@ public class Connection {
 				
 				try {
 					ArrayList<Plugin> group = parse.load();
+					for(Plugin p : group) {
+						pluginMap.put(p.getName(), p);
+						if(linkMap.get(link) == null) {
+							ArrayList<String> vals = new ArrayList<String>();
+							vals.add(p.getName());
+							linkMap.put(link, vals);
+						} else {
+							ArrayList<String> vals = linkMap.get(link);
+							vals.add(p.getName());
+						}
+					}
 					plugins.addAll(group);
 					
 					//tmpPlug.setSettings(parse.load());
@@ -613,6 +628,9 @@ public class Connection {
 		
 		//plugins.add(tmpPlug);
 	}
+	
+	private HashMap<String,ArrayList<String>> linkMap = new HashMap<String,ArrayList<String>>();
+	private HashMap<String,Plugin> pluginMap = new HashMap<String,Plugin>(0);
 	
 	protected void redrawWindow(String win) {
 		Log.e("WINDOW","SERVICE ATTEMPTING TO REDRAW WINDOW:" + win);
@@ -1314,11 +1332,12 @@ public class Connection {
 				//if(p.getSettings()Connection.)
 				if(p.getSettings().getLocationType() == PLUGIN_LOCATION.INTERNAL) {
 					p.outputXMLInternal(out);
-				} else {
-					p.outputXMLExternal(service);
+				//} else {
+				//	p.outputXMLExternal(service);
 				}
 				
 			}
+			
 			out.endTag("", "plugins");
 			out.endTag("","root");
 			out.endDocument();
@@ -1326,6 +1345,48 @@ public class Connection {
 			fos.write(writer.toString().getBytes());
 			
 			fos.close();
+			
+			
+			//output links.
+			ArrayList<String> links = the_settings.getLinks();
+			for(String link : links) {
+				//start the dump:
+				FileOutputStream linkOS = service.openFileOutput(link, Context.MODE_PRIVATE);
+				
+				XmlSerializer linkOut = Xml.newSerializer();
+				
+				StringWriter linkWriter = new StringWriter();
+				
+				linkOut.setOutput(linkWriter);
+				
+				linkOut.startDocument("UTF-8", true);
+				
+				linkOut.startTag("", "root");
+				linkOut.startTag("", "plugins");
+
+				//dumpPluginCommonData(out);
+				ArrayList<String> vals = linkMap.get(link);
+				for(String pKey : vals) {
+					Plugin p = pluginMap.get(pKey);
+					p.outputXMLExternal(service,linkOut);
+				}
+				
+				linkOut.endTag("", "plugins");
+				linkOut.endTag("","root");
+				//linkOut.endTag("", "plugin");
+				linkOut.endDocument();
+				
+				linkOS.write(writer.toString().getBytes());
+				
+				linkOS.close();
+				
+				
+				
+				
+			}
+			
+			
+
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
