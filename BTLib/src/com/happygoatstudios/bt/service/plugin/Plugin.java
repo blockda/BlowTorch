@@ -597,11 +597,42 @@ public class Plugin {
 			//then call lua.
 			out.startTag("", "plugin");
 			dumpPluginCommonData(out);
+			dumpLuaData(out);
 			out.endTag("", "plugin");
 		}
 	}
 	
-	public void outputXMLExternal(StellarService service) {
+	public void outputXMLExternal(StellarService service,XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "plugin");
+		dumpPluginCommonData(out);
+		dumpLuaData(out);
+		out.endTag("", "plugin");
+	}
+	
+	private void dumpLuaData(XmlSerializer out) {
+		//now call the saveXML function in lua.
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		L.getGlobal("saveXML");
+		if(L.getLuaObject(-1).isFunction()) {
+			//out.startT
+			
+			L.pushJavaObject(out);
+			
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("PLUGIN","Plugin SaveXML Error:" + L.getLuaObject(-1).getString());
+			} else {
+				//success
+			}
+			
+		} else {
+			L.pop(2);
+		}
+	}
+	
+/*	public void outputXMLExternal(StellarService service) {
 		L.getGlobal("saveXML");
 		if(L.getLuaObject(-1).isFunction()) {
 			//set up file for writing, calling saveXML.
@@ -646,7 +677,7 @@ public class Plugin {
 			//no saveXML detected, no saving needed, as the next parse will just pick up the same info.
 	
 		}
-	}
+	}*/
 	
 	private void dumpPluginCommonData(XmlSerializer out) {
 		try{
@@ -672,11 +703,14 @@ public class Plugin {
 			for(String script : settings.getScripts().keySet()) {
 				out.startTag("", "script");
 				out.attribute("", "name", script);
-				out.text(settings.getScripts().get(script));
+				//out.text(settings.getScripts().get(script));
+				out.cdsect(settings.getScripts().get(script));
+				
+				//out.cdsect(text)
 				out.endTag("", "script");
 			}
 			
-			L.pop(1);
+			/*L.pop(1);
 			L.getGlobal("debug");
 			L.getField(-1,"traceback");
 			L.remove(-2);
@@ -687,7 +721,7 @@ public class Plugin {
 			if(ret != 0) {
 				Log.e("PLUGIN","SaveXML Error:" + L.getLuaObject(-1).getString());
 				return;
-			}
+			}*/
 		
 		} catch (IOException e) {
 			e.printStackTrace();
