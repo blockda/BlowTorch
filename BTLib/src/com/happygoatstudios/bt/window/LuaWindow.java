@@ -241,6 +241,7 @@ public class LuaWindow extends View {
 		}
 	}
 
+	
 	private void initLua() {
 		L.openLibs();
 		
