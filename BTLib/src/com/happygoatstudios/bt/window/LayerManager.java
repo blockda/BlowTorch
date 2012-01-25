@@ -108,6 +108,69 @@ public class LayerManager {
 		}
 	}
 	
+	private void initWindow(WindowToken w) {
+		View v = mRootLayout.findViewWithTag(w.getName());
+		if(v == null) {
+			
+			Window tmp = new Window(mContext,this,w.getName(),w.getPluginName(),w.getX(),w.getY(),w.getWidth(),w.getHeight(),rootHandler);
+			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			
+			tmp.setLayoutParams(p);
+			tmp.setTag(w.getName());
+			
+			try {
+				String body = mService.getScript(w.getPluginName(),w.getScriptName());
+				//TODO: this needs to be much harderly error checked.
+				tmp.loadScript(body);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			try {
+				mService.registerWindowCallback(w.getName(),tmp.getCallback());
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			//construct border.
+			Border top = new Border();
+			Border bottom = new Border();
+			Border left = new Border();
+			Border right = new Border();
+			
+			top.p1.x = tmp.mBounds.left;
+			top.p1.y = tmp.mBounds.top;
+			top.p2.x = tmp.mBounds.right;
+			top.p2.y = tmp.mBounds.top;
+			
+			bottom.p1.x = tmp.mBounds.left;
+			bottom.p1.y = tmp.mBounds.bottom;
+			bottom.p2.x = tmp.mBounds.right;
+			bottom.p2.y = tmp.mBounds.bottom;
+			
+			left.p1.x = tmp.mBounds.left;
+			left.p1.y = tmp.mBounds.top;
+			left.p2.x = tmp.mBounds.left;
+			left.p2.y = tmp.mBounds.bottom;
+			
+			right.p1.x = tmp.mBounds.right;
+			right.p1.y = tmp.mBounds.top;
+			right.p2.x = tmp.mBounds.right;
+			right.p2.y = tmp.mBounds.bottom;
+			
+			borders.add(top);
+			borders.add(bottom);
+			borders.add(left);
+			borders.add(right);
+			
+			mRootLayout.addView(tmp);
+		}
+	}
+	
 	private void initLuaWindow(WindowToken w) {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
@@ -255,6 +318,14 @@ public class LayerManager {
 						e.printStackTrace();
 					}
 				}
+				
+				if(tmp instanceof Window) {
+					try {
+						mService.unregisterWindowCallback(w.getName(), ((Window)tmp).getCallback());
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 	}
@@ -284,5 +355,12 @@ public class LayerManager {
 		}
 	}
 	
-	
+	public void shutdown(Window window) {
+		try {
+			mService.unregisterWindowCallback(window.getName(), window.getCallback());
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }
