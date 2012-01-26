@@ -474,6 +474,7 @@ public class Connection {
 			// TODO Auto-generated catch block
 		//	e1.printStackTrace();
 		//}
+			
 		ArrayList<Plugin> tmpPlugs = new ArrayList<Plugin>();
 		Pattern invalidchars = Pattern.compile("\\W");
 		Matcher replacebadchars = invalidchars.matcher(this.display);
@@ -508,7 +509,7 @@ public class Connection {
 		
 		//check to see if the new settings file exists.
 		File newSettings = new File(internal+newPath);
-		if(newSettings.exists()) { //if they have niether and old version or a new one.
+		if(!newSettings.exists()) { //if they have niether and old version or a new one.
 			
 			//copy the defaults file to the new location and parse it.
 			try {
