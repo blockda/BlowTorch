@@ -14,9 +14,17 @@ import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaObject;
 import org.keplerproject.luajava.LuaState;
+import org.keplerproject.luajava.LuaStateFactory;
 
 import com.happygoatstudios.bt.service.Colorizer;
 import com.happygoatstudios.bt.service.IWindowCallback;
+//import com.happygoatstudios.bt.window.LuaWindow.BoundsFunction;
+//import com.happygoatstudios.bt.window.LuaWindow.DebugFunction;
+//import com.happygoatstudios.bt.window.LuaWindow.DrawFunction;
+//import com.happygoatstudios.bt.window.LuaWindow.InvalidateFunction;
+//import com.happygoatstudios.bt.window.LuaWindow.OptionsMenuFunction;
+//import com.happygoatstudios.bt.window.LuaWindow.PluginXCallSFunction;
+//import com.happygoatstudios.bt.window.LuaWindow.TableAdapterFunction;
 import com.happygoatstudios.bt.window.TextTree.Line;
 import com.happygoatstudios.bt.window.TextTree.Unit;
 
@@ -26,6 +34,8 @@ import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -42,6 +52,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.CycleInterpolator;
@@ -63,7 +74,7 @@ public class Window extends View {
 	private int mWidth = 1;
 	LuaState L = null;
 	String mOwner;
-	
+	Paint clearme = new Paint();
 	public int CALCULATED_LINESINWINDOW;
 	private int PREF_LINEEXTRA = 2;
 	private int PREF_LINESIZE = (int)PREF_FONTSIZE + PREF_LINEEXTRA;
@@ -84,10 +95,10 @@ public class Window extends View {
 
 	//private String encoding = "ISO-8859-1";
 	boolean constrictWindow = false;
-	int constrictedHeight = 300;
-	int constrictedWidth = 600;
-	int anchorLeft = 100;
-	int anchorTop = 100;
+	//int constrictedHeight = 300;
+	//int constrictedWidth = 600;
+	int mAnchorLeft = 100;
+	int mAnchorTop = 100;
 	
 	
 	
@@ -131,14 +142,15 @@ public class Window extends View {
 	
 	Object token = new Object(); //token for synchronization.
 
-	private int myWidth = -1;
+	//private int myWidth = -1;
 	LayerManager mManager = null;
-	
-	public Window(Context context,LayerManager manager) {
+	Context mContext = null;
+	/*public Window(Context context,LayerManager manager) {
 		super(context);
 		//getHolder().addCallback(this);
 		init();
 		mManager = manager;
+		mContext = context;
 	}
 	
 	public Window(Context context,AttributeSet attrib) {
@@ -149,7 +161,14 @@ public class Window extends View {
 		//createhandler();
 		//this.setZOrderOnTop(true);
 		init();
-	} 
+	} */
+	
+	public Window(Context context,LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
+		super(context);
+		init(manager,name,owner,x,y,width,height,mainWindowHandler);
+	}
+	
+	
 	
 	/*public void onCreate(Bundle b) {
 		onSizeChanged(this.getWidth(),this.getHeight(),0,0);
@@ -166,77 +185,23 @@ public class Window extends View {
 		viewDestroy();
 	}
 	protected void onMeasure(int widthSpec,int heightSpec) {
-		/*boolean flip = false;
-		if(this.getContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			int tmp = widthSpec;
-			widthSpec = heightSpec;
-			heightSpec = tmp;
-			flip = true;
+		setMeasuredDimension(MeasureSpec.getSize(widthSpec),MeasureSpec.getSize(heightSpec));
+		if(!constrictWindow) {
+			mAnchorTop = 0;
+			mAnchorLeft = 0;
+			mWidth = MeasureSpec.getSize(widthSpec);
+			mHeight = MeasureSpec.getSize(heightSpec);
+		}
+		if(constrictWindow) {
+			calculateCharacterFeatures(mWidth,mHeight);
 		} else {
+			calculateCharacterFeatures(mWidth,mHeight);
+		}
 			
-		}*/
-		
-		//Log.e("WINDOW","Incoming measure spec: h="+MeasureSpec.getSize(heightSpec) + " w="+MeasureSpec.getSize(widthSpec));
-		
-		switch(View.MeasureSpec.getMode(widthSpec)) {
-		 case MeasureSpec.AT_MOST:
-			 mWidth = MeasureSpec.getSize(widthSpec);
-//			 if(myWidth < WINDOW_WIDTH) {
-//				 WINDOW_WIDTH = myWidth;
-//			 }
-			 break;
-		 case MeasureSpec.EXACTLY:
-			 mWidth = MeasureSpec.getSize(widthSpec);
-			 break;
-		 case MeasureSpec.UNSPECIFIED:
-			 mWidth = MeasureSpec.getSize(widthSpec);
-			 break;
-		 }
-		
-		switch(View.MeasureSpec.getMode(heightSpec)) {
-		 case MeasureSpec.AT_MOST:
-			 mHeight = MeasureSpec.getSize(heightSpec);
-//			 if(myWidth < WINDOW_HEIGHT) {
-//				 WINDOW_HEIGHT = myWidth;
-//			 }
-			 break;
-		 case MeasureSpec.EXACTLY:
-			 mHeight = MeasureSpec.getSize(heightSpec);
-			 break;
-		 case MeasureSpec.UNSPECIFIED:
-			 mHeight = MeasureSpec.getSize(heightSpec);
-			 break;
-		 }
-		/*if(flip) {
-			setMeasuredDimension(WINDOW_HEIGHT,WINDOW_WIDTH);
-			onSizeChanged(WINDOW_HEIGHT,WINDOW_WIDTH,0,0);
-			
-		} else {*/
-			setMeasuredDimension(mWidth,mHeight);
-			
-			if(constrictWindow) {
-				mWidth = constrictedWidth;
-				mHeight = constrictedHeight;
-				
-				
-			}
-			//onSizeChanged(WINDOW_WIDTH,WINDOW_HEIGHT,0,0);
-			if(constrictWindow) {
-				calculateCharacterFeatures(constrictedWidth,constrictedHeight);
-			} else {
-				calculateCharacterFeatures(mWidth,mHeight);
-			}
-			
-			//Log.e("BYTE","SURFACE CHANGED");
-			doDelayedDraw(0);
-			
-		//}
-		
-			
-		//Log.e("WINDOW","MEASURED HEIGHT:" + WINDOW_HEIGHT + " MEASURED WIDTH: "+ WINDOW_WIDTH);
+		doDelayedDraw(0);
 	}
 	
-	private void init() {
+	private void init(LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
 		new_text_in_buffer_indicator = new View(this.getContext());
 		the_tree = new TextTree();
 		buffer = new TextTree();
@@ -253,6 +218,8 @@ public class Window extends View {
 					Window.this.invalidate();
 					break;
 				case MESSAGE_ADDTEXT:
+					//String str = new String((byte[])msg.obj);
+					//Log.e("window","adding text:\n"+str);
 					Window.this.addBytes((byte[])msg.obj, true);
 					break;
 				case MSG_UPPRIORITY:
@@ -295,6 +262,45 @@ public class Window extends View {
 		indicator_on_no_cycle.setFillAfter(true);
 		indicator_on_no_cycle.setFillBefore(true);
 		
+		//lua startup.
+		mOwner = owner;
+		mManager = manager;
+		//mContext = context;
+		
+		this.mainHandler = mainWindowHandler;
+		this.L = LuaStateFactory.newLuaState();
+		
+		if(x == 0 && y ==0 && width==0 && height == 0) {
+			constrictWindow = false;
+		} else {
+			constrictWindow = true;
+			mAnchorTop = y;
+			mAnchorLeft = x;
+			mWidth = width;
+			mHeight = height;
+			
+		}
+		mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
+		
+		mName = name;
+		initLua();
+		
+		clearme.setColor(0x00000000);
+		clearme.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+		
+		DrawFunction draw = new DrawFunction(L);
+		try {
+			draw.register("draw");
+		} catch (LuaException e) {
+			e.printStackTrace();
+		}
+		
+		calculateCharacterFeatures(width,height);
+		
+		L.pushJavaObject(this);
+		L.setGlobal("view");
+		
+		
 	}
 	
 	protected void shutdown() {
@@ -313,6 +319,7 @@ public class Window extends View {
 	
 	public void calculateCharacterFeatures(int width,int height) {
 		
+		Log.e("WINDOW","WINDOW:" + mName + " character features for w/h:" + width+ " : "+height);
 		if(height == 0 && width == 0) {
 			return;
 		}
@@ -382,124 +389,151 @@ public class Window extends View {
 	int by = 0;
 	public int touchInLink = -1;
 	public boolean onTouchEvent(MotionEvent t) {
-		Rect rect = new Rect();
-		if(!finger_down) {
-			if(constrictWindow) {
-				rect.top = anchorTop;
-				rect.left = anchorLeft;
-				rect.right = anchorLeft + constrictedWidth;
-				rect.bottom = anchorTop + constrictedHeight;
+		boolean retval = false;
+		boolean noFunction = false;
+		//L.getGlobal("debug");
+		//L.getField(L.getTop(), "traceback");
+		//L.remove(-2);
+		
+		/*L.getGlobal("OnTouchEvent");
+		if(!L.isFunction(L.getTop())) {
+			//return false;
+			noFunction = true;
+		}
+		if(!noFunction) {
+			L.pushJavaObject(t);
+			
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("LUAWINDOW","Error in onTouchEvent:"+L.getLuaObject(-1).getString());
 			} else {
-				rect.top = 0;
-				rect.left = 0;
-				rect.right = mWidth;
-				rect.bottom = mHeight;
+				retval = L.getLuaObject(-1).getBoolean();
+				//Log.e("LUAWINDOW","TouchEvent called");
 			}
-			
-			Point point = new Point();
-			point.x = (int) t.getX();
-			point.y = (int) t.getY();
-			if(!rect.contains((int)t.getX(),(int)t.getY())) {
-				return false;
-			}
-		}
+			if(retval) return true;
+		}*/
 		
-		synchronized(token) {
-		if(t.getAction() == MotionEvent.ACTION_DOWN) {
-			
-			start_x = new Float(t.getX(t.getPointerId(0)));
-			start_y = new Float(t.getY(t.getPointerId(0)));
-			pre_event = MotionEvent.obtainNoHistory(t);
-			fling_velocity = 0.0f;
-			finger_down = true;
-			finger_down_to_up = false;
-			prev_draw_time = 0;
-			
-			for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
-				if(linkBoxes.get(tmpCount).getBox().contains((int)(float)start_x,(int)(float)start_y)) {
-					touchInLink = tmpCount;
-				}
-			}
-		}
-		
-		if(!increadedPriority) {
-			increadedPriority = true;
-		}
-		
-		if(t.getAction() == MotionEvent.ACTION_MOVE) {
-			
-
-			//Float now_x = new Float(t.getX(t.getPointerId(0)));
-			Float now_y = new Float(t.getY(t.getPointerId(0)));
-			
-			
-
-			float thentime = pre_event.getEventTime();
-			float nowtime = t.getEventTime();
-			
-			float time = (nowtime - thentime) / 1000.0f; //convert to seconds
-			
-			float prev_y = pre_event.getY(t.getPointerId(0));
-			float dist = now_y - prev_y;
-			diff_amount = (int)dist;
-			
-			float velocity = dist / time;
-			float MAX_VELOCITY = 700;
-			if(Math.abs(velocity) > MAX_VELOCITY) {
-				if(velocity > 0) {
-					velocity = MAX_VELOCITY;
+		if(the_tree.getBrokenLineCount() != 0) {
+			Rect rect = new Rect();
+			if(!finger_down) {
+				if(constrictWindow) {
+					rect.top = mAnchorTop;
+					rect.left = mAnchorLeft;
+					rect.right = mAnchorLeft + mWidth;
+					rect.bottom = mAnchorTop + mHeight;
 				} else {
-					velocity = MAX_VELOCITY * -1;
+					rect.top = 0;
+					rect.left = 0;
+					rect.right = mWidth;
+					rect.bottom = mHeight;
+				}
+				
+				Point point = new Point();
+				point.x = (int) t.getX();
+				point.y = (int) t.getY();
+				if(!rect.contains((int)t.getX(),(int)t.getY())) {
+					return false;
 				}
 			}
-			fling_velocity = velocity;
 			
-			if(Math.abs(diff_amount) > 5) {
+			synchronized(token) {
+			if(t.getAction() == MotionEvent.ACTION_DOWN) {
 				
+				start_x = new Float(t.getX(t.getPointerId(0)));
+				start_y = new Float(t.getY(t.getPointerId(0)));
 				pre_event = MotionEvent.obtainNoHistory(t);
+				fling_velocity = 0.0f;
+				finger_down = true;
+				finger_down_to_up = false;
+				prev_draw_time = 0;
+				
+				for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
+					if(linkBoxes.get(tmpCount).getBox().contains((int)(float)start_x,(int)(float)start_y)) {
+						touchInLink = tmpCount;
+					}
+				}
 			}
 			
-
-		}
-		
-		int pointers = t.getPointerCount();
-		for(int i=0;i<pointers;i++) {
-			
-			Float y_val = new Float(t.getY(t.getPointerId(i)));
-			Float x_val = new Float(t.getX(t.getPointerId(i)));
-			bx = x_val.intValue();
-			by = y_val.intValue();
-			
-			prev_y = y_val;
-		}
-		
-		
-		if(t.getAction() == (MotionEvent.ACTION_UP)) {
-			
-			pre_event = null;
-			prev_y = new Float(0);
-			mHandler.removeMessages(ByteView.MSG_BUTTONDROPSTART);
-	        
-	        //reset the priority
-	        increadedPriority = false;
-	        //_runner.dcbPriority(Process.THREAD_PRIORITY_DEFAULT);
-	        
-
-	        pre_event = null;
-	        finger_down=false;
-	        finger_down_to_up = true;
-	         
-			if(touchInLink > -1) {
-				dataDispatch.sendMessage(dataDispatch.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
-		        touchInLink = -1;
+			if(!increadedPriority) {
+				increadedPriority = true;
 			}
-	        
+			
+			if(t.getAction() == MotionEvent.ACTION_MOVE) {
+				
+	
+				//Float now_x = new Float(t.getX(t.getPointerId(0)));
+				Float now_y = new Float(t.getY(t.getPointerId(0)));
+				
+				
+	
+				float thentime = pre_event.getEventTime();
+				float nowtime = t.getEventTime();
+				
+				float time = (nowtime - thentime) / 1000.0f; //convert to seconds
+				
+				float prev_y = pre_event.getY(t.getPointerId(0));
+				float dist = now_y - prev_y;
+				diff_amount = (int)dist;
+				
+				float velocity = dist / time;
+				float MAX_VELOCITY = 700;
+				if(Math.abs(velocity) > MAX_VELOCITY) {
+					if(velocity > 0) {
+						velocity = MAX_VELOCITY;
+					} else {
+						velocity = MAX_VELOCITY * -1;
+					}
+				}
+				fling_velocity = velocity;
+				
+				if(Math.abs(diff_amount) > 5) {
+					
+					pre_event = MotionEvent.obtainNoHistory(t);
+				}
+				
+	
+			}
+			
+			int pointers = t.getPointerCount();
+			for(int i=0;i<pointers;i++) {
+				
+				Float y_val = new Float(t.getY(t.getPointerId(i)));
+				Float x_val = new Float(t.getX(t.getPointerId(i)));
+				bx = x_val.intValue();
+				by = y_val.intValue();
+				
+				prev_y = y_val;
+			}
+			
+			
+			if(t.getAction() == (MotionEvent.ACTION_UP)) {
+				
+				pre_event = null;
+				prev_y = new Float(0);
+				mHandler.removeMessages(ByteView.MSG_BUTTONDROPSTART);
+		        
+		        //reset the priority
+		        increadedPriority = false;
+		        //_runner.dcbPriority(Process.THREAD_PRIORITY_DEFAULT);
+		        
+	
+		        pre_event = null;
+		        finger_down=false;
+		        finger_down_to_up = true;
+		         
+				if(touchInLink > -1) {
+					dataDispatch.sendMessage(dataDispatch.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
+			        touchInLink = -1;
+				}
+		        
+			}
+			
+			}
+			this.invalidate();
+			return true; //consumes
 		}
 		
-		}
-		this.invalidate();
-		return true; //consumes
-		
+		return false;
 	}
 	
 
@@ -608,363 +642,392 @@ public class Window extends View {
 			xtmp += System.currentTimeMillis();
 		}
 		
-		
-		if(linkColor == null) {
+		if(the_tree.getBrokenLineCount() != 0) {
+			if(linkColor == null) {
+				
+				linkColor = new Paint();
+				linkColor.setAntiAlias(true);
+				linkColor.setColor(linkHighlightColor);
+			}
 			
-			linkColor = new Paint();
-			linkColor.setAntiAlias(true);
 			linkColor.setColor(linkHighlightColor);
-		}
-		
-		linkColor.setColor(linkHighlightColor);
-		//try {	
-		calculateScrollBack();
-		
-		c.save();
-		Rect clip = new Rect();
-		if(constrictWindow) {
-		
-			clip.top = anchorTop;
-			clip.left = anchorLeft;
-			clip.right = clip.left + constrictedWidth;
-			clip.bottom = clip.top + constrictedHeight;
+			//try {	
+			calculateScrollBack();
 			
-		} else {
-			clip.top = 0;
-			clip.left = 0;
-			clip.right = mWidth;
-			clip.bottom = mHeight;
-		}
-		c.clipRect(clip);
-		if(constrictWindow) {
-			c.translate(anchorLeft, anchorTop);
-		}
-		//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
-		Paint b = new Paint();
-		b.setColor(0xFF0A0A0A);
-		//c.drawColor(0xFF0A0A0A); //fill with black
-		c.drawColor(0xFF0A0A0A);
-		c.drawRect(0,0,clip.right-clip.left,clip.top-clip.bottom,b);
-		p.setTypeface(PREF_FONT);
-		p.setAntiAlias(true);
-		p.setTextSize(PREF_FONTSIZE);
-		p.setColor(0xFFFFFFFF);
-		
-		//float char_width = p.measureText("T");
-		
-		float x = 0;
-		float y = 0;
-		
-		
-		//Iterator<TextTree.Unit> u = null;
-		boolean stop = false;
-		
-		//TODO: STEP 0
-		//calculate the y position of the first line.
-		//float max_y = PREF_LINESIZE*the_tree.getLines().size();
-		
-		
-		//instead of being able to draw from the buttom up like i would have liked.
-		//we are going to do the first in hopefully few, really expensive operations.
-		
-		//TODO: STEP 1
-		//noting the current scrollback & window size, calculate the position of the first line of text that we need to draw.
-		//float y_position = WINDOW_HEIGHT+PREF_LINESIZE;
-		//float line_number = y_position/PREF_LINESIZE;
-		
-		//TODO: STEP 2
-		//new step 2, get an iterator to the start of the scrollback
-		
-		//get the iterator of the list at the given position.
-		//i = the_tree.getLines().listIterator(line_number);
-		//use our super cool iterator function.
-		//Float offset = 0f;
-		//synchronized(synch) {
-		
-		IteratorBundle bundle = null;
-		boolean gotIt = false;
-		int maxTries = 20;
-		int tries = 0;
-		while(!gotIt && tries <= maxTries) {
-			try {
-				tries = tries + 1;
-				bundle = getScreenIterator(scrollback,PREF_LINESIZE);
-				gotIt = true;
+			c.save();
+			Rect clip = new Rect();
+			if(constrictWindow) {
+			
+				clip.top = mAnchorTop;
+				clip.left = mAnchorLeft;
+				clip.right = clip.left + mWidth;
+				clip.bottom = clip.top + mHeight;
 				
-			} catch (ConcurrentModificationException e) {
-				//loop again to get it, continue till you get one.
-				synchronized(this) {
-					try {
-						//Log.e("DRAWRUNNER","CAUGHT CONCURRENT MODIFICATION, tried:" + tries);
-						this.wait(5);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
-				}
+			} else {
+				clip.top = 0;
+				clip.left = 0;
+				clip.right = mWidth;
+				clip.bottom = mHeight;
 			}
-		}
-		if(!gotIt) {
-			this.invalidate();
-			return;
-		}
-		screenIt = bundle.getI();
-		y = bundle.getOffset();
-		int extraLines = bundle.getExtraLines();
-		if(screenIt == null) { return;}
-		
-		//TODO: STEP 3
-		//find bleed.
-		boolean bleeding = false;
-		int back = 0;
-		while(screenIt.hasNext() && !bleeding) {
-			
-			Line l = screenIt.next();
-			back++;
-			
-			for(Unit u : l.getData()) {
-				if(u instanceof TextTree.Color) {
-					xterm256Color = false;
-					xterm256FGStart = false;
-					xterm256BGStart = false;
-					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
-					//for(Integer o : ((TextTree.Color) u).getOperations()) {
-						
-						updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
-						Colorizer.COLOR_TYPE type = Colorizer.getColorType(((TextTree.Color) u).getOperations().get(i));
-						if(type != Colorizer.COLOR_TYPE.NOT_A_COLOR && type != Colorizer.COLOR_TYPE.BACKGROUND && type != Colorizer.COLOR_TYPE.BRIGHT_CODE) {
-							bleeding = true;
-						}
-						
-					}
-					//bleeding = ((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
-					if(xterm256FGStart) {
-						p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, xterm256Color));
-					} else {//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
-						p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, false));
-						
-					}
-					
-					b.setColor(0xFF000000);//no not bleed background colors
-
-				}
+			c.clipRect(clip);
+			if(constrictWindow) {
+				c.translate(mAnchorLeft, mAnchorTop);
 			}
-		}
-		
-		//TODO: STEP 4
-		//advance the iterator back the number of units it took to find a bleed.
-		//second real expensive move. In the case of a no color text buffer, it would walk from scroll to end and back every time. USE COLOR 
-		while(back > 0) {
-			screenIt.previous();
-			back--;
-		}
-		if(screenIt.hasNext()) {
-		screenIt.next(); // the bleed/back stuff seems to be messing with my calculation
-		//of what the next line is.
-		}
-		//TODO: STEP 5
-		//draw the text, from top to bottom.	
-		
-		int drawnlines = 0;
-		
-		boolean doingLink = false;
-		StringBuffer currentLink = new StringBuffer();
-		linkBoxes.clear();
-		//try {
-		while(!stop && screenIt.hasPrevious()) {
-			//int index = screenIt.previousIndex();
-			Line l = screenIt.previous();
-		
-			//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
-			//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
-			unitIterator = l.getIterator();
-			while(unitIterator.hasNext()) {
-				Unit u = unitIterator.next();
-				//p.setColor(color)
-				boolean useBackground = false;
-				if(b.getColor() != 0xFF000000) {
-					useBackground = true;
-				}
-				
-				//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
-				if(u instanceof TextTree.Text) {
-					if(useBackground) {
-						//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
-						c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
-					}
+			//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
+			Paint b = new Paint();
+			b.setColor(0xFF0A0A0A);
+			c.drawColor(0xFF0A0A0A); //fill with black
+			//c.drawColor(0xFF0A0A0A);
+			c.drawRect(0,0,clip.right-clip.left,clip.top-clip.bottom,b);
+			p.setTypeface(PREF_FONT);
+			p.setAntiAlias(true);
+			p.setTextSize(PREF_FONTSIZE);
+			p.setColor(0xFFFFFFFF);
+			
+			//float char_width = p.measureText("T");
+			
+			float x = 0;
+			float y = 0;
+			
+			
+			//Iterator<TextTree.Unit> u = null;
+			boolean stop = false;
+			
+			//TODO: STEP 0
+			//calculate the y position of the first line.
+			//float max_y = PREF_LINESIZE*the_tree.getLines().size();
+			
+			
+			//instead of being able to draw from the buttom up like i would have liked.
+			//we are going to do the first in hopefully few, really expensive operations.
+			
+			//TODO: STEP 1
+			//noting the current scrollback & window size, calculate the position of the first line of text that we need to draw.
+			//float y_position = WINDOW_HEIGHT+PREF_LINESIZE;
+			//float line_number = y_position/PREF_LINESIZE;
+			
+			//TODO: STEP 2
+			//new step 2, get an iterator to the start of the scrollback
+			
+			//get the iterator of the list at the given position.
+			//i = the_tree.getLines().listIterator(line_number);
+			//use our super cool iterator function.
+			//Float offset = 0f;
+			//synchronized(synch) {
+			
+			IteratorBundle bundle = null;
+			boolean gotIt = false;
+			int maxTries = 20;
+			int tries = 0;
+			while(!gotIt && tries <= maxTries) {
+				try {
+					tries = tries + 1;
+					bundle = getScreenIterator(scrollback,PREF_LINESIZE);
+					gotIt = true;
 					
-					if(((TextTree.Text)u).isLink() || doingLink) {
-						if(u instanceof TextTree.WhiteSpace) {
-							//DO LINK BOX.
-							for(int z=0;z<linkBoxes.size();z++) {
-								if(linkBoxes.get(z).getData() == null) {
-									linkBoxes.get(z).setData(currentLink.toString());
-								}
-							}
-							currentLink.setLength(0);
-							doingLink = false;
-						} else {
-							doingLink = true;
-							currentLink.append(((TextTree.Text)u).getString());
-							
-							
-							Rect r = new Rect();
-							r.left = (int) x;
-							r.top = (int) (y - p.getTextSize());
-							r.right = (int) (x + p.measureText(((TextTree.Text)u).getString()));
-							r.bottom = (int) (y+5);
-							if(linkMode == LINK_MODE.BACKGROUND) {
-								linkColor.setColor(linkHighlightColor);
-								c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
-							}
-							
-							int linkBoxHeightDips = (int) ((r.bottom - r.top) / this.getResources().getDisplayMetrics().density);
-							if( linkBoxHeightDips < mLinkBoxHeightMinimum) {
-								int additionalAmount = (mLinkBoxHeightMinimum - linkBoxHeightDips)/2;
-								if(additionalAmount > 0) {
-									r.top -= additionalAmount * this.getResources().getDisplayMetrics().density;
-									r.bottom += additionalAmount * this.getResources().getDisplayMetrics().density;
-								}
-							}
-							
-							LinkBox linkbox = new LinkBox(null,r);
-							linkBoxes.add(linkbox);
-							
-						}
-					}
-					if(doingLink) {
-						switch(linkMode) {
-						case NONE:
-							linkColor.setTextSize(p.getTextSize());
-							linkColor.setTypeface(p.getTypeface());
-							linkColor.setUnderlineText(false);
-							linkColor.setColor(p.getColor());
-							break;
-						case HIGHLIGHT:
-							linkColor.setTextSize(p.getTextSize());
-							linkColor.setTypeface(p.getTypeface());
-							linkColor.setColor(p.getColor());
-							linkColor.setUnderlineText(true);
-							break;
-						case HIGHLIGHT_COLOR:
-							linkColor.setTextSize(p.getTextSize());
-							linkColor.setTypeface(p.getTypeface());
-							linkColor.setColor(linkHighlightColor);
-							linkColor.setUnderlineText(true);
-							break;
-						case HIGHLIGHT_COLOR_ONLY_BLAND:
-							
-							linkColor.setTextSize(p.getTextSize());
-							linkColor.setTypeface(p.getTypeface());
-							if(selectedColor == 37) {
-								linkColor.setColor(linkHighlightColor);
-							} else {
-								linkColor.setColor(p.getColor());
-							}
-							linkColor.setUnderlineText(true);
-							break;
-						case BACKGROUND:
-							linkColor.setTextSize(p.getTextSize());
-							linkColor.setTypeface(p.getTypeface());
-							linkColor.setUnderlineText(false);
-							//calculate the "reverse-most-constrasty-color"
-							int counterpart = 0xFF000000 | (linkHighlightColor ^ 0xFFFFFFFF);
-							linkColor.setColor(counterpart);
-							break;
-						default:
-							linkColor.setTextSize(p.getTextSize());
-							linkColor.setTypeface(p.getTypeface());
-							linkColor.setUnderlineText(false);
-							linkColor.setColor(linkHighlightColor);
-						}
-						c.drawText(((TextTree.Text)u).getString(),x,y,linkColor);
-						x += p.measureText(((TextTree.Text)u).getString());
-						
-					} else {
-						//p.setUnderlineText(false);
-						if(useBackground) {
-							//Log.e("WINDOW","DRAWING BACKGROUND TEXT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
-						}
-						c.drawText(((TextTree.Text)u).getString(),x,y,p);
-						x += p.measureText(((TextTree.Text)u).getString());
-					}
-					
-				}
-				if(u instanceof TextTree.Color) {
-					xterm256Color = false;
-					xterm256FGStart = false;
-					xterm256BGStart = false;
-					for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
-						updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
-					}
-					
-					if(debug_mode == 2 || debug_mode == 3) {
-						p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37,false));
-						b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40,false));
-					} else {
-						if(xterm256FGStart) {
-							if(selectedColor == 33) {
-								selectedColor = 33;
-							}
-							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,xterm256Color));
-						} else {
-							if(!xterm256BGStart) {
-								p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
-							}
-						}
-						
-						if(xterm256BGStart) {
-							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,xterm256Color));
-						} else {
-							b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,false));
-							
-						}
-					}
-					if(debug_mode == 1 || debug_mode == 2) {
-						String str = "";
+				} catch (ConcurrentModificationException e) {
+					//loop again to get it, continue till you get one.
+					synchronized(this) {
 						try {
-							str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
+							//Log.e("DRAWRUNNER","CAUGHT CONCURRENT MODIFICATION, tried:" + tries);
+							this.wait(5);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
 						}
-						c.drawText(str,x,y,p);
-						x += p.measureText(str);
 					}
 				}
-				if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
-					if(u instanceof TextTree.NewLine) {
-						if(doingLink) {
-							for(int z=0;z<linkBoxes.size();z++) {
-								if(linkBoxes.get(z).getData() == null) {
-									linkBoxes.get(z).setData(currentLink.toString());
-								}
+			}
+			if(!gotIt) {
+				this.invalidate();
+				return;
+			}
+			screenIt = bundle.getI();
+			y = bundle.getOffset();
+			int extraLines = bundle.getExtraLines();
+			if(screenIt == null) { return;}
+			
+			//TODO: STEP 3
+			//find bleed.
+			boolean bleeding = false;
+			int back = 0;
+			while(screenIt.hasNext() && !bleeding) {
+				
+				Line l = screenIt.next();
+				back++;
+				
+				for(Unit u : l.getData()) {
+					if(u instanceof TextTree.Color) {
+						xterm256Color = false;
+						xterm256FGStart = false;
+						xterm256BGStart = false;
+						for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
+						//for(Integer o : ((TextTree.Color) u).getOperations()) {
+							
+							updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
+							Colorizer.COLOR_TYPE type = Colorizer.getColorType(((TextTree.Color) u).getOperations().get(i));
+							if(type != Colorizer.COLOR_TYPE.NOT_A_COLOR && type != Colorizer.COLOR_TYPE.BACKGROUND && type != Colorizer.COLOR_TYPE.BRIGHT_CODE) {
+								bleeding = true;
 							}
-							currentLink.setLength(0);
-							doingLink = false;
-							//REGISTER LINK BOX
+							
 						}
-					}
-					
-					y = y + PREF_LINESIZE;
-					x = 0;
-					drawnlines++;
-					if(drawnlines > CALCULATED_LINESINWINDOW + extraLines) {
-						stop = true;
+						//bleeding = ((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
+						if(xterm256FGStart) {
+							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, xterm256Color));
+						} else {//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
+							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, false));
+							
+						}
+						
+						b.setColor(0xFF000000);//no not bleed background colors
+	
 					}
 				}
 			}
 			
-			l.resetIterator();
+			//TODO: STEP 4
+			//advance the iterator back the number of units it took to find a bleed.
+			//second real expensive move. In the case of a no color text buffer, it would walk from scroll to end and back every time. USE COLOR 
+			while(back > 0) {
+				screenIt.previous();
+				back--;
+			}
+			if(screenIt.hasNext()) {
+			screenIt.next(); // the bleed/back stuff seems to be messing with my calculation
+			//of what the next line is.
+			}
+			//TODO: STEP 5
+			//draw the text, from top to bottom.	
+			
+			int drawnlines = 0;
+			
+			boolean doingLink = false;
+			StringBuffer currentLink = new StringBuffer();
+			linkBoxes.clear();
+			//try {
+			while(!stop && screenIt.hasPrevious()) {
+				//int index = screenIt.previousIndex();
+				Line l = screenIt.previous();
+			
+				//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
+				//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
+				unitIterator = l.getIterator();
+				while(unitIterator.hasNext()) {
+					Unit u = unitIterator.next();
+					//p.setColor(color)
+					boolean useBackground = false;
+					if(b.getColor() != 0xFF000000) {
+						useBackground = true;
+					}
+					
+					//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
+					if(u instanceof TextTree.Text) {
+						if(useBackground) {
+							//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
+							c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
+						}
+						
+						if(((TextTree.Text)u).isLink() || doingLink) {
+							if(u instanceof TextTree.WhiteSpace) {
+								//DO LINK BOX.
+								for(int z=0;z<linkBoxes.size();z++) {
+									if(linkBoxes.get(z).getData() == null) {
+										linkBoxes.get(z).setData(currentLink.toString());
+									}
+								}
+								currentLink.setLength(0);
+								doingLink = false;
+							} else {
+								doingLink = true;
+								currentLink.append(((TextTree.Text)u).getString());
+								
+								
+								Rect r = new Rect();
+								r.left = (int) x;
+								r.top = (int) (y - p.getTextSize());
+								r.right = (int) (x + p.measureText(((TextTree.Text)u).getString()));
+								r.bottom = (int) (y+5);
+								if(linkMode == LINK_MODE.BACKGROUND) {
+									linkColor.setColor(linkHighlightColor);
+									c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
+								}
+								
+								int linkBoxHeightDips = (int) ((r.bottom - r.top) / this.getResources().getDisplayMetrics().density);
+								if( linkBoxHeightDips < mLinkBoxHeightMinimum) {
+									int additionalAmount = (mLinkBoxHeightMinimum - linkBoxHeightDips)/2;
+									if(additionalAmount > 0) {
+										r.top -= additionalAmount * this.getResources().getDisplayMetrics().density;
+										r.bottom += additionalAmount * this.getResources().getDisplayMetrics().density;
+									}
+								}
+								
+								LinkBox linkbox = new LinkBox(null,r);
+								linkBoxes.add(linkbox);
+								
+							}
+						}
+						if(doingLink) {
+							switch(linkMode) {
+							case NONE:
+								linkColor.setTextSize(p.getTextSize());
+								linkColor.setTypeface(p.getTypeface());
+								linkColor.setUnderlineText(false);
+								linkColor.setColor(p.getColor());
+								break;
+							case HIGHLIGHT:
+								linkColor.setTextSize(p.getTextSize());
+								linkColor.setTypeface(p.getTypeface());
+								linkColor.setColor(p.getColor());
+								linkColor.setUnderlineText(true);
+								break;
+							case HIGHLIGHT_COLOR:
+								linkColor.setTextSize(p.getTextSize());
+								linkColor.setTypeface(p.getTypeface());
+								linkColor.setColor(linkHighlightColor);
+								linkColor.setUnderlineText(true);
+								break;
+							case HIGHLIGHT_COLOR_ONLY_BLAND:
+								
+								linkColor.setTextSize(p.getTextSize());
+								linkColor.setTypeface(p.getTypeface());
+								if(selectedColor == 37) {
+									linkColor.setColor(linkHighlightColor);
+								} else {
+									linkColor.setColor(p.getColor());
+								}
+								linkColor.setUnderlineText(true);
+								break;
+							case BACKGROUND:
+								linkColor.setTextSize(p.getTextSize());
+								linkColor.setTypeface(p.getTypeface());
+								linkColor.setUnderlineText(false);
+								//calculate the "reverse-most-constrasty-color"
+								int counterpart = 0xFF000000 | (linkHighlightColor ^ 0xFFFFFFFF);
+								linkColor.setColor(counterpart);
+								break;
+							default:
+								linkColor.setTextSize(p.getTextSize());
+								linkColor.setTypeface(p.getTypeface());
+								linkColor.setUnderlineText(false);
+								linkColor.setColor(linkHighlightColor);
+							}
+							c.drawText(((TextTree.Text)u).getString(),x,y,linkColor);
+							x += p.measureText(((TextTree.Text)u).getString());
+							
+						} else {
+							//p.setUnderlineText(false);
+							if(useBackground) {
+								//Log.e("WINDOW","DRAWING BACKGROUND TEXT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
+							}
+							c.drawText(((TextTree.Text)u).getString(),x,y,p);
+							x += p.measureText(((TextTree.Text)u).getString());
+						}
+						
+					}
+					if(u instanceof TextTree.Color) {
+						xterm256Color = false;
+						xterm256FGStart = false;
+						xterm256BGStart = false;
+						for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
+							updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
+						}
+						
+						if(debug_mode == 2 || debug_mode == 3) {
+							p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37,false));
+							b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40,false));
+						} else {
+							if(xterm256FGStart) {
+								if(selectedColor == 33) {
+									selectedColor = 33;
+								}
+								p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,xterm256Color));
+							} else {
+								if(!xterm256BGStart) {
+									p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
+								}
+							}
+							
+							if(xterm256BGStart) {
+								b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,xterm256Color));
+							} else {
+								b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,false));
+								
+							}
+						}
+						if(debug_mode == 1 || debug_mode == 2) {
+							String str = "";
+							try {
+								str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
+							} catch (UnsupportedEncodingException e) {
+								e.printStackTrace();
+							}
+							c.drawText(str,x,y,p);
+							x += p.measureText(str);
+						}
+					}
+					if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
+						if(u instanceof TextTree.NewLine) {
+							if(doingLink) {
+								for(int z=0;z<linkBoxes.size();z++) {
+									if(linkBoxes.get(z).getData() == null) {
+										linkBoxes.get(z).setData(currentLink.toString());
+									}
+								}
+								currentLink.setLength(0);
+								doingLink = false;
+								//REGISTER LINK BOX
+							}
+						}
+						
+						y = y + PREF_LINESIZE;
+						x = 0;
+						drawnlines++;
+						if(drawnlines > CALCULATED_LINESINWINDOW + extraLines) {
+							stop = true;
+						}
+					}
+				}
+				
+				l.resetIterator();
+			}
+			
+			//}
+			showScroller(c);
+			c.restore();
+			if(Math.abs(fling_velocity) > 0.0f) {
+				//this.sendEmptyMessageDelayed(MSG_DRAW, 3); //throttle myself, just a little bit.
+				//this.invalidate();
+				this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
+			}
+		
 		}
 		
-		//}
-		showScroller(c);
+		//phew, do the lua stuff, and lets be done with this.
+		c.save();
+		if(constrictWindow) {
+		c.clipRect(mAnchorLeft, mAnchorTop, mAnchorLeft+mWidth, mAnchorTop+mHeight);
+		c.translate(mAnchorLeft, mAnchorTop);
+		}
+		//c.drawBitmap(bmp, 0, 0, null);
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
+		
+		L.getGlobal("OnDraw");
+		if(L.isFunction(L.getTop())) {
+			L.pushJavaObject(c);
+			
+			
+			
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("LUAWINDOW","Error calling OnDraw: " + L.getLuaObject(-1).toString());
+			} else {
+				//Log.e("LUAWINDOW","OnDraw success!");
+			}
+		}
+		
 		c.restore();
-		if(Math.abs(fling_velocity) > 0.0f) {
-			//this.sendEmptyMessageDelayed(MSG_DRAW, 3); //throttle myself, just a little bit.
-			//this.invalidate();
-			this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
-		}
-		
 	}
 	
 	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
@@ -1005,8 +1068,8 @@ public class Window extends View {
 		float workingWidth = mWidth;
 		
 		if(constrictWindow) {
-			workingHeight = constrictedHeight;
-			workingWidth = constrictedWidth;
+			workingHeight = mHeight;
+			workingWidth = mWidth;
 		}
 		
 		Float windowPercent = workingHeight / (the_tree.getBrokenLineCount()*PREF_LINESIZE);
@@ -1484,7 +1547,7 @@ public class Window extends View {
 		return mCallback;
 	}
 
-	public void setDisplayDimensions(int x, int y, int width, int height) {
+	/*public void setDisplayDimensions(int x, int y, int width, int height) {
 		if(x ==0 && y==0 && height == 0 && width==0) {
 			constrictWindow = false;
 			return;
@@ -1494,12 +1557,12 @@ public class Window extends View {
 		constrictedHeight = height;
 		constrictedWidth = width;
 		
-		anchorLeft = x;
-		anchorTop = y;
+		mAnchorLeft = x;
+		mAnchorTop = y;
 		
 		calculateCharacterFeatures(width,height);
 		
-	}
+	}*/
 
 	public void setBufferText(boolean bufferText) {
 		this.bufferText = bufferText;
@@ -1593,9 +1656,41 @@ public class Window extends View {
 		}
 	}
 	
+
+	private void initLua() {
+		L.openLibs();
+		
+		InvalidateFunction iv = new InvalidateFunction(L);
+		DebugFunction df = new DebugFunction(L);
+		BoundsFunction bf = new BoundsFunction(L);
+		OptionsMenuFunction omf = new OptionsMenuFunction(L);
+		TableAdapterFunction taf = new TableAdapterFunction(L);
+		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
+		
+		try {
+			iv.register("invalidate");
+			df.register("debugPrint");
+			bf.register("getBounds");
+			omf.register("addOptionCallback");
+			taf.register("getTableAdapter");
+			pxcf.register("PluginXCallS");
+		} catch (LuaException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+	boolean noScript = true;
 	public void loadScript(String body) {
 		
-		
+		if(body == null) {
+			noScript = true;
+			return;
+		} else {
+			noScript = false;
+		}
 		
 		
 		int ret = L.LdoString(body);
@@ -1617,6 +1712,22 @@ public class Window extends View {
 				Log.e("LUAWINDOW","OnCreate Success!");
 			}
 		}
+	}
+	
+	class DrawFunction extends JavaFunction {
+
+		public DrawFunction(LuaState L) {
+			super(L);
+			
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//this takes no arguments and recieves none.
+			Window.this.invalidate();
+			return 0;
+		}
+		
 	}
 	
 	private class InvalidateFunction extends JavaFunction {

@@ -90,18 +90,7 @@ public class LayerManager {
 				} else {
 					//err.
 				}
-				
-				switch(w.getType()) {
-				case NORMAL:
-					initByteView(w);
-					break;
-				case SCRIPT:
-					initLuaWindow(w);
-					
-					break;
-				default:
-					break;
-				}
+				initWindow(w);
 				
 				
 			}
@@ -128,7 +117,7 @@ public class LayerManager {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+			tmp.setBufferText(w.isBufferText());
 			try {
 				mService.registerWindowCallback(w.getName(),tmp.getCallback());
 			} catch (RemoteException e) {
@@ -136,7 +125,10 @@ public class LayerManager {
 				e.printStackTrace();
 			}
 			
+			if(w.getBuffer() != null) {
+				tmp.addBytesImpl(w.getBuffer().dumpToBytes(false), true);
 			//construct border.
+			}
 			Border top = new Border();
 			Border bottom = new Border();
 			Border left = new Border();
@@ -234,6 +226,7 @@ public class LayerManager {
 		}
 	}
 
+	
 	private void initByteView(WindowToken w) {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
