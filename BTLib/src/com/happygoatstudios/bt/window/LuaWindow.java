@@ -57,15 +57,11 @@ public class LuaWindow extends View {
 	boolean constrictWindow = false;
 	public LuaWindow(Context context,LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
 		super(context);
-		try {
-			Class di = Class.forName("android.content.DialogInterface$OnClickListener");
-		} catch (ClassNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		
 		mOwner = owner;
 		mManager = manager;
 		mContext = context;
+		
 		this.mainHandler = mainWindowHandler;
 		this.L = LuaStateFactory.newLuaState();
 		
@@ -117,20 +113,7 @@ public class LuaWindow extends View {
 		L.pushJavaObject(this);
 		L.setGlobal("view");
 		
-		//surface.drawColor(0x00000000);
 		
-		//surface.drawRe
-		//l = new LuaPaint(this.getContext().getResources().getDisplayMetrics().density);
-		
-		//L.pushJavaObject(l);
-		//L.setGlobal("paint");
-		//l.setColor(0xFF00FF00);
-		
-		
-		//l.setTextSize(26.0f);
-		//surface.drawText("Lua Window, drawing from java", 30, 30, l);
-		
-		 
 		
 	}
 	
@@ -241,7 +224,6 @@ public class LuaWindow extends View {
 		}
 	}
 
-	
 	private void initLua() {
 		L.openLibs();
 		
@@ -320,7 +302,7 @@ public class LuaWindow extends View {
 	
 	//Bitmap bmp = null;
 	//LuaCanvas surface = null;
-	Paint p = new Paint();
+	//Paint luap = new Paint();
 	//boolean dirty = false;
 	Paint clearme = new Paint();
 	
