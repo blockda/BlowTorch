@@ -12,12 +12,12 @@ import android.view.View;
 public class BorderLayer extends View {
 
 	LayerManager mLayerManager = null;
-	private Paint p = new Paint();
+	private Paint borderPaint = new Paint();
 	public BorderLayer(Context context,LayerManager manager) {
 		super(context);
 		mLayerManager = manager;
-		p.setStrokeWidth(5);
-		p.setColor(0xFF444488);
+		borderPaint.setStrokeWidth(5);
+		borderPaint.setColor(0xFF444488);
 	}
 	
 	public void onDraw(Canvas c) {
@@ -25,7 +25,7 @@ public class BorderLayer extends View {
 		
 		for(int i = 0;i<borders.size();i++) {
 			Border b = borders.get(i);
-			c.drawLine(b.p1.x, b.p1.y, b.p2.x, b.p2.y, p);
+			//c.drawLine(b.p1.x, b.p1.y, b.p2.x, b.p2.y, borderPaint);
 		}
 	}
 

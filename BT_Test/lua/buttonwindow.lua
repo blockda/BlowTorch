@@ -355,10 +355,11 @@ managerTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",manage
 normalTouch = {}
 normalTouchState = 0
 function normalTouch.onTouch(v,e)
+	return false
 	local retvalue = false
 	local x = e:getX()
 	local y = e:getY()
-	
+	--debugPrint("normal touch, start")
 	if(e:getAction() == MotionEvent.ACTION_DOWN) then
 		prevevent = 0
 		ret,b,index = buttonTouched(x,y)
@@ -373,11 +374,22 @@ function normalTouch.onTouch(v,e)
 			invalidate()
 			return true
 		else
+			fingerdown = false;
+			--debugPrint("action down, returning false")
 			return false
 		end
 	end
 	
+	--debugPrint("move0")
+			
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
+		--debugPrint("move1")
+		
+		if(fingerdown == false) then
+			--debugPrint("action move, no finger down, returning false")
+			return false
+		end
+		--debugPrint("move2")
 		
 		if(prevevent == 0) then
 			prevevent = e:getEventTime()
@@ -389,6 +401,8 @@ function normalTouch.onTouch(v,e)
 				--debugPrint("processing move event")
 				prevevent = now
 			else
+				--debugPrint("action move, consuming, returning true")
+			
 				return true --consume but dont process.
 			end
 		end
@@ -409,8 +423,11 @@ function normalTouch.onTouch(v,e)
 				end
 			end
 			invalidate()
+			--debugPrint("action move, moving button, returning true")
+			
 			return true
 		else
+			--debugPrint("reached end of normal touch handler, returning false")
 			return false
 		end
 	end
@@ -431,9 +448,11 @@ function normalTouch.onTouch(v,e)
 			invalidate()
 			return true
 		else
+			--debugPrint("button not touched, returning false")
 			return false
 		end
 	end
+	--debugPrint("reached end of normal touch handler, returning false")
 	return false
 end
 normalTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",normalTouch)

@@ -12,6 +12,7 @@ import org.keplerproject.luajava.LuaStateFactory;
 
 import com.happygoatstudios.bt.service.IWindowCallback;
 
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -57,6 +58,7 @@ public class LuaWindow extends View {
 	boolean constrictWindow = false;
 	public LuaWindow(Context context,LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
 		super(context);
+		
 		
 		mOwner = owner;
 		mManager = manager;
