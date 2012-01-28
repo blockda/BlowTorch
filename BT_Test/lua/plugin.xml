@@ -112,7 +112,7 @@ RegisterSpecialCommand("testcommand","testCommandHandler")
 MainWindowSize(0,177,880,500)
 
 
-NewWindow("lua_window",880,577,400,100,"windowscript")
+--NewWindow("lua_window",880,577,400,100,"windowscript")
 
 
 --debugPrint("startup script loaded!")
