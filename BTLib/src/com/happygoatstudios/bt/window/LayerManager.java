@@ -8,7 +8,12 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.TranslateAnimation;
+import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 import com.happygoatstudios.bt.service.IConnectionBinder;
 import com.happygoatstudios.bt.service.WindowToken;
@@ -72,12 +77,19 @@ public class LayerManager {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					
-					try {
-						mWindows = mService.getWindowTokens();
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					boolean done = false;
+					while(!done) {
+						try {
+							mWindows = mService.getWindowTokens();
+							if(mWindows != null) {
+								if(mWindows.size() > 0) {
+									done = true;
+								}
+							}
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -129,6 +141,29 @@ public class LayerManager {
 				tmp.addBytesImpl(w.getBuffer().dumpToBytes(false), true);
 			//construct border.
 			}
+			
+			//attempt to construct a good-ly relative layout to hold the window and any children 
+			RelativeLayout holder = new AnimatedRelativeLayout(mContext,tmp);
+			RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(w.getX()+w.getWidth(),w.getY()+w.getHeight());
+			//RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+			holderParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			holderParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			holder.setPadding(w.getX(), w.getY(), 0, 0);
+			holder.setLayoutParams(holderParams);
+			
+			Button tmpb = new Button(mContext);
+			
+			RelativeLayout.LayoutParams btmpP = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+			btmpP.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+			btmpP.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+			
+			tmpb.setLayoutParams(btmpP);
+			
+			tmpb.setOnClickListener(new ButtonClicker(tmp));
+			//tmpb.add
+			
+			holder.addView(tmp);
+			holder.addView(tmpb);
 			Border top = new Border();
 			Border bottom = new Border();
 			Border left = new Border();
@@ -159,10 +194,110 @@ public class LayerManager {
 			borders.add(left);
 			borders.add(right);
 			
-			mRootLayout.addView(tmp);
+			mRootLayout.addView(holder);
 		}
 	}
 	
+	private class ButtonClicker implements View.OnClickListener {
+		
+		Window w = null;
+		WindowExpander expand = null;
+		WindowShrinker shrink = null;
+		TranslateAnimation tExpand = new TranslateAnimation(0,0,-100,0);
+		TranslateAnimation tShrink = new TranslateAnimation(0,0,0,-100);
+		boolean toggle = true;
+		public ButtonClicker(Window w) {
+			this.w = w;
+			//expand = new WindowExpander(w);
+			shrink = new WindowShrinker(w,w.getParentView());
+		}
+		
+		public void onClick(View v) {
+			AnimatedRelativeLayout view = (AnimatedRelativeLayout) w.getParentView();
+			mRootLayout.bringChildToFront(view);
+			if(toggle) {
+				w.updateDimensions(w.getWidth(),w.getMHeight()+100);
+				tExpand.setDuration(450);
+				tExpand.setFillAfter(false);
+				tExpand.setFillBefore(true);
+				//tExpand.setAnimationListener(expand);
+				view.startAnimationX(tExpand,false);
+				toggle = false;
+			} else {
+				//TranslateAnimation t = new TranslateAnimation(0,0,0,-100);
+				
+				//w.updateDimensions(w.getWidth(), w.getMHeight()-100);
+				//w.updateDimensions(w.getWidth(),w.getMHeight()-100);
+				tShrink.setDuration(450);
+				tShrink.setFillAfter(false);
+				tShrink.setFillBefore(true);
+				//tShrink.setAnimationListener(shrink);
+				view.startAnimationX(tShrink,true);
+				toggle = true;
+				
+			}
+		}
+		
+	}
+	
+	private class WindowExpander implements AnimationListener {
+
+		Window w = null;
+		View v = null;
+		
+		public WindowExpander(Window w,View v) {
+			this.w = w;
+			this.v = v;
+		}
+
+		public void onAnimationEnd(Animation a) {
+			//w.updateAnchor(0, 0);
+		}
+
+		public void onAnimationRepeat(Animation a) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void onAnimationStart(Animation a) {
+			//w.updateDimensions(w.getWidth(), w.getMHeight()+100);
+			//w.updateAnchor(0, -100);
+			w.updateDimensions(w.getWidth(),w.getMHeight()+100);
+			//w.updateAnchor(0,-100);
+			//if(a instanceof TranslateAnimation) {
+				//TranslateAnimation t = (TranslateAnimation)a;
+				//t.
+			//}
+		}
+		
+		
+	}
+	
+	private class WindowShrinker implements AnimationListener {
+
+		Window w = null;
+		View v;
+		public WindowShrinker(Window w,View v) {
+			this.w = w;
+			this.v = v;
+		}
+
+		public void onAnimationEnd(Animation a) {
+			v.clearAnimation();
+			w.updateDimensions(w.getWidth(),w.getMHeight()-100);
+			//w.updateAnchor(0,0);
+		}
+
+		public void onAnimationRepeat(Animation a) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void onAnimationStart(Animation a) {
+			
+		}
+		
+	}
 	private void initLuaWindow(WindowToken w) {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {

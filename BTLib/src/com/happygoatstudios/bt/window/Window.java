@@ -53,11 +53,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.MeasureSpec;
+import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.CycleInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.settings.HyperSettings.LINK_MODE;
@@ -97,10 +100,15 @@ public class Window extends View {
 	boolean constrictWindow = false;
 	//int constrictedHeight = 300;
 	//int constrictedWidth = 600;
-	int mAnchorLeft = 100;
-	int mAnchorTop = 100;
+	int mAnchorLeft = 0;
+	int mAnchorTop = 0;
 	
+	boolean edgeTop = true;
+	boolean edgeLeft = true;
+	boolean edgeRight = true;
+	boolean edgeBottom = true;
 	
+	private Paint borderPaint = new Paint();
 	
 	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
 	private int linkHighlightColor = HyperSettings.DEFAULT_HYPERLINK_COLOR;
@@ -185,23 +193,17 @@ public class Window extends View {
 		viewDestroy();
 	}
 	protected void onMeasure(int widthSpec,int heightSpec) {
-		setMeasuredDimension(MeasureSpec.getSize(widthSpec),MeasureSpec.getSize(heightSpec));
-		if(!constrictWindow) {
-			mAnchorTop = 0;
-			mAnchorLeft = 0;
-			mWidth = MeasureSpec.getSize(widthSpec);
-			mHeight = MeasureSpec.getSize(heightSpec);
-		}
-		if(constrictWindow) {
-			calculateCharacterFeatures(mWidth,mHeight);
-		} else {
-			calculateCharacterFeatures(mWidth,mHeight);
-		}
+		setMeasuredDimension(mWidth,mHeight);
+		
+		calculateCharacterFeatures(mWidth,mHeight);
+		
 			
-		doDelayedDraw(0);
+		//doDelayedDraw(0);
 	}
 	
 	private void init(LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
+		borderPaint.setStrokeWidth(5);
+		borderPaint.setColor(0xFF444488);
 		new_text_in_buffer_indicator = new View(this.getContext());
 		the_tree = new TextTree();
 		buffer = new TextTree();
@@ -300,6 +302,9 @@ public class Window extends View {
 		L.pushJavaObject(this);
 		L.setGlobal("view");
 		
+		mAnchorTop = 0;
+		mAnchorLeft = 0;
+		
 		
 	}
 	
@@ -319,7 +324,7 @@ public class Window extends View {
 	
 	public void calculateCharacterFeatures(int width,int height) {
 		
-		Log.e("WINDOW","WINDOW:" + mName + " character features for w/h:" + width+ " : "+height);
+		//Log.e("WINDOW","WINDOW:" + mName + " character features for w/h:" + width+ " : "+height);
 		if(height == 0 && width == 0) {
 			return;
 		}
@@ -388,7 +393,13 @@ public class Window extends View {
 	int bx = 0;
 	int by = 0;
 	public int touchInLink = -1;
+	//boolean fuckyou = false;
 	public boolean onTouchEvent(MotionEvent t) {
+		//if(fuckyou) {
+			Log.e("WINDOW",mName + "onTouchEvent");
+			//return true;
+		//}
+		
 		boolean retval = false;
 		boolean noFunction = false;
 		//L.getGlobal("debug");
@@ -412,6 +423,7 @@ public class Window extends View {
 			}
 			if(retval) return true;
 		}*/
+		
 		
 		if(the_tree.getBrokenLineCount() != 0) {
 			Rect rect = new Rect();
@@ -1008,23 +1020,46 @@ public class Window extends View {
 		c.translate(mAnchorLeft, mAnchorTop);
 		}
 		//c.drawBitmap(bmp, 0, 0, null);
-		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
-		L.remove(-2);
-		
-		
-		L.getGlobal("OnDraw");
-		if(L.isFunction(L.getTop())) {
-			L.pushJavaObject(c);
+		if(L != null) {
+			L.getGlobal("debug");
+			L.getField(L.getTop(), "traceback");
+			L.remove(-2);
 			
 			
-			
-			int ret = L.pcall(1, 1, -3);
-			if(ret != 0) {
-				Log.e("LUAWINDOW","Error calling OnDraw: " + L.getLuaObject(-1).toString());
-			} else {
-				//Log.e("LUAWINDOW","OnDraw success!");
+			L.getGlobal("OnDraw");
+			if(L.isFunction(L.getTop())) {
+				L.pushJavaObject(c);
+				
+				
+				
+				int ret = L.pcall(1, 1, -3);
+				if(ret != 0) {
+					Log.e("LUAWINDOW","Error calling OnDraw: " + L.getLuaObject(-1).toString());
+				} else {
+					//Log.e("LUAWINDOW","OnDraw success!");
+				}
 			}
+		}
+		
+		
+		//omg, after *all* of that we still have to draw the borders.
+		//ArrayList<Border> borders = mLayerManager.borders;
+		
+//		for(int i = 0;i<borders.size();i++) {
+//			Border b = borders.get(i);
+//			c.drawLine(b.p1.x, b.p1.y, b.p2.x, b.p2.y, p);
+//		}
+		if(edgeLeft) {
+			c.drawLine(0, 0, 0, mHeight, borderPaint);
+		}
+		if(edgeRight) {
+			c.drawLine(mWidth, 0, mWidth, mHeight, borderPaint);
+		}
+		if(edgeTop) {
+			c.drawLine(0, 0, mWidth, 0,borderPaint);
+		}
+		if(edgeBottom) {
+			c.drawLine(0, mHeight, mWidth, mHeight, borderPaint);
 		}
 		
 		c.restore();
@@ -1573,24 +1608,7 @@ public class Window extends View {
 	}
 
 	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
-		/*if(bmp != null) {
-			bmp.recycle();
-			bmp = null;
-			surface = null;
-		}
-			//bmp = Bitmap.createBitmap(w,h,Config.ARGB_8888);
-		//} else {
-		if(constrictWindow) {
-			bmp = Bitmap.createBitmap(mWidth,mHeight,Config.ARGB_8888);
-		} else {
-			bmp = Bitmap.createBitmap(w,h,Config.ARGB_8888);
-		}
-		//}
-			
-		surface = new LuaCanvas(bmp);
-		//Bitmap.cre
-		L.pushJavaObject(surface);
-		L.setGlobal("canvas");*/
+		if(L == null) return;
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
@@ -1609,7 +1627,7 @@ public class Window extends View {
 		}
 	}
 	private void pushTable(String key,Map<String,Object> map) {
-		if(!key.equals("")) {
+		/*if(!key.equals("")) {
 			L.pushString(key);
 		}
 		
@@ -1629,10 +1647,11 @@ public class Window extends View {
 		}
 		if(!key.equals("")) {
 			L.setTable(-3);
-		}
+		}*/
 	}
 	
 	protected void xcallS(String string, String str) {
+		if(L == null) return;
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
@@ -1685,8 +1704,11 @@ public class Window extends View {
 	boolean noScript = true;
 	public void loadScript(String body) {
 		
-		if(body == null) {
+		if(body == null || body.equals("")) {
+			Log.e("Window","NO SCRIPT SPECIFIED, SHUTTING DOWN LUA");
 			noScript = true;
+			L.close();
+			L = null;
 			return;
 		} else {
 			noScript = false;
@@ -1918,6 +1940,49 @@ public class Window extends View {
 				Log.e("LUAWINDOW","Error calling script callback: "+L.getLuaObject(-1).getString());
 			}
 		}
+	}
+
+
+
+	public void updateDimensions(int width, int height) {
+		mWidth = width;
+		mHeight = height;
+		calculateCharacterFeatures(mWidth,mHeight);
+		View v = ((View)this.getParent());
+		RelativeLayout.LayoutParams p = (LayoutParams) v.getLayoutParams();
+		p.height = mHeight;
+		p.width = mWidth;
+		
+		//v.setLayoutParams(p);
+		//v.requestLayout();
+		this.requestLayout();
+	}
+
+	public void updateAnchor(int x, int y) {
+		View v = ((View)this.getParent());
+		//v.setPadding(x, y, 0, 0);
+		LayoutParams p = (LayoutParams) v.getLayoutParams();
+		p.setMargins(x, y, 0, 0);
+		
+		//v.requestLayout();
+	}
+	
+	public View getParentView() {
+		return (View)this.getParent();
+	}
+
+
+
+	public int getMHeight() {
+		// TODO Auto-generated method stub
+		return mHeight;
+	}
+	
+	
+	
+	public void startAnimation(Animation a) {
+		View v = ((View)this.getParent());
+		v.startAnimation(a);
 	}
 	
 	
