@@ -8,14 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 
 public class WindowFragment extends Fragment {
-	ByteView view = null;
+	//ByteView view = null;
 	public WindowFragment() {
 		super();
 	}
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		//view = new ByteView(this.getActivity()); 
-		return view;
+		return null;
 		
 	}
 	

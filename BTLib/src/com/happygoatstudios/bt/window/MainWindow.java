@@ -908,122 +908,6 @@ public class MainWindow extends Activity {
 					//the service is connected at this point, so the service is alive and settings are loaded
 					loadSettings();
 					break;
-				case ByteView.MSG_DELETEBUTTON:
-					ButtonEditorDialog d = new ButtonEditorDialog(MainWindow.this,R.style.SuperSweetDialog,(SlickButton)msg.obj,this);
-					d.show();
-					break;
-				case ByteView.MSG_REALLYDELETEBUTTON:
-					try {
-						service.removeButton(service.getLastSelectedSet(), ((SlickButton)msg.obj).orig_data);
-					} catch (RemoteException e1) {
-						throw new RuntimeException(e1);
-					}
-					RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.slickholder);
-					layout.removeView((SlickButton)msg.obj);
-					
-					if(layout.getChildCount() == 1) {
-						//if the last button was removed manually, we need to make the fake button to properly draw the screen.
-						makeFakeButton();
-					}
-					break;
-				case MESSAGE_ADDBUTTON:
-					
-					try {
-						if(service.isButtonSetLocked(service.getLastSelectedSet()) && service.isButtonSetLockedNewButtons(service.getLastSelectedSet())) {
-							return;
-						}
-					} catch (RemoteException e4) {
-						
-						e4.printStackTrace();
-					}
-					
-					SlickButtonData tmp = new SlickButtonData();
-					tmp.setX(msg.arg1);
-					tmp.setY(msg.arg2);
-					
-					//if(OREINTATION == Configuration.ORIENTATION_PORTRAIT) {
-					//	tmp.setX(msg.arg2);
-					//	tmp.setY(msg.arg1);
-					//}
-					
-					
-					tmp.setText(input_box.getText().toString());
-					tmp.setLabel("LABEL");
-					
-					ColorSetSettings colorset = null;
-					try {
-						colorset = service.getCurrentColorSetDefaults();
-					} catch (RemoteException e2) {
-						throw new RuntimeException(e2);
-					}
-					
-					tmp.setLabelColor(colorset.getLabelColor());
-					tmp.setPrimaryColor(colorset.getPrimaryColor());
-					tmp.setFlipColor(colorset.getFlipColor());
-					tmp.setSelectedColor(colorset.getSelectedColor());
-					tmp.setLabelSize(colorset.getLabelSize());
-					
-					tmp.setWidth(colorset.getButtonWidth());
-					tmp.setHeight(colorset.getButtonHeight());
-					
-					SlickButton new_button = new SlickButton(MainWindow.this,0,0);
-					if(OREINTATION == Configuration.ORIENTATION_PORTRAIT) {
-						new_button.setPortraiteMode(true);
-					}
-					if(isFullScreen) {
-						tmp.setY(msg.arg2 - statusBarHeight);
-						new_button.setFullScreenShift(statusBarHeight);
-					}
-					
-					
-					try {
-						new_button.setLockEdit(service.isButtonSetLockedEditButtons(service.getLastSelectedSet()));
-						new_button.setLockMove(service.isButtonSetLockedMoveButtons(service.getLastSelectedSet()));
-						
-					} catch (RemoteException e4) {
-						e4.printStackTrace();
-					}
-					
-					
-					try {
-						if(!service.isRoundButtons()) {
-							new_button.setDrawRound(false);
-						}
-					} catch (RemoteException e3) {
-						e3.printStackTrace();
-					}
-					new_button.setData(tmp);
-					new_button.setDeleter(this);
-					new_button.setDispatcher(this);
-					
-					try {
-						service.addButton(service.getLastSelectedSet(), tmp);
-					} catch (RemoteException e1) {
-						throw new RuntimeException(e1);
-					}
-					
-					RelativeLayout hold = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-					hold.addView(new_button);
-					
-					/*int aflags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
-					if(overrideHF) {
-						aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
-					}
-					new_button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
-					*/
-					DoHapticFeedback();
-					
-					//this may look real funky, but MSG_DELETEBUTTON really means to launch the editor.
-					if(autoLaunch) {
-						new_button.prepareToLaunchEditor();
-						
-						Message launcheditor = this.obtainMessage(ByteView.MSG_DELETEBUTTON);
-						launcheditor.obj = new_button;
-						this.sendMessage(launcheditor);
-					}
-					//current_button_views.add(new_button);
-					
-					break;
 				case MESSAGE_PROCESSINPUTWINDOW:
 					
 					//input_box.debug(5);
@@ -2080,15 +1964,7 @@ public class MainWindow extends Activity {
 		int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
 		//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
 		boolean hyperLinkEnabled = prefs.getBoolean("HYPERLINK_ENABLED", true);
-		//HyperSettings.LINK_MODE mode = HyperSettings.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-		for(HyperSettings.LINK_MODE m : HyperSettings.LINK_MODE.values()) {
-			if(m.getValue().equals(hyperLinkMode)) {
-				//screen2.setLinkMode(m);
-			}
-		}
 		
-		//screen2.setLinkColor(hyperLinkColor);
-		//screen2.setLinksEnabled(hyperLinkEnabled);
 	}
 	
 	private void loadSettings() {
@@ -2240,12 +2116,7 @@ public class MainWindow extends Activity {
 		try {
 			//calculate80CharFontSize();
 			//ByteView.LINK_MODE hyperLinkMode = ByteView.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-			String str = service.getHyperLinkMode();
-			for(HyperSettings.LINK_MODE mode : HyperSettings.LINK_MODE.values()) {
-				if(mode.getValue().equals(str)) {
-					//screen2.setLinkMode(mode);
-				}
-			}
+			
 			
 			//screen2.setLinkColor(service.getHyperLinkColor());
 			
