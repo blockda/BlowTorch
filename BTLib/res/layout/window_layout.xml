@@ -19,8 +19,6 @@
        	android:layout_alignParentBottom="true"
     	
     	android:id="@+id/ctrl_target" />
-
-    
      <ImageButton
     	android:id="@+id/test_btn"
     	android:layout_width="40dip"
