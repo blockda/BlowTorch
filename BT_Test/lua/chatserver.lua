@@ -1,6 +1,7 @@
 --debugPrint("package path:"..package.path)
 package.path = "/mnt/sdcard/BlowTorch/?.lua"
 
+require("serialize")
 --make a button.
 debugPrint("in the chat server")
 
@@ -9,20 +10,27 @@ chatWindowName = chatWindow:getName()
 
 currentChannel = "main"
 buffers = {}
-buffers.currentChannel = chatWindow:getBuffer()
+buffers[currentChannel] = chatWindow:getBuffer()
 
-buffers["alt"] = chatWindow:getBuffer()
+altbuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree");
+altbuffer:addString("i am the alternate buffer, rock on.")
+
+foobuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree");
+foobuffer:addString("this is the foo buffer, buffffererere.")
+
+buffers["alt"] = altbuffer;
+buffers["foo"] = foobuffer;
 
 function updateSelection(newChannel)
 
-	if(newChannel == currentChannel)
+	if(newChannel == currentChannel) then
 		return
 	end
 	
 	--update currenChannel to newChannel
 	currentChannel = newChannel
 	--get the appropriate channel buffer from the buffers table.
-	buffer = buffers.currentChannel
+	buffer = buffers[currentChannel]
 	--update the chat window (hypothetically, through
 	chatWindow:setBuffer(buffer)
 	
@@ -30,21 +38,27 @@ function updateSelection(newChannel)
 
 end
 
+tmpmap = {}
 function updateUIButtons()
-	tmp = {}
+	tmpmap = {}
 	for i,b in pairs(buffers) do
-		tmp.i = "foo"
+		tmpmap[i] = "foo"
 		--table.insert(tmp,i)
 		
 	end
 
-	WindowXCallS(chatWindowName,"loadButtons",serialize(tmp))
+	WindowXCallS(chatWindowName,"loadButtons",serialize(tmpmap))
+end
+
+function initReady(arg)
+	--arg is meaningless here.
+	updateUIButtons()
 end
 
 function processChat(line,replaceMap)
 	
 	--get chat channel from replacementMap
-	channel = replaceMap.1
+	channel = replaceMap["1"]
 	
 	--if appropriate channel already has a sub buffer.
 	if(channel ~= nil) then
@@ -56,7 +70,7 @@ function processChat(line,replaceMap)
 		--attatch a copy of this line to the new buffer
 		newchannel:appendLine(line)
 		--keep track of new buffer in buffer map, under the name of the matched channel.
-		buffers.channel = newchannel
+		buffers[channel] = newchannel
 		updateUIButtons()
 	end
 

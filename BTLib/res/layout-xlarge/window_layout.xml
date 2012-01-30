@@ -105,22 +105,6 @@
     					android:layout_height="fill_parent"
     					android:layout_x="0px"
     					android:layout_y="0px">
-    				
-    				    
-    				<com.happygoatstudios.bt.window.ByteView
-    					android:id="@+id/slickview"
-    					android:layout_width="fill_parent"
-    					android:layout_height="fill_parent"
-    					android:layout_marginLeft = "0px"
-    					android:layout_marginTop= "0px"/>
-    				<com.happygoatstudios.bt.window.VitalsView
-    					android:id="@+id/vitals"
-    					android:layout_width="fill_parent"
-    					android:layout_alignParentTop="true"
-    					android:layout_alignParentLeft="true"
-    					android:layout_height="fill_parent"
-    					android:layout_marginLeft = "0px"
-    					android:layout_marginTop= "0px"/>
     				</RelativeLayout>
     					
     <!--	</ScrollView> -->

@@ -8,20 +8,20 @@ context = view:getContext()
 RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
 RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
 
-LinearLayout = luajava.bindClass("android.widget.RelativeLayout")
-LinearLayoutParams = luajava.bindClass("android.widget.RelativeLayout")
+--LinearLayout = luajava.bindClass("android.widget.LinearLayout")
+--LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams")
 
 debugPrint("bound necessary classes")
 
 --make holder view for buttons.
-LinearLayout = luajava.bindClass("android.widget.LinearLayout")
+--LinearLayout = luajava.bindClass("android.widget.LinearLayout")
 
-uiButtonBar = LinearLayout.new(context)
-uiButtonBarParams = params = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
-params:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+uiButtonBar = luajava.new(RelativeLayout,context)
+uiButtonBarParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
+uiButtonBarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 --params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 uiButtonBar:setLayoutParams(uiButtonBarParams)
-uiButtonBar:setOrientation(LinearLayout.HORIZONTAL)
+--uiButtonBar:setOrientation(LinearLayout.HORIZONTAL)
 
 --button = luajava.newInstance("android.widget.Button",context)
 --params = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT)
@@ -50,15 +50,17 @@ windowMoveDownAnimation:setFillAfter(false)
 
 toggle = false
 
---toggler = {}
---function toggler.onClick(v)
---	if(toggle == true) then
---		debugPrint("shrink");
---		parentView:startAnimation(shrinkAnimation)
---		view:startAnimation(windowMoveDownAnimation)
---		toggle = false
---	end
---end
+hider = {}
+function hider.onClick(v)
+	if(toggle == true) then
+		debugPrint("shrink");
+		parentView:startAnimation(shrinkAnimation)
+		if(pinned == false) then
+			view:startAnimation(windowMoveDownAnimation)
+		end
+		toggle = false
+	end
+end
 
 function onParentAnimationEnd()
 	debugPrint("in onParentAnimationEnd()")
@@ -83,7 +85,7 @@ function onAnimationEnd()
 	view:requestLayout()
 end
 
---toggler_cb = luajava.createProxy("android.view.View$OnClickListener",toggler)
+hider_cb = luajava.createProxy("android.view.View$OnClickListener",hider)
 --button:setOnClickListener(toggler_cb)
 view:addView(uiButtonBar)
 
@@ -106,25 +108,32 @@ function toucher.onLongClick(v)
 	parentView:bringToFront()
 	parentView:startAnimation(expandAnimation)
 	toggle = true
-	
-	view:startAnimation(windowMoveUpAnimation)
-	
+	if(pinned == false) then
+		view:startAnimation(windowMoveUpAnimation)
+	end
 	return true;
 end
 toucher_cb = luajava.createProxy("android.view.View$OnLongClickListener",toucher)
 view:setOnLongClickListener(toucher_cb)
 
-function updateButtons(input)
+function loadButtons(input)
 	uiButtonBar:removeAllViews()
 	
+	--add the default buttons.
+	uiButtonBar:addView(hideButton)
+	uiButtonBar:addView(pinButton)
+	uiButtonBar:addView(mainButton)
+	
 	--reconstruct the channel list table
-	list = loadstring(args)()
+	list = loadstring(input)()
 	counter = 1
 	for i,b in pairs(list) do
-		newbutton = generateNewButton(i,counter)
-		counter = counter + 1
+		if(i ~= "main") then
+			newbutton = generateNewButton(i,counter)
+			counter = counter + 1
 		
-		uiButtonBar:addView(newbutton)
+			uiButtonBar:addView(newbutton)
+		end
 	end
 	
 	uiButtonBar:requestLayout()
@@ -132,19 +141,81 @@ end
 
 function generateNewButton(name,grav)
 	button = luajava.newInstance("android.widget.Button",context)
-	params = luajava.newInstance("android.widget.LinearLayout$LayoutParams",LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
-	params:setGravity(grav)
+	params = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
+	--params:setGravity(grav)
+	if(grav == 1) then
+		params:addRule(RelativeLayout.LEFT_OF,98)
+		button:setId(grav)
+	else
+		params:addRule(RelativeLayout.LEFT_OF,grav-1)
+		button:setId(grav)
+	end
 	--params:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 	--params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 	debugPrint("created instances")
 	button:setText(name)
 	button:setTextSize(26)
 	button:setLayoutParams(params)
-	
+	button:setOnClickListener(clicker_cb)
 	return button
 end
 
+--init the first three, permanent buttons.
+hideButton = luajava.newInstance("android.widget.Button",context)
+hideParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
+hideParams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+hideButton:setId(100)
+hideButton:setText("Hide")
+hideButton:setTextSize(26)
+hideButton:setLayoutParams(hideParams)
+hideButton:setOnClickListener(hider_cb)
 
+pinButton = luajava.newInstance("android.widget.Button",context)
+pinParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
+pinParams:addRule(RelativeLayout.LEFT_OF,100);
+pinButton:setId(99)
+pinButton:setText("Pin")
+pinButton:setTextSize(26)
+pinButton:setLayoutParams(pinParams)
+
+mainButton = luajava.newInstance("android.widget.Button",context)
+mainParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
+mainParams:addRule(RelativeLayout.LEFT_OF,99);
+mainButton:setId(98)
+mainButton:setText("main")
+mainButton:setTextSize(26)
+mainButton:setLayoutParams(mainParams)
+
+clicker = {}
+function clicker.onClick(v)
+	--get the associated channel to the click, this is kind of awkward for now
+	--but it is the label, so we dont care.
+	label = v:getText()
+	PluginXCallS("updateSelection",label)
+end
+clicker_cb = luajava.createProxy("android.view.View$OnClickListener",clicker)
+mainButton:setOnClickListener(clicker_cb)
+
+pinner = {}
+function pinner.onClick(v)
+	if(toggle == true) then
+		if(pinned == true) then
+			pinned = false
+			pinButton:setText("pin")
+		else
+			--if(toggle == false) then
+				pinned = true
+				pinButton:setText("unpin")
+			--end
+		end
+	end
+	pinButton:invalidate()
+end
+pinner_cb = luajava.createProxy("android.view.View$OnClickListener",pinner)
+pinButton:setOnClickListener(pinner_cb)
+
+pinned = false
+PluginXCallS("initReady","now")
 
 
 

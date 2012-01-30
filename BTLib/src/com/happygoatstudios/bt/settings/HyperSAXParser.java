@@ -22,7 +22,6 @@ import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
-import com.happygoatstudios.bt.window.ByteView;
 
 import android.content.Context;
 import android.sax.Element;
