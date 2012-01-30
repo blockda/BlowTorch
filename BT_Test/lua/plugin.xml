@@ -6,10 +6,21 @@
 			<trigger title="chats" pattern="^\{.{3,}?\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
 				<replace retarget="chats"/>
 			</trigger>
+			<trigger title="testmeo" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="5">
+				<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
+			</trigger>
+			<trigger title="colorize" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="3">
+				<color>45</color>
+			</trigger>
 		</triggers>
 		<script name="bootstrap">
 			<![CDATA[
-				NewWindow("chats",0,0,1280,177)
+				dofile("/mnt/sdcard/BlowTorch/chatserver.lua")
+			]]>
+		</script>
+		<script name="chatwindow">
+			<![CDATA[
+				dofile("/mnt/sdcard/BlowTorch/chatwindow.lua")
 			]]>
 		</script>
 	</plugin>
@@ -65,12 +76,7 @@ dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
 	  <ack with="stampede"/>
 	</trigger>
 
-    <trigger title="testmeo" pattern="adventurer" interpretLiteral="false" fireOnce="false" enabled="true" sequence="5">
-		<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
-	</trigger>
-	<trigger title="colorize" pattern="adventurer" interpretLiteral="false" fireOnce="false" enabled="true" sequence="3">
-		<color>45</color>
-	</trigger>
+
     <trigger title="idle preventer" pattern="Your eyes glaze over." interpretLiteral="false" fireOnce="false" enabled="true">
       <notification title="BlowTorch Triggered" message="YOU HAVE IDLED. ATTEMPTING TO MAKE YOU UNIDLE." fireWhen="none" useSound="true" soundPath="/sdcard/BaardTERM/New Mario Coin Sms V_2.mp3" useLights="false" useVibrate="false" spawnNew="false" useOngoing="false" />
       <ack with="afk;a;afk" fireWhen="always" />

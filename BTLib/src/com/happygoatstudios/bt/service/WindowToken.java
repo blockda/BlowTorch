@@ -51,6 +51,7 @@ public class WindowToken implements Parcelable {
 		this.scriptName = scriptName;
 		this.pluginName = pluginName;
 		//this.owner = owner;
+		buffer = new TextTree();
 	}
 	
 
@@ -80,7 +81,16 @@ public class WindowToken implements Parcelable {
 		} else {
 			scriptName = p.readString();
 			pluginName = p.readString();
+			byte[] buf = p.createByteArray();
+			buffer = new TextTree();
 			type = TYPE.SCRIPT;
+			
+			try {
+				buffer.addBytesImpl(buf);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 		}
 	}
@@ -162,6 +172,7 @@ public class WindowToken implements Parcelable {
 			p.writeInt(1);
 			p.writeString(scriptName);
 			p.writeString(pluginName);
+			p.writeByteArray(buffer.dumpToBytes(true));
 		} else {
 			p.writeInt(0);
 			Log.e("PARCEL","WINDOWTOKEN DUMPING: " + buffer.getBrokenLineCount() + " lines.");
@@ -209,5 +220,9 @@ public class WindowToken implements Parcelable {
 			return new WindowToken[arg0];
 		}
 	};
+	
+	//public void setBuffer(TextTree buffer) {
+	//	this.buffer = buffer;
+	//}
 	
 }

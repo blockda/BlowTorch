@@ -14,7 +14,7 @@
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
-        		  android:windowSoftInputMode="adjustResize"
+        		  android:windowSoftInputMode="adjustPan"
         		  android:label="BlowTorch"
         		 
         		  
