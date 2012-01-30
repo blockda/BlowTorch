@@ -103,6 +103,11 @@ public class ScriptResponder extends TriggerResponder {
 				Log.e("LUA","value: " + two + " data: " + one);
 			}*/
 		
+			L.getGlobal("debug");
+			L.getField(L.getTop(), "traceback");
+			L.remove(-2);
+			
+		
 			L.getGlobal(function);
 			if(!L.isFunction(L.getTop())) {
 				Log.e("LUA",function + " is not a function.");
@@ -111,6 +116,7 @@ public class ScriptResponder extends TriggerResponder {
 			
 			//this is a relativly straightforward matter, push the arguments a la mushclient.
 			L.pushString(name);
+			L.pushJavaObject(line);
 			L.newTable();
 			for(int i=0;i<captureMap.size();i++) {
 				L.pushString(Integer.toString(i));
@@ -119,7 +125,7 @@ public class ScriptResponder extends TriggerResponder {
 			}
 			
 			//L.call(2, 0);
-			if(L.pcall(2,1,0) != 0) {
+			if(L.pcall(3,1,-4) != 0) {
 				Log.e("FOO","Error running("+function+"): " + L.getLuaObject(-1).getString());
 			}
 			//return 2;
