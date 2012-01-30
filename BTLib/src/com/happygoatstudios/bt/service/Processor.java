@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -487,6 +488,32 @@ public class Processor {
 
 	GMCPData gmcp = null;
 
+	public class GMCPWatcher {
+		String plugin;
+		String callback;
+		
+		public GMCPWatcher(String plugin,String callback) {
+			this.plugin = plugin;
+			this.callback = callback;
+		}
+	}
+	
+	public HashMap<String,ArrayList<GMCPWatcher>> gmcpTriggers = new HashMap<String,ArrayList<GMCPWatcher>>();
+	
+	public void addWatcher(String module,String plugin,String callback) {
+		GMCPWatcher tmp = new GMCPWatcher(plugin,callback);
+		
+		ArrayList<GMCPWatcher> list = gmcpTriggers.get(module);
+		if(list == null) {
+			ArrayList<GMCPWatcher> foo = new ArrayList<GMCPWatcher>();
+			foo.add(tmp);
+			gmcpTriggers.put(module, foo);
+		} else {
+			list.add(tmp);
+		}
+		
+	}
+	
 }
 
 /*
