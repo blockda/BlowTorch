@@ -442,6 +442,8 @@ public class Connection {
 		
 		callback.clearText();
 		callback.rawDataIncoming(w.getBuffer().dumpToBytes(true));
+		
+		mWindowCallbacks.finishBroadcast();
 	}
 
 	protected void windowXCallS(String token, String function, Object o) throws RemoteException {

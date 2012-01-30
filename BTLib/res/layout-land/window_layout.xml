@@ -38,7 +38,7 @@
     <!--  android:background="#0A0A0A" -->
     <!-- <EditText -->
     <!-- pre-screen size support android:height = "30px" -->
-    <EditText
+    <com.happygoatstudios.bt.window.BetterEditText
     android:layout_width="fill_parent"
     android:layout_height="20dip"
     android:height = "20dip"
@@ -113,24 +113,6 @@
     					android:layout_height="fill_parent"
     					android:layout_x="0px"
     					android:layout_y="0px">
-    				
-    				    
-    				<!-- <com.happygoatstudios.bt.window.ByteView
-    					android:id="@+id/slickview"
-    					android:layout_alignParentTop="true"
-    					android:layout_width="fill_parent"
-    					android:layout_alignParentLeft="true"
-    					android:layout_height="fill_parent"
-    					android:layout_marginLeft = "0px"
-    					android:layout_marginTop= "0px"/> -->
-    				<com.happygoatstudios.bt.window.VitalsView
-    					android:id="@+id/vitals"
-    					android:layout_width="fill_parent"
-    					android:layout_alignParentTop="true"
-    					android:layout_alignParentLeft="true"
-    					android:layout_height="fill_parent"
-    					android:layout_marginLeft = "0px"
-    					android:layout_marginTop= "0px"/>
     				</RelativeLayout>
     				
     					

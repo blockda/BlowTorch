@@ -161,27 +161,9 @@ public class LayerManager {
 	}
 
 	public void callScript(String window, String callback) {
-		LuaWindow lview = (LuaWindow)mRootLayout.findViewWithTag(window);
+		Window lview = (Window)mRootLayout.findViewWithTag(window);
 		if(lview != null) {
 			lview.callFunction(callback);
-		}
-	}
-
-	public void shutdown(ByteView byteView) {
-		try {
-			mService.unregisterWindowCallback(byteView.getName(), byteView.getCallback());
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void shutdown(LuaWindow luaWindow) {
-		try {
-			mService.unregisterWindowCallback(luaWindow.getName(), luaWindow.getCallback());
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 	

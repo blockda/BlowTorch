@@ -212,7 +212,10 @@ public class Window extends View {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
 				case MESSAGE_CLEARTEXT:
+					Log.e("clear","clearing buffer");
+					the_tree.empty();
 					buffer.empty();
+					//buffer.
 					break;
 				case MESSAGE_SHUTDOWN:
 					Window.this.shutdown();
@@ -532,7 +535,7 @@ public class Window extends View {
 				
 				pre_event = null;
 				prev_y = new Float(0);
-				mHandler.removeMessages(ByteView.MSG_BUTTONDROPSTART);
+				//mHandler.removeMessages(Window.MSG_BUTTONDROPSTART);
 		        
 		        //reset the priority
 		        increadedPriority = false;
@@ -581,7 +584,7 @@ public class Window extends View {
 					if(finger_down_to_up) {
 						prev_draw_time = System.currentTimeMillis(); 
 						Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
-						mHandler.sendEmptyMessage(ByteView.MSG_UPPRIORITY);
+						mHandler.sendEmptyMessage(Window.MSG_UPPRIORITY);
 						finger_down_to_up=false;
 					}
 				}
@@ -611,7 +614,7 @@ public class Window extends View {
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						mHandler.sendEmptyMessage(ByteView.MSG_NORMALPRIORITY);
+						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
 					}
 						
 					if(scrollback <= SCROLL_MIN) {
@@ -619,9 +622,9 @@ public class Window extends View {
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						mHandler.sendEmptyMessage(ByteView.MSG_NORMALPRIORITY);
+						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
 
-						mHandler.sendEmptyMessage(ByteView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+						mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					}
 					
 					if(scrollback >= ((the_tree.getBrokenLineCount() * PREF_LINESIZE))) {
@@ -630,7 +633,7 @@ public class Window extends View {
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						mHandler.sendEmptyMessage(ByteView.MSG_NORMALPRIORITY);
+						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
 						
 					}
 				}
@@ -1362,7 +1365,7 @@ public class Window extends View {
 					}
 				} else {
 					//new_text_in_buffer_indicator.startAnimation(indicator_off);
-					mHandler.sendEmptyMessage(ByteView.MSG_CLEAR_NEW_TEXT_INDICATOR);
+					mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					indicated = false;
 					//indicated = false;
 				}
@@ -1583,7 +1586,7 @@ public class Window extends View {
 		}
 
 		public void redraw() throws RemoteException {
-			mHandler.sendEmptyMessage(ByteView.MESSAGE_FLUSHBUFFER);
+			mHandler.sendEmptyMessage(Window.MESSAGE_FLUSHBUFFER);
 		}
 
 		public void shutdown() throws RemoteException {
@@ -1721,8 +1724,6 @@ public class Window extends View {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
 	
 	boolean noScript = true;
@@ -1755,7 +1756,11 @@ public class Window extends View {
 		}
 		
 		
-		int ret = L.LdoString(body);
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		L.LloadString(body);
+		int ret = L.pcall(0, 1, -2);
 		if(ret != 0) {
 			Log.e("LUAWINDOW","Error Loading Script: "+L.getLuaObject(L.getTop()).getString());
 		} else {
