@@ -355,7 +355,7 @@ managerTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",manage
 normalTouch = {}
 normalTouchState = 0
 function normalTouch.onTouch(v,e)
-	return false
+	
 	local retvalue = false
 	local x = e:getX()
 	local y = e:getY()

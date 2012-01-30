@@ -88,6 +88,7 @@ public class Connection {
 	public static final int MESSAGE_WINDOWBUFFER = 15;
 	public static final int MESSAGE_ADDFUNCTIONCALLBACK = 16;
 	public static final int MESSAGE_WINDOWXCALLS = 17;
+	public static final int MESSAGE_INVALIDATEWINDOWTEXT = 18;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
@@ -161,6 +162,15 @@ public class Connection {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_INVALIDATEWINDOWTEXT:
+					String wname = (String)msg.obj;
+					try {
+						doInvalidateWindowText(wname);
+					} catch (RemoteException e4) {
+						// TODO Auto-generated catch block
+						e4.printStackTrace();
+					}
+					break;
 				case MESSAGE_WINDOWXCALLS:
 					//Bundle b = msg.getData();
 					Object o = msg.obj;
@@ -408,6 +418,32 @@ public class Connection {
 		
 	}
 	
+	protected void doInvalidateWindowText(String name) throws RemoteException {
+		int N = mWindowCallbacks.beginBroadcast();
+		IWindowCallback callback = null;
+		for(int i=0;i<N;i++) {
+			IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
+			String tname = c.getName();
+			if(c.getName().equals(name)) {
+				//WindowToken tok = 
+				//c.invalidateWindowText();
+				//c.rawDataIncoming(raw)
+				callback = c;
+			}
+		}
+		
+		WindowToken w = null;
+		for(int i=0;i<mWindows.size();i++) {
+			WindowToken tmp = mWindows.get(i);
+			if(tmp.getName().equals(name)) {
+				w = tmp;
+			}
+		}
+		
+		callback.clearText();
+		callback.rawDataIncoming(w.getBuffer().dumpToBytes(true));
+	}
+
 	protected void windowXCallS(String token, String function, Object o) throws RemoteException {
 		int N = mWindowCallbacks.beginBroadcast();
 		for(int i=0;i<N;i++) {
