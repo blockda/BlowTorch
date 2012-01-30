@@ -67,6 +67,14 @@ public class TextTree {
 		bleedColor.add(0);
 	}
 	
+	public void addString(String str) {
+		try {
+			this.addBytesImplSimple(str.getBytes(encoding));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	public byte[] dumpToBytes(boolean keep) {
 		ByteBuffer buf = ByteBuffer.allocate(totalbytes);
@@ -115,6 +123,7 @@ public class TextTree {
 		this.brokenLineCount=0;
 		appendLast = false;
 	}
+	
 	
 	public LinkedList<Line> getLines() {
 		return mLines;
