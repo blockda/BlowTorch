@@ -95,6 +95,8 @@ public class Plugin {
 		RegisterFunctionCallback rfc = new RegisterFunctionCallback(L);
 		DebugFunction df = new DebugFunction(L);
 		WindowXCallSFunction wxctf = new WindowXCallSFunction(L);
+		AppendLineToWindowFunction altwf = new AppendLineToWindowFunction(L);
+		InvalidateWindowTextFunction iwtf = new InvalidateWindowTextFunction(L);
 		wf.register("NewWindow");
 		mwf.register("MainWindowSize");
 		esf.register("ExecuteScript");
@@ -102,6 +104,8 @@ public class Plugin {
 		rfc.register("RegisterSpecialCommand");
 		df.register("debugPrint");
 		wxctf.register("WindowXCallS");
+		altwf.register("appendLineToWindow");
+		iwtf.register("invalidateWindowText");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -291,15 +295,18 @@ public class Plugin {
 				scriptName = pScriptName.getString();
 			}
 			
+			WindowToken tok = null;
 			if(pScriptName.isNil()) {
-				WindowToken tok = new WindowToken(name,x,y,width,height);
+				tok = new WindowToken(name,x,y,width,height);
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
 			} else {
-				WindowToken tok = new WindowToken(name,x,y,width,height,scriptName,Plugin.this.getSettings().getName());
+				tok = new WindowToken(name,x,y,width,height,scriptName,Plugin.this.getSettings().getName());
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
 			}
 			
-			return 0;
+			L.pushJavaObject(tok);
+			
+			return 1;
 		}
 		
 	}
@@ -492,6 +499,44 @@ public class Plugin {
 			return tmp;
 		}
 		
+		
+	}
+	
+	private class AppendLineToWindowFunction extends JavaFunction {
+
+		public AppendLineToWindowFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//the only arguments should be a TextTree.Line copied from the one passed to it from a trigger script action
+			//and the window id to send it to.
+			TextTree.Line line = (TextTree.Line)(this.getParam(2)).getObject();
+			String windowId = (this.getParam(3).getString());
+			
+			//now abuse the lineToWindow handler from the replace action to ferry this bad boy across
+			Message m = mHandler.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);
+			m.getData().putString("TARGET", windowId);
+			mHandler.sendMessage(m);
+			return 0;
+		}
+		
+	}
+	
+	private class InvalidateWindowTextFunction extends JavaFunction {
+
+		public InvalidateWindowTextFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String name = this.getParam(2).getString();
+			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_INVALIDATEWINDOWTEXT,name));
+			return 0;
+		}
 		
 	}
 	

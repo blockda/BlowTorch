@@ -38,7 +38,7 @@
     <!--  android:background="#0A0A0A" -->
     <!-- <EditText -->
     <!-- pre-screen size support android:height = "30px" -->
-    <com.happygoatstudios.bt.window.BetterEditText
+    <EditText
     android:layout_width="fill_parent"
     android:layout_height="20dip"
     android:height = "20dip"

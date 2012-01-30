@@ -140,6 +140,7 @@ public class Window extends View {
 	protected static final int MESSAGE_SHUTDOWN = 119;
 	public static final int MESSAGE_PROCESSXCALLS = 4;
 	//private boolean disableEditing = false;
+	protected static final int MESSAGE_CLEARTEXT = 5;
 	
 	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -195,7 +196,7 @@ public class Window extends View {
 	protected void onMeasure(int widthSpec,int heightSpec) {
 		setMeasuredDimension(mWidth,mHeight);
 		
-		calculateCharacterFeatures(mWidth,mHeight);
+		//calculateCharacterFeatures(mWidth,mHeight);
 		
 			
 		//doDelayedDraw(0);
@@ -210,6 +211,9 @@ public class Window extends View {
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_CLEARTEXT:
+					buffer.empty();
+					break;
 				case MESSAGE_SHUTDOWN:
 					Window.this.shutdown();
 					break;
@@ -270,7 +274,7 @@ public class Window extends View {
 		//mContext = context;
 		
 		this.mainHandler = mainWindowHandler;
-		this.L = LuaStateFactory.newLuaState();
+		
 		
 		if(x == 0 && y ==0 && width==0 && height == 0) {
 			constrictWindow = false;
@@ -280,31 +284,22 @@ public class Window extends View {
 			mAnchorLeft = x;
 			mWidth = width;
 			mHeight = height;
+			//this.he
 			
 		}
-		mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
-		
-		mName = name;
-		initLua();
-		
 		clearme.setColor(0x00000000);
 		clearme.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 		
-		DrawFunction draw = new DrawFunction(L);
-		try {
-			draw.register("draw");
-		} catch (LuaException e) {
-			e.printStackTrace();
-		}
+		mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
 		
-		calculateCharacterFeatures(width,height);
+		mName = name;
+		//initLua();
 		
-		L.pushJavaObject(this);
-		L.setGlobal("view");
+		
 		
 		mAnchorTop = 0;
 		mAnchorLeft = 0;
-		
+		calculateCharacterFeatures(width,height);
 		
 	}
 	
@@ -394,12 +389,26 @@ public class Window extends View {
 	int by = 0;
 	public int touchInLink = -1;
 	//boolean fuckyou = false;
+	long target = 0;
+	
+	
+	@Override
 	public boolean onTouchEvent(MotionEvent t) {
 		//if(fuckyou) {
-			Log.e("WINDOW",mName + "onTouchEvent");
+		//switch(t.getActionMasked()) {
+		
+		//}
+		super.onTouchEvent(t);	
+		
 			//return true;
 		//}
-		
+		//long now = System.currentTimeMillis();
+		//if(now < target) {
+			//normal
+		//	return true;
+		//}
+		//target = now + 1000;
+		Log.e("WINDOW",mName + "onTouchEvent");
 		boolean retval = false;
 		boolean noFunction = false;
 		//L.getGlobal("debug");
@@ -447,6 +456,7 @@ public class Window extends View {
 					return false;
 				}
 			}
+			
 			
 			synchronized(token) {
 			if(t.getAction() == MotionEvent.ACTION_DOWN) {
@@ -640,6 +650,8 @@ public class Window extends View {
 	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
 	Iterator<Unit> unitIterator = null;
 	private int mLinkBoxHeightMinimum = 20;
+	
+	boolean hasDrawRoutine = true;
 	//private boolean drawn = false;
 	public void onDraw(Canvas c) {
 		/*if(drawn && !drawOnDemand) {
@@ -731,6 +743,7 @@ public class Window extends View {
 			boolean gotIt = false;
 			int maxTries = 20;
 			int tries = 0;
+			
 			while(!gotIt && tries <= maxTries) {
 				try {
 					tries = tries + 1;
@@ -1020,25 +1033,32 @@ public class Window extends View {
 		c.translate(mAnchorLeft, mAnchorTop);
 		}
 		//c.drawBitmap(bmp, 0, 0, null);
-		if(L != null) {
-			L.getGlobal("debug");
-			L.getField(L.getTop(), "traceback");
-			L.remove(-2);
-			
-			
-			L.getGlobal("OnDraw");
-			if(L.isFunction(L.getTop())) {
-				L.pushJavaObject(c);
+		if(hasDrawRoutine){
+			if(L != null) {
+				L.getGlobal("debug");
+				L.getField(L.getTop(), "traceback");
+				L.remove(-2);
 				
 				
-				
-				int ret = L.pcall(1, 1, -3);
-				if(ret != 0) {
-					Log.e("LUAWINDOW","Error calling OnDraw: " + L.getLuaObject(-1).toString());
+				L.getGlobal("OnDraw");
+				if(L.isFunction(L.getTop())) {
+					L.pushJavaObject(c);
+					
+					
+					
+					int ret = L.pcall(1, 1, -3);
+					if(ret != 0) {
+						Log.e("LUAWINDOW","Error calling OnDraw: " + L.getLuaObject(-1).toString());
+					} else {
+						//Log.e("LUAWINDOW","OnDraw success!");
+						//hasDrawRoutine = false;
+					}
 				} else {
-					//Log.e("LUAWINDOW","OnDraw success!");
+					hasDrawRoutine = false;
 				}
 			}
+		} else {
+			Log.e("DRAW","Skipping draw routine cuz there is none.");
 		}
 		
 		
@@ -1575,6 +1595,10 @@ public class Window extends View {
 			msg.getData().putString("FUNCTION", function);
 			mHandler.sendMessage(msg);
 		}
+
+		public void clearText() throws RemoteException {
+			mHandler.sendEmptyMessage(MESSAGE_CLEARTEXT);
+		}
 		
 	};
 	
@@ -1707,11 +1731,27 @@ public class Window extends View {
 		if(body == null || body.equals("")) {
 			Log.e("Window","NO SCRIPT SPECIFIED, SHUTTING DOWN LUA");
 			noScript = true;
-			L.close();
-			L = null;
+			if(L != null) {
+				L.close();
+				L = null;
+			}
 			return;
 		} else {
 			noScript = false;
+		}
+		if(L != null) {
+			L.close();
+			L = null;
+		}
+		this.L = LuaStateFactory.newLuaState();
+		initLua();
+		L.pushJavaObject(this);
+		L.setGlobal("view");
+		DrawFunction draw = new DrawFunction(L);
+		try {
+			draw.register("draw");
+		} catch (LuaException e) {
+			e.printStackTrace();
 		}
 		
 		
@@ -1735,6 +1775,7 @@ public class Window extends View {
 			}
 		}
 	}
+	
 	
 	class DrawFunction extends JavaFunction {
 
@@ -1941,6 +1982,22 @@ public class Window extends View {
 			}
 		}
 	}
+	
+	public void callFunction(String callback,Object o) {
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(callback);
+		
+		if(L.isFunction(L.getTop())) {
+			L.pushJavaObject(o);
+			int tmp = L.pcall(1, 1, -3);
+			if(tmp != 0) {
+				Log.e("LUAWINDOW","Error calling script callback: "+L.getLuaObject(-1).getString());
+			}
+		}
+	}
 
 
 
@@ -1957,33 +2014,54 @@ public class Window extends View {
 		//v.requestLayout();
 		this.requestLayout();
 	}
+	
 
-	public void updateAnchor(int x, int y) {
+	/*public void updateAnchor(int x, int y) {
 		View v = ((View)this.getParent());
 		//v.setPadding(x, y, 0, 0);
 		LayoutParams p = (LayoutParams) v.getLayoutParams();
 		p.setMargins(x, y, 0, 0);
 		
 		//v.requestLayout();
+	}*/
+	
+	public RelativeLayout getParentView() {
+		return (RelativeLayout)this.getParent();
+	}
+
+	public void onParentAnimationEnd() {
+		//call into lua to notify that the parent animation has completed.
+		callFunction("onParentAnimationEnd");
 	}
 	
-	public View getParentView() {
-		return (View)this.getParent();
+	@Override
+	public void onAnimationEnd() {
+		//call into lua to notify that the parent animation has completed.
+		callFunction("onAnimationEnd");
 	}
+	
+	public void addView(View v) {
+		RelativeLayout tmp = this.getParentView();
+		tmp.addView(v);
+		//tmp.getLayoutParams().
+		//RelativeLayout.LayoutParams p = (LayoutParams) tmp.getLayoutParams();
+		//p.setma
+	}
+	
+	/*@Override
+	public RelativeLayout.LayoutParams getLayoutParams() {
+		return this.getLayoutParams();
+	}*/
 
-
-
-	public int getMHeight() {
+	/*public int getMHeight() {
 		// TODO Auto-generated method stub
 		return mHeight;
-	}
+	}*/
 	
-	
-	
-	public void startAnimation(Animation a) {
+	/*public void startAnimation(Animation a) {
 		View v = ((View)this.getParent());
 		v.startAnimation(a);
-	}
+	}*/
 	
 	
 }

@@ -7,4 +7,5 @@ interface IWindowCallback {
 	String getName();
 	void shutdown();
 	void xcallS(String function,String str);
+	void clearText();
 }
