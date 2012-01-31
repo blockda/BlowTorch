@@ -64,7 +64,7 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 	private boolean fullScreen = true;
 	private boolean echoAliasUpdates = true;
 	
-	
+	private String gmcpTriggerChar = "%";
 	private boolean wordWrap = true;
 	private int breakAmount = 0; //0 is automatic
 	private int orientation = 0; //0 is automatic
@@ -446,5 +446,13 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 
 	public ArrayList<String> getLinks() {
 		return links;
+	}
+
+	public void setGMCPTriggerChar(String gmcpTriggerChar) {
+		this.gmcpTriggerChar = gmcpTriggerChar;
+	}
+
+	public String getGMCPTriggerChar() {
+		return gmcpTriggerChar;
 	}
 }
