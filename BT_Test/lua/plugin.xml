@@ -14,6 +14,10 @@
 			<trigger title="status" pattern="%char.status" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
 				<script function="updateStatus" fireWhen="always"/>
 			</trigger>
+			
+			<trigger title="base" pattern="%char.base" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="updateBase" fireWhen="always"/>
+			</trigger>
 		</triggers>
 		<script name="bootstrap">
 		<![CDATA[
@@ -36,6 +40,9 @@
 			maxAlign = 2500
 			minAlign = -2500
 			
+			tnl = 0
+			toLevel = 0
+			
 			fighting = false
 			
 			function updateVitals(newVitals)
@@ -56,6 +63,7 @@
 			end
 			
 			function updateStatus(newStatus)
+				debugPrint("player status updated!!!!")
 				if(newStatus.enemypct == nil) then
 					if(fighting) then
 						debugPrint("combat over")
@@ -77,6 +85,31 @@
 					align = newStatus.align
 					WindowXCallS("vitals_window","updateAlign",align)
 				end
+				
+				if(newStatus.tnl ~= tnl) then
+					tnl = newStatus.tnl
+					WindowXCallS("vitals_window","updateTNL",tnl)
+				end
+			end
+			
+			function updateBase(newBase)
+				if(newBase.perlevel ~= toLevel) then
+					toLevel = newBase.perlevel
+					WindowXCallS("vitals_window","updateMaxPerLevel",toLevel)
+				end
+			end
+			
+			function initReady(str)
+				info = {}
+				info.hp = vitals.hp
+				info.mp = vitals.mana
+				info.maxhp = maxes.hp
+				info.maxmp = maxes.mana
+				info.enemypct = enemyPct
+				info.tnl = tnl
+				info.tolevel = toLevel
+				
+				WindowXCallS("vitals_window","updateAll",serialize(info))
 			end
 		]]>
 		</script>
