@@ -1635,6 +1635,9 @@ public class Window extends View {
 	}
 
 	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
+		Float foo = new Float(0);
+		//foo.
+		
 		if(L == null) return;
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
