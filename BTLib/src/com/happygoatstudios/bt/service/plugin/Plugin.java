@@ -619,6 +619,10 @@ public class Plugin {
 					L.pushString(tmp);
 					L.pushString((String)o);
 					L.setTable(-3);
+				} else if(o instanceof Integer) {
+					L.pushString(tmp);
+					L.pushString(Integer.toString((Integer)o));
+					L.setTable(-3);
 				}
 			}
 		}
@@ -816,6 +820,25 @@ public class Plugin {
 		default:
 			return "OOPS";
 				//break;
+		}
+	}
+
+	public void handleGMCPCallback(String callback, HashMap<String, Object> data) {
+		L.getGlobal("debug");
+		L.getField(L.getTop(), "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(callback);
+		if(L.getLuaObject(L.getTop()).isFunction()) {
+			pushTable("",data);
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("PLUGIN","Error calling gmcp callback:" + callback + " error:\n"+L.getLuaObject(-1).getString());
+			} else {
+				//success.
+			}
+		} else {
+			//callback not defined.
 		}
 	}
 }

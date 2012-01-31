@@ -22,88 +22,56 @@ public class GMCPData {
 	HashMap<String,Object> data = null;
 	Handler reporter = null;
 	StatusBarWatchList list = null;
-	LuaState L = null;
-	public GMCPData(Handler reporter,LuaState L) {
+	//LuaState L = null;
+	public GMCPData(Handler reporter) {
 		data = new HashMap<String,Object>();
-		watchList = new HashMap<String,Boolean>();
+		//watchList = new HashMap<String,Boolean>();
 		list = new StatusBarWatchList();
 		/*watchList.put("char.vitals",falseVal);
 		watchList.put("char.maxstats",falseVal);
 		watchList.put("char.status",falseVal);*/
-		for(String str : list.data) {
-			watchList.put(str, falseVal);
-		}
+		//for(String str : list.data) {
+		//	watchList.put(str, falseVal);
+		//}
 		this.reporter = reporter;
-		this.L = L;
+		
 	}
 	
 	Boolean falseVal = new Boolean(false);
 	Boolean trueVal = new Boolean(true);
 	
-	private HashMap<String,Boolean> watchList = null;
+	//private HashMap<String,Boolean> watchList = null;
 	
 	public void absorb(String module,JSONObject o) {
-		for(String key : watchList.keySet()) {
-			watchList.put(key,falseVal);
-		}
+		//for(String key : watchList.keySet()) {
+		//	watchList.put(key,falseVal);
+		//}
 		putData(module,o,data,"");
 		
-		boolean didTrigger = false;
-		for(String key : watchList.keySet()) {
-			if(watchList.get(key) == true) {
-				//we have a hit.
-				didTrigger = true;
-			}
-		}
-		if(didTrigger) {
-			/*if(module.equals("room.info")) {
-				//reporter.sendEmptyMessage(StellarService.MESSAGE_UPDATEROOMINFO);
-				//ok, so instead of trying to send messages, we are just going to intervene the Lua runtime directly.
-				L.getGlobal("updateRoomInfo");
-				dumpNodeToLua("", this.getTable("room.info"));
-				L.call(1, 0);
-				return;
-			}*/
-			//Log.e("GMCP","WATCH LIST TRIGGERED");
-			StatusGroupData data = new StatusGroupData();
-			
-			boolean enemyZero = false;
-			for(int i =0;i<list.data.size();i++) {
-				//Log.e("GMCPDUMP",list.data.get(i) + ": " + this.get(list.data.get(i)));
-				//data.addInt((this.get(list.data.get(i)));
-				if(list.data.get(i).equals("char.status.enemy")) {
-					//if(this.get(list.data.get(i)).equals("")) {
-					if(this.get(list.data.get(i)) != null && this.get(list.data.get(i)).equals("")) {
-						enemyZero = true;
-					}
-				}
-			}
-			
-			int hp,mp,maxhp,maxmana,enemy = 0;
-			//Integer ihp,imp,imaxhp,imaxmana = 0;
-			hp = (this.get("char.vitals.hp") == null) ? 100 : (Integer)this.get("char.vitals.hp");
-			mp = (this.get("char.vitals.mana") == null) ? 100 : (Integer)this.get("char.vitals.mana");
-			maxhp = (this.get("char.maxstats.maxhp") == null) ? 100 : (Integer)this.get("char.maxstats.maxhp");
-			maxmana = (this.get("char.maxstats.maxmana") == null) ? 100 : (Integer)this.get("char.maxstats.maxmana");
-			enemy = (this.get("char.status.enemypct") == null) ? 0 : (Integer)this.get("char.status.enemypct");
-			
-			//Message m = reporter.obtainMessage(StellarService.MESSAGE_FOO);
-			//if(this.get(list.data.MESSget(i))
-			//Bundle b = m.getData();
-			//b.putInt("HP", hp);
-			//b.putInt("MP", mp);
-			//b.putInt("MAXHP", maxhp);
-			//b.putInt("MAXMANA", maxmana);
-			
-			/*if(enemyZero) {
-				b.putInt("ENEMY", 0);
-			} else {
-				b.putInt("ENEMY", enemy);
-			}
-			m.setData(b);
-			reporter.sendMessage(m);*/
-			
-		}
+		
+	
+//		StatusGroupData data = new StatusGroupData();
+//		
+//		boolean enemyZero = false;
+//		for(int i =0;i<list.data.size();i++) {
+//			//Log.e("GMCPDUMP",list.data.get(i) + ": " + this.get(list.data.get(i)));
+//			//data.addInt((this.get(list.data.get(i)));
+//			if(list.data.get(i).equals("char.status.enemy")) {
+//				//if(this.get(list.data.get(i)).equals("")) {
+//				if(this.get(list.data.get(i)) != null && this.get(list.data.get(i)).equals("")) {
+//					enemyZero = true;
+//				}
+//			}
+//		}
+//		
+//		int hp,mp,maxhp,maxmana,enemy = 0;
+//		//Integer ihp,imp,imaxhp,imaxmana = 0;
+//		hp = (this.get("char.vitals.hp") == null) ? 100 : (Integer)this.get("char.vitals.hp");
+//		mp = (this.get("char.vitals.mana") == null) ? 100 : (Integer)this.get("char.vitals.mana");
+//		maxhp = (this.get("char.maxstats.maxhp") == null) ? 100 : (Integer)this.get("char.maxstats.maxhp");
+//		maxmana = (this.get("char.maxstats.maxmana") == null) ? 100 : (Integer)this.get("char.maxstats.maxmana");
+//		enemy = (this.get("char.status.enemypct") == null) ? 0 : (Integer)this.get("char.status.enemypct");
+//		
 	};
 	
 	public void putData(String module,JSONObject object,HashMap<String,Object> node,String previous) {
@@ -134,9 +102,9 @@ public class GMCPData {
 				map.clear();
 				
 				insertData(object, map,previous+dotChar+key);
-				if(watchList.containsKey(previous+dotChar+key)) {
-					watchList.put(previous+dotChar+key, true);
-				}
+				//if(watchList.containsKey(previous+dotChar+key)) {
+				//	watchList.put(previous+dotChar+key, true);
+				//}
 				//for(String key : object.keys())
 			} else {
 				//still more modules.
@@ -149,9 +117,9 @@ public class GMCPData {
 				//putData(rest,object,newnode);
 				
 				insertData(object, newnode,previous+dotChar+key);
-				if(watchList.containsKey(previous+dotChar+key)) {
-					watchList.put(previous+dotChar+key, true);
-				}
+				//if(watchList.containsKey(previous+dotChar+key)) {
+				//	watchList.put(previous+dotChar+key, true);
+				//}
 			} else {
 				HashMap<String,Object> newnode = new HashMap<String,Object>();
 				node.put(key, newnode);
@@ -313,7 +281,7 @@ public class GMCPData {
 		//return null;
 	}
 	
-	private void dumpNodeToLua(String key,HashMap<String,Object> node) {
+	/*private void dumpNodeToLua(String key,HashMap<String,Object> node) {
 		if(!key.equals("")) {
 			this.L.pushString(key);
 		}
@@ -344,6 +312,6 @@ public class GMCPData {
 		//this.L.setTable(-3);
 		
 		
-	}
+	}*/
 	
 }

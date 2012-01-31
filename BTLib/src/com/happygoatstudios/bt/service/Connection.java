@@ -25,6 +25,8 @@ import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.button.SlickButtonData;
+import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.function.BellCommand;
 import com.happygoatstudios.bt.service.function.ClearButtonCommand;
@@ -89,6 +91,7 @@ public class Connection {
 	public static final int MESSAGE_ADDFUNCTIONCALLBACK = 16;
 	public static final int MESSAGE_WINDOWXCALLS = 17;
 	public static final int MESSAGE_INVALIDATEWINDOWTEXT = 18;
+	public static final int MESSAGE_GMCPTRIGGERED = 19;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
@@ -162,6 +165,13 @@ public class Connection {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_GMCPTRIGGERED:
+					String plugin = msg.getData().getString("TARGET");
+					String gcallback = msg.getData().getString("CALLBACK");
+					HashMap<String,Object> gdata = (HashMap<String,Object>)msg.obj;
+					Plugin gp = pluginMap.get(plugin);
+					gp.handleGMCPCallback(gcallback,gdata);
+					break;
 				case MESSAGE_INVALIDATEWINDOWTEXT:
 					String wname = (String)msg.obj;
 					try {
@@ -608,6 +618,7 @@ public class Connection {
 		
 		plugins.addAll(tmpPlugs);
 		
+		
 		for(Plugin p : plugins) {
 			pluginMap.put(p.getName(), p);
 		}
@@ -646,7 +657,7 @@ public class Connection {
 							vals.add(p.getName());
 						}
 					}
-					plugins.addAll(group);
+					//plugins.addAll(group);
 					
 					//tmpPlug.setSettings(parse.load());
 				} catch (FileNotFoundException e) {
@@ -661,6 +672,12 @@ public class Connection {
 				}
 			}
 		}
+		
+		//so now that we have all the plugins, we need to build up the processor's gmcpTriggerTables.
+		//loop through all the plugins, looking for literal triggers starting
+		//with the gmcpTriggerChar.
+		
+		
 		//plugins.
 		//tmpPlug.initScripts(mWindows);
 		//tmpPlug.initScripts();
@@ -840,10 +857,12 @@ public class Connection {
 		pump = new DataPumper(host,port,handler);
 		pump.start();
 		
-		processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext(),null);
+		processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext());
 		
+		loadGMCPTriggers();
 		//show notification somehow.
 		isConnected = true;
+		
 		
 	}
 	
@@ -864,6 +883,30 @@ public class Connection {
 		callbacks.finishBroadcast();
 	}*/
 	
+	private void loadGMCPTriggers() {
+		String gmcpChar = the_settings.getGMCPTriggerChar();
+		for(int i=0;i<plugins.size();i++) {
+			Plugin p = plugins.get(i);
+			HashMap<String,TriggerData> triggers = p.getSettings().getTriggers();
+			for(TriggerData t : triggers.values()) {
+				if(!t.isInterpretAsRegex()) { //this actually means literal
+					if(t.getPattern().startsWith(gmcpChar)) {
+						//add it to the watch list, if it has a script responder
+						for(TriggerResponder r : t.getResponders()) {
+							if(r instanceof ScriptResponder) {
+								ScriptResponder s = (ScriptResponder)r;
+								String callback = s.getFunction();
+								String module = t.getPattern().substring(1,t.getPattern().length());
+								String name = p.getName();
+								processor.addWatcher(module, name, callback);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	StringBuffer dataToServer = new StringBuffer();
 	StringBuffer dataToWindow = new StringBuffer();
 	private Data ProcessOutputData(String out) throws UnsupportedEncodingException {
