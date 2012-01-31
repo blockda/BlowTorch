@@ -28,13 +28,13 @@ public class Processor {
 	private String encoding = null;
 	private Context mContext = null;
 	public Processor(Handler useme,
-			String pEncoding,Context pContext,LuaState L) {
+			String pEncoding,Context pContext) {
 		reportto = useme;
 
 		mContext = pContext;
 		String ttype = ConfigurationLoader.getConfigurationValue("terminalTypeString", mContext);
 		opthandler = new OptionNegotiator(ttype);
-		gmcp = new GMCPData(useme,L);
+		gmcp = new GMCPData(useme);
 		setEncoding(pEncoding);
 	}
 
@@ -325,6 +325,18 @@ public class Processor {
 				//}
 				//Log.e("GMCP","DATA: " + output);
 				//TODO: THIS IS WHERE THE ACTUAL WORK IS DONE TO SEND MUD DATA.
+				ArrayList<GMCPWatcher> list = gmcpTriggers.get(module);
+				if(list != null) {
+					for(int i=0;i<list.size();i++) {
+						GMCPWatcher tmp = list.get(i);
+						HashMap<String,Object> tmpdata = gmcp.getTable(module);
+						Message gmsg = reportto.obtainMessage(Connection.MESSAGE_GMCPTRIGGERED,tmpdata);
+						gmsg.getData().putString("TARGET", tmp.plugin);
+						gmsg.getData().putString("CALLBACK", tmp.callback);
+						reportto.sendMessage(gmsg);
+					}
+				}
+				
 				/*if(module.equals("char.vitals")) {
 					int hp = jo.getInt("hp");
 					int mp = jo.getInt("mana");
@@ -513,7 +525,6 @@ public class Processor {
 		}
 		
 	}
-	
 }
 
 /*
