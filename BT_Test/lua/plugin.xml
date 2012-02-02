@@ -121,15 +121,17 @@
 	</plugin>
 	<plugin author="Daniel Block" name="chat_miniwindow" id="50">
 		<triggers>
-			<trigger title="chats" pattern="^\{.{3,}?\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
-				<replace retarget="chats"/>
+			<trigger title="chats" pattern="^\{chan ch=(\w*)\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+				<replace fireWhen="always"/>
+				<script function="processChat" fireWhen="always"/>
+				<gag fireWhen="always"/>
 			</trigger>
-			<trigger title="testmeo" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="5">
+			<!-- <trigger title="testmeo" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="5">
 				<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
 			</trigger>
 			<trigger title="colorize" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="3">
 				<color>45</color>
-			</trigger>
+			</trigger> -->
 		</triggers>
 		<script name="bootstrap">
 			<![CDATA[
@@ -189,7 +191,7 @@ dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
 	</plugin>
   <plugin author="Daniel Block" name="plugin" id="100">
   <triggers>
-    <trigger sequence="10" title="autologin username" pattern="What be thy name, pleasent young fellow?" interpretLiteral="false" fireOnce="true" hidden="true" enabled="true">
+    <trigger sequence="10" title="autologin username" pattern="What be thy name, adventurer?" interpretLiteral="false" fireOnce="true" hidden="true" enabled="true">
       <toast message="autologin username" delay="1" fireWhen="windowOpen" />
 	  <ack with="stampede"/>
 	</trigger>
