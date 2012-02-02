@@ -2,7 +2,7 @@
 package.path = "/mnt/sdcard/BlowTorch/?.lua"
 
 --make a button.
-debugPrint("in the chat window")
+--debugPrint("in the chat window")
 
 Array = luajava.bindClass("java.lang.reflect.Array")
 Rect = luajava.bindClass("android.graphics.Rect")
@@ -150,7 +150,7 @@ function OnDraw(canvas)
 	if(topper == nil) then
 		return
 	end
-	debugPrint("vitals view onDraw")
+	--debugPrint("vitals view onDraw")
 	canvas:drawLine(zeroFloat:floatValue(),alignPosFloat:floatValue(),widthFloat:floatValue(),alignPosFloat:floatValue(),alignpaint)
 	
 	r = luajava.newInstance("java.lang.Float",7)
@@ -166,7 +166,7 @@ end
 
 function OnSizeChanged(neww,newh,oldw,oldh)
 	if(neww == oldw and newh == oldh) then
-		debugPrint("resize called, but the size is the same, returning")
+		--debugPrint("resize called, but the size is the same, returning")
 		return
 	end
 	width = neww
@@ -250,7 +250,7 @@ function updateToppers()
 end
 
 function updateVitals(str)
-	debugPrint("in updateVitals")
+	--debugPrint("in updateVitals")
 	data = loadstring(str)()
 	
 	vitals.hp = data.hp
@@ -263,7 +263,7 @@ function updateVitals(str)
 end
 
 function updateMaxes(str)
-	debugPrint("in updateMaxes")
+	--debugPrint("in updateMaxes")
 	data = loadstring(str)()
 	
 	maxes.hp = data.hp
@@ -305,7 +305,7 @@ function updateBarRects()
 	tnlpercent = 0
 	if(tolevel > 0) then
 		tnlpercent = tnl/tolevel
-		debugPrint("updateBarRects, tnlpercent is:"..tnlpercent)
+		--debugPrint("updateBarRects, tnlpercent is:"..tnlpercent)
 	end
 
 	heightOver5 = height / 5
@@ -317,21 +317,21 @@ function updateBarRects()
 end
 
 function updateMaxPerLevel(str)
-	debugPrint("updating maxperlevel")
+	--debugPrint("updating maxperlevel")
 	tolevel = tonumber(str)
 	updateBarRects()
 	view:invalidate()
 end
 
 function updateTNL(str)
-	debugPrint("updating tnl")
+	--debugPrint("updating tnl")
 	tnl = tonumber(str)
 	updateBarRects()
 	view:invalidate()
 end
 
 function updateAll(data)
-	debugPrint("updating all")
+	--debugPrint("updating all")
 	info = loadstring(data)()
 	
 	vitals.hp = info.hp
