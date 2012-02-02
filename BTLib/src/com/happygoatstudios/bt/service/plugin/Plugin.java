@@ -512,8 +512,8 @@ public class Plugin {
 		public int execute() throws LuaException {
 			//the only arguments should be a TextTree.Line copied from the one passed to it from a trigger script action
 			//and the window id to send it to.
-			TextTree.Line line = (TextTree.Line)(this.getParam(2)).getObject();
-			String windowId = (this.getParam(3).getString());
+			TextTree.Line line = (TextTree.Line)(this.getParam(3)).getObject();
+			String windowId = (this.getParam(2).getString());
 			
 			//now abuse the lineToWindow handler from the replace action to ferry this bad boy across
 			Message m = mHandler.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);

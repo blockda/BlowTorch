@@ -91,6 +91,7 @@ public class ScriptResponder extends TriggerResponder {
 		
 	};
 
+	
 	@Override
 	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
@@ -109,6 +110,10 @@ public class ScriptResponder extends TriggerResponder {
 			
 		
 			L.getGlobal(function);
+			if(function.equals("processChat")) {
+				int foo = 100;
+				foo = foo + function.length();
+			}
 			if(!L.isFunction(L.getTop())) {
 				Log.e("LUA",function + " is not a function.");
 				return;
@@ -125,11 +130,10 @@ public class ScriptResponder extends TriggerResponder {
 			}
 			
 			//L.call(2, 0);
-			if(L.pcall(3,1,-4) != 0) {
+			if(L.pcall(3,1,-5) != 0) {
 				Log.e("FOO","Error running("+function+"): " + L.getLuaObject(-1).getString());
 			}
 			//return 2;
-			
 	}
 
 	@Override

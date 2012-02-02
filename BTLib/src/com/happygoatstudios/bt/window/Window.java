@@ -71,7 +71,8 @@ public class Window extends View {
 	
 	private TextTree the_tree = null;
 	private TextTree buffer = null;
-	
+	private int mMaxHeight;
+	private int mMaxWidth;
 	private static float PREF_FONTSIZE = 18;
 	private int mHeight = 1;
 	private int mWidth = 1;
@@ -194,6 +195,10 @@ public class Window extends View {
 		viewDestroy();
 	}
 	protected void onMeasure(int widthSpec,int heightSpec) {
+		mMaxHeight = MeasureSpec.getSize(heightSpec);
+		mMaxWidth = MeasureSpec.getSize(widthSpec);
+		
+		
 		setMeasuredDimension(mWidth,mHeight);
 		
 		//calculateCharacterFeatures(mWidth,mHeight);
@@ -1061,7 +1066,7 @@ public class Window extends View {
 				}
 			}
 		} else {
-			Log.e("DRAW","Skipping draw routine cuz there is none.");
+			//Log.e("DRAW","Skipping draw routine cuz there is none.");
 		}
 		
 		
@@ -1653,7 +1658,7 @@ public class Window extends View {
 				Log.e("LUAWINDOW","Window("+mName+"): " + L.getLuaObject(-1).getString());
 			}
 		} else {
-			Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
+			//Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
 		}
 	}
 	private void pushTable(String key,Map<String,Object> map) {
@@ -2009,18 +2014,29 @@ public class Window extends View {
 
 
 
-	public void updateDimensions(int width, int height) {
+	public void setDimensions(int width, int height) {
 		mWidth = width;
 		mHeight = height;
 		calculateCharacterFeatures(mWidth,mHeight);
-		View v = ((View)this.getParent());
-		RelativeLayout.LayoutParams p = (LayoutParams) v.getLayoutParams();
-		p.height = mHeight;
-		p.width = mWidth;
+		//View v = ((View)this.getParent());
+		//RelativeLayout.LayoutParams p = (LayoutParams) v.getLayoutParams();
+		//p.height = mHeight;
+		//p.width = mWidth;
 		
+		//Log.e("WINDOW","WINDOW HEIGHT NOW:" + mHeight);
 		//v.setLayoutParams(p);
 		//v.requestLayout();
-		this.requestLayout();
+		//this.requestLayout();
+	}
+	
+	public void setWidth(int width) {
+		this.mWidth = width;
+		calculateCharacterFeatures(mWidth,mHeight);
+	}
+	
+	public void setHeight(int height) {
+		this.mHeight = height;
+		calculateCharacterFeatures(mWidth,mHeight);
 	}
 	
 
@@ -2054,6 +2070,14 @@ public class Window extends View {
 		//tmp.getLayoutParams().
 		//RelativeLayout.LayoutParams p = (LayoutParams) tmp.getLayoutParams();
 		//p.setma
+	}
+	
+	public int getMaxHeight() {
+		return mMaxHeight;
+	}
+	
+	public int getMaxWidth() {
+		return mMaxHeight;
 	}
 	
 	/*@Override
