@@ -66,6 +66,32 @@ public class AnimatedRelativeLayout extends RelativeLayout{
             
      }*/
 	
+	public void setDimensions(int width, int height) {
+		//mWidth = width;
+		//mHeight = height;
+		//calculateCharacterFeatures(mWidth,mHeight);
+		//View v = ((View)this.getParent());
+		RelativeLayout.LayoutParams p = (LayoutParams) this.getLayoutParams();
+		p.height = height;
+		p.width = width;
+		
+		//Log.e("WINDOW","WINDOW HEIGHT NOW:" + mHeight);
+		//v.setLayoutParams(p);
+		//v.requestLayout();
+		//this.requestLayout();
+	}
+	
+	public void setWidth(int width) {
+		RelativeLayout.LayoutParams p = (LayoutParams) this.getLayoutParams();
+		//p.height = height;
+		p.width = width;
+	}
+	
+	public void setHeight(int height) {
+		RelativeLayout.LayoutParams p = (LayoutParams) this.getLayoutParams();
+		p.height = height;
+		//p.width = width;
+	}
 	
 
 }

@@ -20,6 +20,16 @@ foobuffer:addString("this is the foo buffer, buffffererere.")
 
 buffers["alt"] = altbuffer;
 buffers["foo"] = foobuffer;
+buffers["right"] = foobuffer;
+buffers["slap"] = foobuffer;
+buffers["biatch"] = foobuffer;
+buffers["must"] = foobuffer;
+buffers["make"] = foobuffer;
+buffers["more"] = foobuffer;
+buffers["channels"] = foobuffer;
+
+
+
 
 function updateSelection(newChannel)
 
@@ -55,15 +65,34 @@ function initReady(arg)
 	updateUIButtons()
 end
 
-function processChat(line,replaceMap)
+function processChat(name,line,replaceMap)
 	
 	--get chat channel from replacementMap
 	channel = replaceMap["1"]
 	
+	if(currentChannel == "main") then
+		appendLineToWindow(chatWindowName,line)
+	else
+		mainBuffer = buffers["main"]
+		mainBuffer:appendLine(line)
+	end
+
 	--if appropriate channel already has a sub buffer.
 	if(channel ~= nil) then
 		--append this line to it
-		channel:appendLine(line)
+		
+		if(currentChannel == channel) then
+			appendLineToWindow(chatWindowName,line)
+		else
+			channelBuffer = buffers[channel]
+			if(channelBuffer == nil) then
+				channelBuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree")
+				--channelBuffer:appendLine(line)
+				buffers[channel] = channelBuffer
+				updateUIButtons()
+			end
+			channelBuffer:appendLine(line)
+		end
 	else
 		--create a new buffer
 		newchannel = luajava.newInstance("com.happygoatstudios.bt.window.TextTree")
@@ -74,13 +103,8 @@ function processChat(line,replaceMap)
 		updateUIButtons()
 	end
 
-	--if currentWindow is affected by this update, e.g. either main window or the sub-channel selection
-	if(currentChannel == "main" or currentChannel == channel) then
-		--update the window.
-		appendLineToWindow(chatWindowName,line)
-	else
-		--signal the plugin to make the "new notification" mark show.
-	end
+	--append this line to the main buffer, this always happens.
+	--mainBuffer = buffers["main"]
 	
 end
 
