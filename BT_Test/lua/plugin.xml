@@ -63,13 +63,13 @@
 			end
 			
 			function updateStatus(newStatus)
-				debugPrint("player status updated!!!!")
+				--debugPrint("player status updated!!!!")
 				if(newStatus.enemypct == nil) then
 					if(fighting) then
-						debugPrint("combat over")
+						--debugPrint("combat over")
 						fighting = false
 					else
-						debugPrint("combat not started")
+						--debugPrint("combat not started")
 					end
 					WindowXCallS("vitals_window","updateEnemyPercent",0)
 				else
@@ -77,7 +77,7 @@
 						fighting = true
 					end
 					enemyPct = newStatus.enemypct
-					debugPrint("enemyPct: "..newStatus.enemypct)
+					--debugPrint("enemyPct: "..newStatus.enemypct)
 					WindowXCallS("vitals_window","updateEnemyPercent",enemyPct)
 				end
 				

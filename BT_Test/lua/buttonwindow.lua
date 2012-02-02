@@ -355,7 +355,6 @@ managerTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",manage
 normalTouch = {}
 normalTouchState = 0
 function normalTouch.onTouch(v,e)
-	
 	local retvalue = false
 	local x = e:getX()
 	local y = e:getY()
@@ -557,7 +556,7 @@ bounds = nil
 
 
 function OnCreate()
-	debugPrint("in oncreate")	
+	debugPrint("in oncreate, loading "..#buttons.." buttons.")	
 	for i,b in ipairs(buttons) do
 		updateRect(b)
 	end
