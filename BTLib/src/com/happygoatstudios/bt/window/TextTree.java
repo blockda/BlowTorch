@@ -1300,7 +1300,8 @@ public class TextTree {
 	}
 
 	public void appendLine(Line line) {
-		mLines.add(line);
+		addLine(line);
+		
 	}
 	
 }
