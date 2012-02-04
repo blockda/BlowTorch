@@ -19,11 +19,22 @@
 				<script function="updateBase" fireWhen="always"/>
 			</trigger>
 		</triggers>
+		<windows>
+			<window name="vitals_window" id="1010" script="vitalsWindowScript">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape"
+							height="100"
+							width="400"
+							alignParentBottom="true"
+							alignParentRight="true"/>
+				</layoutGroup>
+			</window>
+		</windows>
 		<script name="bootstrap">
 		<![CDATA[
 			package.path = "/mnt/sdcard/BlowTorch/?.lua"
 			require("serialize")
-			vitalsWindow = NewWindow("vitals_window",880,577,400,100,"vitalsWindowScript")
+			--vitalsWindow = NewWindow("vitals_window",880,577,400,100,"vitalsWindowScript")
 		
 			vitals = {}
 			vitals.hp = 100
@@ -133,6 +144,13 @@
 				<color>45</color>
 			</trigger> -->
 		</triggers>
+		<windows>
+			<window name="chats" id="5010" script="chatwindow">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
+				</layoutGroup>
+			</window>
+		</windows>
 		<script name="bootstrap">
 			<![CDATA[
 				dofile("/mnt/sdcard/BlowTorch/chatserver.lua")
@@ -158,6 +176,14 @@
 				<gag/>
 			</trigger>
 		</triggers>
+		<windows>
+			<window name="map_window" id="6010">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape" alignParentRight="true" height="400" width="400" above="1010"/>
+					<layout orientation="portrait" alignParentRight="true" height="400" width="400" above="1010"/>
+				</layoutGroup>
+			</window>
+		</windows>
 		<script name="bootstrap">
 			<![CDATA[
 function startMapCapture() 
@@ -170,7 +196,7 @@ function endMapCapture()
 	TriggerEnabled("map_capture",false)
 	DrawWindow("map_window")
 end
-NewWindow("map_window",880,177,400,400)
+--NewWindow("map_window",880,177,400,400)
 WindowBuffer("map_window",true)
 			]]>
 		</script>
@@ -222,26 +248,7 @@ dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
   </triggers>
   <script name="bootstrap">
 	  <![CDATA[
---load scripts
-
---only one so far.
-
-
-function testCommandHandler(args)
-	debugPrint("Inside the testCommandHandler yo, peep dis raw deal!"..args)
-end
-
-RegisterSpecialCommand("testcommand","testCommandHandler")
-
---debugPrint("button server functions loaded")
---set up windows.
-MainWindowSize(0,177,880,500)
-
-
---NewWindow("lua_window",880,577,400,100,"windowscript")
-
-
---debugPrint("startup script loaded!")
+		dofile("/mnt/sdcard/BlowTorch/mainboot.lua")
 	  ]]>
   </script>
 

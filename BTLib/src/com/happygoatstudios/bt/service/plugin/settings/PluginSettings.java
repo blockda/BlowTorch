@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 
 import com.happygoatstudios.bt.alias.AliasData;
+import com.happygoatstudios.bt.service.WindowToken;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.trigger.TriggerData;
 
@@ -26,7 +27,7 @@ public class PluginSettings implements Cloneable {
 	private HashMap<String,TimerData> timers = null;
 	private HashMap<String,String> scripts = null;
 	
-	
+	private HashMap<String,WindowToken> windows = null;
 	
 	//LuaState L = null;
 	public PluginSettings() {
@@ -39,6 +40,7 @@ public class PluginSettings implements Cloneable {
 		setTriggers(new HashMap<String,TriggerData>());
 		setTimers(new HashMap<String,TimerData>());
 		setScripts(new HashMap<String,String>());
+		setWindows(new HashMap<String,WindowToken>());
 		//L = LuaStateFactory.newLuaState();
 	}
 	
@@ -120,5 +122,15 @@ public class PluginSettings implements Cloneable {
 
 	public String getPath() {
 		return path;
+	}
+
+
+	public void setWindows(HashMap<String,WindowToken> windows) {
+		this.windows = windows;
+	}
+
+
+	public HashMap<String,WindowToken> getWindows() {
+		return windows;
 	}
 }

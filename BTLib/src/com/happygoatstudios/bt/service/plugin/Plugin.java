@@ -57,18 +57,22 @@ public class Plugin {
 	//private String mName = null;
 	private String fullPath;
 	private String shortName;
+	Connection parent;
 	
-	public Plugin(Handler h) throws LuaException {
+	public Plugin(Handler h,Connection parent) throws LuaException {
 		setSettings(new PluginSettings());
 		mHandler = h;
 		L = LuaStateFactory.newLuaState();
+		this.parent = parent;
 		initLua();
+		
 	}
 	
-	public Plugin(PluginSettings settings,Handler h) throws LuaException {
+	public Plugin(PluginSettings settings,Handler h,Connection parent) throws LuaException {
 		this.settings = settings;
 		mHandler = h;
 		L = LuaStateFactory.newLuaState();
+		this.parent = parent;
 		initLua();
 	}
 
@@ -90,7 +94,7 @@ public class Plugin {
 		
 		WindowFunction wf = new WindowFunction(L);
 		ExecuteScriptFunction esf = new ExecuteScriptFunction(L);
-		MainWindowFunction mwf = new MainWindowFunction(L);
+		GetWindowFunction mwf = new GetWindowFunction(L);
 		WindowBufferFunction wbf = new WindowBufferFunction(L);
 		RegisterFunctionCallback rfc = new RegisterFunctionCallback(L);
 		DebugFunction df = new DebugFunction(L);
@@ -98,7 +102,7 @@ public class Plugin {
 		AppendLineToWindowFunction altwf = new AppendLineToWindowFunction(L);
 		InvalidateWindowTextFunction iwtf = new InvalidateWindowTextFunction(L);
 		wf.register("NewWindow");
-		mwf.register("MainWindowSize");
+		mwf.register("GetWindowTokenByName");
 		esf.register("ExecuteScript");
 		wbf.register("WindowBuffer");
 		rfc.register("RegisterSpecialCommand");
@@ -297,10 +301,10 @@ public class Plugin {
 			
 			WindowToken tok = null;
 			if(pScriptName.isNil()) {
-				tok = new WindowToken(name,x,y,width,height);
+				tok = new WindowToken(name,null,null);
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
 			} else {
-				tok = new WindowToken(name,x,y,width,height,scriptName,Plugin.this.getSettings().getName());
+				tok = new WindowToken(name,scriptName,Plugin.this.getSettings().getName());
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
 			}
 			
@@ -335,16 +339,16 @@ public class Plugin {
 		
 	}
 	
-	private class MainWindowFunction extends JavaFunction {
+	private class GetWindowFunction extends JavaFunction {
 
-		public MainWindowFunction(LuaState L) {
+		public GetWindowFunction(LuaState L) {
 			super(L);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
 		public int execute() throws LuaException {
-			int x = (int) this.getParam(2).getNumber();
+			/*int x = (int) this.getParam(2).getNumber();
 			int y = (int) this.getParam(3).getNumber();
 			int width = (int) this.getParam(4).getNumber();
 			int height = (int) this.getParam(5).getNumber();
@@ -356,8 +360,20 @@ public class Plugin {
 			b.putInt("WIDTH", width);
 			b.putInt("HEIGHT", height);
 			msg.setData(b);
-			mHandler.sendMessage(msg);
-			return 0;
+			mHandler.sendMessage(msg);*/
+			String desired = this.getParam(2).getString();
+			WindowToken t = parent.getWindowByName(desired);
+			if(t == null) {
+				//check our local window that haven't been loaded into the main window group.
+				for(WindowToken tmp : settings.getWindows().values()) {
+					if(tmp.getName().equals(desired)) {
+						t = tmp;
+					}					
+				}
+			}
+			L.pushJavaObject(t);
+			
+			return 1;
 		}
 		
 	}

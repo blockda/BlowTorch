@@ -9,18 +9,19 @@ import org.xmlpull.v1.XmlSerializer;
 
 import android.os.Handler;
 
+import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 
 public class ConnectionSettingsPlugin extends Plugin {
-	public ConnectionSettingsPlugin(Handler h) throws LuaException {
-		super(h);
+	public ConnectionSettingsPlugin(Handler h,Connection parent) throws LuaException {
+		super(h,parent);
 		
 	}
 	
-	public ConnectionSettingsPlugin(PluginSettings settings,Handler h) throws LuaException {
-		super(settings,h);
+	public ConnectionSettingsPlugin(PluginSettings settings,Handler h,Connection parent) throws LuaException {
+		super(settings,h,parent);
 		
 	}
 

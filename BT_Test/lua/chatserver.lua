@@ -5,8 +5,8 @@ require("serialize")
 --make a button.
 debugPrint("in the chat server")
 
-chatWindow = NewWindow("chats",0,0,1280,177,"chatwindow")
-chatWindowName = chatWindow:getName()
+chatWindow = GetWindowTokenByName("chats")
+chatWindowName = "chats"
 
 currentChannel = "main"
 buffers = {}
