@@ -9,9 +9,11 @@ import android.sax.ElementListener;
 public class LayoutGroupElementListener implements ElementListener {
 
 	WindowToken current_window;
+	LayoutElementListener sub = null;
 	
-	public LayoutGroupElementListener(WindowToken current_window) {
+	public LayoutGroupElementListener(WindowToken current_window,LayoutElementListener sub) {
 		this.current_window = current_window;
+		this.sub = sub;
 	}
 	
 	public void start(Attributes a) {
@@ -27,7 +29,8 @@ public class LayoutGroupElementListener implements ElementListener {
 			g.type = LAYOUT_TYPE.XLARGE;
 		}
 		
-		current_window.layouts.add(g);
+		current_window.layouts.put(g.type,g);
+		sub.setCurrentType(g.type);
 	}
 
 	public void end() {
