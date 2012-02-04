@@ -11,6 +11,8 @@ import org.xml.sax.SAXException;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.alias.AliasParser;
+import com.happygoatstudios.bt.service.Connection;
+import com.happygoatstudios.bt.service.WindowToken;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.settings.HyperSettings;
@@ -32,8 +34,8 @@ public class ConnectionSetttingsParser extends PluginParser {
 
 	ConnectionSettingsPlugin settings = null;
 	public ConnectionSetttingsParser(String location, Context context,
-			ArrayList<Plugin> plugins, Handler serviceHandler) {
-		super(location, null,context, plugins, serviceHandler);
+			ArrayList<Plugin> plugins, Handler serviceHandler,Connection parent) {
+		super(location, null,context, plugins, serviceHandler,parent);
 		// TODO Auto-generated constructor stub
 		type = TYPE.INTERNAL;
 	}
@@ -135,15 +137,19 @@ public class ConnectionSetttingsParser extends PluginParser {
 			
 		}
 		
+		public void addWindow(String name, WindowToken w) {
+			
+		}
+		
 	}
 	
 	private GlobalHandler GLOBAL_HANDLER = new GlobalHandler();
 	
-	public ArrayList<Plugin> load() {
+	public ArrayList<Plugin> load(Connection parent) {
 		
 		ArrayList<Plugin> result = new ArrayList<Plugin>();
 		try {
-			settings = new ConnectionSettingsPlugin(serviceHandler);
+			settings = new ConnectionSettingsPlugin(serviceHandler,parent);
 		} catch (LuaException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

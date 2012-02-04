@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.RemoteException;
@@ -89,14 +90,26 @@ public class LayerManager {
 				
 				
 			}
+			mRootLayout.requestLayout();
 		}
 	}
 	
 	private void initWindow(WindowToken w) {
 		View v = mRootLayout.findViewWithTag(w.getName());
 		if(v == null) {
+			if(w.getName().equals("chats")) {
+				long sfs = System.currentTimeMillis();
+				sfs = sfs + 10;
+			}
+			Window tmp = new Window(mContext,this,w.getName(),w.getPluginName(),rootHandler);
 			
-			Window tmp = new Window(mContext,this,w.getName(),w.getPluginName(),w.getX(),w.getY(),w.getWidth(),w.getHeight(),rootHandler);
+			//determine the appropriate layout group to load.
+			int screenLayout = mContext.getResources().getConfiguration().screenLayout;
+			boolean landscape = ((screenLayout & Configuration.SCREENLAYOUT_LONG_MASK) == Configuration.SCREENLAYOUT_LONG_YES) ? true : false;
+			//int longyesno = screenLayout & m
+			int screenSize = screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+			
+			
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -106,11 +119,12 @@ public class LayerManager {
 			
 			
 			RelativeLayout holder = new AnimatedRelativeLayout(mContext,tmp,this);
-			RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(w.getX()+w.getWidth(),w.getY()+w.getHeight());
-			holderParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-			holderParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-			holder.setPadding(w.getX(), w.getY(), 0, 0);
-			holder.setLayoutParams(holderParams);
+			//RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(w.getX()+w.getWidth(),w.getY()+w.getHeight());
+			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			//holder.setPadding(w.getX(), w.getY(), 0, 0);
+			holder.setId(w.getId());
+			holder.setLayoutParams(w.getLayout(screenSize,landscape));
 			
 			holder.addView(tmp);
 			

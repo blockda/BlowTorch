@@ -11,6 +11,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.happygoatstudios.bt.alias.AliasData;
+import com.happygoatstudios.bt.service.Connection;
+import com.happygoatstudios.bt.service.WindowToken;
+import com.happygoatstudios.bt.service.WindowTokenParser;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings.PLUGIN_LOCATION;
 import com.happygoatstudios.bt.timer.TimerData;
@@ -39,6 +42,7 @@ public class PluginParser extends BasePluginParser {
 	ArrayList<Plugin> plugins = null;
 	PluginSettings tmp = null;
 	Handler serviceHandler = null;
+	Connection parent = null;
 	
 	enum TYPE {
 		EXTERNAL,
@@ -48,11 +52,12 @@ public class PluginParser extends BasePluginParser {
 	protected TYPE type;
 	protected String shortName;
 	
-	public PluginParser(String location,String name, Context context,ArrayList<Plugin> plugins,Handler serviceHandler) {
+	public PluginParser(String location,String name, Context context,ArrayList<Plugin> plugins,Handler serviceHandler,Connection parent) {
 		super(location, context);
 		// TODO Auto-generated constructor stub
 		//L = p.getLuaState();
 		//this.p = p;
+		this.parent = parent;
 		shortName = name;
 		this.serviceHandler = serviceHandler;
 		this.plugins = plugins;
@@ -63,6 +68,7 @@ public class PluginParser extends BasePluginParser {
 	final TriggerData current_trigger = new TriggerData();
 	final AliasData current_alias = new AliasData();
 	final String current_script_body = new String();
+	final WindowToken current_window = new WindowToken();
 	String current_script_name = new String();
 	
 	public ArrayList<Plugin> load() throws FileNotFoundException, IOException, SAXException {
@@ -70,7 +76,9 @@ public class PluginParser extends BasePluginParser {
 		tmp = new PluginSettings();
 		attatchListeners(root);
 		
+		
 		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
+		
 		//tmp.setPath(path);
 		//p.setSettings(tmp);
 		//do alternate parsing for plugin data.
@@ -92,6 +100,12 @@ public class PluginParser extends BasePluginParser {
 				p.setShortName(shortName);
 				break;
 			}
+			if(p.getSettings().getWindows().size() > 0) {
+				for(WindowToken t : p.getSettings().getWindows().values()) {
+					t.setPluginName(p.getName());
+				}
+			}
+			
 			if(p.getSettings().getScripts().containsKey("bootstrap")) {
 				//run this script.
 				LuaState pL = p.getLuaState();
@@ -101,7 +115,6 @@ public class PluginParser extends BasePluginParser {
 				
 				String datas = p.getSettings().getScripts().get("bootstrap");
 				pL.LloadString(datas);
-				
 				
 				int ret = p.getLuaState().pcall(0, 1, -2);
 				if(ret != 0) {
@@ -128,7 +141,6 @@ public class PluginParser extends BasePluginParser {
 		
 		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root2.getContentHandler());	
 		
-		
 		return plugins;
 	}
 	
@@ -140,6 +152,8 @@ public class PluginParser extends BasePluginParser {
 		Element triggers = plugin.getChild(BasePluginParser.TAG_TRIGGERS);
 		Element timers = plugin.getChild(BasePluginParser.TAG_TIMERS);
 		Element scripts = plugin.getChild(BasePluginParser.TAG_SCRIPT);
+		Element windows = plugin.getChild("windows");
+		Element window = windows.getChild("window");
 		//Element alias = aliases.getChild(BasePluginParser.TAG_ALIAS);
 		AliasParser.registerListeners(aliases, newItemHandler, current_alias);
 		
@@ -148,6 +162,8 @@ public class PluginParser extends BasePluginParser {
 		
 		//Element timer = timers.getChild(BasePluginParser.TAG_TIMER);
 		TimerParser.registerListeners(timers, newItemHandler, new TimerData(), current_trigger, current_timer);
+		
+		WindowTokenParser.registerListeners(window, current_window, newItemHandler);
 		
 		scripts.setTextElementListener(new TextElementListener() {
 
@@ -205,7 +221,7 @@ public class PluginParser extends BasePluginParser {
 				//construct the new plugin.
 				Plugin p;
 				try {
-					p = new Plugin(serviceHandler);
+					p = new Plugin(serviceHandler,parent);
 					tmp.setPath(path);
 					p.setSettings(tmp);
 					
@@ -228,6 +244,7 @@ public class PluginParser extends BasePluginParser {
 		public void addTrigger(String key,TriggerData t);
 		public void addTimer(String key,TimerData t);
 		public void addScript(String name,String body);
+		public void addWindow(String name,WindowToken w);
 	}
 	
 	protected class NewItemHandler implements NewItemCallback {
@@ -246,6 +263,10 @@ public class PluginParser extends BasePluginParser {
 
 		public void addAlias(String key, AliasData a) {
 			PluginParser.this.tmp.getAliases().put(key, a);
+		}
+		
+		public void addWindow(String key, WindowToken w) {
+			PluginParser.this.tmp.getWindows().put(key,w);
 		}
 		
 	}

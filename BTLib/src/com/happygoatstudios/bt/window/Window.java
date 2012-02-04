@@ -123,7 +123,7 @@ public class Window extends View {
 	private Handler mHandler = null;
 	//private Handler realbuttonhandler = null;
 	Handler mainHandler = null;
-	Rect mBounds = null;
+	//Rect mBounds = null;
 	protected static final int MSG_UPPRIORITY = 200;
 	protected static final int MSG_NORMALPRIORITY = 201;
 	//final static public int MSG_BUTTONDROPSTART = 100;
@@ -173,9 +173,9 @@ public class Window extends View {
 		init();
 	} */
 	
-	public Window(Context context,LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
+	public Window(Context context,LayerManager manager,String name,String owner,Handler mainWindowHandler) {
 		super(context);
-		init(manager,name,owner,x,y,width,height,mainWindowHandler);
+		init(manager,name,owner,mainWindowHandler);
 	}
 	
 	
@@ -195,19 +195,19 @@ public class Window extends View {
 		viewDestroy();
 	}
 	protected void onMeasure(int widthSpec,int heightSpec) {
-		mMaxHeight = MeasureSpec.getSize(heightSpec);
-		mMaxWidth = MeasureSpec.getSize(widthSpec);
+		mHeight = MeasureSpec.getSize(heightSpec);
+		mWidth = MeasureSpec.getSize(widthSpec);
 		
 		
 		setMeasuredDimension(mWidth,mHeight);
 		
-		//calculateCharacterFeatures(mWidth,mHeight);
+		calculateCharacterFeatures(mWidth,mHeight);
 		
 			
 		//doDelayedDraw(0);
 	}
 	
-	private void init(LayerManager manager,String name,String owner,int x,int y,int width,int height,Handler mainWindowHandler) {
+	private void init(LayerManager manager,String name,String owner,Handler mainWindowHandler) {
 		borderPaint.setStrokeWidth(5);
 		borderPaint.setColor(0xFF444488);
 		new_text_in_buffer_indicator = new View(this.getContext());
@@ -284,7 +284,7 @@ public class Window extends View {
 		this.mainHandler = mainWindowHandler;
 		
 		
-		if(x == 0 && y ==0 && width==0 && height == 0) {
+		/*if(x == 0 && y ==0 && width==0 && height == 0) {
 			constrictWindow = false;
 		} else {
 			constrictWindow = true;
@@ -294,11 +294,11 @@ public class Window extends View {
 			mHeight = height;
 			//this.he
 			
-		}
+		}*/
 		clearme.setColor(0x00000000);
 		clearme.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 		
-		mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
+		//mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
 		
 		mName = name;
 		//initLua();
@@ -307,7 +307,7 @@ public class Window extends View {
 		
 		mAnchorTop = 0;
 		mAnchorLeft = 0;
-		calculateCharacterFeatures(width,height);
+		//calculateCharacterFeatures(width,height);
 		
 	}
 	
@@ -1845,7 +1845,7 @@ public class Window extends View {
 
 		@Override
 		public int execute() throws LuaException {
-			this.L.pushJavaObject(mBounds);
+			//this.L.pushJavaObject(mBounds);
 			return 1;
 		}
 		
@@ -2015,6 +2015,9 @@ public class Window extends View {
 
 
 	public void setDimensions(int width, int height) {
+		LayoutParams p = (LayoutParams) this.getLayoutParams();
+		p.width = width;
+		p.height = height;
 		mWidth = width;
 		mHeight = height;
 		calculateCharacterFeatures(mWidth,mHeight);
@@ -2030,12 +2033,17 @@ public class Window extends View {
 	}
 	
 	public void setWidth(int width) {
+		LayoutParams p = (LayoutParams) this.getLayoutParams();
+		p.width = width;
+		//p.height = height;
 		this.mWidth = width;
 		calculateCharacterFeatures(mWidth,mHeight);
 	}
 	
 	public void setHeight(int height) {
-		this.mHeight = height;
+		LayoutParams p = (LayoutParams) this.getLayoutParams();
+		//p.width = width;
+		p.height = height;
 		calculateCharacterFeatures(mWidth,mHeight);
 	}
 	
