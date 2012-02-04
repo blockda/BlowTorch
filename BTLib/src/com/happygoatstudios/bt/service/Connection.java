@@ -69,6 +69,8 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Xml;
+import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 public class Connection {
 	//base "connection class"
@@ -86,7 +88,7 @@ public class Connection {
 	public static final int MESSAGE_LUANOTE = 11;
 	public static final int MESSAGE_DRAWINDOW = 12;
 	public static final int MESSAGE_NEWWINDOW = 13;
-	public static final int MESSAGE_MODMAINWINDOW = 14;
+	//public static final int MESSAGE_MODMAINWINDOW = 14;
 	public static final int MESSAGE_WINDOWBUFFER = 15;
 	public static final int MESSAGE_ADDFUNCTIONCALLBACK = 16;
 	public static final int MESSAGE_WINDOWXCALLS = 17;
@@ -226,14 +228,6 @@ public class Connection {
 							tok.setBufferText(set);
 						}
 					}
-					break;
-				case MESSAGE_MODMAINWINDOW:
-					WindowToken main = mWindows.get(0);
-					Bundle c = msg.getData();
-					main.setX(c.getInt("X"));
-					main.setY(c.getInt("Y"));
-					main.setWidth(c.getInt("WIDTH"));
-					main.setHeight(c.getInt("HEIGHT"));
 					break;
 				case MESSAGE_NEWWINDOW:
 					WindowToken tok = (WindowToken)msg.obj;
@@ -400,7 +394,13 @@ public class Connection {
 		mWindows = new ArrayList<WindowToken>();
 		
 		//WindowToken token = new WindowToken(MAIN_WINDOW,0,177,880,500);
-		WindowToken token = new WindowToken(MAIN_WINDOW,0,0,0,0);
+		WindowToken token = new WindowToken(MAIN_WINDOW,null,null);
+		//token.layouts.clear();
+		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+		LayoutGroup g = new LayoutGroup();
+		g.type = LayoutGroup.LAYOUT_TYPE.NORMAL;
+		g.setLandscapeParams(p);
+		g.setPortraitParams(p);
 		mWindows.add(token);
 		
 		/*WindowToken add = new WindowToken("chats",0,0,1280,177);
@@ -504,10 +504,13 @@ public class Connection {
 			}
 		} //else {
 		WindowToken token = mWindows.get(0);
-		token.setX(0);
-		token.setY(0);
-		token.setWidth(0);
-		token.setHeight(0);
+		
+		token.layouts.clear();
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+		LayoutGroup g = new LayoutGroup();
+		g.type = LayoutGroup.LAYOUT_TYPE.NORMAL;
+		g.setLandscapeParams(params);
+		g.setPortraitParams(params);
 		//}
 		for(Plugin p : plugins) {
 			p.shutdown();
@@ -587,9 +590,9 @@ public class Connection {
 		} 
 		
 		
-		ConnectionSetttingsParser csp = new ConnectionSetttingsParser(newPath,service.getApplicationContext(),tmpPlugs,handler);
+		ConnectionSetttingsParser csp = new ConnectionSetttingsParser(newPath,service.getApplicationContext(),tmpPlugs,handler,this);
 		
-		tmpPlugs = csp.load();
+		tmpPlugs = csp.load(this);
 		the_settings = (ConnectionSettingsPlugin) tmpPlugs.get(0);
 		tmpPlugs.remove(0);
 		
@@ -642,7 +645,7 @@ public class Connection {
 				
 				String filename = Environment.getExternalStorageDirectory() + "/BlowTorch/" + link;
 				Log.e("XML","Attempting to load plugins from:" + filename);
-				PluginParser parse = new PluginParser(filename,link,service.getApplicationContext(),plugins,handler);
+				PluginParser parse = new PluginParser(filename,link,service.getApplicationContext(),plugins,handler,this);
 				
 				try {
 					ArrayList<Plugin> group = parse.load();
@@ -655,6 +658,10 @@ public class Connection {
 						} else {
 							ArrayList<String> vals = linkMap.get(link);
 							vals.add(p.getName());
+						}
+						
+						if(p.getSettings().getWindows().size() > 0) {
+							mWindows.addAll(p.getSettings().getWindows().values());
 						}
 					}
 					//plugins.addAll(group);
@@ -1486,6 +1493,16 @@ public class Connection {
 	        e.printStackTrace();
 	        return -1;
 	    } 
+	}
+
+	public WindowToken getWindowByName(String desired) {
+		for(int i=0;i<mWindows.size();i++) {
+			WindowToken t = mWindows.get(i);
+			if(t.getName().equals(desired)) {
+				return t;
+			}
+		}
+		return null;
 	}
 	
 	

@@ -35,4 +35,12 @@ public class LayoutGroup {
 	public RelativeLayout.LayoutParams getLandscapeParams() {
 		return landscapeParams;
 	}
+	
+	public void setType(LayoutGroup.LAYOUT_TYPE input) {
+		this.type = input;
+	}
+	
+	public LayoutGroup.LAYOUT_TYPE getType() {
+		return this.type;
+	}
 }

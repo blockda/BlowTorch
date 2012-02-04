@@ -2,10 +2,13 @@ package com.happygoatstudios.bt.service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 import com.happygoatstudios.bt.service.LayoutGroup.LAYOUT_TYPE;
 import com.happygoatstudios.bt.window.TextTree;
 
+import android.content.res.Configuration;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -13,29 +16,36 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 
 public class WindowToken implements Parcelable {
-	ArrayList<LayoutGroup> layouts;
+	HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup> layouts;
 	
 	private String name;
-	private int x;
-	private int y;
-	private int width;
-	private int height;
+	//private int x;
+	//private int y;
+	//private int width;
+	//private int height;
 	private boolean bufferText = false;
 	private int id;
 	private TextTree buffer;
 	//private String owner;
 	
-	public enum TYPE {
+	/*public enum TYPE {
 		NORMAL,
 		SCRIPT
-	}
+	}*/
 	
-	private TYPE type = TYPE.NORMAL;
+	//private TYPE type = TYPE.NORMAL;
 	
 	private String scriptName;
 	private String pluginName;
 	
-	public WindowToken(String name,int x,int y,int width,int height) {
+	public WindowToken() {
+		name = "";
+
+		//type = TYPE.NORMAL;
+		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
+	}
+	
+	/*public WindowToken(String name,int x,int y,int width,int height) {
 		type = TYPE.NORMAL;
 		this.name = name;
 		this.x = x;
@@ -49,31 +59,65 @@ public class WindowToken implements Parcelable {
 		//portraitParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 		//landscapeParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 		layouts = new ArrayList<LayoutGroup>();
-	}
+	}*/
 	
-	public WindowToken(String name,int x,int y,int width,int height,String scriptName,String pluginName) {
-		type = TYPE.SCRIPT;
+	public WindowToken(String name,String scriptName,String pluginName) {
+		//type = TYPE.SCRIPT;
 		this.name = name;
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
+
 		this.scriptName = scriptName;
 		this.pluginName = pluginName;
 		//this.owner = owner;
 		buffer = new TextTree();
 		//portraitParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 		//landscapeParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-		layouts = new ArrayList<LayoutGroup>();
+		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
 	}
 	
 	public WindowToken copy() {
 		WindowToken w = null;
-		if(this.scriptName == null) {
-			w = new WindowToken(this.name,this.x,this.y,this.width,this.height);
-		} else {
-			w = new WindowToken(this.name,this.x,this.y,this.width,this.height,this.scriptName,this.pluginName);
+		//if(this.scriptName == null) {
+		//	w = new WindowToken(this.name,this.x,this.y,this.width,this.height);
+		//} else {
+		w = new WindowToken(this.name,this.scriptName,this.pluginName);
+		//}
+		w.id = this.id;
+		
+		int numgroups = this.layouts.size();
+		for(LayoutGroup g : this.layouts.values()) {
+			//LayoutGroup g = layouts.get(i);
+			LayoutGroup newg = new LayoutGroup();
+			newg.type = g.type;
+			RelativeLayout.LayoutParams pparams = g.getPortraitParams();
+			RelativeLayout.LayoutParams newportraitparams = new RelativeLayout.LayoutParams(pparams.width,pparams.height);
+			newportraitparams.setMargins(pparams.leftMargin, pparams.topMargin, pparams.rightMargin, pparams.bottomMargin);
+			int[] rules = pparams.getRules();
+			for(int j=0;j<rules.length;j++) {
+				if(rules[j] != 0) {
+					newportraitparams.addRule(j,rules[j]);
+				}
+			}
+			
+			RelativeLayout.LayoutParams lparams = g.getLandscapeParams();
+			RelativeLayout.LayoutParams newlandscapeparams = new RelativeLayout.LayoutParams(lparams.width,lparams.height);
+			newportraitparams.setMargins(lparams.leftMargin, lparams.topMargin, lparams.rightMargin, lparams.bottomMargin);
+			rules = null;
+			rules = lparams.getRules();
+			for(int j=0;j<rules.length;j++) {
+				if(rules[j] != 0) {
+					newlandscapeparams.addRule(j,rules[j]);
+				}
+			}
+			
+			newg.setLandscapeParams(newlandscapeparams);
+			newg.setPortraitParams(newportraitparams);
+			
+			w.layouts.put(newg.type,newg);
+			//pparams = g.getPortraitParams();
+			//newg.setPortraitParams(g.clone());
 		}
+		
+		
 		/*w.landscapeParams = new RelativeLayout.LayoutParams(this.landscapeParams);
 		int[] rules = this.landscapeParams.getRules();
 		for(int i=0;i<rules.length;i++) {
@@ -95,11 +139,13 @@ public class WindowToken implements Parcelable {
 	public WindowToken(Parcel p) {
 		//owner = p.readString();
 		name = p.readString();
-		x = p.readInt();
-		y = p.readInt();
-		height = p.readInt();
-		width = p.readInt();
-		layouts = new ArrayList<LayoutGroup>();
+		if(name.equals("chats")) {
+			long ssfd = System.currentTimeMillis();
+			ssfd = ssfd +10;
+		}
+		id = p.readInt();
+		Log.e("TOKEN","PARCEL: READING WINDOW WITH ID:" + id);
+		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>();
 		//layout paramters.
 		int numLayoutGroups = p.readInt();
 		for(int i=0;i<numLayoutGroups;i++) {
@@ -164,37 +210,27 @@ public class WindowToken implements Parcelable {
 					done = true;
 				}
 			}
+			
+			layouts.put(g.type, g);
 		}
 		setBufferText((p.readInt()==0) ? false : true);
 		int script = p.readInt();
 		if(script != 1) {
 			scriptName = null;
 			pluginName = null;
-			type = TYPE.NORMAL;
-			byte[] buf = p.createByteArray();
-			buffer = new TextTree();
-			try {
-				buffer.addBytesImpl(buf);
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			Log.e("PARCEL","WINDOWTOKEN RECONSTITUTING: " + buffer.getBrokenLineCount() + " lines.");
-			
 		} else {
 			scriptName = p.readString();
 			pluginName = p.readString();
-			byte[] buf = p.createByteArray();
-			buffer = new TextTree();
-			type = TYPE.SCRIPT;
-			
-			try {
-				buffer.addBytesImpl(buf);
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
+		}
+		byte[] buf = p.createByteArray();
+		buffer = new TextTree();
+		//type = TYPE.SCRIPT;
+		
+		try {
+			buffer.addBytesImpl(buf);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -206,45 +242,6 @@ public class WindowToken implements Parcelable {
 		return scriptPath;
 	}*/
 
-	public void setType(TYPE type) {
-		this.type = type;
-	}
-
-	public TYPE getType() {
-		return type;
-	}
-
-	public void setHeight(int height) {
-		this.height = height;
-	}
-
-	public int getHeight() {
-		return height;
-	}
-
-	public void setWidth(int width) {
-		this.width = width;
-	}
-
-	public int getWidth() {
-		return width;
-	}
-
-	public void setY(int y) {
-		this.y = y;
-	}
-
-	public int getY() {
-		return y;
-	}
-
-	public void setX(int x) {
-		this.x = x;
-	}
-
-	public int getX() {
-		return x;
-	}
 
 	public void setName(String name) {
 		this.name = name;
@@ -262,14 +259,13 @@ public class WindowToken implements Parcelable {
 	public void writeToParcel(Parcel p, int arg1) {
 		//p.writeString(owner);
 		p.writeString(name);
-		p.writeInt(x);
-		p.writeInt(y);
-		p.writeInt(height);
-		p.writeInt(width);
-		
-		//write out layout paramters, portrait first.
-		for(int j=0;j<layouts.size();j++) {
-			LayoutGroup g = layouts.get(j);
+		Log.e("TOKEN","PARCEL: WRITING WINDOW WITH ID:" + id);
+		p.writeInt(id);
+		Set<LayoutGroup.LAYOUT_TYPE> keySet = layouts.keySet();
+		p.writeInt(keySet.size());
+		for(LayoutGroup g : layouts.values()) {
+			//LayoutGroup.LAYOUT_TYPE = keySet.
+			//LayoutGroup g = layouts.get(j);
 			switch(g.type) {
 			case SMALL:
 				p.writeInt(0);
@@ -374,6 +370,12 @@ public class WindowToken implements Parcelable {
 	public int getId() {
 		return id;
 	}
+	
+	public HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup> getLayouts() {
+		return layouts;
+	}
+	
+	//public void setType(LayoutGrou)
 
 	public static final Parcelable.Creator<WindowToken> CREATOR = new Parcelable.Creator<WindowToken>() {
 
@@ -385,6 +387,142 @@ public class WindowToken implements Parcelable {
 			return new WindowToken[arg0];
 		}
 	};
+
+	public void resetToDefaults() {
+		name = "";
+		id = 0;
+		bufferText = false;
+		layouts.clear();
+	}
+
+	public LayoutParams getLayout(int size, boolean landscape) {
+		
+		switch(size) {
+		case Configuration.SCREENLAYOUT_SIZE_SMALL:
+			//tmp.setLayoutParams(w.getLayout(Configuration.SCREENLAYOUT_SIZE_SMALL,landscape));
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+				}
+			} else {
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				return p;
+			}
+			//break;
+		case Configuration.SCREENLAYOUT_SIZE_NORMAL:
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+				}
+			} else {
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				return p;
+			}
+			//break;
+		case Configuration.SCREENLAYOUT_SIZE_LARGE:
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+				}
+			} else {
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				return p;
+			}
+			
+		case Configuration.SCREENLAYOUT_SIZE_XLARGE:
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+				}
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+				if(landscape) {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+				} else {
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+				}
+			} else {
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				return p;
+			}
+		}
+		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+		return p;
+		//return null;
+	}
 	
 
 	
