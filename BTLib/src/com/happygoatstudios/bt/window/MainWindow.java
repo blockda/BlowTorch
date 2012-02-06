@@ -1584,11 +1584,27 @@ public class MainWindow extends Activity {
 	
 	int OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
 	
+	boolean keyboardShowing = false;
+	
 	public void onConfigurationChanged(Configuration newconfig) {
-		//Log.e("WINDOW","CONFIGURATION CHANGING");
+		Log.e("WINDOW","CONFIGURATION CHANGING");
 		if(service == null) {
 			super.onConfigurationChanged(newconfig);
 			return;
+		}
+		
+		
+		if(newconfig.keyboardHidden == Configuration.KEYBOARDHIDDEN_YES) {
+			if(keyboardShowing == true) {
+				keyboardShowing = false;
+				return;
+			}
+		}
+		if(newconfig.keyboardHidden == Configuration.KEYBOARDHIDDEN_NO) {
+			if(keyboardShowing == false) {
+				keyboardShowing = true;
+				return;
+			}
 		}
 		//Log.e("WINDOW","CONFIGURATION CHANGED");
 		//RelativeLayout container = (RelativeLayout)this.findViewById(R.id.window_container);

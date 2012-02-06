@@ -6,6 +6,7 @@ package.path = "/mnt/sdcard/BlowTorch/?.lua"
 context = view:getContext()
 
 System = luajava.bindClass("java.lang.System")
+View = luajava.bindClass("android.view.View")
 HorizontalScrollView = luajava.bindClass("android.widget.HorizontalScrollView")
 Drawable = luajava.bindClass("android.graphics.drawable.Drawable")
 RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
@@ -67,6 +68,7 @@ uiButtonBarParams = luajava.newInstance("android.widget.RelativeLayout$LayoutPar
 uiButtonBarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 --params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 uiButtonBar:setLayoutParams(uiButtonBarParams)
+uiButtonBar:setVisibility(View.GONE)
 
 scrollHolder = luajava.new(HorizontalScrollView,context)
 scrollHolderParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
@@ -137,6 +139,8 @@ function onParentAnimationEnd()
 			wheight = theight - uiButtonBarHeight
 			view:setHeight(wheight)
 			view:requestLayout()
+		else 
+			uiButtonBar:setVisibility(View.GONE)
 		end
 		
 	end
@@ -195,6 +199,7 @@ function toucher.onLongClick(v)
 		wheight = view:getHeight() + foldoutHeight - uiButtonBarHeight
 		view:setHeight(wheight)
 		view:startAnimation(windowMoveUpAnimation)
+		uiButtonBar:setVisibility(View.VISIBLE)
 	else
 		wheight = view:getHeight() + foldoutHeight
 		view:setHeight(wheight)
