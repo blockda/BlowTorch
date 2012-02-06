@@ -201,9 +201,10 @@ public class Window extends View {
 		
 		setMeasuredDimension(mWidth,mHeight);
 		
+		//if(sizeChanged) {
 		calculateCharacterFeatures(mWidth,mHeight);
-		
-			
+			//sizeChanged = false;
+		//}	
 		//doDelayedDraw(0);
 	}
 	
@@ -344,7 +345,9 @@ public class Window extends View {
 			this.setLineBreaks(0);
 		}
 		
-		jumpToZero();
+		if(the_tree.getBrokenLineCount() == 0) {
+			jumpToZero();
+		}
 		
 	}
 
@@ -2088,6 +2091,15 @@ public class Window extends View {
 		return mMaxHeight;
 	}
 	
+	@Override
+	protected void onLayout(boolean changed,int left,int top,int right,int bottom) {
+		Log.e("WINDOW","WINDOW ONLAYOUT CALLED: "+changed);
+		if(changed) {
+			sizeChanged = true;
+		}
+	}
+	
+	boolean sizeChanged = false;
 	/*@Override
 	public RelativeLayout.LayoutParams getLayoutParams() {
 		return this.getLayoutParams();

@@ -18,11 +18,11 @@
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
-        		  android:windowSoftInputMode="adjustPan"
+        		  android:windowSoftInputMode="adjustUnspecified|stateHidden"
         		  android:label="BlowTorch"
         		 
         		  
-				  android:configChanges="orientation|keyboard|keyboardHidden"
+				  android:configChanges="orientation|keyboard|keyboardHidden|screenLayout"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	

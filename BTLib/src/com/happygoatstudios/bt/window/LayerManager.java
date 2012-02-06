@@ -8,7 +8,10 @@ import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.view.Display;
+import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.TranslateAnimation;
@@ -29,12 +32,16 @@ public class LayerManager {
 	
 	Handler rootHandler = null;
 	
+	boolean landscape = false;
 	public LayerManager(IConnectionBinder service, Context context, RelativeLayout root,Handler rootHandler) {
 		this.rootHandler = rootHandler;
 		mContext = context;
 		mService = service;
 		mRootLayout = root;
+		//WindowManager w = null;
+		Display display = ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
 		
+		landscape = (display.getRotation() == Surface.ROTATION_180 || display.getRotation() == Surface.ROTATION_90) ? true : false;
 	}
 	
 	public void initiailize() {
@@ -105,7 +112,8 @@ public class LayerManager {
 			
 			//determine the appropriate layout group to load.
 			int screenLayout = mContext.getResources().getConfiguration().screenLayout;
-			boolean landscape = ((screenLayout & Configuration.SCREENLAYOUT_LONG_MASK) == Configuration.SCREENLAYOUT_LONG_YES) ? true : false;
+			//boolean landscape = ((screenLayout & Configuration.SCREENLAYOUT_LONG_MASK) == Configuration.SCREENLAYOUT_LONG_NO) ? true : false;
+			
 			//int longyesno = screenLayout & m
 			int screenSize = screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
 			
