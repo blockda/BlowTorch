@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.window;
 
 import android.content.Context;
 import android.util.Log;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.RelativeLayout;
@@ -92,6 +93,24 @@ public class AnimatedRelativeLayout extends RelativeLayout{
 		p.height = height;
 		//p.width = width;
 	}
+	
+	/*@Override
+	protected void onLayout(boolean changed,int left,int top,int right,int bottom) {
+		Log.e("RELATIVELAYOUT","LAYOUT CHANGING AT HOLDER RELATIVELAYOUT:" + changed);
+		if(changed) {
+			for(int i=0;i<this.getChildCount();i++) {
+				View child = this.getChildAt(i);
+				child.layout(left, top, right, bottom);
+			}
+		} else {
+			for(int i=0;i<this.getChildCount();i++) {
+				View child = this.getChildAt(i);
+				if(child.isLayoutRequested()) {
+					child.layout(left, top, right, bottom);
+				}
+			}
+		}
+	}*/
 	
 
 }
