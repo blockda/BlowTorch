@@ -18,7 +18,7 @@
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
-        		  android:windowSoftInputMode="adjustUnspecified|stateHidden"
+        		  android:windowSoftInputMode="adjustPan|stateHidden"
         		  android:label="BlowTorch"
         		 
         		  

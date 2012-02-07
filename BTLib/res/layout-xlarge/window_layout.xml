@@ -5,13 +5,13 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
     
- <!-- <RelativeLayout
+ <!--  <RelativeLayout
 	android:layout_height="wrap_content"
 	android:minHeight="40dip"
 	android:layout_width="fill_parent"
 	android:id="@+id/input_bar"
 	android:layout_alignParentBottom="true"
-	android:layout_alignParentLeft="true">  -->
+	android:layout_alignParentLeft="true">-->
     <!-- <LinearLayout
     	android:layout_height="40dip"
     	android:layout_width="wrap_content"
@@ -20,18 +20,7 @@
     	android:id="@+id/ctrl_target" /> -->
 
     
-     <ImageButton
-    	android:id="@+id/test_btn"
-    	android:layout_width="80dip"
-    	android:layout_height="40dip"
-    	android:background="#0A0A0A"
-    	android:src="@drawable/sliderwidgetout"
-    	android:textSize="16sp"
-    	android:layout_alignParentLeft="true"
-    	android:layout_alignParentBottom="true"
-    	android:typeface="monospace"
-    	android:textColor="#9999FF"
-    	android:text="|DOWN|"/>
+
 
     <!--  android:background="#0A0A0A" -->
     <!-- <EditText -->
@@ -59,7 +48,21 @@
     android:isScrollContainer = "false"
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"/>
- <!-- </RelativeLayout>  --> 
+    
+    <ImageButton
+    	android:id="@+id/test_btn"
+    	android:layout_width="80dip"
+    	android:layout_height="40dip"
+    	android:background="#0A0A0A"
+    	android:src="@drawable/sliderwidgetout"
+    	android:textSize="16sp"
+    	android:layout_alignParentLeft="true"
+    	android:layout_alignBottom="@id/textinput"
+    	android:layout_alignTop="@id/textinput"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="|DOWN|"/>
+<!-- </RelativeLayout>  -->
 	<!--  android:lineSpacingExtra = "-2sp" -->
     
     <!-- <View 
@@ -98,15 +101,16 @@
    					android:textSize="12sp"
     				android:typeface="monospace"
     				android:id="@+id/tv2" /> -->
-    				<RelativeLayout 
+    				<!-- <RelativeLayout 
     					android:id="@+id/slickholder"
     					android:layout_width="fill_parent"
     					android:layout_height="fill_parent"
     					android:layout_alignParentTop="true"
     					android:layout_alignParentLeft="true"
+    					android:layout_alignParentRight="true"
     					android:layout_above="@id/textinput"
     					>
-    				</RelativeLayout>
+    				</RelativeLayout> -->
     					
     <!--	</ScrollView> -->
     	<!-- <ScrollView
