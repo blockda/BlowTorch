@@ -167,12 +167,32 @@ end
 
 hider_cb = luajava.createProxy("android.view.View$OnClickListener",hider)
 --button:setOnClickListener(toggler_cb)
-view:addView(uiButtonBar)
+
 
 --debugPrint("added button")
 
-parentView = view:getParentView()
-parentView:bringChildToFront(view)
+rootView = view:getParentView()
+rootView:removeView(view)
+
+parentView = luajava.newInstance("com.happygoatstudios.bt.window.AnimatedRelativeLayout",view:getContext())
+parentView:setAnimationListener(view)
+viewParams = view:getLayoutParams()
+chatWindowParams = luajava.new(RelativeLayoutParams,viewParams.width,viewParams.height)
+
+
+parentView:setLayoutParams(viewParams)
+view:setLayoutParams(chatWindowParams)
+
+
+mId = view:getId()
+parentView:setId(mId)
+view:setId(59595)
+
+
+rootView:addView(parentView)
+parentView:addView(uiButtonBar)
+parentView:addView(view)
+
 toucher = {}
 function toucher.onLongClick(v)
 	if(toggle == true) then
@@ -192,7 +212,7 @@ function toucher.onLongClick(v)
 	--params.height = theight
 	--view:requestLayout()
 	--view:updateDimensions(fuckwidth:intValue(),fuckheight:intValue())
-	parentView:bringToFront()
+	rootView:bringChildToFront(parentView)
 	parentView:startAnimation(expandAnimation)
 	toggle = true
 	if(pinned == false) then

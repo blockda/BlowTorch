@@ -10,10 +10,20 @@ import android.widget.RelativeLayout;
 public class AnimatedRelativeLayout extends RelativeLayout{
 
 	Window w = null;
-	LayerManager parent = null;
+	//LayerManager parent = null;
 	public AnimatedRelativeLayout(Context context,Window w,LayerManager m) {
 		super(context);
-		this.parent = m;
+		//this.parent = m;
+		this.w = w;
+	}
+	
+	public AnimatedRelativeLayout(Context context) {
+		super(context);
+		this.w = null;
+		//this.parent = null;
+	}
+	
+	public void setAnimationListener(Window w) {
 		this.w = w;
 	}
 	
@@ -45,7 +55,7 @@ public class AnimatedRelativeLayout extends RelativeLayout{
 	}
 	
 	public void bringToFront() {
-		parent.bringToFront(this);
+		//parent.bringToFront(this);
 	}
 	
 	//public void startAnimationX(Animation a,boolean b) {

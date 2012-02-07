@@ -49,12 +49,14 @@ import android.text.InputType;
 import android.util.Log;
 //import android.util.Log;
 import android.view.ActionMode;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -193,9 +195,9 @@ public class MainWindow extends Activity {
 	Boolean settingsLoaded = false; //synchronize or try to mitigate failures of writing button data, or failures to read data
 	Boolean serviceConnected = false;
 	Boolean isResumed = false;
-	
+	List<WindowToken> mWindows = null;
 	//VitalsView vitals = null;
-	
+	boolean landscape = false;
 	ArrayList<ScriptOptionCallback> scriptCallbacks = new ArrayList<ScriptOptionCallback>();
 	
 	private class ScriptOptionCallback {
@@ -287,7 +289,7 @@ public class MainWindow extends Activity {
 		
 	};
 	
-	private LayerManager mLayers = null;
+	//private LayerManager mLayers = null;
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		if(supportsActionBar()) {
@@ -359,6 +361,7 @@ public class MainWindow extends Activity {
         //health.setValue(10);
 		
         View v = findViewById(R.id.textinput);
+        //v.setTag("inputbar");
         EditText input_box = (EditText)v;
         
         
@@ -498,7 +501,7 @@ public class MainWindow extends Activity {
 					if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
 					}
-					MainWindow.this.initLayers();
+					MainWindow.this.initiailizeWindows();
 					
 					try {
 						service.initXfer();
@@ -541,13 +544,6 @@ public class MainWindow extends Activity {
 				case MESSAGE_TESTLUA:
 					//LuaState exist = LuaStateFactory.getExistingState(msg.arg1);
 					//exist.LdoString("Note(\"Fooooooo\")");
-					break;
-				case MESSAGE_CLEARALLBUTTONS:
-					try {
-						ClearButtonsImplementation();
-					} catch (RemoteException e6) {
-						e6.printStackTrace();
-					}
 					break;
 				case MESSAGE_LAUNCHURL:
 					Pattern urlPattern = Pattern.compile(TextTree.urlFinderString);
@@ -659,20 +655,7 @@ public class MainWindow extends Activity {
 					}
 					
 					if(needschange) {
-						RelativeLayout modb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-						//modb is the slickview/button container.
-						for(int i=0;i<modb.getChildCount();i++) {
-							View tmp = modb.getChildAt(i);
-							if(tmp instanceof SlickButton) {
-								if(isFullScreen) {
-									((SlickButton)tmp).setFullScreenShift(statusBarHeight); 
-								} else {
-									((SlickButton)tmp).setFullScreenShift(0); 
-								}	
-							}
-							
-						}
-						MainWindow.this.findViewById(R.id.window_container).requestLayout();
+						
 						//screen2.doDelayedDraw(100);
 						
 					}
@@ -742,50 +725,7 @@ public class MainWindow extends Activity {
 					}
 					t.show();
 					break;
-				case MESSAGE_DELETEBUTTONSET:
-					try {
-						int count = service.deleteButtonSet((String)msg.obj);
-						String message = "Deleted " + (String)msg.obj + " button set ";
-						if(count > 0) {
-							message +=  "with " + count + " buttons.";
-						} else {
-							message += ".";
-						}
-						
-						Message reloadset = this.obtainMessage(MESSAGE_CHANGEBUTTONSET);
-						reloadset.obj = service.getAvailableSet();
-						reloadset.arg1 = 10;
-						
-						if(service.getLastSelectedSet().equals((String)msg.obj)) {
-							message += "\nLoaded default button set.";
-						}
-						Toast cleared = Toast.makeText(MainWindow.this,message, Toast.LENGTH_SHORT);
-						cleared.show();
-						
-						this.sendMessage(reloadset);
-						
 
-						
-					} catch (RemoteException e4) {
-						throw new RuntimeException(e4);
-					}
-					break;
-				case MESSAGE_CLEARBUTTONSET:
-					try {
-						int count = service.clearButtonSet((String)msg.obj);
-						Toast cleared = Toast.makeText(MainWindow.this,"Cleared " + count+" buttons from " + (String)msg.obj + " button set.", Toast.LENGTH_SHORT);
-						cleared.show();
-						if(service.getLastSelectedSet().equals((String)msg.obj)) {
-							Message reloadset = this.obtainMessage(MESSAGE_CHANGEBUTTONSET);
-							reloadset.obj = msg.obj;
-							reloadset.arg1 = 10;
-							this.sendMessage(reloadset);
-						}
-						
-					} catch (RemoteException e4) {
-						throw new RuntimeException(e4);
-					}
-					break;
 				case MESSAGE_DOHAPTICFEEDBACK:
 					DoHapticFeedback();
 					break;
@@ -823,88 +763,6 @@ public class MainWindow extends Activity {
 					TextView tvtmp = (TextView)error.findViewById(android.R.id.message);
 					tvtmp.setTypeface(Typeface.MONOSPACE);
 					
-					break;
-				case MESSAGE_RELOADBUTTONSET:
-					
-					break;
-				case MESSAGE_NEWBUTTONSET:
-					try {
-						service.addNewButtonSet((String)msg.obj);
-					} catch (RemoteException e3) {
-						throw new RuntimeException(e3);
-					}
-					removeButtonsFromHolder();
-					makeFakeButton();
-					showNoButtonMessage(true);
-					
-					break;
-				case MESSAGE_CHANGEBUTTONSET:
-					RelativeLayout modb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-					//get the new list
-					//screen2.setDisableEditing(false);
-					try {
-						
-						List<SlickButtonData> newset = service.getButtonSet((String)msg.obj);
-						
-						if(newset != null) {
-							
-							removeButtonsFromHolder();
-							
-							if(newset.size() > 0) {
-								for(SlickButtonData tmp : newset) {
-									SlickButton new_button = new SlickButton(modb.getContext(),0,0);
-									new_button.setData(tmp);
-									new_button.setDispatcher(this);
-									new_button.setDeleter(this);
-									
-									if(isFullScreen) {
-										new_button.setFullScreenShift(statusBarHeight);
-									} else {
-										new_button.setFullScreenShift(0);
-									}
-									
-									if(!service.isRoundButtons()) {
-										new_button.setDrawRound(false);
-									}
-									
-									if(service.isButtonSetLocked(service.getLastSelectedSet())) {
-										new_button.setLockEdit(service.isButtonSetLockedEditButtons(service.getLastSelectedSet()));
-										new_button.setLockMove(service.isButtonSetLockedMoveButtons(service.getLastSelectedSet()));
-									}
-									modb.addView(new_button);
-								}
-							} else {
-								makeFakeButton();
-								if(msg.arg1 != 10) showNoButtonMessage(false);
-							}
-						}
-					} catch (RemoteException e3) {
-						throw new RuntimeException(e3);
-					}
-					break;
-				case MESSAGE_MODIFYBUTTON:
-					SlickButtonData orig = msg.getData().getParcelable("ORIG_DATA");
-					SlickButtonData mod = msg.getData().getParcelable("MOD_DATA");
-					
-					try {
-						if(orig != null && mod != null) {
-							//Log.e("WINDOW","MODIFY BUTTON " +orig.toString() + " TO " + mod.toString() + " attempting service call now");
-							service.modifyButton(service.getLastSelectedSet(),orig,mod);
-						} else {
-							//Log.e("WINDOW","ATTEMPTED TO MODIFY BUTTON, BUT GOT NULL DATA");
-						}
-					} catch (RemoteException e2) {
-						throw new RuntimeException(e2);
-					}
-					
-					//we modified the button, now load the set again to make the changes appear on the screen.
-					Message reloadset = myhandler.obtainMessage(MESSAGE_CHANGEBUTTONSET);
-					try {
-						reloadset.obj = service.getLastSelectedSet();
-					} catch (RemoteException e3) {
-						throw new RuntimeException(e3);
-					}
-					myhandler.sendMessage(reloadset);
 					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
@@ -1076,7 +934,7 @@ public class MainWindow extends Activity {
 						
 					});
 					
-					RelativeLayout rl = (RelativeLayout) test_button.getParent();
+					RelativeLayout rl = (RelativeLayout) MainWindow.this.findViewById(R.id.window_container);
 					rl.addView(enterButton);
 					rl.addView(upButton);
 					rl.addView(downButton);
@@ -1354,49 +1212,7 @@ public class MainWindow extends Activity {
 		
 	}
 	
-	protected void ClearButtonsImplementation() throws RemoteException {
-		//find the button holder, nuke the buttons, find the button set that sent the "clear all" and make a button with a link back to that set, and then position that button.
-		//TODO: impl
-		RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.slickholder);
-		//screen2.setDisableEditing(true);
-		
-		removeButtonsFromHolder();
-		
-		String lastSet = service.getLastSelectedSet();
-		
-		SlickButtonData data = new SlickButtonData();
-		data.setLabel("BACK");
-		data.setText(".loadset " + lastSet);
-		
-		ColorSetSettings colorset = null;
-		
-		colorset = service.getCurrentColorSetDefaults();
-		
-		
-		data.setLabelColor(colorset.getLabelColor());
-		data.setPrimaryColor(colorset.getPrimaryColor());
-		data.setFlipColor(colorset.getFlipColor());
-		data.setSelectedColor(colorset.getSelectedColor());
-		data.setLabelSize(colorset.getLabelSize());
-		
-		data.setWidth(colorset.getButtonWidth());
-		data.setHeight(colorset.getButtonHeight());
-		
-		float margin = 7.0f;
-		float density = this.getResources().getDisplayMetrics().density;
-		//float xPos = screen2.getWidth() - ((data.getWidth() * density)/2) - (margin * density);
-		//float yPos = screen2.getHeight() - ((data.getHeight() * density)/2)- (margin * density);
-		//data.setX((int)xPos);
-		//data.setY((int)yPos);
-		
-		SlickButton newButt = new SlickButton(this,0,0);
-		newButt.setData(data);
-		newButt.setDeleter(myhandler);
-		newButt.setDispatcher(myhandler);
-		newButt.setDisableEditing(true);
-		layout.addView(newButt);
-		
-	}
+	
 
 	/*boolean showsettingsoptions = false;
 	boolean settingsmenuclosed  = true;
@@ -1443,35 +1259,6 @@ public class MainWindow extends Activity {
 		
 		AlertDialog d = err.create();
 		d.show();
-	}
-	
-	private void makeFakeButton() {
-		
-		//the uglyest of ugly hacks.
-		RelativeLayout modb = (RelativeLayout)findViewById(R.id.slickholder);
-		//Log.e("WINDOW","ADDING FAKE BUTTON!");
-		SlickButton fakey = new SlickButton(modb.getContext(),0,0);
-		SlickButtonData fakedatay = new SlickButtonData();
-		fakedatay.setPrimaryColor(0x00FFFFFF);
-		fakedatay.setLabelColor(0x00FFFFFF);
-		fakedatay.setFlipColor(0x00FFFFFF);
-		fakedatay.setFlipLabelColor(0x00FFFFFF);
-		fakedatay.setSelectedColor(0x00FFFFFF);
-		fakedatay.setText("");
-		fakedatay.setFlipCommand("");
-		fakedatay.setLabel("");
-		fakedatay.setFlipLabel("");
-		fakedatay.setWidth(2);
-		fakedatay.setHeight(2);
-		fakedatay.setX(-10);
-		fakedatay.setY(-10);
-		
-		fakey.setData(fakedatay);
-		
-		modb.addView(fakey);
-		
-
-		
 	}
 	
 	private void showNoButtonMessage(boolean newset) {
@@ -1559,7 +1346,7 @@ public class MainWindow extends Activity {
 		if(item.getItemId() >= 1000) {
 			//script callback
 			ScriptOptionCallback callback = scriptCallbacks.get(1000-item.getItemId());
-			mLayers.callScript(callback.getWindow(),callback.getCallback());
+			callWindowScript(callback.getWindow(),callback.getCallback());
 			return true;
 		}
 		
@@ -2134,19 +1921,12 @@ public class MainWindow extends Activity {
 	}
 	
 	
-	private void initLayers() {
+	/*private void initLayers() {
 		RelativeLayout holder = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-		if(mLayers == null) {
-			
-			mLayers = new LayerManager(service,this,holder,myhandler);
-			mLayers.initiailize();
-		} else {
-			mLayers.initiailize();
-		}
+		initializeWindows();
 		
 		
-		
-	}
+	}*/
 	
 	private String mBorderTag = "BorderLayer";
 	private void setHyperLinkSettings() {
@@ -2348,42 +2128,7 @@ public class MainWindow extends Activity {
 			default:
 				break;
 			}
-			//screen2.setWordWrap(service.isWordWrap());
-			//screen2.setLineBreaks(service.getBreakAmount());
 			
-			//current_button_views.clear();
-			List<SlickButtonData> buttons =  service.getButtonSet(service.getLastSelectedSet());
-			
-			RelativeLayout button_layout = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-			
-			removeButtonsFromHolder();
-			
-			if(buttons != null) {
-				if(buttons.size() > 0) {
-					for(SlickButtonData button : buttons) {
-						SlickButton tmp = new SlickButton(MainWindow.this,0,0);
-						tmp.setData(button);
-						tmp.setDispatcher(myhandler);
-						tmp.setDeleter(myhandler);
-						//adjust for full screen.
-						if(isFullScreen) {
-							tmp.setFullScreenShift(statusBarHeight);
-						} else {
-							tmp.setFullScreenShift(0);
-						}
-						
-						if(!service.isRoundButtons()) {
-							tmp.setDrawRound(false);
-						}
-						button_layout.addView(tmp);
-						//current_button_views.add(tmp);
-					}
-				} else {
-					makeFakeButton();
-					//show that the loaded set has no buttons.
-					showNoButtonMessage(false);
-				}
-			}
 			
 			//screen2.setFontSize(service.getFontSize());
 			//screen2.setLineSpace(service.getFontSpaceExtra());
@@ -2472,7 +2217,8 @@ public class MainWindow extends Activity {
 			throw new RuntimeException(e1);
 		}
 		
-		initLayers();
+		initiailizeWindows();
+		int i = R.id.textinput;
 	}
 	
 	private Typeface loadFontFromName(String name) {
@@ -2504,23 +2250,6 @@ public class MainWindow extends Activity {
 			}
 		}
 		return font;
-	}
-
-	private void removeButtonsFromHolder() {
-		RelativeLayout clearb = (RelativeLayout)MainWindow.this.findViewById(R.id.slickholder);
-		//int slick = clearb.indexOfChild(screen2);
-		//int vital = clearb.indexOfChild(vitals);
-		int count = clearb.getChildCount();
-		
-		
-		clearb.removeViews(3, count-3);
-		
-		
-		//for(View v : clearb.getChildAt(index))
-		
-		/*clearb.removeAllViews();
-		clearb.addView(screen2, 0);
-		clearb.addView(vitals,1);*/
 	}
 	
 	private BetterEditText.AnimationEndListener mInputBarAnimationListener = null;
@@ -2743,4 +2472,175 @@ public class MainWindow extends Activity {
 		}
 	};
 	
+	boolean windowsInitialized = false;
+	//boolean landscape = false
+	public void initiailizeWindows() {
+		//ask the service for all the current windows for the connection.
+		//List<WindowToken> windows =  null;
+		//make windows in the order they are given, attach the callback and the view to the layout root.
+		//mRootLayout.removeAllViews();
+		
+		if(windowsInitialized == true) {
+			return;
+		}
+		Display display = ((WindowManager)this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+		
+		landscape = (display.getRotation() == Surface.ROTATION_180 || display.getRotation() == Surface.ROTATION_90) ? true : false;
+		windowsInitialized = true;
+		
+		try {
+			mWindows = service.getWindowTokens();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if(mWindows == null) {
+			//Exception e = new Exception("No windows to show.");
+			//throw new RuntimeException(e);
+			synchronized(this) {
+				while(mWindows == null) {
+					try {
+						this.wait(30);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					boolean done = false;
+					while(!done) {
+						try {
+							mWindows = service.getWindowTokens();
+							if(mWindows != null) {
+								if(mWindows.size() > 0) {
+									done = true;
+								}
+							}
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		} else {
+			//initialize windows.
+			for(Object x : mWindows) {
+				WindowToken w = null;
+				if(x instanceof WindowToken) {
+					w = (WindowToken)x;
+				} else {
+					//err.
+				}
+				initWindow(w);
+				
+				
+			}
+			//mRootLayout.requestLayout();
+		}
+	}
+	
+	private void initWindow(WindowToken w) {
+		RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
+		View v = rl.findViewWithTag(w.getName());
+		if(v == null) {
+			if(w.getName().equals("chats")) {
+				long sfs = System.currentTimeMillis();
+				sfs = sfs + 10;
+			}
+			com.happygoatstudios.bt.window.Window tmp = new com.happygoatstudios.bt.window.Window(this,w.getName(),w.getPluginName(),myhandler);
+			
+			//determine the appropriate layout group to load.
+			int screenLayout = this.getResources().getConfiguration().screenLayout;
+			//boolean landscape = ((screenLayout & Configuration.SCREENLAYOUT_LONG_MASK) == Configuration.SCREENLAYOUT_LONG_NO) ? true : false;
+			
+			//int longyesno = screenLayout & m
+			int screenSize = screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+			
+			
+			//RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+			//p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			//p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			
+			tmp.setLayoutParams(w.getLayout(screenSize,landscape));
+			tmp.setTag(w.getName());
+			tmp.setVisibility(View.GONE);
+			tmp.setId(w.getId());
+			rl.addView(tmp);
+			
+			//RelativeLayout holder = new AnimatedRelativeLayout(mContext,tmp,this);
+			//RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(w.getX()+w.getWidth(),w.getY()+w.getHeight());
+			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			//holder.setPadding(w.getX(), w.getY(), 0, 0);
+			//holder.setId(w.getId());
+			//holder.setLayoutParams();
+			
+			//holder.addView(tmp);
+			
+			try {
+				String body = service.getScript(w.getPluginName(),w.getScriptName());
+				//TODO: this needs to be much harderly error checked.
+				tmp.loadScript(body);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			tmp.setBufferText(w.isBufferText());
+			try {
+				service.registerWindowCallback(w.getName(),tmp.getCallback());
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			if(w.getBuffer() != null) {
+				tmp.addBytesImpl(w.getBuffer().dumpToBytes(false), true);
+			//construct border.
+			}
+			
+			//attempt to construct a good-ly relative layout to hold the window and any children 
+			
+			tmp.setVisibility(View.VISIBLE);
+			
+			
+		}
+	}
+	
+	
+	public void cleanupWindows() {
+		RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
+		
+		for(Object x : mWindows) {
+			if(x instanceof WindowToken) {
+				WindowToken w = (WindowToken)x;
+				View tmp = rl.findViewWithTag(w.getName());
+				
+				if(tmp instanceof com.happygoatstudios.bt.window.Window) {
+					try {
+						service.unregisterWindowCallback(w.getName(), ((com.happygoatstudios.bt.window.Window)tmp).getCallback());
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+	
+	public void callWindowScript(String window, String callback) {
+		RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
+		
+		com.happygoatstudios.bt.window.Window lview = (com.happygoatstudios.bt.window.Window)rl.findViewWithTag(window);
+		if(lview != null) {
+			lview.callFunction(callback);
+		}
+	}
+	
+	public void shutdownWindow(com.happygoatstudios.bt.window.Window window) {
+		try {
+			service.unregisterWindowCallback(window.getName(), window.getCallback());
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }
