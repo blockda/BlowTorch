@@ -12,6 +12,7 @@ LinearGradient = luajava.bindClass("android.graphics.LinearGradient")
 TileMode = luajava.bindClass("android.graphics.Shader$TileMode")
 Bitmap = luajava.bindClass("android.graphics.Bitmap")
 BitmapConfig = luajava.bindClass("android.graphics.Bitmap$Config")
+RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
 
 Integer = luajava.newInstance("java.lang.Integer",0)
 IntegerClass = Integer:getClass()
@@ -345,6 +346,16 @@ function updateAll(data)
 	updateBarRects()
 	view:invalidate()
 end
+
+R = luajava.bindClass("com.happygoatstudios.bt.R$id")
+--modify the text input bar layout to make the bar appear above the vitals window
+rootView = view:getParentView()
+inputbar = rootView:findViewById(R.textinput)
+inputbarParams = inputbar:getLayoutParams()
+inputbarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,0) --set this rule to false
+inputbarParams:addRule(RelativeLayout.ABOVE,view:getId())
+--inputbar:requestLayout()
+
 
 updateBarRects()
 PluginXCallS("initReady","now")

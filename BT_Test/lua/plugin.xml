@@ -26,7 +26,8 @@
 							height="100"
 							width="400"
 							alignParentBottom="true"
-							alignParentRight="true"/>
+							alignParentRight="true"
+							alignParentLeft="true"/>
 				</layoutGroup>
 			</window>
 		</windows>
@@ -179,8 +180,8 @@
 		<windows>
 			<window name="map_window" id="6010">
 				<layoutGroup target="xlarge">
-					<layout orientation="landscape" alignParentRight="true" height="400" width="400" above="1010"/>
-					<layout orientation="portrait" alignParentRight="true" height="400" width="400" above="1010"/>
+					<layout orientation="landscape" alignParentRight="true" height="400" width="400" above="2131362032"/>
+					<layout orientation="portrait" alignParentRight="true" height="400" width="400" above="2131362032"/>
 				</layoutGroup>
 			</window>
 		</windows>
