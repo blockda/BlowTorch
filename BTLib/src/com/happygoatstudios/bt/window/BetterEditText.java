@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.window;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
@@ -73,6 +74,31 @@ public class BetterEditText extends EditText {
 	public Boolean getBackSpaceBugFix() {
 		return BackSpaceBugFix;
 	}
+	
+	
+	@Override
+	protected void onAnimationEnd() {
+		Log.e("BET","IN THE ANIMATION END LISTENER");
+		super.onAnimationEnd();
+		//if(listener != null) {
+			listener.onAnimationEnd();
+		//}
+	}
+	
+	public void setListener(AnimationEndListener listener) {
+		this.listener = listener;
+	}
+
+	public AnimationEndListener getListener() {
+		return listener;
+	}
+
+	private AnimationEndListener listener = null;
+	
+	public interface AnimationEndListener {
+		public void onAnimationEnd();
+	}
+	
 	
 	//protected boolean getDefaultEditable() {
 	//	return true;

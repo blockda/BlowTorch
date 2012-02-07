@@ -61,8 +61,10 @@ import android.view.Window;
 
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationSet;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
@@ -312,16 +314,16 @@ public class MainWindow extends Activity {
         //screen2 = (ByteView)findViewById(R.id.slickview);
         //RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         //screen2.setParentLayout(l);
-        View fill2 = (View)findViewById(R.id.filler2);
-        fill2.setFocusable(false);
-        fill2.setClickable(false);
+        //View fill2 = (View)findViewById(R.id.filler2);
+       // fill2.setFocusable(false);
+        //fill2.setClickable(false);
         //screen2.setNewTextIndicator(fill2);
         
-        Animation alphaout = new AlphaAnimation(1.0f,0.0f);
-        alphaout.setDuration(100);
-        alphaout.setFillBefore(true);
-        alphaout.setFillAfter(true);
-        fill2.startAnimation(alphaout);
+        //Animation alphaout = new AlphaAnimation(1.0f,0.0f);
+        //alphaout.setDuration(100);
+       // alphaout.setFillBefore(true);
+        //alphaout.setFillAfter(true);
+        //fill2.startAnimation(alphaout);
         
         //screen2.setZOrderOnTop(false);
         //screen2.setOnTouchListener(gestureListener);
@@ -993,95 +995,182 @@ public class MainWindow extends Activity {
 			
 		};
 		
+		//EditText input_box = (EditText)findViewById(R.id.textinput);
+		BetterEditText bet = (BetterEditText)input_box;
+		//bet.setListener(mInputBarAnimationListener);
+		
 		test_button = (ImageButton)findViewById(R.id.test_btn);
 				
 		test_button.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
 				//change my layout parameters and add a new button.
-				RelativeLayout rl = (RelativeLayout)findViewById(R.id.input_bar);
-				LinearLayout l = (LinearLayout)findViewById(R.id.ctrl_target);
-				if(l == null) {
-					return;
-				}
+				//RelativeLayout rl = (RelativeLayout)findViewById(R.id.input_bar);
+				//LinearLayout l = (LinearLayout)findViewById(R.id.ctrl_target);
+				//if(l == null) {
+				///	return;
+				//}
 
-				
-				LayoutInflater lf = LayoutInflater.from(l.getContext());
-				RelativeLayout target = (RelativeLayout)lf.inflate(R.layout.input_controls, null);
-				
-				ImageButton dc = (ImageButton)target.findViewById(R.id.down_btn_c);
-				ImageButton uc = (ImageButton)target.findViewById(R.id.up_btn_c);
-				ImageButton ec = (ImageButton)target.findViewById(R.id.enter_btn_c);
-				
-				uc.setOnClickListener(new View.OnClickListener() {
+				if(downButton == null) {
+					LayoutInflater lf = LayoutInflater.from(MainWindow.this);
+					RelativeLayout target = (RelativeLayout)lf.inflate(R.layout.input_controls, null);
 					
-					public void onClick(View arg0) {
-						EditText input_box = (EditText)findViewById(R.id.textinput);
-						String cmd = history.getNext();
-						try {
-							if(service.isKeepLast()) {
-								if(historyWidgetKept) {
-									String tmp = history.getNext();
-									input_box.setText(tmp);
-									input_box.setSelection(tmp.length());
-									historyWidgetKept = false;
+					
+					
+					ImageButton dc = (ImageButton)target.findViewById(R.id.down_btn_c);
+					ImageButton uc = (ImageButton)target.findViewById(R.id.up_btn_c);
+					ImageButton ec = (ImageButton)target.findViewById(R.id.enter_btn_c);
+					
+					target.removeView(dc);
+					target.removeView(uc);
+					target.removeView(ec);
+					
+					//target.removeAllViews();
+					
+					downButton = dc;
+					upButton = uc;
+					enterButton = ec;
+					
+					uc.setOnClickListener(new View.OnClickListener() {
+						
+						public void onClick(View arg0) {
+							EditText input_box = (EditText)findViewById(R.id.textinput);
+							String cmd = history.getNext();
+							try {
+								if(service.isKeepLast()) {
+									if(historyWidgetKept) {
+										String tmp = history.getNext();
+										input_box.setText(tmp);
+										input_box.setSelection(tmp.length());
+										historyWidgetKept = false;
+									} else {
+										input_box.setText(cmd);
+										input_box.setSelection(cmd.length());
+									}
 								} else {
 									input_box.setText(cmd);
 									input_box.setSelection(cmd.length());
 								}
-							} else {
-								input_box.setText(cmd);
-								input_box.setSelection(cmd.length());
+							} catch (RemoteException e) {
+								throw new RuntimeException(e);
 							}
-						} catch (RemoteException e) {
-							throw new RuntimeException(e);
 						}
-					}
-				});
-				
-				
-				dc.setOnClickListener(new View.OnClickListener() {
+					});
 					
-					public void onClick(View arg0) {
-						EditText input_box = (EditText)findViewById(R.id.textinput);
-						String cmd = history.getPrev();
-						input_box.setText(cmd);
-					}
-				});
-				
-				ec.setOnClickListener(new View.OnClickListener() {
-
-					public void onClick(View arg0) {
-						myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
-						//screen2.jumpToZero();
-					}
 					
-				});
-				
+					dc.setOnClickListener(new View.OnClickListener() {
+						
+						public void onClick(View arg0) {
+							EditText input_box = (EditText)findViewById(R.id.textinput);
+							String cmd = history.getPrev();
+							input_box.setText(cmd);
+						}
+					});
+					
+					ec.setOnClickListener(new View.OnClickListener() {
+	
+						public void onClick(View arg0) {
+							myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
+							//screen2.jumpToZero();
+						}
+						
+					});
+					
+					RelativeLayout rl = (RelativeLayout) test_button.getParent();
+					rl.addView(enterButton);
+					rl.addView(upButton);
+					rl.addView(downButton);
+				}
 				//pre multi screen support animation value 178px
 				float amount = 180*MainWindow.this.getResources().getDisplayMetrics().density;
-				Animation a = new TranslateAnimation(-1*amount,0,0,0);
-				a.setDuration(120);
-				AnimationSet set = new AnimationSet(true);
-				set.addAnimation(a);
+				//Animation a = new TranslateAnimation(-1*amount,0,0,0);
+				Animation a = new TranslateAnimation(0,amount,0,0);
+				a.setDuration(320);
+				//a.setFillAfter(false);
+				//AnimationSet set = new AnimationSet(true);
+				//set.addAnimation(a);
 				
-				LayoutAnimationController lac = new LayoutAnimationController(set,0.01f);
+				Animation b = new TranslateAnimation(0,amount,0,0);
+				b.setDuration(320);
 				
-				rl.setLayoutAnimation(lac);
+				//LayoutAnimationController lac = new LayoutAnimationController(set,0.01f);
+				
+				//rl.setLayoutAnimation(lac);
+				//View test_btn = 
 				
 				if(input_controls_expanded) {
 					//switch the image resource
-					Animation outanim = new TranslateAnimation(amount,0,0,0);
-					outanim.setDuration(120);
-					LayoutAnimationController lac2 = new LayoutAnimationController(outanim,0.0f);
-					rl.setLayoutAnimation(lac2);
-					l.removeAllViews();
+					Animation outanim = new TranslateAnimation(0,-amount,0,0);
+					outanim.setDuration(320);
+					//outanim.setFillAfter(false);
+					//LayoutAnimationController lac2 = new LayoutAnimationController(outanim,0.0f);
+					//rl.setLayoutAnimation(lac2);
+					//l.removeAllViews();
+					Animation outanimB = new TranslateAnimation(0,-amount,0,0);
+					outanim.setDuration(320);
+					
+					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+					v.startAnimation(outanim);
+					input_box.startAnimation(outanimB);
 					input_controls_expanded = false;
 					test_button.setImageResource(R.drawable.sliderwidgetout);
+					//v.startAnimation(a);
+					//input_box.startAnimation(b);
+					enterButton.startAnimation(outanim);
+					upButton.startAnimation(outanim);
+					downButton.startAnimation(outanim);
+					
 				} else {
-					l.addView(target);
+					//l.addView(target);
+					//set the layout rules and add the views, then animate.
+					if(toggleInParams == null) {
+						toggleInParams = (RelativeLayout.LayoutParams) test_button.getLayoutParams();
+					}
+					
+					if(enterInParams == null) {
+						enterInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						enterInParams.addRule(RelativeLayout.LEFT_OF,test_button.getId());
+						enterInParams.addRule(RelativeLayout.ALIGN_TOP,test_button.getId());
+						enterInParams.addRule(RelativeLayout.ALIGN_BOTTOM,test_button.getId());
+					}
+					
+					if(upInParams == null) {
+						upInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						upInParams.addRule(RelativeLayout.LEFT_OF,enterButton.getId());
+						upInParams.addRule(RelativeLayout.ALIGN_TOP,enterButton.getId());
+						upInParams.addRule(RelativeLayout.ALIGN_BOTTOM,enterButton.getId());
+					}
+					
+					if(downInParams == null) {
+						downInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						downInParams.addRule(RelativeLayout.LEFT_OF,upButton.getId());
+						downInParams.addRule(RelativeLayout.ALIGN_TOP,upButton.getId());
+						downInParams.addRule(RelativeLayout.ALIGN_BOTTOM,upButton.getId());
+					}
+					
+					enterButton.setLayoutParams(enterInParams);
+					upButton.setLayoutParams(upInParams);
+					downButton.setLayoutParams(downInParams);
+					
+					upButton.setVisibility(View.VISIBLE);
+					downButton.setVisibility(View.VISIBLE);
+					enterButton.setVisibility(View.VISIBLE);
+					
+					upButton.requestLayout();
+
+					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+					
 					input_controls_expanded = true;
 					test_button.setImageResource(R.drawable.sliderwidgetin);
+					
+					v.startAnimation(a);
+					input_box.startAnimation(b);
+					enterButton.startAnimation(a);
+					upButton.startAnimation(a);
+					downButton.startAnimation(a);
+					
+					
+					
 				}
 
 			}
@@ -1167,7 +1256,95 @@ public class MainWindow extends Activity {
 			} catch (InterruptedException e) {
 			}
 		}
+		
+		
+		mInputBarAnimationListener = new BetterEditText.AnimationEndListener() {
+			
+			public void onAnimationEnd() {
+				//input_bar.
+				Log.e("Ou","IN THE CUSTOM ANIMATION LISTENER CONTROLLRE");
+				if(input_controls_expanded) {
+					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+					
+					if(toggleOutParams == null) {
+						toggleOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						//tb_params.
+						toggleOutParams.addRule(RelativeLayout.RIGHT_OF,enterButton.getId());
+						toggleOutParams.addRule(RelativeLayout.ALIGN_TOP,input_box.getId());
+						toggleOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,input_box.getId());
+					}
+					
+					if(enterOutParams == null) {
+						enterOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						enterOutParams.addRule(RelativeLayout.RIGHT_OF,upButton.getId());
+						enterOutParams.addRule(RelativeLayout.ALIGN_TOP,test_button.getId());
+						enterOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,test_button.getId());
+					}
+					
+					if(upOutParams == null) {
+						upOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						upOutParams.addRule(RelativeLayout.RIGHT_OF,downButton.getId());
+						upOutParams.addRule(RelativeLayout.ALIGN_TOP,enterButton.getId());
+						upOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,enterButton.getId());
+					}
+					
+					if(downOutParams == null) {
+						downOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						
+						downOutParams.addRule(RelativeLayout.ALIGN_TOP,upButton.getId());
+						downOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,upButton.getId());
+						downOutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+					}
+					
+					test_button.setLayoutParams(toggleOutParams);
+					upButton.setLayoutParams(upOutParams);
+					downButton.setLayoutParams(downOutParams);
+					enterButton.setLayoutParams(enterOutParams);
+					enterButton.requestLayout();
+				} else {
+					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+					if(toggleInParams == null) {
+						toggleInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+						toggleInParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+						toggleInParams.addRule(RelativeLayout.ALIGN_TOP,input_box.getId());
+						toggleInParams.addRule(RelativeLayout.ALIGN_BOTTOM,input_box.getId());
+					}
+					
+					//test_button.setLayoutParams(toggleInParams);
+					//BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+					
+					test_button.setLayoutParams(toggleInParams);
+					test_button.requestLayout();
+					//RelativeLayout rl = (RelativeLayout)input_box.getParent();
+					
+					upButton.setVisibility(View.GONE);
+					downButton.setVisibility(View.GONE);
+					enterButton.setVisibility(View.GONE);
+					//rl.removeView(upButton);
+					//rl.removeView(downButton);
+					//rl.removeView(enterButton);
+					
+					
+				}
+				//
+			}
+		};
+		
+		bet.setListener(mInputBarAnimationListener);
 	}
+	
+	ImageButton downButton = null;
+	ImageButton upButton = null;
+	ImageButton enterButton = null;
+	RelativeLayout.LayoutParams enterOutParams = null;
+	RelativeLayout.LayoutParams enterInParams = null;
+	RelativeLayout.LayoutParams upOutParams = null;
+	RelativeLayout.LayoutParams upInParams = null;
+	RelativeLayout.LayoutParams downOutParams = null;
+	RelativeLayout.LayoutParams downInParams = null;
+	RelativeLayout.LayoutParams toggleOutParams = null;
+	RelativeLayout.LayoutParams toggleInParams = null;
+	
 	
 	protected void initVitals() {
 		//RelativeLayout layout = (RelativeLayout) MainWindow.this.findViewById(R.id.vitals);
@@ -2345,6 +2522,8 @@ public class MainWindow extends Activity {
 		clearb.addView(screen2, 0);
 		clearb.addView(vitals,1);*/
 	}
+	
+	private BetterEditText.AnimationEndListener mInputBarAnimationListener = null;
 
 
 	private IConnectionBinderCallback.Stub the_callback = new IConnectionBinderCallback.Stub() {

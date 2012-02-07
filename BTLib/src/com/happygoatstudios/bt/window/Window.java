@@ -127,9 +127,9 @@ public class Window extends View {
 	protected static final int MSG_UPPRIORITY = 200;
 	protected static final int MSG_NORMALPRIORITY = 201;
 	//final static public int MSG_BUTTONDROPSTART = 100;
-	final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
-	final static public int MSG_SET_NEW_TEXT_INDICATOR = 106;
-	final static public int MSG_SET_NEW_TEXT_INDICATOR_ANIMATED = 107;
+	//final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
+	//final static public int MSG_SET_NEW_TEXT_INDICATOR = 106;
+	//final static public int MSG_SET_NEW_TEXT_INDICATOR_ANIMATED = 107;
 	//final static public int MSG_DELETEBUTTON = 1040;
 	//final static public int MSG_REALLYDELETEBUTTON = 1041;
 		
@@ -143,9 +143,9 @@ public class Window extends View {
 	//private boolean disableEditing = false;
 	protected static final int MESSAGE_CLEARTEXT = 5;
 	
-	Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
-	Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
-	Animation indicator_on_no_cycle = new AlphaAnimation(1.0f,1.0f);
+	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
+	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
+	//Animation indicator_on_no_cycle = new AlphaAnimation(1.0f,1.0f);
 	
 	Handler dataDispatch = null;
 	EditText input = null;
@@ -243,17 +243,6 @@ public class Window extends View {
 				case MSG_NORMALPRIORITY:
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 					break;
-				case MSG_CLEAR_NEW_TEXT_INDICATOR:
-					new_text_in_buffer_indicator.startAnimation(indicator_off);
-					indicated = false;
-					break;
-				case MSG_SET_NEW_TEXT_INDICATOR:
-					new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
-					indicated = true;
-					break;
-				case MSG_SET_NEW_TEXT_INDICATOR_ANIMATED:
-					new_text_in_buffer_indicator.startAnimation(indicator_on);
-					indicated = true;
 				case MESSAGE_PROCESSXCALLS:
 					Window.this.xcallS(msg.getData().getString("FUNCTION"),(String)msg.obj);
 					
@@ -262,20 +251,6 @@ public class Window extends View {
 			}
 		};
 		
-		Interpolator i = new CycleInterpolator(1);
-		indicator_on.setDuration(1000);
-		indicator_on.setInterpolator(i);
-		indicator_on.setDuration(1000);
-		indicator_on.setFillAfter(true);
-		indicator_on.setFillBefore(true);
-		
-		indicator_off.setDuration(1000);
-		indicator_off.setFillAfter(true);
-		indicator_off.setFillBefore(true);
-		
-		indicator_on_no_cycle.setDuration(1);
-		indicator_on_no_cycle.setFillAfter(true);
-		indicator_on_no_cycle.setFillBefore(true);
 		
 		//lua startup.
 		mOwner = owner;
@@ -632,7 +607,7 @@ public class Window extends View {
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
 
-						mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
+						//mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					}
 					
 					if(scrollback >= ((the_tree.getBrokenLineCount() * PREF_LINESIZE))) {
@@ -1341,7 +1316,7 @@ public class Window extends View {
 			
 			if(jumpToEnd) {
 				scrollback = SCROLL_MIN;
-				mHandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
+				//mHandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
 			} else {
 				if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
 					scrollback = (double)mHeight;
@@ -1362,10 +1337,10 @@ public class Window extends View {
 						if(fling_velocity > 0) {
 							//play with no animation
 							//new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
-							mHandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR);
+							//mHandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR);
 						} else {
 							//new_text_in_buffer_indicator.startAnimation(indicator_on);
-							mHandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR_ANIMATED);
+							//mHandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR_ANIMATED);
 							//indicated = true;
 						}
 						//Log.e("BYTE","REPORTED");
@@ -1373,7 +1348,7 @@ public class Window extends View {
 					}
 				} else {
 					//new_text_in_buffer_indicator.startAnimation(indicator_off);
-					mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
+					//mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					indicated = false;
 					//indicated = false;
 				}
