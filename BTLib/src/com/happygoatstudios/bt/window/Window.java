@@ -153,7 +153,7 @@ public class Window extends View {
 	Object token = new Object(); //token for synchronization.
 
 	//private int myWidth = -1;
-	LayerManager mManager = null;
+	//LayerManager mManager = null;
 	Context mContext = null;
 	/*public Window(Context context,LayerManager manager) {
 		super(context);
@@ -173,9 +173,9 @@ public class Window extends View {
 		init();
 	} */
 	
-	public Window(Context context,LayerManager manager,String name,String owner,Handler mainWindowHandler) {
+	public Window(Context context,String name,String owner,Handler mainWindowHandler) {
 		super(context);
-		init(manager,name,owner,mainWindowHandler);
+		init(name,owner,mainWindowHandler);
 	}
 	
 	
@@ -208,7 +208,7 @@ public class Window extends View {
 		//doDelayedDraw(0);
 	}
 	
-	private void init(LayerManager manager,String name,String owner,Handler mainWindowHandler) {
+	private void init(String name,String owner,Handler mainWindowHandler) {
 		borderPaint.setStrokeWidth(5);
 		borderPaint.setColor(0xFF444488);
 		new_text_in_buffer_indicator = new View(this.getContext());
@@ -224,7 +224,7 @@ public class Window extends View {
 					//buffer.
 					break;
 				case MESSAGE_SHUTDOWN:
-					Window.this.shutdown();
+					//Window.this.shutdown();
 					break;
 				case MESSAGE_FLUSHBUFFER:
 					Window.this.flushBuffer();
@@ -254,7 +254,7 @@ public class Window extends View {
 		
 		//lua startup.
 		mOwner = owner;
-		mManager = manager;
+		//mManager = manager;
 		//mContext = context;
 		
 		this.mainHandler = mainWindowHandler;
@@ -287,9 +287,9 @@ public class Window extends View {
 		
 	}
 	
-	protected void shutdown() {
+	/*protected void shutdown() {
 		mManager.shutdown(this);
-	}
+	}*/
 
 	public void setTWidth(int height) {
 		mWidth=height;
@@ -2050,13 +2050,13 @@ public class Window extends View {
 		callFunction("onAnimationEnd");
 	}
 	
-	public void addView(View v) {
+	/*public void addView(View v) {
 		RelativeLayout tmp = this.getParentView();
 		tmp.addView(v);
 		//tmp.getLayoutParams().
 		//RelativeLayout.LayoutParams p = (LayoutParams) tmp.getLayoutParams();
 		//p.setma
-	}
+	}*/
 	
 	public int getMaxHeight() {
 		return mMaxHeight;

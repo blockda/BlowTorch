@@ -108,7 +108,7 @@ public class LayerManager {
 				long sfs = System.currentTimeMillis();
 				sfs = sfs + 10;
 			}
-			Window tmp = new Window(mContext,this,w.getName(),w.getPluginName(),rootHandler);
+			Window tmp = new Window(mContext,w.getName(),w.getPluginName(),rootHandler);
 			
 			//determine the appropriate layout group to load.
 			int screenLayout = mContext.getResources().getConfiguration().screenLayout;
@@ -118,23 +118,25 @@ public class LayerManager {
 			int screenSize = screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
 			
 			
-			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-			p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-			p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+			//RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+			//p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+			//p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
 			
-			tmp.setLayoutParams(p);
+			tmp.setLayoutParams(w.getLayout(screenSize,landscape));
 			tmp.setTag(w.getName());
+			tmp.setVisibility(View.GONE);
+			tmp.setId(w.getId());
+			mRootLayout.addView(tmp);
 			
-			
-			RelativeLayout holder = new AnimatedRelativeLayout(mContext,tmp,this);
+			//RelativeLayout holder = new AnimatedRelativeLayout(mContext,tmp,this);
 			//RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(w.getX()+w.getWidth(),w.getY()+w.getHeight());
 			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
 			//holder.setPadding(w.getX(), w.getY(), 0, 0);
-			holder.setId(w.getId());
-			holder.setLayoutParams(w.getLayout(screenSize,landscape));
+			//holder.setId(w.getId());
+			//holder.setLayoutParams();
 			
-			holder.addView(tmp);
+			//holder.addView(tmp);
 			
 			try {
 				String body = mService.getScript(w.getPluginName(),w.getScriptName());
@@ -159,9 +161,9 @@ public class LayerManager {
 			
 			//attempt to construct a good-ly relative layout to hold the window and any children 
 			
-		
+			tmp.setVisibility(View.VISIBLE);
 			
-			mRootLayout.addView(holder);
+			
 		}
 	}
 
