@@ -183,6 +183,15 @@ function OnPrepareXML(root)
 end
 debugPrint("loaded button prototypes")
 
+function getButtonSetList(s)
+	setdata = {}
+	for i,v in pairs(buttonsets) do
+		setdata[i] = #v
+	end
+	
+	WindowXCallS("button_window","showButtonList",serialize(setdata))
+end
+
 
 
 
