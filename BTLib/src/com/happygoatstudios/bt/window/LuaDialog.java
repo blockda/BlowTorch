@@ -4,7 +4,10 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
+import android.widget.RelativeLayout.LayoutParams;
 
 public class LuaDialog extends Dialog {
 
@@ -23,7 +26,18 @@ public class LuaDialog extends Dialog {
 		if(border != null) {
 			this.getWindow().setBackgroundDrawable(border);
 		}
-		mView = v;		
+		
+		//Window w = this.getWindow();
+		
+		//WindowManager.LayoutParams wparams = w.getAttributes();
+		//params
+		//wparams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+		//wparams.width = WindowManager.LayoutParams.WRAP_CONTENT;
+		
+		//w.setAttributes(wparams);
+		mView = v;	
+		//ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+		//mView.setLayoutParams(params);
 		this.setContentView(mView);
 		
 	}

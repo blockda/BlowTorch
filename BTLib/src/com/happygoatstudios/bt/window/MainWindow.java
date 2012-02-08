@@ -1345,7 +1345,7 @@ public class MainWindow extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if(item.getItemId() >= 1000) {
 			//script callback
-			ScriptOptionCallback callback = scriptCallbacks.get(1000-item.getItemId());
+			ScriptOptionCallback callback = scriptCallbacks.get(item.getItemId()-1000);
 			callWindowScript(callback.getWindow(),callback.getCallback());
 			return true;
 		}
@@ -2495,11 +2495,11 @@ public class MainWindow extends Activity {
 			e.printStackTrace();
 		}
 		
-		if(mWindows == null) {
+		if(mWindows == null || mWindows.size() == 0) {
 			//Exception e = new Exception("No windows to show.");
 			//throw new RuntimeException(e);
 			synchronized(this) {
-				while(mWindows == null) {
+				while(mWindows == null || mWindows.size() == 0) {
 					try {
 						this.wait(30);
 					} catch (InterruptedException e) {
