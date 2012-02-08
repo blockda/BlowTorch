@@ -5,6 +5,21 @@ require("button")
 require("serialize")
 defaults = nil
 
+Adapter = luajava.bindClass("android.widget.Adapter")
+ListView = luajava.bindClass("android.widget.ListView")
+ImageButton = luajava.bindClass("android.widget.ImageButton")
+--LinearLayout = luajava.bindClass("android.widget.LinearLayout")
+LayoutInflater = luajava.bindClass("android.view.LayoutInflater")
+Context = luajava.bindClass("android.content.Context")
+R_id = luajava.bindClass("com.happygoatstudios.bt.R$id")
+R_layout = luajava.bindClass("com.happygoatstudios.bt.R$layout")
+R_drawable = luajava.bindClass("com.happygoatstudios.bt.R$drawable")
+ViewGroup = luajava.bindClass("android.view.ViewGroup")
+View = luajava.bindClass("android.view.View")
+LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams")
+KeyEvent = luajava.bindClass("android.view.KeyEvent")
+TranslateAnimation = luajava.bindClass("android.view.animation.TranslateAnimation")
+
 function loadButtons(args)
 
 	--debugPrint("WindowXCallS Succeeded!")
@@ -564,7 +579,7 @@ function OnCreate()
 	--bounds = getBounds()
 	--drawButtons()
 	addOptionCallback("buttonOptions","Lua Button Options",nil)
-	
+	addOptionCallback("buttonList","Lua Button Sets",nil)
 end
 
 
@@ -663,6 +678,352 @@ end
 radio_cb = luajava.createProxy("android.widget.RadioGroup$OnCheckedChangeListener",radio)
 
 intersectMode = 1
+
+
+mContext = view:getContext()
+layoutInflater = mContext:getSystemService(Context.LAYOUT_INFLATER_SERVICE)
+	
+buttonSetList = {}
+table.insert(buttonSetList,"buttonset1")	
+table.insert(buttonSetList,"buttonset2")
+table.insert(buttonSetList,"buttonset3")	
+table.insert(buttonSetList,"buttonset4")	
+table.insert(buttonSetList,"buttonset5")
+
+mButtonKeyListener = {}
+function mButtonKeyListener.onKey(v,keyCode,event)
+	if(keyCode == KeyEvent_KEYCODE_DPAD_UP or keyCode == KeyEvent.KEY_DPAD_DOWN) then
+		return true
+	else
+		return false
+	end
+	--return false
+end
+mButtonKeyListener_cb = luajava.createProxy("android.view.View$OnKeyListener",mButtonKeyListener)
+
+toolbarTabFocusChangeListener = {}
+function toolbarTabFocusChangeListener.onFocusChange(v,hasFocus)
+	if(hasFocus == true) then
+		v:setFocusable(true)
+		v:setFocusableInTouchMode(true)
+	else
+		v:setFocusable(false)
+		v:setFocusableInTouchMode(false)
+	end
+end
+toolbarTabFocusChangeListener_cb = luajava.createProxy("android.view.View$OnFocusChangeListener",toolbarTabFocusChangeListener)
+
+
+
+
+
+lastSelectedIndex = -1
+
+toolbarLength = nil
+
+toolbarTabOpenListener = {}
+function toolbarTabOpenListener.onClick(v)
+
+	ToolbarTabOpenInAnimation = luajava.new(TranslateAnimation,toolbarLength,0,0,0)
+	ToolbarTabOpenInAnimation:setDuration(800)
+	ToolbarTabOpenOutAnimation = luajava.new(TranslateAnimation,0,toolbarLength,0,0)
+	ToolbarTabOpenOutAnimation:setDuration(800)
+
+	lastSelectedIndex = v:getId()
+	
+	parent = v:getParent()
+	
+	flipper = parent:getParent()
+	--flipper = parent:findViewById(R_id.flipper)
+	
+	flipper:setInAnimation(ToolbarTabOpenInAnimation)
+	flipper:setOutAnimation(ToolbarTabOpenOutAnimation)
+	
+	flipper:showNext()
+	
+	closetab = flipper:findViewById(R_id.toolbar_tab_close)
+	closetab:requestFocus()
+	
+end
+toolbarTabOpenListener_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarTabOpenListener)
+
+toolbarTabCloseListener = {}
+function toolbarTabCloseListener.onClick(v)
+	ToolbarTabCloseOutAnimation = luajava.new(TranslateAnimation,0,toolbarLength,0,0)
+	ToolbarTabCloseOutAnimation:setDuration(800)
+	ToolbarTabCloseInAnimation = luajava.new(TranslateAnimation,toolbarLength,0,0,0)
+	ToolbarTabCloseInAnimation:setDuration(800)
+
+	lastSelectedIndex = v:getId()
+	
+	parent = v:getParent()
+	
+	flipper = parent:getParent()
+	--flipper = parent:findViewById(R_id.flipper)
+	
+	flipper:setInAnimation(ToolbarTabCloseInAnimation)
+	flipper:setOutAnimation(ToolbarTabCloseOutAnimation)
+	
+	flipper:showNext()
+	
+	closetab = flipper:findViewById(R_id.toolbar_tab_close)
+	tab = flipper:findViewById(R_id.toolbar_tab)
+	tab:setFocusable(true)
+	tab:requestFocus()
+	
+end
+toolbarTabCloseListener_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarTabCloseListener)
+
+buttonListAdapter = {}
+function buttonListAdapter.getView(pos,v,parent)
+	newview = nil
+	if(v ~= nil) then
+		newview = v
+		
+	else
+		debugPrint("inflating view")
+		newview = layoutInflater:inflate(R_layout.better_list_row,nil)
+	
+	
+		root = newview:findViewById(R_id.root)
+		root:setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS)
+		
+	
+		
+		spacer = newview:findViewById(R_id.spacer)
+		spacer:setVisibility(View.INVISIBLE)
+		
+		toggle = luajava.new(ImageButton,mContext)
+		modify = luajava.new(ImageButton,mContext)
+		delete = luajava.new(ImageButton,mContext)
+		
+		params = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
+		params:setMargins(0,0,0,0)
+		
+		toggle:setLayoutParams(params)
+		modify:setLayoutParams(params)
+		delete:setLayoutParams(params)
+		
+		toggle:setPadding(0,0,0,0)
+		modify:setPadding(0,0,0,0)
+		delete:setPadding(0,0,0,0)
+		
+		toggle:setImageResource(R_drawable.toolbar_toggleon_button)
+		modify:setImageResource(R_drawable.toolbar_modify_button)
+		delete:setImageResource(R_drawable.toolbar_delete_button)
+		
+		toggle:setBackgroundColor(0)
+		modify:setBackgroundColor(0)
+		delete:setBackgroundColor(0)
+		
+		toggle:setOnKeyListener(mButtonKeyListener_cb)
+		modify:setOnKeyListener(mButtonKeyListener_cb)
+		delete:setOnKeyListener(mButtonKeyListener_cb)
+		
+		holder = newview:findViewById(R_id.button_holder)
+		holder:removeAllViews()
+		holder:addView(toggle)
+		holder:addView(modify)
+		holder:addView(delete)
+		
+		--here is where we hook up listeners
+		
+		toolbar_tab = newview:findViewById(R_id.toolbar_tab)
+		toolbar_tab_close = newview:findViewById(R_id.toolbar_tab_close)
+		
+		toolbar_tab:setOnClickListener(toolbarTabOpenListener_cb)
+		toolbar_tab:setOnFocusChangeListener(toolbarTabFocusChangeListener_cb)
+		
+		toolbar_tab_close:setOnClickListener(toolbarTabCloseListener_cb)
+		toolbar_tab_close:setOnKeyListener(mButtonKeyListener_cb)
+		
+		if(toolbarLength == nil) then
+			toggleDrawable = toggle:getDrawable()
+			toggleWidth = toggleDrawable:getIntrinsicWidth()
+			
+			toolbarLength = toggleWidth*3
+		end
+	end
+	item = buttonSetList[tonumber(pos)+1]
+	
+	if(item ~= nil) then
+		label = newview:findViewById(R_id.infoTitle)
+		extra = newview:findViewById(R_id.infoExtended)
+		label:setText(item.name)
+		extra:setText("Contains: "..item.count.." buttons")
+	end
+	
+	if(newview ~= nil) then
+		debugPrint("returning newview, it is not null")
+	end
+	return newview
+	
+	
+end
+function buttonListAdapter.getCount()
+	--debugPrint("getting button count:"..#buttonSetList)
+	return #buttonSetList
+end
+function buttonListAdapter.areAllItemsEnabled()
+	--debugPrint("areAllItemsEnabled()")
+	return true
+end
+function buttonListAdapter.getItemViewType(pos)
+	--debugPrint("getItemViewType()")
+	return 0
+end
+function buttonListAdapter.isEnabled(pos)
+	--debugPrint("isEnabled(pos)")
+	return true
+end
+function buttonListAdapter.getItem(pos)
+	--debugPrint("getItem(pos)")
+	--return luajava.newInstance("java.lang.Object")
+	return nil
+end
+function buttonListAdapter.isEmpty()
+--debugPrint("isEmpty()")
+	return false
+end
+function buttonListAdapter.hasStableIds()
+--debugPrint("hasStableIds()")
+	return true
+end
+function buttonListAdapter.getViewTypeCount()
+--debugPrint("getViewTypeCount()")
+	return 1
+end
+--function buttonListAdapter.
+buttonListAdapter_cb = luajava.createProxy("android.widget.ListAdapter",buttonListAdapter)
+
+listViewOnItemSelectedListener = {}
+function listViewOnItemSelectedListener.onItemSelected(arg0,arg1,arg2,arg3)
+	for i,v in ipairs(buttonSetList) do
+		first = arg0:getFirstVisiblePosition()
+		last = arg0:getLastVisiblePosition()
+		if(first <= i and i <= last) then
+			if(i == arg2) then
+				tab_bar = arg0:getChildAt(i)
+				tab = tab_bar:findViewById(R_id.toolbar_tab)
+				tab:setFocusable(true)
+			else
+				tab_bar = arg0:getChildAt(i)
+				tab = tab_bar:findViewById(R_id.toolbar_tab)
+				tab:setFocusable(false)
+			end
+		end
+	end
+end
+
+function listViewOnItemSelectedListener.onNothingSelected(arg0)
+	--don't care
+end
+listViewOnItemSelectedListener_cb = luajava.createProxy("android.widget.AdapterView$OnItemSelectedListener",listViewOnItemSelectedListener)
+
+listViewFocusFixerListener = {}
+function listViewFocusFixerListener.onFocusChange(v,hasFocus)
+	if(hasFocus == true) then
+		for i,v in ipairs(buttonSetList) do
+			child = mListView:getChildAt(i)
+			if(child ~= nil) then
+				tab = child:findViewById(R_id.toolbar_tab)
+				tab:setFocusable(false)
+			end
+		end
+		
+		if(lastSelectedIndex < 0) then
+		
+		else
+			index = lastSelectedIndex
+			first = mListView:getFirstVisiblePosition()
+			last = mListView:getLastVisiblePosition()
+			if(first <= index and index <= last) then
+				index = index - first
+			else
+				index = mListView:getFirstVisiblePosition()
+			end
+			mListView:setSelection(lastSelectedIndex)
+			child = mListView:getChildAt(index)
+			tab = child:findViewById(R_id.toolbar_tab)
+			tab:setFocusable(true)
+			tab:requestFocus()
+		end
+	end
+
+end
+listViewFocusFixerListener_cb = luajava.createProxy("android.view.View$OnFocusChangeListener",listViewFocusFixerListener)
+
+mListView = nil
+function buttonList()
+	
+	--pull this list of button data.
+	PluginXCallS("getButtonSetList","all")
+end
+
+newButtonSetButton = {}
+function newButtonSetButton.onClick(v)
+	debugPrint("new button pressed")
+end
+newButtonSetButton_cb = luajava.createProxy("android.view.View$OnClickListener",newButtonSetButton)
+
+doneButtonListener = {}
+function doneButtonListener.onClick(v)
+	mSelectorDialog:dismiss()
+end
+doneButtonListener_cb = luajava.createProxy("android.view.View$OnClickListener",doneButtonListener)
+
+mSelectorDialog = nil
+
+function showButtonList(data)
+	
+	setdata = loadstring(data)()
+
+	--sort the list.
+	table.sort(setdata)
+	
+	for k in pairs(buttonSetList) do
+		buttonSetList[k] = nil
+	end
+	
+	for i,k in pairs(setdata) do
+		tmp = {}
+		tmp.name = i
+		tmp.count = k
+		table.insert(buttonSetList,tmp)
+	end
+	
+	if(mSelectorDialog == nil) then
+		fakeRelativeLayout = luajava.newInstance("android.widget.RelativeLayout",mContext)
+		layout = layoutInflater:inflate(R_layout.trigger_selection_dialog,fakeRelativeLayout)
+		
+		mListView = layout:findViewById(R_id.trigger_list)
+	
+		--mListView = luajava.newInstance("android.widget.ListView",mContext)
+		mListView:setScrollbarFadingEnabled(false)
+		mListView:setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS)
+		mListView:setOnItemSelectedListener(listViewOnItemSelectedListener_cb)
+		mListView:setOnFocusChangeListener(listViewFocusFixerListener_cb)
+		mListView:setSelector(R_drawable.transparent)
+		mListView:setAdapter(buttonListAdapter_cb)
+		--buttonListAdapter_cb:notifyDataSetInvalidated()
+		emptyView = layout:findViewById(R_id.trigger_empty)
+		mListView:setEmptyView(emptyView)
+		
+		title = layout:findViewById(R_id.titlebar)
+		title:setText("SELECT BUTTON SET")
+		
+		newbutton = layout:findViewById(R_id.trigger_new_button)
+		newbutton:setText("New Set")
+		newbutton:setOnClickListener(newButtonSetButton_cb)
+		
+		donebutton = layout:findViewById(R_id.trigger_cancel_button)
+		donebutton:setOnClickListener(doneButtonListener_cb)
+		mSelectorDialog = luajava.newInstance("com.happygoatstudios.bt.window.LuaDialog",mContext,layout,false,nil)
+	
+	end
+	mSelectorDialog:show()
+end
+
 
 function buttonOptions()
 	ctex = view:getContext()
