@@ -857,4 +857,13 @@ public class Plugin {
 			//callback not defined.
 		}
 	}
+	
+	public void addTrigger(TriggerData data) {
+		this.getSettings().getTriggers().put(data.getPattern(), data);
+	}
+
+	public void updateTrigger(TriggerData from, TriggerData to) {
+		this.getSettings().getTriggers().remove(from.getPattern());
+		this.getSettings().getTriggers().put(to.getPattern(),to);
+	}
 }

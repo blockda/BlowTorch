@@ -2,32 +2,55 @@
 
 <RelativeLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/buttonsetselectionlayout"
+	android:id="@+id/root"
 	android:layout_width="280dip"
 	android:layout_height="fill_parent">
+	
+	<Button 
+		android:id="@+id/optionsbutton"
+		android:layout_width="60dip"
+		android:layout_height="60dip"
+		android:layout_alignParentTop="true" 
+		android:layout_alignParentRight="true"
+		android:background="@drawable/optionsbutton_selector"
+		android:text="="
+		android:textSize="26dip"
+	/>
 	
 	<TextView
 		android:id="@+id/titlebar"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
+		android:layout_alignBottom="@id/optionsbutton"
+		android:layout_toLeftOf="@id/optionsbutton"
 		android:text="SELECT TRIGGER"
 		android:textColor="#FF333333"
 		android:background="#FF999999"
 		android:textSize="15dip"
 		android:textStyle="bold"
 		android:gravity="center"/>
+		
+	<!-- <ListView 
+		android:id="@+id/theoptionlist"
+		android:layout_width="200dip"
+		android:layout_height="wrap_content"
+		android:minHeight="60dip"
+		android:maxHeight="300dip"
+		android:layout_below="@id/optionsbutton"
+		android:layout_alignParentRight="true"
+	/> -->
 	
 	<Button
-		android:id="@+id/trigger_new_button"
+		android:id="@+id/newitem"
 		android:layout_alignParentBottom="true"
 		android:layout_alignParentLeft="true"
 		android:layout_height="wrap_content"
 		android:layout_width="146dip"
-		android:text="New Trigger"/>
+		android:text="New"/>
 		
 	<Button
-		android:id="@+id/trigger_cancel_button"
+		android:id="@+id/done"
 		android:layout_alignParentBottom="true"
 		android:layout_alignParentRight="true"
 		android:layout_height="wrap_content"
@@ -41,7 +64,7 @@
 		android:layout_height="fill_parent"
 		android:layout_above="@id/new_buttonset_button"> -->
 		<FrameLayout
-			android:id="@+id/timer_frame"
+			android:id="@+id/frame"
 			android:layout_width = "fill_parent"
 			android:layout_height="fill_parent"
 			android:layout_margin="0dip"
@@ -49,14 +72,14 @@
 			android:layout_above="@id/trigger_new_button"
 			android:layout_below="@id/titlebar">
 		<ListView
-			android:id="@+id/trigger_list"
+			android:id="@+id/list"
 			android:layout_height="fill_parent"
 			android:layout_width="280dip"/>
 		<TextView
-			android:id="@+id/trigger_empty"
+			android:id="@+id/empty"
 			android:layout_width="fill_parent"
 			android:layout_height="fill_parent"
-			android:text="No triggers to display.\nNew triggers can be made with the button below."
+			android:text="No items to display."
 			android:textColor="#FFFFFFFF"
 			android:background="#FF000000"
 			android:layout_margin="0dip"
@@ -67,4 +90,6 @@
 		</FrameLayout>
 	<!-- </ScrollView> -->
 		
+
+	
 </RelativeLayout>

@@ -40,7 +40,7 @@ public class TriggerElementListener implements ElementListener {
 
 	public void end() {
 		//settings.getTriggers().put(current_trigger.getName(), current_trigger.copy());
-		callback.addTrigger(current_trigger.getName(), current_trigger.copy());
+		callback.addTrigger(current_trigger.getPattern(), current_trigger.copy());
 	}
 
 }
