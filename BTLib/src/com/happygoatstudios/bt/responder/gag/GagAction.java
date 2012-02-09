@@ -144,5 +144,17 @@ public class GagAction extends TriggerResponder implements Parcelable {
 	public String getRetarget() {
 		return retarget;
 	}
+	
+	public static Parcelable.Creator<GagAction> CREATOR = new Parcelable.Creator<GagAction>() {
+
+		public GagAction createFromParcel(Parcel source) {
+			return new GagAction(source);
+		}
+
+		public GagAction[] newArray(int size) {
+			return new GagAction[size];
+		}
+		
+	};
 
 }

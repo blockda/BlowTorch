@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.ack.AckResponder;
+import com.happygoatstudios.bt.responder.gag.GagAction;
 import com.happygoatstudios.bt.responder.notification.NotificationResponder;
 import com.happygoatstudios.bt.responder.script.ScriptResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
@@ -160,6 +161,10 @@ public class TriggerData implements Parcelable {
 				
 				responders.add(scr);
 				break;
+			case TriggerResponder.RESPONDER_TYPE_GAG:
+				GagAction gag = in.readParcelable(com.happygoatstudios.bt.responder.gag.GagAction.class.getClassLoader());
+				responders.add(gag);
+				break;
 			}
 		}
 	}
@@ -181,8 +186,12 @@ public class TriggerData implements Parcelable {
 		out.writeInt(keepEvaluating ? 1 : 0);
 		out.writeInt(responders.size());
 		for(TriggerResponder responder : responders) {
-			out.writeInt(responder.getType().getIntVal());
-			out.writeParcelable(responder, 0);
+			//if(responder instanceof GagAction) {
+				
+			//} else {
+				out.writeInt(responder.getType().getIntVal());
+				out.writeParcelable(responder, 0);
+			//}
 		}
 	}
 
