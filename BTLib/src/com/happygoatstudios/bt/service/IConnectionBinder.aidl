@@ -67,11 +67,16 @@ interface IConnectionBinder {
 	void setProcessPeriod(boolean value);
 	Map getTriggerData();
 	Map getDirectionData();
+	Map getPluginTriggerData(String id);
 	void setDirectionData(in Map data);
 	void newTrigger(in TriggerData data);
+	void newPluginTrigger(String selectedPlugin,in TriggerData data);
 	void updateTrigger(in TriggerData from,in TriggerData to);
+	void updatePluginTrigger(String selectedPlugin,in TriggerData from,in TriggerData to);
 	void deleteTrigger(String which);
+	void deletePluginTrigger(String selectedPlugin,String which);
 	TriggerData getTrigger(String pattern);
+	TriggerData getPluginTrigger(String selectedPlugin,String pattern);
 	void setUseExtractUI(boolean use);
 	boolean getUseExtractUI();
 	void setThrottleBackground(boolean use);
@@ -147,6 +152,7 @@ interface IConnectionBinder {
 	void setHyperLinkEnabled(boolean pIn);
 	boolean isHyperLinkEnabled();
 	void setTriggerEnabled(boolean enabled,String key);
+	void setPluginTriggerEnabled(String selectedPlugin,boolean enabled,String key);
 	void setButtonSetLocked(boolean locked,String key);
 	boolean isButtonSetLocked(String key);
 	boolean isButtonSetLockedMoveButtons(String key);
@@ -159,4 +165,5 @@ interface IConnectionBinder {
 	void reloadSettings();
 	void pluginXcallS(String plugin,String function,String str);
 	Map getPluginList();
+	List getPluginsWithTriggers();
 }

@@ -2840,7 +2840,14 @@ public class StellarService extends Service {
 
 		public Map getTriggerData() throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			HashMap<String,TriggerData> triggers = connections.get(connectionClutch).getTriggers();
+			
+			return triggers;
+		}
+		
+		public Map getPluginTriggerData(String id) throws RemoteException {
+			
+			return connections.get(connectionClutch).getPluginTriggers(id);
 		}
 
 		public Map getDirectionData() throws RemoteException {
@@ -2854,24 +2861,22 @@ public class StellarService extends Service {
 		}
 
 		public void newTrigger(TriggerData data) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).addTrigger(data);
 		}
 
 		public void updateTrigger(TriggerData from, TriggerData to)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			connections.get(connectionClutch).updateTrigger(from,to);
 			
 		}
 
 		public void deleteTrigger(String which) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).deleteTrigger(which);
 		}
 
 		public TriggerData getTrigger(String pattern) throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			return connections.get(connectionClutch).getTrigger(pattern);
 		}
 
 		public void setUseExtractUI(boolean use) throws RemoteException {
@@ -3200,7 +3205,7 @@ public class StellarService extends Service {
 
 		public void setTriggerEnabled(boolean enabled, String key)
 				throws RemoteException {
-			// TODO Auto-generated method stub
+			connections.get(connectionClutch).setTriggerEnabled(enabled, key);
 			
 		}
 
@@ -3305,6 +3310,42 @@ public class StellarService extends Service {
 			}
 			
 			return list;
+		}
+		
+		public List getPluginsWithTriggers() {
+			ArrayList<String> list = new ArrayList<String>();
+			Connection c = connections.get(connectionClutch);
+			for(Plugin p : c.plugins) {
+				if(p.getSettings().getTriggers().size() > 0) {
+					list.add(p.getName());
+				}
+			}
+			return list;
+		}
+
+		public void newPluginTrigger(String selectedPlugin, TriggerData data)
+				throws RemoteException {
+			connections.get(connectionClutch).newPluginTrigger(selectedPlugin,data);
+		}
+
+		public void updatePluginTrigger(String selectedPlugin,
+				TriggerData from, TriggerData to) throws RemoteException {
+			connections.get(connectionClutch).updatePluginTrigger(selectedPlugin,from,to);
+		}
+
+		public TriggerData getPluginTrigger(String selectedPlugin,String pattern)
+				throws RemoteException {
+			return connections.get(connectionClutch).getPluginTrigger(selectedPlugin,pattern);
+		}
+
+		public void setPluginTriggerEnabled(String selectedPlugin,
+				boolean enabled, String key) throws RemoteException {
+			connections.get(connectionClutch).setPluginTriggerEnabled(selectedPlugin,enabled,key);
+		}
+
+		public void deletePluginTrigger(String selectedPlugin, String which)
+				throws RemoteException {
+			connections.get(connectionClutch).deletePluginTrigger(selectedPlugin,which);
 		}
 	};
 

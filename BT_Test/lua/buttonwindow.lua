@@ -851,6 +851,7 @@ function buttonListAdapter.getView(pos,v,parent)
 		extra = newview:findViewById(R_id.infoExtended)
 		label:setText(item.name)
 		extra:setText("Contains: "..item.count.." buttons")
+		newview:setId(pos)
 	end
 	
 	if(newview ~= nil) then
@@ -996,7 +997,7 @@ function showButtonList(data)
 		fakeRelativeLayout = luajava.newInstance("android.widget.RelativeLayout",mContext)
 		layout = layoutInflater:inflate(R_layout.trigger_selection_dialog,fakeRelativeLayout)
 		
-		mListView = layout:findViewById(R_id.trigger_list)
+		mListView = layout:findViewById(R_id.list)
 	
 		--mListView = luajava.newInstance("android.widget.ListView",mContext)
 		mListView:setScrollbarFadingEnabled(false)
@@ -1006,7 +1007,7 @@ function showButtonList(data)
 		mListView:setSelector(R_drawable.transparent)
 		mListView:setAdapter(buttonListAdapter_cb)
 		--buttonListAdapter_cb:notifyDataSetInvalidated()
-		emptyView = layout:findViewById(R_id.trigger_empty)
+		emptyView = layout:findViewById(R_id.empty)
 		mListView:setEmptyView(emptyView)
 		
 		title = layout:findViewById(R_id.titlebar)

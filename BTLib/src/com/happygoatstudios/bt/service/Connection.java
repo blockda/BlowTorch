@@ -1504,6 +1504,87 @@ public class Connection {
 		}
 		return null;
 	}
+
+	public HashMap<String, TriggerData> getTriggers() {
+		// TODO Auto-generated method stub
+		return the_settings.getSettings().getTriggers();
+	}
+
+	public Map getPluginTriggers(String id) {
+		// TODO Auto-generated method stub
+		Plugin p = pluginMap.get(id);
+		if(p != null) {
+			return p.getSettings().getTriggers();
+		} else {
+			return null;
+		}
+	}
+
+	public void addTrigger(TriggerData data) {
+		the_settings.addTrigger(data);
+	}
+
+	public void updateTrigger(TriggerData from, TriggerData to) {
+		the_settings.updateTrigger(from,to);
+	}
+
+	public void updatePluginTrigger(String selectedPlugin, TriggerData from,
+			TriggerData to) {
+		Plugin p = pluginMap.get(selectedPlugin);
+		if(p != null) {
+			p.updateTrigger(from,to);
+		}
+	}
+
+	public void newPluginTrigger(String selectedPlugin, TriggerData data) {
+		Plugin p = pluginMap.get(selectedPlugin);
+		if(p != null) {
+			p.addTrigger(data);
+		}
+	}
+
+	public TriggerData getPluginTrigger(String selectedPlugin, String pattern) {
+		Plugin p = pluginMap.get(selectedPlugin);
+		if(p != null) {
+			return p.getSettings().getTriggers().get(pattern);
+		} else {
+			return null;
+		}
+	}
+
+	public TriggerData getTrigger(String pattern) {
+		// TODO Auto-generated method stub
+		return the_settings.getSettings().getTriggers().get(pattern);
+	}
+
+	public void setPluginTriggerEnabled(String selectedPlugin, boolean enabled,
+			String key) {
+		Plugin p = pluginMap.get(selectedPlugin);
+		if(p != null) {
+			TriggerData data = p.getSettings().getTriggers().get(key);
+			if(data != null) {
+				data.setEnabled(enabled);
+			}
+		}
+	}
+	
+	public void setTriggerEnabled(boolean enabled,String key) {
+		TriggerData data = the_settings.getSettings().getTriggers().get(key);
+		if(data != null) {
+			data.setEnabled(true);
+		}
+	}
+
+	public void deletePluginTrigger(String selectedPlugin, String which) {
+		Plugin p = pluginMap.get(selectedPlugin);
+		if(p != null) {
+			p.getSettings().getTriggers().remove(which);
+		}
+	}
+
+	public void deleteTrigger(String which) {
+		the_settings.getSettings().getTriggers().remove(which);
+	}
 	
 	
 }

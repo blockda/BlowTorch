@@ -13,6 +13,7 @@ import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
+import com.happygoatstudios.bt.trigger.TriggerData;
 
 public class ConnectionSettingsPlugin extends Plugin {
 	public ConnectionSettingsPlugin(Handler h,Connection parent) throws LuaException {
@@ -456,4 +457,6 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 	public String getGMCPTriggerChar() {
 		return gmcpTriggerChar;
 	}
+
+
 }
