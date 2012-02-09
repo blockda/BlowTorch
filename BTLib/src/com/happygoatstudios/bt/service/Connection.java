@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1585,6 +1586,61 @@ public class Connection {
 	public void deleteTrigger(String which) {
 		the_settings.getSettings().getTriggers().remove(which);
 	}
+
+	public void setAliases(Map map) {
+		the_settings.getSettings().setAliases((HashMap<String,AliasData>)map);
+	}
 	
+	public void setPluginAliases(String plugin,Map map) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.getSettings().setAliases((HashMap<String,AliasData>)map);
+		}
+	}
+	
+	public AliasData getPluginAlias(String plugin,String key) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			return p.getSettings().getAliases().get(key);
+		}
+		return null;
+	}
+	
+	public AliasData getAlias(String key) {
+		return the_settings.getSettings().getAliases().get(key);
+	}
+	
+	public void deleteAlias(String key) {
+		the_settings.getSettings().getAliases().remove(key);
+	}
+	
+	public void deletePluginAlias(String plugin,String key) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.getSettings().getAliases().remove(key);
+		}
+	}
+	
+	public Map getAliases() {
+		return the_settings.getSettings().getAliases();
+	}
+	
+	public Map getPluginAliases(String plugin) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			return p.getSettings().getAliases();
+		} else {
+			return null;
+		}
+	}
+	
+	public List getSystemCommands() {
+		List<String> list = new ArrayList<String>();
+		Set<String> keys = specialcommands.keySet();
+		for(String key : keys) {
+			list.add(key);
+		}
+		return list;
+	}
 	
 }

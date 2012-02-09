@@ -34,11 +34,12 @@ public class NewAliasDialog extends Dialog {
 	IConnectionBinder service;
 	List<String> cant_name;
 	
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,IConnectionBinder pService,List<String> invalid_names) {
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,IConnectionBinder pService,List<String> invalid_names,String currentPlugin) {
 		super(context);
 		reportto = useme;
 		service = pService;
 		cant_name = invalid_names;
+		this.currentPlugin = currentPlugin;
 	}
 	
 	public void onCreate(Bundle instanceData) {
@@ -359,7 +360,8 @@ public class NewAliasDialog extends Dialog {
 	}
 	
 	boolean isEditor = false;
-	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,AliasData old_alias,IConnectionBinder pService,List<String> invalid_names) {
+	String currentPlugin = null;
+	public NewAliasDialog(Context context,NewAliasDialogDoneListener useme,String pre,String post,int position,AliasData old_alias,IConnectionBinder pService,List<String> invalid_names,String currentPlugin) {
 		super(context);
 		isEditor=true;
 		reportto = useme;
@@ -369,6 +371,7 @@ public class NewAliasDialog extends Dialog {
 		mPost = post;
 		service = pService;
 		cant_name = invalid_names;
+		this.currentPlugin = currentPlugin;
 	}
 	
 	Vector<String> offenders = new Vector<String>();

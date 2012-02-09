@@ -33,8 +33,14 @@ interface IConnectionBinder {
 	void saveBuffer(inout byte[] buffer);
 	void addAlias(in AliasData a);
 	List getSystemCommands();
+	AliasData getAlias(String key);
+	AliasData getPluginAlias(String plugin,String key);
 	Map getAliases();
+	Map getPluginAliases(String currentPlugin);
 	void setAliases(in Map map);
+	void setPluginAliases(String plugin,in Map map);
+	void deleteAlias(String key);
+	void deletePluginAlias(String plugin,String key);
 	void setFontSize(int size);
 	//void setFontSize(String size);
 	int getFontSize();

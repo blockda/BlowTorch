@@ -140,7 +140,7 @@ public class TriggerSelectionDialog extends Dialog {
 		list.setEmptyView(findViewById(R.id.empty));
 		buildList();
 		
-		Button newbutton = (Button)findViewById(R.id.newitem);
+		Button newbutton = (Button)findViewById(R.id.add);
 		
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
@@ -217,7 +217,7 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		mOptionsList.setVisibility(View.INVISIBLE);
 		
-		RelativeLayout root = (RelativeLayout) this.findViewById(R.id.buttonsetselectionlayout);
+		RelativeLayout root = (RelativeLayout) this.findViewById(R.id.root);
 		root.addView(mOptionsList);
 		
 		Button optionsbutton = (Button)this.findViewById(R.id.optionsbutton);
