@@ -62,10 +62,11 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	
 	HashMap<Integer,Integer> checkopens;
 	HashMap<Integer,Integer> checkclosed;
+	String selectedPlugin = null;
 	
-	public TriggerEditorDialog(Context context,TriggerData input,IConnectionBinder pService,Handler finisher) {
+	public TriggerEditorDialog(Context context,TriggerData input,IConnectionBinder pService,Handler finisher,String selectedPlugin) {
 		super(context);
-		
+		this.selectedPlugin = selectedPlugin;
 		service = pService;
 		finish_with = finisher;
 		if(input == null) {
@@ -312,7 +313,11 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 					//Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType() + " AFTER MY LITTLE \"PUSH\"");
 				}*/
 				try {
-					service.updateTrigger(original_trigger,the_trigger);
+					if(selectedPlugin.equals("main")) {
+						service.updateTrigger(original_trigger,the_trigger);
+					} else {	
+						service.updatePluginTrigger(selectedPlugin,original_trigger,the_trigger);
+					}
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
@@ -322,7 +327,11 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				the_trigger.setPattern(pattern.getText().toString());
 				the_trigger.setInterpretAsRegex(!literal.isChecked());
 				try {
-					service.newTrigger(the_trigger);
+					if(selectedPlugin.equals("main")) {
+						service.newTrigger(the_trigger);
+					} else {
+						service.newPluginTrigger(selectedPlugin,the_trigger);
+					}
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
