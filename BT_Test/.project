@@ -42,10 +42,5 @@
 			<type>2</type>
 			<locationURI>_android_BTLib_3c968d3/aidl</locationURI>
 		</link>
-		<link>
-			<name>BTLib_src</name>
-			<type>2</type>
-			<locationURI>_android_BTLib_3c968d3/src</locationURI>
-		</link>
 	</linkedResources>
 </projectDescription>

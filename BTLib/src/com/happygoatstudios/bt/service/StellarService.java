@@ -2684,17 +2684,16 @@ public class StellarService extends Service {
 
 		public List getSystemCommands() throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			return connections.get(connectionClutch).getSystemCommands();
 		}
 
 		public Map getAliases() throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			return connections.get(connectionClutch).getAliases();
 		}
 
 		public void setAliases(Map map) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).setAliases(map);
 		}
 
 		public void setFontSize(int size) throws RemoteException {
@@ -3346,6 +3345,42 @@ public class StellarService extends Service {
 		public void deletePluginTrigger(String selectedPlugin, String which)
 				throws RemoteException {
 			connections.get(connectionClutch).deletePluginTrigger(selectedPlugin,which);
+		}
+
+		public AliasData getAlias(String key) throws RemoteException {
+			
+			return connections.get(connectionClutch).getAlias(key);
+		}
+
+		public AliasData getPluginAlias(String plugin, String key)
+				throws RemoteException {
+			
+			return connections.get(connectionClutch).getPluginAlias(plugin,key);
+		}
+
+		public Map getAliases(String currentPlugin)
+				throws RemoteException {
+			
+			return connections.get(connectionClutch).getAliases();
+		}
+		
+		public Map getPluginAliases(String currentPlugin) {
+			return connections.get(connectionClutch).getPluginAliases(currentPlugin);
+		}
+
+		public void setPluginAliases(String plugin, Map map)
+				throws RemoteException {
+			connections.get(connectionClutch).setPluginAliases(plugin,map);
+		}
+
+		public void deleteAlias(String key) throws RemoteException {
+			connections.get(connectionClutch).deleteAlias(key);
+		}
+
+		
+		public void deletePluginAlias(String plugin, String key)
+				throws RemoteException {
+			connections.get(connectionClutch).deletePluginAlias(plugin,key);
 		}
 	};
 
