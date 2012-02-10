@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:layout_width="250dip"
+  	android:layout_height="78dip"
+  	android:id="@+id/root">
+  	
+  	 <TextView
+  		style="@style/ListFont"
+  		android:id="@+id/infoTitle"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:layout_alignParentTop="true"
+  		
+  		android:text="Main Title"
+  		android:focusable="false"
+  		android:focusableInTouchMode="false"
+  		
+  		android:textSize="24dip"
+  		android:textStyle="bold"/>
+  	<ImageView
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_alignParentRight="true"
+  		android:layout_alignParentBottom="true"
+  		android:layout_below="@id/infoTitle"
+  		android:focusable="false"
+  		android:focusableInTouchMode="false"
+  		android:src="@drawable/notificationicon"
+  		android:id="@+id/icon"/>
+
+  	 <TextView
+  		style="@style/ListFont"
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:layout_toLeftOf="@id/icon"
+  		android:layout_alignBottom="@id/icon"
+  		android:layout_below="@id/infoTitle"
+  		android:focusable="false"
+  		android:focusableInTouchMode="false"
+  		android:text="Extended Info"
+  		android:gravity="center_vertical"
+  		android:layout_marginLeft="10dip"
+  		android:textSize="14dip"
+  		android:id="@+id/infoExtended"/>
+  	 
+  	 <com.happygoatstudios.bt.window.AnimatedRelativeLayout
+  	     android:id="@+id/toolbarholder"
+  	     android:layout_width="wrap_content"
+  	     android:layout_height="fill_parent"
+  	     android:layout_alignParentTop="true"
+  	     android:layout_alignParentRight="true"
+  	     />
+  	     
+
+<!--   	<ImageView
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_alignParentRight="true"
+  		android:layout_alignParentTop="true"
+  		android:layout_alignParentBottom="true"
+  		android:src="@drawable/toolbar_tab"
+  		android:focusable="false"
+  		android:focusableInTouchMode="false"
+  		android:id="@+id/spacer"/> 
+  	<RelativeLayout
+  		android:layout_width="fill_parent"
+  		android:layout_height="78dip"
+  		android:layout_toLeftOf="@id/spacer"
+  		  		android:focusable="false"
+  		android:focusableInTouchMode="false"
+  		android:layout_alignBottom="@id/spacer"
+  		android:layout_alignTop="@id/spacer">
+  		<RelativeLayout
+  			android:layout_width="fill_parent"
+  			android:layout_height="wrap_content"
+  			android:layout_alignParentBottom="true"
+  			android:layout_alignParentLeft="true"
+  			android:layout_alignParentRight="true"
+  			android:focusable="false"
+  			android:focusableInTouchMode="false"
+  			android:id="@+id/extendedPanel">
+  			<ImageView
+  				android:layout_width="wrap_content"
+  				android:layout_height="wrap_content"
+  				android:layout_alignParentRight="true"
+  				android:layout_alignBottom="@id/spacer"
+  				android:focusable="false"
+  				android:focusableInTouchMode="false"
+  				android:src="@drawable/notificationicon"
+  				android:id="@+id/icon"/>
+  			<TextView
+  				style="@style/ListFont"
+  				android:layout_width="fill_parent"
+  				android:layout_height="fill_parent"
+  				android:layout_toLeftOf="@id/icon"
+  				android:layout_alignBottom="@id/icon"
+  				android:focusable="false"
+  				android:focusableInTouchMode="false"
+  				android:text="Extended Info"
+  				android:gravity="center_vertical"
+  				android:layout_marginLeft="10dip"
+  				android:textSize="14dip"
+  				android:id="@+id/infoExtended"/>
+  			
+  		</RelativeLayout>
+  		<TextView
+  			style="@style/ListFont"
+  			android:id="@+id/infoTitle"
+  			android:layout_width="fill_parent"
+  			android:layout_height="wrap_content"
+  			android:layout_alignTop="@id/spacer"
+  			android:layout_above="@id/extendedPanel"
+  			android:text="Main Title"
+  			android:focusable="false"
+  			android:focusableInTouchMode="false"
+  			
+  			android:textSize="24dip"
+  			android:textStyle="bold"/>
+  	</RelativeLayout>
+  	<ViewFlipper
+  		android:layout_width="fill_parent"
+  		android:layout_height="wrap_content"
+  		android:id="@+id/flipper">
+	  	<LinearLayout
+	  		android:layout_width="fill_parent"
+		  	android:layout_height="wrap_content"
+		  	android:orientation="horizontal"
+		  	android:background="#00000000"
+		  	android:gravity="right"
+		  	android:id="@+id/toolbar_holder"> 
+		  	<ImageButton
+		  		android:layout_width="wrap_content"
+		  		android:layout_height="wrap_content"
+		  		android:layout_alignParentLeft="true"
+		  		android:layout_alignParentTop="true"
+		  		android:background="#00000000"
+		  		android:src="@drawable/toolbar_selector"
+		  		android:id="@+id/toolbar_tab"/>
+	  	</LinearLayout>
+	  	<LinearLayout
+	  		android:layout_width="fill_parent"
+		  	android:layout_height="wrap_content"
+		  	android:orientation="horizontal"
+		  	android:gravity="right"
+		  	android:background="#00000000"
+		  	android:id="@+id/toolbar_holder_open"> 
+		  	<ImageButton
+		  		android:layout_width="wrap_content"
+		  		android:layout_height="wrap_content"
+		  		android:layout_alignParentLeft="true"
+		  		android:layout_alignParentTop="true"
+		  		android:background="#00000000"
+		  		android:src="@drawable/toolbar_selector"
+		  		android:id="@+id/toolbar_tab_close"/>
+		   	
+		  	<LinearLayout
+		  		android:id="@+id/button_holder"
+		  		android:orientation="horizontal"
+		  		android:layout_width="wrap_content"
+		  		android:layout_height="wrap_content">
+			  	
+		  	</LinearLayout>
+	  	</LinearLayout>
+	  	
+  	</ViewFlipper> -->
+ </RelativeLayout>
