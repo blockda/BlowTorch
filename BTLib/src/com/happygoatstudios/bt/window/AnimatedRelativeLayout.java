@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.window;
 
 import android.content.Context;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
@@ -9,9 +10,24 @@ import android.widget.RelativeLayout;
 
 public class AnimatedRelativeLayout extends RelativeLayout{
 
-	Window w = null;
+	public interface OnAnimationEndListener {
+		public void onCustomAnimationEnd();
+	}
+	
+	public AnimatedRelativeLayout(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		// TODO Auto-generated constructor stub
+	}
+
+	public AnimatedRelativeLayout(Context context, AttributeSet attrs,
+			int defStyle) {
+		super(context, attrs, defStyle);
+		// TODO Auto-generated constructor stub
+	}
+
+	OnAnimationEndListener w = null;
 	//LayerManager parent = null;
-	public AnimatedRelativeLayout(Context context,Window w,LayerManager m) {
+	public AnimatedRelativeLayout(Context context,OnAnimationEndListener w) {
 		super(context);
 		//this.parent = m;
 		this.w = w;
@@ -23,7 +39,7 @@ public class AnimatedRelativeLayout extends RelativeLayout{
 		//this.parent = null;
 	}
 	
-	public void setAnimationListener(Window w) {
+	public void setAnimationListener(OnAnimationEndListener w) {
 		this.w = w;
 	}
 	
@@ -44,7 +60,9 @@ public class AnimatedRelativeLayout extends RelativeLayout{
 		//if(toggle) {
 			Log.e("ANIM","CUSTOM HANDLERS END");
 			//w.updateDimensions(w.getWidth(),w.getMHeight()-100);
-			w.onParentAnimationEnd();
+			if(w != null) {
+				w.onCustomAnimationEnd();
+			}
 		//}
 	}
 	

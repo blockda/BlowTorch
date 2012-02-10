@@ -995,7 +995,7 @@ function showButtonList(data)
 	
 	if(mSelectorDialog == nil) then
 		fakeRelativeLayout = luajava.newInstance("android.widget.RelativeLayout",mContext)
-		layout = layoutInflater:inflate(R_layout.trigger_selection_dialog,fakeRelativeLayout)
+		layout = layoutInflater:inflate(R_layout.editor_selection_dialog,fakeRelativeLayout)
 		
 		mListView = layout:findViewById(R_id.list)
 	
@@ -1013,11 +1013,11 @@ function showButtonList(data)
 		title = layout:findViewById(R_id.titlebar)
 		title:setText("SELECT BUTTON SET")
 		
-		newbutton = layout:findViewById(R_id.trigger_new_button)
+		newbutton = layout:findViewById(R_id.add)
 		newbutton:setText("New Set")
 		newbutton:setOnClickListener(newButtonSetButton_cb)
 		
-		donebutton = layout:findViewById(R_id.trigger_cancel_button)
+		donebutton = layout:findViewById(R_id.done)
 		donebutton:setOnClickListener(doneButtonListener_cb)
 		mSelectorDialog = luajava.newInstance("com.happygoatstudios.bt.window.LuaDialog",mContext,layout,false,nil)
 	
