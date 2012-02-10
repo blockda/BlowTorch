@@ -56,7 +56,7 @@ public class PluginDialog extends Dialog {
 		setContentView(R.layout.editor_selection_dialog);
 		
 		//initialize the list view
-		list = (ListView)findViewById(R.id.trigger_list);
+		list = (ListView)findViewById(R.id.list);
 		
 		list.setScrollbarFadingEnabled(false);
 		
@@ -124,7 +124,7 @@ public class PluginDialog extends Dialog {
 		list.setSelector(R.drawable.transparent);
 		
 		
-		list.setEmptyView(findViewById(R.id.trigger_empty));
+		list.setEmptyView(findViewById(R.id.empty));
 		buildList();
 		
 		/*Button newbutton = (Button)findViewById(R.id.trigger_new_button);

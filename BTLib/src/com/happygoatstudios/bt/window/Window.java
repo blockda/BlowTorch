@@ -65,7 +65,7 @@ import android.widget.RelativeLayout.LayoutParams;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.settings.HyperSettings.LINK_MODE;
 
-public class Window extends View {
+public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener {
 
 	//private DrawRunner _runner = null;
 	
@@ -2039,7 +2039,7 @@ public class Window extends View {
 		return (RelativeLayout)this.getParent();
 	}
 
-	public void onParentAnimationEnd() {
+	public void onCustomAnimationEnd() {
 		//call into lua to notify that the parent animation has completed.
 		callFunction("onParentAnimationEnd");
 	}

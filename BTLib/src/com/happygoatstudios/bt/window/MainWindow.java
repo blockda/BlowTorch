@@ -84,7 +84,7 @@ import android.widget.Toast;
 
 import com.happygoatstudios.bt.R;
 import com.happygoatstudios.bt.alias.AliasData;
-import com.happygoatstudios.bt.alias.AliasEditorDialog;
+import com.happygoatstudios.bt.alias.AliasSelectionDialog;
 import com.happygoatstudios.bt.button.ButtonEditorDialog;
 import com.happygoatstudios.bt.button.ButtonSetSelectorDialog;
 import com.happygoatstudios.bt.button.SlickButton;
@@ -1396,9 +1396,9 @@ public class MainWindow extends Activity {
 			
 			break;
 		case 99:
-			AliasEditorDialog d = null;
+			AliasSelectionDialog d = null;
 			try {
-				d = new AliasEditorDialog(this,(HashMap<String,AliasData>)service.getAliases(),service);
+				d = new AliasSelectionDialog(this,(HashMap<String,AliasData>)service.getAliases(),service);
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
