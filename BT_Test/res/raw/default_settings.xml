@@ -2,7 +2,16 @@
 <root>
   <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" />
   <service processSemi="true" throttle="false" processPeriod="true" keepWifiActive="true" localEcho="true" vibrateOnBell="true" notifyOnBell="false" displayOnBell="false" />
-  <aliases />
+  <aliases>
+  	<alias pre="fosfsdf" post="skfdsdf"/>
+  	<alias pre="fxcvvx" post="wrwkjfe"/>
+  	<alias pre="hfdfhsdh" post="asf"/>
+  	<alias pre="gjkfgk" post="afdghrh"/>
+  	<alias pre="trlkyhk" post="ugfe"/>
+  	<alias pre="fdhkjtk" post="shjjyr"/>
+  	<alias pre="afskjf" post="ghfyh"/>
+  	<alias pre="hrhtrlkj" post="ergeg"/>
+  </aliases>
   <directions>
     <entry dir="w" cmd="w" />
     <entry dir="e" cmd="e" />
@@ -31,6 +40,6 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   <triggers />
   <timers />
   <plugins>
-  	<!-- <link file="plugin.xml"/> -->
+  	 <link file="plugin.xml"/>
   </plugins>
 </root>

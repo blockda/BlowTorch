@@ -87,11 +87,25 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 
 		@Override
 		public void onCustomAnimationEnd() {
+			
 			RelativeLayout rl = (RelativeLayout)theToolbar.getParent();
+			if(rl == null) {
+				return;
+			}
 			rl.removeAllViews();
 
-			targetHolder.setLayoutAnimation(animateInController);
-			targetHolder.addView(theToolbar);
+			if(targetHolder != null) {
+				//set the image view.
+				AliasEntry data = apdapter.getItem(targetIndex);
+				if(data.enabled) {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleon_button);
+				} else {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
+				}
+				targetHolder.setLayoutAnimation(animateInController);
+				
+				targetHolder.addView(theToolbar);
+			}
 			lastSelectedIndex = targetIndex;
 		}
 		
@@ -260,9 +274,47 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 //				}
 //			});
 			
+			list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+				@Override
+				public void onItemClick(AdapterView<?> arg0, View arg1,
+						int arg2, long arg3) {
+					//we just want to have one
+					arg1.performClick();
+					Log.e("CLICK","CLICK CLICK CLICK CLICK");
+				}
+			});
+			
+			list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+				@Override
+				public void onItemSelected(AdapterView<?> arg0, View arg1,
+						int arg2, long arg3) {
+					if(arg2 != lastSelectedIndex) {
+						//arg0.is
+						if(arg0.getFirstVisiblePosition() <= lastSelectedIndex && arg0.getLastVisiblePosition() >= lastSelectedIndex) {
+							if(theToolbar.getParent() != null) {
+								theToolbar.startAnimation(animateOutNoTransition);
+							}
+						} else {
+							if(theToolbar.getParent() != null) {
+								((RelativeLayout)theToolbar.getParent()).removeAllViews();
+							}
+						}
+					}
+					lastSelectedIndex = arg2;
+					//check to see if the 
+				}
+
+				@Override
+				public void onNothingSelected(AdapterView<?> arg0) {
+					
+				}
+			});
+			
 			list.setItemsCanFocus(true);
 			
-			list.setSelector(R.drawable.transparent);
+			//list.setSelector(R.drawable.transparent);
 			/*Object[] keys = input.keySet().toArray();
 			Object[] values = input.values().toArray();
 			
@@ -320,13 +372,13 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 			}
 			if(input != null) {
 				for(AliasData a : input.values()) {
-					entries.add(new AliasEntry(a.getPre(),a.getPost()));
+					entries.add(new AliasEntry(a.getPre(),a.getPost(),a.isEnabled()));
 				}
 			}
 			
 			apdapter = new AliasAdapter(list.getContext(),0,entries);
 			list.setAdapter(apdapter);
-			list.setTextFilterEnabled(true);
+			//list.setTextFilterEnabled(true);
 			
 			apdapter.sort(new AliasComparator());
 			//apdapter.sort(String.CASE_INSENSITIVE_ORDER);
@@ -378,14 +430,37 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 				lastSelectedIndex = pos;
 				RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
 				rl.setLayoutAnimation(animateInController);
+				AliasEntry data = apdapter.getItem(lastSelectedIndex);
+				if(data.enabled) {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleon_button);
+				} else {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
+				}
 				rl.addView(theToolbar);
 			} else if(lastSelectedIndex != pos) {
 				Log.e("SLDF","AM I EVEN HERE");
 				AnimatedRelativeLayout holder = (AnimatedRelativeLayout)theToolbar.getParent();
-				holder.setAnimationListener(mCustomAnimationListener);
-				holder.startAnimation(animateOut);
-				targetIndex = pos;
-				targetHolder = (RelativeLayout) v.findViewById(R.id.toolbarholder);
+				if(holder != null) {
+					if(list.getFirstVisiblePosition() <= lastSelectedIndex && list.getLastVisiblePosition() >= lastSelectedIndex) {
+					
+						holder.setAnimationListener(mCustomAnimationListener);
+						holder.startAnimation(animateOut);
+						targetIndex = pos;
+						targetHolder = (RelativeLayout) v.findViewById(R.id.toolbarholder);
+						
+					} else {
+						holder.removeAllViews();
+						RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
+						rl.setLayoutAnimation(animateInController);
+						AliasEntry data = apdapter.getItem(pos);
+						if(data.enabled) {
+							((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleon_button);
+						} else {
+							((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
+						}
+						rl.addView(theToolbar);
+					}
+				}
 				//theToolbar.startAnimation(animateOut);
 			} else {
 				
@@ -394,6 +469,12 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 					lastSelectedIndex = pos;
 					RelativeLayout holder = (RelativeLayout)v.findViewById(R.id.toolbarholder);
 					holder.setLayoutAnimation(animateInController);
+					AliasEntry data = apdapter.getItem(pos);
+					if(data.enabled) {
+						((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleon_button);
+					} else {
+						((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
+					}
 					holder.addView(theToolbar);
 				} else {
 					targetIndex = pos;
@@ -444,13 +525,21 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 		modify.setBackgroundColor(0);
 		delete.setBackgroundColor(0);
 		
+		toggle.setOnKeyListener(theButtonKeyListener);
+		modify.setOnKeyListener(theButtonKeyListener);
+		delete.setOnKeyListener(theButtonKeyListener);
+		
+		toggle.setOnClickListener(new ToggleButtonListener());
+		modify.setOnClickListener(new ModifyButtonListener());
+		delete.setOnClickListener(new DeleteButtonListener());
+		
 		theToolbar.addView(toggle);
 		theToolbar.addView(modify);
 		theToolbar.addView(delete);
 		
 		
 		ImageButton close = (ImageButton)theToolbar.findViewById(R.id.toolbar_tab_close);
-		
+		close.setOnKeyListener(theButtonKeyListener);
 		
 		toolbarLength = close.getDrawable().getIntrinsicWidth() + (toggle.getDrawable().getIntrinsicWidth() * 3); 
 		
@@ -574,17 +663,27 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 				
 				RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
 				root.setOnClickListener(mLineClicker);
-				root.setId(157*pos);
+				
 			}
+			//RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
 			
+			v.setId(157*pos);
 			//root.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
 			
+			//if(v.findViewById(theToolbar.getId()) != null) {
+				
+			//}
 			
 			RelativeLayout holder = (RelativeLayout)v.findViewById(R.id.toolbarholder);
 			//holder.setLayoutAnimation(animateInController);
 			
 			holder.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
 			//String m = items.get(position);
+			
+			if(holder.getChildCount() > 0) {
+				holder.removeAllViews();
+				lastSelectedIndex = -1;
+			}
 			
 			//String[] parts = m.split("\\Q[||]\\E");
 			AliasEntry a = items.get(pos);
@@ -707,22 +806,22 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 	
 	public class DeleteButtonListener implements View.OnClickListener {
 
-		private int entry = -1;
-		ViewFlipper flip = null;
-		private int animateDistance = 0;
-		public DeleteButtonListener(int element,ViewFlipper flip,int animateDistance) {
-			entry = element;
-			this.flip = flip;
-			this.animateDistance = animateDistance;
+		//private int entry = -1;
+		//ViewFlipper flip = null;
+		//private int animateDistance = 0;
+		public DeleteButtonListener() {
+			//entry = element;
+			//this.flip = flip;
+			//this.animateDistance = animateDistance;
 		}
 		
 		public void onClick(View v) {
-			
-			
+			//int index = v.getId() / 160;
+			//int index = lastSelectedIndex;
 			AlertDialog.Builder builder = new AlertDialog.Builder(AliasSelectionDialog.this.getContext());
 			builder.setTitle("Delete Trigger");
 			builder.setMessage("Confirm Delete?");
-			builder.setPositiveButton("Delete", new ReallyDeleteTriggerListener(flip,animateDistance,entry));
+			builder.setPositiveButton("Delete", new ReallyDeleteAliasListener());
 			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 				
 				public void onClick(DialogInterface dialog, int which) {
@@ -740,51 +839,54 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 		
 	}
 	
-	public class ReallyDeleteTriggerListener implements DialogInterface.OnClickListener {
-		ViewFlipper flip = null;
-		int animateDistance = 0;
-		int entry = -1;
-		public ReallyDeleteTriggerListener(ViewFlipper flip,int animateDistance,int entry) {
-			this.flip = flip;
-			this.animateDistance = animateDistance;
-			this.entry = entry;
+	public class ReallyDeleteAliasListener implements DialogInterface.OnClickListener {
+		//ViewFlipper flip = null;
+		//int animateDistance = 0;
+		//int entry = -1;
+		public ReallyDeleteAliasListener() {
+			//this.flip = flip;
+			//this.animateDistance = animateDistance;
+			//this.entry = entry;
 		}
 		public void onClick(DialogInterface dialog, int which) {
 			// TODO Auto-generated method stub
 			dialog.dismiss();
-			Animation a = new TranslateAnimation(0, animateDistance, 0, 0);
-			a.setDuration(800);
-			a.setAnimationListener(new DeleteAnimationListener(entry));
+			Animation a = new TranslateAnimation(0, toolbarLength, 0, 0);
+			a.setDuration(300);
+			a.setAnimationListener(new DeleteAnimationListener());
+			
+			theToolbar.startAnimation(a);
+			
 			//list.setOnFocusChangeListener(null);
 			//list.setFocusable(false);
-			flip.setOutAnimation(a);
-			flip.showNext();
+			//flip.setOutAnimation(a);
+			//flip.showNext();
 		}
 		
 	}
 	
 	public class DeleteAnimationListener implements Animation.AnimationListener {
 
-		int entry = -1;
-		public DeleteAnimationListener(int entry) {
-			this.entry = entry;
+		//int entry = -1;
+		public DeleteAnimationListener() {
+			//this.entry = entry;
 		}
 		
 		public void onAnimationEnd(Animation animation) {
-			list.setOnFocusChangeListener(null);
-			list.setFocusable(false);
+			//list.setOnFocusChangeListener(null);
+			//list.setFocusable(false);
 			try {
 				if(currentPlugin.equals("main")) {
-					service.deleteAlias(entries.get(entry).pre);
+					service.deleteAlias(entries.get(lastSelectedIndex).pre);
 				} else {
-					service.deletePluginAlias(currentPlugin,entries.get(entry).pre);
+					service.deletePluginAlias(currentPlugin,entries.get(lastSelectedIndex).pre);
 				}
 				
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
 			//triggerModifier.sendMessageDelayed(triggerModifier.obtainMessage(104), 10);
-			//buildList();
+			apdapter.remove(apdapter.getItem(lastSelectedIndex));
 			apdapter.notifyDataSetInvalidated();
 		}
 
@@ -801,11 +903,13 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 	}
 	
 	public class ModifyButtonListener implements View.OnClickListener {
-		private int index = -1;
-		public ModifyButtonListener(int entry) {
-			this.index = entry;
+		//private int index = -1;
+		public ModifyButtonListener() {
+			//this.index = entry;
 		}
 		public void onClick(View v) {
+			//int index = v.getId() / 159;
+			int index = lastSelectedIndex;
 			AliasEntry entry = apdapter.getItem(index);
 			//launch the trigger editor with this item.
 			try {
@@ -827,18 +931,20 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 	
 	public class ToggleButtonListener implements View.OnClickListener {
 
-		private int index = -1;
-		ImageView icon = null;
-		String key = null;
+		//private int index = -1;
+		//ImageView icon = null;
+		//String key = null;
 	
-		public ToggleButtonListener(int index,ImageView icon,String key) {
-			this.index = index;
-			this.icon = icon;
-			this.key = key;
+		public ToggleButtonListener() {
+			//this.index = index;
+			//this.icon = icon;
+			//this.key = key;
 		}
 		
 		public void onClick(View v) {
+			int index = lastSelectedIndex;
 			AliasEntry entry = apdapter.getItem(index);
+			String key = entry.pre;
 			//View top = list.getChildAt(index);
 			//ViewFlipper flip = top.findViewById(R.id.flipper);
 			ImageButton b = (ImageButton)v;
@@ -846,24 +952,24 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 				b.setImageResource(R.drawable.toolbar_toggleoff_button);
 				try {
 					if(currentPlugin.equals("main")) {
-						service.setTriggerEnabled( false,key);
+						service.setAliasEnabled( false,key);
 					} else {
-						service.setPluginTriggerEnabled( currentPlugin,false,key);
+						service.setPluginAliasEnabled( currentPlugin,false,key);
 					}
 				} catch (RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				entry.enabled = false;
-				
-				icon.setImageResource(R.drawable.toolbar_mini_disabled);
+				RelativeLayout root = (RelativeLayout) v.getParent().getParent().getParent();
+				((ImageView)root.findViewById(R.id.icon)).setImageResource(R.drawable.toolbar_mini_disabled);
 			} else {
 				b.setImageResource(R.drawable.toolbar_toggleon_button);
 				try {
 					if(currentPlugin.equals("main")) {
-						service.setTriggerEnabled( true,key);
+						service.setAliasEnabled( true,key);
 					} else {
-						service.setPluginTriggerEnabled( currentPlugin,true,key);
+						service.setPluginAliasEnabled( currentPlugin,true,key);
 					}
 					
 				} catch (RemoteException e) {
@@ -871,7 +977,9 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 					e.printStackTrace();
 				}
 				entry.enabled = true;
-				icon.setImageResource(R.drawable.toolbar_mini_enabled);
+				
+				RelativeLayout root = (RelativeLayout) v.getParent().getParent().getParent();
+				((ImageView)root.findViewById(R.id.icon)).setImageResource(R.drawable.toolbar_mini_enabled);
 			}
 			
 		}
@@ -883,9 +991,36 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 	public class ToolBarButtonKeyListener implements View.OnKeyListener {
 
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
-			if(keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-				return true;
+			switch(keyCode) {
+			case KeyEvent.KEYCODE_DPAD_UP:
+				int first = 0;
+				//int last = list.getLastVisiblePosition();
+				if(lastSelectedIndex - 1 >= first) {
+					/*list.setSelection(lastSelectedIndex -1);
+					RelativeLayout row = (RelativeLayout) list.getChildAt(lastSelectedIndex -1);
+					row.performClick();*/
+					list.setSelection(lastSelectedIndex - 1);
+					return true;
+				} else {
+					return false;
+				}
+				//break;
+			case KeyEvent.KEYCODE_DPAD_DOWN:
+				int last = list.getCount() -1;
+				if(lastSelectedIndex + 1 <= last) {
+					/*list.setSelection(lastSelectedIndex +1);
+					int childCount = list.getChildCount();
+					//list.getAdapter().get
+					RelativeLayout row = (RelativeLayout) list.getChildAt(lastSelectedIndex +1);
+					row.performClick();*/
+					list.setSelection(lastSelectedIndex + 1);
+					return true;
+				} else {
+					return false;
+				}
+				//break;
 			}
+
 			return false;
 		}
 		
@@ -973,11 +1108,11 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 			
 			
 			Message delmsg = aliasModifier.obtainMessage(MSG_DELETEALIAS);
-			delmsg.obj = new AliasData(muc.pre,muc.post);
+			delmsg.obj = new AliasData(muc.pre,muc.post,muc.enabled);
 			delmsg.arg1 = arg2; //add position
 			
 			Message modmsg = aliasModifier.obtainMessage(MSG_MODIFYALIAS);
-			modmsg.obj = new AliasData(muc.pre,muc.post);
+			modmsg.obj = new AliasData(muc.pre,muc.post,muc.enabled);
 			modmsg.arg1 = arg2; //add position
 			
 			AlertDialog.Builder build = new AlertDialog.Builder(AliasSelectionDialog.this.getContext())
@@ -1078,7 +1213,7 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 		return names;
 	}
 
-	public void newAliasDialogDone(String pre, String post) {
+	public void newAliasDialogDone(String pre, String post,boolean enabled) {
 
 		
 		/****
@@ -1087,8 +1222,11 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 		 * 
 		 */
 
-
-		AliasEntry tmp = new AliasEntry(pre,post);
+		lastSelectedIndex = -1;
+		if(theToolbar.getParent() != null) {
+			((RelativeLayout)theToolbar.getParent()).removeView(theToolbar);
+		}
+		AliasEntry tmp = new AliasEntry(pre,post,enabled);
 		apdapter.add(tmp);
 		apdapter.notifyDataSetChanged();
 		apdapter.sort(new AliasComparator());
@@ -1104,6 +1242,7 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 			AliasData newAlias = new AliasData();
 			newAlias.setPost(post);
 			newAlias.setPre(pre);
+			newAlias.setEnabled(enabled);
 			String newKey = newAlias.getPre();
 			if(newKey.startsWith("^")) newKey = newKey.substring(1,newKey.length());
 			if(newKey.endsWith("$")) newKey = newKey.substring(0,newKey.length()-1);
@@ -1138,9 +1277,14 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 
 	}
 	
-	public void editAliasDialogDone(String pre,String post,int pos,AliasData orig) {
+	public void editAliasDialogDone(String pre,String post,boolean enabled,int pos,AliasData orig) {
+		lastSelectedIndex = -1;
+		if(theToolbar.getParent() != null) {
+			((RelativeLayout)theToolbar.getParent()).removeView(theToolbar);
+		}
+		
 		apdapter.remove(apdapter.getItem(pos));
-		AliasEntry tmp = new AliasEntry(pre,post);
+		AliasEntry tmp = new AliasEntry(pre,post,enabled);
 		apdapter.insert(tmp,pos);
 		apdapter.notifyDataSetChanged();
 		apdapter.sort(new AliasComparator());
@@ -1165,6 +1309,7 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 			AliasData newAlias = new AliasData();
 			newAlias.setPre(pre);
 			newAlias.setPost(post);
+			newAlias.setEnabled(enabled);
 			existingAliases.put(newKey, newAlias);
 			if(currentPlugin.equals("main")) {
 				service.setAliases(existingAliases);
@@ -1263,11 +1408,11 @@ public class AliasSelectionDialog extends Dialog implements AliasEditorDialogDon
 			post = "";
 		}*/
 		
-		public AliasEntry(String pPre,String pPost) {
+		public AliasEntry(String pPre,String pPost,boolean enabled) {
 			pre = pPre;
 			post = pPost;
-		}
-		
+			this.enabled = enabled;
+		}		
 		/*public AliasEntry(AliasData i) {
 			pre = i.getPre();
 			post = i.getPost();

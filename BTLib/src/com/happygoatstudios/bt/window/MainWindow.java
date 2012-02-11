@@ -162,6 +162,8 @@ public class MainWindow extends Activity {
 
 	protected boolean settingsDialogRun = false;
 	
+	private BetterEditText mInputBox = null;
+	
 	private boolean autoLaunch = true;
 	private String overrideHF = "auto";
 	private String overrideHFFlip = "auto";
@@ -199,7 +201,7 @@ public class MainWindow extends Activity {
 	//VitalsView vitals = null;
 	boolean landscape = false;
 	ArrayList<ScriptOptionCallback> scriptCallbacks = new ArrayList<ScriptOptionCallback>();
-	
+	private View mFoldoutBar = null;
 	private class ScriptOptionCallback {
 		private String window;
 		private String title;
@@ -362,13 +364,19 @@ public class MainWindow extends Activity {
 		
         View v = findViewById(R.id.textinput);
         //v.setTag("inputbar");
-        EditText input_box = (EditText)v;
+        //EditText input_box = (EditText)v;
+        mInputBox = (BetterEditText) v;
+        mInputBox.setId(30);
+        
+        View inputBar = findViewById(R.id.inputbar);
+        
+        inputBar.setId(10);
         
         
-        input_box.setOnKeyListener(new TextView.OnKeyListener() {
+        mInputBox.setOnKeyListener(new TextView.OnKeyListener() {
 
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				EditText input_box = (EditText)findViewById(R.id.textinput);
+				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					
 					String cmd = history.getNext();
@@ -376,17 +384,17 @@ public class MainWindow extends Activity {
 						if(service.isKeepLast()) {
 							if(historyWidgetKept) {
 								String tmp = history.getNext();
-								input_box.setText(tmp);
-								input_box.setSelection(tmp.length());
+								mInputBox.setText(tmp);
+								mInputBox.setSelection(tmp.length());
 								historyWidgetKept=false;
 							} else {
-								input_box.setText(cmd);
+								mInputBox.setText(cmd);
 								//input_box.setText(cmd);
-								input_box.setSelection(cmd.length());
+								mInputBox.setSelection(cmd.length());
 							}
 						} else {
-							input_box.setText(cmd);
-							input_box.setSelection(cmd.length());
+							mInputBox.setText(cmd);
+							mInputBox.setSelection(cmd.length());
 						}
 					} catch (RemoteException e) {
 						throw new RuntimeException(e);
@@ -394,8 +402,8 @@ public class MainWindow extends Activity {
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getPrev();
-					input_box.setText(cmd);
-					input_box.setSelection(cmd.length());
+					mInputBox.setText(cmd);
+					mInputBox.setSelection(cmd.length());
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER && event.getAction() == KeyEvent.ACTION_UP) {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
@@ -410,21 +418,21 @@ public class MainWindow extends Activity {
    
         });
         
-        input_box.setDrawingCacheEnabled(true);
-        input_box.setVisibility(View.VISIBLE);
-        input_box.setEnabled(true);
+        mInputBox.setDrawingCacheEnabled(true);
+        mInputBox.setVisibility(View.VISIBLE);
+        mInputBox.setEnabled(true);
         //TextView filler = (TextView)findViewById(R.id.filler);
         //filler.setFocusable(false);
         //filler.setClickable(false);
         
         
-        input_box.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mInputBox.setOnEditorActionListener(new TextView.OnEditorActionListener() {
         
 
         
 		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 		
-				EditText input_box = (EditText)findViewById(R.id.textinput);
+				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				
 			
 				if(event == null)  {
@@ -444,8 +452,8 @@ public class MainWindow extends Activity {
 					} else { return true; }
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getNext();
-					input_box.setText(cmd);
-					input_box.setSelection(cmd.length());
+					mInputBox.setText(cmd);
+					mInputBox.setSelection(cmd.length());
 					if(actionId == EditorInfo.IME_ACTION_DONE) {
 
 						//	return false;
@@ -463,7 +471,7 @@ public class MainWindow extends Activity {
 		//assign my handler
 		myhandler = new Handler() {
 			public void handleMessage(Message msg) {
-				EditText input_box = (EditText)findViewById(R.id.textinput);
+				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
 				case MESSAGE_PLUGINXCALLS:
 					//Map map = (Map)msg.obj;
@@ -606,17 +614,17 @@ public class MainWindow extends Activity {
 					
 					if(!add) {
 						//reset text
-						input_box.setText(text);
-						input_box.setSelection(input_box.getText().toString().length());
+						mInputBox.setText(text);
+						mInputBox.setSelection(mInputBox.getText().toString().length());
 					} else {
 						//append text
-						input_box.setText(input_box.getText().toString() + text);
-						input_box.setSelection(input_box.getText().toString().length());
+						mInputBox.setText(mInputBox.getText().toString() + text);
+						mInputBox.setSelection(mInputBox.getText().toString().length());
 					}
 					
 					if(popup) {
 						InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-						mgr.showSoftInput(input_box, InputMethodManager.SHOW_FORCED);
+						mgr.showSoftInput(mInputBox, InputMethodManager.SHOW_FORCED);
 					}
 				
 					break;
@@ -772,7 +780,7 @@ public class MainWindow extends Activity {
 					
 					//input_box.debug(5);
 					
-					String pdata = input_box.getText().toString();
+					String pdata = mInputBox.getText().toString();
 					history.addCommand(pdata);
 					Character cr = new Character((char)13);
 					Character lf = new Character((char)10);
@@ -815,11 +823,11 @@ public class MainWindow extends Activity {
 					
 					try {
 						if(service.isKeepLast()) {
-							input_box.setSelection(0, input_box.getText().length());
+							mInputBox.setSelection(0, mInputBox.getText().length());
 							historyWidgetKept = true;
 						} else {
-							input_box.clearComposingText();
-							input_box.setText("");
+							mInputBox.clearComposingText();
+							mInputBox.setText("");
 						}
 					} catch (RemoteException e1) {
 						throw new RuntimeException(e1);
@@ -854,10 +862,10 @@ public class MainWindow extends Activity {
 		};
 		
 		//EditText input_box = (EditText)findViewById(R.id.textinput);
-		BetterEditText bet = (BetterEditText)input_box;
+		//BetterEditText bet = (BetterEditText)input_box;
 		//bet.setListener(mInputBarAnimationListener);
 		
-		test_button = (ImageButton)findViewById(R.id.test_btn);
+		test_button = (ImageButton)findViewById(R.id.foldout);
 				
 		test_button.setOnClickListener(new View.OnClickListener() {
 			
@@ -868,46 +876,46 @@ public class MainWindow extends Activity {
 				//if(l == null) {
 				///	return;
 				//}
-
-				if(downButton == null) {
+				
+				if(mFoldoutBar == null) {
 					LayoutInflater lf = LayoutInflater.from(MainWindow.this);
-					RelativeLayout target = (RelativeLayout)lf.inflate(R.layout.input_controls, null);
+					mFoldoutBar = (LinearLayout)lf.inflate(R.layout.input_controls, null);
 					
+				
 					
+					ImageButton dc = (ImageButton)mFoldoutBar.findViewById(R.id.down_btn_c);
+					ImageButton uc = (ImageButton)mFoldoutBar.findViewById(R.id.up_btn_c);
+					ImageButton ec = (ImageButton)mFoldoutBar.findViewById(R.id.enter_btn_c);
 					
-					ImageButton dc = (ImageButton)target.findViewById(R.id.down_btn_c);
-					ImageButton uc = (ImageButton)target.findViewById(R.id.up_btn_c);
-					ImageButton ec = (ImageButton)target.findViewById(R.id.enter_btn_c);
-					
-					target.removeView(dc);
-					target.removeView(uc);
-					target.removeView(ec);
+					//target.removeView(dc);
+					//target.removeView(uc);
+					//target.removeView(ec);
 					
 					//target.removeAllViews();
 					
-					downButton = dc;
-					upButton = uc;
-					enterButton = ec;
+					//downButton = dc;
+					//upButton = uc;
+					//enterButton = ec;
 					
 					uc.setOnClickListener(new View.OnClickListener() {
 						
 						public void onClick(View arg0) {
-							EditText input_box = (EditText)findViewById(R.id.textinput);
+							//EditText input_box = (EditText)findViewById(R.id.textinput);
 							String cmd = history.getNext();
 							try {
 								if(service.isKeepLast()) {
 									if(historyWidgetKept) {
 										String tmp = history.getNext();
-										input_box.setText(tmp);
-										input_box.setSelection(tmp.length());
+										mInputBox.setText(tmp);
+										mInputBox.setSelection(tmp.length());
 										historyWidgetKept = false;
 									} else {
-										input_box.setText(cmd);
-										input_box.setSelection(cmd.length());
+										mInputBox.setText(cmd);
+										mInputBox.setSelection(cmd.length());
 									}
 								} else {
-									input_box.setText(cmd);
-									input_box.setSelection(cmd.length());
+									mInputBox.setText(cmd);
+									mInputBox.setSelection(cmd.length());
 								}
 							} catch (RemoteException e) {
 								throw new RuntimeException(e);
@@ -919,9 +927,9 @@ public class MainWindow extends Activity {
 					dc.setOnClickListener(new View.OnClickListener() {
 						
 						public void onClick(View arg0) {
-							EditText input_box = (EditText)findViewById(R.id.textinput);
+							//EditText input_box = (EditText)findViewById(R.id.textinput);
 							String cmd = history.getPrev();
-							input_box.setText(cmd);
+							mInputBox.setText(cmd);
 						}
 					});
 					
@@ -934,100 +942,56 @@ public class MainWindow extends Activity {
 						
 					});
 					
-					RelativeLayout rl = (RelativeLayout) MainWindow.this.findViewById(R.id.window_container);
-					rl.addView(enterButton);
-					rl.addView(upButton);
-					rl.addView(downButton);
+					//RelativeLayout rl = (RelativeLayout) MainWindow.this.findViewById(R.id.window_container);
+					//rl.addView(enterButton);
+					//rl.addView(upButton);
+					//rl.addView(downButton);
 				}
 				//pre multi screen support animation value 178px
-				float amount = 180*MainWindow.this.getResources().getDisplayMetrics().density;
-				//Animation a = new TranslateAnimation(-1*amount,0,0,0);
-				Animation a = new TranslateAnimation(0,amount,0,0);
-				a.setDuration(320);
-				//a.setFillAfter(false);
-				//AnimationSet set = new AnimationSet(true);
-				//set.addAnimation(a);
+				int foldoutbuttonwidth = 0;
+				ImageButton dc = (ImageButton)mFoldoutBar.findViewById(R.id.down_btn_c);
 				
-				Animation b = new TranslateAnimation(0,amount,0,0);
-				b.setDuration(320);
+				foldoutbuttonwidth = dc.getDrawable().getIntrinsicWidth();
 				
-				//LayoutAnimationController lac = new LayoutAnimationController(set,0.01f);
 				
-				//rl.setLayoutAnimation(lac);
-				//View test_btn = 
-				
-				if(input_controls_expanded) {
-					//switch the image resource
-					Animation outanim = new TranslateAnimation(0,-amount,0,0);
-					outanim.setDuration(320);
-					//outanim.setFillAfter(false);
-					//LayoutAnimationController lac2 = new LayoutAnimationController(outanim,0.0f);
-					//rl.setLayoutAnimation(lac2);
-					//l.removeAllViews();
-					Animation outanimB = new TranslateAnimation(0,-amount,0,0);
-					outanim.setDuration(320);
-					
-					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
-					v.startAnimation(outanim);
-					input_box.startAnimation(outanimB);
-					input_controls_expanded = false;
-					test_button.setImageResource(R.drawable.sliderwidgetout);
-					//v.startAnimation(a);
-					//input_box.startAnimation(b);
-					enterButton.startAnimation(outanim);
-					upButton.startAnimation(outanim);
-					downButton.startAnimation(outanim);
-					
-				} else {
-					//l.addView(target);
-					//set the layout rules and add the views, then animate.
-					if(toggleInParams == null) {
-						toggleInParams = (RelativeLayout.LayoutParams) test_button.getLayoutParams();
-					}
-					
-					if(enterInParams == null) {
-						enterInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						enterInParams.addRule(RelativeLayout.LEFT_OF,test_button.getId());
-						enterInParams.addRule(RelativeLayout.ALIGN_TOP,test_button.getId());
-						enterInParams.addRule(RelativeLayout.ALIGN_BOTTOM,test_button.getId());
-					}
-					
-					if(upInParams == null) {
-						upInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						upInParams.addRule(RelativeLayout.LEFT_OF,enterButton.getId());
-						upInParams.addRule(RelativeLayout.ALIGN_TOP,enterButton.getId());
-						upInParams.addRule(RelativeLayout.ALIGN_BOTTOM,enterButton.getId());
-					}
-					
-					if(downInParams == null) {
-						downInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						downInParams.addRule(RelativeLayout.LEFT_OF,upButton.getId());
-						downInParams.addRule(RelativeLayout.ALIGN_TOP,upButton.getId());
-						downInParams.addRule(RelativeLayout.ALIGN_BOTTOM,upButton.getId());
-					}
-					
-					enterButton.setLayoutParams(enterInParams);
-					upButton.setLayoutParams(upInParams);
-					downButton.setLayoutParams(downInParams);
-					
-					upButton.setVisibility(View.VISIBLE);
-					downButton.setVisibility(View.VISIBLE);
-					enterButton.setVisibility(View.VISIBLE);
-					
-					upButton.requestLayout();
+				float amount = foldoutbuttonwidth*3;
 
-					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+				if(input_controls_expanded) {
+					TranslateAnimation outanim = new TranslateAnimation(0,-1*amount,0,0);
+					outanim.setDuration(320);
+					TranslateAnimation outanimB = new TranslateAnimation(0,-1*amount,0,0);
+					outanim.setDuration(320);
 					
+					//LayoutAnimationController bac = new LayoutAnimationController(outanim,0.0f);
+					
+					input_controls_expanded = false;
+					//LinearLayout inputbar = (LinearLayout) MainWindow.this.findViewById(10);
+					mInputBox.setListener(mInputBarAnimationListener);
+					mInputBox.startAnimation(outanimB);
+					test_button.startAnimation(outanim);
+					mFoldoutBar.startAnimation(outanim);
+					//inputbar.setLayoutAnimation(bac);
+					//inputbar.removeView(mFoldoutBar);
+					//inputbar.startAnimation(outanim);
+					//test_button.startAnimation(outanim);
+					//mInputBox.startAnimation(outanim);
+					//inputbar.removeViewAt(0);
+				} else {
+					Animation a = new TranslateAnimation(-1*amount,0,0,0);
+
+					a.setDuration(320);
+
+					AnimationSet set = new AnimationSet(true);
+					set.addAnimation(a);
+
+					LayoutAnimationController lac = new LayoutAnimationController(set,0.0f);
+					
+					LinearLayout inputbar = (LinearLayout) MainWindow.this.findViewById(10);
+					inputbar.setLayoutAnimation(lac);
+					
+					
+					inputbar.addView(mFoldoutBar, 0);
 					input_controls_expanded = true;
-					test_button.setImageResource(R.drawable.sliderwidgetin);
-					
-					v.startAnimation(a);
-					input_box.startAnimation(b);
-					enterButton.startAnimation(a);
-					upButton.startAnimation(a);
-					downButton.startAnimation(a);
-					
-					
 					
 				}
 
@@ -1122,73 +1086,16 @@ public class MainWindow extends Activity {
 				//input_bar.
 				Log.e("Ou","IN THE CUSTOM ANIMATION LISTENER CONTROLLRE");
 				if(input_controls_expanded) {
-					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
-					
-					if(toggleOutParams == null) {
-						toggleOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						//tb_params.
-						toggleOutParams.addRule(RelativeLayout.RIGHT_OF,enterButton.getId());
-						toggleOutParams.addRule(RelativeLayout.ALIGN_TOP,input_box.getId());
-						toggleOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,input_box.getId());
-					}
-					
-					if(enterOutParams == null) {
-						enterOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						enterOutParams.addRule(RelativeLayout.RIGHT_OF,upButton.getId());
-						enterOutParams.addRule(RelativeLayout.ALIGN_TOP,test_button.getId());
-						enterOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,test_button.getId());
-					}
-					
-					if(upOutParams == null) {
-						upOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						upOutParams.addRule(RelativeLayout.RIGHT_OF,downButton.getId());
-						upOutParams.addRule(RelativeLayout.ALIGN_TOP,enterButton.getId());
-						upOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,enterButton.getId());
-					}
-					
-					if(downOutParams == null) {
-						downOutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						
-						downOutParams.addRule(RelativeLayout.ALIGN_TOP,upButton.getId());
-						downOutParams.addRule(RelativeLayout.ALIGN_BOTTOM,upButton.getId());
-						downOutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-					}
-					
-					test_button.setLayoutParams(toggleOutParams);
-					upButton.setLayoutParams(upOutParams);
-					downButton.setLayoutParams(downOutParams);
-					enterButton.setLayoutParams(enterOutParams);
-					enterButton.requestLayout();
+
 				} else {
-					BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
-					if(toggleInParams == null) {
-						toggleInParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
-						toggleInParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-						toggleInParams.addRule(RelativeLayout.ALIGN_TOP,input_box.getId());
-						toggleInParams.addRule(RelativeLayout.ALIGN_BOTTOM,input_box.getId());
-					}
-					
-					//test_button.setLayoutParams(toggleInParams);
-					//BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
-					
-					test_button.setLayoutParams(toggleInParams);
-					test_button.requestLayout();
-					//RelativeLayout rl = (RelativeLayout)input_box.getParent();
-					
-					upButton.setVisibility(View.GONE);
-					downButton.setVisibility(View.GONE);
-					enterButton.setVisibility(View.GONE);
-					//rl.removeView(upButton);
-					//rl.removeView(downButton);
-					//rl.removeView(enterButton);
-					
-					
+					LinearLayout p = (LinearLayout) mInputBox.getParent();
+					p.removeViewAt(0);
 				}
 				//
 			}
 		};
 		
-		bet.setListener(mInputBarAnimationListener);
+		mInputBox.setListener(mInputBarAnimationListener);
 	}
 	
 	ImageButton downButton = null;
@@ -1618,14 +1525,14 @@ public class MainWindow extends Activity {
 	}
 	
 	private void ClearKeyboard() {
-		EditText input_box = (EditText)findViewById(R.id.textinput);
-		input_box.setText("");
+		//EditText input_box = (EditText)findViewById(R.id.textinput);
+		mInputBox.setText("");
 	}
 	
 	private void HideKeyboard() {
 		InputMethodManager imm = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
-		EditText input_box = (EditText)findViewById(R.id.textinput);
-		imm.hideSoftInputFromWindow(input_box.getWindowToken(), 0);
+		//EditText input_box = (EditText)findViewById(R.id.textinput);
+		imm.hideSoftInputFromWindow(mInputBox.getWindowToken(), 0);
 		//Log.e("WINDOW","ATTEMPTING TO HIDE THE KEYBOARD");
 	}
 	
@@ -1639,8 +1546,8 @@ public class MainWindow extends Activity {
 			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
 		}
 		
-		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
-		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
+		//BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
+		mInputBox.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
 	}
 	
 	private void DoHapticFeedbackPress() {
@@ -1654,8 +1561,8 @@ public class MainWindow extends Activity {
 			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
 		}
 		//Log.e("WINDOW","DISPATCHING HAPTIC FEEDBACK FOR PRESS!");
-		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
-		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
+		//BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
+		mInputBox.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
 	}
 	
 	private void DoHapticFeedbackFlip() {
@@ -1668,8 +1575,8 @@ public class MainWindow extends Activity {
 			aflags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
 		}
 		
-		BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
-		input_box.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
+		//BetterEditText input_box = (BetterEditText) this.findViewById(R.id.textinput);
+		mInputBox.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, aflags);
 	}
 	
 	private boolean isServiceRunning() {
@@ -2105,9 +2012,9 @@ public class MainWindow extends Activity {
 
 			MainWindow.this.findViewById(R.id.window_container).requestLayout();
 			isFullScreen = service.isFullScreen();
-			BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
-			input_box.setBackSpaceBugFix(true);
-			input_box.setKeepScreenOn(service.isKeepScreenOn());
+			//BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
+			mInputBox.setBackSpaceBugFix(true);
+			mInputBox.setKeepScreenOn(service.isKeepScreenOn());
 		
 			
 			//screen2.setEncoding(service.getEncoding());
@@ -2151,27 +2058,27 @@ public class MainWindow extends Activity {
 			if(service.getUseExtractUI()) {
 				
 				
-				int current = input_box.getImeOptions();
+				int current = mInputBox.getImeOptions();
 				int wanted = current & (0xFFFFFFFF^EditorInfo.IME_FLAG_NO_EXTRACT_UI);
 				
 				//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
-				input_box.setImeOptions(wanted);
-				input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
-				BetterEditText better = (BetterEditText)input_box;
-				better.setUseFullScreen(true);
+				mInputBox.setImeOptions(wanted);
+				mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				//BetterEditText better = (BetterEditText)input_box;
+				mInputBox.setUseFullScreen(true);
 			} else {
-				int current = input_box.getImeOptions();
+				int current = mInputBox.getImeOptions();
 				int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
 				//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
-				input_box.setImeOptions(wanted);
+				mInputBox.setImeOptions(wanted);
 				if(service.isAttemptSuggestions()) {
-					input_box.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+					mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 				} else {
-					input_box.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+					mInputBox.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 						
 				}
-				BetterEditText better = (BetterEditText)input_box;
-				better.setUseFullScreen(false);
+				//BetterEditText better = (BetterEditText)input_box;
+				mInputBox.setUseFullScreen(false);
 				//Log.e("WINDOW","SETTINGS NOW "+Integer.toHexString(input_box.getImeOptions()));
 			}
 			
@@ -2199,16 +2106,16 @@ public class MainWindow extends Activity {
 			
 			if(service.isBackSpaceBugFix()) {
 				//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
-				BetterEditText tmp_bar = (BetterEditText)input_box;
-				tmp_bar.setBackSpaceBugFix(true);
+				//BetterEditText tmp_bar = (BetterEditText)input_box;
+				mInputBox.setBackSpaceBugFix(true);
 			} else {
-				BetterEditText tmp_bar = (BetterEditText)input_box;
-				tmp_bar.setBackSpaceBugFix(false);
+				//BetterEditText tmp_bar = (BetterEditText)input_box;
+				mInputBox.setBackSpaceBugFix(false);
 				//Log.e("WINDOW","NOT APPLYING BACK SPACE BUG FIX");
 			}
 			
-			InputMethodManager imm = (InputMethodManager) input_box.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.restartInput(input_box);
+			InputMethodManager imm = (InputMethodManager) mInputBox.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.restartInput(mInputBox);
 			//imm.
 			//im
 			//get the rest of the window options that are necessary to function
@@ -2218,7 +2125,7 @@ public class MainWindow extends Activity {
 		}
 		
 		initiailizeWindows();
-		int i = R.id.textinput;
+		//int i = R.id.textinput;
 	}
 	
 	private Typeface loadFontFromName(String name) {
@@ -2501,13 +2408,13 @@ public class MainWindow extends Activity {
 			synchronized(this) {
 				while(mWindows == null || mWindows.size() == 0) {
 					try {
-						this.wait(30);
+						this.wait(300);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					boolean done = false;
-					while(!done) {
+					//while(!done) {
 						try {
 							mWindows = service.getWindowTokens();
 							if(mWindows != null) {
@@ -2519,7 +2426,7 @@ public class MainWindow extends Activity {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-					}
+					//}
 				}
 			}
 		} else {

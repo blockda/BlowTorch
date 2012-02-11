@@ -394,7 +394,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//	return true;
 		//}
 		//target = now + 1000;
-		Log.e("WINDOW",mName + "onTouchEvent");
+		//Log.e("WINDOW",mName + "onTouchEvent");
 		boolean retval = false;
 		boolean noFunction = false;
 		//L.getGlobal("debug");
@@ -2066,15 +2066,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		return mMaxHeight;
 	}
 	
-	@Override
+	/*@Override
 	protected void onLayout(boolean changed,int left,int top,int right,int bottom) {
-		Log.e("WINDOW","WINDOW ONLAYOUT CALLED: "+changed);
+		//Log.e("WINDOW","WINDOW ONLAYOUT CALLED: "+changed);
 		if(changed) {
 			sizeChanged = true;
 		}
-	}
+	}*/
 	
-	boolean sizeChanged = false;
+	//boolean sizeChanged = false;
 	/*@Override
 	public RelativeLayout.LayoutParams getLayoutParams() {
 		return this.getLayoutParams();

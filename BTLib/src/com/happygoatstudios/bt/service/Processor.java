@@ -38,7 +38,7 @@ public class Processor {
 		setEncoding(pEncoding);
 	}
 
-	private boolean debugTelnet = true;
+	private boolean debugTelnet = false;
 
 	public boolean isDebugTelnet() {
 		return debugTelnet;

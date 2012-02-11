@@ -5,8 +5,49 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
     
+    
+    <LinearLayout
+        android:id="@+id/inputbar"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        >
+    <ImageButton
+    	android:id="@+id/foldout"
+    	android:layout_width="40dip"
+    	android:layout_height="20dip"
+    	android:background="#0A0A0A"
+    	android:src="@drawable/sliderwidgetout"
+    	android:textSize="16sp"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="|DOWN|"/>
+    
+    <com.happygoatstudios.bt.window.BetterEditText
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:minHeight = "20dip"
+    android:textSize="24sp"
+    android:typeface="monospace"
+    android:textColor="#9999FF"
+    android:textColorHighlight="#555555"
+    android:background="@drawable/input_bar_bg"
+    android:candidatesTextStyleSpans=""
+    android:editable="true"
+    android:layout_marginLeft="3sp"
+    android:id="@+id/textinput"
+    android:inputType = "textMultiLine"
+    android:nextFocusUp = "@id/textinput"
+    android:nextFocusDown = "@id/textinput"
+    android:nextFocusLeft = "@id/textinput"
+    android:nextFocusRight = "@id/textinput"
+    android:isScrollContainer = "false"
+    android:keepScreenOn = "true"
+    android:imeOptions = "actionSend"/>
 
-
+    </LinearLayout>
+<!-- 
 <RelativeLayout
 	android:layout_height="20dip"
 	android:layout_width="wrap_content"
@@ -35,9 +76,6 @@
     	android:textColor="#9999FF"
     	android:text="|DOWN|"/>
 
-    <!--  android:background="#0A0A0A" -->
-    <!-- <EditText -->
-    <!-- pre-screen size support android:height = "30px" -->
     <com.happygoatstudios.bt.window.BetterEditText
     android:layout_width="fill_parent"
     android:layout_height="20dip"
@@ -63,7 +101,6 @@
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"/>
  </RelativeLayout>
-	<!--  android:lineSpacingExtra = "-2sp" -->
     
     <TextView 
     android:layout_width = "fill_parent" 
@@ -95,18 +132,6 @@
     	android:layout_width="fill_parent"
     	android:layout_above="@id/filler">
     	
-    	
- <!--   <ScrollView 
-    		android:id="@+id/secscroller"
-    		android:layout_height="fill_parent"
-   	 		android:layout_width="fill_parent"> -->
-    			<!-- <TextView  
-    				android:layout_width="fill_parent" 
-   					android:layout_height="fill_parent" 
-    				android:text="@string/hello2"
-   					android:textSize="12sp"
-    				android:typeface="monospace"
-    				android:id="@+id/tv2" /> -->
     				<RelativeLayout 
     					android:id="@+id/slickholder"
     					android:layout_width="fill_parent"
@@ -115,20 +140,7 @@
     					android:layout_y="0px">
     				</RelativeLayout>
     				
-    					
-    <!--	</ScrollView> -->
-    	<!-- <ScrollView
-    	    android:id="@+id/thrirdscroller"
-    		android:layout_height="fill_parent"
-   	 		android:layout_width="fill_parent"> -->
-    		<!--  <WebView
-    			android:id="@+id/webview"
-    			android:layout_height="fill_parent"
-    			android:layout_width="fill_parent"
-    			android:typeface="monospace"/> -->
-    		
-    	<!-- </ScrollView> -->	
-	 </com.happygoatstudios.bt.legacy.FixedViewFlipper>
+	 </com.happygoatstudios.bt.legacy.FixedViewFlipper> -->
 	
 
 </RelativeLayout>

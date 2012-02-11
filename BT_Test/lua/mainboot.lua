@@ -23,7 +23,7 @@ RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
 LayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
 params = luajava.new(LayoutParams,LayoutParams.FILL_PARENT,LayoutParams.FILL_PARENT)
 --params:addRule(RelativeLayout.ABOVE,100)
-params:addRule(RelativeLayout.ABOVE,2131362032)
+params:addRule(RelativeLayout.ABOVE,10)
 params:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
 params:addRule(RelativeLayout.BELOW,5010) --chat window
 params:addRule(RelativeLayout.LEFT_OF,6010) --map window

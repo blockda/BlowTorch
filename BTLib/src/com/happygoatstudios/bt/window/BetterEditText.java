@@ -80,9 +80,9 @@ public class BetterEditText extends EditText {
 	protected void onAnimationEnd() {
 		Log.e("BET","IN THE ANIMATION END LISTENER");
 		super.onAnimationEnd();
-		//if(listener != null) {
+		if(listener != null) {
 			listener.onAnimationEnd();
-		//}
+		}
 	}
 	
 	public void setListener(AnimationEndListener listener) {
