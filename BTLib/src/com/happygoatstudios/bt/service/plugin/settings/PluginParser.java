@@ -148,14 +148,14 @@ public class PluginParser extends BasePluginParser {
 		Element pgroup = root.getChild(BasePluginParser.TAG_PLUGINS);
 		
 		Element plugin = pgroup.getChild(BasePluginParser.TAG_PLUGIN);
-		Element aliases = plugin.getChild(BasePluginParser.TAG_ALIASES);
+		//Element aliases = plugin.getChild(BasePluginParser.TAG_ALIASES);
 		Element triggers = plugin.getChild(BasePluginParser.TAG_TRIGGERS);
 		Element timers = plugin.getChild(BasePluginParser.TAG_TIMERS);
 		Element scripts = plugin.getChild(BasePluginParser.TAG_SCRIPT);
 		Element windows = plugin.getChild("windows");
 		Element window = windows.getChild("window");
 		//Element alias = aliases.getChild(BasePluginParser.TAG_ALIAS);
-		AliasParser.registerListeners(aliases, newItemHandler, current_alias);
+		AliasParser.registerListeners(plugin, newItemHandler, current_alias);
 		
 		//Element trigger = triggers.getChild(BasePluginParser.TAG_TRIGGER);
 		TriggerParser.registerListeners(triggers, newItemHandler, new TriggerData(),current_trigger,current_timer);

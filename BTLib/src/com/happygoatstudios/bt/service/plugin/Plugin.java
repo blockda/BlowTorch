@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
@@ -34,6 +36,7 @@ import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.alias.AliasParser;
 import com.happygoatstudios.bt.responder.IteratorModifiedException;
 import com.happygoatstudios.bt.responder.TriggerResponder;
+import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.StellarService;
 import com.happygoatstudios.bt.service.WindowToken;
@@ -58,6 +61,12 @@ public class Plugin {
 	private String fullPath;
 	private String shortName;
 	Connection parent;
+	StringBuffer joined_alias = new StringBuffer();
+	Pattern alias_replace = Pattern.compile(joined_alias.toString());
+	Matcher alias_replacer = alias_replace.matcher("");
+	Matcher alias_recursive = alias_replace.matcher("");
+	String mEncoding = "ISO-8859-1";
+	Pattern whiteSpace = Pattern.compile("\\s");
 	
 	public Plugin(Handler h,Connection parent) throws LuaException {
 		setSettings(new PluginSettings());
@@ -859,11 +868,156 @@ public class Plugin {
 	}
 	
 	public void addTrigger(TriggerData data) {
-		this.getSettings().getTriggers().put(data.getPattern(), data);
+		this.getSettings().getTriggers().put(data.getName(), data);
 	}
 
 	public void updateTrigger(TriggerData from, TriggerData to) {
-		this.getSettings().getTriggers().remove(from.getPattern());
-		this.getSettings().getTriggers().put(to.getPattern(),to);
+		this.getSettings().getTriggers().remove(from.getName());
+		this.getSettings().getTriggers().put(to.getName(),to);
+	}
+	
+	public void buildAliases() {
+		joined_alias.setLength(0);
+		
+		//Object[] a = the_settings.getAliases().keySet().toArray();
+		Object[] a = getSettings().getAliases().values().toArray();
+		
+		
+		String prefix = "\\b";
+		String suffix = "\\b";
+		//StringBuffer joined_alias = new StringBuffer();
+		if(a.length > 0) {
+			if(((AliasData)a[0]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
+			if(((AliasData)a[0]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
+			joined_alias.append("("+prefix+((AliasData)a[0]).getPre()+suffix+")");
+			for(int i=1;i<a.length;i++) {
+				if(((AliasData)a[i]).isEnabled()) {
+					if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
+					if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
+					joined_alias.append("|");
+					joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
+				}
+			}
+			
+		}
+		
+		alias_replace = Pattern.compile(joined_alias.toString());
+		alias_replacer = alias_replace.matcher("");
+		alias_recursive = alias_replace.matcher("");
+		//Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
+	}
+	
+	public byte[] doAliasReplacement(byte[] input,Boolean reprocess) {
+		if(joined_alias.length() > 0) {
+
+			//Pattern to_replace = Pattern.compile(joined_alias.toString());
+			byte[] retval = null;
+			//Matcher replacer = null;
+			try {
+				alias_replacer.reset(new String(input,mEncoding));//replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
+			} catch (UnsupportedEncodingException e1) {
+				throw new RuntimeException(e1);
+			}
+			
+			StringBuffer replaced = new StringBuffer();
+			
+			boolean found = false;
+			boolean doTail = true;
+			while(alias_replacer.find()) {
+				found = true;
+				
+				AliasData replace_with = getSettings().getAliases().get(alias_replacer.group(0));
+				//do special replace if only ^ is matched.
+				if(replace_with.getPre().startsWith("^") && !replace_with.getPre().endsWith("$")) {
+					doTail = false;
+					//do special replace.
+					String[] tParts = null;
+					try {
+						tParts = whiteSpace.split(new String(input,mEncoding));
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+					HashMap<String,String> map = new HashMap<String,String>();
+					for(int i=0;i<tParts.length;i++) {
+						map.put(Integer.toString(i), tParts[i]);
+					}
+					ToastResponder r = new ToastResponder();
+					String finalString = r.translate(replace_with.getPost(), map);
+					
+					replaced.append(finalString);
+					
+				} else {
+					alias_replacer.appendReplacement(replaced, replace_with.getPost());
+				}
+			}
+			if(doTail) {
+				alias_replacer.appendTail(replaced);
+			}
+			StringBuffer buffertemp = new StringBuffer();
+			if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
+				boolean recursivefound = false;
+				boolean eatTail = false;
+				do {
+					recursivefound = false;
+					
+					//Matcher recursivematch = to_replace.matcher(replaced.toString());
+					alias_recursive.reset(replaced.toString());
+					buffertemp.setLength(0);
+					while(alias_recursive.find()) {
+						recursivefound = true;
+						AliasData replace_with = getSettings().getAliases().get(alias_recursive.group(0));
+						if(replace_with.getPre().startsWith("^") && ! replace_with.getPre().endsWith("$")) {
+							ToastResponder r = new ToastResponder();
+							String[] tParts = null;
+							
+							String tmpInput = replaced.toString();
+							int index = tmpInput.indexOf(";");
+							String rest = "";
+							if(index > -1) {
+								rest = tmpInput.substring(index+1,tmpInput.length());
+								tmpInput = tmpInput.substring(0,index);
+							}
+							String sepchar = "";
+							if(rest.length()>0) {
+								sepchar = ";";
+							}
+							tParts = whiteSpace.split(tmpInput);
+							
+							HashMap<String,String> map = new HashMap<String,String>();
+							for(int i=0;i<tParts.length;i++) {
+								map.put(Integer.toString(i), tParts[i]);
+							} 
+							eatTail = true;
+							alias_recursive.appendReplacement(buffertemp, r.translate(replace_with.getPost(),map) + sepchar +rest);
+							reprocess = false;
+						} else {
+							alias_recursive.appendReplacement(buffertemp, replace_with.getPost());
+						}
+						
+					}
+					if(recursivefound) {
+						if(!eatTail) {
+							alias_recursive.appendTail(buffertemp);
+						}
+						replaced.setLength(0);
+						replaced.append(buffertemp);
+						
+					}
+				} while(recursivefound == true);
+			}
+			//so replacer should contain the transformed string now.
+			//pull the bytes back out.
+			try {
+				retval = replaced.toString().getBytes(mEncoding);
+			} catch (UnsupportedEncodingException e1) {
+				throw new RuntimeException(e1);
+			}
+			
+			replaced.setLength(0);
+			
+			return retval;
+		} else {
+			return input;
+		}
 	}
 }

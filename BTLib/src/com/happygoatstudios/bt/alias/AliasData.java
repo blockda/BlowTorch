@@ -8,21 +8,25 @@ public class AliasData implements Parcelable {
 	
 	private String pre;
 	private String post;
+	private boolean enabled;
 	
 	public AliasData() {
 		pre = "";
 		post = "";
+		enabled = true;
 	}
 	
-	public AliasData(String pPre, String pPost) {
+	public AliasData(String pPre, String pPost,boolean enabled) {
 		pre = pPre;
 		post = pPost;
+		this.enabled = enabled;
 	}
 	
 	public AliasData copy() {
 		AliasData tmp = new AliasData();
 		tmp.pre = this.pre;
 		tmp.post = this.post;
+		tmp.enabled = this.enabled;
 		return tmp;
 	}
 	
@@ -32,6 +36,7 @@ public class AliasData implements Parcelable {
 		AliasData t = (AliasData)o;
 		if(!t.pre.equals(this.pre)) return false;
 		if(!t.post.equals(this.post)) return false;
+		if(t.enabled != this.enabled) return false;
 		return true;
 	}
 	
@@ -53,6 +58,7 @@ public class AliasData implements Parcelable {
 	private void readFromParcel(Parcel p) {
 		this.pre = p.readString();
 		this.post = p.readString();
+		this.setEnabled((p.readInt() == 0) ? false : true);
 	}
 
 
@@ -64,6 +70,11 @@ public class AliasData implements Parcelable {
 	public void writeToParcel(Parcel o, int flags) {
 		o.writeString(this.pre);
 		o.writeString(this.post);
+		if(this.enabled) {
+			o.writeInt(1);
+		} else {
+			o.writeInt(0);
+		}
 	}
 
 	public String getPre() {
@@ -80,6 +91,14 @@ public class AliasData implements Parcelable {
 
 	public void setPost(String post) {
 		this.post = post;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
 	}
 	
 	

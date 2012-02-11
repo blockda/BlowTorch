@@ -20,7 +20,8 @@ public class AliasParser {
 		//registerListeners(root);
 	//}
 	public static void registerListeners(Element root,PluginParser.NewItemCallback callback,AliasData current_alias) {
-		Element alias = root.getChild(BasePluginParser.TAG_ALIAS);
+		Element aliases = root.getChild(BasePluginParser.TAG_ALIASES);
+		Element alias = aliases.getChild(BasePluginParser.TAG_ALIAS);
 		alias.setStartElementListener(new AliasElementListener(callback,current_alias));
 	}
 	
@@ -28,6 +29,9 @@ public class AliasParser {
 		out.startTag("", BasePluginParser.TAG_ALIAS);
 		out.attribute("", BasePluginParser.ATTR_PRE, data.getPre());
 		out.attribute("", BasePluginParser.ATTR_POST, data.getPost());
+		if(data.isEnabled()) {
+			out.attribute("", "enabled", (data.isEnabled() == true) ? "true" : "false");
+		}
 		out.endTag("", BasePluginParser.TAG_ALIAS);
 	}
 	
