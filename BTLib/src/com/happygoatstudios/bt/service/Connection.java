@@ -101,7 +101,7 @@ public class Connection {
 	Processor processor = null;
 	//TextTree buffer = null;
 	TextTree working = null;
-	
+	boolean loaded = false;
 	String display;
 	String host;
 	int port;
@@ -118,11 +118,11 @@ public class Connection {
 	Pattern commandPattern = Pattern.compile("^.(\\w+)\\s*(.*)$");
 	Matcher commandMatcher = commandPattern.matcher("");
 	private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();
-	StringBuffer joined_alias = new StringBuffer();
-	Pattern alias_replace = Pattern.compile(joined_alias.toString());
-	Matcher alias_replacer = alias_replace.matcher("");
-	Matcher alias_recursive = alias_replace.matcher("");
-	Pattern whiteSpace = Pattern.compile("\\s");
+	//StringBuffer joined_alias = new StringBuffer();
+	//Pattern alias_replace = Pattern.compile(joined_alias.toString());
+	//Matcher alias_replacer = alias_replace.matcher("");
+	//Matcher alias_recursive = alias_replace.matcher("");
+	//Pattern whiteSpace = Pattern.compile("\\s");
 	
 	public Connection(String display,String host,int port,StellarService service) {
 		
@@ -425,7 +425,11 @@ public class Connection {
 		mWindows.add(bwin);*/
 		loadPlugins();
 		
+		loaded = true;
 		
+		for(Plugin pl : plugins) {
+			pl.buildAliases();
+		}
 		
 	}
 	
@@ -865,6 +869,10 @@ public class Connection {
 		pump = new DataPumper(host,port,handler);
 		pump.start();
 		
+		/*if(processor != null) {
+			processor.reset();
+			processor = null;
+		}*/
 		processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext());
 		
 		loadGMCPTriggers();
@@ -969,43 +977,66 @@ public class Connection {
 					
 					//5 - alias replacement				
 					if(d.cmdString != null && !d.cmdString.equals("")) {
-						Boolean reprocess = true;
-						byte[] tmp = DoAliasReplacement(d.cmdString.getBytes(the_settings.getEncoding()),reprocess);
-						String tmpstr = new String(tmp,the_settings.getEncoding());
-						//if(tmpstr)
-						if(!d.cmdString.equals(tmpstr)) {
-							//alias replaced, needs to be processed
-							
-							String[] alias_cmds = null;
-							if(the_settings.isSemiIsNewLine()) {
-								alias_cmds = semicolon.split(tmpstr);
+						boolean didReplace = false;
+						byte[] tmp = null;
+						for(int i=0;i<plugins.size()+1;i++) {
+							Plugin p = null;
+							if(i ==0) {
+								p = the_settings;
 							} else {
-								alias_cmds = new String[] { tmpstr };
+								p = plugins.get(i-1);
 							}
-							for(String alias_cmd : alias_cmds) {
-								iterator.add(alias_cmd);
-							}
-							if(reprocess) {
-								for(int ax=0;ax<alias_cmds.length;ax++) {
-									iterator.previous();
+							if(p.getSettings().getAliases().size() > 0) {
+								Boolean reprocess = true;
+								tmp = p.doAliasReplacement(d.cmdString.getBytes(the_settings.getEncoding()),reprocess);
+								String tmpstr = new String(tmp,the_settings.getEncoding());
+								//if(tmpstr)
+								if(!d.cmdString.equals(tmpstr)) {
+									//alias replaced, needs to be processed
+									
+									String[] alias_cmds = null;
+									if(the_settings.isSemiIsNewLine()) {
+										alias_cmds = semicolon.split(tmpstr);
+									} else {
+										alias_cmds = new String[] { tmpstr };
+									}
+									for(String alias_cmd : alias_cmds) {
+										iterator.add(alias_cmd);
+									}
+									if(reprocess) {
+										for(int ax=0;ax<alias_cmds.length;ax++) {
+											iterator.previous();
+										}
+									}
+									didReplace = true;
+									i=plugins.size();
 								}
 							}
-						
+						}
+							
+						if(didReplace) {
+
 						} else {
-						
-							if(m) {
-								String srv = new String(tmp,the_settings.getEncoding()) + crlf;
-								//srv = srv.replace(";", crlf);
-								dataToServer.append(new String(srv));
-								
-								dataToWindow.append(new String(tmp,the_settings.getEncoding()) + ";");
+							if(tmp != null) {
+								if(m) {
+									String srv = new String(tmp,the_settings.getEncoding()) + crlf;
+									//srv = srv.replace(";", crlf);
+									dataToServer.append(new String(srv));
+									
+									dataToWindow.append(new String(tmp,the_settings.getEncoding()) + ";");
+								} else {
+									String srv = new String(tmp,the_settings.getEncoding()) + crlf;
+									//srv = srv.replace(";", crlf);
+									dataToServer.append(new String(srv));
+								}
 							} else {
-								String srv = new String(tmp,the_settings.getEncoding()) + crlf;
-								//srv = srv.replace(";", crlf);
-								dataToServer.append(new String(srv));
+								dataToServer.append(d.cmdString + crlf);
+								dataToWindow.append(d.cmdString);
 							}
 						}
+							
 					}
+					
 						//dataToServer.append(d.cmdString + crlf);
 					if(d.visString != null && !d.visString.equals("")) {
 						if(!m) {
@@ -1166,154 +1197,6 @@ public class Connection {
 		}
 	}
 	
-	public byte[] DoAliasReplacement(byte[] input,Boolean reprocess) {
-		if(joined_alias.length() > 0) {
-
-			//Pattern to_replace = Pattern.compile(joined_alias.toString());
-			byte[] retval = null;
-			//Matcher replacer = null;
-			try {
-				alias_replacer.reset(new String(input,the_settings.getEncoding()));//replacer = to_replace.matcher(new String(bytes,the_settings.getEncoding()));
-			} catch (UnsupportedEncodingException e1) {
-				throw new RuntimeException(e1);
-			}
-			
-			StringBuffer replaced = new StringBuffer();
-			
-			boolean found = false;
-			boolean doTail = true;
-			while(alias_replacer.find()) {
-				found = true;
-				
-				AliasData replace_with = the_settings.getSettings().getAliases().get(alias_replacer.group(0));
-				//do special replace if only ^ is matched.
-				if(replace_with.getPre().startsWith("^") && !replace_with.getPre().endsWith("$")) {
-					doTail = false;
-					//do special replace.
-					String[] tParts = null;
-					try {
-						tParts = whiteSpace.split(new String(input,the_settings.getEncoding()));
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-					}
-					HashMap<String,String> map = new HashMap<String,String>();
-					for(int i=0;i<tParts.length;i++) {
-						map.put(Integer.toString(i), tParts[i]);
-					}
-					ToastResponder r = new ToastResponder();
-					String finalString = r.translate(replace_with.getPost(), map);
-					
-					replaced.append(finalString);
-					
-				} else {
-					alias_replacer.appendReplacement(replaced, replace_with.getPost());
-				}
-			}
-			if(doTail) {
-				alias_replacer.appendTail(replaced);
-			}
-			StringBuffer buffertemp = new StringBuffer();
-			if(found) { //if we replaced a match, we need to continue the find/match process until none are found.
-				boolean recursivefound = false;
-				boolean eatTail = false;
-				do {
-					recursivefound = false;
-					
-					//Matcher recursivematch = to_replace.matcher(replaced.toString());
-					alias_recursive.reset(replaced.toString());
-					buffertemp.setLength(0);
-					while(alias_recursive.find()) {
-						recursivefound = true;
-						AliasData replace_with = the_settings.getSettings().getAliases().get(alias_recursive.group(0));
-						if(replace_with.getPre().startsWith("^") && ! replace_with.getPre().endsWith("$")) {
-							ToastResponder r = new ToastResponder();
-							String[] tParts = null;
-							
-							String tmpInput = replaced.toString();
-							int index = tmpInput.indexOf(";");
-							String rest = "";
-							if(index > -1) {
-								rest = tmpInput.substring(index+1,tmpInput.length());
-								tmpInput = tmpInput.substring(0,index);
-							}
-							String sepchar = "";
-							if(rest.length()>0) {
-								sepchar = ";";
-							}
-							tParts = whiteSpace.split(tmpInput);
-							
-							HashMap<String,String> map = new HashMap<String,String>();
-							for(int i=0;i<tParts.length;i++) {
-								map.put(Integer.toString(i), tParts[i]);
-							} 
-							eatTail = true;
-							alias_recursive.appendReplacement(buffertemp, r.translate(replace_with.getPost(),map) + sepchar +rest);
-							reprocess = false;
-						} else {
-							alias_recursive.appendReplacement(buffertemp, replace_with.getPost());
-						}
-						
-					}
-					if(recursivefound) {
-						if(!eatTail) {
-							alias_recursive.appendTail(buffertemp);
-						}
-						replaced.setLength(0);
-						replaced.append(buffertemp);
-						
-					}
-				} while(recursivefound == true);
-			}
-			//so replacer should contain the transformed string now.
-			//pull the bytes back out.
-			try {
-				retval = replaced.toString().getBytes(the_settings.getEncoding());
-			} catch (UnsupportedEncodingException e1) {
-				throw new RuntimeException(e1);
-			}
-			
-			replaced.setLength(0);
-			
-			return retval;
-		} else {
-			return input;
-		}
-	}
-	
-
-	private void buildAliases() {
-		joined_alias.setLength(0);
-		
-		//Object[] a = the_settings.getAliases().keySet().toArray();
-		Object[] a = the_settings.getSettings().getAliases().values().toArray();
-		
-		
-		String prefix = "\\b";
-		String suffix = "\\b";
-		//StringBuffer joined_alias = new StringBuffer();
-		if(a.length > 0) {
-			if(((AliasData)a[0]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
-			if(((AliasData)a[0]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
-			joined_alias.append("("+prefix+((AliasData)a[0]).getPre()+suffix+")");
-			for(int i=1;i<a.length;i++) {
-				if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
-				if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
-				joined_alias.append("|");
-				joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
-			}
-			
-		}
-		
-		alias_replace = Pattern.compile(joined_alias.toString());
-		alias_replacer = alias_replace.matcher("");
-		alias_recursive = alias_replace.matcher("");
-		//Log.e("SERVICE","BUILDING ALIAS PATTERN: " + joined_alias.toString());
-		
-		
-			
-		
-	}
-	
 	//public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
 	private RemoteCallbackList<IWindowCallback> mWindowCallbacks = new RemoteCallbackList<IWindowCallback>();
 	//private HashMap<String,Integer> mWindowCallbackMap = new HashMap<String,Integer>();
@@ -1370,8 +1253,11 @@ public class Connection {
 	ArrayList<WindowToken> mWindows;
 	
 	public List<WindowToken> getWindows() {
-		// TODO Auto-generated method stub
-		return mWindows;
+		if(loaded) {
+			return mWindows;
+		} else {
+			return null;
+		}
 	}
 
 	public String getScript(String plugin, String name) {
@@ -1589,12 +1475,14 @@ public class Connection {
 
 	public void setAliases(Map map) {
 		the_settings.getSettings().setAliases((HashMap<String,AliasData>)map);
+		the_settings.buildAliases();
 	}
 	
 	public void setPluginAliases(String plugin,Map map) {
 		Plugin p = pluginMap.get(plugin);
 		if(p != null) {
 			p.getSettings().setAliases((HashMap<String,AliasData>)map);
+			p.buildAliases();
 		}
 	}
 	
@@ -1641,6 +1529,59 @@ public class Connection {
 			list.add(key);
 		}
 		return list;
+	}
+
+	public void setPluginAliasEnabled(String plugin, boolean enabled, String key) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			AliasData data = p.getSettings().getAliases().get(key);
+			if(data != null) {
+				data.setEnabled(enabled);
+				p.buildAliases();
+			}
+		}
+	}
+
+	public void setAliasEnabled(boolean enabled, String key) {
+		AliasData data = the_settings.getSettings().getAliases().get(key);
+		if(data != null) {
+			data.setEnabled(enabled);
+			the_settings.buildAliases();
+		}
+	}
+
+	public byte[] doKeyboardAliasReplace(byte[] bytes, Boolean reprocess) {
+		int count = plugins.size();
+		byte res[] = null;
+		for(int i = 0;i<count;i++) {
+			Plugin p = plugins.get(i);
+			byte tmp[] = p.doAliasReplacement(bytes, reprocess);
+			if(tmp.length != bytes.length) {
+				return tmp;
+			} else {
+				boolean same = true;
+				for(int j=0;j<tmp.length;j++) {
+					if(tmp[j] != bytes[j]) {
+						same = false;
+						j=tmp.length;
+					}
+				}
+				if(!same) {
+					return tmp;
+				}
+			}
+		}
+		
+		return bytes;
+	}
+
+	public void doReconnect() {
+		if(pump != null) {
+			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+			pump = null;
+		}
+		
+		doStartup();
 	}
 	
 }

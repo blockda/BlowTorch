@@ -51,9 +51,9 @@ public class ConnectionSetttingsParser extends PluginParser {
 			
 		});
 		
-		Element aliases = root.getChild(BasePluginParser.TAG_ALIASES);
-		Element triggers = root.getChild(BasePluginParser.TAG_TRIGGERS);
-		Element timers = root.getChild(BasePluginParser.TAG_TIMERS);
+		//Element aliases = root.getChild(BasePluginParser.TAG_ALIASES);
+		//Element triggers = root.getChild(BasePluginParser.TAG_TRIGGERS);
+		//Element timers = root.getChild(BasePluginParser.TAG_TIMERS);
 		Element plugins = root.getChild("plugins");
 		
 		Element link = plugins.getChild("link");

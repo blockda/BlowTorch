@@ -120,7 +120,7 @@
 				info.enemypct = enemyPct
 				info.tnl = tnl
 				info.tolevel = toLevel
-				
+				info.align = align
 				WindowXCallS("vitals_window","updateAll",serialize(info))
 			end
 		]]>
@@ -180,8 +180,8 @@
 		<windows>
 			<window name="map_window" id="6010">
 				<layoutGroup target="xlarge">
-					<layout orientation="landscape" alignParentRight="true" height="400" width="400" above="2131362032"/>
-					<layout orientation="portrait" alignParentRight="true" height="400" width="400" above="2131362032"/>
+					<layout orientation="landscape" alignParentRight="true" height="400" width="400" above="10"/>
+					<layout orientation="portrait" alignParentRight="true" height="400" width="400" above="10"/>
 				</layoutGroup>
 			</window>
 		</windows>
@@ -218,7 +218,7 @@ dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
 	</plugin>
   <plugin author="Daniel Block" name="plugin" id="100">
   <triggers>
-    <trigger sequence="10" title="autologin username" pattern="What be thy name, adventurer?" interpretLiteral="false" fireOnce="true" hidden="true" enabled="true">
+    <trigger sequence="10" title="autologin username" pattern="What be thy name, adventurer?" interpretLiteral="false" fireOnce="true" enabled="true">
       <toast message="autologin username" delay="1" fireWhen="windowOpen" />
 	  <ack with="stampede"/>
 	</trigger>
@@ -236,7 +236,7 @@ dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
     <trigger title="Tellwatch" pattern="^(.+) just sent you a tell.$" interpretLiteral="true" fireOnce="false" enabled="true">
       <notification title="NEW TELL" message="$1 is talking to you." fireWhen="always" useSound="true" soundPath="" useLights="true" lightColor="0" useVibrate="true" vibrateType="0" spawnNew="false" useOngoing="false" />
     </trigger>
-    <trigger title="autologin password" pattern="Password:" interpretLiteral="false" fireOnce="true" hidden="true" enabled="true">
+    <trigger title="autologin password" pattern="Password:" interpretLiteral="false" fireOnce="true" enabled="true">
       <ack with="mudsrrad" fireWhen="windowOpen" />
       <toast message="autologin password" delay="1" fireWhen="windowOpen" />
     </trigger>

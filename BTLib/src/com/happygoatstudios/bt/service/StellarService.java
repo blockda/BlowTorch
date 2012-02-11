@@ -3000,8 +3000,7 @@ public class StellarService extends Service {
 		}
 
 		public void reconnect() throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).doReconnect();
 		}
 
 		public Map getTimers() throws RemoteException {
@@ -3381,6 +3380,19 @@ public class StellarService extends Service {
 		public void deletePluginAlias(String plugin, String key)
 				throws RemoteException {
 			connections.get(connectionClutch).deletePluginAlias(plugin,key);
+		}
+
+		@Override
+		public void setAliasEnabled(boolean enabled, String key)
+				throws RemoteException {
+			connections.get(connectionClutch).setAliasEnabled(enabled,key);
+			
+		}
+
+		@Override
+		public void setPluginAliasEnabled(String plugin, boolean enabled,
+				String key) throws RemoteException {
+			connections.get(connectionClutch).setPluginAliasEnabled(plugin,enabled,key);
 		}
 	};
 

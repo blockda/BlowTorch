@@ -41,6 +41,8 @@ interface IConnectionBinder {
 	void setPluginAliases(String plugin,in Map map);
 	void deleteAlias(String key);
 	void deletePluginAlias(String plugin,String key);
+	void setAliasEnabled(boolean enabled,String key);
+	void setPluginAliasEnabled(String plugin,boolean enabled,String key);
 	void setFontSize(int size);
 	//void setFontSize(String size);
 	int getFontSize();

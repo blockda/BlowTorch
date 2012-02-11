@@ -379,9 +379,9 @@ public class TriggerSelectionDialog extends Dialog {
 			list.setFocusable(false);
 			try {
 				if(currentPlugin.equals("main")) {
-					service.deleteTrigger(entries.get(entry).extra);
+					service.deleteTrigger(entries.get(entry).name);
 				} else {
-					service.deletePluginTrigger(currentPlugin,entries.get(entry).extra);
+					service.deletePluginTrigger(currentPlugin,entries.get(entry).name);
 				}
 				
 			} catch (RemoteException e) {
@@ -413,9 +413,9 @@ public class TriggerSelectionDialog extends Dialog {
 			try {
 				TriggerData data = null;
 				if(currentPlugin.equals("main")) {
-					data = service.getTrigger(entry.extra);
+					data = service.getTrigger(entry.name);
 				} else {
-					data = service.getPluginTrigger(currentPlugin,entry.extra);
+					data = service.getPluginTrigger(currentPlugin,entry.name);
 				}
 				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler,currentPlugin);
 				editor.show();
@@ -685,7 +685,7 @@ public class TriggerSelectionDialog extends Dialog {
 			
 			int width = toggle.getDrawable().getIntrinsicWidth() + delete.getDrawable().getIntrinsicWidth() + modify.getDrawable().getIntrinsicWidth();
 			
-			toggle.setOnClickListener(new ToggleButtonListener(pos,iv,e.extra));
+			toggle.setOnClickListener(new ToggleButtonListener(pos,iv,e.name));
 			modify.setOnClickListener(new ModifyButtonListener(pos));
 			delete.setOnClickListener(new DeleteButtonListener(pos,(ViewFlipper)v.findViewById(R.id.flipper),width));
 			
