@@ -20,11 +20,25 @@
     	android:id="@+id/ctrl_target" /> -->
 
     
-
-
-    <!--  android:background="#0A0A0A" -->
-    <!-- <EditText -->
-    <!-- pre-screen size support android:height = "30px" -->
+   
+    <LinearLayout
+        android:id="@+id/inputbar"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        >
+    <ImageButton
+    	android:id="@+id/foldout"
+    	android:layout_width="80dip"
+    	android:layout_height="40dip"
+    	android:background="#0A0A0A"
+    	android:src="@drawable/sliderwidgetout"
+    	android:textSize="16sp"
+    	android:typeface="monospace"
+    	android:textColor="#9999FF"
+    	android:text="|DOWN|"/>
+    
     <com.happygoatstudios.bt.window.BetterEditText
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
@@ -36,9 +50,7 @@
     android:background="@drawable/input_bar_bg"
     android:candidatesTextStyleSpans=""
     android:editable="true"
-    android:layout_alignParentBottom="true"
     android:layout_marginLeft="3sp"
-    android:layout_toRightOf="@id/test_btn"
     android:id="@+id/textinput"
     android:inputType = "textMultiLine"
     android:nextFocusUp = "@id/textinput"
@@ -48,20 +60,10 @@
     android:isScrollContainer = "false"
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"/>
+
+    </LinearLayout>
     
-    <ImageButton
-    	android:id="@+id/test_btn"
-    	android:layout_width="80dip"
-    	android:layout_height="40dip"
-    	android:background="#0A0A0A"
-    	android:src="@drawable/sliderwidgetout"
-    	android:textSize="16sp"
-    	android:layout_alignParentLeft="true"
-    	android:layout_alignBottom="@id/textinput"
-    	android:layout_alignTop="@id/textinput"
-    	android:typeface="monospace"
-    	android:textColor="#9999FF"
-    	android:text="|DOWN|"/>
+
 <!-- </RelativeLayout>  -->
 	<!--  android:lineSpacingExtra = "-2sp" -->
     

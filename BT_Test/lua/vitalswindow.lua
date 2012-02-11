@@ -64,7 +64,8 @@ gPositions = makeFloatArray(gradientPositions)
 zeroFloat = luajava.newInstance("java.lang.Float",0)
 widthFloat = luajava.newInstance("java.lang.Float",view:getWidth())
 alignPosFloat = luajava.newInstance("java.lang.Float",0)
-
+alignPercent = 0.5
+alignIndicatorX = 0
 alignShader = luajava.new(LinearGradient,zeroFloat:floatValue(),zeroFloat:floatValue(),widthFloat:floatValue(),zeroFloat:floatValue(),gColors,gPositions,TileMode.REPEAT)
 
 --make the hp/mp/tnl "top" gradient
@@ -93,7 +94,7 @@ alignpaint = luajava.new(Paint)
 topperBorderPaint = luajava.new(Paint)
 topperDividerPaint = luajava.new(Paint)
 topperGradientPaint = luajava.new(Paint)
-
+alignIndicatorPaint = luajava.new(Paint)
 
 
 hppaint:setStyle(Style.FILL)
@@ -108,6 +109,10 @@ alignpaint:setStyle(Style.STROKE)
 alignpaint:setAntiAlias(true)
 alignpaint:setShader(gradientShader)
 alignpaint:setStrokeWidth(25)
+
+alignIndicatorPaint:setStrokeWidth(4)
+alignIndicatorPaint:setStyle(Style.STROKE)
+alignIndicatorPaint:setARGB(200,127,127,127)
 
 topperBorderPaint:setStyle(Style.STROKE)
 topperDividerPaint:setStyle(Style.STROKE)
@@ -152,7 +157,6 @@ function OnDraw(canvas)
 		return
 	end
 	--debugPrint("vitals view onDraw")
-	canvas:drawLine(zeroFloat:floatValue(),alignPosFloat:floatValue(),widthFloat:floatValue(),alignPosFloat:floatValue(),alignpaint)
 	
 	r = luajava.newInstance("java.lang.Float",7)
 	rf = r:floatValue()
@@ -162,6 +166,9 @@ function OnDraw(canvas)
 	canvas:drawRoundRect(tnlrect,rf,rf,tnlpaint)
 	
 	canvas:drawBitmap(topper,0,0,nil)
+	
+	canvas:drawCircle(alignIndicatorX,alignPosFloat:floatValue(),5,alignIndicatorPaint)
+	
 	--canvas
 end
 
@@ -176,6 +183,7 @@ function OnSizeChanged(neww,newh,oldw,oldh)
 	heightOver10 = height/10
 	alignPos = heightOver10*9
 	
+	alignIndicatorX = width * alignPercent
 	
 	alignPosFloat = luajava.newInstance("java.lang.Float",alignPos)
 	alignShader = luajava.new(LinearGradient,zeroFloat:floatValue(),zeroFloat:floatValue(),widthFloat:floatValue(),zeroFloat:floatValue(),gColors,gPositions,TileMode.REPEAT)
@@ -242,9 +250,14 @@ function updateToppers()
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
 	
+	
+	
 	rect:offsetTo(0,tonumber((height/5)*4))
 	topperCanvas:save()
 	topperCanvas:clipRect(rect)
+	
+	topperCanvas:drawLine(zeroFloat:floatValue(),alignPosFloat:floatValue(),widthFloat:floatValue(),alignPosFloat:floatValue(),alignpaint)
+	
 	topperCanvas:drawLine(0,tonumber((height/10)*9),tonumber(width),tonumber((height/10)*9),topperGradientPaint)
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
@@ -278,18 +291,18 @@ end
 
 function updateAlign(str)
 	align = str
-	updateBarRects()
+	--calculate align percent
+	tmp = align + 2500
+	alignPercent = tmp / 5000
+	alignIndicatorX = ((width-(2*5))*alignPercent)+5
+	--alignIndicatorX = width*alignPercent
+	debugPrint("alignIndicatorX now at: "..alignIndicatorX)
+	--updateBarRects()
 	view:invalidate()
 end
 
 function updateEnemyPercent(str)
 	enemypct = str
-	updateBarRects()
-	view:invalidate()
-end
-
-function updateAlign(str)
-	align = str
 	updateBarRects()
 	view:invalidate()
 end
@@ -342,6 +355,8 @@ function updateAll(data)
 	enemypct = info.enemypct
 	tnl = info.tnl
 	tolevel = tonumber(info.tolevel)
+	align = info.align
+	updateAlign(align)
 	
 	updateBarRects()
 	view:invalidate()
@@ -350,7 +365,7 @@ end
 R = luajava.bindClass("com.happygoatstudios.bt.R$id")
 --modify the text input bar layout to make the bar appear above the vitals window
 rootView = view:getParentView()
-inputbar = rootView:findViewById(R.textinput)
+inputbar = rootView:findViewById(10)
 inputbarParams = inputbar:getLayoutParams()
 inputbarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,0) --set this rule to false
 inputbarParams:addRule(RelativeLayout.ABOVE,view:getId())

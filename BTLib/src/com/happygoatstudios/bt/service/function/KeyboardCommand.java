@@ -107,7 +107,7 @@ public class KeyboardCommand extends SpecialCommand {
 		
 		Boolean foo = new Boolean(true);
 		try {
-			text = new String(c.DoAliasReplacement(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
+			text = new String(c.doKeyboardAliasReplace(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

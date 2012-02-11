@@ -33,6 +33,7 @@ public class AliasEditorDialog extends Dialog {
 	int old_pos = 0;
 	IConnectionBinder service;
 	List<String> cant_name;
+	private boolean mEnabled = true;
 	
 	public AliasEditorDialog(Context context,AliasEditorDialogDoneListener useme,IConnectionBinder pService,List<String> invalid_names,String currentPlugin) {
 		super(context);
@@ -93,7 +94,9 @@ public class AliasEditorDialog extends Dialog {
 						if(!dollar.isChecked()) {
 							suffix = "";
 						}
-						reportto.newAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString());
+						
+						boolean checked = ((CheckBox)AliasEditorDialog.this.findViewById(R.id.enabledcheck)).isChecked();
+						reportto.newAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString(),checked);
 						AliasEditorDialog.this.dismiss();
 					}
 				}
@@ -217,6 +220,7 @@ public class AliasEditorDialog extends Dialog {
 		
 		CheckBox carrot = (CheckBox)AliasEditorDialog.this.findViewById(R.id.carrot);
 		CheckBox dollar = (CheckBox)AliasEditorDialog.this.findViewById(R.id.dollar);
+		CheckBox enabled = (CheckBox)AliasEditorDialog.this.findViewById(R.id.enabledcheck);
 		
 		String preText = mPre;
 		if(preText.startsWith("^")) {
@@ -231,6 +235,8 @@ public class AliasEditorDialog extends Dialog {
 		} else {
 			dollar.setChecked(false);
 		}
+		
+		enabled.setChecked(mEnabled);
 		
 		
 		tpre.setText(preText);
@@ -285,7 +291,9 @@ public class AliasEditorDialog extends Dialog {
 						suffix = "";
 					}
 					
-					reportto.editAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString(),old_pos,original_alias);
+					boolean checked = ((CheckBox)AliasEditorDialog.this.findViewById(R.id.dollar)).isChecked();
+					
+					reportto.editAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString(),checked,old_pos,original_alias);
 					AliasEditorDialog.this.dismiss();
 				}
 			}
@@ -371,6 +379,7 @@ public class AliasEditorDialog extends Dialog {
 		mPost = post;
 		service = pService;
 		cant_name = invalid_names;
+		mEnabled = old_alias.isEnabled();
 		this.currentPlugin = currentPlugin;
 	}
 	
