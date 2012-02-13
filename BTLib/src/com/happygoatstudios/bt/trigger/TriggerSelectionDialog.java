@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -166,13 +167,20 @@ public class TriggerSelectionDialog extends Dialog {
 		try {
 			List<String> pluginList = (List<String>)service.getPluginsWithTriggers();
 			
-			plugins = new String[pluginList.size()+2];
+			plugins = new String[pluginList.size()+4];
 			plugins[0] = "Help";
-			plugins[1] = "Main";
-			for(int i=0;i<pluginList.size();i++) {
-				plugins[i+2] = pluginList.get(i);
+			plugins[1] = "Disable All";
+			plugins[2] = "divider";
+			plugins[3] = "Main";
+			
+			String[] tmp = new String[pluginList.size()];
+			tmp = pluginList.toArray(tmp);
+			java.util.Arrays.sort(tmp);
+			for(int i=0;i<tmp.length;i++) {
+				plugins[i+4] = tmp[i];
+				
 			}
-			java.util.Arrays.sort(plugins);
+			//java.util.Arrays.sort(plugins);
 			
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -180,14 +188,15 @@ public class TriggerSelectionDialog extends Dialog {
 		}
 		
 		mPluginAdapter = new PluginListAdapter(this.getContext(),0,plugins);
-	
-		mOptionsList = new ListView(this.getContext());
-		RelativeLayout.LayoutParams olparams = new RelativeLayout.LayoutParams(200,200);
-		olparams.addRule(RelativeLayout.BELOW,R.id.optionsbutton);
-		olparams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+		
+		//mOptionsList = new ListView(this.getContext());
+		mOptionsList =(ListView) this.findViewById(R.id.optionslist);
+		//RelativeLayout.LayoutParams olparams = new RelativeLayout.LayoutParams(200,200);
+		//olparams.addRule(RelativeLayout.BELOW,R.id.optionsbutton);
+		//olparams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 		
 		//optionsList.setMinimumHeight(60);
-		mOptionsList.setLayoutParams(olparams);
+		//mOptionsList.setLayoutParams(olparams);
 		
 		mOptionsList.setAdapter(mPluginAdapter);
 		
@@ -195,6 +204,10 @@ public class TriggerSelectionDialog extends Dialog {
 
 			public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
 					long arg3) {
+					if(pos == 0 || pos == 1) {
+						return;
+					}
+					
 					String plugin = plugins[pos];
 					
 					if(plugin.equals("Help")) {
@@ -208,8 +221,6 @@ public class TriggerSelectionDialog extends Dialog {
 					currentPlugin = plugin;
 					
 					TriggerSelectionDialog.this.buildList();
-				
-					
 			}
 		});
 		
@@ -217,8 +228,10 @@ public class TriggerSelectionDialog extends Dialog {
 		
 		mOptionsList.setVisibility(View.INVISIBLE);
 		
-		RelativeLayout root = (RelativeLayout) this.findViewById(R.id.root);
-		root.addView(mOptionsList);
+		//mOptionsList.setDividerHeight(0);
+		//mOptionsList.setDivider(null);
+		//RelativeLayout root = (RelativeLayout) this.findViewById(R.id.root);
+		//root.addView(mOptionsList);
 		
 		Button optionsbutton = (Button)this.findViewById(R.id.optionsbutton);
 		
@@ -930,26 +943,84 @@ public class TriggerSelectionDialog extends Dialog {
 		}
 		
 		@Override
+		public int getViewTypeCount() {
+			return 2;
+		}
+		
+		@Override
+		public int getItemViewType(int pos) {
+			if(pos == 2) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+		
+		@Override
+		public boolean areAllItemsEnabled() {
+			return true;
+		}
+		
+		@Override
+		public boolean isEnabled(int pos) {
+			if(pos == 2) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+		
+		@Override
 		public View getView(int pos,View convertView,ViewGroup parent) {
+			
+			if(pos == 2) {
+				//need to do the special text view.
+				View tmp = convertView;
+				if(tmp == null) {
+					LayoutInflater li = (LayoutInflater) TriggerSelectionDialog.this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+					
+					tmp = li.inflate(R.layout.editor_selection_filter_divider_row, null);
+					((TextView)tmp).setText("Filter by plugin");
+					//tmp = new TextView(TriggerSelectionDialog.this.getContext());
+					//AbsListView.LayoutParams params = new AbsListView.LayoutParams(AbsListView.LayoutParams.FILL_PARENT,AbsListView.LayoutParams.WRAP_CONTENT);
+					//tmp.setLayoutParams(params);
+					//((TextView)tmp).setTextSize(13);
+					return tmp;
+				} else {
+					return tmp;
+				}
+			}
+			
 			TextView retView = null;
 			if(convertView == null) {
-				retView = new TextView(TriggerSelectionDialog.this.getContext());
-				AbsListView.LayoutParams params = new AbsListView.LayoutParams(200,60);
-				retView.setLayoutParams(params);
+				LayoutInflater li = (LayoutInflater) TriggerSelectionDialog.this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				
+				retView = (TextView) li.inflate(R.layout.editor_selection_filter_list_row, null);
+				
+				//retView = new TextView(TriggerSelectionDialog.this.getContext());
+				//AbsListView.LayoutParams params = new AbsListView.LayoutParams(200,60);
+				//retView.setLayoutParams(params);
 				//retView = v;
 				
 
 			} else {
 				retView = (TextView)convertView;
 			}
-			retView.setTextSize(26);
-			retView.setBackgroundColor(0xFF444444);
-			retView.setTextColor(0xFFAAAAAA);
-			Log.e("TRIG","LOADING: "+this.getItem(pos));
+			//retView.setTextSize(26);
+			//retView.setBackgroundColor(0xFF444444);
+			//retView.setTextColor(0xFFAAAAAA);
+			//Log.e("TRIG","LOADING: "+this.getItem(pos));
 			retView.setText(this.getItem(pos));
 			
+			if(pos == 1 || pos ==0) {
+				retView.setGravity(Gravity.CENTER);
+			} else {
+				retView.setGravity(Gravity.LEFT);
+			}
 			return retView;
 		}
+		
+	
 		
 	}
 	
