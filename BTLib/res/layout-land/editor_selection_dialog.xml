@@ -57,20 +57,14 @@
 		android:layout_width="133dip"
 		android:text="Done"/>
 		
-	<!-- <ScrollView
-		android:id="@+id/buttonset_scroller"
-		android:layout_alignParentTop="true"
-		android:layout_width="420px"
+	<FrameLayout
+		android:id="@+id/frame"
+		android:layout_width = "fill_parent"
 		android:layout_height="fill_parent"
-		android:layout_above="@id/new_buttonset_button"> -->
-		<FrameLayout
-			android:id="@+id/frame"
-			android:layout_width = "fill_parent"
-			android:layout_height="fill_parent"
-			android:layout_margin="0dip"
-			android:padding="0dip"
-			android:layout_above="@id/add"
-			android:layout_below="@id/titlebar">
+		android:layout_margin="0dip"
+		android:padding="0dip"
+		android:layout_above="@id/add"
+		android:layout_below="@id/titlebar">
 		<ListView
 			android:id="@+id/list"
 			android:layout_height="fill_parent"
@@ -87,9 +81,18 @@
 			android:textStyle="bold"
 			android:textSize="18dip"
 			android:gravity="center"/>
-		</FrameLayout>
-	<!-- </ScrollView> -->
-		
-
+	</FrameLayout>
 	
+	<ListView
+	    android:id="@+id/optionslist"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/optionsbutton"
+	 	android:layout_marginRight="20dip"
+	 	android:layout_marginLeft="20dip"
+	 	android:divider="@drawable/optionslist_separator"
+	 	android:dividerHeight="3dip"
+	 	android:background="@drawable/optionslist_border"
+	    android:listSelector="@drawable/timer_list_item_selector"
+	    android:drawSelectorOnTop="true"/>
 </RelativeLayout>
