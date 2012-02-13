@@ -115,12 +115,18 @@ interface IConnectionBinder {
 	void setDisplayDimensions(int rows,int cols);
 	void reconnect();
 	Map getTimers();
+	Map getPluginTimers(String plugin);
 	TimerData getTimer(String ordinal);
+	TimerData getPluginTimer(String plugin,String name);
+	void deleteTimer(String name);
+	void deletePluginTimer(String plugin,String name);
 	void startTimer(String ordinal);
 	void pauseTimer(String ordinal);
 	void stopTimer(String ordinal);
 	void resetTimer(String ordinal);
 	void updateTimer(in TimerData old,in TimerData newtimer);
+	void updatePluginTimer(String plugin,in TimerData old,in TimerData newtimer);
+	void addPluginTimer(String plugin,in TimerData newtimer);
 	void addTimer(in TimerData newtimer);
 	void removeTimer(in TimerData deltimer);
 	int getNextTimerOrdinal();

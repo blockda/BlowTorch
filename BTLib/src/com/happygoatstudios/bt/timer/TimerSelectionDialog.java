@@ -18,18 +18,30 @@ import android.os.Message;
 import android.os.RemoteException;
 //import android.util.Log;
 import android.text.TextUtils.TruncateAt;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationSet;
+import android.view.animation.LayoutAnimationController;
+import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
+
+import com.happygoatstudios.bt.window.AnimatedRelativeLayout;
 
 public class TimerSelectionDialog extends Dialog {
 
@@ -39,16 +51,21 @@ public class TimerSelectionDialog extends Dialog {
 	private TimerListAdapter adapter;
 	
 	private Handler doneHandler;
-	//private HashMap<String,PlayPauseListener> playpause_listeners;
-	//private HashMap<String,ResetListener> reset_listeners;
+
+	public int lastSelectedIndex = -1;
+
+	private RelativeLayout targetHolder = null;
+	private int targetIndex = -1;
+	String currentPlugin = "main";
+	ListView mOptionsList;
 	
-	private Button edit;
+	LinearLayout theToolbar = null;
+	int toolbarLength = 0;
 	
-	//private Window the_window;
+	LayoutAnimationController animateInController = null;
+	TranslateAnimation animateOut = null;
+	TranslateAnimation animateOutNoTransition = null;
 	
-	public int selected = -1;
-	
-	//private TableLayout button_row;
 	public TimerSelectionDialog(Context context,IConnectionBinder the_service) {
 		super(context);
 		service = the_service;
@@ -60,52 +77,73 @@ public class TimerSelectionDialog extends Dialog {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
-		//the_window = this.getWindow();
-		//the_window.
+		setContentView(R.layout.editor_selection_dialog);
 		
-		//selected = -1;
-		
-		setContentView(R.layout.timer_selection_dialog);
-		
-		list = (ListView)findViewById(R.id.timer_list);
+		list = (ListView)findViewById(R.id.list);
 		list.setScrollbarFadingEnabled(false);
 		list.setFocusable(true);
 		list.setClickable(true);
+		list.setEmptyView(findViewById(R.id.empty));
 		
-		//button_row = (TableLayout)findViewById(R.id.button_table);
-		//button_row.set
-		
-		TextView empty = new TextView(this.getContext());
-		empty.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-		empty.setText("EMPTY VIEW");
-		
-		empty.setTextColor(0xFFFFFFFF);
-		empty.setBackgroundColor(0xFF0000FF);
-		empty.setVisibility(View.GONE);
-		((ViewGroup)list.getParent()).addView(empty);
-		//list.addView(empty);
-		list.setEmptyView(findViewById(R.id.timer_empty));
-		
-		
+		list.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
 		
 		list.setOnItemClickListener(new OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
-				//arg2 is the selected item.
-				//list.setSelection(arg2);
-				TimerSelectionDialog.this.selected = arg2;
-				//Log.e("CLICKER","SELECTED IS " + selected);
-				//i.selected = true;
-				//button_row.setVisibility(View.VISIBLE);
-				
-				adapter.notifyDataSetChanged();
-				
+				arg1.performClick();
 			}
 			
 		});
 		
-		//list.inv
+		list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			@Override
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				if(arg2 != lastSelectedIndex) {
+					//arg0.is
+					if(arg0.getFirstVisiblePosition() <= lastSelectedIndex && arg0.getLastVisiblePosition() >= lastSelectedIndex) {
+						if(theToolbar.getParent() != null) {
+							theToolbar.startAnimation(animateOutNoTransition);
+						}
+					} else {
+						if(theToolbar.getParent() != null) {
+							((RelativeLayout)theToolbar.getParent()).removeAllViews();
+						}
+					}
+				}
+				lastSelectedIndex = arg2;
+				//check to see if the 
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				
+			}
+		});
+		
+		list.setItemsCanFocus(true);
+		
+		View newbutton = findViewById(R.id.add);
+		newbutton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				TimerEditorDialog newdialog = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),currentPlugin,null,service,doneHandler);
+				newdialog.show();
+			}
+		});
+		
+		View donebutton = findViewById(R.id.done);
+		
+		donebutton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				TimerSelectionDialog.this.dismiss();
+			}
+		});
 		
 		//set click listeners.
 		doneHandler = new Handler() {
@@ -139,7 +177,7 @@ public class TimerSelectionDialog extends Dialog {
 				case 100:
 					//editor new 
 					//button_row.setVisibility(View.VISIBLE);
-					selected = Integer.parseInt((String)msg.obj);
+					lastSelectedIndex = Integer.parseInt((String)msg.obj);
 					buildList();
 					break;
 				case 102:
@@ -152,162 +190,13 @@ public class TimerSelectionDialog extends Dialog {
 			}
 		};
 		
-		//doneHandler.sendEmptyMessageDelayed(102,2500);
+		TextView title = (TextView)findViewById(R.id.titlebar);
+		title.setText("TIMERS");
 		
-		//build the list
-		
-		Button newbutton = (Button)findViewById(R.id.timer_new_button);
-		
-		newbutton.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				//launch the new editor.
-				TimerEditorDialog editor = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),null,service,doneHandler);
-				editor.show();
-			}
-		});
-		
-		Button cancel = (Button)findViewById(R.id.timer_cancel_button);
-		cancel.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				doneHandler.removeMessages(101);
-				TimerSelectionDialog.this.dismiss();
-			}
-		});
-		
-		//reset_listeners = new HashMap<String,ResetListener>();
-		//playpause_listeners = new HashMap<String,PlayPauseListener>();
-		
-		ImageButton play = (ImageButton)findViewById(R.id.timer_play);
-		ImageButton pause = (ImageButton)findViewById(R.id.timer_pause);
-		ImageButton reset = (ImageButton)findViewById(R.id.timer_reset);
-		edit = (Button)findViewById(R.id.timer_edit);
-
-		play.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				if(selected == -1) {
-					return;
-				}
-				
-				try {
-					service.startTimer(Integer.toString(selected));
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				buildList();
-				//updateTimers();
-			}
-		});
-		
-		
-		pause.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				if(selected == -1) {
-					return;
-				}
-				
-				try {
-					service.pauseTimer(Integer.toString(selected));
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				buildList();
-			}
-		});
-		
-		reset.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				if(selected == -1) {
-					return;
-				}
-				
-				try {
-					service.resetTimer(Integer.toString(selected));
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				buildList();
-			}
-		});
-		
-		edit.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				DispatchEdit();
-			}
-		});
+		makeToolbar();
 		
 		buildList();
-		adapter.notifyDataSetChanged();
 		
-		list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
-			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
-					int arg2, long arg3) {
-				//edit.dispatchKeyEvent(new KeyEvent(KeyEvent.KEYCODE_ENTER));
-				DispatchEdit();
-				return true;
-			}
-		});
-		
-		if(adapter.getCount() > 0) {
-			selected = 0;
-		}
-	}
-	
-	private void DispatchEdit() {
-		if(selected == -1) {
-			return;
-		}
-		
-		//else, give the option for editing.
-		AlertDialog.Builder b = new AlertDialog.Builder(TimerSelectionDialog.this.getContext());
-		b.setTitle("Edit Timer?");
-		b.setMessage(("Do you want to edit or delete this timer?"));
-		b.setPositiveButton("Edit", new DialogInterface.OnClickListener() {
-			
-			public void onClick(DialogInterface dialog, int which) {
-				//attempt to launch the editor.
-				TimerEditorDialog editor = null;
-				try {
-					editor = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),service.getTimer(Integer.toString(selected)),service,doneHandler);
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				editor.show();
-			}
-		});
-		b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
-		b.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
-			
-			public void onClick(DialogInterface dialog, int which) {
-				//attempt to delete the timer
-				try {
-					service.removeTimer(service.getTimer(Integer.toString(selected)));
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				dialog.dismiss();
-				buildList();
-			}
-		});
-		
-		AlertDialog alert = b.create();
-		alert.show();
-	}
-	
-	public void onBackPressed() {
-		doneHandler.removeMessages(101);
-		this.dismiss();
 	}
 	
 	//private boolean noTimers = false;
@@ -322,7 +211,11 @@ public class TimerSelectionDialog extends Dialog {
 		
 		HashMap<String,TimerData> timer_list = null;
 		try{
-			timer_list = (HashMap<String,TimerData>)service.getTimers();
+			if(currentPlugin.equals("main")) {
+				timer_list = (HashMap<String,TimerData>)service.getTimers();
+			} else {
+				timer_list = (HashMap<String,TimerData>)service.getPluginTimers(currentPlugin);
+			}
 		}catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -364,13 +257,13 @@ public class TimerSelectionDialog extends Dialog {
 			doneHandler.removeMessages(101);
 		}
 		
-		adapter = new TimerListAdapter(list.getContext(),R.layout.timer_selection_list_row,entries);
+		adapter = new TimerListAdapter(list.getContext(),0,entries);
 		list.setAdapter(adapter);
 		adapter.sort(new TimerSorter());
 		
-		if(selected != 1) {
-			list.setSelection(selected);
-		}
+		//if(lastSelectedIndex != 1) {
+		//	list.setSelection(lastSelectedIndex);
+		//}
 	}
 	//HashMap<String,TimerProgress> wad = new HashMap<String,TimerProgress>();
 	
@@ -387,143 +280,48 @@ public class TimerSelectionDialog extends Dialog {
 			View v = convertView;
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				v = li.inflate(R.layout.timer_selection_list_row,null);
+				v = li.inflate(R.layout.editor_selection_list_row,null);
+				RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
+				root.setOnClickListener(mLineClicker);
 			}
 			
 			TimerItem e = entries.get(pos);
 			
+			RelativeLayout holder = (RelativeLayout)v.findViewById(R.id.toolbarholder);
+			
+			holder.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+			
+			if(holder.getChildCount() > 0) {
+				holder.removeAllViews();
+				lastSelectedIndex = -1;
+			}
+			
+			v.setId(157*pos);
+			
 			if(e != null) {
-				TextView label = (TextView)v.findViewById(R.id.timer_title);
-				TextView extra = (TextView)v.findViewById(R.id.timer_display);
-				TextView ordinal = (TextView)v.findViewById(R.id.timer_ordinal);
-				ProgressMeter p = (ProgressMeter)v.findViewById(R.id.timer_progress);
-				TextView status = (TextView)v.findViewById(R.id.timer_status);
-				TextView total = (TextView)v.findViewById(R.id.timer_total);
+				TextView label = (TextView)v.findViewById(R.id.infoTitle);
+				TextView extra = (TextView)v.findViewById(R.id.infoExtended);
+				//TextView ordinal = (TextView)v.findViewById(R.id.timer_ordinal);
+				//ProgressMeter p = (ProgressMeter)v.findViewById(R.id.timer_progress);
+				//TextView status = (TextView)v.findViewById(R.id.timer_status);
+				//TextView total = (TextView)v.findViewById(R.id.timer_total);
+				label.setText(e.name);
+				extra.setText(Integer.toString(e.seconds) + " seconds.");
 				
 				//int text_color = 0xFF888888;
 				//int non_selected = 0xFF333333;
 				//int selected = 0xFF888888;
-				if(e.ordinal == TimerSelectionDialog.this.selected) {
-					//Log.e("SELECTOR","SELCTED " + e.ordinal + " SELECTOR IS " + TimerSelectionDialog.this.selected);
-					label.setTextColor(0xFF888888);
-					extra.setTextColor(0xFF888888);
-					label.setBackgroundColor(0xFF555555);
-					extra.setBackgroundColor(0xFF555555);
-					
-					
-					ordinal.setTextColor(0xFF888888);
-					ordinal.setBackgroundColor(0xFF333333);
-					
-					total.setTextColor(0xFF888888);
-					total.setBackgroundColor(0xFF555555);
-					status.setTextColor(0xFF888888);
-					status.setBackgroundColor(0xFF555555);
-					
-					label.setEllipsize(TruncateAt.END);
-					//v.setBackgroundColor(0xFF333333);
-				} else {
-					//Log.e("SELECTOR","NOT SELECTED " + e.ordinal + " SELECTOR IS " + TimerSelectionDialog.this.selected);
-					label.setTextColor(0xFF888888);
-					extra.setTextColor(0xFF888888);
-					label.setBackgroundColor(0xFF333333);
-					extra.setBackgroundColor(0xFF333333);
-					ordinal.setTextColor(0xFF888888);
-					ordinal.setBackgroundColor(0xFF111111);
-					//v.setBackgroundColor(0xFF111111);
-					
-					total.setTextColor(0xFF888888);
-					total.setBackgroundColor(0xFF333333);
-					status.setTextColor(0xFF888888);
-					status.setBackgroundColor(0xFF333333);
-					label.setEllipsize(TruncateAt.END);
-				}
-				
-				//if(!e.playing) {
-				//	p.setProgress(100);
-				//	p.setRange(100);
-				//}
-				
-				/*if(views.containsKey(Integer.toString(e.ordinal))) {
-					views.remove(Integer.toString(e.ordinal));
-				}
-				views.put(Integer.toString(e.ordinal), new wad(extra,p));*/
-				label.setText(e.name); label.setClickable(false); label.setFocusable(false);
-				
-				float progress = ((float)(e.timeLeft)/((float)e.seconds))*100;
-				//Log.e("SELECTOR","PROGRESS " + e.timeLeft + " total " + e.seconds + " calc " + progress);
-				
-				/*if(wad.containsKey(Integer.toString(e.ordinal))) {
-					extra.setText(Long.toString(wad.get(Integer.toString(e.ordinal)).getTimeleft()/1000));
-					p.setProgress(wad.get(Integer.toString(e.ordinal)).getPercentage()*100);
-					p.setRange(100);
-				} else {
-					//
-					extra.setText(Long.toString(e.timeLeft));
-					p.setProgress(progress);
-					p.setRange(100); p.setClickable(false); p.setFocusable(false);
-				}*/
-				//extra.setText(Long.toString(e.timeLeft)); extra.setClickable(false); label.setFocusable(false);
-				ordinal.setText( Integer.toString(e.ordinal));
-				extra.setText(Long.toString(e.timeLeft) + "s left.");
-				p.setProgress(progress);
-				p.setRange(100);
-				
-				total.setText(e.seconds + "s");
-				
+				ImageView icon = (ImageView) v.findViewById(R.id.icon);
 				
 				if(e.playing) {
-					status.setText("(playing)");
+					icon.setImageResource(R.drawable.toolbar_mini_play);
 				} else {
 					if(e.timeLeft == e.seconds) {
-						//Log.e("SELECTOR","STATUS STOPPED " + e.timeLeft);
-						status.setText("(stopped)");
+						icon.setImageResource(R.drawable.toolbar_mini_stop);
 					} else {
-						//Log.e("SELECTOR","STATUS PAUSED " + e.timeLeft);
-						status.setText("(paused)");
+						icon.setImageResource(R.drawable.toolbar_mini_pause);
 					}
 				}
-				//if(wad != null) {
-				//	if(wad.containsKey(Integer.toString(e.ordinal))) {
-				//		extra.setText(Long.toString(wad.get(Integer.toString(e.ordinal)).getTimeleft()));
-				//		p.setProgress(wad.get(Integer.toString(e.ordinal)).getPercentage()*100);
-				//		
-				//	}
-				//}
-				//set the progress meter, need to take the ttl and divide it by the seconds/1000.
-				
-				//Log.e("SELECTOR","CONTRUCTING ROW FOR TIMER" + extra.toString());
-				
-				
-				
-				TextView tordinal = (TextView)v.findViewById(R.id.timer_ordinal);
-				tordinal.setOnClickListener( new View.OnClickListener() {
-					
-					public void onClick(View v) {
-						v.invalidate();
-					}
-				});
-				
-				//v.setFocusable(false);
-				//v.setClickable(false);
-				
-				
-				
-				//ImageButton playpause = (ImageButton)v.findViewById(R.id.timer_playpause);
-				//ImageButton reset = (ImageButton)v.findViewById(R.id.timer_reset);
-				
-				if(e.playing) {
-					//turn the play button into a pause button.
-					//playpause.setOnClickListener(playpause_listeners.get( Integer.toString(e.ordinal)));
-					//playpause.setImageResource(android.R.drawable.ic_media_pause);
-					//playpause_listeners.get( Integer.toString(e.ordinal)).setPlaying(true);
-				} else {
-					//playpause.setOnClickListener(playpause_listeners.get( Integer.toString(e.ordinal)));
-					//playpause.setImageResource(android.R.drawable.ic_media_play);
-					//playpause_listeners.get( Integer.toString(e.ordinal)).setPlaying(false);
-				}
-				//reset.setOnClickListener(reset_listeners.get(Integer.toString(e.ordinal)));
-				
-				
 				
 				
 				
@@ -557,61 +355,352 @@ public class TimerSelectionDialog extends Dialog {
 		boolean selected;
 	}
 	
-	/*private class PlayPauseListener implements View.OnClickListener {
+	public class CustomAnimationEndListener implements AnimatedRelativeLayout.OnAnimationEndListener {
 
-		private int ordinal;
-		private boolean playing;
-		public PlayPauseListener(int pOrdinal,boolean pPlaying) {
-			ordinal = pOrdinal;
-			playing = pPlaying;
+		@Override
+		public void onCustomAnimationEnd() {
+			
+			RelativeLayout rl = (RelativeLayout)theToolbar.getParent();
+			if(rl == null) {
+				return;
+			}
+			rl.removeAllViews();
+
+			if(targetHolder != null) {
+				//set the image view.
+				TimerItem data = adapter.getItem(targetIndex);
+				if(data.playing) {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_pause_button);
+				} else {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_play_button);
+				}
+				targetHolder.setLayoutAnimation(animateInController);
+				
+				targetHolder.addView(theToolbar);
+			}
+			lastSelectedIndex = targetIndex;
 		}
 		
+	}
+	
+	public CustomAnimationEndListener mCustomAnimationListener = new CustomAnimationEndListener();
+	
+	private class LineClickedListener implements View.OnClickListener {
+
+		@Override
 		public void onClick(View v) {
-			ImageView iv = (ImageView)v;
-			try {
-				if(playing) {
-					//pause
-					service.pauseTimer(Integer.toString(ordinal));
-					iv.setImageResource(android.R.drawable.ic_media_play);
-					playing = false;
-				} else {
-					service.startTimer(Integer.toString(ordinal));
-					iv.setImageResource(android.R.drawable.ic_media_pause);
-					playing = true;
-				}
-				buildList();
-			} catch (RemoteException e) {
+			int pos = v.getId() / 157;
+			//Log.e("CLICK","this is the clicker, clicked view:"+ pos);
+			
+			if(lastSelectedIndex < 0) {
 				
+				lastSelectedIndex = pos;
+				RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
+				rl.setLayoutAnimation(animateInController);
+				TimerItem data = adapter.getItem(lastSelectedIndex);
+				if(data.playing) {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_pause_button);
+				} else {
+					((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_play_button);
+				}
+				rl.addView(theToolbar);
+			} else if(lastSelectedIndex != pos) {
+				//Log.e("SLDF","AM I EVEN HERE");
+				AnimatedRelativeLayout holder = (AnimatedRelativeLayout)theToolbar.getParent();
+				if(holder != null) {
+					if(list.getFirstVisiblePosition() <= lastSelectedIndex && list.getLastVisiblePosition() >= lastSelectedIndex) {
+					
+						holder.setAnimationListener(mCustomAnimationListener);
+						holder.startAnimation(animateOut);
+						targetIndex = pos;
+						targetHolder = (RelativeLayout) v.findViewById(R.id.toolbarholder);
+						
+					} else {
+						holder.removeAllViews();
+						RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
+						rl.setLayoutAnimation(animateInController);
+						TimerItem data = adapter.getItem(pos);
+						if(data.playing) {
+							((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_pause_button);
+						} else {
+							((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_play_button);
+						}
+						rl.addView(theToolbar);
+					}
+				}
+				//theToolbar.startAnimation(animateOut);
+			} else {
+				
+				//lastSelectedIndex = -1;
+				if(theToolbar.getParent() == null) {
+					lastSelectedIndex = pos;
+					RelativeLayout holder = (RelativeLayout)v.findViewById(R.id.toolbarholder);
+					holder.setLayoutAnimation(animateInController);
+					TimerItem data = adapter.getItem(pos);
+					if(data.playing) {
+						((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_pause_button);
+					} else {
+						((ImageButton)theToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_play_button);
+					}
+					holder.addView(theToolbar);
+				} else {
+					targetIndex = pos;
+					theToolbar.startAnimation(animateOutNoTransition);
+					
+				}
+			}
+		}
+		
+	}
+	
+	private LineClickedListener mLineClicker = new LineClickedListener();
+	
+	private void makeToolbar() {
+		LayoutInflater li = (LayoutInflater)TimerSelectionDialog.this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		theToolbar = (LinearLayout) li.inflate(R.layout.editor_selection_list_row_toolbar, null);
+		RelativeLayout.LayoutParams toolbarParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+		toolbarParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+		toolbarParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+		toolbarParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		theToolbar.setLayoutParams(toolbarParams);
+		
+		ImageButton playpause = new ImageButton(TimerSelectionDialog.this.getContext());
+		ImageButton stop = new ImageButton(TimerSelectionDialog.this.getContext());
+		ImageButton modify = new ImageButton(TimerSelectionDialog.this.getContext());
+		ImageButton delete = new ImageButton(TimerSelectionDialog.this.getContext());
+		
+		LinearLayout.LayoutParams params = (new LinearLayout.LayoutParams( LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+		params.setMargins(0, 0, 0, 0);
+		
+		
+		playpause.setLayoutParams(params);
+		stop.setLayoutParams(params);
+		modify.setLayoutParams(params);
+		delete.setLayoutParams(params);
+		
+		playpause.setPadding(0, 0, 0, 0);
+		stop.setPadding(0, 0, 0, 0);
+		modify.setPadding(0, 0, 0, 0);
+		delete.setPadding(0, 0, 0, 0);
+		//AliasEntry a = entries.get(pos);
+		//if(a.enabled) {
+		stop.setImageResource(R.drawable.toolbar_stop_button);
+		playpause.setImageResource(R.drawable.toolbar_play_button);
+		
+		//} else {
+		//	toggle.setImageResource(R.drawable.toolbar_toggleoff_button);
+		//}
+		modify.setImageResource(R.drawable.toolbar_modify_button);
+		delete.setImageResource(R.drawable.toolbar_delete_button);
+		
+		playpause.setBackgroundColor(0);
+		stop.setBackgroundColor(0x0000000000);
+		modify.setBackgroundColor(0);
+		delete.setBackgroundColor(0);
+		
+		playpause.setOnKeyListener(theButtonKeyListener);
+		stop.setOnKeyListener(theButtonKeyListener);
+		modify.setOnKeyListener(theButtonKeyListener);
+		delete.setOnKeyListener(theButtonKeyListener);
+		
+		//playpause.setOnClickListener(new PlayPauseButtonListener());
+		//stop.setOnClickListener(new StopButtonListener());
+		modify.setOnClickListener(new ModifyButtonListener());
+		delete.setOnClickListener(new DeleteButtonListener());
+		
+		theToolbar.addView(playpause);
+		theToolbar.addView(stop);
+		theToolbar.addView(modify);
+		theToolbar.addView(delete);
+		
+		
+		ImageButton close = (ImageButton)theToolbar.findViewById(R.id.toolbar_tab_close);
+		close.setOnKeyListener(theButtonKeyListener);
+		
+		toolbarLength = close.getDrawable().getIntrinsicWidth() + (modify.getDrawable().getIntrinsicWidth() * 4); 
+		
+		TranslateAnimation animation2 = new TranslateAnimation(toolbarLength,0,0,0);
+		animation2.setDuration(300);
+		AnimationSet set = new AnimationSet(true);
+		set.addAnimation(animation2);
+		animateInController = new LayoutAnimationController(set);
+		
+		animateOut = new TranslateAnimation(0,toolbarLength,0,0);
+		animateOut.setDuration(300);
+
+		animateOutNoTransition = new TranslateAnimation(0,toolbarLength,0,0);
+		animateOutNoTransition.setDuration(300);
+		animateOutNoTransition.setAnimationListener(new AnimationListener() {
+
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				RelativeLayout rl = (RelativeLayout)theToolbar.getParent();
+				rl.removeAllViews();
+				lastSelectedIndex = targetIndex;
+				lastSelectedIndex = -1;
+				
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+				
+			}
+
+			@Override
+			public void onAnimationStart(Animation animation) {
+				
+			}
+			
+		});
+	}
+	
+	public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListener();
+	
+	public class ToolBarButtonKeyListener implements View.OnKeyListener {
+
+		public boolean onKey(View v, int keyCode, KeyEvent event) {
+			switch(keyCode) {
+			case KeyEvent.KEYCODE_DPAD_UP:
+				int first = 0;
+				//int last = list.getLastVisiblePosition();
+				if(lastSelectedIndex - 1 >= first) {
+					/*list.setSelection(lastSelectedIndex -1);
+					RelativeLayout row = (RelativeLayout) list.getChildAt(lastSelectedIndex -1);
+					row.performClick();*/
+					list.setSelection(lastSelectedIndex - 1);
+					return true;
+				} else {
+					return false;
+				}
+				//break;
+			case KeyEvent.KEYCODE_DPAD_DOWN:
+				int last = list.getCount() -1;
+				if(lastSelectedIndex + 1 <= last) {
+					/*list.setSelection(lastSelectedIndex +1);
+					int childCount = list.getChildCount();
+					//list.getAdapter().get
+					RelativeLayout row = (RelativeLayout) list.getChildAt(lastSelectedIndex +1);
+					row.performClick();*/
+					list.setSelection(lastSelectedIndex + 1);
+					return true;
+				} else {
+					return false;
+				}
+				//break;
+			}
+
+			return false;
+		}
+		
+	}
+	
+	public class ModifyButtonListener implements View.OnClickListener {
+		//private int index = -1;
+		public ModifyButtonListener() {
+			//this.index = entry;
+		}
+		public void onClick(View v) {
+			//int index = v.getId() / 159;
+			int index = lastSelectedIndex;
+			TimerItem entry = adapter.getItem(index);
+			//launch the trigger editor with this item.
+			try {
+				TimerData data = null;
+				if(currentPlugin.equals("main")) {
+					data = service.getTimer(entry.name);
+				} else {
+					data = service.getPluginTimer(currentPlugin,entry.name);
+				}
+				TimerEditorDialog editor = new TimerEditorDialog(TimerSelectionDialog.this.getContext(),currentPlugin,data,service,doneHandler);
+				editor.show();
+				
+				
+			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
 		}
-
-		public boolean isPlaying() {
-			return playing;
-		}
-
-		public void setPlaying(boolean playing) {
-			this.playing = playing;
-		}
-		
-	}*/
+	}
 	
-	/*private class ResetListener implements View.OnClickListener {
+	public class DeleteButtonListener implements View.OnClickListener {
 
-		private int ordinal;
-		public ResetListener(int pOrdinal) {
-			ordinal = pOrdinal;
-			
+
+		public DeleteButtonListener() {
+
 		}
 		
 		public void onClick(View v) {
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(TimerSelectionDialog.this.getContext());
+			builder.setTitle("Delete Timer");
+			builder.setMessage("Confirm Delete?");
+			builder.setPositiveButton("Delete", new ReallyDeleteAliasListener());
+			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			builder.setIcon(android.R.drawable.ic_dialog_alert);
+			AlertDialog d = builder.create();
+			d.show();
+			
+		}
+		
+	}
+	
+	public class ReallyDeleteAliasListener implements DialogInterface.OnClickListener {
+
+		public ReallyDeleteAliasListener() {
+
+		}
+		public void onClick(DialogInterface dialog, int which) {
+
+			dialog.dismiss();
+			Animation a = new TranslateAnimation(0, toolbarLength, 0, 0);
+			a.setDuration(300);
+			a.setAnimationListener(new DeleteAnimationListener());
+			
+			theToolbar.startAnimation(a);
+			
+		}
+		
+	}
+	
+	public class DeleteAnimationListener implements Animation.AnimationListener {
+
+		//int entry = -1;
+		public DeleteAnimationListener() {
+			//this.entry = entry;
+		}
+		
+		public void onAnimationEnd(Animation animation) {
+			//list.setOnFocusChangeListener(null);
+			//list.setFocusable(false);
 			try {
-				service.resetTimer(Integer.toString(ordinal));
+				if(currentPlugin.equals("main")) {
+					service.deleteTimer(entries.get(lastSelectedIndex).name);
+				} else {
+					service.deletePluginTimer(currentPlugin,entries.get(lastSelectedIndex).name);
+				}
+				
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
-			buildList();
+			//triggerModifier.sendMessageDelayed(triggerModifier.obtainMessage(104), 10);
+			adapter.remove(adapter.getItem(lastSelectedIndex));
+			adapter.notifyDataSetInvalidated();
+		}
+
+		public void onAnimationRepeat(Animation animation) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void onAnimationStart(Animation animation) {
+			// TODO Auto-generated method stub
+			
 		}
 		
-	}*/
+	}
+	
 }

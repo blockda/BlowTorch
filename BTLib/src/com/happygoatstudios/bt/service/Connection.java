@@ -1583,5 +1583,70 @@ public class Connection {
 		
 		doStartup();
 	}
+
+	public void deletePluginTimer(String plugin, String name) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.getSettings().getTimers().remove(name);
+		}
+	}
+
+	public TimerData getTimer(String name) {
+		// TODO Auto-generated method stub
+		return the_settings.getSettings().getTimers().get(name);
+	}
+
+	public void deleteTimer(String name) {
+		the_settings.getSettings().getTimers().remove(name);
+	}
+
+	public TimerData getPluginTimer(String plugin, String name) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			return p.getSettings().getTimers().get(name);
+		} else {
+			return null;
+		}
+	}
+
+	public void addPluginTimer(String plugin, TimerData newtimer) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
+		}
+	}
+
+	public void updatePluginTimer(String plugin, TimerData old,
+		TimerData newtimer) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.getSettings().getTimers().remove(old.getName());				
+			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
+		}
+		
+	}
+
+	public void updateTimer(TimerData old, TimerData newtimer) {
+		the_settings.getSettings().getTimers().remove(old.getName());
+		the_settings.getSettings().getTimers().put(newtimer.getName(),newtimer);
+	}
+
+	public Map getTimers() {
+		// TODO Auto-generated method stub
+		return the_settings.getSettings().getTimers();
+	}
+
+	public Map getPluginTimers(String plugin) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			return p.getSettings().getTimers();
+		} else {
+			return null;
+		}
+	}
+
+	public void addTimer(TimerData newtimer) {
+		the_settings.getSettings().getTimers().put(newtimer.getName(), newtimer);
+	}
 	
 }
