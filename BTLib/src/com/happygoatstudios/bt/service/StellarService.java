@@ -3005,12 +3005,16 @@ public class StellarService extends Service {
 
 		public Map getTimers() throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			return connections.get(connectionClutch).getTimers();
+		}
+		
+		public Map getPluginTimers(String plugin) throws RemoteException {
+			return connections.get(connectionClutch).getPluginTimers(plugin);
 		}
 
 		public TimerData getTimer(String ordinal) throws RemoteException {
 			// TODO Auto-generated method stub
-			return null;
+			return connections.get(connectionClutch).getTimer(ordinal);
 		}
 
 		public void startTimer(String ordinal) throws RemoteException {
@@ -3035,13 +3039,11 @@ public class StellarService extends Service {
 
 		public void updateTimer(TimerData old, TimerData newtimer)
 				throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).updateTimer(old,newtimer);
 		}
 
 		public void addTimer(TimerData newtimer) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).addTimer(newtimer);
 		}
 
 		public void removeTimer(TimerData deltimer) throws RemoteException {
@@ -3394,6 +3396,35 @@ public class StellarService extends Service {
 				String key) throws RemoteException {
 			connections.get(connectionClutch).setPluginAliasEnabled(plugin,enabled,key);
 		}
+
+		@Override
+		public TimerData getPluginTimer(String plugin,String name) throws RemoteException {
+			return connections.get(connectionClutch).getPluginTimer(plugin,name);
+		}
+
+		@Override
+		public void deleteTimer(String name) throws RemoteException {
+			connections.get(connectionClutch).deleteTimer(name);
+		}
+
+		@Override
+		public void deletePluginTimer(String plugin, String name)
+				throws RemoteException {
+			connections.get(connectionClutch).deletePluginTimer(plugin,name);
+		}
+
+		@Override
+		public void updatePluginTimer(String plugin, TimerData old,
+				TimerData newtimer) throws RemoteException {
+			connections.get(connectionClutch).updatePluginTimer(plugin,old,newtimer);
+		}
+
+		@Override
+		public void addPluginTimer(String plugin, TimerData newtimer)
+				throws RemoteException {
+			connections.get(connectionClutch).addPluginTimer(plugin,newtimer);
+		}
+
 	};
 
 	public void sendRawDataToWindow(byte[] data) {
