@@ -59,7 +59,9 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 	
 	private boolean isEditor = false;
 	
-	public TimerEditorDialog(Context c,TimerData input,IConnectionBinder pService,Handler reportto) {
+	String plugin = "main";
+	
+	public TimerEditorDialog(Context c,String plugin,TimerData input,IConnectionBinder pService,Handler reportto) {
 		super(c);
 		service = pService;
 		finish_with = reportto;
@@ -71,6 +73,8 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 			orig_timer = input.copy();
 			isEditor = true;
 		}
+		
+		this.plugin = plugin;
 		
 		checkopens = new HashMap<Integer,Integer>();
 		checkclosed = new HashMap<Integer,Integer>();
@@ -152,7 +156,11 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				
 				//responders should be handled already.
 				try {
-					service.updateTimer(orig_timer, the_timer);
+					if(plugin.equals("main")) {
+						service.updateTimer(orig_timer, the_timer);
+					} else {
+						service.updatePluginTimer(plugin, orig_timer, the_timer);
+					}
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
@@ -163,8 +171,13 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				the_timer.setRepeat(theRepeat);
 				
 				try {
-					the_timer.setOrdinal(service.getNextTimerOrdinal());
-					service.addTimer(the_timer);
+					//the_timer.setOrdinal(service.getNextTimerOrdinal());
+					if(plugin.equals("main")) {
+						service.addTimer(the_timer);
+					} else {
+						service.addPluginTimer(plugin,the_timer);
+					}
+					
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
