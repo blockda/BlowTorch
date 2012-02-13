@@ -887,10 +887,18 @@ public class Plugin {
 		String suffix = "\\b";
 		//StringBuffer joined_alias = new StringBuffer();
 		if(a.length > 0) {
-			if(((AliasData)a[0]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
-			if(((AliasData)a[0]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
-			joined_alias.append("("+prefix+((AliasData)a[0]).getPre()+suffix+")");
-			for(int i=1;i<a.length;i++) {
+			int j=0;
+			for(int i=0;i<a.length;i++) {
+				if(((AliasData)a[i]).isEnabled()) {
+					if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
+					if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
+					joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
+					j=i;
+					i=a.length;
+					
+				}
+			}
+			for(int i=j;i<a.length;i++) {
 				if(((AliasData)a[i]).isEnabled()) {
 					if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
 					if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
