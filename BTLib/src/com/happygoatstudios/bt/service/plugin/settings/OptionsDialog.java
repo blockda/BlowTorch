@@ -11,6 +11,7 @@ import com.happygoatstudios.bt.service.IConnectionBinder;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.AlertDialog.Builder;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.DataSetObserver;
@@ -50,6 +51,7 @@ public class OptionsDialog extends Dialog {
 	SettingsGroup mCurrent;
 	String selectedPlugin;
 	String[] mEncodings = null;
+	//FragmentManager mFragementManager;
 	
 	
 	boolean toggle = true;
@@ -60,6 +62,7 @@ public class OptionsDialog extends Dialog {
 		super(context);
 		this.selectedPlugin = plugin;
 		this.service = service;
+		//this.mFragementManager = fragmentManager;
 	}
 
 	public void onCreate(Bundle b) {
@@ -363,6 +366,10 @@ public class OptionsDialog extends Dialog {
 			builder.setSingleChoiceItems(mEncodings, selected, new EncodingItemClickListener(o));
 			
 			AlertDialog dialog = builder.create();
+			//GenericDialogFragment gdf = new GenericDialogFragment(dialog);
+			//gdf.showWithTag("encoding_dialog");
+			//gdf.show(mFragementManager, "encoding_dialog");
+			//dialog.show();
 			dialog.show();
 		}
 		

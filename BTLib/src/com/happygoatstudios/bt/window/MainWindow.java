@@ -1344,6 +1344,9 @@ public class MainWindow extends Activity {
 			int size = sg.getOptions().size();*/
 			OptionsDialog optdialog = new OptionsDialog(this,service,"main");
 			optdialog.show();
+			//OptionsDialogFragment odf = new OptionsDialogFragment(service,"main",getFragmentManager());
+			//odf.show(getFragmentManager(), "dialog");
+			
 			break;
 			
 			
