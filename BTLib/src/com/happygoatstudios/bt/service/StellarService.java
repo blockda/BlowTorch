@@ -95,6 +95,7 @@ import com.happygoatstudios.bt.service.function.SpecialCommand;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
@@ -3018,23 +3019,27 @@ public class StellarService extends Service {
 		}
 
 		public void startTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).playTimer(ordinal);
 		}
 
 		public void pauseTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).pauseTimer(ordinal);
 		}
 
 		public void stopTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).stopTimer(ordinal);
+		}
+		
+		public void startPluginTimer(String plugin,String ordinal) throws RemoteException {
+			connections.get(connectionClutch).playPluginTimer(plugin,ordinal);
 		}
 
-		public void resetTimer(String ordinal) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+		public void pausePluginTimer(String plugin,String ordinal) throws RemoteException {
+			connections.get(connectionClutch).pausePluginTimer(plugin,ordinal);
+		}
+
+		public void stopPluginTimer(String plugin,String ordinal) throws RemoteException {
+			connections.get(connectionClutch).stopPluginTimer(plugin,ordinal);
 		}
 
 		public void updateTimer(TimerData old, TimerData newtimer)
@@ -3423,6 +3428,65 @@ public class StellarService extends Service {
 		public void addPluginTimer(String plugin, TimerData newtimer)
 				throws RemoteException {
 			connections.get(connectionClutch).addPluginTimer(plugin,newtimer);
+		}
+
+		@Override
+		public SettingsGroup getSettings() throws RemoteException {
+			return connections.get(connectionClutch).getSettings();
+		}
+
+		@Override
+		public SettingsGroup getPluginSettings(String plugin)
+				throws RemoteException {
+			return connections.get(connectionClutch).getPluginSettings(plugin);
+		}
+
+		@Override
+		public void updateBooleanSetting(String key, boolean value)
+				throws RemoteException {
+			connections.get(connectionClutch).updateBooleanSetting(key,value);
+		}
+
+		@Override
+		public void updatePluginBooleanSetting(String plugin, String key,
+				boolean value) throws RemoteException {
+			connections.get(connectionClutch).updatePluginBooleanSetting(plugin,key,value);
+		}
+
+		@Override
+		public void updateIntegerSetting(String key, int value)
+				throws RemoteException {
+			connections.get(connectionClutch).updateIntegerSetting(key, value);
+		}
+
+		@Override
+		public void updatePluginIntegerSetting(String plugin, String key,
+				int value) throws RemoteException {
+			connections.get(connectionClutch).updatePluginIntegerSetting(plugin, key, value);
+		}
+
+		@Override
+		public void updateFloatSetting(String key, float value)
+				throws RemoteException {
+			connections.get(connectionClutch).updateFloatSetting(key, value);
+		}
+
+		@Override
+		public void updatePluginFloatSetting(String plugin, String key,
+				float value) throws RemoteException {
+			connections.get(connectionClutch).updatePluginFloatSetting(plugin, key, value);
+		}
+
+		@Override
+		public void updateStringSetting(String key, String value)
+				throws RemoteException {
+			connections.get(connectionClutch).updateStringSetting(key, value);
+		}
+
+		@Override
+		public void updatePluginStringSetting(String plugin, String key,
+				String value) throws RemoteException {
+			connections.get(connectionClutch).updatePluginStringSetting(plugin, key, value);
 		}
 
 	};

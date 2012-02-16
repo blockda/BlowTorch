@@ -20,11 +20,13 @@ public class TimerData implements Parcelable {
 	private Integer seconds;
 	private boolean repeat;
 	private boolean playing;
+	private long startTime;
+	private int remainingTime;
 	
 	
 	//data that is not serialized, but should still be parcelable.
-	private long ttf;
-	private Long pauseLocation;
+	//private long ttf;
+	//private Long pauseLocation;
 	
 	private List<TriggerResponder> responders;
 	
@@ -34,15 +36,15 @@ public class TimerData implements Parcelable {
 		seconds=30;
 		repeat=true;
 		playing = false;
-		ttf = seconds*1000;
+		//ttf = seconds*1000;
 		responders = new ArrayList<TriggerResponder>();
-		pauseLocation = 0l;
+		//pauseLocation = 0l;
 		
 	}
 	
 	public void reset() {
-		ttf = seconds*1000;
-		pauseLocation = 0l;
+		//ttf = seconds*1000;
+		//pauseLocation = 0l;
 	}
 	
 	public TimerData copy() {
@@ -53,7 +55,7 @@ public class TimerData implements Parcelable {
 		tmp.seconds = this.seconds;
 		tmp.repeat = this.repeat;
 		tmp.playing = this.playing;
-		tmp.ttf =  this.ttf;
+		tmp.remainingTime =  this.remainingTime;
 		for(TriggerResponder responder : this.responders) {
 			tmp.responders.add(responder.copy());
 		}
@@ -104,7 +106,7 @@ public class TimerData implements Parcelable {
 		setSeconds(in.readInt());
 		setRepeat( (in.readInt() == 1) ? true : false);
 		setPlaying( (in.readInt() == 1) ? true : false);
-		setTTF( in.readLong());
+		setRemainingTime( in.readInt());
 		int numresponders = in.readInt();
 		responders = new ArrayList<TriggerResponder>();
 		//Log.e("PARCLE","IN: name=" + name);
@@ -151,7 +153,7 @@ public class TimerData implements Parcelable {
 		o.writeInt(seconds);
 		o.writeInt((repeat) ? 1 : 0);
 		o.writeInt((playing) ? 1 : 0);
-		o.writeLong(ttf);
+		o.writeInt(remainingTime);
 		o.writeInt(responders.size());
 		for(TriggerResponder responder : responders) {
 			o.writeInt(responder.getType().getIntVal());
@@ -209,20 +211,20 @@ public class TimerData implements Parcelable {
 		return playing;
 	}
 
-	public void setTTF(long ttf) {
-		this.ttf = ttf;
+	public long getStartTime() {
+		return startTime;
 	}
 
-	public long getTTF() {
-		return ttf;
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
 	}
 
-	public void setPauseLocation(Long pauseLocation) {
-		this.pauseLocation = pauseLocation;
+	public int getRemainingTime() {
+		return remainingTime;
 	}
 
-	public Long getPauseLocation() {
-		return pauseLocation;
+	public void setRemainingTime(int remainingTime) {
+		this.remainingTime = remainingTime;
 	}
 	
 }

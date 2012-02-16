@@ -91,6 +91,8 @@ import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.button.manager.ButtonManagerDialog;
 import com.happygoatstudios.bt.service.*;
+import com.happygoatstudios.bt.service.plugin.settings.OptionsDialog;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.ConfigurationLoader;
 import com.happygoatstudios.bt.settings.HyperSettings;
@@ -1329,64 +1331,71 @@ public class MainWindow extends Activity {
 			
 			break;
 		case 103:
-			//fix up the shared preferences so that it will actually work.
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
-			
-			SharedPreferences.Editor edit = prefs.edit();
-			
+			//enter new routine.
+			/*SettingsGroup sg = null;
 			try {
-				//Log.e("WINDOW","FUCKING FUCK FUCK SERVICE IS MODIFYING THE FUCKING FILE");
-				edit.putBoolean("THROTTLE_BACKGROUND",service.isThrottleBackground());
-				edit.putBoolean("USE_EXTRACTUI", service.getUseExtractUI());
-				edit.putBoolean("PROCESS_PERIOD", service.isProcessPeriod());
-				edit.putBoolean("PROCESS_SEMI", service.isSemiNewline());
-				edit.putBoolean("WIFI_KEEPALIVE", service.isKeepWifiActive());
-				edit.putBoolean("USE_SUGGESTIONS", service.isAttemptSuggestions());
-				edit.putBoolean("BACKSPACE_BUGFIX", service.isBackSpaceBugFix());
-				edit.putBoolean("AUTOLAUNCH_EDITOR", service.isAutoLaunchEditor());
-				edit.putBoolean("DISABLE_COLOR",service.isDisableColor());
-				edit.putString("OVERRIDE_HAPTICFEEDBACK", service.HapticFeedbackMode());
-				edit.putString("HAPTIC_PRESS", service.getHFOnPress());
-				edit.putString("HAPTIC_FLIP", service.getHFOnFlip());
-				edit.putString("ENCODING", service.getEncoding());
-				
-				edit.putInt("BREAK_AMOUNT", service.getBreakAmount());
-				edit.putInt("ORIENTATION", service.getOrientation());
-				edit.putBoolean("WORD_WRAP",service.isWordWrap());
-				//edit.putInt("CALCULATED_WIDTH", screen2.CALCULATED_ROWSINWINDOW);
-				
-				edit.putBoolean("REMOVE_EXTRA_COLOR", service.isRemoveExtraColor());
-				edit.putBoolean("DEBUG_TELNET", service.isDebugTelnet());
-				
-				edit.putBoolean("KEEPLAST", service.isKeepLast());
-				edit.putString("FONT_SIZE", Integer.toString((service.getFontSize())));
-				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
-				edit.putString("MAX_LINES", Integer.toString(service.getMaxLines()));
-				edit.putString("FONT_NAME", service.getFontName());
-				
-				edit.putBoolean("KEEP_SCREEN_ON",service.isKeepScreenOn());
-				edit.putBoolean("LOCAL_ECHO", service.isLocalEcho());
-				edit.putBoolean("BELL_VIBRATE", service.isVibrateOnBell());
-				edit.putBoolean("BELL_NOTIFY", service.isNotifyOnBell());
-				edit.putBoolean("BELL_DISPLAY", service.isDisplayOnBell());
-				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
-				edit.putBoolean("ROUND_BUTTONS",service.isRoundButtons());
-				edit.putBoolean("ECHO_ALIAS_UPDATE", service.isEchoAliasUpdate());
-				edit.putInt("HYPERLINK_COLOR", service.getHyperLinkColor());
-				edit.putString("HYPERLINK_MODE", service.getHyperLinkMode());
-				edit.putBoolean("HYPERLINK_ENABLED", service.isHyperLinkEnabled());
-				//edit.putBoolean("FIT_MESSAGE", service.isShowFitMessage());
+				sg = service.getSettings();
 			} catch (RemoteException e) {
-				throw new RuntimeException(e);
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			
-			edit.commit();
-			
-			Intent settingintent = new Intent(this,HyperSettingsActivity.class);
-			this.startActivityForResult(settingintent, 0);
-			//settingsmenuclosed = true;
-			//showsettingsoptions = false;
+			//give up the list to the dialog.
+			int size = sg.getOptions().size();*/
+			OptionsDialog optdialog = new OptionsDialog(this,service,"main");
+			optdialog.show();
 			break;
+			
+			
+			//OLD SETTINGS METHOD.
+//			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
+//			SharedPreferences.Editor edit = prefs.edit();
+//			
+//			try {
+//				edit.putBoolean("THROTTLE_BACKGROUND",service.isThrottleBackground());
+//				edit.putBoolean("USE_EXTRACTUI", service.getUseExtractUI());
+//				edit.putBoolean("PROCESS_PERIOD", service.isProcessPeriod());
+//				edit.putBoolean("PROCESS_SEMI", service.isSemiNewline());
+//				edit.putBoolean("WIFI_KEEPALIVE", service.isKeepWifiActive());
+//				edit.putBoolean("USE_SUGGESTIONS", service.isAttemptSuggestions());
+//				edit.putBoolean("BACKSPACE_BUGFIX", service.isBackSpaceBugFix());
+//				edit.putBoolean("AUTOLAUNCH_EDITOR", service.isAutoLaunchEditor());
+//				edit.putBoolean("DISABLE_COLOR",service.isDisableColor());
+//				edit.putString("OVERRIDE_HAPTICFEEDBACK", service.HapticFeedbackMode());
+//				edit.putString("HAPTIC_PRESS", service.getHFOnPress());
+//				edit.putString("HAPTIC_FLIP", service.getHFOnFlip());
+//				edit.putString("ENCODING", service.getEncoding());
+//				edit.putInt("BREAK_AMOUNT", service.getBreakAmount());
+//				edit.putInt("ORIENTATION", service.getOrientation());
+//				edit.putBoolean("WORD_WRAP",service.isWordWrap());
+//				edit.putBoolean("REMOVE_EXTRA_COLOR", service.isRemoveExtraColor());
+//				edit.putBoolean("DEBUG_TELNET", service.isDebugTelnet());
+//				edit.putBoolean("KEEPLAST", service.isKeepLast());
+//				edit.putString("FONT_SIZE", Integer.toString((service.getFontSize())));
+//				edit.putString("FONT_SIZE_EXTRA", Integer.toString(service.getFontSpaceExtra()));
+//				edit.putString("MAX_LINES", Integer.toString(service.getMaxLines()));
+//				edit.putString("FONT_NAME", service.getFontName());
+//				edit.putBoolean("KEEP_SCREEN_ON",service.isKeepScreenOn());
+//				edit.putBoolean("LOCAL_ECHO", service.isLocalEcho());
+//				edit.putBoolean("BELL_VIBRATE", service.isVibrateOnBell());
+//				edit.putBoolean("BELL_NOTIFY", service.isNotifyOnBell());
+//				edit.putBoolean("BELL_DISPLAY", service.isDisplayOnBell());
+//				edit.putBoolean("WINDOW_FULLSCREEN",service.isFullScreen());
+//				edit.putBoolean("ROUND_BUTTONS",service.isRoundButtons());
+//				edit.putBoolean("ECHO_ALIAS_UPDATE", service.isEchoAliasUpdate());
+//				edit.putInt("HYPERLINK_COLOR", service.getHyperLinkColor());
+//				edit.putString("HYPERLINK_MODE", service.getHyperLinkMode());
+//				edit.putBoolean("HYPERLINK_ENABLED", service.isHyperLinkEnabled());
+//			} catch (RemoteException e) {
+//				throw new RuntimeException(e);
+//			}
+//			
+//			edit.commit();
+//			
+//			Intent settingintent = new Intent(this,HyperSettingsActivity.class);
+//			this.startActivityForResult(settingintent, 0);
+//
+//			//break;
 		case 100:
 			//launch the sweet trigger dialog.
 			TriggerSelectionDialog trigger_selector = new TriggerSelectionDialog(this,service);

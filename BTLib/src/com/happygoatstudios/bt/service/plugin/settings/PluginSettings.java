@@ -13,6 +13,8 @@ public class PluginSettings implements Cloneable {
 	private int id;
 	private String author;
 	
+	private SettingsGroup options;
+	
 	public enum PLUGIN_LOCATION {
 		INTERNAL,
 		EXTERNAL
@@ -41,6 +43,8 @@ public class PluginSettings implements Cloneable {
 		setTimers(new HashMap<String,TimerData>());
 		setScripts(new HashMap<String,String>());
 		setWindows(new HashMap<String,WindowToken>());
+		setOptions(new SettingsGroup());
+		
 		//L = LuaStateFactory.newLuaState();
 	}
 	
@@ -132,5 +136,15 @@ public class PluginSettings implements Cloneable {
 
 	public HashMap<String,WindowToken> getWindows() {
 		return windows;
+	}
+
+
+	public SettingsGroup getOptions() {
+		return options;
+	}
+
+
+	public void setOptions(SettingsGroup options) {
+		this.options = options;
 	}
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/holder"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    android:orientation="vertical">
+    <TextView 
+      	android:id="@+id/title"
+       	android:layout_width="fill_parent"
+      	android:layout_height="wrap_content"
+      	android:textSize="26dip"
+       	android:gravity="center"/>
+	<ListView
+		android:id="@+id/list"
+		android:layout_height="fill_parent"
+		android:layout_width="fill_parent"/>
+</LinearLayout>
