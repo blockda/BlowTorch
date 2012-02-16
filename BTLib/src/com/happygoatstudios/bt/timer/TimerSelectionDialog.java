@@ -61,6 +61,7 @@ public class TimerSelectionDialog extends Dialog {
 	
 	LinearLayout theToolbar = null;
 	int toolbarLength = 0;
+	ImageButton playPauseButton = null;
 	
 	LayoutAnimationController animateInController = null;
 	TranslateAnimation animateOut = null;
@@ -124,7 +125,8 @@ public class TimerSelectionDialog extends Dialog {
 		});
 		
 		list.setItemsCanFocus(true);
-		
+		adapter = new TimerListAdapter(list.getContext(),0,entries);
+		list.setAdapter(adapter);
 		View newbutton = findViewById(R.id.add);
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
@@ -167,9 +169,9 @@ public class TimerSelectionDialog extends Dialog {
 					break;
 				case 101: 
 					
-					ListView tmp = (ListView) TimerSelectionDialog.this.findViewById(R.id.timer_list);
-					tmp.invalidate();
-					adapter.notifyDataSetInvalidated();
+					//ListView tmp = (ListView) TimerSelectionDialog.this.findViewById(R.id.list);
+					//tmp.invalidate();
+					//adapter.notifyDataSetInvalidated();
 					//updateTimers();
 					buildList();
 					break;
@@ -203,11 +205,8 @@ public class TimerSelectionDialog extends Dialog {
 	
 	@SuppressWarnings("unchecked")
 	private void buildList() {
-		if(adapter != null) {
-			adapter.clear();
-		}
 		
-		
+		entries.clear();
 		
 		HashMap<String,TimerData> timer_list = null;
 		try{
@@ -226,7 +225,7 @@ public class TimerSelectionDialog extends Dialog {
 			TimerItem i = new TimerItem();
 			i.name = timer.getName();
 			i.ordinal = timer.getOrdinal();
-			i.timeLeft = timer.getTTF()/1000;
+			i.timeLeft = timer.getRemainingTime();
 			i.seconds = timer.getSeconds();
 			i.playing = timer.isPlaying();
 			i.selected = false;
@@ -244,7 +243,7 @@ public class TimerSelectionDialog extends Dialog {
 		
 		
 		
-		if(anyplaying) {
+		/*if(anyplaying) {
 			if(doneHandler.hasMessages(101)) {
 				
 			} else {
@@ -255,12 +254,13 @@ public class TimerSelectionDialog extends Dialog {
 		} else {
 			//Log.e("SELECTOR","STOPPING DRAWING");
 			doneHandler.removeMessages(101);
-		}
+		}*/
 		
-		adapter = new TimerListAdapter(list.getContext(),0,entries);
-		list.setAdapter(adapter);
+		//adapter = new TimerListAdapter(list.getContext(),0,entries);
+		//list.setAdapter(adapter);
+		adapter.notifyDataSetInvalidated();
 		adapter.sort(new TimerSorter());
-		
+		list.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
 		//if(lastSelectedIndex != 1) {
 		//	list.setSelection(lastSelectedIndex);
 		//}
@@ -281,9 +281,11 @@ public class TimerSelectionDialog extends Dialog {
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = li.inflate(R.layout.editor_selection_list_row,null);
-				RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
-				root.setOnClickListener(mLineClicker);
+				//RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
+				//root.setOnClickListener(mLineClicker);
 			}
+			
+			v.setOnClickListener(mLineClicker);
 			
 			TimerItem e = entries.get(pos);
 			
@@ -291,6 +293,7 @@ public class TimerSelectionDialog extends Dialog {
 			
 			holder.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
 			
+			holder.setLayoutAnimation(animateInController);
 			if(holder.getChildCount() > 0) {
 				holder.removeAllViews();
 				lastSelectedIndex = -1;
@@ -349,7 +352,7 @@ public class TimerSelectionDialog extends Dialog {
 	public class TimerItem {
 		String name;
 		int ordinal;
-		long timeLeft;
+		int timeLeft;
 		boolean playing;
 		int seconds;
 		boolean selected;
@@ -464,7 +467,7 @@ public class TimerSelectionDialog extends Dialog {
 		toolbarParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		theToolbar.setLayoutParams(toolbarParams);
 		
-		ImageButton playpause = new ImageButton(TimerSelectionDialog.this.getContext());
+		playPauseButton = new ImageButton(TimerSelectionDialog.this.getContext());
 		ImageButton stop = new ImageButton(TimerSelectionDialog.this.getContext());
 		ImageButton modify = new ImageButton(TimerSelectionDialog.this.getContext());
 		ImageButton delete = new ImageButton(TimerSelectionDialog.this.getContext());
@@ -473,19 +476,19 @@ public class TimerSelectionDialog extends Dialog {
 		params.setMargins(0, 0, 0, 0);
 		
 		
-		playpause.setLayoutParams(params);
+		playPauseButton.setLayoutParams(params);
 		stop.setLayoutParams(params);
 		modify.setLayoutParams(params);
 		delete.setLayoutParams(params);
 		
-		playpause.setPadding(0, 0, 0, 0);
+		playPauseButton.setPadding(0, 0, 0, 0);
 		stop.setPadding(0, 0, 0, 0);
 		modify.setPadding(0, 0, 0, 0);
 		delete.setPadding(0, 0, 0, 0);
 		//AliasEntry a = entries.get(pos);
 		//if(a.enabled) {
 		stop.setImageResource(R.drawable.toolbar_stop_button);
-		playpause.setImageResource(R.drawable.toolbar_play_button);
+		playPauseButton.setImageResource(R.drawable.toolbar_play_button);
 		
 		//} else {
 		//	toggle.setImageResource(R.drawable.toolbar_toggleoff_button);
@@ -493,22 +496,22 @@ public class TimerSelectionDialog extends Dialog {
 		modify.setImageResource(R.drawable.toolbar_modify_button);
 		delete.setImageResource(R.drawable.toolbar_delete_button);
 		
-		playpause.setBackgroundColor(0);
+		playPauseButton.setBackgroundColor(0);
 		stop.setBackgroundColor(0x0000000000);
 		modify.setBackgroundColor(0);
 		delete.setBackgroundColor(0);
 		
-		playpause.setOnKeyListener(theButtonKeyListener);
+		playPauseButton.setOnKeyListener(theButtonKeyListener);
 		stop.setOnKeyListener(theButtonKeyListener);
 		modify.setOnKeyListener(theButtonKeyListener);
 		delete.setOnKeyListener(theButtonKeyListener);
 		
-		//playpause.setOnClickListener(new PlayPauseButtonListener());
-		//stop.setOnClickListener(new StopButtonListener());
+		playPauseButton.setOnClickListener(new PlayPauseButtonListener());
+		stop.setOnClickListener(new StopButtonListener());
 		modify.setOnClickListener(new ModifyButtonListener());
 		delete.setOnClickListener(new DeleteButtonListener());
 		
-		theToolbar.addView(playpause);
+		theToolbar.addView(playPauseButton);
 		theToolbar.addView(stop);
 		theToolbar.addView(modify);
 		theToolbar.addView(delete);
@@ -644,6 +647,87 @@ public class TimerSelectionDialog extends Dialog {
 			AlertDialog d = builder.create();
 			d.show();
 			
+		}
+		
+	}
+	
+	public class StopButtonListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			TimerItem entry = adapter.getItem(lastSelectedIndex);
+			if(currentPlugin.equals("main")) {
+				try {
+					service.stopTimer(entry.name);
+					entry.playing = false;
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					service.stopPluginTimer(currentPlugin, entry.name);
+					entry.playing = false;
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+			playPauseButton.setImageResource(R.drawable.toolbar_play_button);
+			RelativeLayout row = (RelativeLayout)playPauseButton.getParent().getParent().getParent();
+			((ImageView)row.findViewById(R.id.icon)).setImageResource(R.drawable.toolbar_mini_stop);
+		}
+		
+	}
+	
+	public class PlayPauseButtonListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			TimerItem entry = adapter.getItem(lastSelectedIndex);
+
+			if(entry.playing) {
+				entry.playing = false;
+				if(currentPlugin.equals("main")) {
+					try {
+						service.pauseTimer(entry.name);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						service.pausePluginTimer(currentPlugin, entry.name);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				((ImageButton)v).setImageResource(R.drawable.toolbar_play_button);
+				RelativeLayout row = (RelativeLayout)v.getParent().getParent().getParent();
+				((ImageView)row.findViewById(R.id.icon)).setImageResource(R.drawable.toolbar_mini_pause);
+			} else {
+				entry.playing = true;
+				if(currentPlugin.equals("main")) {
+					try {
+						service.startTimer(entry.name);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						service.startPluginTimer(currentPlugin, entry.name);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				((ImageButton)v).setImageResource(R.drawable.toolbar_pause_button);
+				RelativeLayout row = (RelativeLayout)v.getParent().getParent().getParent();
+				((ImageView)row.findViewById(R.id.icon)).setImageResource(R.drawable.toolbar_mini_play);
+			}
 		}
 		
 	}
