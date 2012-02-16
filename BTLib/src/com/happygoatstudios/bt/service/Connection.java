@@ -45,9 +45,14 @@ import com.happygoatstudios.bt.service.function.SwitchWindowCommand;
 
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
+import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
 import com.happygoatstudios.bt.service.plugin.settings.ConnectionSetttingsParser;
+import com.happygoatstudios.bt.service.plugin.settings.EncodingOption;
+import com.happygoatstudios.bt.service.plugin.settings.IntegerOption;
+import com.happygoatstudios.bt.service.plugin.settings.ListOption;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings.PLUGIN_LOCATION;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
 import com.happygoatstudios.bt.settings.HyperSAXParser;
 import com.happygoatstudios.bt.settings.HyperSettings;
@@ -431,6 +436,182 @@ public class Connection {
 			pl.buildAliases();
 		}
 		
+		SettingsGroup sg = new SettingsGroup();
+		sg.setTitle("Program Settings");
+
+		EncodingOption enc = new EncodingOption();
+		enc.setTitle("System Encoding");
+		enc.setDescription("Specifies the encoding used to process incoming text.");
+		enc.setKey("encoding");
+		sg.addOption(enc);
+
+		SettingsGroup window = new SettingsGroup();
+		window.setTitle("Window");
+		window.setDescription("Options involved with the display of text or interaction with the window.");
+		window.setKey("window_group");
+		
+		SettingsGroup hyperlinks = new SettingsGroup();
+		hyperlinks.setTitle("Hyperlink Settings");
+		hyperlinks.setDescription("Options for highlighting web page URLs.");
+		hyperlinks.setKey("hyperlinks_options");
+		
+		BooleanOption hyperlinks_enabled = new BooleanOption();
+		hyperlinks_enabled.setTitle("Enable Hyperlinks?");
+		hyperlinks_enabled.setDescription("Make text that starts with http:// or www. a clickable link.");
+		hyperlinks_enabled.setKey("hyperlinks_enabled");
+		hyperlinks_enabled.setValue(true);
+		hyperlinks.addOption(hyperlinks_enabled);
+		
+		ListOption hyperlink_mode = new ListOption();
+		hyperlink_mode.setTitle("Hyperlink Mode");
+		hyperlink_mode.setDescription("How hyperlinks are presented.");
+		hyperlink_mode.setKey("hyperlink_mode");
+		hyperlink_mode.addItem("None");
+		hyperlink_mode.addItem("Underline");
+		hyperlink_mode.addItem("Underline with specified Color");
+		hyperlink_mode.addItem("Underline and Colorize, only if no ANSI color is specified");
+		hyperlink_mode.addItem("Background highlight with specified color");
+		hyperlink_mode.setValue(new Integer(3));
+		hyperlinks.addOption(hyperlink_mode);
+		
+		window.addOption(hyperlinks);
+		
+		BooleanOption word_wrap = new BooleanOption();
+		word_wrap.setTitle("Word Wrap?");
+		word_wrap.setDescription("Broken text will be wrapped at the nearest whitespace.");
+		word_wrap.setKey("word_wrap");
+		word_wrap.setValue(true);
+		window.addOption(word_wrap);
+		
+		BooleanOption disable_color = new BooleanOption();
+		disable_color.setTitle("Disable ANSI Color");
+		disable_color.setDescription("Turns off color processing (.colordebug 3)");
+		disable_color.setKey("disable_color");
+		disable_color.setValue(false);
+		window.addOption(disable_color);
+		
+		BooleanOption screen_on = new BooleanOption();
+		screen_on.setTitle("Keep Screen On?");
+		screen_on.setDescription("Keep the screen on while the window is active.");
+		screen_on.setKey("screen_on");
+		screen_on.setValue(true);
+		window.addOption(screen_on);
+		
+		IntegerOption font_size = new IntegerOption();
+		font_size.setTitle("Font Size");
+		font_size.setDescription("The height of a drawn character.");
+		font_size.setKey("font_size");
+		font_size.setValue(13);
+		window.addOption(font_size);
+		
+		IntegerOption line_extra = new IntegerOption();
+		line_extra.setTitle("Line Spacing");
+		line_extra.setDescription("The extra space in between lines (in pixels)");
+		line_extra.setKey("line_extra");
+		line_extra.setValue(2);
+		window.addOption(line_extra);
+		
+		BooleanOption fullscreen = new BooleanOption();
+		fullscreen.setTitle("Use Fullscreen Window?");
+		fullscreen.setDescription("Hides the notification bar. This can be toggled by typing .togglefullscreen");
+		fullscreen.setKey("fullscreen");
+		fullscreen.setValue(true);
+		window.addOption(fullscreen);
+		
+		IntegerOption buffer_size = new IntegerOption();
+		buffer_size.setTitle("Text Buffer Size");
+		buffer_size.setDescription("The number of lines kept by the window for scrollback.");
+		buffer_size.setKey("buffer_size");
+		buffer_size.setValue(300);
+		window.addOption(buffer_size);
+		
+		sg.addOption(window);
+		
+		ListOption lo = new ListOption();
+		lo.setTitle("this is a list");
+		lo.setDescription("yup, click this row and it will launch.");
+		lo.addItem("list item 1");
+		lo.addItem("skfdskf");
+		lo.addItem("skdjflas");
+		lo.addItem("more list items");
+		lo.setKey("option_three");
+		sg.addOption(lo);
+		
+		SettingsGroup sg2 = new SettingsGroup();
+		sg2.setTitle("Secondary Page");
+		sg2.setDescription("a whole new page of options!");
+		BooleanOption bo3 = new BooleanOption();
+		bo3.setValue(true);
+		bo3.setTitle("this is good");
+		bo3.setDescription("programming");
+		bo3.setKey("option_four");
+		
+		ListOption lo2 = new ListOption();
+		lo2.setTitle("more lists");
+		lo2.setDescription("this is another list");
+		lo2.addItem("second list");
+		lo2.addItem("has a few");
+		lo2.addItem("items in it");
+		lo2.setKey("option_five");
+		sg2.addOption(bo3);
+		sg2.addOption(lo2);
+		
+		SettingsGroup tertiary = new SettingsGroup();
+		tertiary.setTitle("Third Page");
+		tertiary.setDescription("a third page of options.this could go on forever");
+		
+		BooleanOption btert1 = new BooleanOption();
+		btert1.setTitle("boooooool:");
+		btert1.setDescription("more descriptions.");
+		btert1.setKey("sfkjasdkfj");
+		btert1.setValue(true);
+		
+		ListOption btert2 = new ListOption();
+		btert2.setTitle("fosfsdf");
+		btert2.setDescription("slkfjs;lkfjs");
+		btert2.addItem("one");
+		btert2.addItem("sslfs");
+		btert2.addItem("sfdjsdf");
+		
+		tertiary.addOption(btert1);
+		tertiary.addOption(btert2);
+		sg2.addOption(tertiary);
+		
+		sg.addOption(sg2);
+		
+		SettingsGroup sg3 = new SettingsGroup();
+		sg3.setTitle("Second-secondary Page");
+		sg3.setDescription("another page of options");
+		
+		BooleanOption b3o = new BooleanOption();
+		b3o.setTitle("lskjfsf");
+		b3o.setDescription("lskflsakfa;sdff");
+		b3o.setValue(false);
+		b3o.setKey("slkfsfaaaaaa");
+		
+		BooleanOption b3t = new BooleanOption();
+		b3t.setTitle("ksljfsdf");
+		b3t.setDescription("sfw9ew9o3lksf");
+		b3t.setKey("sfsffdsfss");
+		b3t.setValue(true);
+		
+		ListOption l3o = new ListOption();
+		l3o.setTitle("LISTLISTLIST");
+		l3o.setDescription("this is yet, another list.");
+		l3o.setKey("skj;k;lk;lk");
+		l3o.addItem("one");
+		l3o.addItem("two");
+		l3o.addItem("three");
+		l3o.addItem("four");
+		
+		sg3.addOption(b3o);
+		sg3.addOption(l3o);
+		sg3.addOption(b3t);
+		
+		sg.addOption(sg3);
+		
+		
+		the_settings.getSettings().setOptions(sg);
 	}
 	
 	protected void doInvalidateWindowText(String name) throws RemoteException {
@@ -1603,6 +1784,7 @@ public class Connection {
 	public TimerData getPluginTimer(String plugin, String name) {
 		Plugin p = pluginMap.get(plugin);
 		if(p != null) {
+			
 			return p.getSettings().getTimers().get(name);
 		} else {
 			return null;
@@ -1612,6 +1794,7 @@ public class Connection {
 	public void addPluginTimer(String plugin, TimerData newtimer) {
 		Plugin p = pluginMap.get(plugin);
 		if(p != null) {
+			newtimer.setRemainingTime(newtimer.getSeconds());
 			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
 		}
 	}
@@ -1633,12 +1816,14 @@ public class Connection {
 
 	public Map getTimers() {
 		// TODO Auto-generated method stub
+		the_settings.updateTimerProgress();
 		return the_settings.getSettings().getTimers();
 	}
 
 	public Map getPluginTimers(String plugin) {
 		Plugin p = pluginMap.get(plugin);
 		if(p != null) {
+			p.updateTimerProgress();
 			return p.getSettings().getTimers();
 		} else {
 			return null;
@@ -1646,7 +1831,112 @@ public class Connection {
 	}
 
 	public void addTimer(TimerData newtimer) {
+		newtimer.setRemainingTime(newtimer.getSeconds());
 		the_settings.getSettings().getTimers().put(newtimer.getName(), newtimer);
 	}
+
+	public boolean isWindowShowing() {
+		// TODO Auto-generated method stub
+		return service.isWindowConnected();
+	}
 	
+	public String getDisplayName() {
+		return display;
+	}
+	
+	public Context getContext() {
+		return service.getApplicationContext();
+	}
+	
+	public void playTimer(String key) {
+		the_settings.startTimer(key);
+	}
+	
+	public void playPluginTimer(String plugin,String timer) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.startTimer(timer);
+		}
+	}
+	
+	public void pauseTimer(String key) {
+		the_settings.pauseTimer(key);
+	}
+	
+	public void pausePluginTimer(String plugin,String timer) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.pauseTimer(timer);
+		}
+	}
+	
+	public void stopTimer(String key) {
+		the_settings.stopTimer(key);
+	}
+	
+	public void stopPluginTimer(String plugin,String key) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.stopTimer(key);
+		}
+	}
+
+	public SettingsGroup getSettings() {
+		// TODO Auto-generated method stub
+		return the_settings.getSettings().getOptions();
+	}
+	
+	public SettingsGroup getPluginSettings(String plugin) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			return p.getSettings().getOptions();
+		} else {
+			return null;
+		}
+	}
+
+	public void updateBooleanSetting(String key, boolean value) {
+		the_settings.updateBooleanSetting(key,value);
+	}
+	
+	public void updatePluginBooleanSetting(String plugin,String key,boolean value) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.updateBooleanSetting(key,value);
+		}
+	}
+	
+	public void updateStringSetting(String key,String value) {
+		the_settings.updateStringSetting(key,value);
+	}
+	
+	public void updatePluginStringSetting(String plugin,String key,String value) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.updateStringSetting(key,value);
+		}
+		
+	}
+	
+	public void updateIntegerSetting(String key,int value) {
+		the_settings.updateIntegerSetting(key,value);
+	}
+	
+	public void updatePluginIntegerSetting(String plugin,String key,int value) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.updateIntegerSetting(key,value);
+		}
+	}
+	
+	public void updateFloatSetting(String key,float value) {
+		the_settings.updateFloatSetting(key,value);
+	}
+	
+	public void updatePluginFloatSetting(String plugin,String key,float value) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			p.updateFloatSetting(key,value);
+		}
+	}
 }

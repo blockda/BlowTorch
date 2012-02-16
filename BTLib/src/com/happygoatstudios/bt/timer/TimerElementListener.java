@@ -30,6 +30,7 @@ public class TimerElementListener implements ElementListener {
 			//Log.e("PARSER","SECONDS ATTRIBUTE CONTAINS " + a.getValue("",ATTR_SECONDS));
 		//}
 		current_timer.setSeconds((a.getValue("",BasePluginParser.ATTR_SECONDS) == null) ? 30 : Integer.parseInt(a.getValue("",BasePluginParser.ATTR_SECONDS)));
+		current_timer.setRemainingTime(current_timer.getSeconds());
 		//Log.e("PARSER","SECONDS IN CONTAINER IS NOW " + current_timer.getSeconds().toString());
 		current_timer.setRepeat((a.getValue("",BasePluginParser.ATTR_REPEAT) == null) ? false : a.getValue("",BasePluginParser.ATTR_REPEAT).equals("true") ? true : false);
 		current_timer.setPlaying((a.getValue("",BasePluginParser.ATTR_PLAYING) == null) ? false : a.getValue("",BasePluginParser.ATTR_PLAYING).equals("true") ? true : false);

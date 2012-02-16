@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +31,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Xml;
 
@@ -43,6 +46,8 @@ import com.happygoatstudios.bt.service.WindowToken;
 import com.happygoatstudios.bt.service.plugin.function.DrawWindowFunction;
 import com.happygoatstudios.bt.service.plugin.function.NoteFunction;
 import com.happygoatstudios.bt.service.plugin.function.TriggerEnabledFunction;
+import com.happygoatstudios.bt.service.plugin.settings.BaseOption;
+import com.happygoatstudios.bt.service.plugin.settings.Option;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerParser;
@@ -57,6 +62,7 @@ public class Plugin {
 	LuaState L = null;
 	private PluginSettings settings = null;
 	Handler mHandler = null;
+	Handler innerHandler = null;
 	//private String mName = null;
 	private String fullPath;
 	private String shortName;
@@ -67,12 +73,14 @@ public class Plugin {
 	Matcher alias_recursive = alias_replace.matcher("");
 	String mEncoding = "ISO-8859-1";
 	Pattern whiteSpace = Pattern.compile("\\s");
+	HashMap<String,CustomTimerTask> timerTasks = new HashMap<String,CustomTimerTask>();
 	
 	public Plugin(Handler h,Connection parent) throws LuaException {
 		setSettings(new PluginSettings());
 		mHandler = h;
 		L = LuaStateFactory.newLuaState();
 		this.parent = parent;
+		initTimers();
 		initLua();
 		
 	}
@@ -82,7 +90,36 @@ public class Plugin {
 		mHandler = h;
 		L = LuaStateFactory.newLuaState();
 		this.parent = parent;
+		
+		initTimers();
+		
 		initLua();
+	}
+	
+	private void initTimers() {
+		innerHandler = new Handler() { 
+			public void handleMessage(Message msg) {
+				switch(msg.what) {
+				case 100:
+					DoTimerResponders((String)msg.obj);
+					break;
+				}
+			}
+		};
+		
+		CONNECTION_TIMER = new Timer("blowtorch_"+this.getName()+"_timer",true);
+		
+		for(TimerData timer : settings.getTimers().values()) {
+			if(timer.isPlaying()) {
+				CustomTimerTask task = new CustomTimerTask(timer.getName());
+				if(timer.isRepeat()) {
+					CONNECTION_TIMER.schedule(task, timer.getSeconds()*1000, timer.getSeconds()*1000);
+				} else {
+					CONNECTION_TIMER.schedule(task, timer.getSeconds()*1000);
+				}
+				
+			}
+		}
 	}
 
 	private void initLua() throws LuaException {
@@ -1027,5 +1064,173 @@ public class Plugin {
 		} else {
 			return input;
 		}
+	}
+
+	private Timer CONNECTION_TIMER;
+	
+	private class CustomTimerTask extends java.util.TimerTask {
+
+		private String name;
+		private long startTime;
+		public CustomTimerTask(String name) {
+			this.name = name;
+			startTime = SystemClock.elapsedRealtime();
+		}
+		
+		@Override
+		public void run() {
+			innerHandler.sendMessage(innerHandler.obtainMessage(100,name));
+			TimerData d = getSettings().getTimers().get(name);
+			if(d != null) {
+				if(!d.isRepeat()) {
+					timerTasks.remove(d.getName());
+				} else {
+					CustomTimerTask t = timerTasks.get(name);
+					t.setStartTime(SystemClock.elapsedRealtime());
+				}
+			}
+			
+		}
+
+		public long getStartTime() {
+			return startTime;
+		}
+
+		public void setStartTime(long startTime) {
+			this.startTime = startTime;
+		}
+		
+	}
+	
+	private void DoTimerResponders(String ordinal) {
+		//synchronized(the_settings) {
+			
+			//just a precaution, 
+			if(innerHandler == null) {
+				return; //responders need the handler, and will choke on null.
+			}
+			
+			if(!getSettings().getTimers().containsKey(ordinal)) {
+				return; // no ordinal
+			}
+			
+			TimerData data = getSettings().getTimers().get(ordinal);
+			if(data == null) {
+				return; //this shoudn't happen. means there is a null entry in the map.
+			}
+			
+			//hasListener = isWindowShowing();
+			for(TriggerResponder responder : data.getResponders()) {
+				try {
+					responder.doResponse(parent.getContext(),null,0,null,null,null,(Object)getSettings().getTimers().get(ordinal), parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler,captureMap,L,Plugin.this.getSettings().getTimers().get(ordinal).getName());
+				} catch (IteratorModifiedException e) {
+					// won't ever get here because gag/replace actions can't be applied to timers.
+				}
+				//service.
+				//responder.doResponse(parent.getContext(),null,null,null,null, parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler, null,L,data.getName());
+			}
+		//}
+	}
+	
+	public void startTimer(String key) {
+		TimerData d = getSettings().getTimers().get(key);
+		if(d == null) {
+			return;
+		}
+		if(timerTasks.containsKey(d.getName())) {
+			//already playing.
+			return;
+		}
+		
+		if(d.isPlaying()) {
+			//already playing
+		} else {
+			if(d.getRemainingTime() != d.getSeconds()) {
+				CustomTimerTask task = new CustomTimerTask(d.getName());
+				if(d.isRepeat()) {
+					CONNECTION_TIMER.schedule(task, d.getRemainingTime()*1000, d.getSeconds()*1000);
+				} else {
+					CONNECTION_TIMER.schedule(task, d.getRemainingTime()*1000);
+				}
+				
+				timerTasks.put(d.getName(), task);
+			} else {
+				CustomTimerTask task = new CustomTimerTask(d.getName());
+				if(d.isRepeat()) {
+					CONNECTION_TIMER.schedule(task, d.getSeconds()*1000, d.getSeconds()*1000);
+				} else {
+					CONNECTION_TIMER.schedule(task, d.getSeconds()*1000);
+				}
+				timerTasks.put(d.getName(), task);
+			}
+			
+			d.setPlaying(true);
+		}
+		
+	}
+	
+	public void stopTimer(String key) {
+		CustomTimerTask task = timerTasks.get(key);
+		if(task != null) {
+			task.cancel();
+			timerTasks.remove(key);
+		}
+		TimerData d = getSettings().getTimers().get(key);
+		if(d != null) {
+			d.setRemainingTime(d.getSeconds());
+			d.setPlaying(false);
+		}
+	}
+	
+	public void pauseTimer(String key) {
+		CustomTimerTask task = timerTasks.get(key);
+		long taskStartTime = task.getStartTime();
+		if(task != null) {
+			task.cancel();
+			timerTasks.remove(key);
+		}
+		
+		TimerData d = getSettings().getTimers().get(key);
+		if(d != null) {
+			//calculate the remaining seconds.
+			long now = SystemClock.elapsedRealtime();
+			int elapsed = d.getSeconds() - (int) Math.floor((now - taskStartTime)/1000);
+			d.setRemainingTime(elapsed);
+			d.setPlaying(false);
+		}
+		
+	}
+	
+	public void updateTimerProgress() {
+		for(String key : timerTasks.keySet()) {
+			CustomTimerTask t = timerTasks.get(key);
+			long taskStart = t.getStartTime();
+			long now = SystemClock.elapsedRealtime();
+			int elapsed = (int) Math.floor((now - taskStart)/1000);
+			TimerData d = getSettings().getTimers().get(key);
+			if(d != null) {
+				d.setRemainingTime(d.getSeconds() - elapsed);
+			}
+		}
+	}
+	
+	public void updateBooleanSetting(String key,boolean value) {
+		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
+		o.setValue(value);
+	}
+	
+	public void updateIntegerSetting(String key,int value) {
+		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
+		o.setValue(value);
+	}
+	
+	public void updateFloatSetting(String key,float value) {
+		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
+		o.setValue(value);
+	}
+	
+	public void updateStringSetting(String key,String value) {
+		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
+		o.setValue(value);
 	}
 }

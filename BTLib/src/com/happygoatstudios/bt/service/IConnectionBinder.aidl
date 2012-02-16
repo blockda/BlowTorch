@@ -11,6 +11,12 @@ import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerProgress;
 import com.happygoatstudios.bt.alias.AliasData;
+import com.happygoatstudios.bt.service.plugin.settings.ListOption;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
+import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
+import com.happygoatstudios.bt.service.plugin.settings.EncodingOption;
+import com.happygoatstudios.bt.service.plugin.settings.IntegerOption;
+
 interface IConnectionBinder {
 	List getConnections();
 	void switchTo(String display);
@@ -123,7 +129,9 @@ interface IConnectionBinder {
 	void startTimer(String ordinal);
 	void pauseTimer(String ordinal);
 	void stopTimer(String ordinal);
-	void resetTimer(String ordinal);
+	void startPluginTimer(String plugin,String ordinal);
+	void pausePluginTimer(String plugin,String ordinal);
+	void stopPluginTimer(String plugin,String ordinal);
 	void updateTimer(in TimerData old,in TimerData newtimer);
 	void updatePluginTimer(String plugin,in TimerData old,in TimerData newtimer);
 	void addPluginTimer(String plugin,in TimerData newtimer);
@@ -180,4 +188,14 @@ interface IConnectionBinder {
 	void pluginXcallS(String plugin,String function,String str);
 	Map getPluginList();
 	List getPluginsWithTriggers();
+	SettingsGroup getSettings();
+	SettingsGroup getPluginSettings(String plugin);
+	void updateBooleanSetting(String key,boolean value);
+	void updatePluginBooleanSetting(String plugin,String key,boolean value);
+	void updateIntegerSetting(String key,int value);
+	void updatePluginIntegerSetting(String plugin,String key,int value);
+	void updateFloatSetting(String key,float value);
+	void updatePluginFloatSetting(String plugin,String key,float value);
+	void updateStringSetting(String key,String value);
+	void updatePluginStringSetting(String plugin,String key,String value);
 }
