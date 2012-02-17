@@ -13,9 +13,12 @@ public class SettingsGroup extends Option implements Parcelable {
 	private static final int OPTION_LIST = 3;
 	private static final int OPTION_ENCODING = 4;
 	private static final int OPTION_INTEGER = 5;
+	private static final int OPTION_COLOR = 6;
+	private static final int OPTION_FILE = 7;
+	
 	private HashMap<String,Option> optionsMap = new HashMap<String,Option>();
 	
-	ArrayList<Option> options;
+	private ArrayList<Option> options;
 	
 	public SettingsGroup() {
 		options = new ArrayList<Option>();
@@ -53,6 +56,12 @@ public class SettingsGroup extends Option implements Parcelable {
 				break;
 			case OPTION_INTEGER:
 				o = p.readParcelable(com.happygoatstudios.bt.service.plugin.settings.IntegerOption.class.getClassLoader());
+				break;
+			case OPTION_COLOR:
+				o = p.readParcelable(com.happygoatstudios.bt.service.plugin.settings.ColorOption.class.getClassLoader());
+				break;
+			case OPTION_FILE:
+				o = p.readParcelable(com.happygoatstudios.bt.service.plugin.settings.FileOption.class.getClassLoader());
 				break;
 			}
 
@@ -110,6 +119,12 @@ public class SettingsGroup extends Option implements Parcelable {
 			case INTEGER:
 				p.writeInt(OPTION_INTEGER);
 				break;
+			case COLOR:
+				p.writeInt(OPTION_COLOR);
+				break;
+			case FILE:
+				p.writeInt(OPTION_FILE);
+				break;
 			}
 			p.writeParcelable(o, flags);
 		}
@@ -128,6 +143,52 @@ public class SettingsGroup extends Option implements Parcelable {
 	
 	public Option findOptionByKey(String key) {
 		return optionsMap.get(key);
+	}
+	
+	public void updateBoolean(String key,boolean value) {
+		BaseOption o = (BaseOption) optionsMap.get(key);
+		if(o != null) {
+			o.setValue(value);
+		} else {
+			//type mismatch, don't do anything.
+		}
+	}
+	
+	public void updateInteger(String key,int value) {
+		BaseOption o = (BaseOption) optionsMap.get(key);
+		if(o != null) {
+			o.setValue(value);
+		} else {
+			//type mismatch, don't do anything.
+		}
+	}
+	
+	public void updateFloat(String key,float value) {
+		BaseOption o = (BaseOption) optionsMap.get(key);
+		if(o != null) {
+			o.setValue(value);
+		}
+		//if(o instanceof FloatOption) {
+		//	((IntegerOption) o).setValue(value);
+		//} else {
+			//type mismatch, don't do anything.
+		//}
+	}
+	
+	public void updateString(String key,String value) {
+		BaseOption o = (BaseOption) optionsMap.get(key);
+		if(o != null) {
+			o.setValue(value);
+		}
+	}
+	
+	//since all options sould take a string as a value, this is a "force update on setting with string" functoin
+	//that the xml parser will use.
+	public void setOption(String key,String value) {
+		BaseOption o = (BaseOption) optionsMap.get(key);
+		if(o != null) {
+			o.setValue(value);
+		}
 	}
 	
 }

@@ -5,19 +5,18 @@ import java.math.BigInteger;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class IntegerOption extends BaseOption implements Parcelable {
+public class ColorOption extends BaseOption implements Parcelable {
 
-	public IntegerOption() {
-		this.type = TYPE.INTEGER;
-		this.setValue(new Integer(0));
+	public ColorOption() {
+		this.type = TYPE.COLOR;
 	}
 	
-	public IntegerOption(Parcel p) {
-		this.type = TYPE.INTEGER;
+	public ColorOption(Parcel p) {
+		this.type = TYPE.COLOR;
 		setTitle(p.readString());
 		setDescription(p.readString());
 		setKey(p.readString());
-		setValue(new Integer(p.readInt()));
+		setValue(p.readInt());
 	}
 	
 	@Override
@@ -27,7 +26,7 @@ public class IntegerOption extends BaseOption implements Parcelable {
 	}
 
 	@Override
-	public void writeToParcel(Parcel p, int flags) {
+	public void writeToParcel(Parcel p, int arg1) {
 		p.writeString(title);
 		p.writeString(description);
 		p.writeString(key);
@@ -72,15 +71,14 @@ public class IntegerOption extends BaseOption implements Parcelable {
 		
 	}
 	
-	public static final Parcelable.Creator<IntegerOption> CREATOR = new Parcelable.Creator<IntegerOption>() {
+	public static final Parcelable.Creator<ColorOption> CREATOR = new Parcelable.Creator<ColorOption>() {
 
-		public IntegerOption createFromParcel(Parcel arg0) {
-			return new IntegerOption(arg0);
+		public ColorOption createFromParcel(Parcel arg0) {
+			return new ColorOption(arg0);
 		}
 
-		public IntegerOption[] newArray(int arg0) {
-			return new IntegerOption[arg0];
+		public ColorOption[] newArray(int arg0) {
+			return new ColorOption[arg0];
 		}
 	};
-
 }

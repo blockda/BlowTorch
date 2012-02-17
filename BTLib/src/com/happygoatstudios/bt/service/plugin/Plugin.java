@@ -1215,22 +1215,21 @@ public class Plugin {
 	}
 	
 	public void updateBooleanSetting(String key,boolean value) {
-		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
-		o.setValue(value);
+		settings.getOptions().updateBoolean(key,value);
 	}
 	
 	public void updateIntegerSetting(String key,int value) {
-		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
-		o.setValue(value);
+		settings.getOptions().updateInteger(key,value);
+		//o.setValue(value);
 	}
 	
 	public void updateFloatSetting(String key,float value) {
-		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
-		o.setValue(value);
+		settings.getOptions().updateFloat(key,value);
+		//o.setValue(value);
 	}
 	
 	public void updateStringSetting(String key,String value) {
-		BaseOption o = (BaseOption) settings.getOptions().findOptionByKey(key);
-		o.setValue(value);
+		settings.getOptions().updateString(key,value);
+		//o.setValue(value);
 	}
 }

@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 public class BooleanOption extends BaseOption implements Parcelable {
 
+
+	
 	public BooleanOption() {
 		type = TYPE.BOOLEAN;
 	}
@@ -21,6 +23,13 @@ public class BooleanOption extends BaseOption implements Parcelable {
 	public void setValue(Object o) {
 		if(o instanceof Boolean) {
 			this.value = (Boolean)o;
+		} else if(o instanceof String) {
+			String str = (String)o;
+			if(str.equals("true")) {
+				value = (Boolean)true;
+			} else if(str.equals("false")) {
+				value = (Boolean)false;
+			}
 		}
 	}
 
