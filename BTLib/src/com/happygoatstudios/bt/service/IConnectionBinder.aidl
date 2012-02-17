@@ -16,6 +16,9 @@ import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
 import com.happygoatstudios.bt.service.plugin.settings.EncodingOption;
 import com.happygoatstudios.bt.service.plugin.settings.IntegerOption;
+import com.happygoatstudios.bt.service.plugin.settings.ColorOption;
+import com.happygoatstudios.bt.service.plugin.settings.FileOption;
+
 
 interface IConnectionBinder {
 	List getConnections();

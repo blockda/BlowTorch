@@ -139,6 +139,8 @@ public class DataPumper extends Thread {
 				
 				the_socket = new Socket();
 				SocketAddress adr = new InetSocketAddress(addr,port);
+				the_socket.setKeepAlive(true);
+				the_socket.setSoTimeout(0);
 				the_socket.connect(adr,14000);
 				sendWarning(Colorizer.colorCyanBright+"Connected to: "+Colorizer.colorYeollowBright+host+Colorizer.colorCyanBright+"!"+Colorizer.colorWhite+"\n");
 				
