@@ -8,7 +8,7 @@ public abstract class Option implements Parcelable {
 		BOOLEAN,
 		LIST,
 		GROUP,
-		ENCODING, INTEGER
+		ENCODING, INTEGER, COLOR, FILE
 	}
 	
 	protected String title;

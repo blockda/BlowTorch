@@ -35,7 +35,11 @@ public class EncodingOption extends BaseOption implements Parcelable {
 
 	@Override
 	public void setValue(Object o) {
-		value = (String)o;
+		if(o instanceof String) {
+			value = (String)o;
+		} else {
+			value = o.toString();
+		}
 	}
 
 	@Override
