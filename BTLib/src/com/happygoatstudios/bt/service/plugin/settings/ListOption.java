@@ -7,7 +7,7 @@ import android.os.Parcelable;
 
 public class ListOption extends BaseOption implements Parcelable {
 
-	ArrayList<String> items;
+	protected ArrayList<String> items;
 	
 	public ListOption() {
 		type = TYPE.LIST;
@@ -38,7 +38,16 @@ public class ListOption extends BaseOption implements Parcelable {
 	
 	@Override
 	public void setValue(Object o) {
-		this.value = (Integer)o;
+		if(o instanceof Integer) {
+			value = (Integer)o;
+		} else if(o instanceof String) {
+			try {
+				int num = Integer.parseInt((String)o);
+				value = (Integer)num;
+			} catch(NumberFormatException e) {
+				
+			}
+		}
 	}
 
 	@Override

@@ -46,8 +46,10 @@ import com.happygoatstudios.bt.service.function.SwitchWindowCommand;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
+import com.happygoatstudios.bt.service.plugin.settings.ColorOption;
 import com.happygoatstudios.bt.service.plugin.settings.ConnectionSetttingsParser;
 import com.happygoatstudios.bt.service.plugin.settings.EncodingOption;
+import com.happygoatstudios.bt.service.plugin.settings.FileOption;
 import com.happygoatstudios.bt.service.plugin.settings.IntegerOption;
 import com.happygoatstudios.bt.service.plugin.settings.ListOption;
 import com.happygoatstudios.bt.service.plugin.settings.PluginParser;
@@ -474,7 +476,24 @@ public class Connection {
 		hyperlink_mode.setValue(new Integer(3));
 		hyperlinks.addOption(hyperlink_mode);
 		
+		ColorOption hyperlink_color = new ColorOption();
+		hyperlink_color.setTitle("Hyperlink Color");
+		hyperlink_color.setDescription("The color the hyperlink will be colorized with.");
+		hyperlink_color.setKey("hyperlink_color");
+		hyperlink_color.setValue(new Integer(0xFF0000FF));
+		hyperlinks.addOption(hyperlink_color);
+		
 		window.addOption(hyperlinks);
+		
+		ListOption orientation = new ListOption();
+		orientation.setTitle("Orientation");
+		orientation.setDescription("Sets the layout mode for the application. Automatic will switch the layout when the device rotates.");
+		orientation.setKey("orientation");
+		orientation.setValue(new Integer(0));
+		orientation.addItem("Automatic");
+		orientation.addItem("Landscape");
+		orientation.addItem("Portrait");
+		window.addOption(orientation);
 		
 		BooleanOption word_wrap = new BooleanOption();
 		word_wrap.setTitle("Word Wrap?");
@@ -524,6 +543,20 @@ public class Connection {
 		buffer_size.setKey("buffer_size");
 		buffer_size.setValue(300);
 		window.addOption(buffer_size);
+		
+		FileOption font_path = new FileOption();
+		font_path.setTitle("Font");
+		font_path.setDescription("The font used by the window to render text.");
+		font_path.setKey("font_path");
+		font_path.setValue("monospace");
+		font_path.addItem("monospace");
+		font_path.addItem("sans serrif");
+		font_path.addItem("default");
+		font_path.addPath("/system/fonts/");
+		font_path.addPath("BlowTorch/");
+		font_path.addExtension(".ttf");
+		window.addOption(font_path);
+		
 		
 		sg.addOption(window);
 		

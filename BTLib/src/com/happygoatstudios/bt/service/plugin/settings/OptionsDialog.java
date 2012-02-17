@@ -1,11 +1,17 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.happygoatstudios.bt.R;
+import com.happygoatstudios.bt.button.ButtonEditorDialog.COLOR_FIELDS;
+import com.happygoatstudios.bt.button.ColorPickerDialog;
 import com.happygoatstudios.bt.service.IConnectionBinder;
 
 import android.app.AlertDialog;
@@ -16,6 +22,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.text.InputType;
 import android.view.Gravity;
@@ -253,6 +260,26 @@ public class OptionsDialog extends Dialog {
 				//widget.setOnClickListener(new IntegerOptionClickedListener());
 				
 				break;
+				
+			case COLOR:
+				v.setTag(o);
+				ColorOption co = (ColorOption)o;
+				LayoutInflater li = (LayoutInflater)OptionsDialog.this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				View color_swatch_layout = li.inflate(R.layout.colorswatch_widget, null);
+				Button swatch = (Button) color_swatch_layout.findViewById(R.id.colorswatch);
+				//swatch.setTag(co);
+				swatch.setBackgroundColor((Integer)co.getValue());
+				
+				v.setOnClickListener(new ColorOptionClickedListener(swatch));
+				swatch.setTag(co);
+				swatch.setOnClickListener(new ColorOptionClickedListener(swatch));
+				
+				widget.addView(color_swatch_layout);
+				break;
+			case FILE:
+				v.setTag(o);
+				v.setOnClickListener(new FileOptionClickedListener());
+				break;
 			}
 			
 			return v;
@@ -260,6 +287,180 @@ public class OptionsDialog extends Dialog {
 		}
 
 
+		
+	}
+	
+	private class FileOptionClickedListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			FileOption o = (FileOption)v.getTag();
+			
+			//this is tricky. we have to build the list. in the right order.
+			//first build up the actual file matches, sort them and insert the "items" at the top.
+			//ArrayList<String> paths = new ArrayList<String>();
+			StringBuilder str = new StringBuilder();
+			ArrayList<String> extensions = o.extensions;
+			for(int i=0;i<extensions.size();i++) {
+				str.append("(^.+(\\Q"+extensions.get(i)+"\\E))");
+				if(i != extensions.size()-1) {
+					str.append("|");
+				}
+			}
+			
+			Pattern p = Pattern.compile(str.toString());
+			Matcher m = p.matcher("");
+			
+			PatternFileNameFilter filter = new PatternFileNameFilter(m);
+			
+			ArrayList<String> foundFilePaths = new ArrayList<String>();
+			ArrayList<String> foundFileNames = new ArrayList<String>();
+			
+			ArrayList<String> items = o.items;
+			for(int i=0;i<items.size();i++) {
+				foundFilePaths.add(items.get(i));
+				foundFileNames.add(items.get(i));
+			}
+			ArrayList<String> paths = o.paths;
+			for(int i=0;i<paths.size();i++) {
+				String path = paths.get(i);
+				
+				if(path.startsWith("/")) {
+					//use it directly
+					File file = new File(path);
+					for(File found : file.listFiles(filter)) {
+						foundFilePaths.add(found.getPath());
+						foundFileNames.add(found.getName());
+					}
+				} else {
+					//get it from sdcard.
+					String sdstate = Environment.getExternalStorageState();
+					if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
+						File tmp = Environment.getExternalStorageDirectory();
+						File file = new File(tmp,"/"+path);
+						for(File found : file.listFiles(filter)) {
+							foundFilePaths.add(found.getPath());
+							foundFileNames.add(found.getPath());
+						}
+					}
+				}
+			}
+			
+			String[] entries = new String[foundFileNames.size()];
+			entries = foundFileNames.toArray(entries);
+			
+			int selectedIndex = -1;
+			for(int i=0;i<foundFilePaths.size();i++) {
+				String path = foundFilePaths.get(i);
+				if(path.equals((String)o.getValue())) {
+					selectedIndex = i;
+					i=foundFilePaths.size();
+				}
+			}
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(OptionsDialog.this.getContext());
+			builder.setTitle(o.getTitle());
+			builder.setSingleChoiceItems(entries, selectedIndex,new FileOptionItemClickListener((FileOption)o,foundFilePaths,foundFileNames));
+
+			AlertDialog dialog = builder.create();
+			dialog.show();
+			
+		}
+		
+	}
+	
+	private class FileOptionItemClickListener implements DialogInterface.OnClickListener {
+
+		private ArrayList<String> paths;
+		private ArrayList<String> names;
+		private FileOption option;
+		
+		public FileOptionItemClickListener(FileOption option,ArrayList<String> paths,ArrayList<String> names) {
+			this.paths = paths;
+			this.names = names;
+			this.option = option;
+		}
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			String path = paths.get(which);
+			option.setValue(path);
+			if(selectedPlugin.equals("main")) {
+				try {
+					service.updateStringSetting(option.getKey(), path);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					service.updatePluginStringSetting(selectedPlugin, option.getKey(), path);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
+	
+	private class PatternFileNameFilter implements FilenameFilter {
+
+		Matcher m;
+		public PatternFileNameFilter(Matcher matcher) {
+			m = matcher;
+		}
+		
+		@Override
+		public boolean accept(File dir, String filename) {
+			m.reset(filename);
+			if(m.matches()) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+	}
+	
+	private class ColorOptionClickedListener implements View.OnClickListener,ColorPickerDialog.OnColorChangedListener {
+
+		private ColorOption option;
+		Button widget;
+		
+		public ColorOptionClickedListener(Button widget) {
+			this.widget = widget;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			option = (ColorOption) v.getTag();
+			
+			ColorPickerDialog dialog = new ColorPickerDialog(OptionsDialog.this.getContext(),this,(Integer)option.getValue(),COLOR_FIELDS.COLOR_FLIPLABEL);
+			dialog.show();
+		}
+
+		@Override
+		public void colorChanged(int color, COLOR_FIELDS which) {
+			option.setValue(color);
+			widget.setBackgroundColor(color);
+			widget.invalidate();
+			if(selectedPlugin.equals("main")) {
+				try {
+					service.updateIntegerSetting(option.getKey(), color);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					service.updatePluginIntegerSetting(selectedPlugin, option.getKey(), color);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 		
 	}
 	
