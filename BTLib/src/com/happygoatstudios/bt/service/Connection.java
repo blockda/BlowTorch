@@ -45,6 +45,7 @@ import com.happygoatstudios.bt.service.function.SwitchWindowCommand;
 
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
+import com.happygoatstudios.bt.service.plugin.settings.BaseOption;
 import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
 import com.happygoatstudios.bt.service.plugin.settings.ColorOption;
 import com.happygoatstudios.bt.service.plugin.settings.ConnectionSetttingsParser;
@@ -80,7 +81,7 @@ import android.util.Xml;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-public class Connection {
+public class Connection implements SettingsChangedListener {
 	//base "connection class"
 	public final static int MESSAGE_STARTUP = 1;
 	public final static int MESSAGE_STARTCOMPRESS = 2;
@@ -130,6 +131,8 @@ public class Connection {
 	//Matcher alias_replacer = alias_replace.matcher("");
 	//Matcher alias_recursive = alias_replace.matcher("");
 	//Pattern whiteSpace = Pattern.compile("\\s");
+	
+	public Object callbackSync = new Object();
 	
 	public Connection(String display,String host,int port,StellarService service) {
 		
@@ -440,50 +443,13 @@ public class Connection {
 		
 		SettingsGroup sg = new SettingsGroup();
 		sg.setTitle("Program Settings");
+		sg.setListener(this);
 
 		EncodingOption enc = new EncodingOption();
 		enc.setTitle("System Encoding");
 		enc.setDescription("Specifies the encoding used to process incoming text.");
 		enc.setKey("encoding");
 		sg.addOption(enc);
-
-		SettingsGroup window = new SettingsGroup();
-		window.setTitle("Window");
-		window.setDescription("Options involved with the display of text or interaction with the window.");
-		window.setKey("window_group");
-		
-		SettingsGroup hyperlinks = new SettingsGroup();
-		hyperlinks.setTitle("Hyperlink Settings");
-		hyperlinks.setDescription("Options for highlighting web page URLs.");
-		hyperlinks.setKey("hyperlinks_options");
-		
-		BooleanOption hyperlinks_enabled = new BooleanOption();
-		hyperlinks_enabled.setTitle("Enable Hyperlinks?");
-		hyperlinks_enabled.setDescription("Make text that starts with http:// or www. a clickable link.");
-		hyperlinks_enabled.setKey("hyperlinks_enabled");
-		hyperlinks_enabled.setValue(true);
-		hyperlinks.addOption(hyperlinks_enabled);
-		
-		ListOption hyperlink_mode = new ListOption();
-		hyperlink_mode.setTitle("Hyperlink Mode");
-		hyperlink_mode.setDescription("How hyperlinks are presented.");
-		hyperlink_mode.setKey("hyperlink_mode");
-		hyperlink_mode.addItem("None");
-		hyperlink_mode.addItem("Underline");
-		hyperlink_mode.addItem("Underline with specified Color");
-		hyperlink_mode.addItem("Underline and Colorize, only if no ANSI color is specified");
-		hyperlink_mode.addItem("Background highlight with specified color");
-		hyperlink_mode.setValue(new Integer(3));
-		hyperlinks.addOption(hyperlink_mode);
-		
-		ColorOption hyperlink_color = new ColorOption();
-		hyperlink_color.setTitle("Hyperlink Color");
-		hyperlink_color.setDescription("The color the hyperlink will be colorized with.");
-		hyperlink_color.setKey("hyperlink_color");
-		hyperlink_color.setValue(new Integer(0xFF0000FF));
-		hyperlinks.addOption(hyperlink_color);
-		
-		window.addOption(hyperlinks);
 		
 		ListOption orientation = new ListOption();
 		orientation.setTitle("Orientation");
@@ -493,161 +459,142 @@ public class Connection {
 		orientation.addItem("Automatic");
 		orientation.addItem("Landscape");
 		orientation.addItem("Portrait");
-		window.addOption(orientation);
-		
-		BooleanOption word_wrap = new BooleanOption();
-		word_wrap.setTitle("Word Wrap?");
-		word_wrap.setDescription("Broken text will be wrapped at the nearest whitespace.");
-		word_wrap.setKey("word_wrap");
-		word_wrap.setValue(true);
-		window.addOption(word_wrap);
-		
-		BooleanOption disable_color = new BooleanOption();
-		disable_color.setTitle("Disable ANSI Color");
-		disable_color.setDescription("Turns off color processing (.colordebug 3)");
-		disable_color.setKey("disable_color");
-		disable_color.setValue(false);
-		window.addOption(disable_color);
+		sg.addOption(orientation);
 		
 		BooleanOption screen_on = new BooleanOption();
 		screen_on.setTitle("Keep Screen On?");
 		screen_on.setDescription("Keep the screen on while the window is active.");
 		screen_on.setKey("screen_on");
 		screen_on.setValue(true);
-		window.addOption(screen_on);
-		
-		IntegerOption font_size = new IntegerOption();
-		font_size.setTitle("Font Size");
-		font_size.setDescription("The height of a drawn character.");
-		font_size.setKey("font_size");
-		font_size.setValue(13);
-		window.addOption(font_size);
-		
-		IntegerOption line_extra = new IntegerOption();
-		line_extra.setTitle("Line Spacing");
-		line_extra.setDescription("The extra space in between lines (in pixels)");
-		line_extra.setKey("line_extra");
-		line_extra.setValue(2);
-		window.addOption(line_extra);
+		sg.addOption(screen_on);
 		
 		BooleanOption fullscreen = new BooleanOption();
 		fullscreen.setTitle("Use Fullscreen Window?");
 		fullscreen.setDescription("Hides the notification bar. This can be toggled by typing .togglefullscreen");
 		fullscreen.setKey("fullscreen");
 		fullscreen.setValue(true);
-		window.addOption(fullscreen);
+		sg.addOption(fullscreen);
+
+		//SettingsGroup window = token.getSettings();
+		token.getSettings().setListener(new WindowSettingsChangedListener(token.getName()));
+		sg.addOption(token.getSettings());
 		
-		IntegerOption buffer_size = new IntegerOption();
-		buffer_size.setTitle("Text Buffer Size");
-		buffer_size.setDescription("The number of lines kept by the window for scrollback.");
-		buffer_size.setKey("buffer_size");
-		buffer_size.setValue(300);
-		window.addOption(buffer_size);
+		SettingsGroup input = new SettingsGroup();
+		input.setTitle("Input");
+		input.setDescription("Options that deal with the input box and editors.");
 		
-		FileOption font_path = new FileOption();
-		font_path.setTitle("Font");
-		font_path.setDescription("The font used by the window to render text.");
-		font_path.setKey("font_path");
-		font_path.setValue("monospace");
-		font_path.addItem("monospace");
-		font_path.addItem("sans serrif");
-		font_path.addItem("default");
-		font_path.addPath("/system/fonts/");
-		font_path.addPath("BlowTorch/");
-		font_path.addExtension(".ttf");
-		window.addOption(font_path);
+		BooleanOption fullscreen_editor = new BooleanOption();
+		fullscreen_editor.setTitle("Fullscreen Editor?");
+		fullscreen_editor.setDescription("Show the full screen editor when the input bar is clicked.");
+		fullscreen_editor.setKey("fullscreen_editor");
+		fullscreen_editor.setValue(false);
+		input.addOption(fullscreen_editor);
+		
+		BooleanOption use_suggestions = new BooleanOption();
+		use_suggestions.setTitle("Use Suggestions?");
+		use_suggestions.setDescription("Attempt suggestions if the full screen editor is not used.");
+		use_suggestions.setKey("use_suggestions");
+		use_suggestions.setValue(false);
+		input.addOption(use_suggestions);
+		
+		BooleanOption keep_last = new BooleanOption();
+		keep_last.setTitle("Keep Last Entered?");
+		keep_last.setDescription("Keeps the last text entered in the window and highights after sending.");
+		keep_last.setKey("keep_last");
+		keep_last.setValue(false);
+		input.addOption(keep_last);
+		
+		BooleanOption compatilibility_mode = new BooleanOption();
+		compatilibility_mode.setTitle("Enable Compatibility Mode?");
+		compatilibility_mode.setDescription("Enable this if you have problems with bascpace not workin in the non-full screen editor.");
+		compatilibility_mode.setKey("compatibility_mode");
+		compatilibility_mode.setValue(false);
+		input.addOption(compatilibility_mode);
+		
+		sg.addOption(input);
+
 		
 		
-		sg.addOption(window);
+		SettingsGroup servOptions = new SettingsGroup();
+		servOptions.setTitle("Service");
+		servOptions.setDescription("Options for the background service and data processing.");
 		
-		ListOption lo = new ListOption();
-		lo.setTitle("this is a list");
-		lo.setDescription("yup, click this row and it will launch.");
-		lo.addItem("list item 1");
-		lo.addItem("skfdskf");
-		lo.addItem("skdjflas");
-		lo.addItem("more list items");
-		lo.setKey("option_three");
-		sg.addOption(lo);
+		BooleanOption local_echo = new BooleanOption();
+		local_echo.setTitle("Local Echo?");
+		local_echo.setDescription("Will the service echo data sent to the server?");
+		local_echo.setKey("local_echo");
+		local_echo.setValue(true);
+		servOptions.addOption(local_echo);
 		
-		SettingsGroup sg2 = new SettingsGroup();
-		sg2.setTitle("Secondary Page");
-		sg2.setDescription("a whole new page of options!");
-		BooleanOption bo3 = new BooleanOption();
-		bo3.setValue(true);
-		bo3.setTitle("this is good");
-		bo3.setDescription("programming");
-		bo3.setKey("option_four");
+		BooleanOption process_system_commands = new BooleanOption();
+		process_system_commands.setTitle("Process System Commands?");
+		process_system_commands.setDescription("Perform system functions for input beginning with the specified system command marker.");
+		process_system_commands.setKey("process_system_commands");
+		process_system_commands.setValue(true);
+		servOptions.addOption(process_system_commands);
 		
-		ListOption lo2 = new ListOption();
-		lo2.setTitle("more lists");
-		lo2.setDescription("this is another list");
-		lo2.addItem("second list");
-		lo2.addItem("has a few");
-		lo2.addItem("items in it");
-		lo2.setKey("option_five");
-		sg2.addOption(bo3);
-		sg2.addOption(lo2);
+		BooleanOption echo_alias_updates = new BooleanOption();
+		echo_alias_updates.setTitle("Echo Alias Updates?");
+		echo_alias_updates.setDescription("Local echo system command updates to aliases.");
+		echo_alias_updates.setKey("echo_alias_updates");
+		echo_alias_updates.setValue(true);
+		servOptions.addOption(echo_alias_updates);
 		
-		SettingsGroup tertiary = new SettingsGroup();
-		tertiary.setTitle("Third Page");
-		tertiary.setDescription("a third page of options.this could go on forever");
+		BooleanOption keep_wifi_alive = new BooleanOption();
+		keep_wifi_alive.setTitle("Keep Wifi Alive?");
+		keep_wifi_alive.setDescription("Attempt to keep WiFi radio active while connected.");
+		keep_wifi_alive.setKey("keep_wifi_alive");
+		keep_wifi_alive.setValue(true);
+		servOptions.addOption(keep_wifi_alive);
 		
-		BooleanOption btert1 = new BooleanOption();
-		btert1.setTitle("boooooool:");
-		btert1.setDescription("more descriptions.");
-		btert1.setKey("sfkjasdkfj");
-		btert1.setValue(true);
+		BooleanOption cull_extraneous = new BooleanOption();
+		cull_extraneous.setTitle("Cull Extraneous Colors?");
+		cull_extraneous.setDescription("Removes extraneous color codes.");
+		cull_extraneous.setKey("cull_extraneous_color");
+		cull_extraneous.setValue(true);
+		servOptions.addOption(cull_extraneous);
 		
-		ListOption btert2 = new ListOption();
-		btert2.setTitle("fosfsdf");
-		btert2.setDescription("slkfjs;lkfjs");
-		btert2.addItem("one");
-		btert2.addItem("sslfs");
-		btert2.addItem("sfdjsdf");
+		BooleanOption debug_telnet = new BooleanOption();
+		debug_telnet.setTitle("Debug Telnet?");
+		debug_telnet.setDescription("Shows data involving telnet option transactions in the window.");
+		debug_telnet.setKey("debug_telnet");
+		debug_telnet.setValue(false);
+		servOptions.addOption(debug_telnet);
 		
-		tertiary.addOption(btert1);
-		tertiary.addOption(btert2);
-		sg2.addOption(tertiary);
+		sg.addOption(servOptions);
 		
-		sg.addOption(sg2);
+		SettingsGroup bellOptions = new SettingsGroup();
+		bellOptions.setTitle("Bell");
+		bellOptions.setDescription("Options for what happens when the bell character is recieved.");
 		
-		SettingsGroup sg3 = new SettingsGroup();
-		sg3.setTitle("Second-secondary Page");
-		sg3.setDescription("another page of options");
+		BooleanOption bell_vibrate = new BooleanOption();
+		bell_vibrate.setTitle("Vibrate?");
+		bell_vibrate.setDescription("Plays a short vibrate pattern when the bell is recieved.");
+		bell_vibrate.setKey("bell_vibrate");
+		bell_vibrate.setValue(true);
+		bellOptions.addOption(bell_vibrate);
 		
-		BooleanOption b3o = new BooleanOption();
-		b3o.setTitle("lskjfsf");
-		b3o.setDescription("lskflsakfa;sdff");
-		b3o.setValue(false);
-		b3o.setKey("slkfsfaaaaaa");
+		BooleanOption bell_notification = new BooleanOption();
+		bell_notification.setTitle("Generate Notification?");
+		bell_notification.setDescription("Spawns a new notification when bell is recieved.");
+		bell_notification.setKey("bell_notification");
+		bell_notification.setValue(false);
+		bellOptions.addOption(bell_notification);
 		
-		BooleanOption b3t = new BooleanOption();
-		b3t.setTitle("ksljfsdf");
-		b3t.setDescription("sfw9ew9o3lksf");
-		b3t.setKey("sfsffdsfss");
-		b3t.setValue(true);
+		BooleanOption bell_display = new BooleanOption();
+		bell_display.setTitle("Display Bell?");
+		bell_display.setDescription("Displays a small alert on the screen when the bell character is recieved.");
+		bell_display.setKey("bell_display");
+		bell_display.setValue(false);
+		bellOptions.addOption(bell_display);
 		
-		ListOption l3o = new ListOption();
-		l3o.setTitle("LISTLISTLIST");
-		l3o.setDescription("this is yet, another list.");
-		l3o.setKey("skj;k;lk;lk");
-		l3o.addItem("one");
-		l3o.addItem("two");
-		l3o.addItem("three");
-		l3o.addItem("four");
-		
-		sg3.addOption(b3o);
-		sg3.addOption(l3o);
-		sg3.addOption(b3t);
-		
-		sg.addOption(sg3);
-		
+		sg.addOption(bellOptions);		
 		
 		the_settings.getSettings().setOptions(sg);
 	}
 	
 	protected void doInvalidateWindowText(String name) throws RemoteException {
+		synchronized(callbackSync) {
 		int N = mWindowCallbacks.beginBroadcast();
 		IWindowCallback callback = null;
 		for(int i=0;i<N;i++) {
@@ -673,9 +620,11 @@ public class Connection {
 		callback.rawDataIncoming(w.getBuffer().dumpToBytes(true));
 		
 		mWindowCallbacks.finishBroadcast();
+		}
 	}
 
 	protected void windowXCallS(String token, String function, Object o) throws RemoteException {
+		synchronized(callbackSync) {
 		int N = mWindowCallbacks.beginBroadcast();
 		for(int i=0;i<N;i++) {
 			IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
@@ -687,11 +636,13 @@ public class Connection {
 		}
 		
 		mWindowCallbacks.finishBroadcast();
+		}
 	}
 
 	public void reloadSettings() {
 		//unhook all windows.
 		//while(mWindowCallbacks.)
+		synchronized(callbackSync) {
 		int N = mWindowCallbacks.beginBroadcast();
 		
 		for(int i=0;i<N;i++) {
@@ -709,6 +660,7 @@ public class Connection {
 		
 		mWindowCallbacks.finishBroadcast();
 		
+		}
 		//loadSettings();
 		loadPlugins();
 		
@@ -916,6 +868,7 @@ public class Connection {
 	
 	protected void redrawWindow(String win) {
 		Log.e("WINDOW","SERVICE ATTEMPTING TO REDRAW WINDOW:" + win);
+		synchronized(callbackSync) {
 		int N = mWindowCallbacks.beginBroadcast();
 		for(int i=0;i<N;i++) {
 			IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
@@ -929,10 +882,12 @@ public class Connection {
 			}
 		}
 		mWindowCallbacks.finishBroadcast();
+		}
 	}
 
 	
 	protected void lineToWindow(String target, Line line) {
+		synchronized(callbackSync) {
 		for(WindowToken w : mWindows) {
 			if(w.getName().equals(target)) {
 				TextTree tmp = new TextTree();
@@ -961,6 +916,7 @@ public class Connection {
 				}
 				mWindowCallbacks.finishBroadcast();
 			}
+		}
 		}
 	}
 
@@ -1052,6 +1008,7 @@ public class Connection {
 		/*if(activated) {
 			service.sendRawDataToWindow(data);
 		}*/
+		synchronized(callbackSync) {
 		int N = mWindowCallbacks.beginBroadcast();
 		
 		try {
@@ -1070,6 +1027,7 @@ public class Connection {
 		}
 		
 		mWindowCallbacks.finishBroadcast();
+		}
 		
 	}
 
@@ -1971,5 +1929,60 @@ public class Connection {
 		if(p != null) {
 			p.updateFloatSetting(key,value);
 		}
+	}
+	
+	private class WindowSettingsChangedListener implements SettingsChangedListener {
+
+		private String window;
+		
+		public WindowSettingsChangedListener(String window) {
+			this.window = window;
+		}
+		
+		@Override
+		public void updateSetting(String key, String value) {
+			Connection.this.handleWindowSettingsChanged(window,key,value);
+		}
+		
+	}
+	
+	public void handleWindowSettingsChanged(String window,String key,String value) {
+		synchronized(callbackSync) {
+		int N = mWindowCallbacks.beginBroadcast();
+		
+		for(int i=0;i<N;i++) {
+			IWindowCallback callback = mWindowCallbacks.getBroadcastItem(i);
+			try{
+				if(callback.getName().equals(window)) {
+					callback.updateSetting(key,value);
+				}
+			} catch (RemoteException e) {
+				
+			}
+		}
+		
+		mWindowCallbacks.finishBroadcast();
+		}
+		
+	}
+
+	@Override
+	public void updateSetting(String key, String value) {
+		
+		BaseOption o = (BaseOption)the_settings.getSettings().getOptions().findOptionByKey(key);
+		try {
+			KEYS tmp = KEYS.valueOf(key);
+			switch(tmp) {
+			case debug_telnet:
+				processor.setDebugTelnet((Boolean)o.getValue());
+				break;
+			}
+		} catch(IllegalArgumentException e) {
+			
+		}
+	}
+	
+	private enum KEYS {
+		debug_telnet
 	}
 }

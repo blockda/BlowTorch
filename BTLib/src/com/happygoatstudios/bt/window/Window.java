@@ -18,6 +18,9 @@ import org.keplerproject.luajava.LuaStateFactory;
 
 import com.happygoatstudios.bt.service.Colorizer;
 import com.happygoatstudios.bt.service.IWindowCallback;
+import com.happygoatstudios.bt.service.SettingsChangedListener;
+import com.happygoatstudios.bt.service.plugin.settings.BaseOption;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 //import com.happygoatstudios.bt.window.LuaWindow.BoundsFunction;
 //import com.happygoatstudios.bt.window.LuaWindow.DebugFunction;
 //import com.happygoatstudios.bt.window.LuaWindow.DrawFunction;
@@ -39,6 +42,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -65,7 +69,7 @@ import android.widget.RelativeLayout.LayoutParams;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.settings.HyperSettings.LINK_MODE;
 
-public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener {
+public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener,SettingsChangedListener {
 
 	//private DrawRunner _runner = null;
 	
@@ -73,7 +77,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private TextTree buffer = null;
 	private int mMaxHeight;
 	private int mMaxWidth;
-	private static float PREF_FONTSIZE = 18;
+	private int PREF_FONTSIZE = 18;
 	private int mHeight = 1;
 	private int mWidth = 1;
 	LuaState L = null;
@@ -142,6 +146,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public static final int MESSAGE_PROCESSXCALLS = 4;
 	//private boolean disableEditing = false;
 	protected static final int MESSAGE_CLEARTEXT = 5;
+	protected static final int MESSAGE_SETTINGSCHANGED = 6;
 	
 	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -151,10 +156,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	EditText input = null;
 	
 	Object token = new Object(); //token for synchronization.
-
+	private SettingsGroup settings = null;
 	//private int myWidth = -1;
 	//LayerManager mManager = null;
 	Context mContext = null;
+	
 	/*public Window(Context context,LayerManager manager) {
 		super(context);
 		//getHolder().addCallback(this);
@@ -173,9 +179,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		init();
 	} */
 	
-	public Window(Context context,String name,String owner,Handler mainWindowHandler) {
+	public Window(Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
 		super(context);
-		init(name,owner,mainWindowHandler);
+		init(name,owner,mainWindowHandler,settings);
 	}
 	
 	
@@ -208,7 +214,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//doDelayedDraw(0);
 	}
 	
-	private void init(String name,String owner,Handler mainWindowHandler) {
+	private void init(String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
+		this.settings = settings;
+		this.settings.setListener(this);
 		borderPaint.setStrokeWidth(5);
 		borderPaint.setColor(0xFF444488);
 		new_text_in_buffer_indicator = new View(this.getContext());
@@ -217,6 +225,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_SETTINGSCHANGED:
+					Window.this.doUpdateSetting(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
+					//settings.setOption(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
+					break;
 				case MESSAGE_CLEARTEXT:
 					Log.e("clear","clearing buffer");
 					the_tree.empty();
@@ -290,6 +302,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	/*protected void shutdown() {
 		mManager.shutdown(this);
 	}*/
+
+	protected void doUpdateSetting(String key, String value) {
+		settings.setOption(key, value);
+	}
+
+
 
 	public void setTWidth(int height) {
 		mWidth=height;
@@ -1585,6 +1603,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public void clearText() throws RemoteException {
 			mHandler.sendEmptyMessage(MESSAGE_CLEARTEXT);
 		}
+
+		@Override
+		public void updateSetting(String key, String value)
+				throws RemoteException {
+			//mHandler.sendMessage(mHandler.ob)
+			Message m = mHandler.obtainMessage(MESSAGE_SETTINGSCHANGED);
+			m.getData().putString("KEY", key);
+			m.getData().putString("VALUE", value);
+			mHandler.sendMessage(m);
+		}
 		
 	};
 	
@@ -2065,6 +2093,99 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public int getMaxWidth() {
 		return mMaxHeight;
 	}
+
+
+
+	@Override
+	public void updateSetting(String key, String value) {
+		//convert to enum value, then switch, handle accordingly.
+		BaseOption o = (BaseOption) settings.findOptionByKey(key);
+		o.setValue(value);
+		try {
+			KEYS tmp = KEYS.valueOf(key);
+			switch(tmp) {
+			case hyperlinks_enabled:
+				this.setLinksEnabled((Boolean)o.getValue());
+				break;
+			case hyperlink_mode:
+				this.setLinkMode((Integer)o.getValue());
+				break;
+				
+			case hyperlink_color:
+				this.setLinkColor((Integer)o.getValue());
+				break;
+				
+			case word_wrap:
+				this.setWordWrap((Boolean)o.getValue());
+				break;
+			
+			case color_option:
+				switch((Integer)o.getValue()) {
+				case 0:
+					this.setColorDebugMode(0);
+					break;
+				case 1:
+					this.setColorDebugMode(3);
+					break;
+				case 2:
+					this.setColorDebugMode(1);
+					break;
+				case 3:
+					this.setColorDebugMode(2);
+				}
+				break;				
+			case font_size:
+				setCharacterSizes((Integer)o.getValue(),PREF_LINEEXTRA);
+				break;
+			case line_extra:
+				setCharacterSizes(PREF_FONTSIZE,(Integer)o.getValue());
+				break;
+			case buffer_size:
+				the_tree.setMaxLines((Integer)o.getValue());
+				break;
+			case font_path:
+				PREF_FONT = loadFontFromName((String)o.getValue());
+				p.setTypeface(PREF_FONT);
+				this.invalidate();
+				break;
+				
+			}
+		} catch(IllegalArgumentException e) {
+		}
+	}
+	
+	private void setLinkMode(Integer value) {
+		switch(value) {
+		case 0:
+			setLinkMode(HyperSettings.LINK_MODE.NONE);
+			break;
+		case 1:
+			setLinkMode(HyperSettings.LINK_MODE.HIGHLIGHT);
+			break;
+		case 2:
+			setLinkMode(HyperSettings.LINK_MODE.HIGHLIGHT_COLOR);
+			break;
+		case 3:
+			setLinkMode(HyperSettings.LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND);
+			break;
+		case 4:
+			setLinkMode(HyperSettings.LINK_MODE.BACKGROUND);
+			break;
+		}
+	}
+
+	private enum KEYS {
+		hyperlinks_enabled,
+		hyperlink_mode,
+		hyperlink_color,
+		word_wrap,
+		color_option,
+		screen_on,
+		font_size,
+		line_extra,
+		buffer_size,
+		font_path
+	}
 	
 	/*@Override
 	protected void onLayout(boolean changed,int left,int top,int right,int bottom) {
@@ -2089,7 +2210,36 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		View v = ((View)this.getParent());
 		v.startAnimation(a);
 	}*/
-	
+	private Typeface loadFontFromName(String name) {
+		Typeface font = Typeface.MONOSPACE;
+		//Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
+		if(name.contains("/")) {
+			//string is a path
+			if(name.contains(Environment.getExternalStorageDirectory().getPath())) {
+				
+				String sdstate = Environment.getExternalStorageState();
+				if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
+					font = Typeface.createFromFile(name);
+				} else {
+					font = Typeface.MONOSPACE;
+				}
+				
+			} else {
+				//path is a system path
+				font = Typeface.createFromFile(name);
+			}
+			
+		} else {
+			if(name.equals("monospace")) {
+				font = Typeface.MONOSPACE;
+			} else if(name.equals("sans serif")) {
+				font = Typeface.SANS_SERIF;
+			} else if (name.equals("default")) {
+				font = Typeface.DEFAULT;
+			}
+		}
+		return font;
+	}
 	
 }
 

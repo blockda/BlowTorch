@@ -524,14 +524,15 @@ public class OptionsDialog extends Dialog {
 			
 			
 			String text = input.getText().toString();
+			
 			try{
 				Integer number = Integer.parseInt(text);
 				option.setValue(number);
-				
+				widget.setText(text);
 				if(selectedPlugin.equals("main")) {
 					service.updateIntegerSetting(option.getKey(), number);
 				} else {
-					service.updateIntegerSetting(option.getKey(), number);
+					service.updatePluginIntegerSetting(selectedPlugin,option.getKey(), number);
 				}
 			
 			} catch(NumberFormatException e) {
