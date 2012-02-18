@@ -6,6 +6,12 @@ import java.util.HashMap;
 import java.util.Set;
 
 import com.happygoatstudios.bt.service.LayoutGroup.LAYOUT_TYPE;
+import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
+import com.happygoatstudios.bt.service.plugin.settings.ColorOption;
+import com.happygoatstudios.bt.service.plugin.settings.FileOption;
+import com.happygoatstudios.bt.service.plugin.settings.IntegerOption;
+import com.happygoatstudios.bt.service.plugin.settings.ListOption;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.window.TextTree;
 
 import android.content.res.Configuration;
@@ -27,7 +33,9 @@ public class WindowToken implements Parcelable {
 	private int id;
 	private TextTree buffer;
 	//private String owner;
+	//SettingsChangedListener mSettingsChangedListener = null;
 	
+	private SettingsGroup settings = null;
 	/*public enum TYPE {
 		NORMAL,
 		SCRIPT
@@ -43,6 +51,7 @@ public class WindowToken implements Parcelable {
 
 		//type = TYPE.NORMAL;
 		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
+		initSettings();
 	}
 	
 	/*public WindowToken(String name,int x,int y,int width,int height) {
@@ -72,6 +81,105 @@ public class WindowToken implements Parcelable {
 		//portraitParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 		//landscapeParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
+		
+		initSettings();
+		//setSettings(new SettingsGroup());
+		
+		
+	}
+	
+	private void initSettings() {
+		SettingsGroup window = new SettingsGroup();
+		window.setTitle("Window");
+		window.setDescription("Options involved with the display of text or interaction with the window.");
+		window.setKey("window_group");
+		
+		SettingsGroup hyperlinks = new SettingsGroup();
+		hyperlinks.setTitle("Hyperlink Settings");
+		hyperlinks.setDescription("Options for highlighting web page URLs.");
+		hyperlinks.setKey("hyperlinks_options");
+		
+		BooleanOption hyperlinks_enabled = new BooleanOption();
+		hyperlinks_enabled.setTitle("Enable Hyperlinks?");
+		hyperlinks_enabled.setDescription("Make text that starts with http:// or www. a clickable link.");
+		hyperlinks_enabled.setKey("hyperlinks_enabled");
+		hyperlinks_enabled.setValue(true);
+		hyperlinks.addOption(hyperlinks_enabled);
+		
+		ListOption hyperlink_mode = new ListOption();
+		hyperlink_mode.setTitle("Hyperlink Mode");
+		hyperlink_mode.setDescription("How hyperlinks are presented.");
+		hyperlink_mode.setKey("hyperlink_mode");
+		hyperlink_mode.addItem("None");
+		hyperlink_mode.addItem("Underline");
+		hyperlink_mode.addItem("Underline with specified Color");
+		hyperlink_mode.addItem("Underline and Colorize, only if no ANSI color is specified");
+		hyperlink_mode.addItem("Background highlight with specified color");
+		hyperlink_mode.setValue(new Integer(3));
+		hyperlinks.addOption(hyperlink_mode);
+		
+		ColorOption hyperlink_color = new ColorOption();
+		hyperlink_color.setTitle("Hyperlink Color");
+		hyperlink_color.setDescription("The color the hyperlink will be colorized with.");
+		hyperlink_color.setKey("hyperlink_color");
+		hyperlink_color.setValue(new Integer(0xFF0000FF));
+		hyperlinks.addOption(hyperlink_color);
+		
+		window.addOption(hyperlinks);
+		
+		BooleanOption word_wrap = new BooleanOption();
+		word_wrap.setTitle("Word Wrap?");
+		word_wrap.setDescription("Broken text will be wrapped at the nearest whitespace.");
+		word_wrap.setKey("word_wrap");
+		word_wrap.setValue(true);
+		window.addOption(word_wrap);
+		
+		ListOption color_option = new ListOption();
+		color_option.setTitle("ANSI Color");
+		color_option.setDescription("Options for handling or disabling ANSI Color");
+		color_option.setKey("color_option");
+		color_option.setValue(0);
+		color_option.addItem("Enabled");
+		color_option.addItem("Disabled");
+		color_option.addItem("Show and colorize codes");
+		color_option.addItem("Show codes, do not colorize");
+		window.addOption(color_option);
+		
+		IntegerOption font_size = new IntegerOption();
+		font_size.setTitle("Font Size");
+		font_size.setDescription("The height of a drawn character.");
+		font_size.setKey("font_size");
+		font_size.setValue(13);
+		window.addOption(font_size);
+		
+		IntegerOption line_extra = new IntegerOption();
+		line_extra.setTitle("Line Spacing");
+		line_extra.setDescription("The extra space in between lines (in pixels)");
+		line_extra.setKey("line_extra");
+		line_extra.setValue(2);
+		window.addOption(line_extra);
+		
+		IntegerOption buffer_size = new IntegerOption();
+		buffer_size.setTitle("Text Buffer Size");
+		buffer_size.setDescription("The number of lines kept by the window for scrollback.");
+		buffer_size.setKey("buffer_size");
+		buffer_size.setValue(300);
+		window.addOption(buffer_size);
+		
+		FileOption font_path = new FileOption();
+		font_path.setTitle("Font");
+		font_path.setDescription("The font used by the window to render text.");
+		font_path.setKey("font_path");
+		font_path.setValue("monospace");
+		font_path.addItem("monospace");
+		font_path.addItem("sans serrif");
+		font_path.addItem("default");
+		font_path.addPath("/system/fonts/");
+		font_path.addPath("BlowTorch/");
+		font_path.addExtension(".ttf");
+		window.addOption(font_path);
+		
+		setSettings(window);
 	}
 	
 	public WindowToken copy() {
@@ -232,6 +340,9 @@ public class WindowToken implements Parcelable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		settings = p.readParcelable(com.happygoatstudios.bt.service.plugin.settings.SettingsGroup.class.getClassLoader());
+		
 	}
 
 	/*public void setScriptPath(String scriptPath) {
@@ -331,6 +442,8 @@ public class WindowToken implements Parcelable {
 			Log.e("PARCEL","WINDOWTOKEN DUMPING: " + buffer.getBrokenLineCount() + " lines.");
 			p.writeByteArray(buffer.dumpToBytes(true));
 		}
+		
+		p.writeParcelable(settings, arg1);
 		
 	}
 	public void setBuffer(TextTree buffer) {
@@ -522,6 +635,14 @@ public class WindowToken implements Parcelable {
 		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
 		return p;
 		//return null;
+	}
+
+	public SettingsGroup getSettings() {
+		return settings;
+	}
+
+	public void setSettings(SettingsGroup settings) {
+		this.settings = settings;
 	}
 	
 
