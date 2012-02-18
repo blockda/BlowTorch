@@ -2466,7 +2466,7 @@ public class MainWindow extends Activity {
 				long sfs = System.currentTimeMillis();
 				sfs = sfs + 10;
 			}
-			com.happygoatstudios.bt.window.Window tmp = new com.happygoatstudios.bt.window.Window(this,w.getName(),w.getPluginName(),myhandler);
+			com.happygoatstudios.bt.window.Window tmp = new com.happygoatstudios.bt.window.Window(this,w.getName(),w.getPluginName(),myhandler,w.getSettings());
 			
 			//determine the appropriate layout group to load.
 			int screenLayout = this.getResources().getConfiguration().screenLayout;
