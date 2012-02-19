@@ -9,10 +9,18 @@ import android.os.RemoteException;
 import com.happygoatstudios.bt.service.Connection;
 
 public class KeyboardCommand extends SpecialCommand {
+	String encoding;
 	public KeyboardCommand() {
 		this.commandName = "keyboard";
 		//alternate short form, kb.
+		//this.encoding = encoding;
+		this.encoding = "ISO-8859-1";
 	}
+	
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
+	
 	public Object execute(Object o,Connection c) {
 		
 		//DO ALIAS/VARIABLE TRANSFORMATIONS!!!
@@ -107,7 +115,7 @@ public class KeyboardCommand extends SpecialCommand {
 		
 		Boolean foo = new Boolean(true);
 		try {
-			text = new String(c.doKeyboardAliasReplace(text.getBytes("ISO-8859-1"),foo),"ISO-8859-1");
+			text = new String(c.doKeyboardAliasReplace(text.getBytes(encoding),foo),encoding);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

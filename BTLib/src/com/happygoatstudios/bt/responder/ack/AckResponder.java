@@ -58,7 +58,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 
 	@Override
 	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
-			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name) {
+			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name,String encoding) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
 		} else {
@@ -70,12 +70,9 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 		String xformed = AckResponder.this.translate(this.getAckWith(), captureMap);
 		//msg = dispatcher.obtainMessage(StellarService.MESSAGE_SENDDATA,(this.getAckWith() + crlf).getBytes("ISO-8859-1"));
 		//TODO: make ack responder actually ack
-		try {
-			msg = dispatcher.obtainMessage(Connection.MESSAGE_SENDDATA,(xformed + crlf).getBytes("ISO-8859-1"));
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+			msg = dispatcher.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,(xformed + crlf));
+
 		
 		dispatcher.sendMessage(msg);
 		
