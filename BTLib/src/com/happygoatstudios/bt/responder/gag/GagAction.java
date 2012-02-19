@@ -50,7 +50,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 	public void doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, Matcher matched,
 			Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
-			HashMap<String, String> captureMap, LuaState L, String name) throws IteratorModifiedException {
+			HashMap<String, String> captureMap, LuaState L, String name,String encoding) throws IteratorModifiedException {
 			//iterator.pr
 			int prevloc = -1;
 			if(iterator.hasPrevious()) {
