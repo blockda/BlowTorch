@@ -261,7 +261,7 @@ public class Plugin {
 							}
 							for(TriggerResponder responder : t.getResponders()) {
 								try {
-									responder.doResponse(service.getApplicationContext(),input,lineNum,it,l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName());
+									responder.doResponse(service.getApplicationContext(),input,lineNum,it,l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName(),mEncoding);
 								} catch(IteratorModifiedException e) {
 									it = e.getIterator();
 								}
@@ -1122,7 +1122,7 @@ public class Plugin {
 			//hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
 				try {
-					responder.doResponse(parent.getContext(),null,0,null,null,null,(Object)getSettings().getTimers().get(ordinal), parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler,captureMap,L,Plugin.this.getSettings().getTimers().get(ordinal).getName());
+					responder.doResponse(parent.getContext(),null,0,null,null,null,(Object)getSettings().getTimers().get(ordinal), parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler,captureMap,L,Plugin.this.getSettings().getTimers().get(ordinal).getName(),mEncoding);
 				} catch (IteratorModifiedException e) {
 					// won't ever get here because gag/replace actions can't be applied to timers.
 				}
@@ -1231,5 +1231,9 @@ public class Plugin {
 	public void updateStringSetting(String key,String value) {
 		settings.getOptions().updateString(key,value);
 		//o.setValue(value);
+	}
+	
+	public void setEncoding(String encoding) {
+		this.mEncoding = encoding;
 	}
 }

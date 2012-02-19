@@ -92,7 +92,7 @@ public class Connection implements SettingsChangedListener {
 	public final static int MESSAGE_PROCESS = 7;
 	public final static int MESSAGE_DISCONNECTED = 8;
 	public static final int MESSAGE_MCCPFATALERROR = 9;
-	public final static int MESSAGE_SENDDATA = 9;
+	public final static int MESSAGE_SENDDATA_BYTES = 9;
 	public static final int MESSAGE_LINETOWINDOW = 10;
 	public static final int MESSAGE_LUANOTE = 11;
 	public static final int MESSAGE_DRAWINDOW = 12;
@@ -103,6 +103,7 @@ public class Connection implements SettingsChangedListener {
 	public static final int MESSAGE_WINDOWXCALLS = 17;
 	public static final int MESSAGE_INVALIDATEWINDOWTEXT = 18;
 	public static final int MESSAGE_GMCPTRIGGERED = 19;
+	public static final int MESSAGE_SENDDATA_STRING = 20;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	DataPumper pump = null;
@@ -113,11 +114,12 @@ public class Connection implements SettingsChangedListener {
 	String display;
 	String host;
 	int port;
+	//String encoding = "ISO-8859-1";
 	
 	public StellarService service = null;
 	boolean isConnected = false;
 	public ConnectionSettingsPlugin the_settings = null;
-	
+	KeyboardCommand keyboardCommand;
 	Character cr = new Character((char)13);
 	Character lf = new Character((char)10);
 	String crlf = cr.toString() + lf.toString();
@@ -141,7 +143,7 @@ public class Connection implements SettingsChangedListener {
 		//TimerCommand timercmd = new TimerCommand();
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
-		KeyboardCommand kbcmd = new KeyboardCommand();
+		keyboardCommand = new KeyboardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
 		SpeedwalkCommand swcmd = new SpeedwalkCommand();
@@ -155,8 +157,8 @@ public class Connection implements SettingsChangedListener {
 		//specialcommands.put(timercmd.commandName, timercmd);
 		specialcommands.put(bellcmd.commandName, bellcmd);
 		specialcommands.put(fscmd.commandName, fscmd);
-		specialcommands.put(kbcmd.commandName, kbcmd);
-		specialcommands.put("kb", kbcmd);
+		specialcommands.put(keyboardCommand.commandName, keyboardCommand);
+		specialcommands.put("kb", keyboardCommand);
 		specialcommands.put(dccmd.commandName, dccmd);
 		specialcommands.put(rccmd.commandName, rccmd);
 		specialcommands.put(swcmd.commandName, swcmd);
@@ -261,74 +263,17 @@ public class Connection implements SettingsChangedListener {
 					String target = msg.getData().getString("TARGET");
 					Connection.this.lineToWindow(target,line);
 					break;
-				case MESSAGE_SENDDATA:
-					
-					byte[] bytes = (byte[]) msg.obj;
-					
-					Data d = null;
+				case MESSAGE_SENDDATA_STRING:
 					try {
-						d = ProcessOutputData(new String(bytes,the_settings.getEncoding()));
-					} catch (UnsupportedEncodingException e2) {
-						e2.printStackTrace();
+						byte[] bytes = ((String)msg.obj).getBytes(the_settings.getEncoding());
+						sendToServer(bytes);
+					} catch (UnsupportedEncodingException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
-					
-					if(d == null) {
-						return;
-					}
-					
-					String nosemidata = null;
-					try {
-						
-						if(d.cmdString != null && !d.cmdString.equals("")) {
-							nosemidata = d.cmdString;
-							byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
-							ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
-							//int found = 0;
-							int count = 0;
-							for(int i=0;i<sendtest.length;i++) {
-								if(sendtest[i] == (byte)0xFF) {
-									//buf = ByteBuffer.wrap(buf.array());
-									buf.put((byte)0xFF);
-									buf.put((byte)0xFF);
-									count += 2;
-								} else {
-									buf.put(sendtest[i]);
-									count++;
-								}
-							}
-							
-							byte[] tosend = new byte[count];
-							buf.rewind();
-							buf.get(tosend,0,count);
-							
-							if(pump.isConnected()) {
-								//output_writer.write(tosend);
-								//output_writer.flush();
-								pump.sendData(tosend);
-								//pump.handler.sendMessage(datasend);
-							} else {
-								sendBytesToWindow(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
-							}
-						} else {
-							if(d.cmdString.equals("") && d.visString == null) {
-								pump.sendData(crlf.getBytes(the_settings.getEncoding()));
-								//pump.handler.sendMessage(datasend);
-								//output_writer.flush();
-								d.visString = "\n";
-							}
-						}
-						//send the transformed data back to the window
-						if(d.visString != null && !d.visString.equals("")) {
-							if(the_settings.isLocalEcho()) {
-								//preserve.
-								//buffer_tree.addBytesImplSimple(data)
-								sendBytesToWindow(d.visString.getBytes(the_settings.getEncoding()));
-							}
-						}
-					} catch (IOException e) {
-						//throw new RuntimeException(e);
-						this.sendEmptyMessage(MESSAGE_DISCONNECTED);
-					}
+					break;
+				case MESSAGE_SENDDATA_BYTES:
+					sendToServer((byte[])msg.obj);
 					break;
 				case MESSAGE_STARTUP:
 					doStartup();
@@ -891,6 +836,7 @@ public class Connection implements SettingsChangedListener {
 		for(WindowToken w : mWindows) {
 			if(w.getName().equals(target)) {
 				TextTree tmp = new TextTree();
+				tmp.setEncoding(the_settings.getEncoding());
 				tmp.appendLine(line);
 				tmp.updateMetrics();
 				byte[] lol = tmp.dumpToBytes(false);
@@ -971,6 +917,13 @@ public class Connection implements SettingsChangedListener {
 		
 		working.setBleedColor(buffer.getBleedColor());
 		working.addBytesImpl(raw);
+		
+		the_settings.process(working, service, true, handler, display);
+		if(working.getLines().size() == 0) {
+			return;
+		}
+		working.updateMetrics();
+		
 		for(Plugin p : plugins) {
 			p.process(working, service, true, handler, display);
 			if(working.getLines().size() == 0) {
@@ -1228,9 +1181,13 @@ public class Connection implements SettingsChangedListener {
 			if(d.visString.endsWith(";")) {
 				d.visString = d.visString.substring(0,d.visString.length()-1) + "\n";
 			}
+			if(!d.visString.endsWith(crlf)) {
+				d.visString = d.visString + crlf;
+			}
 		//}
 		//Log.e("BT","TO SERVER:" + d.cmdString);
 		//Log.e("BT","TO WINDOW:" + d.visString);
+		
 		
 		return d;
 	}
@@ -1976,13 +1933,174 @@ public class Connection implements SettingsChangedListener {
 			case debug_telnet:
 				processor.setDebugTelnet((Boolean)o.getValue());
 				break;
+			case encoding:
+				this.doUpdateEncoding((String)o.getValue());
+				break;
+			case orientation:
+				break;
+			case screen_on:
+				break;
+			case fullscreen:
+				break;
+			case fullscreen_editor:
+				break;
+			case use_suggestions:
+				break;
+			case keep_last:
+				break;
+			case compatibility_mode:
+				break;
+			case local_echo:
+				break;
+			case process_system_commands:
+				break;
+			case echo_alias_updates:
+				break;
+			case keep_wifi_alive:
+				break;
+			case cull_extraneous_color:
+				break;
+			case debug_telent:
+				break;
+			case bell_vibrate:
+				break;
+			case bell_notification:
+				break;
+			case bell_display:
+				break;
 			}
 		} catch(IllegalArgumentException e) {
 			
 		}
 	}
 	
+	private void doUpdateEncoding(String value) {
+		processor.setEncoding(value);
+		//this.encoding = value;
+		the_settings.setEncoding(value);
+		this.working.setEncoding(value);
+		
+		for(int i=0;i<mWindows.size();i++) {
+			WindowToken w = mWindows.get(i);
+			w.getBuffer().setEncoding(value);
+		}
+		
+		synchronized(callbackSync) {
+			int N = mWindowCallbacks.beginBroadcast();
+			
+			for(int i=0;i<N;i++) {
+				IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
+				try {
+					w.setEncoding(value);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+			mWindowCallbacks.finishBroadcast();
+		}
+		
+		for(int i=0;i<plugins.size();i++) {
+			Plugin p = plugins.get(i);
+			p.setEncoding(value);
+		}
+		
+		//handle the keyboard command callback.
+		keyboardCommand.setEncoding(value); 
+		
+		//may want to go through and activate the settings changed handler for plugins.
+		//the chat window would want to re-construct it's buffers. But for proper operation
+		//it may not be out of the question to make encoding change requrie a restart.
+		//everything that doesn't use TextTree's directly to make multi-buffers, will work fine.		
+	}
+
 	private enum KEYS {
-		debug_telnet
+		debug_telnet,
+		encoding, 
+		orientation, 
+		screen_on, 
+		fullscreen, 
+		fullscreen_editor,
+		use_suggestions,
+		keep_last, compatibility_mode,
+		local_echo,
+		process_system_commands,
+		echo_alias_updates,
+		keep_wifi_alive,
+		cull_extraneous_color,
+		debug_telent,
+		bell_vibrate,
+		bell_notification,
+		bell_display
+	}
+	
+	private void sendToServer(byte[] bytes) {
+		//byte[] bytes = (byte[]) msg.obj;
+		
+		Data d = null;
+		try {
+			d = ProcessOutputData(new String(bytes,the_settings.getEncoding()));
+		} catch (UnsupportedEncodingException e2) {
+			e2.printStackTrace();
+		}
+		
+		if(d == null) {
+			return;
+		}
+		
+		String nosemidata = null;
+		try {
+			
+			if(d.cmdString != null && !d.cmdString.equals("")) {
+				nosemidata = d.cmdString;
+				byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
+				ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
+				//int found = 0;
+				int count = 0;
+				for(int i=0;i<sendtest.length;i++) {
+					if(sendtest[i] == (byte)0xFF) {
+						//buf = ByteBuffer.wrap(buf.array());
+						buf.put((byte)0xFF);
+						buf.put((byte)0xFF);
+						count += 2;
+					} else {
+						buf.put(sendtest[i]);
+						count++;
+					}
+				}
+				
+				byte[] tosend = new byte[count];
+				buf.rewind();
+				buf.get(tosend,0,count);
+				
+				if(pump.isConnected()) {
+					//output_writer.write(tosend);
+					//output_writer.flush();
+					pump.sendData(tosend);
+					//pump.handler.sendMessage(datasend);
+				} else {
+					sendBytesToWindow(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+				}
+			} else {
+				if(d.cmdString.equals("") && d.visString == null) {
+					pump.sendData(crlf.getBytes(the_settings.getEncoding()));
+					//pump.handler.sendMessage(datasend);
+					//output_writer.flush();
+					d.visString = "\n";
+				}
+			}
+			//send the transformed data back to the window
+			if(d.visString != null && !d.visString.equals("")) {
+				if(the_settings.isLocalEcho()) {
+					//preserve.
+					//buffer_tree.addBytesImplSimple(data)
+					sendBytesToWindow(d.visString.getBytes(the_settings.getEncoding()));
+				}
+			}
+		} catch (IOException e) {
+			//throw new RuntimeException(e);
+			handler.sendEmptyMessage(MESSAGE_DISCONNECTED);
+		}
 	}
 }
