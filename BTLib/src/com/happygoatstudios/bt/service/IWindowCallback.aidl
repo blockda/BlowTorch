@@ -9,4 +9,5 @@ interface IWindowCallback {
 	void xcallS(String function,String str);
 	void clearText();
 	void updateSetting(String key,String value);
+	void setEncoding(String value);
 }

@@ -2622,7 +2622,7 @@ public class StellarService extends Service {
 
 		public void sendData(byte[] seq) throws RemoteException {
 			Handler handler = connections.get(connectionClutch).handler;
-			handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_SENDDATA, seq));
+			handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_SENDDATA_BYTES, seq));
 		}
 
 		public void saveSettings() throws RemoteException {

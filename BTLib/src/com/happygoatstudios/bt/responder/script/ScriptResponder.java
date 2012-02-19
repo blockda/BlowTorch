@@ -95,7 +95,7 @@ public class ScriptResponder extends TriggerResponder {
 	@Override
 	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
-			HashMap<String, String> captureMap,LuaState L,String name) {
+			HashMap<String, String> captureMap,LuaState L,String name,String encoding) {
 			
 			/*L.pushNil();
 			while(L.next(LuaState.LUA_GLOBALSINDEX) != 0) {

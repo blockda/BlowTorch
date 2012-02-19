@@ -118,7 +118,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	@Override
 	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
-			HashMap<String, String> captureMap, LuaState L, String name) throws IteratorModifiedException {
+			HashMap<String, String> captureMap, LuaState L, String name,String encoding) throws IteratorModifiedException {
 			if(line == null || matched == null) {
 				return;
 			}

@@ -147,6 +147,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	//private boolean disableEditing = false;
 	protected static final int MESSAGE_CLEARTEXT = 5;
 	protected static final int MESSAGE_SETTINGSCHANGED = 6;
+	protected static final int MESSAGE_ENCODINGCHANGED = 7;
 	
 	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -225,6 +226,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_ENCODINGCHANGED:
+					Window.this.updateEncoding((String)msg.obj);
+					break;
 				case MESSAGE_SETTINGSCHANGED:
 					Window.this.doUpdateSetting(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
 					//settings.setOption(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
@@ -302,6 +306,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	/*protected void shutdown() {
 		mManager.shutdown(this);
 	}*/
+
+	protected void updateEncoding(String value) {
+		the_tree.setEncoding(value);
+	}
+
+
 
 	protected void doUpdateSetting(String key, String value) {
 		settings.setOption(key, value);
@@ -1612,6 +1622,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			m.getData().putString("KEY", key);
 			m.getData().putString("VALUE", value);
 			mHandler.sendMessage(m);
+		}
+		
+		public void setEncoding(String value) {
+			mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_ENCODINGCHANGED,value));
 		}
 		
 	};
