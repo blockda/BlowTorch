@@ -1464,4 +1464,17 @@ function OnDraw(canvas)
 	
 end
 
+function OnDestroy()
+	debugPrint("destroying button window")
+	if(managerLayer ~= nil) then
+		managerLayer:recycle()
+		managerLayer = nil
+		managerCanvas = nil
+	end
+
+	buttonLayer:recycle()
+	buttonLayer = nil
+	buttonCanvas = nil
+end
+
 

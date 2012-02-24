@@ -29,13 +29,17 @@ import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 //import com.happygoatstudios.bt.window.LuaWindow.PluginXCallSFunction;
 //import com.happygoatstudios.bt.window.LuaWindow.TableAdapterFunction;
 import com.happygoatstudios.bt.window.TextTree.Line;
+import com.happygoatstudios.bt.window.TextTree.Selection;
+import com.happygoatstudios.bt.window.TextTree.SelectionCursor;
 import com.happygoatstudios.bt.window.TextTree.Unit;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
@@ -49,6 +53,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.os.RemoteException;
+import android.text.ClipboardManager;
 import android.util.AttributeSet;
 import android.util.Log;
 //import android.util.Log;
@@ -80,6 +85,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private int PREF_FONTSIZE = 18;
 	private int mHeight = 1;
 	private int mWidth = 1;
+	int one_char_is_this_wide = 1;
 	LuaState L = null;
 	String mOwner;
 	Paint clearme = new Paint();
@@ -148,6 +154,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected static final int MESSAGE_CLEARTEXT = 5;
 	protected static final int MESSAGE_SETTINGSCHANGED = 6;
 	protected static final int MESSAGE_ENCODINGCHANGED = 7;
+	protected static final int MESSAGE_STARTSELECTION = 8;
+	protected static final int MESSAGE_SCROLLDOWN=9;
+	protected static final int MESSAGE_SCROLLUP=10;
+	protected static final int MESSAGE_SCROLLRIGHT = 11;
+	protected static final int MESSAGE_SCROLLLEFT = 12;
 	
 	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -162,6 +173,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	//LayerManager mManager = null;
 	Context mContext = null;
 	
+	Bitmap mSelectionIndicatorBitmap = null;
+	Canvas mSelectionIndicatorCanvas = null;
+	
+	int SELECTIONINDICATOR_FONTSIZE = 30;
+	Paint selectionIndicatorPaint = new Paint();
+	int one_selection_char_is_this_wide = 1;
+	int selectionIndicatorHalfDimension = 90;
+	
+	Path selectionIndicatorClipPath = new Path();
+	
+	Rect selectionIndicatorLeftButtonRect = new Rect();
+	Rect selectionIndicatorRightButtonRect = new Rect();
+	Rect selectionIndicatorUpButtonRect = new Rect();
+	Rect selectionIndicatorDownButtonRect = new Rect();
+	Rect selectionIndicatorCenterButtonRect = new Rect();
+	
+	Rect selectionIndicatorRect = new Rect();
 	/*public Window(Context context,LayerManager manager) {
 		super(context);
 		//getHolder().addCallback(this);
@@ -216,6 +244,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	private void init(String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
+		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
+		
 		this.settings = settings;
 		this.settings.setListener(this);
 		borderPaint.setStrokeWidth(5);
@@ -223,9 +253,33 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		new_text_in_buffer_indicator = new View(this.getContext());
 		the_tree = new TextTree();
 		buffer = new TextTree();
+		//this.setOnTouchListener(textSelectionTouchHandler);
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_SCROLLLEFT:
+					Log.e("window","handler scrollleft");
+					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					Window.this.doScrollLeft(true);
+					break;
+				case MESSAGE_SCROLLRIGHT:
+					Log.e("window","handler scrollright");
+					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					Window.this.doScrollRight(true);
+					break;
+				case MESSAGE_SCROLLDOWN:
+					Log.e("window","handler scrolldown");
+					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					Window.this.doScrollDown(true);
+					break;
+				case MESSAGE_SCROLLUP:
+					Log.e("window","handler scrollup");
+					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					Window.this.doScrollUp(true);
+					break;
+				case MESSAGE_STARTSELECTION:
+					Window.this.startSelection(msg.arg1,msg.arg2);
+					break;
 				case MESSAGE_ENCODINGCHANGED:
 					Window.this.updateEncoding((String)msg.obj);
 					break;
@@ -240,7 +294,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					//buffer.
 					break;
 				case MESSAGE_SHUTDOWN:
-					//Window.this.shutdown();
+					Window.this.shutdown();
 					break;
 				case MESSAGE_FLUSHBUFFER:
 					Window.this.flushBuffer();
@@ -301,8 +355,41 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mAnchorLeft = 0;
 		//calculateCharacterFeatures(width,height);
 		
+		mSelectionIndicatorBitmap = Bitmap.createBitmap(2*selectionIndicatorHalfDimension, 2*selectionIndicatorHalfDimension, Bitmap.Config.ARGB_8888);
+		mSelectionIndicatorCanvas = new Canvas(mSelectionIndicatorBitmap);
+		
+		int full = selectionIndicatorHalfDimension * 2;
+		int third = full / 3;
+		
+		selectionIndicatorLeftButtonRect.set(third, 0, 2*third, 40);
+		selectionIndicatorUpButtonRect.set(0, third, 40, 2*third);
+		selectionIndicatorRightButtonRect.set(full-40, third, full, 2*third);
+		selectionIndicatorDownButtonRect.set(third, 2*third, 2*third, full);
+		selectionIndicatorCenterButtonRect.set(third, third, 2*third, 2*third);
+		
+		selectionIndicatorRect.set(0,0,full,full);
+		
 	}
 	
+	private void startSelection(int line,int column) {
+		
+		theSelection = the_tree.getSelectionForPoint(line,column);
+		if(theSelection == null) {
+			firstPress = true;
+		} else {
+			this.setOnTouchListener(textSelectionTouchHandler);
+			selectedSelector = theSelection.end;
+			moveWidgetToSelector(selectedSelector);
+			
+			//start the window buffering so it does not interfere with our biz-nas.
+			this.setBufferText(true);
+			this.invalidate();
+		}
+		
+	}
+
+
+
 	/*protected void shutdown() {
 		mManager.shutdown(this);
 	}*/
@@ -341,9 +428,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		Paint p = new Paint();
 		p.setTypeface(PREF_FONT);
 		p.setTextSize(PREF_FONTSIZE);
-		int one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
+		one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
 		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
 		
+		selectionIndicatorPaint.setTextSize(SELECTIONINDICATOR_FONTSIZE);
+		selectionIndicatorPaint.setTypeface(PREF_FONT);
+		selectionIndicatorPaint.setAntiAlias(true);
+		one_selection_char_is_this_wide = (int) Math.ceil(selectionIndicatorPaint.measureText("a"));
+		selectionIndicatorVectorX = one_char_is_this_wide + selectionIndicatorHalfDimension;
 		if(automaticBreaks) {
 			this.setLineBreaks(0);
 		}
@@ -405,7 +497,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	//boolean fuckyou = false;
 	long target = 0;
 	
-	
+	int touchStartY;
 	@Override
 	public boolean onTouchEvent(MotionEvent t) {
 		//if(fuckyou) {
@@ -488,6 +580,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						touchInLink = tmpCount;
 					}
 				}
+				
+				//calculate row/col
+				float x = t.getX();
+				float y = t.getY();
+				
+				//convert y to be at the bottom of the screen.
+				
+				y = (float) ((float)this.getHeight() - y + (scrollback-SCROLL_MIN));
+				
+				float xform_to_line = y / (float)PREF_LINESIZE;
+				int line = (int)Math.floor(xform_to_line);
+				
+				float xform_to_column = x / (float)one_char_is_this_wide;
+				int column = (int)Math.floor(xform_to_column);
+				mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_STARTSELECTION, line, column), 1500);
 			}
 			
 			if(!increadedPriority) {
@@ -511,8 +618,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				float dist = now_y - prev_y;
 				diff_amount = (int)dist;
 				
+				if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
+					mHandler.removeMessages(MESSAGE_STARTSELECTION);
+				}
+				
 				float velocity = dist / time;
-				float MAX_VELOCITY = 700;
+				float MAX_VELOCITY = 700; 
 				if(Math.abs(velocity) > MAX_VELOCITY) {
 					if(velocity > 0) {
 						velocity = MAX_VELOCITY;
@@ -521,6 +632,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					}
 				}
 				fling_velocity = velocity;
+				
+				if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
+					mHandler.removeMessages(MESSAGE_STARTSELECTION);
+				}
 				
 				if(Math.abs(diff_amount) > 5) {
 					
@@ -561,6 +676,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					dataDispatch.sendMessage(dataDispatch.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
 			        touchInLink = -1;
 				}
+				
+				//if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
+					mHandler.removeMessages(MESSAGE_STARTSELECTION);
+				//}
 		        
 			}
 			
@@ -675,6 +794,50 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}*/
 		//drawn = true;
 		
+		if(selectedSelector != null) {
+			//int full = selectionIndicatorHalfDimension * 2;
+			//int third = (selectionIndicatorHalfDimension * 2) / 3;
+			int color = scroller_paint.getColor();
+			int newcolor = 0xFF000000 | color;
+			scroller_paint.setColor(newcolor);
+			mSelectionIndicatorCanvas.drawRect(selectionIndicatorLeftButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(selectionIndicatorUpButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(selectionIndicatorRightButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(selectionIndicatorDownButtonRect, scroller_paint);
+			//mSelectionIn
+			scroller_paint.setColor(color);
+			
+			mSelectionIndicatorCanvas.save();
+			mSelectionIndicatorCanvas.clipPath(selectionIndicatorClipPath);
+			mSelectionIndicatorCanvas.drawColor(0xFF444444);
+			
+		}
+		int startline2=0,startcol=0,endline=0,endcol=0;
+		if(theSelection  != null) {
+
+			if(theSelection.start.line == theSelection.end.line) {
+				startline2 = theSelection.start.line;
+				endline = theSelection.start.line;
+				if(theSelection.end.column < theSelection.start.column) {
+					startcol = theSelection.end.column;
+					endcol = theSelection.start.column;
+				} else{
+					startcol = theSelection.start.column;
+					endcol = theSelection.end.column;
+				}
+			} else if(theSelection.end.line >  theSelection.start.line) {
+				startline2 = theSelection.end.line;
+				startcol = theSelection.end.column;
+				endline = theSelection.start.line;
+				endcol = theSelection.start.column;
+			} else {
+				startline2 = theSelection.start.line;
+				startcol = theSelection.start.column;
+				endline = theSelection.end.line;
+				endcol = theSelection.end.column;
+			}
+		}
+		
 		if(mName != null && mName.equals("map_window")) {
 			long xtmp = 10;
 			xtmp += System.currentTimeMillis();
@@ -785,6 +948,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int extraLines = bundle.getExtraLines();
 			if(screenIt == null) { return;}
 			
+			int startline = bundle.getStartLine();
+			int workingline = startline;
+			int workingcol = 0;
+			
 			//TODO: STEP 3
 			//find bleed.
 			boolean bleeding = false;
@@ -846,22 +1013,186 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			while(!stop && screenIt.hasPrevious()) {
 				//int index = screenIt.previousIndex();
 				Line l = screenIt.previous();
-			
+				
 				//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
 				//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
 				unitIterator = l.getIterator();
+				
+				int linemode = 0;
+				if(startline2 == endline && startline2 == workingline) {
+					linemode = 1;
+				} else if(startline2 == workingline) {
+					linemode = 2;
+				} else if(startline2 > workingline && endline < workingline) {
+					
+					linemode = 3;
+				} else if(endline == workingline) {
+					Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
+					linemode = 4;
+					
+				}
+				
 				while(unitIterator.hasNext()) {
 					Unit u = unitIterator.next();
 					//p.setColor(color)
 					boolean useBackground = false;
-					if(b.getColor() != 0xFF000000) {
+					if(b.getColor() != 0xFF0A0A0A && b.getColor() != 0xFF000000) {
 						useBackground = true;
 					}
 					
+
 					//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
 					if(u instanceof TextTree.Text) {
+						boolean doIndicator = false;
+						int indicatorlineoffset = 0;
+						boolean backgroundSelection = false;
+						if(selectedSelector != null && selectedSelector.line == workingline) {
+							doIndicator = true;
+						} else if(selectedSelector != null && Math.abs(selectedSelector.line -workingline) < 3) {
+							doIndicator = true;
+							indicatorlineoffset = selectedSelector.line - workingline;
+						}
+						
+						if(theSelection  != null) {
+							
+							//Log.e("Window","doing selection run: start={"+startline2+","+startcol+"} end={"+endline+","+endcol);
+							switch(linemode) {
+							case 1:
+								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
+								if(finishCol > startcol && finishCol-1 <= endcol){
+									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+										int overshoot = startcol - workingcol;
+										int overshootPixels = overshoot * one_char_is_this_wide;
+										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+									} else {
+										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									}
+								} else if(finishCol > endcol) {
+									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+										int overshoot = endcol - workingcol + 1;
+										int overshootPixels = overshoot * one_char_is_this_wide;
+										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
+									} else {
+										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									}
+								} else {
+									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+								}
+								break;
+							case 2:
+								finishCol = workingcol + ((TextTree.Text)u).bytecount;
+								if(finishCol > startcol) {
+									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+										int overshoot = startcol - workingcol;
+										int overshootPixels = overshoot * one_char_is_this_wide;
+										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+									} else {
+										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									}
+								} else {
+									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+								}
+//								} else if(finishCol > endcol) {
+//									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+//										int overshoot = endcol - workingcol + 1;
+//										int overshootPixels = overshoot * one_char_is_this_wide;
+//										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
+//									} else {
+//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									}
+//								} else {
+//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//								}
+								break;
+							case 3:
+								
+								c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+								break;
+							case 4:
+								finishCol = workingcol + ((TextTree.Text)u).bytecount;
+//								if(finishCol > startcol && finishCol-1 <= endcol){
+//									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+//										int overshoot = startcol - workingcol;
+//										int overshootPixels = overshoot * one_char_is_this_wide;
+//									int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+//									} else {
+//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									}
+								Log.e("ACEFJSAf","x:"+x+" y:"+y +" text:"+((TextTree.Text)u).getString()+"|" + " finishCol="+finishCol+" workingCol="+workingcol + " endcol="+endcol);
+								if(finishCol >= endcol) {
+									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+										int overshoot = endcol - workingcol + 1;
+										int overshootPixels = overshoot * one_char_is_this_wide;
+										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
+									} else {
+										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									}
+								} else {
+									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+								}
+								break;
+							default:
+								break;
+							}
+						}
+							
+//							if(startline2 == endline && startline2 == workingline) {
+//								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
+//								if(finishCol > startcol && finishCol-1 <= endcol){
+//									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+//										int overshoot = startcol - workingcol;
+//										int overshootPixels = overshoot * one_char_is_this_wide;
+//										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+//									} else {
+//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									}
+//								} else if(finishCol > endcol) {
+//									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+//										int overshoot = endcol - workingcol + 1;
+//										int overshootPixels = overshoot * one_char_is_this_wide;
+//										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
+//									} else {
+//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									}
+//								} else {
+//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//								}
+//							} else if(startline2 == workingline) {
+//								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
+//								if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+//									int overshoot = startcol - workingcol + 1;
+//									int overshootPixels = overshoot * one_char_is_this_wide;
+//									//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//									c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
+//								} else {
+//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//								}
+//							} else if(startline2 > workingline && endline < workingline) {
+//								c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//								Log.e("wondow","drawing in between line:" +workingline+ " ypos:"+y);
+//							} else if(endline == workingline) {
+//								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
+//								if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+//									int overshoot = endcol - workingcol;
+//									int overshootPixels = overshoot * one_char_is_this_wide;
+//									int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//									c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+//								} else {
+//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//								}
+//							}
+//						}
+						
 						if(useBackground) {
-							//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
+							Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 							c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
 						}
 						
@@ -957,6 +1288,28 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							if(useBackground) {
 								//Log.e("WINDOW","DRAWING BACKGROUND TEXT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 							}
+							boolean backGroundSelection = false;
+							
+							if(doIndicator) {
+								int unitEndCol = workingcol + (((TextTree.Text)u).bytecount-1);
+								if(unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column +10) {
+									float size = p.getTextSize();
+									p.setTextSize(30);
+									int overshoot = (workingcol - selectedSelector.column);
+									int ix = 0,iy=SELECTIONINDICATOR_FONTSIZE;
+									//if(overshoot > 0) {
+										ix = (int) (selectionIndicatorHalfDimension + (overshoot*one_selection_char_is_this_wide) - 0.5*one_selection_char_is_this_wide);
+										iy = (int) (selectionIndicatorHalfDimension+(0.5*SELECTIONINDICATOR_FONTSIZE)) + (indicatorlineoffset*SELECTIONINDICATOR_FONTSIZE);
+									
+									
+									
+									mSelectionIndicatorCanvas.drawText(((TextTree.Text)u).getString(), ix, iy, p);
+									
+									p.setTextSize(size);
+								}
+								
+							}
+							workingcol += ((TextTree.Text)u).bytecount;
 							c.drawText(((TextTree.Text)u).getString(),x,y,p);
 							x += p.measureText(((TextTree.Text)u).getString());
 						}
@@ -1015,26 +1368,32 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								doingLink = false;
 								//REGISTER LINK BOX
 							}
+						} else if(u instanceof TextTree.Break) {
+							workingline = workingline -1;
 						}
 						
 						y = y + PREF_LINESIZE;
 						x = 0;
+						//workingline = workingline - 1;
 						drawnlines++;
+						workingcol = 0;
 						if(drawnlines > CALCULATED_LINESINWINDOW + extraLines) {
 							stop = true;
 						}
 					}
 				}
-				
+				workingline = workingline - 1;
+				workingcol = 0;
 				l.resetIterator();
 			}
 			
 			//}
 			showScroller(c);
 			c.restore();
-			if(Math.abs(fling_velocity) > 0.0f) {
+			if(Math.abs(fling_velocity) > PREF_LINESIZE) {
 				//this.sendEmptyMessageDelayed(MSG_DRAW, 3); //throttle myself, just a little bit.
 				//this.invalidate();
+				Log.e("SFS","fling redrawing");
 				this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
 			}
 		
@@ -1161,6 +1520,58 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		scrollerRect.set((int)workingWidth-(int)(2*density),(int)(scrollerPos - scrollerSize/2),(int)workingWidth,(int)(scrollerPos + scrollerSize/2));
 		
 		c.drawRect(scrollerRect, scroller_paint);
+		
+		
+		if(theSelection != null) {
+			//compute rects for the guys.
+			//compute the current line in pixels from the bottom of the screen.
+			int currentLine = theSelection.start.line * PREF_LINESIZE;
+			currentLine = (int) (currentLine - (scrollback - SCROLL_MIN));
+			
+			
+			int startBottom = (int) (this.getHeight() - currentLine);
+			int startTop = startBottom - PREF_LINESIZE;
+			int startLeft = theSelection.start.column * one_char_is_this_wide;
+			int startRight = startLeft + one_char_is_this_wide;
+			
+			currentLine = theSelection.end.line * PREF_LINESIZE;
+			currentLine = (int) (currentLine - (scrollback - SCROLL_MIN));
+			
+			int endBottom = (int) (this.getHeight() - currentLine);
+			int endTop = endBottom - PREF_LINESIZE;
+			int endLeft = theSelection.end.column * one_char_is_this_wide;
+			int endRight = endLeft + one_char_is_this_wide;
+			
+			//int scroll_from_bottom = (int) (scrollback-SCROLL_MIN);
+			
+			c.drawRect(startLeft, startTop, startRight, startBottom, scroller_paint);
+			c.drawRect(endLeft, endTop, endRight, endBottom, scroller_paint);
+			
+		}
+		
+		if(selectedSelector != null) {
+			//this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+			//c.save();
+			
+			//c.clipPath(path);
+			mSelectionIndicatorCanvas.restore();
+			Paint edgePaint = new Paint();
+			edgePaint.setStyle(Paint.Style.STROKE);
+			edgePaint.setStrokeWidth(6);
+			edgePaint.setAntiAlias(true);
+			edgePaint.setColor(0xFFAA22AA);
+			mSelectionIndicatorCanvas.drawPath(selectionIndicatorClipPath, edgePaint);
+			
+			float left = (float) (selectionIndicatorHalfDimension-(0.5*one_selection_char_is_this_wide));
+			float top = (float)(selectionIndicatorHalfDimension-(0.5*SELECTIONINDICATOR_FONTSIZE));
+			float right = (float)(selectionIndicatorHalfDimension+(0.5*one_selection_char_is_this_wide));
+			float bottom = (float)(selectionIndicatorHalfDimension+(0.5*SELECTIONINDICATOR_FONTSIZE));
+			
+			c.drawBitmap(mSelectionIndicatorBitmap, widgetX-selectionIndicatorHalfDimension, widgetY-selectionIndicatorHalfDimension, null);
+			c.drawRect(left+(widgetX-selectionIndicatorHalfDimension),top+(widgetY-selectionIndicatorHalfDimension),right+(widgetX-selectionIndicatorHalfDimension),bottom+(widgetY-selectionIndicatorHalfDimension), scroller_paint);		
+			//c.restore();
+			//this.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+		}
 		
 	}
 
@@ -1486,10 +1897,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		private ListIterator<TextTree.Line> i;
 		private Float offset;
 		private int extraLines;
-		public IteratorBundle(ListIterator<TextTree.Line> pI,double pOffset,int lines) {
+		private int startLine;
+		public IteratorBundle(ListIterator<TextTree.Line> pI,double pOffset,int lines,int startline) {
 			setI(pI);
 			setOffset((float)pOffset);
 			setExtraLines(lines);
+			setStartLine(startline);
 		}
 		public void setOffset(Float offset) {
 			this.offset = offset;
@@ -1509,6 +1922,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int getExtraLines() {
 			return extraLines;
 		}
+		public int getStartLine() {
+			return startLine;
+		}
+		public void setStartLine(int startLine) {
+			this.startLine = startLine;
+		}
 		
 	}
 	ListIterator<Line> drawingIterator = null;
@@ -1522,6 +1941,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(pY >= max) {
 			pY = max;
 		}
+		
+		int startline = 0;
 		//Log.e("BYTE","SCROLLBACK IS:" +pIn);
 		int current = 0;
 		if(drawingIterator == null) {
@@ -1535,9 +1956,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
 			//calculate how few.
 			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount()-1);
-			while(drawingIterator.hasNext()) drawingIterator.next();
+			while(drawingIterator.hasNext()) {drawingIterator.next(); startline += 1;}
 			//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
-			return new IteratorBundle(drawingIterator,under*pLineSize,0);
+			return new IteratorBundle(drawingIterator,under*pLineSize,0,startline);
 		}
 		
 		//double target = Math.floor(pY/pLineSize);
@@ -1547,19 +1968,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			Line l = drawingIterator.next();
 			working_h += pLineSize * (1 + l.getBreaks());
 			current += 1 + l.getBreaks();
+			
 			if(working_h >= pY) {
 				double delta = working_h - pY;
 				double offset = delta - pLineSize;
 				int extra = (int) Math.ceil(delta/pLineSize);
 				if(drawingIterator.hasPrevious()) drawingIterator.previous();
-				return new IteratorBundle(drawingIterator,-1*offset,extra);
+				return new IteratorBundle(drawingIterator,-1*offset,extra,startline);
 			} else {
 				//next line
 				//position++;
 			}
+			startline += 1 + l.getBreaks();
 		}
 		
-		return new IteratorBundle(drawingIterator,pLineSize,0);
+		return new IteratorBundle(drawingIterator,pLineSize,0,startline);
 		
 	}
 
@@ -2254,6 +2677,635 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		return font;
 	}
+	
+	private View.OnTouchListener textSelectionTouchHandler = new View.OnTouchListener() {
+		
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			//calculate out the position
+			
+			float x = event.getX();
+			float y = event.getY();
+			
+			//convert y to be at the bottom of the screen.
+			y = (float)v.getHeight() - y;
+			
+			y += (scrollback-SCROLL_MIN);
+			
+			float xform_to_line = y / (float)PREF_LINESIZE;
+			int line = (int)Math.floor(xform_to_line);
+			
+			float xform_to_column = x / (float)one_char_is_this_wide;
+			int column = (int)Math.floor(xform_to_column);
+			
+			switch(event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+				//if(firstPress) {
+
+					
+				//} else {
+					if(Math.abs(theSelection.start.line - line) < 2 && Math.abs(theSelection.start.column - column) < 2) {
+						selectedSelector = theSelection.start;
+						selectionFingerDown = true;
+						moveWidgetToSelector(selectedSelector);
+						Log.e("window","moving start selector");
+						v.invalidate();
+					} else if(Math.abs(theSelection.end.line - line) < 2 && Math.abs(theSelection.end.column - column) < 2) {
+						selectedSelector = theSelection.end;
+						moveWidgetToSelector(selectedSelector);
+						selectionFingerDown = true;
+						Log.e("window","moving end selector");
+						v.invalidate();
+					} else {
+						int modx = (int) x - (widgetX - selectionIndicatorHalfDimension);
+						int mody = (int) event.getY() - (widgetY - selectionIndicatorHalfDimension);
+						if(selectionIndicatorRect.contains(modx,mody)) {
+							
+							//int newx = (int) (x - selectionIndicatorRect.left);
+							//int newy = (int) (mody - selectionIndicatorRect.top);
+							
+							int full = selectionIndicatorHalfDimension * 2;
+							int third = full / 3;
+							
+							int col = modx / third;
+							
+							int row = mody / third;
+							
+							switch(row) {
+							case 0:
+								switch(col) {
+								case 0:
+									//upper left
+									selectionButtonDown = SelectionWidgetButtons.NEXT;
+									break;
+								case 1:
+									//upper middle
+									selectionButtonDown = SelectionWidgetButtons.UP;
+									int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE)-PREF_LINESIZE;
+									//selectorCenterY -= PREF_LINESIZE;
+									//if(selectorCenterY - (2*PREF_LINESIZE) < remainder) {
+										//selectorCenterY = selectorCenterY + PREF_LINESIZE;
+										//scrollback += PREF_LINESIZE;
+										mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLUP,700);
+									//}
+									break;
+								case 2:
+									//upper right
+									selectionButtonDown = SelectionWidgetButtons.COPY;
+									break;
+								}
+								break;
+							case 1:
+								switch(col) {
+								case 0:
+									//middle left
+									selectionButtonDown = SelectionWidgetButtons.LEFT;
+									mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLLEFT,700);
+									break;
+								case 1:
+									//center
+									selectionButtonDown = SelectionWidgetButtons.CENTER;
+									widgetCenterMovedX = 0;
+									widgetCenterMovedY = 0;
+									widgetCenterMoveXLast = (int) x;
+									widgetCenterMoveYLast = (int) event.getY();
+									break;
+								case 2:
+									selectionButtonDown = SelectionWidgetButtons.RIGHT;
+									mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLRIGHT, 700);
+									//middle right
+									break;
+								}
+								break;
+							case 2:
+								switch(col) {
+								case 0:
+									//bottom left
+									selectionButtonDown = SelectionWidgetButtons.EXIT;
+									break;
+								case 1:
+									//bottom middle
+									selectionButtonDown = SelectionWidgetButtons.DOWN;
+									//int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE) + PREF_LINESIZE;
+									//selectorCenterY += PREF_LINESIZE;
+									//if(selectorCenterY + PREF_LINESIZE > v.getHeight() - remainder) {
+										//send the message to start scrolling.
+										mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLDOWN,700);
+									//}
+									//calculateWidgetPosition(selectorCenterX,selectorCenterY);
+									break;
+								case 2:
+									//bottom right
+									break;
+								}
+								break;
+							}
+						}
+						
+						
+					//}
+				}
+				break;
+			case MotionEvent.ACTION_MOVE:
+				if(selectionButtonDown != null && selectionButtonDown == SelectionWidgetButtons.CENTER) {
+					widgetCenterMovedX += (x - widgetCenterMoveXLast);
+					widgetCenterMovedY -= (event.getY() - widgetCenterMoveYLast);
+					widgetCenterMoveXLast = (int) x;
+					widgetCenterMoveYLast = (int) event.getY();
+					if(Math.abs(widgetCenterMovedX) > one_selection_char_is_this_wide) {
+						int sign = (int)Math.signum(widgetCenterMovedX);
+						if(sign > 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollRight(false);
+						} else if(sign < 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollLeft(false);
+						}
+//						selectedSelector.column += 1 * Math.signum(widgetCenterMovedX);
+//						selectorCenterX += one_char_is_this_wide * Math.signum(widgetCenterMovedX);
+//						calculateWidgetPosition(selectorCenterX,selectorCenterY);
+						widgetCenterMovedX = 0;
+						v.invalidate();
+					}
+					if(Math.abs(widgetCenterMovedY) > SELECTIONINDICATOR_FONTSIZE) {
+						int sign = (int)Math.signum(widgetCenterMovedY);
+						if(sign > 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollUp(false);
+						} else if(sign < 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollDown(false);
+						}
+//						selectedSelector.line += 1 * Math.signum(widgetCenterMovedY);
+//						selectorCenterY += PREF_LINESIZE * -Math.signum(widgetCenterMovedY);
+//						calculateWidgetPosition(selectorCenterX,selectorCenterY);
+						widgetCenterMovedY = 0;
+						v.invalidate();
+					}
+					return true;
+				}
+				if(selectedSelector != null && selectionFingerDown == true) {
+					selectedSelector.column = column;
+					selectedSelector.line = line;
+					Log.e("window","moving selector-> line:"+line+" col:"+column);
+					
+					widgetCenterMovedX += (x - widgetCenterMoveXLast);
+					widgetCenterMovedY -= (event.getY() - widgetCenterMoveYLast);
+					widgetCenterMoveXLast = (int) x;
+					widgetCenterMoveYLast = (int) event.getY();
+					if(Math.abs(widgetCenterMovedX) > one_char_is_this_wide) {
+						int sign = (int)Math.signum(widgetCenterMovedX);
+						if(sign > 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollRight(false);
+						} else if(sign < 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollLeft(false);
+						}
+//						selectedSelector.column += 1 * Math.signum(widgetCenterMovedX);
+//						selectorCenterX += one_char_is_this_wide * Math.signum(widgetCenterMovedX);
+//						calculateWidgetPosition(selectorCenterX,selectorCenterY);
+						widgetCenterMovedX = 0;
+						//mHandler.removeMessages(MESSAGE_SCROLLDOWN);
+						//mHandler.removeMessages(MESSAGE_SCROLLUP);
+						v.invalidate();
+					} else {
+//						mHandler.removeMessages(MESSAGE_SCROLLDOWN);
+//						mHandler.removeMessages(MESSAGE_SCROLLUP);
+//						mHandler.removeMessages(MESSAGE_SCROLLLEFT);
+//						mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
+					}
+					
+					if(Math.abs(widgetCenterMovedY) > SELECTIONINDICATOR_FONTSIZE) {
+						int sign = (int) Math.signum(widgetCenterMovedY);
+						if(sign > 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollUp(false);
+						} else if(sign < 0) {
+							scrollRepeatRate = scrollRepeatRateInitial;
+							scrollRepeatRateStep = 1;
+							doScrollDown(false);
+						}
+
+						/*selectedSelector.line += 1 * Math.signum(widgetCenterMovedY);
+						selectorCenterY += PREF_LINESIZE * -Math.signum(widgetCenterMovedY);
+						calculateWidgetPosition(selectorCenterX,selectorCenterY);
+						*/
+						widgetCenterMovedY = 0;
+						//mHandler.removeMessages(MESSAGE_SCROLLDOWN);
+						//mHandler.removeMessages(MESSAGE_SCROLLUP);
+						v.invalidate();
+					}
+
+					
+					v.invalidate();
+				}
+				break;
+			case MotionEvent.ACTION_UP:
+				selectionFingerDown = false;
+				if(theSelection != null) {
+					mHandler.removeMessages(MESSAGE_SCROLLDOWN);
+					mHandler.removeMessages(MESSAGE_SCROLLUP);
+					mHandler.removeMessages(MESSAGE_SCROLLLEFT);
+					mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
+					scrollRepeatRate = scrollRepeatRateInitial;
+					scrollRepeatRateStep = 1;
+					/*if(selectedSelector != null) {
+						selectedSelector = null;
+						v.invalidate();
+						return true;
+					}*/
+//					boolean doselection = false;
+//					
+//					int startline,startcol,endline,endcol;
+//					if(theSelection.end.line > theSelection.start.line) {
+//						
+//						startline = theSelection.end.line;
+//						startcol = theSelection.end.column;
+//						endline = theSelection.start.line;
+//						endcol = theSelection.start.column;
+//					} else {
+//						startline = theSelection.start.line;
+//						startcol = theSelection.start.column;
+//						endline = theSelection.end.line;
+//						endcol = theSelection.end.column;
+//					}
+//					
+//					if(startline == endline) {
+//						if(startcol < column && endcol > column && startline == line) {
+//							doselection = true;
+//						}
+//					} else {
+//						if(startline > line && endline < line) {
+//							doselection = true;
+//						} else if(startline == line) {
+//							if(startcol < column) {
+//								doselection = true;
+//							}
+//						} else if(endline == line) {
+//							if(endcol > column) {
+//								doselection = true;
+//							}
+//						}
+//					}
+//					
+//					if(doselection) {
+//						String text = the_tree.getTextSection(theSelection);
+//						Log.e("window","copied text:\n" + text);
+//						v.invalidate();
+//					}
+					
+					int mod2x = (int) x - (widgetX - selectionIndicatorHalfDimension);
+					int mod2y = (int) event.getY() - (widgetY - selectionIndicatorHalfDimension);
+					if(selectionIndicatorRect.contains(mod2x,mod2y)) {
+						
+						//int newx = (int) (x - (widgetX - selectionIndic);
+						//int newy = (int) (event.getY() - selectionIndicatorRect.top);
+						
+						int full = selectionIndicatorHalfDimension * 2;
+						int third = full / 3;
+						
+						int col = mod2x / third;
+						
+						int row = mod2y / third;
+						
+						SelectionWidgetButtons tmp = null;
+						
+						switch(row) {
+						case 0:
+							switch(col) {
+							case 0:
+								//upper left
+								tmp = SelectionWidgetButtons.NEXT;
+								break;
+							case 1:
+								//upper middle
+								tmp = SelectionWidgetButtons.UP;
+								break;
+							case 2:
+								//upper right
+								tmp = SelectionWidgetButtons.COPY;
+								break;
+							}
+							break;
+						case 1:
+							switch(col) {
+							case 0:
+								//middle left
+								tmp = SelectionWidgetButtons.LEFT;
+								break;
+							case 1:
+								//center
+								tmp = SelectionWidgetButtons.CENTER;
+								break;
+							case 2:
+								tmp = SelectionWidgetButtons.RIGHT;
+								//middle right
+								break;
+							}
+							break;
+						case 2:
+							switch(col) {
+							case 0:
+								//bottom left
+								tmp = SelectionWidgetButtons.EXIT;
+								break;
+							case 1:
+								//bottom middle
+								tmp = SelectionWidgetButtons.DOWN;
+								break;
+							case 2:
+								//bottom right
+								break;
+							}
+							break;
+						}
+						
+						if(selectionButtonDown != null && tmp == selectionButtonDown) {
+							switch(tmp) {
+							case UP:
+								Log.e("widget","widget up pressed");
+								doScrollUp(false);
+//								selectedSelector.line += 1;
+//								if(selectedSelector.line == the_tree.getBrokenLineCount()) {
+//									selectedSelector.line -= 1;
+//									return true;
+//								} else {
+//									int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE)-PREF_LINESIZE;
+//									selectorCenterY -= PREF_LINESIZE;
+//									if(selectorCenterY - (PREF_LINESIZE) < remainder) {
+//										selectorCenterY = selectorCenterY + PREF_LINESIZE;
+//										scrollback += PREF_LINESIZE;
+//									}
+//									calculateWidgetPosition(selectorCenterX,selectorCenterY);
+//								}
+								break;
+							case DOWN:
+								Log.e("widget","widget down pressed");
+								doScrollDown(false);
+//								selectedSelector.line -= 1;
+//								if(selectedSelector.line < 0) {
+//									selectedSelector.line = 0;
+//									return true;
+//								} else {
+//									int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE) + PREF_LINESIZE;
+//									selectorCenterY += PREF_LINESIZE;
+//									if(selectorCenterY > v.getHeight() - remainder) {
+//										selectorCenterY -= PREF_LINESIZE;
+//										scrollback -= PREF_LINESIZE;
+//									}
+//									calculateWidgetPosition(selectorCenterX,selectorCenterY);
+//								}
+								break;
+							case NEXT:
+								Log.e("widget","widget next pressed");
+								//copy the bitches and resume normal operation.
+								String copy = the_tree.getTextSection(theSelection);
+								Log.e("copied text","text copied:\n"+copy);
+								ClipboardManager cpMan = (ClipboardManager) v.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+								cpMan.setText(copy);
+								v.setOnTouchListener(null);
+								theSelection.start = null;
+								theSelection.end = null;
+								theSelection = null;
+								selectedSelector = null;
+								Window.this.flushBuffer();
+								Window.this.setBufferText(false);
+								v.invalidate();
+								return true;
+								//break;
+							case LEFT:
+								Log.e("widget","widget left pressed");
+								doScrollLeft(false);
+								break;
+							case RIGHT:
+								Log.e("widget","widget right pressed");
+								doScrollRight(false);
+								break;
+							case CENTER:
+								Log.e("widget","widget center pressed");
+								break;
+							}
+							v.invalidate();
+						}
+					}
+					
+				}
+				selectionButtonDown = null;
+				break;
+			}
+			
+
+			//String word = the_tree.getWordAt(line,column);
+			//the_tree.
+			//Log.e("texttree","word at line:"+line+" column:"+column+" is: " + word);
+			
+			
+			//break;
+			//}
+			return true;
+		}
+	};
+	
+	private int widgetCenterMovedX = 0;
+	private int widgetCenterMovedY = 0;
+	private int widgetCenterMoveXLast = 0;
+	private int widgetCenterMoveYLast = 0;
+	
+	private int widgetX = 0;
+	private int widgetY = 0;
+	
+	private SelectionCursor selectedSelector;
+	private Selection theSelection;
+	boolean firstPress = true;
+	
+	private enum SelectionWidgetButtons {
+		UP,
+		DOWN,
+		LEFT,
+		RIGHT,
+		CENTER,
+		EXIT,
+		COPY,
+		NEXT,
+	}
+	
+	private SelectionWidgetButtons selectionButtonDown = null;
+	
+	private void calculateWidgetPosition(int startX,int startY) {
+		//test to see if we can place it here.
+		//add the vector to the components of the widget's center
+		int newWidgetX = (int) (startX + selectionIndicatorVectorX);
+		int newWidgetY = (int) ((int) (startY + selectionIndicatorVectorY));
+		
+		if((newWidgetX + (selectionIndicatorHalfDimension)) > this.getWidth()) {
+			selectionIndicatorVectorX -= one_char_is_this_wide;
+			if(selectionIndicatorVectorX < (one_char_is_this_wide + selectionIndicatorHalfDimension)) {
+				selectionIndicatorVectorX = -(selectionIndicatorVectorX+one_char_is_this_wide);
+			}
+			newWidgetX = (int) (startX + selectionIndicatorVectorX);
+			
+		} else if((newWidgetX - selectionIndicatorHalfDimension) < 0) {
+			//flip the vector
+			selectionIndicatorVectorX += one_char_is_this_wide;
+			if(selectionIndicatorVectorX > -(one_char_is_this_wide+selectionIndicatorHalfDimension)) {
+				selectionIndicatorVectorX = -(selectionIndicatorVectorX-one_char_is_this_wide);
+			}
+			newWidgetX = (int) (startX + selectionIndicatorVectorX);
+		}
+		
+		if((newWidgetY + (selectionIndicatorHalfDimension)) > this.getHeight()) {
+			selectionIndicatorVectorY -= PREF_LINESIZE;
+			//only if we run into 
+			newWidgetY = (int) (startY + selectionIndicatorVectorY);
+			
+		} else if ((newWidgetY - selectionIndicatorHalfDimension) < 0) {
+			selectionIndicatorVectorY += PREF_LINESIZE;
+			newWidgetY = (int) (startY + selectionIndicatorVectorY);
+		}
+		
+		widgetX = newWidgetX;
+		widgetY = newWidgetY;
+		
+	}
+	
+	private void moveWidgetToSelector(TextTree.SelectionCursor cursor) {
+		int endx = (int) ((selectedSelector.column * one_char_is_this_wide) + (0.5*one_char_is_this_wide));
+		int endy = (int) ((this.getHeight() - ((selectedSelector.line * PREF_LINESIZE) + (0.5*SELECTIONINDICATOR_FONTSIZE) - (scrollback-SCROLL_MIN))));
+		//widgetX = endx;
+		//widgetY = endy;
+		selectorCenterX = endx;
+		selectorCenterY = endy;
+		calculateWidgetPosition(selectorCenterX,selectorCenterY);
+	}
+	
+	private int selectorCenterX = 0;
+	private int selectorCenterY = 0;
+	
+	private float selectionIndicatorVectorX = 160;
+	private float selectionIndicatorVectorY = 0;
+	
+	private boolean selectionFingerDown = false;
+
+	public void shutdown() {
+		if(L == null) return;
+		//call into lua to notify shutdown imminent.
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal("OnDestroy");
+		if(L.getLuaObject(L.getTop()).isFunction()) {
+			int ret = L.pcall(0, 1, -2);
+			if(ret != 0) {
+				Log.e("LUA","Error in OnDestroy: "+L.getLuaObject(-1).getString());
+			}
+		} else {
+			//no method.
+		}
+		
+		L.close();
+		L = null;
+		
+	}
+	
+	private void doScrollDown(boolean repeat) {
+		Log.e("FOO","do scroll down");
+		selectedSelector.line -= 1;
+		if(selectedSelector.line < 0) {
+			selectedSelector.line = 0;
+			repeat = false;
+		} else {
+			int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE) + PREF_LINESIZE;
+			selectorCenterY += PREF_LINESIZE;
+			if(selectorCenterY > this.getHeight() - remainder) {
+				selectorCenterY -= PREF_LINESIZE;
+				scrollback -= PREF_LINESIZE;
+			}
+			calculateWidgetPosition(selectorCenterX,selectorCenterY);
+		}
+	
+		this.invalidate();
+		if(repeat) {
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLDOWN,scrollRepeatRate);
+		} else {
+			mHandler.removeMessages(MESSAGE_SCROLLDOWN);
+		}
+	}
+	
+	private void doScrollUp(boolean repeat) {
+		Log.e("FOO","do scroll up");
+		selectedSelector.line += 1;
+		if(selectedSelector.line == the_tree.getBrokenLineCount()) {
+			selectedSelector.line -= 1;
+			repeat = false;
+		} else {
+			int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE)-PREF_LINESIZE;
+			selectorCenterY -= PREF_LINESIZE;
+			if(selectorCenterY - (PREF_LINESIZE) < remainder) {
+				selectorCenterY = selectorCenterY + PREF_LINESIZE;
+				scrollback += PREF_LINESIZE;
+			}
+			calculateWidgetPosition(selectorCenterX,selectorCenterY);
+		}
+//		selectedSelector.line += 1;
+//		if(selectedSelector.line >= the_tree.getBrokenLineCount()) {
+//			selectedSelector.line -= 1;
+//			repeat = false;
+//		} else {
+//			scrollback += PREF_LINESIZE;
+//		}
+//		calculateWidgetPosition(selectorCenterX,selectorCenterY);
+		//calculateWidgetPosition()
+		this.invalidate();
+		if(repeat) {
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLUP,scrollRepeatRate);
+		} else {
+			mHandler.removeMessages(MESSAGE_SCROLLUP);
+		}
+	}
+	
+	private void doScrollLeft(boolean repeat) {
+		selectedSelector.column -= 1;
+		if(selectedSelector.column < 0) {
+			selectedSelector.column = 0;
+		} else {
+			selectorCenterX -= one_char_is_this_wide;
+			widgetY -= one_char_is_this_wide;
+			calculateWidgetPosition(selectorCenterX,selectorCenterY);
+		}
+		this.invalidate();
+		if(repeat) {
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLLEFT,scrollRepeatRate);
+		}else {
+			mHandler.removeMessages(MESSAGE_SCROLLLEFT);
+		}
+	}
+	
+	private void doScrollRight(boolean repeat) {
+		selectedSelector.column += 1;
+		selectorCenterX += one_char_is_this_wide;
+		calculateWidgetPosition(selectorCenterX,selectorCenterY);
+		this.invalidate();
+		if(repeat) {
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLRIGHT, scrollRepeatRate);
+		}else {
+			mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
+		}
+	}
+	
+	private int scrollRepeatRateStep = 1;
+	private int scrollRepeatRateInitial = 300;
+	private int scrollRepeatRate = scrollRepeatRateInitial;
+	private int scrollRepeatRateMin = 60;
+	
 	
 }
 
