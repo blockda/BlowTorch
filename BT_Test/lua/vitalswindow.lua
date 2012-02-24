@@ -375,6 +375,13 @@ inputbarParams:addRule(RelativeLayout.ABOVE,view:getId())
 updateBarRects()
 PluginXCallS("initReady","now")
 
+function OnDestroy()
+	debugPrint("destroying vitals window")
+	topper:recycle()
+	topperCanvas = nil
+	topper = nil
+	
+end
 
 
 

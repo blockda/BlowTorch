@@ -9,6 +9,8 @@ import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.text.Selection;
+
 import com.happygoatstudios.bt.window.TextTree.Line;
 
 public class TextTree {
@@ -1303,5 +1305,390 @@ public class TextTree {
 		addLine(line);
 		
 	}
+
+	public Selection getSelectionForPoint(int line, int column) {
+		//this is neat.
+		//get an iterator.
+		Line data = null;
+		ListIterator<Line> lineIterator = mLines.listIterator();
+		boolean done = false;
+		int working = 0;
+		int subline = 0;
+		//if(line == 0) {
+		while(lineIterator.hasNext() && !done) {
+			
+			Line l = lineIterator.next();
+			
+			
+			if(l.breaks > 0) {
+				subline = l.breaks;
+				
+				for(int i=0;i<l.breaks;i++) {
+					if(i != 0) {subline = subline - 1;};
+					if(working == line) {
+						data = l;
+						done = true;
+						i=l.breaks;
+					}
+					working += 1;
+					
+				}
+				
+				if(!done) {
+					subline = 0;
+					if(working == line){
+						data = l;
+						done = true;
+					}
+					working += 1;
+				}
+				
+				
+			} else {
+				
+				if(working == line) {
+					data = l;
+					done = true;
+				}
+				working += 1;
+			}
+		}
+		
+		if(!done) {
+			//no text there.
+			return null;
+		}
+		
+		
+		if(data.bytes == 0) {
+			return null;
+		}
+		//i.getIterator().r
+		ListIterator<Unit> i = data.getData().listIterator();
+		
+		//advance to the subline.
+		done = false;
+		working = 0;
+		if(subline > 0) {
+			while(i.hasNext() && !done) {
+				Unit u = i.next();
+				if(u instanceof Break) {
+					working += 1;
+					if(working == subline) {
+						done = true;
+					}
+				}
+			}
+		}
+		
+		done = false;
+		working = 0;
+		while(i.hasNext() && !done) {
+			Unit u = i.next();
+			if(u instanceof WhiteSpace) {
+				working += u.bytecount;
+				if(working >= column) {
+					//get the text on either side.
+					boolean subdone = false;
+					int startline,startcol,endline,endcol;
+					Unit prevUnit = null;
+					int unitsback = 1;
+					i.previous();
+					startline = line;
+					startcol = working - u.bytecount;
+					endline = line;
+					//StringBuilder output = new StringBuilder();
+					while(!subdone && i.hasPrevious()) {
+						Unit subu = i.previous();
+						if(subu instanceof Text) {
+							prevUnit = subu;
+							subdone = true;
+							//output.append(((Text)subu).getString());
+							startcol = startcol - ((Text)subu).bytecount;
+						}
+						unitsback += 1;
+					}
+					endcol = startcol;
+					for(int j=0;j<unitsback;j++) {
+						Unit tmp = i.next();
+						if(tmp instanceof Text) {
+							//output.append(((Text)tmp).getString());
+							endcol += ((Text)u).bytecount;
+						}
+					}					
+					subdone = false;
+					while(!subdone && i.hasNext()) {
+						Unit tmp = i.next();
+						if(tmp instanceof Text) {
+							//output.append(((Text)tmp).getString());
+							endcol += ((Text)u).bytecount;
+							SelectionCursor start = new SelectionCursor(startline,startcol);
+							SelectionCursor end = new SelectionCursor(endline, endcol);
+							Selection selection = new Selection(start, end);
+							return selection;
+						}
+					}
+					
+				}
+			} else if(u instanceof Text) {
+				working += u.bytecount;
+				if(working >= column) {
+					int startline,startcol,endline,endcol;
+					startline = line;
+					endline = line;
+					startcol = working - u.bytecount;
+					//find the next whitespace.
+					int units_back = 1;
+					i.previous();
+					boolean subdone = false;
+					while(!subdone && i.hasPrevious()) {
+						Unit tmp = i.previous();
+						if(tmp instanceof WhiteSpace) {
+							subdone = true;
+						} else if(tmp instanceof Text) {
+							startcol = startcol - ((Text)tmp).bytecount;
+						}
+						units_back += 1;
+					}
+					endcol = startcol-1;
+					i.next();
+					for(int j=0;j<units_back-1;j++) {
+						Unit tmp = i.next();
+						if(tmp instanceof Text) {
+							endcol += ((Text)tmp).bytecount;
+						}
+					}
+					subdone = false;
+					while(!subdone && i.hasNext()) {
+						Unit tmp = i.next();
+						if(tmp instanceof WhiteSpace) {
+							subdone = true;
+						} else if(tmp instanceof Text) {
+							endcol += ((Text)tmp).bytecount;
+						}
+					}
+					
+					SelectionCursor start = new SelectionCursor(startline,startcol);
+					SelectionCursor end = new SelectionCursor(endline, endcol);
+					Selection selection = new Selection(start, end);
+					return selection;
+					//return ((Text)u).getString();
+				}
+			}
+		}
+		
+		return null;
+	}
 	
+	public String getTextSection(Selection selection) {
+		
+		int startline,startcol,endline,endcol;
+		
+		if(selection.end.line > selection.start.line) {
+			
+			startline = selection.end.line;
+			startcol = selection.end.column;
+			endline = selection.start.line;
+			endcol = selection.start.column;
+		} else {
+			startline = selection.start.line;
+			startcol = selection.start.column;
+			endline = selection.end.line;
+			endcol = selection.end.column;
+		}
+		
+		StringBuilder builder = new StringBuilder();
+		
+		boolean startfound = false;
+		ListIterator<Line> lineIterator = mLines.listIterator();
+		Line firstdata = null;
+		//boolean done = false;
+		int working = 0;
+		int subline = 0;
+		int workingLine = 0;
+		//if(line == 0) {
+		while(lineIterator.hasNext() && !startfound) {
+			
+			Line l = lineIterator.next();
+			
+			
+			if(l.breaks > 0) {
+				subline = l.breaks;
+				
+				for(int i=0;i<l.breaks;i++) {
+					if(i != 0) {subline = subline - 1;};
+					if(working == startline) {
+						firstdata = l;
+						startfound = true;
+						i=l.breaks;
+					}
+					working += 1;
+					
+				}
+				
+				if(!startfound) {
+					subline = 0;
+					if(working == startline){
+						firstdata = l;
+						startfound = true;
+					}
+					working += 1;
+				}
+				
+				
+			} else {
+				
+				if(working == startline) {
+					firstdata = l;
+					startfound = true;
+				}
+				working += 1;
+			}
+		}
+		workingLine = startline;
+		if(!startfound) {
+			//no text there.
+			return null;
+		}
+		
+		lineIterator.previous();
+		
+		boolean done = false;
+		ListIterator<Unit> li = firstdata.getData().listIterator();
+		working = 0;
+		if(subline > 0) {
+			while(li.hasNext() && !done) {
+				Unit u = li.next();
+				if(u instanceof Break) {
+					working += 1;
+					if(working == subline) {
+						done = true;
+					}
+				}
+			}
+			
+
+		}
+		
+		done = false;
+		working = 0;
+		while(!done && li.hasNext()) {
+			Unit u = li.next();
+			if(u instanceof Text) {
+				working += ((Text)u).bytecount;
+				if(working >= startcol) {
+					
+					builder.append(((Text)u).getString().substring(((Text)u).bytecount-(working-startcol), ((Text)u).bytecount));
+					
+					done = true;
+					
+				}
+			}
+		}
+		
+		if(startline == endline || startline - endline < (firstdata.breaks+1)) {
+			done = false;
+			while(li.hasNext() && !done) {
+				Unit u = li.next();
+				done = false;
+				if(u instanceof Text) {
+					working += ((Text)u).bytecount;
+					if(workingLine == endline && working > endcol) {
+						if(((Text)u).bytecount == 1) {
+							builder.append(((Text)u).getString());
+						} else {
+							builder.append(((Text)u).getString().substring(0,endcol-(working-((Text)u).bytecount-1)));
+						}
+						done = true;
+					} else {
+						builder.append(((Text)u).getString());
+					}
+				}
+				if(u instanceof Break) {
+					working = 0;
+					workingLine -= 1;
+				}
+				
+			}
+			return builder.toString();
+		} else {
+			done = false;
+			while(li.hasNext()) {
+				Unit u = li.next();
+				if(u instanceof Text) {
+					builder.append(((Text)u).getString());
+				} else if(u instanceof Break) {
+					working = 0;
+					workingLine -=1;
+				}
+				
+			}
+			builder.append("\n");
+			done = false;
+			while(!done && lineIterator.hasPrevious()) {
+				Line tmp = lineIterator.previous();
+				workingLine -= 1 + tmp.breaks;
+				if(workingLine <= endline) {
+					workingLine = workingLine + tmp.getBreaks();
+					Iterator<Unit> slow = tmp.getData().iterator();
+					boolean enddone = false;
+					working = 0;
+					while(!enddone && slow.hasNext()) {
+						Unit u = slow.next();
+						if(u instanceof Text) {
+							working += ((Text)u).bytecount;
+							if(workingLine == endline && working > endcol) {
+								if(((Text)u).bytecount == 1) {
+									builder.append((((Text)u).getString()));
+								} else{
+									builder.append(((Text)u).getString().substring(0,endcol-(working-((Text)u).bytecount-1)));
+								}
+								enddone = true;
+								done = true;
+							} else {
+								builder.append(((Text)u).getString());
+							}
+						} if(u instanceof Break) {
+							working = 0;
+							workingLine -= 1;
+						}
+					}
+					done = true;
+				} else {
+					Iterator<Unit> fast = tmp.getData().iterator();
+					while(fast.hasNext()) {
+						Unit u = fast.next();
+						if(u instanceof Text) {
+							builder.append(((Text)u).getString());
+						}
+					}
+					builder.append("\n");
+				}
+			}
+			return builder.toString();
+		}
+		
+		
+		
+		//return null;
+	}
+	
+	public class SelectionCursor {
+		public int line,column;
+		
+		public SelectionCursor(int line,int column) {
+			this.line = line;
+			this.column = column;
+		}
+	}
+	
+	public class Selection {
+		SelectionCursor start,end;
+		
+		public Selection(SelectionCursor start,SelectionCursor end) {
+			this.start = start;
+			this.end = end;
+		}
+		
+	}
 }
