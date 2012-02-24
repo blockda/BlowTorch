@@ -1620,7 +1620,7 @@ public class MainWindow extends Activity {
 	
 	public void cleanExit() {
 		//we want to kill the service when we go.
-		
+		cleanupWindows();
 		//shut down the service
 		if(isBound) {
 			try {
@@ -1651,6 +1651,7 @@ public class MainWindow extends Activity {
 	
 	public void dirtyExit() {
 		//we dont want to kill the service
+		cleanupWindows();
 		if(isBound) {
 			
 			try {
@@ -1719,6 +1720,7 @@ public class MainWindow extends Activity {
 		
 	}
 	public void onDestroy() {
+		
 		if(isBound) {
 			
 			try {
@@ -2540,6 +2542,12 @@ public class MainWindow extends Activity {
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
+					
+					((com.happygoatstudios.bt.window.Window)tmp).shutdown();
+					
+					rl.removeView(tmp);
+					tmp = null;
+					
 				}
 			}
 		}
