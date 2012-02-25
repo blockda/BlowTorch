@@ -94,6 +94,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private int PREF_LINESIZE = (int)PREF_FONTSIZE + PREF_LINEEXTRA;
 	private Typeface PREF_FONT = Typeface.MONOSPACE;
 	public int CALCULATED_ROWSINWINDOW;
+	private boolean textSelectionEnabled = true;
 	private double fling_velocity;
 	//boolean buttondropstarted=false;
 	boolean increadedPriority = false;
@@ -103,7 +104,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private boolean bufferText = false;
 	private View new_text_in_buffer_indicator = null;
 
-	private Double scrollback = (double)mHeight;
+	
 
 	private int debug_mode = 0;
 
@@ -229,19 +230,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		Log.e("WINDOW","Detached from window.");
 		viewDestroy();
 	}
-	protected void onMeasure(int widthSpec,int heightSpec) {
-		mHeight = MeasureSpec.getSize(heightSpec);
-		mWidth = MeasureSpec.getSize(widthSpec);
-		
-		
-		setMeasuredDimension(mWidth,mHeight);
-		
-		//if(sizeChanged) {
-		calculateCharacterFeatures(mWidth,mHeight);
-			//sizeChanged = false;
-		//}	
-		//doDelayedDraw(0);
-	}
+//	protected void onMeasure(int widthSpec,int heightSpec) {
+//		mHeight = MeasureSpec.getSize(heightSpec);
+//		mWidth = MeasureSpec.getSize(widthSpec);
+//		
+//		
+//		setMeasuredDimension(mWidth,mHeight);
+//		
+//		//if(sizeChanged) {
+//		calculateCharacterFeatures(mWidth,mHeight);
+//			//sizeChanged = false;
+//		//}	
+//		//doDelayedDraw(0);
+//	}
 	
 	private void init(String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
 		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
@@ -252,6 +253,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		borderPaint.setColor(0xFF444488);
 		new_text_in_buffer_indicator = new View(this.getContext());
 		the_tree = new TextTree();
+		if(name.equals("mainDisplay")) {
+			the_tree.debugLineAdd = true;
+		}
 		buffer = new TextTree();
 		//this.setOnTouchListener(textSelectionTouchHandler);
 		mHandler = new Handler() {
@@ -305,7 +309,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				case MESSAGE_ADDTEXT:
 					//String str = new String((byte[])msg.obj);
 					//Log.e("window","adding text:\n"+str);
-					Window.this.addBytes((byte[])msg.obj, true);
+					Window.this.addBytes((byte[])msg.obj, false);
 					break;
 				case MSG_UPPRIORITY:
 					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
@@ -416,20 +420,37 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		return mWidth;
 	}
 	
+	private boolean featuresChanged = true;
 	public void calculateCharacterFeatures(int width,int height) {
 		
 		//Log.e("WINDOW","WINDOW:" + mName + " character features for w/h:" + width+ " : "+height);
 		if(height == 0 && width == 0) {
 			return;
 		}
-		CALCULATED_LINESINWINDOW = (int) (height / PREF_LINESIZE);
+		//int newlines =  (int) (height / PREF_LINESIZE);
+		//if(newlines != CALCULATED_LINESINWINDOW) {
+			CALCULATED_LINESINWINDOW = (int) (height / PREF_LINESIZE);
+		//	featuresChanged = true;
+		//}
+		
+		featurePaint.setTypeface(PREF_FONT);
+		featurePaint.setTextSize(PREF_FONTSIZE);
+		one_char_is_this_wide = (int)Math.ceil(featurePaint.measureText("a")); //measure a single character
+		//int newrows = (width / one_char_is_this_wide);
+		//if(newrows != CALCULATED_ROWSINWINDOW) {
+			CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
+		//	featuresChanged = true;
+		//}
+		
+		//if(!featuresChanged) {
+		//	return;
+		//}
+		//featuresChanged = false;
 		//Log.e("WINDOW","WINDOW("+mName+"):" + CALCULATED_LINESINWINDOW + " drawable lines. RE: " + (CALCULATED_LINESINWINDOW*PREF_LINESIZE) + " target:" + height);
 		//leftOver = height - CALCULATED_LINESINWINDOW*PREF_LINESIZE;
-		Paint p = new Paint();
-		p.setTypeface(PREF_FONT);
-		p.setTextSize(PREF_FONTSIZE);
-		one_char_is_this_wide = (int)Math.ceil(p.measureText("a")); //measure a single character
-		CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
+		
+
+		
 		
 		selectionIndicatorPaint.setTextSize(SELECTIONINDICATOR_FONTSIZE);
 		selectionIndicatorPaint.setTypeface(PREF_FONT);
@@ -446,7 +467,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 
-
+	Paint featurePaint = new Paint();
+	
 	public void viewCreate() {
 		
 		windowShowing = true;
@@ -504,7 +526,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//switch(t.getActionMasked()) {
 		
 		//}
-		super.onTouchEvent(t);	
+		//super.onTouchEvent(t);	
 		
 			//return true;
 		//}
@@ -594,7 +616,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				float xform_to_column = x / (float)one_char_is_this_wide;
 				int column = (int)Math.floor(xform_to_column);
-				mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_STARTSELECTION, line, column), 1500);
+				if(textSelectionEnabled) {
+					Log.e("sfdsf","starting text selection");
+					mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_STARTSELECTION, line, column), 1500);
+				} else {
+					Log.e("sfdsf","not starting text selection");
+				}
 			}
 			
 			if(!increadedPriority) {
@@ -779,7 +806,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	Paint linkColor = null;
 	private Double SCROLL_MIN = 24d;
-	
+	private Double scrollback = SCROLL_MIN;
 	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
 	Iterator<Unit> unitIterator = null;
 	private int mLinkBoxHeightMinimum = 20;
@@ -853,8 +880,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			linkColor.setColor(linkHighlightColor);
 			//try {	
+			//Log.e("ondraw","Calculating scrollback before:" + scrollback);
 			calculateScrollBack();
-			
+			//Log.e("ondraw","Calculating scrollback after:" + scrollback);
 			c.save();
 			Rect clip = new Rect();
 			if(constrictWindow) {
@@ -889,6 +917,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			float x = 0;
 			float y = 0;
+			if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
+				
+				y = ((PREF_LINESIZE * CALCULATED_LINESINWINDOW) - this.getHeight()) - PREF_LINESIZE;
+				Log.e("STARTY","STARTY IS:"+y);
+			}
 			
 			
 			//Iterator<TextTree.Unit> u = null;
@@ -945,6 +978,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			screenIt = bundle.getI();
 			y = bundle.getOffset();
+			//Log.e("STARTY","STARTY:"+y);
 			int extraLines = bundle.getExtraLines();
 			if(screenIt == null) { return;}
 			
@@ -1192,7 +1226,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 //						}
 						
 						if(useBackground) {
-							Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
+							//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
 							c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
 						}
 						
@@ -1370,6 +1404,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							}
 						} else if(u instanceof TextTree.Break) {
 							workingline = workingline -1;
+							if(startline2 == endline && startline2 == workingline) {
+								linemode = 1;
+							} else if(startline2 == workingline) {
+								linemode = 2;
+							} else if(startline2 > workingline && endline < workingline) {
+								
+								linemode = 3;
+							} else if(endline == workingline) {
+								Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
+								linemode = 4;
+								
+							} else {
+								linemode = -1;
+							}
 						}
 						
 						y = y + PREF_LINESIZE;
@@ -1393,8 +1441,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			if(Math.abs(fling_velocity) > PREF_LINESIZE) {
 				//this.sendEmptyMessageDelayed(MSG_DRAW, 3); //throttle myself, just a little bit.
 				//this.invalidate();
-				Log.e("SFS","fling redrawing");
+				//Log.e("SFS","fling redrawing");
+				//fling_velocity = 0;
 				this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
+			} else {
+				fling_velocity = 0;
 			}
 		
 		}
@@ -1673,15 +1724,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					the_tree.setLineBreakAt(80);
 					//Log.e("BYTE","SET LINE BREAKS TO DEFAULT BECAUSE CALCULATED WAS 0");
 				}
+				//jumpToZero();
 				automaticBreaks = true;
 			} else {
 				the_tree.setLineBreakAt(i);
 				automaticBreaks = false;
+				//jumpToZero();
 				//Log.e("BYTE","SET LINE BREAKS TO: " + i);
 			}
 		
 		
-			jumpToZero();
+			
 		//}
 		
 		
@@ -1743,6 +1796,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				return;
 			}
 		
+			int oldbrokencount = the_tree.getBrokenLineCount();
 			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
 			//synchronized(synch) {
 			try {
@@ -1761,10 +1815,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					scrollback = (double)mHeight;
 				} else {
 					if(scrollback > SCROLL_MIN + PREF_LINESIZE ) {
-					//scrollback = oldposition * (the_tree.getBrokenLineCount()*PREF_LINESIZE);
+						//scrollback = oldposition * (the_tree.getBrokenLineCount()*PREF_LINESIZE);
 						double new_max = the_tree.getBrokenLineCount()*PREF_LINESIZE;
+						int lines = (int) ((new_max - old_max)/PREF_LINESIZE);
+						
 						scrollback += new_max - old_max;
-						//Log.e("BYTE","REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback);
+						Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
 						
 					} else {
 						scrollback = SCROLL_MIN;
@@ -1970,10 +2026,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			current += 1 + l.getBreaks();
 			
 			if(working_h >= pY) {
+				int y = 0;
+				if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
+					
+					y = ((PREF_LINESIZE) * CALCULATED_LINESINWINDOW) - this.getHeight();
+					//Log.e("STARTY","STARTY IS:"+y);
+				}
 				double delta = working_h - pY;
 				double offset = delta - pLineSize;
 				int extra = (int) Math.ceil(delta/pLineSize);
+				//Log.e("SCREENIT","GET SCREEN ITERATOR, EXTRA:"+extra);
 				if(drawingIterator.hasPrevious()) drawingIterator.previous();
+				if(l.breaks > 0) {
+					startline += l.breaks;
+				}
 				return new IteratorBundle(drawingIterator,-1*offset,extra,startline);
 			} else {
 				//next line
@@ -2083,6 +2149,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 
 	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
+		mWidth = w;
+		mHeight = h;
+		calculateCharacterFeatures(mWidth,mHeight);
+		//int diff = oldh - h;
+		//scrollback -= diff;
+		if(scrollback == SCROLL_MIN) {
+			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
+			scrollback = SCROLL_MIN;
+		} else {
+			//we have to calculate the new scrollback position.
+			double oldmin = SCROLL_MIN;
+			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
+			scrollback -= oldmin - SCROLL_MIN;
+		}
+		
 		Float foo = new Float(0);
 		//foo.
 		
@@ -2163,7 +2244,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		OptionsMenuFunction omf = new OptionsMenuFunction(L);
 		TableAdapterFunction taf = new TableAdapterFunction(L);
 		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
-		
+		SheduleCallbackFunction scf = new SheduleCallbackFunction(L);
+		CancelSheduleCallbackFunction cscf = new CancelSheduleCallbackFunction(L);
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
@@ -2171,6 +2253,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			omf.register("addOptionCallback");
 			taf.register("getTableAdapter");
 			pxcf.register("PluginXCallS");
+			scf.register("scheduleCallback");
+			cscf.register("cancelCallback");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2345,6 +2429,72 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			return 1;
 		}
 		
+	}
+	
+	private class SheduleCallbackFunction extends JavaFunction {
+
+		public SheduleCallbackFunction(LuaState L) {
+			super(L);
+
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			int id = (int)this.getParam(2).getNumber();
+			String callback = this.getParam(3).getString();
+			long delay = Long.parseLong(this.getParam(4).getString());
+			//callScheduleCallback(id,callback);
+			Message msg = callbackHandler.obtainMessage(id,callback);
+			callbackHandler.sendMessageDelayed(msg, delay);
+			return 0;
+		}
+		
+	}
+	
+	private class CancelSheduleCallbackFunction extends JavaFunction {
+
+		public CancelSheduleCallbackFunction(LuaState L) {
+			super(L);
+
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			int id = (int)this.getParam(2).getNumber();
+			//String callback = this.getParam(3).getString();
+			//callScheduleCallback(id,callback);
+			callbackHandler.removeMessages(id);
+			return 0;
+		}
+		
+	}
+	
+	private Handler callbackHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			//
+			//just call the string.
+			Window.this.callScheduleCallback(msg.arg1,(String)msg.obj);
+			
+			
+		}
+	};
+	
+	private void callScheduleCallback(int id,String callback) {
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(callback);
+		if(L.getLuaObject(-1).isFunction()) {
+			//prepare to call.
+			L.pushString(Integer.toString(id));
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("Window","Scheduled callback("+callback+") error:"+L.getLuaObject(-1).toString());
+			}
+		} else {
+			//error no function.
+		}
 	}
 	
 	private class PluginXCallSFunction extends JavaFunction {
@@ -3301,6 +3451,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 	
+	public boolean isTextSelectionEnabled() {
+		return textSelectionEnabled;
+	}
+
+
+
+	public void setTextSelectionEnabled(boolean textSelectionEnabled) {
+		this.textSelectionEnabled = textSelectionEnabled;
+		Log.e("sfdsf","setting text selection enabled="+textSelectionEnabled);
+	}
+
 	private int scrollRepeatRateStep = 1;
 	private int scrollRepeatRateInitial = 300;
 	private int scrollRepeatRate = scrollRepeatRateInitial;
