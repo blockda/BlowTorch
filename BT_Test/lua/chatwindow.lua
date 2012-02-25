@@ -121,6 +121,7 @@ function hider.onClick(v)
 		if(pinned == false) then
 			view:startAnimation(windowMoveDownAnimation)
 		end
+		view:setTextSelectionEnabled(false)
 		toggle = false
 	end
 end
@@ -228,8 +229,43 @@ function toucher.onLongClick(v)
 	parentView:requestLayout()
 	return true;
 end
-toucher_cb = luajava.createProxy("android.view.View$OnLongClickListener",toucher)
-view:setOnLongClickListener(toucher_cb)
+--toucher_cb = luajava.createProxy("android.view.View$OnLongClickListener",toucher)
+--view:setOnLongClickListener(toucher_cb)
+
+toucher2 = {}
+moveDelta = 0
+moveTotal = 0
+moveLast = 0
+function toucher2.onTouch(v,e)
+	action = e:getAction()
+	if(action == MotionEvent.ACTION_DOWN) then
+		scheduleCallback(100,"doExpand",1000)
+		moveLast = e:getY()
+		
+		v:onTouchEvent(e)
+	elseif( action == MotionEvent.ACTION_MOVE) then
+		moveDelta = e:getY() - moveLast
+		moveLast = e:getY()
+		moveTotal = moveTotal + moveDelta
+		if(moveTotal > 30) then
+			cancelCallback(100)
+		end
+		v:onTouchEvent(e)
+	elseif(action == MotionEvent.ACTION_UP) then
+		v:onTouchEvent(e)
+		cancelCallback(100)
+	end
+	return true
+end
+toucher2_cb = luajava.createProxy("android.view.View$OnTouchListener",toucher2)
+view:setOnTouchListener(toucher2_cb)
+view:setTextSelectionEnabled(false)
+
+function doExpand(id)
+	toucher.onLongClick(nil)
+	view:setTextSelectionEnabled(true)
+end
+
 
 function loadButtons(input)
 	uiButtonBar:removeAllViews()

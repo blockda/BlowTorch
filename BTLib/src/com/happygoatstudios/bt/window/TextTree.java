@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.text.Selection;
+import android.util.Log;
 
 import com.happygoatstudios.bt.window.TextTree.Line;
 
@@ -23,6 +24,7 @@ public class TextTree {
 	Pattern colordata = Pattern.compile("\\x1B\\x5B.+m");
 	Matcher colormatch = colordata.matcher("");
 	
+	public boolean debugLineAdd = false;
 	//Pattern newlinelookup = Pattern.compile("\n");
 	//Pattern tab = Pattern.compile(new String(new byte[]{0x09}));
 	
@@ -329,6 +331,7 @@ public class TextTree {
 		//int projected = totalbytes + data.length;
 		//Log.e("TREE","ADDING: " + data.length + " bytes, buffer has " + totalbytes + " total bytes. " + projected + " projected.");
 		//LinkedList<Line> lines = new LinkedList<Line>();
+		int linesadded = 0;
 		Line tmp = null;
 		
 		if(holdover != null) {
@@ -352,6 +355,7 @@ public class TextTree {
 					appendLast = true;
 				} else if(u instanceof NewLine) {
 					appendLast = false;
+					//linesadded = 1;
 				}
 			}
 			//Log.e("TREE","APPEND LAST IS:" + appendLast);
@@ -363,6 +367,7 @@ public class TextTree {
 				tmp = mLines.remove(0); //dont worry kids, it'll be appended back.
 				totalbytes -= tmp.bytes; //this will be added back too, this is just to avoid memory leaking
 				ldata = tmp.getData();
+				brokenLineCount -= tmp.breaks + 1;
 				//Log.e("TREE",">>>>>>>>>>>>>>APPENDING TO: " + deColorLine(tmp));
 			//}
 		} //else {
@@ -418,6 +423,7 @@ public class TextTree {
 					holdover = new byte[]{ ESC };
 					//Log.e("TREE","APPEND DUE TO HOLDOVER EVENT: " + deColorLine(tmp));
 					addLine(tmp);
+					linesadded += tmp.breaks + 1;
 					//tmp = new Line();
 					//Log.e("TEXTTREE",getLastTwenty(false));
 					
@@ -440,6 +446,7 @@ public class TextTree {
 					cb.get(holdover,0,tmpsize);
 					//Log.e("TREE","APPEND DUE TO HOLDOVER EVENT: " + deColorLine(tmp));
 					addLine(tmp);
+					linesadded += tmp.breaks + 1;
 					//Log.e("TEXTTREE",getLastTwenty(false));
 					//Log.e("TREE","HOLDOVER EVENT, ESC AND [");
 					return;
@@ -516,6 +523,7 @@ public class TextTree {
 					cb.get(holdover,0,mtmpsz);
 					//Log.e("TREE","APPEND DUE TO UNTERMINATED ANSI SEQUENCE:"  + deColorLine(tmp));
 					addLine(tmp);
+					linesadded += tmp.breaks + 1;
 					//Log.e("TREE","WARNING: UNTERMINATED ASCII SEQUENCE: " + new String(holdover,encoding));
 					return;
 				}
@@ -527,6 +535,7 @@ public class TextTree {
 			case NEWLINE:
 				//Log.e("TREE","START APPEND DUE TO NEWLINE:"  + deColorLine(tmp));
 				//Log.e("TREE","NEWLINE ADDING: " +sb.toString());
+				//linesadded += 1;
 				if(sb.position() > 0) {
 					int nsize = sb.position();
 					byte[] txtdata = new byte[nsize];
@@ -551,6 +560,7 @@ public class TextTree {
 				tmp.getData().addLast(nl);
 				//Log.e("TREE","APPEND DUE TO NEWLINE:"  + deColorLine(tmp));
 				addLine(tmp);
+				linesadded += tmp.breaks + 1;
 				tmp = new Line();
 				break;
 			default:
@@ -621,8 +631,12 @@ public class TextTree {
 		
 		if(tmp.getData().size() > 0) {
 			addLine(tmp);
+			linesadded += tmp.breaks + 1;
 		}
 		
+		if(debugLineAdd) {
+			Log.e("TREE","ADDED " + linesadded + " LINES TO TREE");
+		}
 	}
 	
 	public void prune() {
