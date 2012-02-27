@@ -33,11 +33,14 @@ import com.happygoatstudios.bt.window.TextTree.Selection;
 import com.happygoatstudios.bt.window.TextTree.SelectionCursor;
 import com.happygoatstudios.bt.window.TextTree.Unit;
 
+import android.R;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
@@ -45,6 +48,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -77,7 +81,11 @@ import com.happygoatstudios.bt.settings.HyperSettings.LINK_MODE;
 public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener,SettingsChangedListener {
 
 	//private DrawRunner _runner = null;
-	
+	private Bitmap homeWidgetDrawable = null;
+	private Bitmap textSelectionCancelBitmap = null;
+	private Bitmap textSelectionCopyBitmap = null;
+	private Bitmap textSelectionSwapBitmap = null;
+	private Rect homeWidgetRect = new Rect();
 	private TextTree the_tree = null;
 	private TextTree buffer = null;
 	private int mMaxHeight;
@@ -137,6 +145,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	//Rect mBounds = null;
 	protected static final int MSG_UPPRIORITY = 200;
 	protected static final int MSG_NORMALPRIORITY = 201;
+	private Paint textSelectionIndicatorPaint = new Paint();
+	private Paint textSelectionIndicatorBackgroundPaint = new Paint();
+	private Paint textSelectionIndicatorCirclePaint = new Paint();
+	
 	//final static public int MSG_BUTTONDROPSTART = 100;
 	//final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
 	//final static public int MSG_SET_NEW_TEXT_INDICATOR = 106;
@@ -246,7 +258,27 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	private void init(String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
 		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
+		homeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.happygoatstudios.bt.R.drawable.homewidget);
+		textSelectionCancelBitmap = BitmapFactory.decodeResource(this.getResources(), com.happygoatstudios.bt.R.drawable.cancel_tiny);
+		textSelectionCopyBitmap = BitmapFactory.decodeResource(this.getResources(), com.happygoatstudios.bt.R.drawable.copy_tiny);
+		textSelectionSwapBitmap = BitmapFactory.decodeResource(this.getResources(), com.happygoatstudios.bt.R.drawable.swap);
 		
+		textSelectionIndicatorPaint.setStyle(Paint.Style.STROKE);
+		textSelectionIndicatorPaint.setStrokeWidth(2);
+		textSelectionIndicatorPaint.setColor(0xFFFF0000);
+		textSelectionIndicatorPaint.setAntiAlias(true);
+		
+		textSelectionIndicatorBackgroundPaint.setStyle(Paint.Style.FILL);
+		textSelectionIndicatorBackgroundPaint.setColor(0x770000FF);
+		
+		textSelectionIndicatorCirclePaint.setStyle(Paint.Style.STROKE);
+		textSelectionIndicatorCirclePaint.setStrokeWidth(2);
+		textSelectionIndicatorCirclePaint.setColor(0xFFFFFFFF);
+		DashPathEffect dpe = new DashPathEffect(new float[]{3,3}, 0);
+		
+		textSelectionIndicatorCirclePaint.setPathEffect(dpe);
+		textSelectionIndicatorCirclePaint.setAntiAlias(true);
+		//homeWidgetDrawable.setBounds(homeWidgetRect);
 		this.settings = settings;
 		this.settings.setListener(this);
 		borderPaint.setStrokeWidth(5);
@@ -518,7 +550,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public int touchInLink = -1;
 	//boolean fuckyou = false;
 	long target = 0;
-	
+	boolean homeWidgetFingerDown = false;
 	int touchStartY;
 	@Override
 	public boolean onTouchEvent(MotionEvent t) {
@@ -622,6 +654,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				} else {
 					Log.e("sfdsf","not starting text selection");
 				}
+				
+				if(homeWidgetShowing) {
+					if(homeWidgetRect.contains((int)x,(int)t.getY())) {
+						homeWidgetFingerDown = true;
+					}
+				}
 			}
 			
 			if(!increadedPriority) {
@@ -662,6 +700,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
+					//homeWidgetFingerDown = false;
+					
 				}
 				
 				if(Math.abs(diff_amount) > 5) {
@@ -707,6 +747,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				//if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
 				//}
+					
+				if(homeWidgetShowing && homeWidgetFingerDown) {
+					if(homeWidgetRect.contains((int)t.getX(),(int)t.getY())) {
+						scrollback = SCROLL_MIN;
+						homeWidgetFingerDown = false;
+						this.invalidate();
+					}
+				}
 		        
 			}
 			
@@ -1098,16 +1146,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * one_char_is_this_wide;
 										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, textSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
 									}
 								} else if(finishCol > endcol) {
 									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
 										int overshoot = endcol - workingcol + 1;
 										int overshootPixels = overshoot * one_char_is_this_wide;
 										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
-										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
+										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, textSelectionIndicatorBackgroundPaint);
 									} else {
 										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
 									}
@@ -1122,9 +1170,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * one_char_is_this_wide;
 										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, textSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
 									}
 								} else {
 									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
@@ -1144,7 +1192,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								break;
 							case 3:
 								
-								c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+								c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
 								break;
 							case 4:
 								finishCol = workingcol + ((TextTree.Text)u).bytecount;
@@ -1168,7 +1216,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
 									}
 								} else {
-									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
 								}
 								break;
 							default:
@@ -1313,6 +1361,26 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								linkColor.setTypeface(p.getTypeface());
 								linkColor.setUnderlineText(false);
 								linkColor.setColor(linkHighlightColor);
+							}
+							
+							if(doIndicator) {
+								int unitEndCol = workingcol + (((TextTree.Text)u).bytecount-1);
+								if(unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column +10) {
+									float size = p.getTextSize();
+									p.setTextSize(30);
+									int overshoot = (workingcol - selectedSelector.column);
+									int ix = 0,iy=SELECTIONINDICATOR_FONTSIZE;
+									//if(overshoot > 0) {
+										ix = (int) (selectionIndicatorHalfDimension + (overshoot*one_selection_char_is_this_wide) - 0.5*one_selection_char_is_this_wide);
+										iy = (int) (selectionIndicatorHalfDimension+(0.5*SELECTIONINDICATOR_FONTSIZE)) + (indicatorlineoffset*SELECTIONINDICATOR_FONTSIZE);
+									
+									
+									
+									mSelectionIndicatorCanvas.drawText(((TextTree.Text)u).getString(), ix, iy, p);
+									
+									p.setTextSize(size);
+								}
+								
 							}
 							c.drawText(((TextTree.Text)u).getString(),x,y,linkColor);
 							x += p.measureText(((TextTree.Text)u).getString());
@@ -1531,12 +1599,25 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	private Paint scroller_paint = new Paint();
+	private boolean homeWidgetShowing = false;
 	Rect scrollerRect = new Rect();
 	public void showScroller(Canvas c) {
 		scroller_paint.setColor(0xFFFF0000);
 		
 		if(the_tree.getBrokenLineCount() < 1) {
 			return; //no scroller to show.
+		}
+		
+		if(scrollback > SCROLL_MIN) {
+			homeWidgetShowing = true;
+			//c.save();
+			//c.translate(homeWidgetRect.left, homeWidgetRect.bottom);
+			//homeWidgetDrawable.draw(c);
+			//c.restore();
+			//homeWidgetDrawable.draw(c);
+			c.drawBitmap(homeWidgetDrawable, homeWidgetRect.left, homeWidgetRect.top, null);
+		} else {
+			homeWidgetShowing = false;
 		}
 		
 		double scrollerSize = 0.0f;
@@ -1595,14 +1676,25 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			//int scroll_from_bottom = (int) (scrollback-SCROLL_MIN);
 			
-			c.drawRect(startLeft, startTop, startRight, startBottom, scroller_paint);
-			c.drawRect(endLeft, endTop, endRight, endBottom, scroller_paint);
+			c.drawRect(startLeft, startTop-2, startRight, startBottom-2, textSelectionIndicatorPaint);
+			c.drawRect(endLeft, endTop-2, endRight, endBottom-2, textSelectionIndicatorPaint);
 			
+			int x=0,y=0;
+			if(selectedSelector == theSelection.end) {
+				x = endLeft + (endRight - endLeft)/2;
+				y = endTop + (endBottom - endTop)/2;
+			} else {
+				x = startLeft + (startRight - startLeft)/2;
+				y = startTop + (startBottom - startTop)/2;
+			}
+			
+			c.drawCircle(x, y-2, 50, textSelectionIndicatorCirclePaint);
 		}
 		
 		if(selectedSelector != null) {
 			//this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 			//c.save();
+			
 			
 			//c.clipPath(path);
 			mSelectionIndicatorCanvas.restore();
@@ -1611,7 +1703,24 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			edgePaint.setStrokeWidth(6);
 			edgePaint.setAntiAlias(true);
 			edgePaint.setColor(0xFFAA22AA);
+			
 			mSelectionIndicatorCanvas.drawPath(selectionIndicatorClipPath, edgePaint);
+			
+			//draw the cancel, start, end and copy buttons.
+			Paint cancelPaint = new Paint();
+			cancelPaint.setStyle(Paint.Style.FILL);
+			cancelPaint.setAntiAlias(true);
+			cancelPaint.setColor(0xFFFF0000);
+			int third = (selectionIndicatorHalfDimension*2)/3;
+			mSelectionIndicatorCanvas.drawBitmap(textSelectionCopyBitmap, 0,0, null);
+			mSelectionIndicatorCanvas.drawBitmap(textSelectionCancelBitmap, 0,2*third, null);
+			mSelectionIndicatorCanvas.drawBitmap(textSelectionSwapBitmap, 2*third,0, null);
+			
+			//mSelectionIndicatorCanvas.drawCircle(third/2, third/2, 15, cancelPaint);
+			//mSelectionIndicatorCanvas.drawCircle((2*third)+(third/2), third/2, 15, cancelPaint);
+			
+			//mSelectionIndicatorCanvas.drawCircle(third/2,(2*third)+(third/2) , 15, cancelPaint);
+			//mSelectionIndicatorCanvas.drawCircle((2*third)+(third/2),(2*third)+(third/2) , 15, cancelPaint);
 			
 			float left = (float) (selectionIndicatorHalfDimension-(0.5*one_selection_char_is_this_wide));
 			float top = (float)(selectionIndicatorHalfDimension-(0.5*SELECTIONINDICATOR_FONTSIZE));
@@ -2163,6 +2272,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
 			scrollback -= oldmin - SCROLL_MIN;
 		}
+		
+		homeWidgetRect.set(mWidth-homeWidgetDrawable.getWidth(),mHeight-homeWidgetDrawable.getHeight(),mWidth,mHeight);
 		
 		Float foo = new Float(0);
 		//foo.
@@ -3242,7 +3353,30 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							case CENTER:
 								Log.e("widget","widget center pressed");
 								break;
+							case COPY:
+								//actually switch.
+								if(selectedSelector == theSelection.end) {
+									selectedSelector = theSelection.start;
+								} else {
+									selectedSelector = theSelection.end;
+								}
+								//calculateWidgetPosition(selectedSelector.line,selectedSelector.column);
+								moveWidgetToSelector(selectedSelector);
+								break;
+							case EXIT:
+								//get out and don't copy.
+								v.setOnTouchListener(null);
+								theSelection.start = null;
+								theSelection.end = null;
+								theSelection = null;
+								selectedSelector = null;
+								Window.this.flushBuffer();
+								Window.this.setBufferText(false);
+								v.invalidate();
+								return true;
+								//break;
 							}
+
 							v.invalidate();
 						}
 					}
@@ -3315,10 +3449,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			selectionIndicatorVectorY -= PREF_LINESIZE;
 			//only if we run into 
 			newWidgetY = (int) (startY + selectionIndicatorVectorY);
+			if(newWidgetY + selectionIndicatorHalfDimension > this.getHeight()) {
+				selectionIndicatorVectorY = -selectionIndicatorHalfDimension;
+				newWidgetY = (int) (startY + selectionIndicatorVectorY);
+			}
 			
 		} else if ((newWidgetY - selectionIndicatorHalfDimension) < 0) {
 			selectionIndicatorVectorY += PREF_LINESIZE;
+			
 			newWidgetY = (int) (startY + selectionIndicatorVectorY);
+			if(newWidgetY - selectionIndicatorHalfDimension < 0) {
+				selectionIndicatorVectorY = +selectionIndicatorHalfDimension;
+				newWidgetY = (int) (startY + selectionIndicatorVectorY);
+			}
 		}
 		
 		widgetX = newWidgetX;
@@ -3327,6 +3470,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	private void moveWidgetToSelector(TextTree.SelectionCursor cursor) {
+		
+		int part1 = (int) (selectedSelector.line * PREF_LINESIZE + (0.5*SELECTIONINDICATOR_FONTSIZE));
+		//int part2 = (int) (scrollback);
+		int part2 = (int) (selectedSelector.line * PREF_LINESIZE - (0.5*SELECTIONINDICATOR_FONTSIZE));
+		
+		
+		if(part1 > scrollback) {
+			//calculate how much scroll to go to get to be true.
+			//int tmp = (int) (scrollback-SCROLL_MIN);
+			//int howmuch = part2 - part1;
+			scrollback = (double) part1;
+		} else if(part2 < (scrollback-SCROLL_MIN)) {
+			scrollback -= ((scrollback-SCROLL_MIN) - part2);
+		}
+		
 		int endx = (int) ((selectedSelector.column * one_char_is_this_wide) + (0.5*one_char_is_this_wide));
 		int endy = (int) ((this.getHeight() - ((selectedSelector.line * PREF_LINESIZE) + (0.5*SELECTIONINDICATOR_FONTSIZE) - (scrollback-SCROLL_MIN))));
 		//widgetX = endx;
