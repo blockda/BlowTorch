@@ -555,7 +555,7 @@ function resizer.onTouch(v,e)
 			parentView:setDimensions(wwidth,wheight)
 			
 			foldoutHeight = foldoutHeight + delta
-			--debugPrint("resizer moving:"..delta.." calculated new height:"..theight)
+			debugPrint("resizer moving:"..delta.." calculated new height:"..theight)
 			view:setDimensions(tonumber(twidth),tonumber(theight))
 			view:requestLayout()
 			parentView:requestLayout()

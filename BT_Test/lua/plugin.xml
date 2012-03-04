@@ -1,6 +1,160 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <root>
 <plugins>
+	<plugin author="Daniel Block" name="stat_mon" id="88">
+	<triggers>
+		<trigger title="statmon" pattern="%char.stats" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+			<script function="updateStat" fireWhen="always"/>
+		</trigger>
+	</triggers>
+	<windows>
+		<window name="stat_window" id="9020" script="statWindowUI">
+			<layoutGroup target="xlarge">
+				<layout orientation="landscape"
+				height="100"
+				width="400"
+				below="1010"
+				/>
+			</layoutGroup>
+		</window>
+	</windows>
+	<script name="bootstrap">
+	<![CDATA[
+		package.path = "/mnt/sdcard/BlowTorch/?.lua"
+		require("serialize")
+		
+		function updateStat(stats)
+			WindowXCallS("stat_window","updateStats",serialize(stats))
+		end
+	]]>
+	</script>
+	<script name="statWindowUI">
+	<![CDATA[
+		dofile("/mnt/sdcard/BlowTorch/statwindowui.lua")
+	]]>
+	</script>
+	</plugin>
+	<plugin author="Daniel Block" name="tick_clock" id="77">
+	<triggers>
+		<trigger title="ticker" pattern="^--&gt; TICK &lt;--.+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+			<script function="ticked" fireWhen="always"/>
+		</trigger>
+		<trigger title="timecatcher" pattern="^  \*  It is (\d*)(am|pm|Midnight|Noon).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+			<script function="timeCatcher" fireWhen="always"/>
+		</trigger>
+		<trigger title="moonSet" pattern="^You notice the (\w+) moon falling to the (west|east)\.$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+			<script function="OnMoonSet" fireWhen="always"/>
+		</trigger>
+		<trigger title="moonRise" pattern="^You see the (\w+) moon rising in the (west|east)\.$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+			<script function="OnMoonRise" fireWhen="always"/>
+		</trigger>
+
+	</triggers>
+	<windows>
+		<window name="clock_widget" id="9010" script="clockWidgetUI">
+			<layoutGroup target="xlarge">
+				<layout orientation="landscape"
+				height="100"
+				width="400"
+				alignParentTop="true"/>
+			</layoutGroup>
+		</window>
+	</windows>
+	<script name="clockWidgetUI">
+	<![CDATA[
+		dofile("/mnt/sdcard/BlowTorch/clockwidgetui.lua")
+	]]>
+	</script>
+	<script name="bootstrap">
+	<![CDATA[
+		package.path = "/mnt/sdcard/BlowTorch/?.lua"
+		require("serialize")
+		
+		function ticked()
+			debugPrint("ticked")
+			timers.grey = timers.grey + 1
+			timers.white = timers.white + 1
+			timers.black = timers.black + 1
+			if(timers.grey == 32) then
+				timers.grey = 1
+			end
+			if(timers.black == 52) then
+				timers.black = 1
+			end
+			if(timers.white == 67) then
+				timers.white = 1
+			end
+			
+			WindowXCallS("clock_widget","tickIncoming",serialize(timers))
+		end
+		
+		function timeCatcher(name,line,map)
+
+			debugPrint("TIMERTEST: "..map["2"])
+			str = ""
+			if(map["2"] ~= nil) then
+				num = 0
+				if(map["2"] == "Midnight") then
+					str = "00:00"
+					num = 0
+				elseif(map["2"] == "Noon") then
+					str = "12:00"
+					num = 12
+				elseif(map["2"] == "am") then
+					num = tonumber(map["1"])
+					str = map["1"]..":00"
+				elseif(map["2"] == "pm") then
+					num = tonumber(map["1"])
+					num = num+12
+					str = num..":00"
+				end
+				debugPrint(str)
+				WindowXCallS("clock_widget","setTimeOrdinal",num)
+			end
+			
+		end
+		
+		function OnMoonRise(name,line,map)
+			moon = map["1"]
+			debugPrint(moon.." rising.")
+			if(moon == "grey") then
+				timers.grey = 23
+				greyCatch = 1
+			elseif(moon == "black") then
+				timers.black = 38
+				blackCatch = 1
+			else
+				timers.white = 49
+				whiteCatch = 1
+			end
+		end
+		
+		function OnMoonSet(name,line,map)
+			moon = map["1"]
+			debugPrint(moon.." setting.")
+			if(moon == "grey") then
+				timers.grey = 0
+				greyCatch = 1
+			elseif(moon == "black") then
+				timers.black = 0
+				blackCatch = 1
+			else
+				timers.white = 0
+				whiteCatch = 1
+			end
+		end
+		
+		timers = {}
+		timers.grey = -100
+		timers.white = -100
+		timers.black = -100
+		
+		greyCatch = 0
+		whiteCatch = 0
+		blackCatch = 0
+	]]>
+	</script>
+	</plugin>
 	<plugin author="Daniel Block" name="vitals_server" id="66">
 		<triggers>
 			<trigger title="vitals" pattern="%char.vitals" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
@@ -25,9 +179,7 @@
 					<layout orientation="landscape"
 							height="100"
 							width="400"
-							alignParentBottom="true"
-							alignParentRight="true"
-							alignParentLeft="true"/>
+							below="6022"/>
 				</layoutGroup>
 			</window>
 		</windows>
@@ -165,7 +317,7 @@
 	</plugin>
 	<plugin author="Daniel Block" name="map_miniwindow" id="30">
 		<triggers>
-			<trigger title="map_capture" pattern="^.*$" enabled="false" interpretLiteral="true" fireOnce="false">
+			<trigger title="map_capture" pattern="^(\s*).*$" enabled="false" interpretLiteral="true" fireOnce="false">
 				<gag retarget="map_window"/>
 			</trigger>
 			<trigger title="map_capture_start" pattern="^&lt;MAPSTART&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
@@ -178,13 +330,24 @@
 			</trigger>
 		</triggers>
 		<windows>
-			<window name="map_window" id="6010">
+			<window name="map_window" id="6020" script="mapUIStartup">
 				<layoutGroup target="xlarge">
-					<layout orientation="landscape" alignParentRight="true" height="400" width="400" above="10"/>
-					<layout orientation="portrait" alignParentRight="true" height="400" width="400" above="10"/>
+					<layout orientation="landscape" alignParentRight="true" height="400" width="400" below="6021"/>
+					<layout orientation="portrait" alignParentRight="true" height="400" width="400" below="6021"/>
 				</layoutGroup>
 			</window>
 		</windows>
+		<script name="mapUIStartup">
+			<![CDATA[
+			parent = view:getParent()
+			parent:removeView(view)
+			scroller = parent:findViewById(6010)
+			holder = scroller:getChildAt(0)
+			holder:addView(view)
+			view:setTextSelectionEnabled(false)
+			view:setScrollingEnabled(false)
+			]]>
+		</script>
 		<script name="bootstrap">
 			<![CDATA[
 function startMapCapture() 

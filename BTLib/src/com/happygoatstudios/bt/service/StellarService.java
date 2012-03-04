@@ -3266,7 +3266,7 @@ public class StellarService extends Service {
 			return tmp;
 		}
 
-		public List getWindowTokens() throws RemoteException {
+		public WindowToken[] getWindowTokens() throws RemoteException {
 			if(connections == null || connections.size() == 0) return null;
 			return connections.get(connectionClutch).getWindows();
 		}
@@ -3487,6 +3487,12 @@ public class StellarService extends Service {
 		public void updatePluginStringSetting(String plugin, String key,
 				String value) throws RemoteException {
 			connections.get(connectionClutch).updatePluginStringSetting(plugin, key, value);
+		}
+
+		@Override
+		public void updateWindowBufferMaxValue(String plugin, String window,
+				int amount) throws RemoteException {
+			connections.get(connectionClutch).updateWindowBufferMaxValue(plugin,window,amount);
 		}
 
 	};

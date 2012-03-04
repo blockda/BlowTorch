@@ -17,12 +17,12 @@ import android.widget.RelativeLayout.LayoutParams;
 public class ColorPickerDialog extends Dialog {
 
     public interface OnColorChangedListener {
-        void colorChanged(int color,ButtonEditorDialog.COLOR_FIELDS which);
+        void colorChanged(int color);
     }
 
     private OnColorChangedListener mListener;
     private int mInitialColor;
-    private ButtonEditorDialog.COLOR_FIELDS whichfield;
+    //private ButtonEditorDialog.COLOR_FIELDS whichfield;
 
     private static class ColorPickerView extends View implements SeekBar.OnSeekBarChangeListener {
         private Paint mPaint;
@@ -30,14 +30,14 @@ public class ColorPickerDialog extends Dialog {
         private Paint mCenterIndicator;
         private int[] mColors;
         private OnColorChangedListener mListener;
-        private ButtonEditorDialog.COLOR_FIELDS thefield;
+        //private ButtonEditorDialog.COLOR_FIELDS thefield;
         private Path circle_path;
         private Paint mCenterCircle;
 
-        ColorPickerView(Context c, OnColorChangedListener l, int color,ButtonEditorDialog.COLOR_FIELDS usethisfield) {
+        ColorPickerView(Context c, OnColorChangedListener l, int color) {
             super(c);
             mListener = l;
-            thefield = usethisfield;
+           // thefield = usethisfield;
             int alphapart = (0xFF000000&color);
             mColors = new int[] {
                 (alphapart|0x00FF0000), (alphapart|0x00FF00FF), (alphapart|0x000000FF), (alphapart|0x0000FFFF), (alphapart|0x0000FF00),
@@ -204,7 +204,7 @@ public class ColorPickerDialog extends Dialog {
                 case MotionEvent.ACTION_UP:
                     if (mTrackingCenter) {
                         if (inCenter) {
-                            mListener.colorChanged(mCenterPaint.getColor(),thefield);
+                            mListener.colorChanged(mCenterPaint.getColor());
                         }
                         mTrackingCenter = false;    // so we draw w/o halo
                         invalidate();
@@ -263,7 +263,7 @@ public class ColorPickerDialog extends Dialog {
 
     public ColorPickerDialog(Context context,
                              OnColorChangedListener listener,
-                             int initialColor,ButtonEditorDialog.COLOR_FIELDS fieldtouse) {
+                             int initialColor) {
         super(context);
 
         
@@ -271,15 +271,30 @@ public class ColorPickerDialog extends Dialog {
         
         mListener = listener;
         mInitialColor = initialColor;
-        whichfield = fieldtouse;
+        //whichfield = fieldtouse;
     }
+    
+    public ColorPickerDialog(Context context,
+            OnColorChangedListener listener,
+            double initialColor) {
+    		super(context);
+
+
+
+
+    		mListener = listener;
+    		mInitialColor = (int)initialColor;
+    		//whichfield = fieldtouse;
+    }
+    
+    
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         OnColorChangedListener l = new OnColorChangedListener() {
-            public void colorChanged(int color,ButtonEditorDialog.COLOR_FIELDS whichfield) {
-                mListener.colorChanged(color,whichfield);
+            public void colorChanged(int color) {
+                mListener.colorChanged(color);
                 dismiss();
             }
         };
@@ -314,7 +329,7 @@ public class ColorPickerDialog extends Dialog {
         
 
         
-        ColorPickerView view = new ColorPickerView(getContext(), l, mInitialColor,whichfield);
+        ColorPickerView view = new ColorPickerView(getContext(), l, mInitialColor);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
         params.addRule(RelativeLayout.BELOW,0x01);
         params.width = LayoutParams.WRAP_CONTENT;

@@ -159,6 +159,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_INITIALIZEWINDOWS = 890;
 	public static final int MESSAGE_ADDOPTIONCALLBACK = 891;
 	public static final int MESSAGE_PLUGINXCALLS = 892;
+	public static final int MESSAGE_WINDOWBUFFERMAXCHANGED = 893;
 	
 	//private TextTree tree = new TextTree();
 
@@ -199,7 +200,7 @@ public class MainWindow extends Activity {
 	Boolean settingsLoaded = false; //synchronize or try to mitigate failures of writing button data, or failures to read data
 	Boolean serviceConnected = false;
 	Boolean isResumed = false;
-	List<WindowToken> mWindows = null;
+	WindowToken[] mWindows = null;
 	//VitalsView vitals = null;
 	boolean landscape = false;
 	ArrayList<ScriptOptionCallback> scriptCallbacks = new ArrayList<ScriptOptionCallback>();
@@ -475,6 +476,17 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_WINDOWBUFFERMAXCHANGED:
+					String pluginl = msg.getData().getString("PLUGIN");
+					String window = msg.getData().getString("WINDOW");
+					int amount = msg.arg1;
+					try {
+						service.updateWindowBufferMaxValue(pluginl,window,amount);
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					break;
 				case MESSAGE_PLUGINXCALLS:
 					//Map map = (Map)msg.obj;
 					String plugin = msg.getData().getString("PLUGIN");
@@ -2416,11 +2428,11 @@ public class MainWindow extends Activity {
 			e.printStackTrace();
 		}
 		
-		if(mWindows == null || mWindows.size() == 0) {
+		if(mWindows == null || mWindows.length == 0) {
 			//Exception e = new Exception("No windows to show.");
 			//throw new RuntimeException(e);
 			synchronized(this) {
-				while(mWindows == null || mWindows.size() == 0) {
+				while(mWindows == null || mWindows.length == 0) {
 					try {
 						this.wait(300);
 					} catch (InterruptedException e) {
@@ -2432,7 +2444,7 @@ public class MainWindow extends Activity {
 						try {
 							mWindows = service.getWindowTokens();
 							if(mWindows != null) {
-								if(mWindows.size() > 0) {
+								if(mWindows.length > 0) {
 									done = true;
 								}
 							}
@@ -2443,7 +2455,7 @@ public class MainWindow extends Activity {
 					//}
 				}
 			}
-		} else {
+		} 
 			//initialize windows.
 			for(Object x : mWindows) {
 				WindowToken w = null;
@@ -2457,7 +2469,7 @@ public class MainWindow extends Activity {
 				
 			}
 			//mRootLayout.requestLayout();
-		}
+		//}
 	}
 	
 	private void initWindow(WindowToken w) {

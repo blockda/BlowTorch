@@ -18,6 +18,7 @@ import com.happygoatstudios.bt.service.plugin.settings.EncodingOption;
 import com.happygoatstudios.bt.service.plugin.settings.IntegerOption;
 import com.happygoatstudios.bt.service.plugin.settings.ColorOption;
 import com.happygoatstudios.bt.service.plugin.settings.FileOption;
+import com.happygoatstudios.bt.service.WindowToken;
 
 
 interface IConnectionBinder {
@@ -183,7 +184,7 @@ interface IConnectionBinder {
 	boolean isButtonSetLockedMoveButtons(String key);
 	boolean isButtonSetLockedNewButtons(String key);
 	boolean isButtonSetLockedEditButtons(String key);
-	List getWindowTokens();
+	WindowToken[] getWindowTokens();
 	void registerWindowCallback(String name,IWindowCallback callback);
 	void unregisterWindowCallback(String name,IWindowCallback callback);
 	String getScript(String plugin,String name);
@@ -201,4 +202,5 @@ interface IConnectionBinder {
 	void updatePluginFloatSetting(String plugin,String key,float value);
 	void updateStringSetting(String key,String value);
 	void updatePluginStringSetting(String plugin,String key,String value);
+	void updateWindowBufferMaxValue(String plugin,String window,int amount);
 }
