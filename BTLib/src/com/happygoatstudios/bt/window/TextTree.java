@@ -309,7 +309,7 @@ public class TextTree {
 			}
 		}
 		
-		
+		this.prune();
 	}
 	
 	static enum RUN {
@@ -637,6 +637,7 @@ public class TextTree {
 		if(debugLineAdd) {
 			Log.e("TREE","ADDED " + linesadded + " LINES TO TREE");
 		}
+		prune();
 	}
 	
 	public void prune() {
@@ -692,10 +693,11 @@ public class TextTree {
 	Line pSend;
 	
 	public class Line {
-		protected int totalchars;
+		//protected int totalchars;
 		protected int charcount;
 		protected int breaks;
 		protected int bytes;
+		//protected int viswidth;
 		private ListIterator<Unit> theIterator = null;
 		
 		public int getBreaks() {
@@ -717,7 +719,13 @@ public class TextTree {
 			this.breaks = 0;
 			this.charcount = 0;
 			this.bytes = 0;
+			//this.viswidth = 0;
 			
+			//boolean broken = false;
+			//boolean visfound = false;
+			//Break lastBreak = null;
+			//int backlogvis = 0;
+			//int tmpvis = 0;
 			
 			int charsinline = 0; //tracker for how many characters are in the line
 			//int nonWhiteSpaceRun = 0; //tracker for how many characters have accumulated without whitespace
@@ -725,9 +733,11 @@ public class TextTree {
 			
 			theIterator = mData.listIterator(0);
 			stripBreaks();
+			//Counter counter = new Counter();
 			while(theIterator.hasPrevious()) {
 				theIterator.previous();
 			}
+			
 			while(theIterator.hasNext()) {
 			//while()
 			
@@ -738,12 +748,16 @@ public class TextTree {
 					if(wordWrap) {
 						whiteSpaceFound = true;
 					}
+					//this.charcount += u.charcount;
 				}
+				
 				if(u instanceof Text) {
 					//update charsinline
 					charsinline += ((Text)u).charcount;
 					this.bytes += ((Text)u).charcount;
+					this.charcount += u.charcount;
 				}
+				
 				if(u instanceof Tab || u instanceof NewLine || u instanceof Color) {
 					this.bytes += u.reportSize();
 				}
@@ -763,13 +777,18 @@ public class TextTree {
 								Unit tmp = theIterator.previous();
 								if(tmp instanceof WhiteSpace) {
 									theIterator.next(); //get on the right side of the unit.
-									theIterator.add(new Break());
+									Break b = new Break();
+									theIterator.add(b);
 									this.breaks += 1;
 									found = true;
-								}
+									
+								} 
+								
 							}
+							
 							whiteSpaceFound = false;
 							charsinline = 0;
+						
 						} else {
 							//just break here and continue
 							//if(amount > u.charcount) {
@@ -793,6 +812,8 @@ public class TextTree {
 				}
 				
 			}
+			
+			
 			
 			while(theIterator.hasPrevious()) {
 				theIterator.previous();
@@ -929,15 +950,15 @@ public class TextTree {
 			mData = l;
 			//need to parse this to make sure we report the correct data.
 			charcount = 0;
-			totalchars = 0;
+			//totalchars = 0;
 			breaks = 0;
 			for(Unit u : mData) {
 				if(u instanceof Text) {
 					charcount += u.charcount;
-					totalchars += u.charcount;
+					///totalchars += u.charcount;
 				}
 				if(u instanceof Color) {
-					totalchars += u.charcount;
+					//totalchars += u.charcount;
 				}
 			}
 			
@@ -1072,6 +1093,17 @@ public class TextTree {
 		}
 	}
 	
+	/*public class Counter extends Unit {
+		public int count = 0;
+		public Counter() {
+			
+		}
+		
+		public int reportSize() {
+			return 0;
+		}
+	}*/
+	
 	
 	public class Color extends Unit {
 		protected byte[] bin;
@@ -1159,7 +1191,10 @@ public class TextTree {
 	}
 	
 	public class Break extends Unit {
-		
+		public int viswidth = 0;
+		public Break() {
+			
+		}
 		public int reportSize() {
 			return 0;
 		}
@@ -1217,7 +1252,7 @@ public class TextTree {
 			}
 			
 			if(u instanceof NewLine) {
-				stripColor.append("\n");
+				//stripColor.append("\n");
 			}
 			
 		}

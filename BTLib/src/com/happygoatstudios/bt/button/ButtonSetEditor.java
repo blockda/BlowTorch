@@ -102,7 +102,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		normalColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getPrimaryColor(),COLOR_FIELDS.COLOR_MAIN);
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getPrimaryColor());
 				diag.show();
 			}
 		});
@@ -110,7 +110,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		focusColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getSelectedColor(),COLOR_FIELDS.COLOR_SELECTED);
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getSelectedColor());
 				diag.show();
 			}
 		});
@@ -118,7 +118,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		labelColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getLabelColor(),COLOR_FIELDS.COLOR_LABEL);
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getLabelColor());
 				diag.show();
 			}
 		});
@@ -126,7 +126,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		flipColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getFlipColor(),COLOR_FIELDS.COLOR_FLIPPED);
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getFlipColor());
 				diag.show();
 			}
 		});
@@ -134,7 +134,7 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		flipLabelColor.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getFlipLabelColor(),COLOR_FIELDS.COLOR_FLIPLABEL);
+				ColorPickerDialog diag = new ColorPickerDialog(ButtonSetEditor.this.getContext(),ButtonSetEditor.this,newsettings.getFlipLabelColor());
 				diag.show();
 			}
 		});
@@ -226,7 +226,8 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		
 	}
 
-	public void colorChanged(int color, COLOR_FIELDS which) {
+	public void colorChanged(int color) {
+		COLOR_FIELDS which = COLOR_FIELDS.COLOR_MAIN;
 		switch(which) {
 		case COLOR_MAIN:
 			newsettings.setPrimaryColor(color);

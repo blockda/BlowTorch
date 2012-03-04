@@ -18,10 +18,10 @@ public class WindowTokenElementListener implements ElementListener {
 	}
 	
 	public void start(Attributes a) {
-		current_window.setName(a.getValue("","name"));
+		current_window.setName((a.getValue("","name") == null) ? "mainDisplay" : a.getValue("","name"));
 		current_window.setBufferText((a.getValue("","bufferText") == null) ? false : (a.getValue("","bufferText").equals("true")) ? true : false);
-		current_window.setId(Integer.parseInt(a.getValue("","id")));
-		current_window.setScriptName(a.getValue("","script"));
+		current_window.setId((a.getValue("","id") == null) ? 0 : Integer.parseInt(a.getValue("","id")));
+		current_window.setScriptName((a.getValue("","script") == null) ? "" : a.getValue("","script"));
 		//current_window.
 	}
 

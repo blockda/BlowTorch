@@ -1236,4 +1236,18 @@ public class Plugin {
 	public void setEncoding(String encoding) {
 		this.mEncoding = encoding;
 	}
+
+	public void doBackgroundStartup() {
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal("OnBackgroundStartup");
+		if(L.getLuaObject(-1).isFunction()) {
+			int ret = L.pcall(0, 1, -2);
+			if(ret != 0) {
+				Log.e("LUA","Error in OnBackgroundStartup:"+L.getLuaObject(-1).getString());
+			}
+		}
+	}
 }
