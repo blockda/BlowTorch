@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <root>
-  <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" />
+  <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" script="uiBootStrap" id="6666"/>
   <service processSemi="true" throttle="false" processPeriod="true" keepWifiActive="true" localEcho="true" vibrateOnBell="true" notifyOnBell="false" displayOnBell="false" />
   <aliases>
   	<alias pre="fosfsdf" post="skfdsdf"/>
@@ -39,6 +39,11 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   </buttonsets>
   <triggers />
   <timers />
+  <script name="uiBootStrap">
+  <![CDATA[
+  	dofile("/mnt/sdcard/BlowTorch/uibootstrap.lua")
+  ]]>
+  </script>
   <plugins>
   	 <link file="plugin.xml"/>
   </plugins>

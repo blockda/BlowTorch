@@ -13,6 +13,7 @@ import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.alias.AliasParser;
 import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.WindowToken;
+import com.happygoatstudios.bt.service.WindowTokenParser;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.settings.HyperSettings;
@@ -43,13 +44,13 @@ public class ConnectionSetttingsParser extends PluginParser {
 	//overrided for awesome sake.
 	protected void attatchListeners(RootElement root) {
 		Element window = root.getChild("window");
-		window.setEndElementListener(new EndElementListener() {
+		/*window.setEndElementListener(new EndElementListener() {
 
 			public void end() {
 				Log.e("XMLPARSE","successfuly encountered a window element.");
 			}
 			
-		});
+		});*/
 		
 		//Element aliases = root.getChild(BasePluginParser.TAG_ALIASES);
 		//Element triggers = root.getChild(BasePluginParser.TAG_TRIGGERS);
@@ -66,7 +67,7 @@ public class ConnectionSetttingsParser extends PluginParser {
 		TriggerParser.registerListeners(root, GLOBAL_HANDLER, new TriggerData(), current_trigger, current_timer);
 		AliasParser.registerListeners(root, GLOBAL_HANDLER, current_alias);
 		TimerParser.registerListeners(root, GLOBAL_HANDLER, new TimerData(), current_trigger, current_timer);
-		
+		WindowTokenParser.registerListeners(window, current_window, GLOBAL_HANDLER);
 		script.setTextElementListener(new TextElementListener() {
 
 			public void start(Attributes a) {
@@ -138,7 +139,7 @@ public class ConnectionSetttingsParser extends PluginParser {
 		}
 		
 		public void addWindow(String name, WindowToken w) {
-			
+			settings.getSettings().getWindows().put(w.getName(), w);
 		}
 		
 	}

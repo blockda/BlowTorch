@@ -61,6 +61,7 @@ import android.text.ClipboardManager;
 import android.util.AttributeSet;
 import android.util.Log;
 //import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -565,6 +566,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//long now = System.currentTimeMillis();
 		//if(now < target) {
 			//normal
+		if(!scrollingEnabled) {
+			return false;
+		}
 		//	return true;
 		//}
 		//target = now + 1000;
@@ -913,10 +917,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 		}
 		
-		if(mName != null && mName.equals("map_window")) {
-			long xtmp = 10;
-			xtmp += System.currentTimeMillis();
-		}
+		//if(mName != null && mName.equals("map_window")) {
+		//	long xtmp = 10;
+		//	xtmp += System.currentTimeMillis();
+		//}
 		
 		if(the_tree.getBrokenLineCount() != 0) {
 			if(linkColor == null) {
@@ -968,7 +972,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
 				
 				y = ((PREF_LINESIZE * CALCULATED_LINESINWINDOW) - this.getHeight()) - PREF_LINESIZE;
-				Log.e("STARTY","STARTY IS:"+y);
+				//Log.e("STARTY","STARTY IS:"+y);
 			}
 			
 			
@@ -1042,7 +1046,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				Line l = screenIt.next();
 				back++;
-				
+
 				for(Unit u : l.getData()) {
 					if(u instanceof TextTree.Color) {
 						xterm256Color = false;
@@ -1094,8 +1098,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			//try {
 			while(!stop && screenIt.hasPrevious()) {
 				//int index = screenIt.previousIndex();
+				//boolean started = false;
 				Line l = screenIt.previous();
-				
+				String tmpstr = TextTree.deColorLine(l).toString();
+				/*if(mName.equals("map_window")) {
+					Log.e("map","map window line: "+tmpstr+"|"+l.viswidth+" calc:"+CALCULATED_ROWSINWINDOW);
+				}
+				if(l.viswidth <= CALCULATED_ROWSINWINDOW) {
+					//center justify.
+
+					int amount = one_char_is_this_wide*l.charcount;
+					x = (float) ((mWidth/2.0)-(amount/2.0));
+				}*/
 				//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
 				//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
 				unitIterator = l.getIterator();
@@ -1109,7 +1123,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					
 					linemode = 3;
 				} else if(endline == workingline) {
-					Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
+					//Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
 					linemode = 4;
 					
 				}
@@ -1205,7 +1219,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 //									} else {
 //										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
 //									}
-								Log.e("ACEFJSAf","x:"+x+" y:"+y +" text:"+((TextTree.Text)u).getString()+"|" + " finishCol="+finishCol+" workingCol="+workingcol + " endcol="+endcol);
+								//Log.e("ACEFJSAf","x:"+x+" y:"+y +" text:"+((TextTree.Text)u).getString()+"|" + " finishCol="+finishCol+" workingCol="+workingcol + " endcol="+endcol);
 								if(finishCol >= endcol) {
 									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
 										int overshoot = endcol - workingcol + 1;
@@ -1480,7 +1494,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								
 								linemode = 3;
 							} else if(endline == workingline) {
-								Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
+								//Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
 								linemode = 4;
 								
 							} else {
@@ -1929,7 +1943,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						int lines = (int) ((new_max - old_max)/PREF_LINESIZE);
 						
 						scrollback += new_max - old_max;
-						Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
+						//Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
 						
 					} else {
 						scrollback = SCROLL_MIN;
@@ -2278,7 +2292,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		Float foo = new Float(0);
 		//foo.
 		
-		if(L == null) return;
+		if(L == null || !hasOnSizeChanged) return;
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
@@ -2290,12 +2304,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			L.pushString(Integer.toString(oldh));
 			int ret = L.pcall(4, 1, -6);
 			if(ret != 0) {
-				Log.e("LUAWINDOW","Window("+mName+"): " + L.getLuaObject(-1).getString());
+				Log.e("LUAWINDOW","Window("+mName+") OnSizeChangedError: " + L.getLuaObject(-1).getString());
 			}
 		} else {
 			//Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
+			hasOnSizeChanged = false;
 		}
 	}
+	boolean hasOnSizeChanged = true;
 	private void pushTable(String key,Map<String,Object> map) {
 		/*if(!key.equals("")) {
 			L.pushString(key);
@@ -2410,7 +2426,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(ret != 0) {
 			Log.e("LUAWINDOW","Error Loading Script: "+L.getLuaObject(L.getTop()).getString());
 		} else {
-			Log.e("LUAWINDOW","Loaded script body for: " + mName);
+			//Log.e("LUAWINDOW","Loaded script body for: " + mName);
 		}
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
@@ -2422,7 +2438,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			if(tmp != 0) {
 				Log.e("LUAWINDOW","Calling OnCreate: "+L.getLuaObject(-1).getString());
 			} else {
-				Log.e("LUAWINDOW","OnCreate Success!");
+				//Log.e("LUAWINDOW","OnCreate Success!");
 			}
 		}
 	}
@@ -2571,7 +2587,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 		@Override
 		public int execute() throws LuaException {
-			int id = (int)this.getParam(2).getNumber();
+			int id = Integer.parseInt(this.getParam(2).getString());
 			//String callback = this.getParam(3).getString();
 			//callScheduleCallback(id,callback);
 			callbackHandler.removeMessages(id);
@@ -2840,6 +2856,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				break;
 			case buffer_size:
 				the_tree.setMaxLines((Integer)o.getValue());
+				Message msg = mainHandler.obtainMessage(MainWindow.MESSAGE_WINDOWBUFFERMAXCHANGED);
+				msg.arg1 = (Integer)o.getValue();
+				msg.getData().putString("PLUGIN", this.mOwner);
+				msg.getData().putString("WINDOW", mName);
+				mainHandler.sendMessage(msg);
 				break;
 			case font_path:
 				PREF_FONT = loadFontFromName((String)o.getValue());
@@ -3501,6 +3522,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private float selectionIndicatorVectorY = 0;
 	
 	private boolean selectionFingerDown = false;
+	private boolean scrollingEnabled = true;
 
 	public void shutdown() {
 		if(L == null) return;
@@ -3619,12 +3641,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		this.textSelectionEnabled = textSelectionEnabled;
 		Log.e("sfdsf","setting text selection enabled="+textSelectionEnabled);
 	}
+	
+	public void setScrollingEnabled(boolean scrollingEnabled) {
+		this.scrollingEnabled  = scrollingEnabled;
+	}
+	
+	public boolean isScrollingEnabled() {
+		return this.scrollingEnabled;
+	}
 
 	private int scrollRepeatRateStep = 1;
 	private int scrollRepeatRateInitial = 300;
 	private int scrollRepeatRate = scrollRepeatRateInitial;
 	private int scrollRepeatRateMin = 60;
 	
-	
+	public int gravity = Gravity.LEFT;
 }
 

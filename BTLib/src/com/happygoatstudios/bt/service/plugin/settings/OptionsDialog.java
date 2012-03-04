@@ -436,12 +436,12 @@ public class OptionsDialog extends Dialog {
 		public void onClick(View v) {
 			option = (ColorOption) v.getTag();
 			
-			ColorPickerDialog dialog = new ColorPickerDialog(OptionsDialog.this.getContext(),this,(Integer)option.getValue(),COLOR_FIELDS.COLOR_FLIPLABEL);
+			ColorPickerDialog dialog = new ColorPickerDialog(OptionsDialog.this.getContext(),this,(Integer)option.getValue());
 			dialog.show();
 		}
 
 		@Override
-		public void colorChanged(int color, COLOR_FIELDS which) {
+		public void colorChanged(int color) {
 			option.setValue(color);
 			widget.setBackgroundColor(color);
 			widget.invalidate();

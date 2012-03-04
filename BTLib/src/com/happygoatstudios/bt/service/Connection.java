@@ -350,14 +350,8 @@ public class Connection implements SettingsChangedListener {
 		mWindows = new ArrayList<WindowToken>();
 		
 		//WindowToken token = new WindowToken(MAIN_WINDOW,0,177,880,500);
-		WindowToken token = new WindowToken(MAIN_WINDOW,null,null);
-		//token.layouts.clear();
-		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-		LayoutGroup g = new LayoutGroup();
-		g.type = LayoutGroup.LAYOUT_TYPE.NORMAL;
-		g.setLandscapeParams(p);
-		g.setPortraitParams(p);
-		mWindows.add(token);
+		//if(the_settings.)
+
 		
 		/*WindowToken add = new WindowToken("chats",0,0,1280,177);
 		try {
@@ -381,6 +375,26 @@ public class Connection implements SettingsChangedListener {
 		loadPlugins();
 		
 		loaded = true;
+		
+		//fish out the window.
+		if(the_settings.getSettings().getWindows().size() < 1) {
+			WindowToken token = new WindowToken(MAIN_WINDOW,null,null);
+			//token.layouts.clear();
+			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+			LayoutGroup g = new LayoutGroup();
+			g.type = LayoutGroup.LAYOUT_TYPE.NORMAL;
+			g.setLandscapeParams(p);
+			g.setPortraitParams(p);
+			mWindows.add(0,token);
+		} else {
+			//mWindows.add
+			mWindows.add(0,the_settings.getSettings().getWindows().get(MAIN_WINDOW));
+		}
+		
+		the_settings.doBackgroundStartup();
+		for(Plugin pl : plugins) {
+			pl.doBackgroundStartup();
+		}
 		
 		for(Plugin pl : plugins) {
 			pl.buildAliases();
@@ -421,8 +435,8 @@ public class Connection implements SettingsChangedListener {
 		sg.addOption(fullscreen);
 
 		//SettingsGroup window = token.getSettings();
-		token.getSettings().setListener(new WindowSettingsChangedListener(token.getName()));
-		sg.addOption(token.getSettings());
+		mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
+		sg.addOption(mWindows.get(0).getSettings());
 		
 		SettingsGroup input = new SettingsGroup();
 		input.setTitle("Input");
@@ -619,6 +633,7 @@ public class Connection implements SettingsChangedListener {
 				mWindows.remove(mWindows.size()-1);
 			}
 		} //else {
+		if(mWindows.size() > 0) {
 		WindowToken token = mWindows.get(0);
 		
 		token.layouts.clear();
@@ -627,6 +642,7 @@ public class Connection implements SettingsChangedListener {
 		g.type = LayoutGroup.LAYOUT_TYPE.NORMAL;
 		g.setLandscapeParams(params);
 		g.setPortraitParams(params);
+		}
 		//}
 		for(Plugin p : plugins) {
 			p.shutdown();
@@ -1381,9 +1397,11 @@ public class Connection implements SettingsChangedListener {
 	
 	ArrayList<WindowToken> mWindows;
 	
-	public List<WindowToken> getWindows() {
+	public WindowToken[] getWindows() {
 		if(loaded) {
-			return mWindows;
+			WindowToken[] tmp = new WindowToken[mWindows.size()];
+			tmp = mWindows.toArray(tmp);
+			return tmp;
 		} else {
 			return null;
 		}
@@ -1399,7 +1417,17 @@ public class Connection implements SettingsChangedListener {
 				}
 			}
 		}
-		return "";
+		
+		//if we are here, then it means the main window callback has attempted to load a script.
+		//if(the_settings.getSettings().getName().equals(plugin)) {
+			if(the_settings.getSettings().getScripts().containsKey(name)) {
+				return the_settings.getSettings().getScripts().get(name);
+			} else {
+				return "";
+			}
+			
+		//}
+		//return "";
 	}
 
 	public void executeFunctionCallback(int id, String callback, String args) {
@@ -2102,5 +2130,15 @@ public class Connection implements SettingsChangedListener {
 			//throw new RuntimeException(e);
 			handler.sendEmptyMessage(MESSAGE_DISCONNECTED);
 		}
+	}
+
+	public void updateWindowBufferMaxValue(String plugin, String window,
+			int amount) {
+		for(WindowToken w : mWindows) {
+			if(w.getName().equals(window)) {
+				//WindowToken w = mWindows.get(0);
+				w.setBufferSize(amount);
+			}
+		} 
 	}
 }
