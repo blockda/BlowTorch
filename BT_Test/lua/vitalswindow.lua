@@ -365,10 +365,17 @@ end
 R = luajava.bindClass("com.happygoatstudios.bt.R$id")
 --modify the text input bar layout to make the bar appear above the vitals window
 rootView = view:getParentView()
-inputbar = rootView:findViewById(10)
-inputbarParams = inputbar:getLayoutParams()
-inputbarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,0) --set this rule to false
-inputbarParams:addRule(RelativeLayout.ABOVE,view:getId())
+--inputbar = rootView:findViewById(10)
+--inputbarParams = inputbar:getLayoutParams()
+--inputbarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,0) --set this rule to false
+--inputbarParams:addRule(RelativeLayout.ABOVE,view:getId())
+
+scroller = rootView:findViewById(6010)
+rootView:removeView(view)
+
+holder = scroller:getChildAt(0)
+holder:addView(view)
+
 --inputbar:requestLayout()
 
 

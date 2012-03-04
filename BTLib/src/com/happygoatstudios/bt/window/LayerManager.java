@@ -24,7 +24,7 @@ import com.happygoatstudios.bt.service.WindowToken;
 
 public class LayerManager {
 
-	List<WindowToken> mWindows = null;
+	WindowToken[] mWindows = null;
 	Context mContext = null;
 	IConnectionBinder mService = null;
 	
@@ -73,7 +73,7 @@ public class LayerManager {
 						try {
 							mWindows = mService.getWindowTokens();
 							if(mWindows != null) {
-								if(mWindows.size() > 0) {
+								if(mWindows.length > 0) {
 									done = true;
 								}
 							}

@@ -439,7 +439,7 @@ public class WindowToken implements Parcelable {
 			p.writeByteArray(buffer.dumpToBytes(true));
 		} else {
 			p.writeInt(0);
-			Log.e("PARCEL","WINDOWTOKEN DUMPING: " + buffer.getBrokenLineCount() + " lines.");
+			Log.e("PARCEL","WINDOWTOKEN("+name+") DUMPING: " + buffer.getLines().size() + " lines.");
 			p.writeByteArray(buffer.dumpToBytes(true));
 		}
 		
@@ -643,6 +643,11 @@ public class WindowToken implements Parcelable {
 
 	public void setSettings(SettingsGroup settings) {
 		this.settings = settings;
+	}
+
+	public void setBufferSize(int amount) {
+		this.buffer.setMaxLines(amount);
+		this.buffer.prune();
 	}
 	
 

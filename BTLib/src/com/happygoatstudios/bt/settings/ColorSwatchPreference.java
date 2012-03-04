@@ -63,7 +63,7 @@ public class ColorSwatchPreference extends Preference implements ColorPickerDial
 			//@Override
 			public void onClick(View v) {
 				//
-				ColorPickerDialog d = new ColorPickerDialog(v.getContext(), ColorSwatchPreference.this, colorValue, COLOR_FIELDS.COLOR_MAIN);
+				ColorPickerDialog d = new ColorPickerDialog(v.getContext(), ColorSwatchPreference.this, colorValue);
 				d.show();
 			}
 		});
@@ -73,7 +73,7 @@ public class ColorSwatchPreference extends Preference implements ColorPickerDial
 	}
 
 	//@Override
-	public void colorChanged(int color, COLOR_FIELDS which) {
+	public void colorChanged(int color) {
 
 		theView.setBackgroundColor(color);
 		colorValue = color;
