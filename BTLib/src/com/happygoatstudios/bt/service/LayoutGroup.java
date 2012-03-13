@@ -5,10 +5,10 @@ import android.widget.RelativeLayout;
 public class LayoutGroup {
 	
 	public enum LAYOUT_TYPE {
-		SMALL,
-		NORMAL,
-		LARGE,
-		XLARGE
+		small,
+		normal,
+		large,
+		xlarge
 	}
 	
 	LAYOUT_TYPE type;

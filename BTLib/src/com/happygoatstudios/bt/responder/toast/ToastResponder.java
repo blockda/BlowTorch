@@ -83,15 +83,15 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int start,int end,String matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name,String encoding) {
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
-				return;
+				return false;
 			}
 		} else {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN  || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
-				return;
+				return false;
 			}
 		}
 		
@@ -100,6 +100,8 @@ public class ToastResponder extends TriggerResponder implements Parcelable {
 		float density = c.getResources().getDisplayMetrics().density;
 		t.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, (int) (50*density));
 		t.show();
+		
+		return false;
 	}
 
 	public static Parcelable.Creator<ToastResponder> CREATOR = new Parcelable.Creator<ToastResponder>() {

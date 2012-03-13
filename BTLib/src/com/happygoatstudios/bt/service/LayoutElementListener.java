@@ -7,7 +7,7 @@ import android.widget.RelativeLayout;
 
 public class LayoutElementListener implements StartElementListener {
 
-	LayoutGroup.LAYOUT_TYPE currentType = LayoutGroup.LAYOUT_TYPE.NORMAL;
+	LayoutGroup.LAYOUT_TYPE currentType = LayoutGroup.LAYOUT_TYPE.normal;
 	
 	enum RULES {
 		leftOf,

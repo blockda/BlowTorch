@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<root>
+<blowtorch xmlversion="2">
 <plugins>
 	<plugin author="Daniel Block" name="stat_mon" id="88">
 	<triggers>
@@ -14,6 +14,13 @@
 				height="100"
 				width="400"
 				below="1010"
+					/>
+			</layoutGroup>
+			<layoutGroup target="large">
+				<layout orientation="landscape"
+				height="50"
+				width="200"
+				below="1010"
 				/>
 			</layoutGroup>
 		</window>
@@ -23,8 +30,16 @@
 		package.path = "/mnt/sdcard/BlowTorch/?.lua"
 		require("serialize")
 		
+		currentStats = {}
+		
 		function updateStat(stats)
+			currentStats = stats;
+			debugPrint("stats recieved")
 			WindowXCallS("stat_window","updateStats",serialize(stats))
+		end
+		
+		function loadStats(data)
+			WindowXCallS("stat_window","updateStats",serialize(currentStats))
 		end
 	]]>
 	</script>
@@ -39,8 +54,11 @@
 		<trigger title="ticker" pattern="^--&gt; TICK &lt;--.+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
 			<script function="ticked" fireWhen="always"/>
 		</trigger>
-		<trigger title="timecatcher" pattern="^  \*  It is (\d*)(am|pm|Midnight|Noon).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+		<trigger title="timecatcher" pattern="^  \*  It is (\d*)(am|pm|Midnight|Noon).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="2">
 			<script function="timeCatcher" fireWhen="always"/>
+		</trigger>
+		<trigger title="yearcatcher" pattern="^  \*  It is the year of the (.*).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+			<script function="yearCatcher" fireWhen="always"/>
 		</trigger>
 		<trigger title="moonSet" pattern="^You notice the (\w+) moon falling to the (west|east)\.$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
 			<script function="OnMoonSet" fireWhen="always"/>
@@ -56,6 +74,12 @@
 				<layout orientation="landscape"
 				height="100"
 				width="400"
+				alignParentTop="true"/>
+			</layoutGroup>
+			<layoutGroup target="large">
+				<layout orientation="landscape"
+				height="50"
+				width="200"
 				alignParentTop="true"/>
 			</layoutGroup>
 		</window>
@@ -112,6 +136,10 @@
 				WindowXCallS("clock_widget","setTimeOrdinal",num)
 			end
 			
+		end
+		
+		function yearCatcher(name,line,map)
+			debugPrint("in yearcatcher")
 		end
 		
 		function OnMoonRise(name,line,map)
@@ -179,6 +207,12 @@
 					<layout orientation="landscape"
 							height="100"
 							width="400"
+							below="6022"/>
+				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape"
+							height="50"
+							width="200"
 							below="6022"/>
 				</layoutGroup>
 			</window>
@@ -275,6 +309,8 @@
 				info.align = align
 				WindowXCallS("vitals_window","updateAll",serialize(info))
 			end
+			
+			Send_GMCP_Packet("request char")
 		]]>
 		</script>
 		<script name="vitalsWindowScript">
@@ -302,6 +338,9 @@
 				<layoutGroup target="xlarge">
 					<layout orientation="landscape" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
 				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape" width="fill_parent" height="77" alignParentTop="true" alignParentRight="true"/>
+				</layoutGroup>
 			</window>
 		</windows>
 		<script name="bootstrap">
@@ -317,8 +356,9 @@
 	</plugin>
 	<plugin author="Daniel Block" name="map_miniwindow" id="30">
 		<triggers>
-			<trigger title="map_capture" pattern="^(\s*).*$" enabled="false" interpretLiteral="true" fireOnce="false">
-				<gag retarget="map_window"/>
+			<trigger title="map_capture" pattern="^.*$" enabled="false" interpretLiteral="true" fireOnce="false">
+				<script function="doMapCapture" fireWhen="always"/>
+				<gag/>
 			</trigger>
 			<trigger title="map_capture_start" pattern="^&lt;MAPSTART&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
 				<script function="startMapCapture" fireWhen="always"/>
@@ -332,10 +372,15 @@
 		<windows>
 			<window name="map_window" id="6020" script="mapUIStartup">
 				<layoutGroup target="xlarge">
-					<layout orientation="landscape" alignParentRight="true" height="400" width="400" below="6021"/>
-					<layout orientation="portrait" alignParentRight="true" height="400" width="400" below="6021"/>
+					<layout orientation="landscape" alignParentRight="true" height="370" width="400" below="6021"/>
+					<layout orientation="portrait" alignParentRight="true" height="370" width="400" below="6021"/>
+				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape" alignParentRight="true" height="200" width="200" below="6021"/>
+					<layout orientation="portrait" alignParentRight="true" height="200" width="200" below="6021"/>
 				</layoutGroup>
 			</window>
+			
 		</windows>
 		<script name="mapUIStartup">
 			<![CDATA[
@@ -344,41 +389,39 @@
 			scroller = parent:findViewById(6010)
 			holder = scroller:getChildAt(0)
 			holder:addView(view)
+			view:setLinksEnabled(false)
 			view:setTextSelectionEnabled(false)
 			view:setScrollingEnabled(false)
-			]]>
-		</script>
-		<script name="bootstrap">
-			<![CDATA[
-function startMapCapture() 
-	--Note("STARTING MAP CAPTURE")
-	TriggerEnabled("map_capture",true)
+			view:setBold(true)
+			view:setCharacterSizes(21,1)
+			
+function updateHeaders(data)
+	local tmp = loadstring(data)()
+	title = tmp.title
+	
+	exits = tmp.exits
+	
+	titleLabel:setText(title)
+	exitsLabel:setText(exits)
 end
 
-function endMapCapture() 
-	--Note("ENDING MAP CAPTURE")
-	TriggerEnabled("map_capture",false)
-	DrawWindow("map_window")
+function OnCreate()
+	--find the scroller and ask it for some specific children, i actually think we can just ask the root. lets try
+
+	titleLabel = parent:findViewById(6021)
+	exitsLabel = parent:findViewById(6022)
 end
---NewWindow("map_window",880,177,400,400)
-WindowBuffer("map_window",true)
+			
+			
 			]]>
 		</script>
-	</plugin>
-	<plugin author="Daniel Block" name="button_window" id="10">
 		<script name="bootstrap">
 			<![CDATA[
-			dofile("/mnt/sdcard/BlowTorch/buttonserver.lua")
-			NewWindow("button_window",0,0,0,0,"buttonwindow")
+		dofile("/mnt/sdcard/BlowTorch/mapwindowserver.lua")
 			]]>
 		</script>
-		<script name="buttonwindow">
-			<![CDATA[
-dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
---debugPrint("custom loaded file go!")
-]]>
-  </script>
 	</plugin>
+
   <plugin author="Daniel Block" name="plugin" id="100">
   <triggers>
     <trigger sequence="10" title="autologin username" pattern="What be thy name, adventurer?" interpretLiteral="false" fireOnce="true" enabled="true">
@@ -627,17 +670,7 @@ end
 	  ]]>
   </script>
   
-  <buttonsets>
-	<buttonset name="a" primaryColor="7799FF22" selectedColor="77FF3300" flipColor="770033FF">
-		<button label="smorp" x="200" y="400"/>
-		<button label="spliz" x="300" y="400"/>
-	</buttonset>
-	<buttonset name="b">
-		<button label="blah" x="100" y="100"/>
-		<button label="bliz" x="200" y="200"/>
-		<button label="bloop" x="300" y="300" primaryColor="FFFF00FF"/>
-	</buttonset>
-  </buttonsets>
+
   </plugin>
 </plugins>
-</root>
+</blowtorch>

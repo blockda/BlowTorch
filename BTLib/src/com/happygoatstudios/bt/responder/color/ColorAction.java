@@ -49,13 +49,13 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, Matcher matched,
+	public boolean doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, int start, int end,String matched,
 			Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name,String encoding) {
 		//well. this is sort of duplication of effort from the replacer action. but whatever.
-		int start = matched.start();
-		int end = matched.end()-1;
+		//int start = matched.start();
+		//int end = matched.end()-1;
 		
 		Unit u = null;
 		line.resetIterator();
@@ -107,7 +107,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		//here is where we would insert replaced text if this were a replacer.
 		//instead, this is where we insert a new color unit denoting which color we would like.
 		newLine.add(line.newColor(color));
-		newLine.add(line.newText(matched.group(0)));
+		newLine.add(line.newText(matched));
 		if(preEmptiveChop) {
 			int length = ((Text)u).getString().length();
 			Text post = line.newText(((Text)u).getString().substring(length-preEmptiveChopAt,length));
@@ -164,7 +164,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		}
 		
 		//return
-		return;
+		return false;
 	}
 
 	@Override

@@ -2,21 +2,25 @@ package com.happygoatstudios.bt.service.plugin.settings;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Random;
 
 import org.keplerproject.luajava.LuaException;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.alias.AliasParser;
 import com.happygoatstudios.bt.service.Connection;
 import com.happygoatstudios.bt.service.WindowToken;
 import com.happygoatstudios.bt.service.WindowTokenParser;
+import com.happygoatstudios.bt.service.function.SpecialCommand;
 import com.happygoatstudios.bt.service.plugin.ConnectionSettingsPlugin;
 import com.happygoatstudios.bt.service.plugin.Plugin;
 import com.happygoatstudios.bt.settings.HyperSettings;
+import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerParser;
 import com.happygoatstudios.bt.trigger.TriggerData;
@@ -30,6 +34,7 @@ import android.sax.RootElement;
 import android.sax.StartElementListener;
 import android.sax.TextElementListener;
 import android.util.Log;
+import android.util.Xml;
 
 public class ConnectionSetttingsParser extends PluginParser {
 
@@ -43,7 +48,8 @@ public class ConnectionSetttingsParser extends PluginParser {
 
 	//overrided for awesome sake.
 	protected void attatchListeners(RootElement root) {
-		Element window = root.getChild("window");
+		Element windows = root.getChild("windows");
+		Element window = windows.getChild("window");
 		/*window.setEndElementListener(new EndElementListener() {
 
 			public void end() {
@@ -51,6 +57,7 @@ public class ConnectionSetttingsParser extends PluginParser {
 			}
 			
 		});*/
+		
 		
 		//Element aliases = root.getChild(BasePluginParser.TAG_ALIASES);
 		//Element triggers = root.getChild(BasePluginParser.TAG_TRIGGERS);
@@ -62,6 +69,7 @@ public class ConnectionSetttingsParser extends PluginParser {
 		//Element trigger = triggers.getChild("trigger");
 		//Element alias = aliases.getChild("alias");
 		Element script = root.getChild("script");
+		
 		
 		//do our attatch listener dance.
 		TriggerParser.registerListeners(root, GLOBAL_HANDLER, new TriggerData(), current_trigger, current_timer);
@@ -75,7 +83,8 @@ public class ConnectionSetttingsParser extends PluginParser {
 			}
 
 			public void end(String body) {
-				Log.e("SCRIPT","SCRIPT BODY:\n"+body);
+				//Log.e("SCRIPT","SCRIPT BODY:\n"+body);
+				
 				if(current_script_name == null) {
 					Random r = new Random();
 					r.setSeed(System.currentTimeMillis());
@@ -90,13 +99,13 @@ public class ConnectionSetttingsParser extends PluginParser {
 			
 		});
 		
-		plugins.setStartElementListener(new StartElementListener() {
+		/*plugins.setStartElementListener(new StartElementListener() {
 
 			public void start(Attributes attributes) {
 				Log.e("PARSE","PLUGIN ELEMENT ENCOUNTERED");
 			}
 			
-		});
+		});*/
 		
 		link.setStartElementListener(new StartElementListener() {
 
@@ -174,6 +183,85 @@ public class ConnectionSetttingsParser extends PluginParser {
 		//plugins.addAll(result);
 		
 		return result;
+	}
+	
+	public static String outputXML(ConnectionSettingsPlugin p,ArrayList<Plugin> plugins) throws IllegalArgumentException, IllegalStateException, IOException {
+		XmlSerializer out = Xml.newSerializer();
+		StringWriter writer = new StringWriter();
+		//out.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+		//out.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
+		//out.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-line-separator", "\n");
+		out.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+		out.setOutput(writer);
+		out.startDocument("UTF-8", true);
+		out.startTag("", "blowtorch");
+		out.attribute("", "xmlversion", "2");
+		out.startTag("", "windows");
+	
+		
+		
+		for(WindowToken w : p.getSettings().getWindows().values()) {
+			WindowTokenParser.saveToXml(out,w);
+		}
+		
+		out.endTag("", "windows");
+		
+		out.startTag("", "triggers");
+		for(TriggerData t : p.getSettings().getTriggers().values()) {
+			TriggerParser.saveTriggerToXML(out, t);
+		}
+		out.endTag("", "triggers");
+		
+		out.startTag("", "aliases");
+		for(AliasData a : p.getSettings().getAliases().values()) {
+			AliasParser.saveAliasToXML(out, a);
+		}
+		out.endTag("", "aliases");
+		
+		out.startTag("","timers");
+		for(TimerData t : p.getSettings().getTimers().values()) {
+			TimerParser.saveTimerToXML(out, t);
+		}
+		out.endTag("", "timers");
+		
+		out.startTag("", "directions");
+		for(DirectionData d : p.getDirections().values()) {
+			out.startTag("","entry");
+			out.attribute("", "dir", d.getDirection());
+			out.attribute("", "cmd", d.getCommand());
+			out.endTag("","entry");
+		}
+		out.endTag("", "directions");
+		
+		for(String key : p.getSettings().getScripts().keySet()) {
+			out.startTag("", "script");
+			out.attribute("", "name", key);
+			out.cdsect(p.getSettings().getScripts().get(key));
+			out.endTag("", "script");
+		}
+		
+		out.startTag("","plugins");
+		for(String link : p.getLinks()) {
+			out.startTag("", "link");
+			out.attribute("", "file", link);
+			out.endTag("", "link");
+		}
+		
+		//output "internal" plugins.
+		for(Plugin plugin : plugins) {
+			if(plugin.getStorageType().equals("INTERNAL")) {
+				PluginParser.saveToXml(out,plugin);
+			}// else {
+				
+			//}
+		}
+		
+		
+		out.endTag("", "plugins");
+		out.endTag("", "blowtorch");
+		out.endDocument();
+		
+		return writer.toString();
 	}
 
 }

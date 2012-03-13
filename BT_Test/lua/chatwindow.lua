@@ -4,7 +4,7 @@ package.path = "/mnt/sdcard/BlowTorch/?.lua"
 --make a button.
 --debugPrint("in the chat window")
 context = view:getContext()
-
+density = getDisplayDensity()
 System = luajava.bindClass("java.lang.System")
 View = luajava.bindClass("android.view.View")
 HorizontalScrollView = luajava.bindClass("android.widget.HorizontalScrollView")
@@ -16,6 +16,7 @@ LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams
 MotionEvent = luajava.bindClass("android.view.MotionEvent")
 Array = luajava.bindClass("java.lang.reflect.Array")
 Integer = luajava.newInstance("java.lang.Integer",0)
+Color = luajava.bindClass("android.graphics.Color")
 IntegerClass = Integer:getClass()
 RawInteger = IntegerClass.TYPE
 
@@ -122,6 +123,9 @@ function hider.onClick(v)
 			view:startAnimation(windowMoveDownAnimation)
 		end
 		view:setTextSelectionEnabled(false)
+		if(previousOnTop ~= nil) then
+			previousOnTop:bringToFront()
+		end
 		toggle = false
 	end
 end
@@ -213,6 +217,8 @@ function toucher.onLongClick(v)
 	--params.height = theight
 	--view:requestLayout()
 	--view:updateDimensions(fuckwidth:intValue(),fuckheight:intValue())
+	local numchildren = tonumber(rootView:getChildCount())
+	previousOnTop = rootView:getChildAt(numchildren-1)
 	rootView:bringChildToFront(parentView)
 	parentView:startAnimation(expandAnimation)
 	toggle = true
@@ -317,9 +323,11 @@ function generateNewButton(name,grav)
 	--params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 	--debugPrint("created instances")
 	button:setText(name)
-	button:setTextSize(26)
+	button:setTextSize(12*density)
 	button:setLayoutParams(params)
 	button:setOnClickListener(clicker_cb)
+	button:setOnLongClickListener(longclicker_cb)
+	button:setTextColor(Color:argb(255,150,150,150))
 	--button:setPadding(10,0,10,0)
 	shape = makeStateDrawable(name)
 	
@@ -410,7 +418,7 @@ hideParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",Re
 hideParams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 hideButton:setId(100)
 hideButton:setText("Hide")
-hideButton:setTextSize(26)
+hideButton:setTextSize(12*density)
 hideButton:setLayoutParams(hideParams)
 hideButton:setOnClickListener(hider_cb)
 
@@ -419,7 +427,7 @@ pinParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",Rel
 pinParams:addRule(RelativeLayout.LEFT_OF,100);
 pinButton:setId(99)
 pinButton:setText("Pin")
-pinButton:setTextSize(26)
+pinButton:setTextSize(12*density)
 pinButton:setLayoutParams(pinParams)
 
 mainButton = luajava.newInstance("android.widget.Button",context)
@@ -428,7 +436,7 @@ mainParams:addRule(RelativeLayout.LEFT_OF,99);
 mainParams:setMargins(2,0,0,0)
 mainButton:setId(98)
 mainButton:setText("main")
-mainButton:setTextSize(26)
+mainButton:setTextSize(12*density)
 mainButton:setLayoutParams(mainParams)
 mainButtonShape = makeStateDrawable("main")
 mainButton:setBackgroundDrawable(mainButtonShape)
@@ -440,7 +448,7 @@ resizeParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",
 resizeParams:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
 resizeButton:setId(101)
 resizeButton:setText("Pull")
-resizeButton:setTextSize(26)
+resizeButton:setTextSize(12*density)
 resizeButton:setLayoutParams(resizeParams)
 
 delButton = luajava.newInstance("android.widget.Button",context)
@@ -448,7 +456,7 @@ delParams = luajava.newInstance("android.widget.RelativeLayout$LayoutParams",Rel
 delParams:addRule(RelativeLayout.RIGHT_OF,101)
 delButton:setId(102)
 delButton:setText("Del")
-delButton:setTextSize(26)
+delButton:setTextSize(12*density)
 delButton:setLayoutParams(delParams)
 
 selectedStatetmp = {}
@@ -492,6 +500,14 @@ function clicker.onClick(v)
 end
 clicker_cb = luajava.createProxy("android.view.View$OnClickListener",clicker)
 mainButton:setOnClickListener(clicker_cb)
+
+longclicker = {}
+function longclicker.onLongClick(v)
+	label = v:getText()
+	sendToServer(".kb popup "..label)
+	return true
+end
+longclicker_cb = luajava.createProxy("android.view.View$OnLongClickListener",longclicker)
 
 pinner = {}
 function pinner.onClick(v)
@@ -542,14 +558,14 @@ function resizer.onTouch(v,e)
 			theight = view:getHeight() + delta
 			wwidth = parentView:getWidth()
 			wheight = parentView:getHeight() + delta
-			if(wheight > 677) then
-				wheight = 677
-				theight = 677 - uiButtonBarHeight
+			if(wheight > maxHeight) then
+				wheight = maxHeight
+				theight = maxHeight - uiButtonBarHeight
 			end
 			
-			if(theight < 177) then
-				theight = 177
-				wheight = 177+uiButtonBarHeight
+			if(theight < minHeight) then
+				theight = minHeight
+				wheight = minHeight+uiButtonBarHeight
 			end
 			
 			parentView:setDimensions(wwidth,wheight)
@@ -566,7 +582,7 @@ function resizer.onTouch(v,e)
 	
 	if(action == MotionEvent.ACTION_UP) then
 		debugPrint("resizer up, foldout height:"..foldoutHeight.." start height"..startHeight)
-		foldoutHeight = parentView:getHeight() - 177
+		foldoutHeight = parentView:getHeight() - minHeight
 		expandAnimation = luajava.newInstance("android.view.animation.TranslateAnimation",0,0,-foldoutHeight,0)
 		shrinkAnimation = luajava.newInstance("android.view.animation.TranslateAnimation",0,0,0,-foldoutHeight)
 		expandAnimation:setDuration(450)
@@ -585,7 +601,14 @@ end
 
 PluginXCallS("initReady","now")
 
-
+function OnCreate()
+	local params = parentView:getLayoutParams()
+	minHeight = params.height
+	debugPrint("OnCreate for CHATWINDOW"..minHeight)
+	inputbar = rootView:findViewById(10)
+	
+	maxHeight = inputbar:getTop()
+end
 
 
 

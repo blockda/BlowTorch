@@ -61,7 +61,7 @@ BUTTON_DATA.__index = BUTTONSET_DATA
 --setmetatable(BUTTON_DATA,BUTTONSET_DATA)
 
 BUTTON = {} -- this class is purley a factory. these represent "in use" buttons
-function BUTTON:new(data)
+function BUTTON:new(data,density)
 	local o = {}
 	o.paintOpts = luajava.newInstance("android.graphics.Paint")
 	o.paintOpts:setAntiAlias(true)
@@ -70,7 +70,9 @@ function BUTTON:new(data)
 	o.selected = false
 	setmetatable(o,self)
 	self.__index = self
+	o.density = density
 	o:updateRect()
+	
 	
 	return o
 end
@@ -83,10 +85,10 @@ end
 
 function BUTTON:updateRect()
 	--local r = self.rect
-	local left = self.data.x - (self.data.width/2)
-	local right = self.data.x + (self.data.width/2)
-	local top = self.data.y - (self.data.height/2)
-	local bottom = self.data.y + (self.data.height/2)
+	local left = self.data.x - (self.data.width/2)*self.density
+	local right = self.data.x + (self.data.width/2)*self.density
+	local top = self.data.y - (self.data.height/2)*self.density
+	local bottom = self.data.y + (self.data.height/2)*self.density
 	local tmp = self.rect
 	tmp:set(left,top,right,bottom)
 end
@@ -118,7 +120,7 @@ function BUTTON:draw(state,canvas)
 	if(usestate == 0 or usestate == 1) then
 		p:setColor(self.data.labelColor)
 		--debugPrint(string.format("LabelSize:%d",tonumber(self.data.labelSize)))
-		p:setTextSize(tonumber(self.data.labelSize))
+		p:setTextSize(tonumber(self.data.labelSize)*self.density)
 		label = self.data.label
 	elseif(usestate == 2) then
 		p:setColor(self.data.flipLabelColor)

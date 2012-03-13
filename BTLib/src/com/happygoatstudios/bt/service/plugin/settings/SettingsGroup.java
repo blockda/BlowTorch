@@ -250,4 +250,8 @@ public class SettingsGroup extends Option implements Parcelable {
 		}
 	}
 	
+	/*public interface BlandNewOption {
+		
+	}*/
+	
 }

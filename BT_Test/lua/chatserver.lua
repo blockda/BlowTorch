@@ -18,15 +18,15 @@ altbuffer:addString("i am the alternate buffer, rock on.")
 foobuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree");
 foobuffer:addString("this is the foo buffer, buffffererere.")
 
-buffers["alt"] = altbuffer;
-buffers["foo"] = foobuffer;
-buffers["right"] = foobuffer;
-buffers["slap"] = foobuffer;
-buffers["biatch"] = foobuffer;
-buffers["must"] = foobuffer;
-buffers["make"] = foobuffer;
+--buffers["alt"] = altbuffer;
+buffers["filler"] = foobuffer;
+buffers["lots"] = foobuffer;
+buffers["and"] = foobuffer;
+buffers["lots"] = foobuffer;
 buffers["more"] = foobuffer;
 buffers["channels"] = foobuffer;
+--buffers[""] = foobuffer;
+--buffers["channels"] = foobuffer;
 
 
 

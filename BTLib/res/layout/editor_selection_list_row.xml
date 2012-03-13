@@ -3,9 +3,22 @@
 <RelativeLayout
   	xmlns:android="http://schemas.android.com/apk/res/android"
   	android:layout_width="250dip"
-  	android:layout_height="78dip"
+  	android:layout_height="200dip"
   	android:id="@+id/root">
   	
+    
+      <ImageView
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_alignParentRight="true"
+  		android:layout_alignParentTop="true"
+  		android:layout_alignParentBottom="true"
+  		android:src="@drawable/toolbar_tab"
+  		android:focusable="false"
+  		android:focusableInTouchMode="false"
+  		android:visibility="invisible"
+  		android:id="@+id/spacer"/>
+      
   	 <TextView
   		style="@style/ListFont"
   		android:id="@+id/infoTitle"
@@ -36,13 +49,13 @@
   		android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
   		android:layout_toLeftOf="@id/icon"
-  		android:layout_alignBottom="@id/icon"
+  		android:layout_alignBottom="@id/spacer"
   		android:layout_below="@id/infoTitle"
   		android:focusable="false"
   		android:focusableInTouchMode="false"
   		android:text="Extended Info"
   		android:gravity="center_vertical"
-  		android:layout_marginLeft="10dip"
+  		android:paddingLeft="10dip"
   		android:textSize="14dip"
   		android:id="@+id/infoExtended"/>
   	 
@@ -53,7 +66,7 @@
   	     android:layout_alignParentTop="true"
   	     android:layout_alignParentRight="true"
   	     />
-  	     
+
 
 <!--   	<ImageView
   		android:layout_width="wrap_content"

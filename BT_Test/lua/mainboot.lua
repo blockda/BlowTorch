@@ -9,6 +9,15 @@ end
 
 RegisterSpecialCommand("testcommand","testCommandHandler")
 
+function demoCommand(args)
+	num = tonumber(args)
+	if(num ~= nil) then
+		WindowXCallS("mainDisplay","demo",tostring(num))
+	end
+end
+
+RegisterSpecialCommand("demo","demoCommand")
+
 --debugPrint("button server functions loaded")
 --set up windows.
 --MainWindowSize(0,177,880,500)
@@ -20,7 +29,7 @@ function OnBackgroundStartup()
 	layouts = mainwindow:getLayouts()
 	layouts:clear()
 	newlayoutgroup = luajava.newInstance("com.happygoatstudios.bt.service.LayoutGroup")
-	newlayoutgroup:setType(LAYOUT_TYPE.NORMAL)
+	newlayoutgroup:setType(LAYOUT_TYPE.normal)
 	RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
 	LayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
 	params = luajava.new(LayoutParams,LayoutParams.FILL_PARENT,LayoutParams.FILL_PARENT)
