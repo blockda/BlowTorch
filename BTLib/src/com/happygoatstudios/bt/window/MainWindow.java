@@ -160,7 +160,8 @@ public class MainWindow extends Activity {
 	public static final int MESSAGE_ADDOPTIONCALLBACK = 891;
 	public static final int MESSAGE_PLUGINXCALLS = 892;
 	public static final int MESSAGE_WINDOWBUFFERMAXCHANGED = 893;
-	
+	protected static final int MESSAGE_MARKWINDOWSDIRTY = 894;
+	protected static final int MESSAGE_MARKSETTINGSDIRTY = 895;
 	//private TextTree tree = new TextTree();
 
 	protected boolean settingsDialogRun = false;
@@ -308,7 +309,7 @@ public class MainWindow extends Activity {
 		//this.requestWindowFeature(Window.FEATURE_ACTION_MODE_OVERLAY);
 		//this
 		if(ConfigurationLoader.isTestMode(this)) {
-			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+			//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		}
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
@@ -476,6 +477,12 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_MARKSETTINGSDIRTY:
+					MainWindow.this.markSettingsDirty();
+					break;
+				case MESSAGE_MARKWINDOWSDIRTY:
+					MainWindow.this.markWindowsDirty();
+					break;
 				case MESSAGE_WINDOWBUFFERMAXCHANGED:
 					String pluginl = msg.getData().getString("PLUGIN");
 					String window = msg.getData().getString("WINDOW");
@@ -519,6 +526,8 @@ public class MainWindow extends Activity {
 					}
 					break;
 				case MESSAGE_INITIALIZEWINDOWS:
+					Log.e("WINDOW","INITIALIZE WINDOWS CALLED");
+					//windowsInitialized = false;
 					scriptCallbacks.clear();
 					if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
@@ -788,6 +797,7 @@ public class MainWindow extends Activity {
 					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
+					Log.e("WINDOW","CALLBACK INDICATED RELOADING OF SETTINGS");
 					loadSettings();
 					break;
 				case MESSAGE_PROCESSINPUTWINDOW:
@@ -975,6 +985,8 @@ public class MainWindow extends Activity {
 					outanim.setDuration(320);
 					TranslateAnimation outanimB = new TranslateAnimation(0,-1*amount,0,0);
 					outanim.setDuration(320);
+					TranslateAnimation outanimC = new TranslateAnimation(0,-1*amount,0,0);
+					outanim.setDuration(320);
 					
 					//LayoutAnimationController bac = new LayoutAnimationController(outanim,0.0f);
 					
@@ -982,7 +994,7 @@ public class MainWindow extends Activity {
 					//LinearLayout inputbar = (LinearLayout) MainWindow.this.findViewById(10);
 					mInputBox.setListener(mInputBarAnimationListener);
 					mInputBox.startAnimation(outanimB);
-					test_button.startAnimation(outanim);
+					test_button.startAnimation(outanimC);
 					mFoldoutBar.startAnimation(outanim);
 					//inputbar.setLayoutAnimation(bac);
 					//inputbar.removeView(mFoldoutBar);
@@ -1112,6 +1124,15 @@ public class MainWindow extends Activity {
 		mInputBox.setListener(mInputBarAnimationListener);
 	}
 	
+	protected void markSettingsDirty() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	protected void markWindowsDirty() {
+		this.windowsInitialized = false;
+	}
+
 	ImageButton downButton = null;
 	ImageButton upButton = null;
 	ImageButton enterButton = null;
@@ -1483,6 +1504,8 @@ public class MainWindow extends Activity {
 	
 	public void onConfigurationChanged(Configuration newconfig) {
 		Log.e("WINDOW","CONFIGURATION CHANGING");
+		super.onConfigurationChanged(newconfig);
+		
 		if(service == null) {
 			super.onConfigurationChanged(newconfig);
 			return;
@@ -1544,7 +1567,7 @@ public class MainWindow extends Activity {
 			break;
 		}
 		
-		super.onConfigurationChanged(newconfig);
+		
 		
 	}
 	
@@ -1827,18 +1850,18 @@ public class MainWindow extends Activity {
 			}
 			
 			
-			try {
+			//try {
 				loadSettings();
-				if(service.hasBuffer()) {
-					setHyperLinkSettings();
-					service.requestBuffer();
-				} else {
-					
-				}
-			} catch (RemoteException e2) {
+				//if(service.hasBuffer()) {
+				//	setHyperLinkSettings();
+				//	service.requestBuffer();
+				//} else {
+				//	
+				//}
+			//} catch (RemoteException e2) {
 				
-				e2.printStackTrace();
-			}
+			//	e2.printStackTrace();
+			//}
 			//myhandler.sendEmptyMessage(MESSAGE_LOADSETTINGS);
 		}
 		
@@ -2403,6 +2426,15 @@ public class MainWindow extends Activity {
 		public void loadWindowSettings() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_INITIALIZEWINDOWS);
 		}
+		
+		public void markWindowsDirty() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_MARKWINDOWSDIRTY);
+		}
+
+		@Override
+		public void markSettingsDirty() throws RemoteException {
+			myhandler.sendEmptyMessage(MESSAGE_MARKSETTINGSDIRTY);
+		}
 	};
 	
 	boolean windowsInitialized = false;
@@ -2413,9 +2445,17 @@ public class MainWindow extends Activity {
 		//make windows in the order they are given, attach the callback and the view to the layout root.
 		//mRootLayout.removeAllViews();
 		
+		//cleanupWindows();
 		if(windowsInitialized == true) {
+			Log.e("WINDOW","ALREADY LOADED WINDOWS");
 			return;
 		}
+		
+		if(mWindows != null) {
+			Log.e("LUAWINDOW","cleaning up windows.");
+		}
+		cleanupWindows();
+		
 		Display display = ((WindowManager)this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
 		
 		landscape = (display.getRotation() == Surface.ROTATION_180 || display.getRotation() == Surface.ROTATION_90) ? true : false;
@@ -2466,6 +2506,17 @@ public class MainWindow extends Activity {
 				}
 				initWindow(w);
 				
+				
+			}
+			RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
+			
+			for(Object x : mWindows) {
+				WindowToken w = null;
+				if(x instanceof WindowToken) {
+					w = (WindowToken)x;
+				}
+				com.happygoatstudios.bt.window.Window v = (com.happygoatstudios.bt.window.Window)rl.findViewWithTag(w.getName());
+				v.runScriptOnCreate();
 				
 			}
 			//mRootLayout.requestLayout();
@@ -2527,7 +2578,7 @@ public class MainWindow extends Activity {
 			}
 			
 			if(w.getBuffer() != null) {
-				tmp.addBytesImpl(w.getBuffer().dumpToBytes(false), true);
+				tmp.addBytes(w.getBuffer().dumpToBytes(false), true);
 			//construct border.
 			}
 			
@@ -2542,7 +2593,7 @@ public class MainWindow extends Activity {
 	
 	public void cleanupWindows() {
 		RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
-		
+		if(mWindows == null) return;
 		for(Object x : mWindows) {
 			if(x instanceof WindowToken) {
 				WindowToken w = (WindowToken)x;
@@ -2561,6 +2612,16 @@ public class MainWindow extends Activity {
 					tmp = null;
 					
 				}
+			}
+		}
+		
+		int counter = 0;
+		while(rl.getChildCount() > 1) {
+			View v = rl.getChildAt(rl.getChildCount()-1);
+			if(v.getId() != 10) {
+				rl.removeView(v);
+			} else {
+				rl.removeViewAt(rl.getChildCount()-2);
 			}
 		}
 	}

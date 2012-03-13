@@ -32,4 +32,6 @@ interface IConnectionBinderCallback {
 	void switchTo(String connection);
 	void reloadBuffer();
 	void loadWindowSettings();
+	void markWindowsDirty();
+	void markSettingsDirty();
 }

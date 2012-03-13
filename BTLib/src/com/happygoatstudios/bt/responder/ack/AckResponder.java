@@ -57,12 +57,12 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 	String crlf = cr.toString() + lf.toString();
 
 	@Override
-	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int start,int end,String matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name,String encoding) {
 		if(windowIsOpen) {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
+			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
 		} else {
-			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return;
+			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
 		}
 		
 		Message msg = null;
@@ -75,7 +75,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 
 		
 		dispatcher.sendMessage(msg);
-		
+		return false;
 	}
 	
 	public AckResponder(Parcel in) {

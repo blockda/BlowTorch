@@ -147,6 +147,7 @@ public class Plugin {
 		WindowXCallSFunction wxctf = new WindowXCallSFunction(L);
 		AppendLineToWindowFunction altwf = new AppendLineToWindowFunction(L);
 		InvalidateWindowTextFunction iwtf = new InvalidateWindowTextFunction(L);
+		GMCPSendFunction gsf = new GMCPSendFunction(L);
 		wf.register("NewWindow");
 		mwf.register("GetWindowTokenByName");
 		esf.register("ExecuteScript");
@@ -156,6 +157,9 @@ public class Plugin {
 		wxctf.register("WindowXCallS");
 		altwf.register("appendLineToWindow");
 		iwtf.register("invalidateWindowText");
+		gsf.register("Send_GMCP_Packet");
+		SaveSettingsFunction ssfun = new SaveSettingsFunction(L);
+		ssfun.register("saveSettings");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -183,46 +187,38 @@ public class Plugin {
 	}
 	private final HashMap<String,String> captureMap = new HashMap<String,String>();
 	public void process(TextTree input,StellarService service,boolean windowOpen,Handler pump,String display) {
-		if(this.settings.getName().equals("map_miniwindow")) {
+		//if(this.settings.getName().equals("map_miniwindow")) {
 			//inspection
-			HashMap<String,TriggerData> triggers = this.settings.getTriggers();
-			Collection<TriggerData> c = triggers.values();
-			c.contains("foo");
+		//<String,TriggerData> triggers = this.settings.getTriggers();
+		//	Collection<TriggerData> c = triggers.values();
+		//	c.contains("foo");
+		//}
+		if(this.settings.getTriggers().size() == 0) return;
+		if(sortedTriggers == null) {
+			sortTriggers();
 		}
 		
-		List<TriggerData> triggers = new ArrayList<TriggerData>(this.settings.getTriggers().values());
-		Collections.sort(triggers,new Comparator() {
-
-			
-			/*public int compare(TriggerData a, TriggerData b) {
-				// TODO Auto-generated method stub
-				if(a.getSequence() < b.getSequence()) {
-					return -1;
-				} else if(a.getSequence() == b.getSequence()) {
-					return 0;
-				} else if(a.getSequence() > b.getSequence()){
-					return 1;
-				}
-				
-				return 0;
-				
-			}*/
-
-			public int compare(Object arg0, Object arg1) {
-				// TODO Auto-generated method stub
-				TriggerData a = (TriggerData)arg0;
-				TriggerData b = (TriggerData)arg1;
-				//if(a.getSequence() == 5 || b.getSequence() == 5) {
-					//Log.e("COMP","STOP HERE");
-				//}
-				if(a.getSequence() > b.getSequence()) return 1;
-				if(a.getSequence() < b.getSequence()) return -1;
-				
-				return 0;
-			}
-			
-		});
-		//sick ass shit in the hiznizouous
+		List<TriggerData> triggers = sortedTriggers;//new ArrayList<TriggerData>(this.settings.getTriggers().values());
+//		Collections.sort(triggers,new Comparator() {
+//		
+//			
+//			
+//
+//			public int compare(Object arg0, Object arg1) {
+//				// TODO Auto-generated method stub
+//				TriggerData a = (TriggerData)arg0;
+//				TriggerData b = (TriggerData)arg1;
+//				//if(a.getSequence() == 5 || b.getSequence() == 5) {
+//					//Log.e("COMP","STOP HERE");
+//				//}
+//				if(a.getSequence() > b.getSequence()) return 1;
+//				if(a.getSequence() < b.getSequence()) return -1;
+//				
+//				return 0;
+//			}
+//			
+//		});
+//		//sick ass shit in the hiznizouous
 		ListIterator<TextTree.Line> it = input.getLines().listIterator(input.getLines().size());
 		boolean keepEvaluating = true;
 		int lineNum = input.getLines().size();
@@ -243,44 +239,114 @@ public class Plugin {
 			//}
 			//StringBuffer tmp = TextTree.deColorLine(l);
 			//test this line against each trigger.
+			String str = TextTree.deColorLine(l).toString();
 			for(TriggerData t : triggers) {
-				if(t.isEnabled()) {
-					String str = TextTree.deColorLine(l).toString();
-					t.getMatcher().reset(str);
-					while(t.getMatcher().find() && keepEvaluating) {
-						if(t.isFireOnce() && t.isFired()) {
-							//do nothiong
-						} else {
-							if(t.isFireOnce()) {
-								t.setFired(true);
-							}
-							
-							captureMap.clear();
-							for(int i=0;i<=t.getMatcher().groupCount();i++) {
-								captureMap.put(Integer.toString(i), t.getMatcher().group(i));
-							}
-							for(TriggerResponder responder : t.getResponders()) {
-								try {
-									responder.doResponse(service.getApplicationContext(),input,lineNum,it,l,t.getMatcher(),t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName(),mEncoding);
-								} catch(IteratorModifiedException e) {
-									it = e.getIterator();
+				if(!t.isInterpretAsRegex() && t.getPattern().startsWith("%")) {
+					
+				} else {
+					if(t.isEnabled()) {
+						
+						t.getMatcher().reset(str);
+						while(t.getMatcher().find() && keepEvaluating) {
+							if(t.isFireOnce() && t.isFired()) {
+								//do nothiong
+							} else {
+								if(t.isFireOnce()) {
+									t.setFired(true);
 								}
-								if(input.getLines().size() == 0) {
-									return;
+								
+								captureMap.clear();
+								for(int i=0;i<=t.getMatcher().groupCount();i++) {
+									captureMap.put(Integer.toString(i), t.getMatcher().group(i));
 								}
+								for(TriggerResponder responder : t.getResponders()) {
+									try {
+										responder.doResponse(service.getApplicationContext(),input,lineNum,it,l,0,0,"",t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName(),mEncoding);
+									} catch(IteratorModifiedException e) {
+										it = e.getIterator();
+									}
+									if(input.getLines().size() == 0) {
+										return;
+									}
+								}
+								if(!t.isKeepEvaluating()) {
+									keepEvaluating = false;
+									break;
+								}
+								
+								
 							}
-							if(!t.isKeepEvaluating()) {
-								keepEvaluating = false;
-								break;
-							}
-							
-							
 						}
 					}
 				}
 			}
 		}
 		//return null;
+	}
+	
+	public boolean process2(TextTree.Line l,String stripped,int lineNum,TextTree input,StellarService service,boolean windowOpen,Handler pump,String display) throws IteratorModifiedException {
+		boolean modified = false;
+		if(getSettings().getTriggers().size() == 0) return false;
+		if(sortedTriggers == null) {
+			sortTriggers();
+			buildTriggerSystem();
+			if(sortedTriggers == null) {
+				return false;
+			}
+		}
+		//for(TriggerData t: sortedTriggers) {
+		//	if(!t.isInterpretAsRegex() && t.getPattern().startsWith("%")) {
+				
+		//	} else {
+				//if(t.isEnabled()) {
+					massiveMatcher.reset(stripped);
+					while(massiveMatcher.find()) {
+						int index = -1;
+						for(int i=1;i<=massiveMatcher.groupCount();i++) {
+							if(massiveMatcher.group(i) != null) {
+								index = i;
+								i = massiveMatcher.groupCount()+1;
+							}
+						}
+						
+						if(index > 0) {
+							TriggerData t = sortedTriggerMap.get(index);
+							if(t.isFireOnce() && t.isFired()) {
+								
+							} else {
+								if(t.isFireOnce()) {
+									t.setFired(true);
+								}
+							}
+							
+							int start = massiveMatcher.start();
+							int end = massiveMatcher.end();
+							String matched = massiveMatcher.group(0);
+							
+							captureMap.clear();
+							for(int i=index;i<=(t.getMatcher().groupCount()+index);i++) {
+								captureMap.put(Integer.toString(i), massiveMatcher.group(i));
+							}
+							
+							for(TriggerResponder responder : t.getResponders()) {
+	
+									responder.doResponse(service.getApplicationContext(),input,lineNum,null,l,start,end,matched,t, display, StellarService.getNotificationId(), windowOpen, pump,captureMap,L,t.getName(),mEncoding);
+								
+								if(input.getLines().size() == 0) {
+									return true;
+								}
+							}
+							if(!t.isKeepEvaluating()) {
+								//keepEvaluating = false;
+								break;
+							}
+						}
+					}
+				//}
+			//}
+		//}
+			
+		return modified;
 	}
 	
 	public void initScripts(ArrayList<WindowToken> windows) {
@@ -617,10 +683,41 @@ public class Plugin {
 		}
 		
 	}
+	
+	private class SaveSettingsFunction extends JavaFunction {
+		
+		public SaveSettingsFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_SAVESETTINGS,Plugin.this.getName()));
+			return 0;
+		}
+	}
+	
+	private class GMCPSendFunction extends JavaFunction {
+		public GMCPSendFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String str = this.getParam(2).getString();
+			Log.e("LUA","GMCP SEND:" + str);
+			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_SENDGMCPDATA,str));
+			return 0;
+		}
+		
+		
+	}
 
 	public void shutdown() {
 		// TODO Auto-generated method stub
-		L.close();
+		//L.close();
+		L = null;
 	}
 
 	public String getName() {
@@ -1122,7 +1219,7 @@ public class Plugin {
 			//hasListener = isWindowShowing();
 			for(TriggerResponder responder : data.getResponders()) {
 				try {
-					responder.doResponse(parent.getContext(),null,0,null,null,null,(Object)getSettings().getTimers().get(ordinal), parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler,captureMap,L,Plugin.this.getSettings().getTimers().get(ordinal).getName(),mEncoding);
+					responder.doResponse(parent.getContext(),null,0,null,null,0,0,"",(Object)getSettings().getTimers().get(ordinal), parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler,captureMap,L,Plugin.this.getSettings().getTimers().get(ordinal).getName(),mEncoding);
 				} catch (IteratorModifiedException e) {
 					// won't ever get here because gag/replace actions can't be applied to timers.
 				}
@@ -1250,4 +1347,106 @@ public class Plugin {
 			}
 		}
 	}
+
+	public void scriptXmlExport(XmlSerializer out) {
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal("OnXmlExport");
+		if(L.getLuaObject(-1).isFunction()) {
+			L.pushJavaObject(out);
+			int retval = L.pcall(1, 1, -3);
+			if(retval != 0) {
+				Log.e("LUA","Plugin: "+this.getName()+" OnXmlExport() Error:" + L.getLuaObject(-1).getString());
+			}
+		}
+	}
+	
+	private ArrayList<TriggerData> sortedTriggers = null;
+	public void sortTriggers() {
+		if(this.settings.getTriggers().size() == 0) return;
+		sortedTriggers = new ArrayList<TriggerData>(this.settings.getTriggers().values());
+		Collections.sort(sortedTriggers,new Comparator() {
+
+			
+			
+
+			public int compare(Object arg0, Object arg1) {
+				// TODO Auto-generated method stub
+				TriggerData a = (TriggerData)arg0;
+				TriggerData b = (TriggerData)arg1;
+				//if(a.getSequence() == 5 || b.getSequence() == 5) {
+					//Log.e("COMP","STOP HERE");
+				//}
+				if(a.getSequence() > b.getSequence()) return 1;
+				if(a.getSequence() < b.getSequence()) return -1;
+				
+				return 0;
+			}
+			
+		});
+	}
+	
+	public ArrayList<TriggerData> getSortedTriggers() {
+		if(sortedTriggers == null) { sortTriggers(); }
+		return sortedTriggers;
+	}
+	
+	public void buildTriggerSystem() {
+		//start with the global settings.
+		long start = System.currentTimeMillis();
+		sortedTriggerMap = new HashMap<Integer,TriggerData>();
+		//triggerPluginMap = new HashMap<Integer,Plugin>();
+		int working = 1;
+		triggerBuilder.setLength(0);
+		boolean addseparator = false;
+		ArrayList<TriggerData> tmp = sortedTriggers;
+		if(tmp == null) {
+			sortTriggers();
+			tmp = sortedTriggers;
+			if(tmp == null || tmp.size() == 0) return;
+		}
+		if(tmp != null && tmp.size() > 0) {
+			for(int i=0;i<tmp.size();i++) {
+				TriggerData t = tmp.get(i);
+				if(!t.isInterpretAsRegex() && t.getPattern().startsWith("%")) {
+					
+				} else {
+					if(t.isEnabled()) {
+						if(i == 0) {
+							triggerBuilder.append("(");
+							triggerBuilder.append(t.getPattern());
+							triggerBuilder.append(")");
+							addseparator = true;
+						} else {
+							triggerBuilder.append("|(");
+							triggerBuilder.append(t.getPattern());
+							triggerBuilder.append(")");
+						}
+						sortedTriggerMap.put(working, t);
+						//triggerPluginMap.put(working, the_settings);
+						working += t.getMatcher().groupCount()+1;
+					}
+				}
+			}
+		}
+		
+		massiveTriggerString = triggerBuilder.toString();
+		
+		massivePattern = Pattern.compile(massiveTriggerString,Pattern.MULTILINE);
+		//massiveTriggerString = massiveTriggerString.replace("|", "\n");
+		//Log.e("MASSIVE",massiveTriggerString);
+		massiveMatcher = massivePattern.matcher("");
+		
+		long delta = System.currentTimeMillis() - start;
+		//Log.e("TRIGGERS","TIMEPROFILE "+getSettings().getName()+" trigger system took " + delta + " millis to build.");
+	}
+	
+	StringBuilder triggerBuilder = new StringBuilder();
+	String massiveTriggerString = null;
+	Pattern massivePattern = null;
+	Matcher massiveMatcher = null;
+	HashMap<Integer,TriggerData> sortedTriggerMap = null;
+	//HashMap<Integer,Plugin> triggerPluginMap = null;
 }

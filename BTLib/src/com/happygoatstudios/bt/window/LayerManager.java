@@ -155,7 +155,7 @@ public class LayerManager {
 			}
 			
 			if(w.getBuffer() != null) {
-				tmp.addBytesImpl(w.getBuffer().dumpToBytes(false), true);
+				tmp.addBytes(w.getBuffer().dumpToBytes(false), true);
 			//construct border.
 			}
 			

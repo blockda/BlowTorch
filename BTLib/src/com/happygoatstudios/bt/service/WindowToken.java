@@ -40,7 +40,17 @@ public class WindowToken implements Parcelable {
 		NORMAL,
 		SCRIPT
 	}*/
-	
+	public enum OPTION_KEY {
+		hyperlinks_enabled,
+		hyperlink_mode,
+		hyperlink_color,
+		word_wrap,
+		color_option,
+		font_size,
+		line_extra,
+		buffer_size,
+		font_path
+	}
 	//private TYPE type = TYPE.NORMAL;
 	
 	private String scriptName;
@@ -261,16 +271,16 @@ public class WindowToken implements Parcelable {
 			int layoutType = p.readInt();
 			switch(layoutType) {
 			case 0:
-				g.type = LAYOUT_TYPE.SMALL;
+				g.type = LAYOUT_TYPE.small;
 				break;
 			case 1:
-				g.type = LAYOUT_TYPE.NORMAL;
+				g.type = LAYOUT_TYPE.normal;
 				break;
 			case 2:
-				g.type = LAYOUT_TYPE.LARGE;
+				g.type = LAYOUT_TYPE.large;
 				break;
 			case 3:
-				g.type = LAYOUT_TYPE.XLARGE;
+				g.type = LAYOUT_TYPE.xlarge;
 				break;
 			}
 			
@@ -378,16 +388,16 @@ public class WindowToken implements Parcelable {
 			//LayoutGroup.LAYOUT_TYPE = keySet.
 			//LayoutGroup g = layouts.get(j);
 			switch(g.type) {
-			case SMALL:
+			case small:
 				p.writeInt(0);
 				break;
-			case NORMAL:
+			case normal:
 				p.writeInt(1);
 				break;
-			case LARGE:
+			case large:
 				p.writeInt(2);
 				break;
-			case XLARGE:
+			case xlarge:
 				p.writeInt(3);
 				break;
 			}
@@ -501,6 +511,20 @@ public class WindowToken implements Parcelable {
 		}
 	};
 
+	public static final int DEFAULT_HYPERLINK_COLOR = 0xFF0000FF;
+
+	public static final int DEFAULT_HYPERLINK_MODE = 3;
+
+	public static final int DEFAULT_COLOR_MODE = 0;
+
+	public static final int DEFAULT_FONT_SIZE = 18;
+
+	public static final int DEFAULT_LINE_EXTRA = 3;
+
+	public static final int DEFAULT_BUFFER_SIZE = 300;
+
+	public static final String DEFAULT_FONT_PATH = "monospace";
+
 	public void resetToDefaults() {
 		name = "";
 		id = 0;
@@ -513,29 +537,29 @@ public class WindowToken implements Parcelable {
 		switch(size) {
 		case Configuration.SCREENLAYOUT_SIZE_SMALL:
 			//tmp.setLayoutParams(w.getLayout(Configuration.SCREENLAYOUT_SIZE_SMALL,landscape));
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
 			} else {
 				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -543,29 +567,29 @@ public class WindowToken implements Parcelable {
 			}
 			//break;
 		case Configuration.SCREENLAYOUT_SIZE_NORMAL:
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
 			} else {
 				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -573,29 +597,29 @@ public class WindowToken implements Parcelable {
 			}
 			//break;
 		case Configuration.SCREENLAYOUT_SIZE_LARGE:
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
 			} else {
 				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -603,29 +627,29 @@ public class WindowToken implements Parcelable {
 			}
 			
 		case Configuration.SCREENLAYOUT_SIZE_XLARGE:
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE) != null) {
+			if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.XLARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.LARGE).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.NORMAL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL) != null) {
+			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
 				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getLandscapeParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.SMALL).getPortraitParams();
+					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
 			} else {
 				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);

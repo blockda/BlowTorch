@@ -189,16 +189,16 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 	//vp[3] = 200;
 	
 	@Override
-	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name,String encoding) {
+	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int start,int end,String matched,Object source,String displayname,int triggernumber,boolean windowIsOpen,Handler dispatcher,HashMap<String,String> captureMap,LuaState L,String name,String encoding) {
 		//we are going to do the window response now.
 		
 		if(windowIsOpen) {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
-				return;
+				return false;
 			}
 		} else {
 			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) {
-				return;
+				return false;
 			}
 		}
 		
@@ -336,6 +336,8 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		NM.cancel(myTriggerId); //cancel my id if i am a not spawn new kind of guy, if that is true this shouldn't be a problem here, as the id doens't exist in the notification system yet.
 		
 		NM.notify(myTriggerId,note);
+		
+		return false;
 	}
 
 	public void setSpawnNewNotification(boolean spawnNewNotification) {
