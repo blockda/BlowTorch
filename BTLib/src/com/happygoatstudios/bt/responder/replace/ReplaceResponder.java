@@ -116,16 +116,16 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int start,int pend,String matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name,String encoding) throws IteratorModifiedException {
-			if(line == null || matched == null) {
-				return;
+			if(line == null) {
+				return false;
 			}
-			
+			int end = pend  + 1;
 			//so here we go, meat of the replacer code.
-			int start = matched.start();
-			int end = matched.end()-1;
+			//int start = matched.start();
+			//int end = matched.end()-1;
 			
 			ListIterator<TextTree.Unit> it = line.getIterator();
 			//reset iterator to begginig of line.
@@ -258,6 +258,8 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 					throw e;
 				}
 			}
+			
+			return false;
 			
 	}
 

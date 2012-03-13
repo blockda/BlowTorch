@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.responder.gag;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.regex.Matcher;
 
@@ -47,17 +48,25 @@ public class GagAction extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public void doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, Matcher matched,
+	public boolean doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, int start,int end,String matched,
 			Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name,String encoding) throws IteratorModifiedException {
 			//iterator.pr
 			int prevloc = -1;
-			if(iterator.hasPrevious()) {
+			ListIterator<TextTree.Line> lineit = tree.getLines().listIterator(lineNumber);
+			if(lineit.hasPrevious()) {
 				//Log.e("GAG","PREVIOUS INDEX:" + iterator.previousIndex());
-				prevloc = iterator.previousIndex();
+				prevloc = lineit.previousIndex();
 			}
-			tree.getLines().remove(lineNumber);
+			//if(tree.getLines().size() == 0) {
+			//	return false;
+			//}
+			//if(tree.getLines().size()-1 <= lineNumber) {
+				tree.getLines().remove(lineNumber);
+			//} else {
+			//	return false; //not really sure why that is happening.
+			//}
 			
 			
 			if(retarget != null) {
@@ -71,11 +80,13 @@ public class GagAction extends TriggerResponder implements Parcelable {
 				//Log.e("GAG","NOT RETARGETING TO: " + retarget);
 			}
 			
-			if(iterator.hasPrevious()) {
+			if(lineit.hasPrevious()) {
 				iterator = tree.getLines().listIterator(prevloc+1);
 				IteratorModifiedException e = new IteratorModifiedException(iterator);
 				throw e;
 			}
+			
+			return false;
 			
 	}
 

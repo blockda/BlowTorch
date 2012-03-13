@@ -348,6 +348,18 @@ end
 
 dosun = false
 
+
+
+height = 1
+width = 1
+
+function OnSizeChanged(neww,newh,oldw,oldh)
+	height = newh
+	width = neww
+	rebuildConstants()
+end
+
+function rebuildConstants()
 blackPaint = luajava.new(Paint)
 blackPaint:setStyle(Style.FILL)
 blackPaint:setAntiAlias(true)
@@ -399,4 +411,5 @@ aval.sun = (100-constant.sun)/(tmpval.sun*tmpval.sun)
 aval.grey = (100-constant.grey)/(tmpval.grey*tmpval.grey)
 aval.black = (100-constant.black)/(tmpval.black*tmpval.black)
 aval.white = (100-constant.white)/(tmpval.white*tmpval.white)
+end
 

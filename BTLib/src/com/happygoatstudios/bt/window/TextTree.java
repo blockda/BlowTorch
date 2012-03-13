@@ -91,21 +91,32 @@ public class TextTree {
 			Iterator<Unit> iu = l.getData().iterator();
 			while(iu.hasNext()) {
 				Unit u = iu.next();
-				if(u instanceof Text) {
+				switch(u.type) {
+				//if(u instanceof Text) {
+				case WHITESPACE:
+				case TEXT:
 					buf.put(((Text)u).bin);
 					written += ((Text)u).bin.length;
-				}
-				if(u instanceof Color) {
+					break;
+				//}
+				//if(u instanceof Color) {
+				case COLOR:
 					buf.put(((Color)u).bin);
 					written += ((Color)u).bin.length;
-				}
-				if(u instanceof NewLine) {
+					break;
+				//}
+				//if(u instanceof NewLine) {
+				case NEWLINE:
 					buf.put(NEWLINE);
 					written += 1;
-				}
-				if(u instanceof Tab) {
+					break;
+				//}
+				//if(u instanceof Tab) {
+				case TAB:
 					buf.put(TAB);
 					written += 1;
+					break;
+				//}
 				}
 				
 			}
@@ -743,28 +754,46 @@ public class TextTree {
 			
 				Unit u = theIterator.next();
 				
-				//check if it is whitespace
-				if(u instanceof WhiteSpace) {
-					if(wordWrap) {
-						whiteSpaceFound = true;
-					}
-					//this.charcount += u.charcount;
-				}
-				
-				if(u instanceof Text) {
-					//update charsinline
+				switch(u.type) {
+				case WHITESPACE:
+					if(wordWrap) whiteSpaceFound = true;
+				case TEXT:
 					charsinline += ((Text)u).charcount;
 					this.bytes += ((Text)u).charcount;
 					this.charcount += u.charcount;
-				}
-				
-				if(u instanceof Tab || u instanceof NewLine || u instanceof Color) {
+					break;
+				case TAB:
+				case NEWLINE:
+				case COLOR:
 					this.bytes += u.reportSize();
-				}
-				if(u instanceof Break) {
+					break;
+				case BREAK:
 					theIterator.remove();
 					this.breaks -= 1;
+					break;	
 				}
+				//check if it is whitespace
+//				if(u instanceof WhiteSpace) {
+//					if(wordWrap) {
+//						whiteSpaceFound = true;
+//					}
+//					//this.charcount += u.charcount;
+//				}
+//				
+//				if(u instanceof Text) {
+//					//update charsinline
+//					charsinline += ((Text)u).charcount;
+//					this.bytes += ((Text)u).charcount;
+//					this.charcount += u.charcount;
+//				}
+//				
+//				if(u instanceof Tab || u instanceof NewLine || u instanceof Color) {
+//					this.bytes += u.reportSize();
+//				}
+//				if(u instanceof Break) {
+//					theIterator.remove();
+//					this.breaks -= 1;
+//				}
 				
 				if(charsinline > breakAt) {
 					int amount = charsinline - breakAt;
@@ -970,6 +999,16 @@ public class TextTree {
 		
 	}
 	
+	public enum UNIT_TYPE {
+		BLAND,
+		TEXT,
+		WHITESPACE,
+		TAB,
+		NEWLINE,
+		COLOR,
+		BREAK,
+	}
+	
 	public class Unit {
 		protected int charcount;
 		protected int bytecount;
@@ -978,6 +1017,7 @@ public class TextTree {
 		public Unit() { charcount = 0; bytecount=0; }
 		//	charcount = 0;
 		//}
+		public UNIT_TYPE type = UNIT_TYPE.BLAND;
 		
 		//public Unit copy() { return null;}
 		public int reportSize() { return 0; } //raw units have no size.
@@ -998,6 +1038,7 @@ public class TextTree {
 			charcount = 0;
 			bytecount = 0;
 			bin = new byte[0];
+			this.type = UNIT_TYPE.TEXT;
 		}
 		
 		public Text(String input) {
@@ -1018,6 +1059,8 @@ public class TextTree {
 				
 				e.printStackTrace();
 			}
+			
+			this.type = UNIT_TYPE.TEXT;
 		}
 		
 		public Text(byte[] in) throws UnsupportedEncodingException {
@@ -1031,6 +1074,7 @@ public class TextTree {
 			}
 			this.charcount = data.length();
 			bytecount = bin.length;
+			this.type = UNIT_TYPE.TEXT;
 		}
 
 		public String getString() {
@@ -1072,6 +1116,7 @@ public class TextTree {
 			//data = new String(new byte[]{0x09});
 			this.charcount = 1;
 			this.bytecount = 1;
+			this.type = UNIT_TYPE.TAB;
 		}
 		
 		public int reportSize() {
@@ -1086,6 +1131,7 @@ public class TextTree {
 			data = new String("\n");
 			this.charcount = 1;
 			this.bytecount = 1;
+			this.type = UNIT_TYPE.NEWLINE;
 		}
 		
 		public int reportSize() {
@@ -1116,6 +1162,7 @@ public class TextTree {
 			//this.charcount = data.length();
 			operations = new ArrayList<Integer>();
 			//operations.add(new Integer(0));
+			this.type = UNIT_TYPE.COLOR;
 		}
 		
 		public void setOperations(ArrayList<Integer> ops) {
@@ -1155,6 +1202,8 @@ public class TextTree {
 			} catch (UnsupportedEncodingException e) {
 				throw new RuntimeException(e);
 			}*/
+			this.type = UNIT_TYPE.COLOR;
+			
 		}
 		
 		//public String getData() {
@@ -1193,7 +1242,7 @@ public class TextTree {
 	public class Break extends Unit {
 		public int viswidth = 0;
 		public Break() {
-			
+			this.type = UNIT_TYPE.BREAK;
 		}
 		public int reportSize() {
 			return 0;
@@ -1205,14 +1254,17 @@ public class TextTree {
 		//whitespace is esentially text.
 		public WhiteSpace() {
 			super();
+			this.type = UNIT_TYPE.WHITESPACE;
 		}
 		
 		public WhiteSpace(String pIn) {
 			super(pIn);
+			this.type = UNIT_TYPE.WHITESPACE;
 		}
 		
 		public WhiteSpace(byte[] pIn) throws UnsupportedEncodingException {
 			super(pIn);
+			this.type = UNIT_TYPE.WHITESPACE;
 		}
 		
 		public String getString() {
@@ -1251,9 +1303,9 @@ public class TextTree {
 				stripColor.append(((Text)u).data);
 			}
 			
-			if(u instanceof NewLine) {
+			//if(u instanceof NewLine) {
 				//stripColor.append("\n");
-			}
+			//}
 			
 		}
 		

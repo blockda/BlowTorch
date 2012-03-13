@@ -35,6 +35,7 @@ import com.happygoatstudios.bt.window.TextTree.Unit;
 
 import android.R;
 import android.animation.ObjectAnimator;
+import android.app.Service;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -173,6 +174,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected static final int MESSAGE_SCROLLUP=10;
 	protected static final int MESSAGE_SCROLLRIGHT = 11;
 	protected static final int MESSAGE_SCROLLLEFT = 12;
+	//public static final int MESSAGE_SENDDATA = 0;
 	
 	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -229,10 +231,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	
 	
-	/*public void onCreate(Bundle b) {
-		onSizeChanged(this.getWidth(),this.getHeight(),0,0);
-		viewCreate();
-	}*/
+	public void onCreate(Bundle b) {
+		//onSizeChanged(this.getWidth(),this.getHeight(),0,0);
+		//viewCreate();
+		
+		//updateHandler = new ThreadUpdater(the_tree,mHandler,updateSynch);
+		//updateHandler.start();
+	}
 	
 	protected void onAttachedToWindow() {
 		Log.e("WINDOW","Attatched to window.");
@@ -873,6 +878,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}*/
 		//drawn = true;
 		
+		//synchronized(updateSynch) {
+		
 		if(selectedSelector != null) {
 			//int full = selectionIndicatorHalfDimension * 2;
 			//int third = (selectionIndicatorHalfDimension * 2) / 3;
@@ -1136,9 +1143,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						useBackground = true;
 					}
 					
-
+					switch(u.type) {
 					//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
-					if(u instanceof TextTree.Text) {
+					//if(u instanceof TextTree.Text) {
+					case WHITESPACE:
+					case TEXT:
+						TextTree.Text text = ((TextTree.Text)u);
 						boolean doIndicator = false;
 						int indicatorlineoffset = 0;
 						boolean backgroundSelection = false;
@@ -1154,83 +1164,83 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							//Log.e("Window","doing selection run: start={"+startline2+","+startcol+"} end={"+endline+","+endcol);
 							switch(linemode) {
 							case 1:
-								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
+								int finishCol = workingcol + text.bytecount;
 								if(finishCol > startcol && finishCol-1 <= endcol){
-									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+									if((finishCol - startcol) < text.bytecount) {
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * one_char_is_this_wide;
-										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										int stringWidth = (int) p.measureText(text.getString());
 										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, textSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, textSelectionIndicatorBackgroundPaint);
 									}
 								} else if(finishCol > endcol) {
-									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+									if((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
 										int overshootPixels = overshoot * one_char_is_this_wide;
-										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										//int stringWidth = (int) p.measureText(text.getString());
 										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, textSelectionIndicatorBackgroundPaint);
 									} else {
-										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 									}
 								} else {
-									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 								}
 								break;
 							case 2:
-								finishCol = workingcol + ((TextTree.Text)u).bytecount;
+								finishCol = workingcol + text.bytecount;
 								if(finishCol > startcol) {
-									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+									if((finishCol - startcol) < text.bytecount) {
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * one_char_is_this_wide;
-										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										int stringWidth = (int) p.measureText(text.getString());
 										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, textSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, textSelectionIndicatorBackgroundPaint);
 									}
 								} else {
-									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 								}
 //								} else if(finishCol > endcol) {
-//									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+//									if((finishCol - endcol) < text.bytecount) {
 //										int overshoot = endcol - workingcol + 1;
 //										int overshootPixels = overshoot * one_char_is_this_wide;
-//										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										//int stringWidth = (int) p.measureText(text.getString());
 //										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
 //									} else {
-//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //									}
 //								} else {
-//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //								}
 								break;
 							case 3:
 								
-								c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
+								c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, textSelectionIndicatorBackgroundPaint);
 								break;
 							case 4:
-								finishCol = workingcol + ((TextTree.Text)u).bytecount;
+								finishCol = workingcol + text.bytecount;
 //								if(finishCol > startcol && finishCol-1 <= endcol){
-//									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+//									if((finishCol - startcol) < text.bytecount) {
 //										int overshoot = startcol - workingcol;
 //										int overshootPixels = overshoot * one_char_is_this_wide;
-//									int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//									int stringWidth = (int) p.measureText(text.getString());
 //										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
 //									} else {
-//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //									}
-								//Log.e("ACEFJSAf","x:"+x+" y:"+y +" text:"+((TextTree.Text)u).getString()+"|" + " finishCol="+finishCol+" workingCol="+workingcol + " endcol="+endcol);
+								//Log.e("ACEFJSAf","x:"+x+" y:"+y +" text:"+text.getString()+"|" + " finishCol="+finishCol+" workingCol="+workingcol + " endcol="+endcol);
 								if(finishCol >= endcol) {
-									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+									if((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
 										int overshootPixels = overshoot * one_char_is_this_wide;
-										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+										//int stringWidth = (int) p.measureText(text.getString());
 										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
 									} else {
-										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 									}
 								} else {
-									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, textSelectionIndicatorBackgroundPaint);
+									c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, textSelectionIndicatorBackgroundPaint);
 								}
 								break;
 							default:
@@ -1239,60 +1249,60 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						}
 							
 //							if(startline2 == endline && startline2 == workingline) {
-//								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
+//								int finishCol = workingcol + text.bytecount;
 //								if(finishCol > startcol && finishCol-1 <= endcol){
-//									if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+//									if((finishCol - startcol) < text.bytecount) {
 //										int overshoot = startcol - workingcol;
 //										int overshootPixels = overshoot * one_char_is_this_wide;
-//										int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										int stringWidth = (int) p.measureText(text.getString());
 //										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
 //									} else {
-//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //									}
 //								} else if(finishCol > endcol) {
-//									if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+//									if((finishCol - endcol) < text.bytecount) {
 //										int overshoot = endcol - workingcol + 1;
 //										int overshootPixels = overshoot * one_char_is_this_wide;
-//										//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//										//int stringWidth = (int) p.measureText(text.getString());
 //										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
 //									} else {
-//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //									}
 //								} else {
-//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //								}
 //							} else if(startline2 == workingline) {
-//								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
-//								if((finishCol - startcol) < ((TextTree.Text)u).bytecount) {
+//								int finishCol = workingcol + text.bytecount;
+//								if((finishCol - startcol) < text.bytecount) {
 //									int overshoot = startcol - workingcol + 1;
 //									int overshootPixels = overshoot * one_char_is_this_wide;
-//									//int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//									//int stringWidth = (int) p.measureText(text.getString());
 //									c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
 //								} else {
-//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //								}
 //							} else if(startline2 > workingline && endline < workingline) {
-//								c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//								c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //								Log.e("wondow","drawing in between line:" +workingline+ " ypos:"+y);
 //							} else if(endline == workingline) {
-//								int finishCol = workingcol + ((TextTree.Text)u).bytecount;
-//								if((finishCol - endcol) < ((TextTree.Text)u).bytecount) {
+//								int finishCol = workingcol + text.bytecount;
+//								if((finishCol - endcol) < text.bytecount) {
 //									int overshoot = endcol - workingcol;
 //									int overshootPixels = overshoot * one_char_is_this_wide;
-//									int stringWidth = (int) p.measureText(((TextTree.Text)u).getString());
+//									int stringWidth = (int) p.measureText(text.getString());
 //									c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
 //								} else {
-//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, scroller_paint);
+//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
 //								}
 //							}
 //						}
 						
 						if(useBackground) {
 							//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
-							c.drawRect(x, y - p.getTextSize(), x + p.measureText(((TextTree.Text)u).getString()), y+5, b);
+							c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, b);
 						}
 						
-						if(((TextTree.Text)u).isLink() || doingLink) {
+						if(text.isLink() || doingLink) {
 							if(u instanceof TextTree.WhiteSpace) {
 								//DO LINK BOX.
 								for(int z=0;z<linkBoxes.size();z++) {
@@ -1304,13 +1314,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								doingLink = false;
 							} else {
 								doingLink = true;
-								currentLink.append(((TextTree.Text)u).getString());
+								currentLink.append(text.getString());
 								
 								
 								Rect r = new Rect();
 								r.left = (int) x;
 								r.top = (int) (y - p.getTextSize());
-								r.right = (int) (x + p.measureText(((TextTree.Text)u).getString()));
+								r.right = (int) (x + p.measureText(text.getString()));
 								r.bottom = (int) (y+5);
 								if(linkMode == LINK_MODE.BACKGROUND) {
 									linkColor.setColor(linkHighlightColor);
@@ -1378,7 +1388,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							}
 							
 							if(doIndicator) {
-								int unitEndCol = workingcol + (((TextTree.Text)u).bytecount-1);
+								int unitEndCol = workingcol + (text.bytecount-1);
 								if(unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column +10) {
 									float size = p.getTextSize();
 									p.setTextSize(30);
@@ -1390,14 +1400,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 									
 									
 									
-									mSelectionIndicatorCanvas.drawText(((TextTree.Text)u).getString(), ix, iy, p);
+									mSelectionIndicatorCanvas.drawText(text.getString(), ix, iy, p);
 									
 									p.setTextSize(size);
 								}
 								
 							}
-							c.drawText(((TextTree.Text)u).getString(),x,y,linkColor);
-							x += p.measureText(((TextTree.Text)u).getString());
+							c.drawText(text.getString(),x,y,linkColor);
+							x += p.measureText(text.getString());
 							
 						} else {
 							//p.setUnderlineText(false);
@@ -1407,7 +1417,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							boolean backGroundSelection = false;
 							
 							if(doIndicator) {
-								int unitEndCol = workingcol + (((TextTree.Text)u).bytecount-1);
+								int unitEndCol = workingcol + (text.bytecount-1);
 								if(unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column +10) {
 									float size = p.getTextSize();
 									p.setTextSize(30);
@@ -1419,19 +1429,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 									
 									
 									
-									mSelectionIndicatorCanvas.drawText(((TextTree.Text)u).getString(), ix, iy, p);
+									mSelectionIndicatorCanvas.drawText(text.getString(), ix, iy, p);
 									
 									p.setTextSize(size);
 								}
 								
 							}
-							workingcol += ((TextTree.Text)u).bytecount;
-							c.drawText(((TextTree.Text)u).getString(),x,y,p);
-							x += p.measureText(((TextTree.Text)u).getString());
+							workingcol += text.bytecount;
+							c.drawText(text.getString(),x,y,p);
+							x += p.measureText(text.getString());
 						}
 						
-					}
-					if(u instanceof TextTree.Color) {
+						break;
+					case COLOR:
+					//if(u instanceof TextTree.Color) {
 						xterm256Color = false;
 						xterm256FGStart = false;
 						xterm256BGStart = false;
@@ -1471,8 +1482,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							c.drawText(str,x,y,p);
 							x += p.measureText(str);
 						}
-					}
-					if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
+						break;
+					case NEWLINE:
+					case BREAK:
+					//if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
 						if(u instanceof TextTree.NewLine) {
 							if(doingLink) {
 								for(int z=0;z<linkBoxes.size();z++) {
@@ -1510,6 +1523,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						if(drawnlines > CALCULATED_LINESINWINDOW + extraLines) {
 							stop = true;
 						}
+						break;
 					}
 				}
 				workingline = workingline - 1;
@@ -1589,6 +1603,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 		c.restore();
+		
+		//}
 	}
 	
 	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
@@ -1830,6 +1846,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		PREF_FONT = font;
 	}
 	
+	public void setBold(boolean bold) {
+		if(bold) {
+			PREF_FONT = Typeface.create(PREF_FONT, Typeface.BOLD);
+			p.setTypeface(PREF_FONT);
+		} else {
+			PREF_FONT = Typeface.create(PREF_FONT, Typeface.NORMAL);
+			p.setTypeface(PREF_FONT);
+		}
+	}
+	
 	public Typeface getFont() {
 		return PREF_FONT;
 	}
@@ -1904,12 +1930,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void addBytes(byte[] obj,boolean jumpToEnd) {
-		
-		synchronized(token) {
+		//if(updateHandler == null) {
 			addBytesImpl(obj,jumpToEnd);
-		}
+		//} else {
+		//	updateHandler.handler.sendMessage(updateHandler.handler.obtainMessage(ThreadUpdater.MESSAGE_ADDTEXT,(jumpToEnd == true) ? 1 : 0, 0, obj));
+		//}
+		//		synchronized(token) {
+//			addBytesImpl(obj,jumpToEnd);
+//		}
 	}
-	public void addBytesImpl(byte[] obj,boolean jumpToEnd) {
+	private void addBytesImpl(byte[] obj,boolean jumpToEnd) {
 		if(obj.length == 0) return;
 		
 			if(bufferText) {
@@ -1918,7 +1948,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				//}
 				return;
 			}
-		
+			
 			int oldbrokencount = the_tree.getBrokenLineCount();
 			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
 			//synchronized(synch) {
@@ -2373,6 +2403,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
 		SheduleCallbackFunction scf = new SheduleCallbackFunction(L);
 		CancelSheduleCallbackFunction cscf = new CancelSheduleCallbackFunction(L);
+		GetDisplayDensityFunction gddf = new GetDisplayDensityFunction(L); 
+		SendToServerFunction stsf = new SendToServerFunction(L);
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
@@ -2382,6 +2414,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			pxcf.register("PluginXCallS");
 			scf.register("scheduleCallback");
 			cscf.register("cancelCallback");
+			gddf.register("getDisplayDensity");
+			stsf.register("sendToServer");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2428,6 +2462,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		} else {
 			//Log.e("LUAWINDOW","Loaded script body for: " + mName);
 		}
+
+	}
+	
+	public void runScriptOnCreate() {
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
@@ -2607,6 +2645,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	};
 	
 	private void callScheduleCallback(int id,String callback) {
+		if(L == null) return;
 		L.getGlobal("debug");
 		L.getField(-1, "traceback");
 		L.remove(-2);
@@ -2700,6 +2739,42 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
+	private class GetDisplayDensityFunction extends JavaFunction {
+
+		public GetDisplayDensityFunction(LuaState L) {
+			super(L);
+			
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			float density = Window.this.getContext().getResources().getDisplayMetrics().density;
+			if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+				density = density * 1.5f;
+			}
+			Log.e("WINODW","PUSHING DENSITY:"+Float.toString(density));
+			L.pushNumber(density);
+			return 1;
+		}
+		
+	}
+	
+	private class SendToServerFunction extends JavaFunction {
+
+		public SendToServerFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			if(this.getParam(2).isNil()) { return 0; }
+			Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
+			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,this.getParam(2).getString()));
+			return 0;
+		}
+		
+	}
 
 
 	public void callFunction(String callback) {
@@ -3525,6 +3600,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private boolean scrollingEnabled = true;
 
 	public void shutdown() {
+		Log.e("LUAWINDOW","SHUTTING DOWN: "+mName);
 		if(L == null) return;
 		//call into lua to notify shutdown imminent.
 		L.getGlobal("debug");
@@ -3540,6 +3616,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		} else {
 			//no method.
 		}
+		
+		//callbackHandler.removeCallbacksAndMessages(token)
 		
 		L.close();
 		L = null;
@@ -3656,5 +3734,55 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private int scrollRepeatRateMin = 60;
 	
 	public int gravity = Gravity.LEFT;
+	
+//	private class ThreadUpdater extends Thread {
+//		public final static int MESSAGE_ADDTEXT = 1;
+//		public final static int MESSAGE_QUIT = 2;
+//		TextTree buffer = null;
+//		Object synch = null;
+//		Handler mainHandler = null;
+//		public Handler handler = null;
+//		public ThreadUpdater(TextTree buffer,Handler h,Object synch) {
+//			this.buffer = buffer;
+//			this.mainHandler = h;
+//			this.synch = synch;
+//		}
+//		
+//		@Override
+//		public void run() {
+//			Looper.prepare();
+//			
+//			this.handler = new Handler() {
+//				public void handleMessage(Message msg) {
+//					switch(msg.what) {
+//					case MESSAGE_ADDTEXT:
+//						synchronized(synch) {
+//							//try {
+//								boolean jumptoend = false;
+//								if(msg.arg1 == 1) jumptoend = true;
+//								Window.this.addBytesImpl((byte[])msg.obj,jumptoend);
+//								//buffer.addBytesImpl((byte[])msg.obj);
+//							//} catch (UnsupportedEncodingException e) {
+//								// TODO Auto-generated catch block
+//							//	e.printStackTrace();
+//							//}
+//							synch.notify();
+//						}
+//						break;
+//					case MESSAGE_QUIT:
+//						this.getLooper().quit();
+//						break;
+//					}
+//				}
+//			};
+//			
+//			Looper.loop();
+//		}
+		
+		
+	//}
+	
+	//private ThreadUpdater updateHandler = null;
+	//private Object updateSynch = new Object();
 }
 

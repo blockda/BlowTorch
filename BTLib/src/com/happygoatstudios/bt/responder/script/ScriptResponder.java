@@ -93,7 +93,7 @@ public class ScriptResponder extends TriggerResponder {
 
 	
 	@Override
-	public void doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,Matcher matched,Object source, String displayname, int triggernumber,
+	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int start,int end,String matched,Object source, String displayname, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap,LuaState L,String name,String encoding) {
 			
@@ -116,7 +116,7 @@ public class ScriptResponder extends TriggerResponder {
 			}
 			if(!L.isFunction(L.getTop())) {
 				Log.e("LUA",function + " is not a function.");
-				return;
+				return false;
 			}
 			
 			//this is a relativly straightforward matter, push the arguments a la mushclient.
@@ -132,8 +132,14 @@ public class ScriptResponder extends TriggerResponder {
 			//L.call(2, 0);
 			if(L.pcall(3,1,-5) != 0) {
 				Log.e("FOO","Error running("+function+"): " + L.getLuaObject(-1).getString());
+			} else {
+				if(L.getLuaObject(-1).getBoolean() == true) {
+					return true;
+				}
 			}
 			//return 2;
+			
+			return false;
 	}
 
 	@Override

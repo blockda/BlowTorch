@@ -5,6 +5,13 @@ require("button")
 require("serialize")
 defaults = nil
 
+--set up the density value.
+--local ctmp = view:getContext()
+--local res = ctmp:getResources()
+--local displaymetrics = res:getDisplayMetrics()
+
+density = getDisplayDensity()
+
 Adapter = luajava.bindClass("android.widget.Adapter")
 ListView = luajava.bindClass("android.widget.ListView")
 ImageButton = luajava.bindClass("android.widget.ImageButton")
@@ -20,6 +27,9 @@ LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams
 KeyEvent = luajava.bindClass("android.view.KeyEvent")
 TranslateAnimation = luajava.bindClass("android.view.animation.TranslateAnimation")
 ScrollView = luajava.bindClass("android.widget.ScrollView")
+AnimationSet = luajava.bindClass("android.view.animation.AnimationSet")
+LayoutAnimationController = luajava.bindClass("android.view.animation.LayoutAnimationController")
+lastLoadedSet = nil
 function loadButtons(args)
 
 	--debugPrint("WindowXCallS Succeeded!")
@@ -29,7 +39,8 @@ function loadButtons(args)
 	--end
 	--printTable("args",args)
 	local tmp = loadstring(args)()
-	printTable("defs",tmp.default)
+	--printTable("defs",tmp.default)
+	lastLoadedSet = tmp.name
 	--set up metatables.
 	--if(args.defaults == nil) then
 	defaults = BUTTONSET_DATA:new(tmp.default)
@@ -43,7 +54,7 @@ function loadButtons(args)
 	--setmetatable(BUTTON_DATA,defaults)
 	for i,v in pairs(tmp.set) do
 		--debugPrint("PROCESSING NEW BUTTON"..i)
-		buttons[i] = BUTTON:new(v)
+		buttons[i] = BUTTON:new(v,density)
 	end
 	debugPrint(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
 	--for i,v in pairs(buttons) do
@@ -451,10 +462,12 @@ function normalTouch.onTouch(v,e)
 			local r = touchedbutton.rect
 			if(r:contains(x,y)) then
 				--process primary touch
+				sendToServer(touchedbutton.data.command)
 				debugPrint("primary touch")
 			else
 				--process secondary touch
 				debugPrint("secondary touch")
+				sendToServer(touchedbutton.data.flipCommand)
 			end
 			normalTouchState = 0
 			clearButton(touchedbutton)
@@ -578,8 +591,9 @@ function OnCreate()
 	paint:setARGB(0xAA,0x00,0x33,0xAA)
 	--bounds = getBounds()
 	--drawButtons()
-	addOptionCallback("buttonOptions","Lua Button Options",nil)
+	--addOptionCallback("buttonOptions","Lua Button Options",nil)
 	addOptionCallback("buttonList","Lua Button Sets",nil)
+	view:bringToFront()
 end
 
 
@@ -591,40 +605,73 @@ cpaint = luajava.new(PaintClass)
 cpaint:setARGB(0x00,0x00,0x00,0x00)
 cpaint:setXfermode(xferMode)
 
-checkchange = {}
-function checkchange.onCheckedChanged(v,ischecked)
-	debugPrint("starting check change")
-	if(ischecked) then
+drawManagerLayer = true
+function enterManagerMode()
+	if(drawManagerLayer) then
 		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
 		debugPrint("drawingManagerLayer")
-		drawManagerLayer()
-		--paint:setShadowLayer(1,0,0,Color.WHITE)
-		view:setOnTouchListener(managerTouch_cb)
-		manage = true
-	else
-		debugPrint("check unset")
-		managerCanvas = nil
-		managerLayer:recycle()
-		managerLayer = nil
-		manage = false
-		view:setOnTouchListener(normalTouch_cb)
-		
-		--save settings.
-		local tmp = {}
-		for i,b in pairs(buttons) do
-			tmp[i] = b.data
-		end
-		
-		PluginXCallS("saveButtons",serialize(tmp))
-		
-		--paint:setShadowLayer(0,0,0,Color.WHITE)
+		drawManagerGrid()
 	end
+	
+	--set up and add the back/options widget.
+	backWidget = makeBackWidget()
+	local parent = view:getParent()
+	parent:addView(backWidget)
+	
+		--paint:setShadowLayer(1,0,0,Color.WHITE)
+	view:setOnTouchListener(managerTouch_cb)
+	manage = true
 	drawButtons()
 	invalidate()
 end
 
-function drawManagerLayer()
+function exitManagerMode()
+	if(drawManagerLayer ~= nil) then
+		managerCanvas = nil
+		managerLayer:recycle()
+		managerLayer = nil
+	end
+	view:setOnTouchListener(normalTouch_cb)
+	manage = false
+	
+	local parent = view:getParent()
+	parent:removeView(backWidget)
+	
+	local tmp = {}
+	for i,b in pairs(buttons) do
+		tmp[i] = b.data
+	end
+		
+	PluginXCallS("saveButtons",serialize(tmp))
+	drawButtons()
+	invalidate()
+end
+
+checkchange = {}
+function checkchange.onCheckedChanged(v,ischecked)
+	debugPrint("starting check change")
+	drawManagerLayer = ischecked
+	if(manage == true and ischecked == true) then
+		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
+		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
+		debugPrint("drawingManagerLayer")
+		drawManagerGrid()
+		--drawButtons()
+		invalidate()
+	else
+		managerCanvas = nil
+		managerLayer:recycle()
+		managerLayer = nil
+		--drawManagerLayer = false
+		--drawManagerGrid()
+		--drawButtons()
+		invalidate()
+	end
+
+end
+
+function drawManagerGrid()
 		local c = managerCanvas
 		local width = view:getWidth()
 		local height = view:getHeight()
@@ -647,13 +694,13 @@ end
 
 checkchange_cb = luajava.createProxy("android.widget.CompoundButton$OnCheckedChangeListener",checkchange)
 
-gridwidth = 100
+gridwidth = 67 * density
 seeker = {}
 function seeker.onProgressChanged(v,prog,state)
 	debugPrint("seekbarchanged:"..prog)
-	gridwidth = 50 + prog
+	gridwidth = (32 + prog)*density
 	--managerCanvas:clearCanvas()
-	drawManagerLayer()
+	drawManagerGrid()
 	--drawButtons()
 	invalidate()
 end
@@ -782,76 +829,43 @@ function buttonListAdapter.getView(pos,v,parent)
 		
 	else
 		debugPrint("inflating view")
-		newview = layoutInflater:inflate(R_layout.better_list_row,nil)
+		newview = layoutInflater:inflate(R_layout.editor_selection_list_row,nil)
 	
-	
-		root = newview:findViewById(R_id.root)
-		root:setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS)
+		local root = newview:findViewById(R_id.root)
+		root:setOnClickListener(rowClicker_cb)
 		
-	
-		
-		spacer = newview:findViewById(R_id.spacer)
-		spacer:setVisibility(View.INVISIBLE)
-		
-		toggle = luajava.new(ImageButton,mContext)
-		modify = luajava.new(ImageButton,mContext)
-		delete = luajava.new(ImageButton,mContext)
-		
-		params = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
-		params:setMargins(0,0,0,0)
-		
-		toggle:setLayoutParams(params)
-		modify:setLayoutParams(params)
-		delete:setLayoutParams(params)
-		
-		toggle:setPadding(0,0,0,0)
-		modify:setPadding(0,0,0,0)
-		delete:setPadding(0,0,0,0)
-		
-		toggle:setImageResource(R_drawable.toolbar_toggleon_button)
-		modify:setImageResource(R_drawable.toolbar_modify_button)
-		delete:setImageResource(R_drawable.toolbar_delete_button)
-		
-		toggle:setBackgroundColor(0)
-		modify:setBackgroundColor(0)
-		delete:setBackgroundColor(0)
-		
-		toggle:setOnKeyListener(mButtonKeyListener_cb)
-		modify:setOnKeyListener(mButtonKeyListener_cb)
-		delete:setOnKeyListener(mButtonKeyListener_cb)
-		
-		holder = newview:findViewById(R_id.button_holder)
-		holder:removeAllViews()
-		holder:addView(toggle)
-		holder:addView(modify)
-		holder:addView(delete)
-		
-		--here is where we hook up listeners
-		
-		toolbar_tab = newview:findViewById(R_id.toolbar_tab)
-		toolbar_tab_close = newview:findViewById(R_id.toolbar_tab_close)
-		
-		toolbar_tab:setOnClickListener(toolbarTabOpenListener_cb)
-		toolbar_tab:setOnFocusChangeListener(toolbarTabFocusChangeListener_cb)
-		
-		toolbar_tab_close:setOnClickListener(toolbarTabCloseListener_cb)
-		toolbar_tab_close:setOnKeyListener(mButtonKeyListener_cb)
-		
-		if(toolbarLength == nil) then
-			toggleDrawable = toggle:getDrawable()
-			toggleWidth = toggleDrawable:getIntrinsicWidth()
-			
-			toolbarLength = toggleWidth*3
-		end
 	end
+	
+	newview:setId(157*pos)
+	
+	local holder = newview:findViewById(R_id.toolbarholder)
+	holder:setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS)
+	
+	if(holder:getChildCount() > 0) then
+		holder:removeAllViews()
+		lastSelectedIndex = -1
+	end
+	
 	item = buttonSetList[tonumber(pos)+1]
 	
 	if(item ~= nil) then
+
 		label = newview:findViewById(R_id.infoTitle)
 		extra = newview:findViewById(R_id.infoExtended)
+		
+		icon = newview:findViewById(R_id.icon)
+		icon:setVisibility(View.GONE)
 		label:setText(item.name)
 		extra:setText("Contains: "..item.count.." buttons")
-		newview:setId(pos)
+		
+		if(selectedIndex == (pos+1)) then
+			label:setBackgroundColor(Color:argb(255,70,70,70))
+			extra:setBackgroundColor(Color:argb(255,70,70,70))
+		else
+			label:setBackgroundColor(Color:argb(255,5,5,5))
+			extra:setBackgroundColor(Color:argb(255,5,5,5))
+		end
+		--newview:setId(pos)
 	end
 	
 	if(newview ~= nil) then
@@ -880,7 +894,7 @@ end
 function buttonListAdapter.getItem(pos)
 	--debugPrint("getItem(pos)")
 	--return luajava.newInstance("java.lang.Object")
-	return nil
+	return buttonSetList[pos+1]
 end
 function buttonListAdapter.isEmpty()
 --debugPrint("isEmpty()")
@@ -899,18 +913,16 @@ buttonListAdapter_cb = luajava.createProxy("android.widget.ListAdapter",buttonLi
 
 listViewOnItemSelectedListener = {}
 function listViewOnItemSelectedListener.onItemSelected(arg0,arg1,arg2,arg3)
-	for i,v in ipairs(buttonSetList) do
-		first = arg0:getFirstVisiblePosition()
-		last = arg0:getLastVisiblePosition()
-		if(first <= i and i <= last) then
-			if(i == arg2) then
-				tab_bar = arg0:getChildAt(i)
-				tab = tab_bar:findViewById(R_id.toolbar_tab)
-				tab:setFocusable(true)
-			else
-				tab_bar = arg0:getChildAt(i)
-				tab = tab_bar:findViewById(R_id.toolbar_tab)
-				tab:setFocusable(false)
+	if(arg2 ~= lastSelectedIndex) then
+		if(arg0:getFirstVisiblePosition() <= lastSelectedPosition and arg0:getLastVisiblePosition() >= lastSelectedPosition) then
+			local parent = thetoolbar:getParent()
+			if(parent ~= nil) then
+				thetoolbar:startAnimation(animateOutNoTransition)
+			end
+		else
+			local parent = thetoolbar:getParent()
+			if(parent ~= nil) then
+				parent:removeAllViews()
 			end
 		end
 	end
@@ -921,38 +933,6 @@ function listViewOnItemSelectedListener.onNothingSelected(arg0)
 end
 listViewOnItemSelectedListener_cb = luajava.createProxy("android.widget.AdapterView$OnItemSelectedListener",listViewOnItemSelectedListener)
 
-listViewFocusFixerListener = {}
-function listViewFocusFixerListener.onFocusChange(v,hasFocus)
-	if(hasFocus == true) then
-		for i,v in ipairs(buttonSetList) do
-			child = mListView:getChildAt(i)
-			if(child ~= nil) then
-				tab = child:findViewById(R_id.toolbar_tab)
-				tab:setFocusable(false)
-			end
-		end
-		
-		if(lastSelectedIndex < 0) then
-		
-		else
-			index = lastSelectedIndex
-			first = mListView:getFirstVisiblePosition()
-			last = mListView:getLastVisiblePosition()
-			if(first <= index and index <= last) then
-				index = index - first
-			else
-				index = mListView:getFirstVisiblePosition()
-			end
-			mListView:setSelection(lastSelectedIndex)
-			child = mListView:getChildAt(index)
-			tab = child:findViewById(R_id.toolbar_tab)
-			tab:setFocusable(true)
-			tab:requestFocus()
-		end
-	end
-
-end
-listViewFocusFixerListener_cb = luajava.createProxy("android.view.View$OnFocusChangeListener",listViewFocusFixerListener)
 
 mListView = nil
 function buttonList()
@@ -980,18 +960,32 @@ function showButtonList(data)
 	setdata = loadstring(data)()
 
 	--sort the list.
-	table.sort(setdata)
+	--table.sort(setdata)
 	
 	for k in pairs(buttonSetList) do
 		buttonSetList[k] = nil
 	end
 	
+	local counter = 1
+	selectedIndex = -1
 	for i,k in pairs(setdata) do
 		tmp = {}
 		tmp.name = i
 		tmp.count = k
 		table.insert(buttonSetList,tmp)
+
 	end
+	
+	local sorter = function(a,b) if(a.name < b.name) then return true end return false end
+	table.sort(buttonSetList,sorter)
+	
+	for i,b in ipairs(buttonSetList) do
+		if(b.name == lastLoadedSet) then
+		selectedIndex = counter
+		end
+		counter = counter + 1
+	end
+	debugPrint("selected Item index is"..selectedIndex.." lastloadedset is:"..lastLoadedSet)
 	
 	if(mSelectorDialog == nil) then
 		fakeRelativeLayout = luajava.newInstance("android.widget.RelativeLayout",mContext)
@@ -1003,12 +997,13 @@ function showButtonList(data)
 		mListView:setScrollbarFadingEnabled(false)
 		mListView:setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS)
 		mListView:setOnItemSelectedListener(listViewOnItemSelectedListener_cb)
-		mListView:setOnFocusChangeListener(listViewFocusFixerListener_cb)
+		--mListView:setOnFocusChangeListener(listViewFocusFixerListener_cb)
 		mListView:setSelector(R_drawable.transparent)
 		mListView:setAdapter(buttonListAdapter_cb)
 		--buttonListAdapter_cb:notifyDataSetInvalidated()
 		emptyView = layout:findViewById(R_id.empty)
 		mListView:setEmptyView(emptyView)
+		mListView:setSelectionFromTop(selectedIndex -1,10*density)
 		
 		title = layout:findViewById(R_id.titlebar)
 		title:setText("SELECT BUTTON SET")
@@ -1031,22 +1026,31 @@ function buttonOptions()
 
 	ll = luajava.newInstance("android.widget.LinearLayout",ctex)
 	ll:setOrientation(1)
-	lp = luajava.newInstance("android.view.ViewGroup$LayoutParams",-1,-2)
+	
+	fillparams = luajava.new(LinearLayoutParams,LinearLayoutParams.FILL_PARENT,LinearLayoutParams.WRAP_CONTENT,1)
+	
+	--lp = luajava.newInstance("android.view.ViewGroup$LayoutParams",-1,-2)
 
 	cb = luajava.newInstance("android.widget.CheckBox",ctex)
 	cb:setChecked(manage)
 	cb:setText("Show Grid/Manage Buttons")
 	cb:setOnCheckedChangeListener(checkchange_cb)
+	cb:setLayoutParams(fillparams)
+	
 	debugPrint("seekbar creation")
 	sb = luajava.newInstance("android.widget.SeekBar",ctex)
 	sb:setOnSeekBarChangeListener(seeker_cb)
+	sb:setLayoutParams(fillparams)
 	--sb:setMinimum(10)
 	--sb:setMax(200)
 	--sb:setProgress(gridwidth)
 	
+	
+	
 	rg_static = luajava.bindClass("android.widget.RadioGroup")
 	
 	rg = luajava.newInstance("android.widget.RadioGroup",ctex)
+	rg:setLayoutParams(fillparams)
 	rg:setOnCheckedChangeListener(radio_cb)
 	
 	contain = luajava.newInstance("android.widget.RadioButton",ctex)
@@ -1057,20 +1061,33 @@ function buttonOptions()
 	intersect:setText("Intersect")
 	intersect:setId(0)
 	
+	local subrow = luajava.new(LinearLayout,ctex)
+	subrow:setLayoutParams(fillparams)
+	
 	rg_lp = luajava.bindClass("android.widget.RadioGroup$LayoutParams")
 	
-	rg_lp_gen = luajava.new(rg_lp,lp)
+	rg_lp_gen = luajava.new(rg_lp,fillparams)
 	
 	
 	
 	rg:addView(intersect,0,rg_lp_gen)
 	rg:addView(contain,1,rg_lp_gen)
 	rg:check(intersectMode)
+	
+	setSettingsButton = luajava.new(Button,ctex)
+	setSettingsButton:setLayoutParams(fillparams)
+	setSettingsButton:setText("Edit Defaults")
+	setSettingsButton:setOnClickListener(setSettingsButton_cb)
 	debugPrint("adding views")
 	
-	ll:addView(cb,lp)
-	ll:addView(sb,lp)
-	ll:addView(rg,lp)
+	ll:addView(cb)
+	ll:addView(sb)
+	subrow:addView(rg)
+	--ll:addView(rg)
+	subrow:addView(setSettingsButton)
+	--ll:addView(setSettingsButton)
+	ll:addView(subrow)
+	--set up the show editor settings button.
 	debugPrint("builder alert creation")
 	builder = luajava.newInstance("android.app.AlertDialog$Builder",ctex)
 
@@ -1365,11 +1382,11 @@ end
 counter = 0
 
 function addButton(pX,pY) 
-	local newb = BUTTON:new({x=pX,y=pY,label="newb"})
+	local newb = BUTTON:new({x=pX,y=pY,label="newb"},density)
 	--newb.x = x
 	--newb.y = y
-	newb.data.width = gridwidth-5
-	newb.data.height = gridwidth-5
+	newb.data.width = (gridwidth-5)/density
+	newb.data.height = (gridwidth-5)/density
 	newb.data.label = "newb"..counter
 	counter = counter+1
 	--newb.rect = luajava.newInstance("android.graphics.RectF")
@@ -1450,7 +1467,7 @@ dragBoxPaint = luajava.new(PaintClass)
 dragBoxPaint:setARGB(0x33,0x77,0x00,0x33)
 
 function OnDraw(canvas)
-	if(manage) then
+	if(manage and drawManagerLayer) then
 		canvas:drawBitmap(managerLayer,0,0,nil)
 	end
 	
@@ -1480,10 +1497,16 @@ function OnDestroy()
 		managerLayer = nil
 		managerCanvas = nil
 	end
-
-	buttonLayer:recycle()
-	buttonLayer = nil
-	buttonCanvas = nil
+	debugPrint("freeing button layer")
+	if(buttonLayer ~= nil) then
+		debugPrint("recycle")
+		--buttonLayer:recycle()
+		debugPrint("layer to nil")
+		buttonLayer = nil
+		debugPrint("canvas to nil")
+		buttonCanvas = nil
+	end
+	debugPrint("finished destroying window")
 end
 
 TabHost = luajava.bindClass("android.widget.TabHost")
@@ -1677,10 +1700,14 @@ function showEditorDialog()
 		editorValues.flipColor = button.data.flipColor
 		editorValues.flipLabelColor = button.data.flipLabelColor
 		editorValues.height = button.data.height
+		
 		editorValues.width = button.data.width
+		
 		editorValues.labelSize = button.data.labelSize
 		editorValues.x = button.data.x
 		editorValues.y = button.data.y
+		debugPrint("single editor loading:"..editorValues.x)
+		debugPrint("single editor loading:"..editorValues.y)
 	else 
 		for i,b in pairs(buttons) do
 			if(b.selected == true) then
@@ -1738,7 +1765,7 @@ function showEditorDialog()
 		end
 	end
 	
-	context = view:getContext()
+	local context = view:getContext()
 	top = luajava.new(RelativeLayout,context)
 	topparams = luajava.new(RelativeLayoutParams,450,400)
 	
@@ -1979,375 +2006,18 @@ function showEditorDialog()
 	--tmpview3 = luajava.new(TextView,context)
 	--tmpview3:setText("third page")
 	--tmpview3:setId(3)
-	--tmpview3:setLayoutParams(params);
+	--tmpview3:setLayoutParams(params);	
 	
-	scrollview = luajava.new(ScrollView,context)
-	--scrollview:setLayoutParams(fillparams)
-	scrollview:setId(3)
-	advancedPage = luajava.new(LinearLayout,context)
-	--advancedPage:setId(3)
-	advancedPage:setOrientation(LinearLayout.VERTICAL)
-	
-	
-	buttonNameRow = luajava.new(LinearLayout,context)
-	buttonNameRow:setLayoutParams(fillparams)
-	
-	buttonNameLabel = luajava.new(TextView,context)
-	buttonNameEdit = luajava.new(EditText,context)
-	
-	buttonNameLabelParams = luajava.new(LinearLayoutParams,80,WRAP_CONTENT)
-	buttonNameLabel:setLayoutParams(buttonNameLabelParams)
-	buttonNameLabel:setText("Name:")
-	buttonNameLabel:setTextSize(24)
-	buttonNameLabel:setGravity(Gravity.RIGHT)
-	
-	buttonNameEdit:setTextSize(18)
-	buttonNameEdit:setLines(1)
-	buttonNameEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	buttonNameEdit:setLayoutParams(buttonNameEditParams)
-	if(numediting > 1) then
-		buttonNameEdit:setEnabled(false)
-	else
-		if(editorValues.name ~= nil) then
-			buttonNameEdit:setText(editorValues.name)
-		end
+	local scrollerpage = makeAdvancedPage()
+	local parent = scrollerpage:getParent()
+	if(parent ~= nil) then
+		parent:removeView(scrollerpage)
 	end
-	
-	buttonNameRow:addView(buttonNameLabel)
-	buttonNameRow:addView(buttonNameEdit)
-	
-	advancedPage:addView(buttonNameRow)
-	
-	colortopLabel = luajava.new(TextView,context)
-	colortopLabelParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-	colortopLabelParams:setMargins(0,10,0,0)
-	colortopLabel:setLayoutParams(colortopLabelParams)
-	colortopLabel:setTextSize(24)
-	colortopLabel:setText("Colors:")
-	
-	advancedPage:addView(colortopLabel)
-	
-	colorRowOne = luajava.new(LinearLayout,context)
-	colorRowOne:setLayoutParams(fillparams)
-	
-	colorHolderA = luajava.new(LinearLayout,context)
-	colorHolderA:setLayoutParams(fillparams)
-	
-	wrapparams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-	normalColor = luajava.new(View,context)
-	
-	touchparams = luajava.new(LinearLayoutParams,60,60)
-	normalColor:setLayoutParams(touchparams)
-	--theNormalColor = Color:argb(255,250,120,250)
-	theNormalColor = editorValues.primaryColor
-	normalColor:setTag("normal")
-	normalColor:setOnClickListener(swatchclicked_cb)
-	normalColor:setBackgroundColor(theNormalColor)
-	--normalColor:setGravity(GRAVITY_CENTER)
-	colorHolderA:addView(normalColor)
-	colorHolderA:setGravity(GRAVITY_CENTER)
-	colorRowOne:addView(colorHolderA)
-	
-	colorHolderB = luajava.new(LinearLayout,context)
-	colorHolderB:setLayoutParams(fillparams)
-	colorHolderB:setGravity(GRAVITY_CENTER)
-	pressedColor = luajava.new(View,context)
-	pressedColor:setLayoutParams(touchparams)
-	pressedColor:setTag("pressed")
-	pressedColor:setOnClickListener(swatchclicked_cb)
-	--thePressedColor = Color:argb(255,120,250,250)
-	thePressedColor = editorValues.selectedColor
-	pressedColor:setBackgroundColor(thePressedColor)
-	colorHolderB:addView(pressedColor)
-	
-	colorRowOne:addView(colorHolderB)
-	
-	colorHolderC = luajava.new(LinearLayout,context)
-	colorHolderC:setLayoutParams(fillparams)
-	colorHolderC:setGravity(GRAVITY_CENTER)
-	flipColor = luajava.new(View,context)
-	flipColor:setLayoutParams(touchparams)
-	flipColor:setTag("flip")
-	flipColor:setOnClickListener(swatchclicked_cb)
-	--theFlipColor = Color:argb(255,120,250,250)
-	theFlipColor = editorValues.flipColor
-	flipColor:setBackgroundColor(theFlipColor)
-	colorHolderC:addView(flipColor)
-	
-	colorRowOne:addView(colorHolderC)
-	
-	advancedPage:addView(colorRowOne)
-	
-	labelRowOne = luajava.new(LinearLayout,context)
-	labelRowOne:setLayoutParams(fillparams)
-	
-	flipLabel = luajava.new(TextView,context)
-	flipLabel:setLayoutParams(fillparams)
-	flipLabel:setGravity(GRAVITY_CENTER)
-	flipLabel:setText("Flipped")
-	flipLabel:setTextSize(15)
-	
-	normalLabel = luajava.new(TextView,context)
-	normalLabel:setLayoutParams(fillparams)
-	normalLabel:setGravity(GRAVITY_CENTER)
-	normalLabel:setText("Normal")
-	normalLabel:setTextSize(15)
-	
-	pressedLabel = luajava.new(TextView,context)
-	pressedLabel:setLayoutParams(fillparams)
-	pressedLabel:setGravity(GRAVITY_CENTER)
-	pressedLabel:setText("Pressed")
-	pressedLabel:setTextSize(15)
-	
-	labelRowOne:addView(normalLabel)
-	labelRowOne:addView(pressedLabel)
-	labelRowOne:addView(flipLabel)
-	
-	advancedPage:addView(labelRowOne)
-	
-	colorRowTwo = luajava.new(LinearLayout,context)
-	colorRowTwoParams = luajava.new(LinearLayoutParams,fillparams)
-	colorRowTwoParams:setMargins(0,10,0,0)
-	colorRowTwo:setLayoutParams(colorRowTwoParams)
-	
-	colorHolderD = luajava.new(LinearLayout,context)
-	colorHolderD:setLayoutParams(fillparams)
-	colorHolderD:setGravity(GRAVITY_CENTER)
-	normalLabelColor = luajava.new(View,context)
-	normalLabelColor:setLayoutParams(touchparams)
-	
-	--theNormalLabelColor = Color:argb(255,120,250,250)
-	theNormalLabelColor = editorValues.labelColor
-	normalLabelColor:setBackgroundColor(theNormalLabelColor)
-	normalLabelColor:setTag("label")
-	normalLabelColor:setOnClickListener(swatchclicked_cb)
-	colorHolderD:addView(normalLabelColor)
-	
-	colorHolderE = luajava.new(LinearLayout,context)
-	colorHolderE:setLayoutParams(fillparams)
-	colorHolderE:setGravity(GRAVITY_CENTER)
-	flipLabelColor = luajava.new(View,context)
-	flipLabelColor:setLayoutParams(touchparams)
-	flipLabelColor:setTag("flipLabel")
-	flipLabelColor:setOnClickListener(swatchclicked_cb)
-	--theFlipLabelColor = Color:argb(255,120,250,250)
-	theFlipLabelColor = editorValues.flipLabelColor
-	flipLabelColor:setBackgroundColor(theFlipLabelColor)
-	colorHolderE:addView(flipLabelColor)
-	
-	colorHolderF = luajava.new(LinearLayout,context)
-	colorHolderF:setLayoutParams(fillparams)
-	colorHolderF:setGravity(GRAVITY_CENTER)
-	
-	invisible = luajava.new(View,context)
-	invisible:setVisibility(View.INVISIBLE)
-	invisible:setLayoutParams(fillparams)
-	
-	colorRowTwo:addView(colorHolderD)
-	colorRowTwo:addView(colorHolderE)
-	colorRowTwo:addView(colorHolderF)
-	
-	advancedPage:addView(colorRowTwo)
-	
-	labelRowTwo = luajava.new(LinearLayout,context)
-	labelRowTwo:setLayoutParams(fillparams)
-	
-	normalLabelLabel = luajava.new(TextView,context)
-	normalLabelLabel:setLayoutParams(fillparams)
-	normalLabelLabel:setGravity(GRAVITY_CENTER)
-	normalLabelLabel:setText("Label")
-	normalLabelLabel:setTextSize(15)
-	
-	flipLabelLabel = luajava.new(TextView,context)
-	flipLabelLabel:setLayoutParams(fillparams)
-	flipLabelLabel:setGravity(GRAVITY_CENTER)
-	flipLabelLabel:setText("FlipLabel")
-	flipLabelLabel:setTextSize(15)
-	
-	invisLabel = luajava.new(TextView,context)
-	invisLabel:setLayoutParams(fillparams)
-	invisLabel:setGravity(GRAVITY_CENTER)
-	invisLabel:setText("FlipLabel")
-	invisLabel:setTextSize(15)
-	invisLabel:setVisibility(View.INVISIBLE)
-	
-	labelRowTwo:addView(normalLabelLabel)
-	labelRowTwo:addView(flipLabelLabel)
-	labelRowTwo:addView(invisLabel)
-	
-	advancedPage:addView(labelRowTwo)
-	
-	typeInLabel = luajava.new(TextView,context)
-	typeInLabelParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-	typeInLabelParams:setMargins(0,10,0,0)
-	typeInLabel:setLayoutParams(typeInLabelParams)
-	typeInLabel:setTextSize(24)
-	typeInLabel:setText("Type-In Controls:")
-	
-	advancedPage:addView(typeInLabel)
-	
-	controlRowOne = luajava.new(LinearLayout,context)
-	controlRowOne:setLayoutParams(fillparams)
-	
-	controlHolderA = luajava.new(LinearLayout,context)
-	controlHolderA:setLayoutParams(fillparams)
-	controlHolderA:setGravity(GRAVITY_CENTER)
-	
-	numbereditorParams = luajava.new(LinearLayoutParams,120,WRAP_CONTENT)
-	labelSizeEdit = luajava.new(EditText,context)
-	labelSizeEdit:setLayoutParams(numbereditorParams)
-	labelSizeEdit:setTextSize(18)
-	if(editorValues.labelSize == "MULTI") then
-		
-	else
-		labelSizeEdit:setText(tostring(editorValues.labelSize))
-	end
-	controlHolderA:addView(labelSizeEdit)
-	
-	controlRowOne:addView(controlHolderA)
-	
-	controlHolderB = luajava.new(LinearLayout,context)
-	controlHolderB:setLayoutParams(fillparams)
-	controlHolderB:setGravity(GRAVITY_CENTER)
-	
-	--numbereditorParams = luajava.new(LinearLayoutParams,120,WRAP_CONTENT)
-	widthEdit = luajava.new(EditText,context)
-	widthEdit:setLayoutParams(numbereditorParams)
-	widthEdit:setTextSize(18)
-	controlHolderB:addView(widthEdit)
-	if(editorValues.width == "MULTI") then
-		
-	else
-		widthEdit:setText(tostring(editorValues.width))
-	end
-	
-	controlRowOne:addView(controlHolderB)
-	
-	controlHolderC = luajava.new(LinearLayout,context)
-	controlHolderC:setLayoutParams(fillparams)
-	controlHolderC:setGravity(GRAVITY_CENTER)
-	
-	--numbereditorParams = luajava.new(LinearLayoutParams,120,WRAP_CONTENT)
-	heightEdit = luajava.new(EditText,context)
-	heightEdit:setLayoutParams(numbereditorParams)
-	heightEdit:setTextSize(18)
-	if(editorValues.height == "MULTI") then
-		
-	else
-		heightEdit:setText(tostring(editorValues.height))
-	end
-	controlHolderC:addView(heightEdit)
-	
-	controlRowOne:addView(controlHolderC)
-	advancedPage:addView(controlRowOne)
-	
-	labelRowThree = luajava.new(LinearLayout,context)
-	labelRowThree:setLayoutParams(fillparams)
-	
-	labelSizeLabel = luajava.new(TextView,context)
-	labelSizeLabel:setLayoutParams(fillparams)
-	labelSizeLabel:setGravity(GRAVITY_CENTER)
-	labelSizeLabel:setText("Label Font Size")
-	labelSizeLabel:setTextSize(15)
-	
-	widthLabel = luajava.new(TextView,context)
-	widthLabel:setLayoutParams(fillparams)
-	widthLabel:setGravity(GRAVITY_CENTER)
-	widthLabel:setText("Width")
-	widthLabel:setTextSize(15)
-	
-	heightLabel = luajava.new(TextView,context)
-	heightLabel:setLayoutParams(fillparams)
-	heightLabel:setGravity(GRAVITY_CENTER)
-	heightLabel:setText("Height")
-	heightLabel:setTextSize(15)
-	--invisLabel:setVisibility(View.INVISIBLE)
-	
-	labelRowThree:addView(labelSizeLabel)
-	labelRowThree:addView(widthLabel)
-	labelRowThree:addView(heightLabel)
-	
-	advancedPage:addView(labelRowThree)
-	
-	controlRowTwo = luajava.new(LinearLayout,context)
-	controlRowTwo:setLayoutParams(fillparams)
-	
-	controlHolderD = luajava.new(LinearLayout,context)
-	controlHolderD:setLayoutParams(fillparams)
-	controlHolderD:setGravity(GRAVITY_CENTER)
-	
-	--numbereditorParams = luajava.new(LinearLayoutParams,120,WRAP_CONTENT)
-	xcoordEdit = luajava.new(EditText,context)
-	xcoordEdit:setLayoutParams(numbereditorParams)
-	xcoordEdit:setTextSize(18)
-	if(editorValues.x == "MULTI") then
-		
-	else
-		xcoordEdit:setText(tostring(editorValues.x))
-	end
-	controlHolderD:addView(xcoordEdit)
-	controlRowTwo:addView(controlHolderD)
-	controlHolderE = luajava.new(LinearLayout,context)
-	controlHolderE:setLayoutParams(fillparams)
-	controlHolderE:setGravity(GRAVITY_CENTER)
-	
-	--numbereditorParams = luajava.new(LinearLayoutParams,120,WRAP_CONTENT)
-	ycoordEdit = luajava.new(EditText,context)
-	ycoordEdit:setLayoutParams(numbereditorParams)
-	ycoordEdit:setTextSize(18)
-	if(editorValues.y == "MULTI") then
-		
-	else
-		ycoordEdit:setText(tostring(editorValues.y))
-	end
-	controlHolderE:addView(ycoordEdit)
-	
-	controlRowTwo:addView(controlHolderE)
-	
-	controlHolderF = luajava.new(LinearLayout,context)
-	controlHolderF:setLayoutParams(fillparams)
-	controlHolderF:setGravity(GRAVITY_CENTER)
-	
-	invisibleControl = luajava.new(View,context)
-	invisibleControl:setVisibility(View.INVISIBLE)
-	invisibleControl:setLayoutParams(fillparams)
-	
-	controlHolderF:addView(invisibleControl)
-	controlRowTwo:addView(controlHolderF)
-	
-	advancedPage:addView(controlRowTwo)
-	
-	labelRowFour = luajava.new(LinearLayout,context)
-	labelRowFour:setLayoutParams(fillparams)
-	
-	xcoordLabel = luajava.new(TextView,context)
-	xcoordLabel:setLayoutParams(fillparams)
-	xcoordLabel:setGravity(GRAVITY_CENTER)
-	xcoordLabel:setText("X Coord")
-	xcoordLabel:setTextSize(15)
-	
-	ycoordLabel = luajava.new(TextView,context)
-	ycoordLabel:setLayoutParams(fillparams)
-	ycoordLabel:setGravity(GRAVITY_CENTER)
-	ycoordLabel:setText("Y Coord")
-	ycoordLabel:setTextSize(15)
-	
-	invisControlLabel = luajava.new(TextView,context)
-	invisControlLabel:setLayoutParams(fillparams)
-	invisControlLabel:setGravity(GRAVITY_CENTER)
-	invisControlLabel:setText("FlipLabel")
-	invisControlLabel:setTextSize(15)
-	invisControlLabel:setVisibility(View.INVISIBLE)
-	
-	labelRowFour:addView(xcoordLabel)
-	labelRowFour:addView(ycoordLabel)
-	labelRowFour:addView(invisControlLabel)
-	
-	advancedPage:addView(labelRowFour)
-	
-	scrollview:addView(advancedPage)
-	
-	content:addView(scrollview)
+	buttonNameRow:setVisibility(View.VISIBLE)
+	controlRowTwo:setVisibility(View.VISIBLE)
+	labelRowFour:setVisibility(View.VISIBLE)
+	
+	content:addView(scrollerpage)
 	tab3:setIndicator(label3)
 	tab3:setContent(3)
 	
@@ -2421,4 +2091,914 @@ function swatchclicked.onClick(v)
 end
 swatchclicked_cb = luajava.createProxy("android.view.View$OnClickListener",swatchclicked)
 
+function makeAdvancedPage()
+	
+	local fnew = luajava.new
+	--local slp = nil
+	local context = view:getContext()
+	if(advancedPageScroller == nil) then
+		advancedPageScroller = fnew(ScrollView,context)
+		--slp = advancedPageScroller
+		--slp.__FunctionCalled = "setLayoutParams"
+		advancedPageScroller:setId(3)
+		debugPrint("makeing advanced page:")
+	else
+		--return advancedPageScroller
+	end
+	
+	if(advancedPage == nil) then
+		advancedPage = fnew(LinearLayout,context)
+		advancedPage:setOrientation(LinearLayout.VERTICAL)
+		advancedPageScroller:addView(advancedPage)
+	end
+	
+	if(buttonNameRow == nil) then
+		buttonNameRow = fnew(LinearLayout,context)
+		buttonNameRow:setLayoutParams(fillparams)
+		advancedPage:addView(buttonNameRow)
+	end
+	buttonNameRow:setVisibility(View.VISIBLE)
+	
+	buttonNameLabelParams = fnew(LinearLayoutParams,80,WRAP_CONTENT)
+	if(buttonNameLabel == nil) then
+		buttonNameLabel = fnew(TextView,context)
+		
+		buttonNameLabel:setLayoutParams(buttonNameLabelParams)
+		buttonNameLabel:setText("Name:")
+		buttonNameLabel:setTextSize(24)
+		buttonNameLabel:setGravity(Gravity.RIGHT)
+		buttonNameRow:addView(buttonNameLabel)
+	end
+	
+	buttonNameEditParams = fnew(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+		
+	if(buttonNameEdit == nil) then
+		buttonNameEdit = fnew(EditText,context)	
+		buttonNameEdit:setTextSize(18)
+		buttonNameEdit:setLines(1)
+		buttonNameEdit:setLayoutParams(buttonNameEditParams)
+		buttonNameRow:addView(buttonNameEdit)
+	end
+	if(numediting > 1) then
+		buttonNameEdit:setEnabled(false)
+	else
+		if(editorValues.name ~= nil) then
+			buttonNameEdit:setText(editorValues.name)
+		end
+	end
+	
+	colortopLabelParams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
+		
+	if(colortopLabel == nil) then
+		colortopLabel = fnew(TextView,context)
+		colortopLabelParams:setMargins(0,10,0,0)
+		colortopLabel:setLayoutParams(colortopLabelParams)
+		colortopLabel:setTextSize(24)
+		colortopLabel:setText("Colors:")
+		advancedPage:addView(colortopLabel)
+	end
+	
+	if(colorRowOne == nil) then
+		colorRowOne = fnew(LinearLayout,context)
+		colorRowOne:setLayoutParams(fillparams)
+		advancedPage:addView(colorRowOne)
+	end
+	
+	if(colorHolderA == nil) then
+		colorHolderA = fnew(LinearLayout,context)
+		colorHolderA:setLayoutParams(fillparams)
+		colorHolderA:setGravity(GRAVITY_CENTER)
+		debugPrint("addiing normal color holder")
+		colorRowOne:addView(colorHolderA)
+	end
+	
+	wrapparams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
+	touchparams = fnew(LinearLayoutParams,60,60)
+	
+	if(normalColor == nil) then
+		normalColor = fnew(View,context)
+		normalColor:setLayoutParams(touchparams)
+		theNormalColor = editorValues.primaryColor
+		normalColor:setBackgroundColor(theNormalColor)
+		normalColor:setTag("normal")
+		normalColor:setOnClickListener(swatchclicked_cb)
+		debugPrint("addiing normal color")
+		colorHolderA:addView(normalColor)
+	else 
+		theNormalColor = editorValues.primaryColor
+		normalColor:setBackgroundColor(theNormalColor)
+	end
 
+	if(colorHolderB == nil) then
+		colorHolderB = fnew(LinearLayout,context)
+		colorHolderB:setLayoutParams(fillparams)
+		colorHolderB:setGravity(GRAVITY_CENTER)
+		debugPrint("addiing pressed color holder")
+		colorRowOne:addView(colorHolderB)
+	end
+	
+	if(pressedColor == nil) then
+		pressedColor = fnew(View,context)
+		pressedColor:setLayoutParams(touchparams)
+		pressedColor:setTag("pressed")
+		pressedColor:setOnClickListener(swatchclicked_cb)
+		--thePressedColor = Color:argb(255,120,250,250)
+		thePressedColor = editorValues.selectedColor
+		pressedColor:setBackgroundColor(thePressedColor)
+		debugPrint("addiing pressed color")
+		colorHolderB:addView(pressedColor)
+	else
+		thePressedColor = editorValues.selectedColor
+		pressedColor:setBackgroundColor(thePressedColor)
+	end
+	
+	if(colorHolderC == nil) then
+		colorHolderC = fnew(LinearLayout,context)
+		colorHolderC:setLayoutParams(fillparams)
+		colorHolderC:setGravity(GRAVITY_CENTER)
+		debugPrint("addiing flip colo hodlerr")
+		colorRowOne:addView(colorHolderC)
+	end
+	
+	if(flipColor == nil) then
+		flipColor = fnew(View,context)
+		flipColor:setLayoutParams(touchparams)
+		flipColor:setTag("flip")
+		flipColor:setOnClickListener(swatchclicked_cb)
+		theFlipColor = editorValues.flipColor
+		debugPrint("addiing flip color")
+		flipColor:setBackgroundColor(theFlipColor)
+		colorHolderC:addView(flipColor)
+	else
+		theFlipColor = editorValues.flipColor
+		flipColor:setBackgroundColor(theFlipColor)
+	end
+	
+	if(labelRowOne == nil) then
+		labelRowOne = fnew(LinearLayout,context)
+		labelRowOne:setLayoutParams(fillparams)
+		advancedPage:addView(labelRowOne)
+	end
+
+	if(normalLabel == nil) then
+		normalLabel = fnew(TextView,context)
+		normalLabel:setLayoutParams(fillparams)
+		normalLabel:setGravity(GRAVITY_CENTER)
+		normalLabel:setText("Normal")
+		normalLabel:setTextSize(15)
+		labelRowOne:addView(normalLabel)
+	end
+	
+	if(pressedLabel == nil) then
+		pressedLabel = fnew(TextView,context)
+		pressedLabel:setLayoutParams(fillparams)
+		pressedLabel:setGravity(GRAVITY_CENTER)
+		pressedLabel:setText("Pressed")
+		pressedLabel:setTextSize(15)
+		labelRowOne:addView(pressedLabel)
+	end
+	
+	if(flipLabel == nil) then
+		flipLabel = fnew(TextView,context)
+		flipLabel:setLayoutParams(fillparams)
+		flipLabel:setGravity(GRAVITY_CENTER)
+		flipLabel:setText("Flipped")
+		flipLabel:setTextSize(15)
+		labelRowOne:addView(flipLabel)
+	end
+	
+	if(colorRowTwo == nil) then
+		colorRowTwo = fnew(LinearLayout,context)
+		colorRowTwoParams = fnew(LinearLayoutParams,fillparams)
+		colorRowTwoParams:setMargins(0,10,0,0)
+		colorRowTwo:setLayoutParams(colorRowTwoParams)
+		advancedPage:addView(colorRowTwo)
+	end
+	
+	if(colorHolderD == nil) then
+		colorHolderD = fnew(LinearLayout,context)
+		colorHolderD:setLayoutParams(fillparams)
+		colorHolderD:setGravity(GRAVITY_CENTER)
+	end
+	
+	if(normalLabelColor == nil) then
+		normalLabelColor = fnew(View,context)
+		normalLabelColor:setLayoutParams(touchparams)
+		theNormalLabelColor = editorValues.labelColor
+		normalLabelColor:setBackgroundColor(theNormalLabelColor)
+		normalLabelColor:setTag("label")
+		normalLabelColor:setOnClickListener(swatchclicked_cb)
+		colorHolderD:addView(normalLabelColor)
+		colorRowTwo:addView(colorHolderD)
+	else
+		theNormalLabelColor = editorValues.labelColor
+		normalLabelColor:setBackgroundColor(theNormalLabelColor)
+	end
+	
+	if(colorHolderE == nil) then
+		colorHolderE = fnew(LinearLayout,context)
+		colorHolderE:setLayoutParams(fillparams)
+		colorHolderE:setGravity(GRAVITY_CENTER)
+		colorRowTwo:addView(colorHolderE)
+	end
+	
+	if(flipLabelColor == nil) then
+		flipLabelColor = fnew(View,context)
+		flipLabelColor:setLayoutParams(touchparams)
+		flipLabelColor:setTag("flipLabel")
+		flipLabelColor:setOnClickListener(swatchclicked_cb)
+		--theFlipLabelColor = Color:argb(255,120,250,250)
+		theFlipLabelColor = editorValues.flipLabelColor
+		flipLabelColor:setBackgroundColor(theFlipLabelColor)
+		colorHolderE:addView(flipLabelColor)
+	else
+		theFlipLabelColor = editorValues.flipLabelColor
+		flipLabelColor:setBackgroundColor(theFlipLabelColor)
+	end
+	
+	if(colorHolderF == nil) then
+		colorHolderF = fnew(LinearLayout,context)
+		colorHolderF:setLayoutParams(fillparams)
+		colorHolderF:setGravity(GRAVITY_CENTER)
+		colorRowTwo:addView(colorHolderF)
+	end
+	
+	if(invisible == nil) then
+		invisible = fnew(View,context)
+		invisible:setVisibility(View.INVISIBLE)
+		invisible:setLayoutParams(fillparams)
+		colorHolderF:addView(invisible)
+	end
+	
+	if(labelRowTwo == nil) then
+		labelRowTwo = fnew(LinearLayout,context)
+		labelRowTwo:setLayoutParams(fillparams)
+		advancedPage:addView(labelRowTwo)
+	end
+	
+	if(normalLabelLabel == nil) then
+		normalLabelLabel = fnew(TextView,context)
+		normalLabelLabel:setLayoutParams(fillparams)
+		normalLabelLabel:setGravity(GRAVITY_CENTER)
+		normalLabelLabel:setText("Label")
+		normalLabelLabel:setTextSize(15)
+		labelRowTwo:addView(normalLabelLabel)
+	end
+	
+	if(flipLabelLabel == nil) then
+		flipLabelLabel = fnew(TextView,context)
+		flipLabelLabel:setLayoutParams(fillparams)
+		flipLabelLabel:setGravity(GRAVITY_CENTER)
+		flipLabelLabel:setText("FlipLabel")
+		flipLabelLabel:setTextSize(15)
+		labelRowTwo:addView(flipLabelLabel)
+	end
+	
+	if(invisLabel == nil) then
+		invisLabel = fnew(TextView,context)
+		invisLabel:setLayoutParams(fillparams)
+		invisLabel:setGravity(GRAVITY_CENTER)
+		invisLabel:setText("FlipLabel")
+		invisLabel:setTextSize(15)
+		invisLabel:setVisibility(View.INVISIBLE)
+		labelRowTwo:addView(invisLabel)
+	end
+	
+	if(typeInLabel == nil) then
+		typeInLabel = fnew(TextView,context)
+		typeInLabelParams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
+		typeInLabelParams:setMargins(0,10,0,0)
+		typeInLabel:setLayoutParams(typeInLabelParams)
+		typeInLabel:setTextSize(24)
+		typeInLabel:setText("Type-In Controls:")
+		advancedPage:addView(typeInLabel)
+	end
+	
+	if(controlRowOne == nil) then
+		controlRowOne = fnew(LinearLayout,context)
+		controlRowOne:setLayoutParams(fillparams)
+		advancedPage:addView(controlRowOne)
+	end
+	
+	if(controlHolderA == nil) then
+		controlHolderA = fnew(LinearLayout,context)
+		controlHolderA:setLayoutParams(fillparams)
+		controlHolderA:setGravity(GRAVITY_CENTER)
+		controlRowOne:addView(controlHolderA)
+	end
+	
+	numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
+	if(labelSizeEdit == nil) then
+		labelSizeEdit = fnew(EditText,context)
+		labelSizeEdit:setLayoutParams(numbereditorParams)
+		labelSizeEdit:setTextSize(18)
+		controlHolderA:addView(labelSizeEdit)
+	end
+	if(editorValues.labelSize == "MULTI") then
+		
+	else
+		labelSizeEdit:setText(tostring(editorValues.labelSize))
+	end
+	
+	if(controlHolderB == nil) then
+		controlHolderB = fnew(LinearLayout,context)
+		controlHolderB:setLayoutParams(fillparams)
+		controlHolderB:setGravity(GRAVITY_CENTER)
+		controlRowOne:addView(controlHolderB)
+	end
+	--numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
+	if(widthEdit == nil) then
+		widthEdit = fnew(EditText,context)
+		widthEdit:setLayoutParams(numbereditorParams)
+		widthEdit:setTextSize(18)
+		controlHolderB:addView(widthEdit)
+	end
+	if(editorValues.width == "MULTI") then
+		
+	else
+		widthEdit:setText(tostring(editorValues.width))
+	end
+	
+	if(controlHolderC == nil) then
+		controlHolderC = fnew(LinearLayout,context)
+		controlHolderC:setLayoutParams(fillparams)
+		controlHolderC:setGravity(GRAVITY_CENTER)
+		controlRowOne:addView(controlHolderC)
+	end
+	--numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
+	if(heightEdit == nil) then
+		heightEdit = fnew(EditText,context)
+		heightEdit:setLayoutParams(numbereditorParams)
+		heightEdit:setTextSize(18)
+		controlHolderC:addView(heightEdit)
+	end
+	if(editorValues.height == "MULTI") then
+		
+	else
+		heightEdit:setText(tostring(editorValues.height))
+	end
+	
+	if(labelRowThree == nil) then
+		labelRowThree = fnew(LinearLayout,context)
+		labelRowThree:setLayoutParams(fillparams)
+		advancedPage:addView(labelRowThree)
+	end
+	
+	if(labelSizeLabel == nil) then
+		labelSizeLabel = fnew(TextView,context)
+		labelSizeLabel:setLayoutParams(fillparams)
+		labelSizeLabel:setGravity(GRAVITY_CENTER)
+		labelSizeLabel:setText("Label Font Size")
+		labelSizeLabel:setTextSize(15)
+		labelRowThree:addView(labelSizeLabel)
+	end
+	
+	if(widthLabel == nil) then
+		widthLabel = fnew(TextView,context)
+		widthLabel:setLayoutParams(fillparams)
+		widthLabel:setGravity(GRAVITY_CENTER)
+		widthLabel:setText("Width")
+		widthLabel:setTextSize(15)
+		labelRowThree:addView(widthLabel)
+	end
+	
+	if(heightLabel == nil) then
+		heightLabel = fnew(TextView,context)
+		heightLabel:setLayoutParams(fillparams)
+		heightLabel:setGravity(GRAVITY_CENTER)
+		heightLabel:setText("Height")
+		heightLabel:setTextSize(15)
+		labelRowThree:addView(heightLabel)
+	--invisLabel:setVisibility(View.INVISIBLE)
+	end
+	
+	if(controlRowTwo == nil) then
+		controlRowTwo = fnew(LinearLayout,context)
+		controlRowTwo:setLayoutParams(fillparams)
+		advancedPage:addView(controlRowTwo)
+	end
+	controlRowTwo:setVisibility(View.VISIBLE)
+	
+	if(controlHolderD == nil) then
+		controlHolderD = fnew(LinearLayout,context)
+		controlHolderD:setLayoutParams(fillparams)
+		controlHolderD:setGravity(GRAVITY_CENTER)
+		controlRowTwo:addView(controlHolderD)
+	end
+	--numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
+	if(xcoordEdit == nil) then
+		xcoordEdit = fnew(EditText,context)
+		xcoordEdit:setLayoutParams(numbereditorParams)
+		xcoordEdit:setTextSize(18)
+		controlHolderD:addView(xcoordEdit)
+	end
+	if(editorValues.x == "MULTI") then
+		debugPrint("setting x string:MULTI")
+	else
+		debugPrint("setting x string:"..editorValues.x)
+		xcoordEdit:setText(tostring(editorValues.x))
+	end
+	
+	if(controlHolderE == nil) then
+		controlHolderE = fnew(LinearLayout,context)
+		controlHolderE:setLayoutParams(fillparams)
+		controlHolderE:setGravity(GRAVITY_CENTER)
+		controlRowTwo:addView(controlHolderE)
+	end
+	--numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
+	if(ycoordEdit == nil) then
+		ycoordEdit = fnew(EditText,context)
+		ycoordEdit:setLayoutParams(numbereditorParams)
+		ycoordEdit:setTextSize(18)
+		controlHolderE:addView(ycoordEdit)
+	end
+	if(editorValues.y == "MULTI") then
+		
+	else
+		ycoordEdit:setText(tostring(editorValues.y))
+	end
+	
+	if(controlHolderF == nil) then
+		controlHolderF = fnew(LinearLayout,context)
+		controlHolderF:setLayoutParams(fillparams)
+		controlHolderF:setGravity(GRAVITY_CENTER)
+		controlRowTwo:addView(controlHolderF)
+	end
+	
+	if(invisibleControl == nil) then
+		invisibleControl = fnew(View,context)
+		invisibleControl:setVisibility(View.INVISIBLE)
+		invisibleControl:setLayoutParams(fillparams)
+		controlHolderF:addView(invisibleControl)
+	end
+	
+	if(labelRowFour == nil) then
+		labelRowFour = fnew(LinearLayout,context)
+		labelRowFour:setLayoutParams(fillparams)
+		advancedPage:addView(labelRowFour)
+	end
+	
+	if(xcoordLabel == nil) then
+		xcoordLabel = fnew(TextView,context)
+		xcoordLabel:setLayoutParams(fillparams)
+		xcoordLabel:setGravity(GRAVITY_CENTER)
+		xcoordLabel:setText("X Coord")
+		xcoordLabel:setTextSize(15)
+		labelRowFour:addView(xcoordLabel)
+	end
+	
+	if(ycoordLabel == nil) then
+		ycoordLabel = fnew(TextView,context)
+		ycoordLabel:setLayoutParams(fillparams)
+		ycoordLabel:setGravity(GRAVITY_CENTER)
+		ycoordLabel:setText("Y Coord")
+		ycoordLabel:setTextSize(15)
+		labelRowFour:addView(ycoordLabel)
+	end
+	
+	if(invisibleControlLabel == nil) then
+		invisControlLabel = fnew(TextView,context)
+		invisControlLabel:setLayoutParams(fillparams)
+		invisControlLabel:setGravity(GRAVITY_CENTER)
+		invisControlLabel:setText("FlipLabel")
+		invisControlLabel:setTextSize(15)
+		invisControlLabel:setVisibility(View.INVISIBLE)
+		labelRowFour:addView(invisControlLabel)
+	end
+	
+	return advancedPageScroller
+	
+end
+
+toolbarModifyClicked = {}
+function toolbarModifyClicked.onClick(v)
+	
+	--local adapter = mListView:getAdapter()
+	local entry = buttonSetList[lastSelectedIndex+1]
+	debugPrint("toolbarModifyClicked:"..entry.name)
+	if(entry.name ~= lastLoadedSet) then
+		PluginXCallS("loadAndEditSet",entry.name)
+		return
+	end
+
+	enterManagerMode()
+	mSelectorDialog:dismiss()
+end
+toolbarModifyClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarModifyClicked)
+
+toolbarLoadClicked = {}
+function toolbarLoadClicked.onClick(v)
+	local entry = buttonSetList[lastSelectedIndex+1]
+	if(entry.name ~= lastLoadedSet) then
+		PluginXCallS("loadButtonSet",entry.name)
+	end
+	mSelectorDialog:dismiss()
+end
+toolbarLoadClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarLoadClicked)
+
+function loadAndEditSet(data)
+	debugPrint("Loading and editing: "..data)
+	loadButtons(data)
+	enterManagerMode()
+	mSelectorDialog:dismiss()
+end
+
+thetoolbar = nil
+toolbarlength = 0
+
+function makeToolbar()
+	--thetoolbar = thetoolbar or {}
+	thetoolbar = layoutInflater:inflate(R_layout.editor_selection_list_row_toolbar,nil)
+	toolbarparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
+	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	thetoolbar:setLayoutParams(toolbarparams)
+	
+	toolbarToggle = luajava.new(ImageButton,view:getContext())
+	toolbarModify = luajava.new(ImageButton,view:getContext())
+	toolbarDelete = luajava.new(ImageButton,view:getContext())
+	
+	buttonParams = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
+	buttonParams:setMargins(0,0,0,0)
+	
+	toolbarToggle:setLayoutParams(buttonParams) 
+	toolbarModify:setLayoutParams(buttonParams) 
+	toolbarDelete:setLayoutParams(buttonParams) 
+	
+	toolbarToggle:setPadding(0,0,0,0) 
+	toolbarModify:setPadding(0,0,0,0) 
+	toolbarDelete:setPadding(0,0,0,0) 
+	
+	toolbarToggle:setImageResource(R_drawable.toolbar_load_button)
+	toolbarModify:setImageResource(R_drawable.toolbar_modify_button)
+	toolbarDelete:setImageResource(R_drawable.toolbar_delete_button)
+	
+	toolbarToggle:setOnKeyListener(theButtonKeyListener)
+	toolbarModify:setOnKeyListener(theButtonKeyListener)
+	toolbarDelete:setOnKeyListener(theButtonKeyListener)
+	
+	toolbarToggle:setOnClickListener(toolbarLoadClicked_cb)
+	toolbarModify:setOnClickListener(toolbarModifyClicked_cb)
+	debugPrint("THE MODIFYCLICKER IS SET")
+	toolbarDelete:setOnClickListener(toolbarDeleteClicked_cb)
+	
+	thetoolbar:addView(toolbarToggle)
+	thetoolbar:addView(toolbarModify)
+	thetoolbar:addView(toolbarDelete)
+	
+	closeButton = thetoolbar:findViewById(R_id.toolbar_tab_close)
+	closeButton:setOnKeyListener(theButtonKeyListener)
+	
+	local tmpa = closeButton:getDrawable()
+	local tmpb = toolbarToggle:getDrawable()
+	
+	thetoolbarlength = tmpa:getIntrinsicWidth() + 3 * tmpb:getIntrinsicWidth()
+	
+	animateInController = nil
+	animateOut = nil
+	animateOutNoTransition = nil
+	
+	
+	local tmpanim = luajava.new(TranslateAnimation,thetoolbarlength,0,0,0)
+	tmpanim:setDuration(300)
+	
+	local tmpset = luajava.new(AnimationSet,true)
+	tmpset:addAnimation(tmpanim)
+	
+	animateInController = luajava.new(LayoutAnimationController,tmpset)
+	
+	animateOut = luajava.new(TranslateAnimation,0,thetoolbarlength,0,0)
+	animateOut:setDuration(300)
+	
+	animateOutNoTransition = luajava.new(TranslateAnimation,0,thetoolbarlength,0,0)
+	animateOutNoTransition:setDuration(300)
+	animateOutNoTransition:setAnimationListener(animateOutNoTransition_cb)	
+	
+end
+
+makeToolbar()
+
+animateOutNoTransition_handler = {}
+function animateOutNoTransition_handler.onAnimationEnd()
+	local rl = thetoolbar:getParent()
+	rl:removeAllViews()
+	lastSelectedIndex = -1
+end
+animateOutNoTransition_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",animateOutNoTransition_handler)
+
+
+targetholder = nil
+lastSelectedPosition = -1
+
+rowClicker = {}
+function rowClicker.onClick(v)
+	local pos = v:getId() / 157
+	
+	if(lastSelectedIndex < 0) then
+		lastSelectedIndex = pos
+		local holder = v:findViewById(R_id.toolbarholder)
+		holder:setLayoutAnimation(animateInController)
+		local adapter = mListView:getAdapter()
+		entry = adapter:getItem(lastSelectedIndex)
+		holder:addView(thetoolbar)
+		debugPrint("row clicked, none selected")
+	elseif(lastSelectedIndex ~= pos) then
+		debugPrint("row clicked, not the selected row")
+		local parent = thetoolbar:getParent()
+		if(parent ~= nil) then
+			if(mListView:getFirstVisiblePosition() <= lastSelectedIndex and mListView:getLastVisiblePosition() >= lastSelectedIndex) then
+				parent:setAnimationListener(toolbarCustomAnimationListener_cb)
+				parent:startAnimation(animateOut)
+				targetIndex = pos
+				targetHolder = v:findViewById(R_id.toolbarholder)
+				debugPrint("starting custom animation")
+			else
+				parent:removeAllViews()
+				local holder = v:findViewById(R_id.toolbarholder)
+				holder:setLayoutAnimation(animateInController)
+				holder:addView(thetoolbar)
+				debugPrint("not starting custom animation")
+			end
+		end
+	else
+		debugPrint("selected row clicked")
+		local parent = thetoolbar:getParent()
+		if(parent == nil) then
+			lastSelectedIndex = pos
+			local holder = v:findViewById(R_id.toolbarholder)
+			holder:setLayoutAnimation(animateInController)
+			holder:addView(thetoolbar)
+		else
+			targetIndex = pos
+			thetoolbar:startAnimation(animateOutNoTransition)
+		end
+	end
+end
+rowClicker_cb = luajava.createProxy("android.view.View$OnClickListener",rowClicker)
+
+toolbarCustomAnimationListener = {}
+function toolbarCustomAnimationListener.onCustomAnimationEnd()
+	local parent = thetoolbar:getParent()
+	if(parent == nil) then return end
+	
+	parent:removeAllViews()
+	if(targetHolder ~= nil) then
+		targetHolder:setLayoutAnimation(animateInController)
+		targetHolder:addView(thetoolbar)
+	end
+	debugPrint("customanimationlistener fired,"..lastSelectedIndex.." target:"..targetIndex)
+	lastSelectedIndex = targetIndex
+end
+toolbarCustomAnimationListener_cb = luajava.createProxy("com.happygoatstudios.bt.window.AnimatedRelativeLayout$OnAnimationEndListener",toolbarCustomAnimationListener)
+
+managerDoneButtonListener = {}
+function managerDoneButtonListener.onClick(v)
+	debugPrint("exiting manager mode")
+	exitManagerMode()
+end
+
+managerDoneButton_cb = luajava.createProxy("android.view.View$OnClickListener",managerDoneButtonListener)
+
+buttonSetSettingsButtonListener = {}
+function buttonSetSettingsButtonListener.onClick(v)
+	buttonOptions()
+end
+buttonSetSettingsButton_cb = luajava.createProxy("android.view.View$OnClickListener",buttonSetSettingsButtonListener)
+
+backWidgetMovePaddingBottom = 10
+backWidgetMoveLastY = -1
+backWidgetMoveTouchListener = {}
+backWidgetMoveTotal = 0
+function backWidgetMoveTouchListener.onTouch(v,e)
+	if(e:getAction() == MotionEvent.ACTION_MOVE) then
+		local dy = e:getY() - backWidgetMoveLastY
+		debugPrint("touch y event at: "..e:getY())
+		backWidgetMoveLastY = e:getY()
+		backWidgetMoveTotal = backWidgetMoveTotal - dy
+		backWidgetMovePaddingBottom = backWidgetMovePaddingBottom + backWidgetMoveTotal
+		backWidget:setPadding(0,0,0,backWidgetMovePaddingBottom)
+		debugPrint("relayotging:"..backWidgetMovePaddingBottom.." dy:"..dy)
+		backWidget:requestLayout()
+	elseif(e:getAction() == MotionEvent.ACTION_UP) then
+		backWidgetMoveTotal = 0
+		
+	elseif(e:getAction() == MotionEvent.ACTION_DOWN) then
+		backWidgetMoveLastY = e:getY()
+	end
+	return true
+end
+backWidgetMoveTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",backWidgetMoveTouchListener)
+
+backWidget = nil
+function makeBackWidget()
+	if(backWidget ~= nil) then return backWidget end
+	
+	backWidget = luajava.new(LinearLayout,view:getContext())
+	
+	backWidgetParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
+	backWidgetParams:addRule(RelativeLayout.ALIGN_LEFT,view:getId())
+	backWidgetParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	
+	backWidget:setPadding(0,0,0,backWidgetMovePaddingBottom)
+	
+	backWidget:setLayoutParams(backWidgetParams)
+	backWidget:setOrientation(LinearLayout.VERTICAL)
+	backWidgetButtonParams = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
+	backWidgetButtonParams:setMargins(0,0,0,0)
+	
+	backWidgetMoveButton = luajava.new(ImageButton,view:getContext())
+	backWidgetMoveButton:setImageResource(R_drawable.toolbar_move_button)
+	backWidgetMoveButton:setPadding(0,0,0,0)
+	backWidgetMoveButton:setLayoutParams(backWidgetButtonParams)
+	backWidgetMoveButton:setOnTouchListener(backWidgetMoveTouch_cb)
+	
+	buttonSetSettingsButton = luajava.new(ImageButton,view:getContext())
+	buttonSetSettingsButton:setImageResource(R_drawable.toolbar_modify_button)
+	buttonSetSettingsButton:setPadding(0,0,0,0)
+	buttonSetSettingsButton:setLayoutParams(backWidgetButtonParams)
+	buttonSetSettingsButton:setOnClickListener(buttonSetSettingsButton_cb)
+	
+	managerDoneButton = luajava.new(ImageButton,view:getContext())
+	managerDoneButton:setImageResource(R_drawable.toolbar_check_button)
+	managerDoneButton:setPadding(0,0,0,0)
+	managerDoneButton:setLayoutParams(backWidgetButtonParams)
+	
+	managerDoneButton:setOnClickListener(managerDoneButton_cb)
+	
+	backWidget:addView(backWidgetMoveButton)
+	backWidget:addView(buttonSetSettingsButton)
+	backWidget:addView(managerDoneButton)
+	
+	return backWidget
+end
+
+setSettingsButtonListener = {}
+function setSettingsButtonListener.onClick(v)
+	local context = view:getContext()
+
+	editorValues = {}
+	editorValues.primaryColor = defaults.primaryColor
+	editorValues.selectedColor = defaults.selectedColor
+	editorValues.flipColor = defaults.flipColor
+	editorValues.labelColor = defaults.labelColor
+	editorValues.flipLabelColor = defaults.flipLabelColor
+	
+	editorValues.height = defaults.height
+	editorValues.width = defaults.width
+	editorValues.labelSize = defaults.labelSize
+	editorValues.x = 0
+	editorValues.y = 0	
+
+	local page = makeAdvancedPage()
+	local parent = page:getParent()
+	if(parent ~= nil) then
+		parent:removeView(page)
+	end
+	
+	buttonNameRow:setVisibility(View.GONE)
+	controlRowTwo:setVisibility(View.GONE)
+	labelRowFour:setVisibility(View.GONE)
+	
+
+	local top = luajava.new(RelativeLayout,context)
+	local topparams = luajava.new(RelativeLayoutParams,450,400)
+	
+	top:setLayoutParams(topparams)
+	--top:setOrientation(LinearLayout.VERTICAL)
+	local titletext = luajava.new(TextView,context)
+	local titletextParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
+	titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	
+	titletext:setLayoutParams(titletextParams)
+	titletext:setTextSize(36)
+	titletext:setText("TITLE BAR")
+	titletext:setGravity(GRAVITY_CENTER)
+	titletext:setId(1)
+	top:addView(titletext)
+
+	--make the new tabhost.	
+	local params = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
+	local fillparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,1)
+	local contentparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+	--fillparams:setGravity(Gravity.FILL_HORIZONTAL)
+	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
+	--make the done and cancel buttons.
+	--have to stuff them in linearlayout.
+	local finishHolderParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
+	finishHolderParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	local finishHolder = luajava.new(LinearLayout,context)
+	finishHolder:setLayoutParams(finishHolderParams)
+	finishHolder:setId(2)
+	
+	local holder = luajava.new(LinearLayout,context)
+	holder:addView(page,contentparams)
+	local holderparam = luajava.new(RelativeLayoutParams,FILL_PARENT,FILL_PARENT)
+	holderparam:addRule(RelativeLayout.ABOVE,2)
+	holderparam:addRule(RelativeLayout.BELOW,1)
+	holderparam:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	holderparam:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
+	
+	
+	top:addView(holder,holderparam)
+	
+	--finishbuttonParams = luajava.new(RelativeLayoutParams,RLayoutParams.FILL_PARENT,WRAP_CONTENT)
+	local done = luajava.new(Button,context)
+	done:setLayoutParams(fillparams)
+	done:setText("Done")
+	done:setOnClickListener(seteditorDone_cb)
+	
+	local cancel = luajava.new(Button,context)
+	cancel:setLayoutParams(fillparams)
+	cancel:setText("Cancel")
+	cancel:setOnClickListener(seteditorCancel_cb)
+	finishHolder:addView(done)
+	finishHolder:addView(cancel)
+	top:addView(finishHolder)
+	
+	buttSetSettingsEditor = luajava.newInstance("com.happygoatstudios.bt.window.LuaDialog",view:getContext(),top,false,nil)
+	
+	buttSetSettingsEditor:show()
+end
+setSettingsButton_cb = luajava.createProxy("android.view.View$OnClickListener",setSettingsButtonListener)
+
+setEditorCancelListener = {}
+function setEditorCancelListener.onClick(v)
+	buttSetSettingsEditor:dismiss()
+end
+seteditorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorCancelListener)
+
+setEditorDoneListener = {}
+function setEditorDoneListener.onClick(v)
+	--apply the settings.
+	labelsizetmp = labelSizeEdit:getText()
+	labelsize = tonumber(labelsizetmp:toString())
+	--debugPrint(
+	heighttmp = heightEdit:getText()
+	
+	height = tonumber(heighttmp:toString())
+	debugPrint("height read from editor"..height)
+	widthtmp = widthEdit:getText()
+	width = tonumber(widthtmp:toString())
+	
+	--first strip any settings that match the current default.
+	for i,b in pairs(buttons) do
+		if rawget(b.data,"primaryColor") == defaults.primaryColor then
+			rawset(b.data,"primaryColor",nil)
+		end
+		
+		if rawget(b.data,"selectedColor") == defaults.selectedColor then
+			rawset(b.data,"selectedColor",nil)
+		end
+		
+		if rawget(b.data,"flipColor") == defaults.flipColor then
+			rawset(b.data,"flipColor",nil)
+		end
+		
+		if rawget(b.data,"labelColor") == defaults.labelColor then
+			rawset(b.data,"primaryColor",nil)
+		end
+		
+		if rawget(b.data,"flipLabelColor") == defaults.flipLabelColor then
+			rawset(b.data,"flipLabelColor",nil)
+		end
+		
+		if rawget(b.data,"height") == defaults.height then
+			rawset(b.data,"height",nil)
+		end
+		
+		if rawget(b.data,"width") == defaults.width then
+			rawset(b.data,"width",nil)
+		end
+		
+		if rawget(b.data,"labelSize") == defaults.labelSize then
+			rawset(b.data,"labelSize",nil)
+		end
+	end
+	
+	defaults.primaryColor = theNormalColor
+	defaults.selectedColor = thePressedColor
+	defaults.flipColor = theFlipColor
+	defaults.labelColor = theLabelColor
+	defaults.flipLabelColor = theFlipLabelColor
+	defaults.height = height
+	defaults.width = width
+	defaults.labelSize = labelsize
+
+	buttSetSettingsEditor:dismiss()
+	
+	local tmp = {}
+	for i,b in pairs(buttons) do
+		tmp[i] = b.data
+	end
+		
+	PluginXCallS("saveButtons",serialize(tmp))
+	
+	PluginXCallS("saveSetDefaults",serialize(defaults))
+	
+	drawButtons()
+end
+seteditorDone_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorDoneListener)
+
+view:bringToFront()
+PluginXCallS("buttonLayerReady","")
