@@ -10,7 +10,9 @@ ScrollView = luajava.bindClass("android.widget.ScrollView")
 RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
 RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
 TextView = luajava.bindClass("android.widget.TextView")
-
+Color = luajava.bindClass("android.graphics.Color")
+Gravity = luajava.bindClass("android.view.Gravity")
+TruncateAt = luajava.bindClass("android.text.TextUtils$TruncateAt")
 --scrollholder = luajava.new(RelativeLayout,view:getContext())
 --scrollholderParams = luajava.new(RelativeLayoutParams,400,400)
 --scrollerParams:addRule(RelativeLayout.BELOW,5010)
@@ -38,20 +40,30 @@ holder:setLayoutParams(holderParams)
 scroller:addView(holder)
 
 label = luajava.new(TextView,view:getContext())
-label:setTextSize(36)
+label:setTextSize(22)
 label:setText("BELOW THE MAP")
+label:setTextColor(Color:argb(255,15,200,15))
 labelParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
 labelParams:addRule(RelativeLayout.ALIGN_LEFT,6020)
 labelParams:addRule(RelativeLayout.ALIGN_RIGHT,6020)
 labelParams:addRule(RelativeLayout.BELOW,6020)
 label:setLayoutParams(labelParams)
+label:setGravity(Gravity.CENTER)
 label:setId(6022)
 holder:addView(label)
 
 label2 = luajava.new(TextView,view:getContext())
-label2:setTextSize(36)
+label2:setTextSize(25)
 label2:setText("ABOVE THE MAP")
+label2:setTextColor(Color:argb(255,15,200,15))
+label2:setGravity(Gravity.CENTER)
 label2:setId(6021)
+label2:setLines(1)
+label2:setHorizontallyScrolling(true)
+label2:setFocusableInTouchMode(true)
+label2:setFocusable(true)
+label2:setEllipsize(TruncateAt.END)
+debugPrint("setEllipsized")
 labelParams2 = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
 labelParams2:addRule(RelativeLayout.ALIGN_LEFT,6020)
 labelParams2:addRule(RelativeLayout.ALIGN_RIGHT,6020)
@@ -66,6 +78,99 @@ holder:addView(label2)
 --parent:addView(view)
 
 
+function demo(args)
+	num = tonumber(args)
+	if(num ~= nil) then
+		if(num == 1) then
+			doDemoOne()
+		elseif(num ==2) then
+			doDemoTwo()
+		end
+	end
+end
+
+function doDemoOne()
+	--demo one, this is the the vitals window under the input bar.
+	inputbar = parent:findViewById(10)
+	vitalsbar = parent:findViewById(1010)
+	debugPrint("something|"..vitalsbar:toString())
+	holder:removeView(vitalsbar)
+	--scroller:invalidate()
+	oldparams = vitalsbar:getLayoutParams()
+	vparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,oldparams.height)
+	--vparams:addRule(RelativeLayout.BELOW,10)
+	vparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	vparams:addRule(RelativeLayout.LEFT_OF,9010)
+	vitalsbar:setLayoutParams(vparams)
+	originalinputparams = inputbar:getLayoutParams()
+	iparams = luajava.new(RelativeLayoutParams,inputbar:getLayoutParams())
+	iparams:addRule(RelativeLayout.ABOVE,1010)
+	inputbar:setLayoutParams(iparams)
+	
+	parent:addView(vitalsbar)
+	inputbar:requestLayout()
+	
+	
+	tickbar = parent:findViewById(9010)
+	statbar = parent:findViewById(9020)
+	
+	holder:removeView(tickbar)
+	holder:removeView(statbar)
+	
+	originaltickparams = tickbar:getLayoutParams()
+	originalstatparams = statbar:getLayoutParams()
+	
+	
+	tickbarparams = luajava.new(RelativeLayoutParams,tickbar:getLayoutParams())
+	statbarparams = luajava.new(RelativeLayoutParams,statbar:getLayoutParams())
+	
+	tickbarparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	tickbarparams:addRule(RelativeLayout.LEFT_OF,9020)
+
+	statbarparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	statbarparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	
+	statbar:setLayoutParams(statbarparams)
+	tickbar:setLayoutParams(tickbarparams)
+	
+	parent:addView(statbar)
+	parent:addView(tickbar)
+	
+	
+end
+
+function doDemoTwo()
+	--everything except vitals in the scroller, vitals on the side
+	parent:removeView(tickbar)
+	parent:removeView(statbar)
+	
+	newtickparams = luajava.new(RelativeLayoutParams,originaltickparams)
+	newstatparams = luajava.new(RelativeLayoutParams,originalstatparams)
+	
+	newtickparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	
+	newstatparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	newstatparams:addRule(RelativeLayout.BELOW,6022)
+	
+	tickbar:setLayoutParams(newtickparams)
+	statbar:setLayoutParams(newstatparams)
+	
+	inputbar:setLayoutParams(originalinputparams)
+	
+	holder:addView(statbar)
+	holder:addView(tickbar)
+	
+	vparams = luajava.new(RelativeLayoutParams,200,RelativeLayoutParams.FILL_PARENT)
+	vparams:addRule(RelativeLayout.ABOVE,10)
+	vparams:addRule(RelativeLayout.BELOW,5010)
+	vparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	vitalsbar:setLayoutParams(vparams)
+	
+	scrollerParams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT,0)
+	scrollerParams:addRule(RelativeLayout.LEFT_OF,1010)
+	
+	parent:addView(vitalsbar)
+end
 
 
 

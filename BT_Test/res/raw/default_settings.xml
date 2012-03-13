@@ -1,6 +1,15 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<root>
+<blowtorch xmlversion="2">
   <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" script="uiBootStrap" id="6666"/>
+  <windows>
+    <window name="mainDisplay" id="6666" script="uiBootStrap">
+      <layoutGroup target="normal">
+        <layout orientation="portrait" leftOf="6010" above="10" below="5010" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+      </layoutGroup>
+      <options/>
+    </window>
+  </windows>
+  
   <service processSemi="true" throttle="false" processPeriod="true" keepWifiActive="true" localEcho="true" vibrateOnBell="true" notifyOnBell="false" displayOnBell="false" />
   <aliases>
   	<alias pre="fosfsdf" post="skfdsdf"/>
@@ -46,5 +55,37 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   </script>
   <plugins>
   	 <link file="plugin.xml"/>
+  	 <plugin author="Daniel Block" name="button_window" id="10">
+  	 	<windows>
+  	 		<window name="button_window" id="10203" script="buttonwindow">
+  	 			<layoutGroup target="normal">
+  	 				<layout orientation="landscape" height="fill_parent" width="fill_parent" above="10"/>
+  	 			</layoutGroup>
+  	 		</window>
+  	 	</windows>
+		<script name="bootstrap">
+		<![CDATA[
+			dofile("/mnt/sdcard/BlowTorch/buttonserver.lua")
+		]]>
+		</script>
+		<script name="buttonwindow">
+			<![CDATA[
+			dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
+			--debugPrint("custom loaded file go!")
+		]]>
+  		</script>
+  		<buttonsets>
+			<buttonset name="a" primaryColor="7799FF22" selectedColor="77FF3300" flipColor="770033FF">
+				<button label="smorp" x="200" y="400"/>
+				<button label="spliz" x="300" y="400"/>
+			</buttonset>
+			<buttonset name="b">
+				<button label="blah" x="100" y="100"/>
+				<button label="bliz" x="200" y="200"/>
+				<button label="bloop" x="300" y="300" primaryColor="FFFF00FF"/>
+			</buttonset>
+			<selected>a</selected>
+  		</buttonsets>
+	</plugin>
   </plugins>
-</root>
+</blowtorch>

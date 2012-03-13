@@ -2,6 +2,7 @@ package com.happygoatstudios.bt.service.plugin.settings;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -9,6 +10,7 @@ import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaState;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlSerializer;
 
 import com.happygoatstudios.bt.alias.AliasData;
 import com.happygoatstudios.bt.service.Connection;
@@ -72,17 +74,17 @@ public class PluginParser extends BasePluginParser {
 	String current_script_name = new String();
 	
 	public ArrayList<Plugin> load() throws FileNotFoundException, IOException, SAXException {
-		RootElement root = new RootElement("root");
+		RootElement root = new RootElement("blowtorch");
 		tmp = new PluginSettings();
 		attatchListeners(root);
 		
-		
-		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
+		InputStream in = this.getInputStream();
+		Xml.parse(in, Xml.Encoding.UTF_8, root.getContentHandler());
 		
 		//tmp.setPath(path);
 		//p.setSettings(tmp);
 		//do alternate parsing for plugin data.
-		RootElement root2 = new RootElement("root");
+		RootElement root2 = new RootElement("blowtorch");
 		Element data = root2.getChild(PluginParser.TAG_PLUGINS).getChild(PluginParser.TAG_PLUGIN);
 		
 		//upon encountering.
@@ -172,7 +174,7 @@ public class PluginParser extends BasePluginParser {
 			}
 
 			public void end(String body) {
-				Log.e("SCRIPT","SCRIPT BODY:\n"+body);
+				//Log.e("SCRIPT","SCRIPT BODY:\n"+body);
 				if(current_script_name == null) {
 					Random r = new Random();
 					r.setSeed(System.currentTimeMillis());
@@ -191,6 +193,7 @@ public class PluginParser extends BasePluginParser {
 
 			public void start(Attributes a) {
 				
+				Log.e("Parse","Parsing plugin: "+a.getValue("",BasePluginParser.ATTR_NAME));
 				tmp.setName(a.getValue("",BasePluginParser.ATTR_NAME));
 				tmp.setAuthor(a.getValue("",BasePluginParser.ATTR_AUTHOR));
 				tmp.setId(Integer.parseInt(a.getValue("",BasePluginParser.ATTR_ID)));
@@ -272,5 +275,48 @@ public class PluginParser extends BasePluginParser {
 	}
 	
 	private NewItemHandler newItemHandler = new NewItemHandler();
+
+	public static void saveToXml(XmlSerializer out, Plugin plugin) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "plugin");
+		out.attribute("", "name", plugin.getName());
+		out.attribute("", "author", plugin.getSettings().getAuthor());
+		out.attribute("", "id", Integer.toString(plugin.getSettings().getId()));
+		
+		out.startTag("","windows");
+		for(WindowToken w : plugin.getSettings().getWindows().values()) {
+			WindowTokenParser.saveToXml(out, w);
+		}
+		out.endTag("", "windows");
+		
+		//this is the same-ish as the connection settings parser, save alias, triggers and timers.
+		out.startTag("", "aliases");
+		for(AliasData a : plugin.getSettings().getAliases().values()) {
+			AliasParser.saveAliasToXML(out, a);
+		}
+		out.endTag("", "aliases");
+		
+		out.startTag("", "triggers");
+		for(TriggerData t : plugin.getSettings().getTriggers().values()) {
+			TriggerParser.saveTriggerToXML(out, t);
+		}
+		out.endTag("", "triggers");
+		
+		out.startTag("", "timers");
+		for(TimerData t : plugin.getSettings().getTimers().values()) {
+			TimerParser.saveTimerToXML(out, t);
+		}
+		out.endTag("", "timers");
+		
+		for(String scriptName : plugin.getSettings().getScripts().keySet()) {
+			out.startTag("", "script");
+			out.attribute("", "name", scriptName);
+			out.cdsect(plugin.getSettings().getScripts().get(scriptName));
+			out.endTag("", "script");
+		}
+		
+		plugin.scriptXmlExport(out);
+		
+		out.endTag("", "plugin");
+	}
 	
 }

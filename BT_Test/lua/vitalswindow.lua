@@ -179,6 +179,12 @@ function OnSizeChanged(neww,newh,oldw,oldh)
 	end
 	width = neww
 	height = newh
+	if(height > width) then
+		local tmp = height
+		height = width
+		width = tmp
+	end
+	debugPrint("changed to height/width:"..width.."x"..height)
 	widthFloat = luajava.newInstance("java.lang.Float",width)
 	heightOver10 = height/10
 	alignPos = heightOver10*9
@@ -217,6 +223,7 @@ function OnSizeChanged(neww,newh,oldw,oldh)
 	updateToppers()
 	
 	updateBarRects()
+	PluginXCallS("initReady","now")
 end
 
 function updateToppers()
@@ -328,6 +335,11 @@ function updateBarRects()
 	enemyrect:set(0,heightOver5*2,width*enemyval,heightOver5*3)	
 	tnlrect:set(0,heightOver5*3,width*tnlpercent,heightOver5*4)
 	
+	debugPrint("hprect:"..hprect:toString())
+	debugPrint("manarect:"..manarect:toString())
+	debugPrint("enemyrect:"..enemyrect:toString())
+	debugPrint("tnlrect:"..tnlrect:toString())
+	--debugPrint("hprect:"..hprect:toString())	
 end
 
 function updateMaxPerLevel(str)
@@ -346,6 +358,7 @@ end
 
 function updateAll(data)
 	--debugPrint("updating all")
+	debugPrint("updateAll called:"..data)
 	info = loadstring(data)()
 	
 	vitals.hp = info.hp
@@ -384,7 +397,7 @@ PluginXCallS("initReady","now")
 
 function OnDestroy()
 	debugPrint("destroying vitals window")
-	topper:recycle()
+	--topper:recycle()
 	topperCanvas = nil
 	topper = nil
 	

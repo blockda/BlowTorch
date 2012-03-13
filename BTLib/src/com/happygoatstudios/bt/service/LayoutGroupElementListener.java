@@ -19,18 +19,16 @@ public class LayoutGroupElementListener implements ElementListener {
 	public void start(Attributes a) {
 		LayoutGroup g = new LayoutGroup();
 		String target = a.getValue("","target");
-		if(target.equals("small")) {
-			g.type = LAYOUT_TYPE.SMALL;
-		} else if(target.equals("normal")) {
-			g.type = LAYOUT_TYPE.NORMAL;
-		} else if(target.equals("large")) {
-			g.type = LAYOUT_TYPE.LARGE;
-		} else if(target.equals("xlarge")) {
-			g.type = LAYOUT_TYPE.XLARGE;
+		try {
+			LayoutGroup.LAYOUT_TYPE tmp = LayoutGroup.LAYOUT_TYPE.valueOf(target.toLowerCase());
+			
+			g.type = tmp;
+			
+			current_window.layouts.put(g.type,g);
+			sub.setCurrentType(g.type);
+		} catch (IllegalArgumentException e) {
+			
 		}
-		
-		current_window.layouts.put(g.type,g);
-		sub.setCurrentType(g.type);
 	}
 
 	public void end() {

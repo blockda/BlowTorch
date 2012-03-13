@@ -503,5 +503,12 @@ public class DataPumper extends Thread {
 		// TODO Auto-generated method stub
 		return connected ;
 	}
+
+	//public void sendGMCPData(String obj) {
+		//construct a gmcp packet.
+		//this is just a helper.
+	//	Message msg = writerThread.outhandler.obtainMessage(OutputWriterThread.MESSAGE_SEND,data);
+	//	writerThread.outhandler.sendMessage(msg);
+	//}
 		
 }

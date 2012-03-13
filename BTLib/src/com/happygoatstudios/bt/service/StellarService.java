@@ -194,7 +194,7 @@ public class StellarService extends Service {
 		}
 		Log.e("SERVICE","onStartCommand");
 		if(ConfigurationLoader.isTestMode(this.getApplicationContext())) {
-			Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
+			//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
 		}
 		
 		//lol, here we go.
@@ -2537,6 +2537,7 @@ public class StellarService extends Service {
 	}*/
 	
 	public void reloadWindows() {
+		Log.e("SERVER","INITIALIZE WINDOWS INITIATED: reloadWindows");
 		int N = callbacks.beginBroadcast();
 		
 		for(int i=0;i<N;i++) {
@@ -3595,6 +3596,32 @@ public class StellarService extends Service {
 				//notify listeners that data can be read
 			}
 			callbacks.finishBroadcast();
+		}
+
+		public void markWindowsDirty() {
+			final int N = callbacks.beginBroadcast();
+			for(int i=0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).markWindowsDirty();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+			callbacks.finishBroadcast();
+		
+		}
+
+		public void markSettingsDirty() {
+			final int N = callbacks.beginBroadcast();
+			for(int i=0;i<N;i++) {
+				try {
+					callbacks.getBroadcastItem(i).markSettingsDirty();
+				} catch (RemoteException e) {
+					
+				}
+			}
 		}
 
 }
