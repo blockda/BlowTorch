@@ -85,6 +85,14 @@ function demo(args)
 			doDemoOne()
 		elseif(num ==2) then
 			doDemoTwo()
+		elseif(num == 3) then
+			doDemoThree()
+		elseif(num == 4) then
+			doDemoFour()
+		elseif(num == 5) then
+			doDemoFive()
+		elseif(num == 0) then
+			doDemoZero()
 		end
 	end
 end
@@ -159,21 +167,78 @@ function doDemoTwo()
 	
 	holder:addView(statbar)
 	holder:addView(tickbar)
-	
-	vparams = luajava.new(RelativeLayoutParams,200,RelativeLayoutParams.FILL_PARENT)
+	chatwindow = parent:findViewById(5010)
+	vparams = luajava.new(RelativeLayoutParams,100,inputbar:getTop() - chatwindow:getBottom())
 	vparams:addRule(RelativeLayout.ABOVE,10)
-	vparams:addRule(RelativeLayout.BELOW,5010)
+	--vparams:addRule(RelativeLayout.BELOW,5010)
 	vparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 	vitalsbar:setLayoutParams(vparams)
 	
 	scrollerParams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT,0)
 	scrollerParams:addRule(RelativeLayout.LEFT_OF,1010)
 	
-	parent:addView(vitalsbar)
+	vitalsbar:requestLayout()
+	--parent:addView(vitalsbar)
 end
 
+function doDemoThree()
+	vparams = luajava.new(RelativeLayoutParams,100,RelativeLayoutParams.FILL_PARENT)
+	vparams:addRule(RelativeLayout.ABOVE,10)
+	--vparams:addRule(RelativeLayout.BELOW,5010)
+	vparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	vparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	
+	vitalsbar:setLayoutParams(vparams)
+	
+	
+	newchatparams = luajava.new(RelativeLayoutParams,chatwindow:getLayoutParams())
+	newchatparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	newchatparams:addRule(RelativeLayout.LEFT_OF,1010)
+	
+	chatwindow:setLayoutParams(newchatparams)
 
+end
 
+function doDemoFour()
+	--newchatparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,177)
+	
+	newchatparams:addRule(RelativeLayout.LEFT_OF,6010)
+	newchatparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT,0)
+	
+	
+	scrollerParams:addRule(RelativeLayout.BELOW,0)
+	scrollerParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	
+	chatwindow:requestLayout()
+end
+
+function doDemoFive()
+	scrollerParams:addRule(RelativeLayout.LEFT_OF,0)
+	scrollerParams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	
+	vitalsbar:setLayoutParams(oldparams)
+	parent:removeView(vitalsbar)
+	
+	
+	--newstatparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	newstatparams:addRule(RelativeLayout.BELOW,1010)
+	holder:addView(vitalsbar)
+end
+
+function doDemoZero()
+	scrollerParams:addRule(RelativeLayout.ALIGN_PARENT_TOP,0)
+	
+	scrollerParams:addRule(RelativeLayout.BELOW,chatwindow:getId())
+	
+	--newchatparams = luajava.new(RelativeLayoutParams,chatwindow:getLayoutParams())
+	--newchatparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	--newchatparams:addRule(RelativeLayout.LEFT_OF,1010)
+	newchatparams:addRule(RelativeLayout.LEFT_OF,0)
+	newchatparams:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
+	newchatparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	--chatwindow:setLayoutLarasm(newchatparams)
+	chatwindow:requestLayout()
+end
 
 
 
