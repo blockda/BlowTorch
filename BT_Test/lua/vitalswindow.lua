@@ -167,43 +167,74 @@ function OnDraw(canvas)
 	
 	canvas:drawBitmap(topper,0,0,nil)
 	
-	canvas:drawCircle(alignIndicatorX,alignPosFloat:floatValue(),5,alignIndicatorPaint)
-	
+	if(vertical) then
+		canvas:drawCircle(alignPosFloat:floatValue(),alignIndicatorX,5,alignIndicatorPaint)
+	else
+		canvas:drawCircle(alignIndicatorX,alignPosFloat:floatValue(),5,alignIndicatorPaint)
+	end
 	--canvas
 end
 
+vertical = false
 function OnSizeChanged(neww,newh,oldw,oldh)
 	if(neww == oldw and newh == oldh) then
 		--debugPrint("resize called, but the size is the same, returning")
 		return
 	end
-	width = neww
-	height = newh
+	width = tonumber(neww)
+	height = tonumber(newh)
 	if(height > width) then
-		local tmp = height
-		height = width
-		width = tmp
+		vertical = true
+	else
+		vertical = false
 	end
-	debugPrint("changed to height/width:"..width.."x"..height)
-	widthFloat = luajava.newInstance("java.lang.Float",width)
-	heightOver10 = height/10
-	alignPos = heightOver10*9
+	--debugPrint("changed to height/width:"..width.."x"..height)
 	
-	alignIndicatorX = width * alignPercent
+	--if(vertical) then
+		
+	--else
+		widthFloat = luajava.newInstance("java.lang.Float",width)
+		heightOver10 = height/10
+		widthOver10 = width/10
+		if(vertical) then
+			alignPos = widthOver10*9
+		else
+			alignPos = heightOver10*9
+		end
+	--end
+	
+	if(vertical) then
+		alignIndicatorX = height * alignPercent
+	else
+		alignIndicatorX = width * alignPercent
+	end
+	
 	
 	alignPosFloat = luajava.newInstance("java.lang.Float",alignPos)
-	alignShader = luajava.new(LinearGradient,zeroFloat:floatValue(),zeroFloat:floatValue(),widthFloat:floatValue(),zeroFloat:floatValue(),gColors,gPositions,TileMode.REPEAT)
-	alignpaint:setShader(alignShader)
-	alignpaint:setStrokeWidth(height/5)
+	if(vertical) then
+		alignShader = luajava.new(LinearGradient,0,0,0,tonumber(height),gColors,gPositions,TileMode.REPEAT)
+		alignpaint:setShader(alignShader)
+		alignpaint:setStrokeWidth(width/5)
+	else
+		alignShader = luajava.new(LinearGradient,0,0,tonumber(width),0,gColors,gPositions,TileMode.REPEAT)
+		alignpaint:setShader(alignShader)
+		alignpaint:setStrokeWidth(height/5)
+	end
 	
 	heightOver5 = height/5
 	
 	--rebuild vertical gradient
-	vertGradientTop = luajava.newInstance("java.lang.Float",heightOver10)
-	vertGradientBottom = luajava.newInstance("java.lang.Float",-1*heightOver10)
-	vertShader = luajava.new(LinearGradient,zeroFloat:floatValue(),vertGradientBottom:floatValue(),zeroFloat:floatValue(),vertGradientTop:floatValue(),vgColors,nil,TileMode.REPEAT)
-	topperGradientPaint:setShader(vertShader)
-	
+	if(vertical) then
+		vertGradientTop = luajava.newInstance("java.lang.Float",widthOver10)
+		vertGradientBottom = luajava.newInstance("java.lang.Float",-1*widthOver10)
+		vertShader = luajava.new(LinearGradient,vertGradientBottom:floatValue(),0,vertGradientTop:floatValue(),0,vgColors,nil,TileMode.REPEAT)
+		topperGradientPaint:setShader(vertShader)
+	else
+		vertGradientTop = luajava.newInstance("java.lang.Float",heightOver10)
+		vertGradientBottom = luajava.newInstance("java.lang.Float",-1*heightOver10)
+		vertShader = luajava.new(LinearGradient,zeroFloat:floatValue(),vertGradientBottom:floatValue(),zeroFloat:floatValue(),vertGradientTop:floatValue(),vgColors,nil,TileMode.REPEAT)
+		topperGradientPaint:setShader(vertShader)
+	end
 	--update toppers
 	if(topper ~= nil) then 
 		topper:recycle()
@@ -228,44 +259,87 @@ end
 
 function updateToppers()
 	rect = luajava.new(Rect)
-	rect:set(0,0,tonumber(width),tonumber(height/5))
+	if(vertical) then
+		rect:set(0,0,tonumber(width/5),tonumber(height))
+	else
+		rect:set(0,0,tonumber(width),tonumber(height/5))
+	end
+	
 	--topperCanvas:drawARGB(255,0,0,255)
 	topperCanvas:save()
 	topperCanvas:clipRect(rect)
-	topperCanvas:drawLine(0,tonumber(height/10),tonumber(width),tonumber(height/10),topperGradientPaint)
+	if(vertical) then
+		topperCanvas:drawLine(tonumber(width/10),0,tonumber(width/10),tonumber(height),topperGradientPaint)
+	else
+		topperCanvas:drawLine(0,tonumber(height/10),tonumber(width),tonumber(height/10),topperGradientPaint)
+	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
 	
-	rect:offsetTo(0,tonumber(height/5))
-	topperCanvas:save()
+
+	if(vertical) then
+		rect:offsetTo(tonumber(width/5),0)
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(tonumber((width/10)*3),0,tonumber((width/10)*3),tonumber(height),topperGradientPaint)
+	
+	else
+		rect:offsetTo(0,tonumber(height/5))
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(0,tonumber((height/10)*3),tonumber(width),tonumber((height/10)*3),topperGradientPaint)
+	
+	end
+	topperCanvas:restore()
+	
+	--topperCanvas:save()
+	--topperCanvas:clipRect(rect)
+	if(vertical) then
+		rect:offsetTo(tonumber((width/5)*2),0)
+			topperCanvas:save()
 	topperCanvas:clipRect(rect)
-	topperCanvas:drawLine(0,tonumber((height/10)*3),tonumber(width),tonumber((height/10)*3),topperGradientPaint)
+		topperCanvas:drawLine(tonumber((width/10)*5),0,tonumber((width/10)*5),tonumber(height),topperGradientPaint)
+	else
+		rect:offsetTo(0,tonumber((height/5)*2))
+			topperCanvas:save()
+	topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(0,tonumber((height/10)*5),tonumber(width),tonumber((height/10)*5),topperGradientPaint)
+	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
 	
-	rect:offsetTo(0,tonumber((height/5)*2))
-	topperCanvas:save()
+	--topperCanvas:save()
+	--topperCanvas:clipRect(rect)
+	if(vertical) then
+		rect:offsetTo(tonumber((width/5)*3),0)
+			topperCanvas:save()
 	topperCanvas:clipRect(rect)
-	topperCanvas:drawLine(0,tonumber((height/10)*5),tonumber(width),tonumber((height/10)*5),topperGradientPaint)
+		topperCanvas:drawLine(tonumber((width/10)*7),0,tonumber((width/10)*7),tonumber(height),topperGradientPaint)
+	else
+		rect:offsetTo(0,tonumber((height/5)*3))
+			topperCanvas:save()
+	topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(0,tonumber((height/10)*7),tonumber(width),tonumber((height/10)*7),topperGradientPaint)
+	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
 	
-	rect:offsetTo(0,tonumber((height/5)*3))
-	topperCanvas:save()
+	--topperCanvas:save()
+	--topperCanvas:clipRect(rect)
+	if(vertical) then
+		rect:offsetTo(tonumber((width/5)*4),0)	
+			topperCanvas:save()
 	topperCanvas:clipRect(rect)
-	topperCanvas:drawLine(0,tonumber((height/10)*7),tonumber(width),tonumber((height/10)*7),topperGradientPaint)
-	--topperCanvas:drawRect(rect,topperBorderPaint)
-	topperCanvas:restore()
+		topperCanvas:drawLine(alignPosFloat:floatValue(),0,alignPosFloat:floatValue(),tonumber(height),alignpaint)
+		topperCanvas:drawLine(tonumber((width/10)*9),0,tonumber((width/10)*9),tonumber(height),topperGradientPaint)
 	
-	
-	
-	rect:offsetTo(0,tonumber((height/5)*4))
-	topperCanvas:save()
+	else
+		rect:offsetTo(0,tonumber((height/5)*4))	
+			topperCanvas:save()
 	topperCanvas:clipRect(rect)
-	
-	topperCanvas:drawLine(zeroFloat:floatValue(),alignPosFloat:floatValue(),widthFloat:floatValue(),alignPosFloat:floatValue(),alignpaint)
-	
-	topperCanvas:drawLine(0,tonumber((height/10)*9),tonumber(width),tonumber((height/10)*9),topperGradientPaint)
+		topperCanvas:drawLine(zeroFloat:floatValue(),alignPosFloat:floatValue(),widthFloat:floatValue(),alignPosFloat:floatValue(),alignpaint)
+		topperCanvas:drawLine(0,tonumber((height/10)*9),tonumber(width),tonumber((height/10)*9),topperGradientPaint)
+	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
 end
@@ -301,7 +375,11 @@ function updateAlign(str)
 	--calculate align percent
 	tmp = align + 2500
 	alignPercent = tmp / 5000
-	alignIndicatorX = ((width-(2*5))*alignPercent)+5
+	if(vertical) then
+		alignIndicatorX = ((height-(2*5))*alignPercent)+5
+	else
+		alignIndicatorX = ((width-(2*5))*alignPercent)+5
+	end
 	--alignIndicatorX = width*alignPercent
 	debugPrint("alignIndicatorX now at: "..alignIndicatorX)
 	--updateBarRects()
@@ -315,6 +393,9 @@ function updateEnemyPercent(str)
 end
 
 function updateBarRects()
+
+width = tonumber(width)
+		height = tonumber(height)
 	hppct = vitals.hp / maxes.hp
 	manapct = vitals.mp / maxes.mp
 	
@@ -329,11 +410,23 @@ function updateBarRects()
 		--debugPrint("updateBarRects, tnlpercent is:"..tnlpercent)
 	end
 
-	heightOver5 = height / 5
-	hprect:set(0,0,width*hppct,heightOver5)
-	manarect:set(0,heightOver5,width*manapct,heightOver5*2)
-	enemyrect:set(0,heightOver5*2,width*enemyval,heightOver5*3)	
-	tnlrect:set(0,heightOver5*3,width*tnlpercent,heightOver5*4)
+	if(vertical) then
+		debugPrint("doing vertical bars")
+		
+		widthOver5 = width / 5
+		
+		hprect:set(0,height*(1-hppct),widthOver5,height)
+		manarect:set(widthOver5,height*(1-manapct),widthOver5*2,height)
+		enemyrect:set(widthOver5*2,height*(1-enemyval),widthOver5*3,height)	
+		tnlrect:set(widthOver5*3,height*(1-tnlpercent),widthOver5*4,height)
+	else
+		heightOver5 = height / 5
+		hprect:set(0,0,width*hppct,heightOver5)
+		manarect:set(0,heightOver5,width*manapct,heightOver5*2)
+		enemyrect:set(0,heightOver5*2,width*enemyval,heightOver5*3)	
+		tnlrect:set(0,heightOver5*3,width*tnlpercent,heightOver5*4)
+	end
+
 	
 	debugPrint("hprect:"..hprect:toString())
 	debugPrint("manarect:"..manarect:toString())
