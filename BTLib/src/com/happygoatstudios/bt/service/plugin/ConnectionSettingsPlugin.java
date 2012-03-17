@@ -10,7 +10,11 @@ import org.xmlpull.v1.XmlSerializer;
 import android.os.Handler;
 
 import com.happygoatstudios.bt.service.Connection;
+import com.happygoatstudios.bt.service.plugin.settings.BooleanOption;
+import com.happygoatstudios.bt.service.plugin.settings.EncodingOption;
+import com.happygoatstudios.bt.service.plugin.settings.ListOption;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.settings.HyperSettings;
 import com.happygoatstudios.bt.speedwalk.DirectionData;
 import com.happygoatstudios.bt.trigger.TriggerData;
@@ -18,12 +22,164 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 public class ConnectionSettingsPlugin extends Plugin {
 	public ConnectionSettingsPlugin(Handler h,Connection parent) throws LuaException {
 		super(h,parent);
-		
+		init();
 	}
 	
 	public ConnectionSettingsPlugin(PluginSettings settings,Handler h,Connection parent) throws LuaException {
 		super(settings,h,parent);
+		init();
+	}
+	
+	private void init() {
+		SettingsGroup sg = new SettingsGroup();
+		sg.setTitle("Program Settings");
+		sg.setListener(parent);
+
+		EncodingOption enc = new EncodingOption();
+		enc.setTitle("System Encoding");
+		enc.setDescription("Specifies the encoding used to process incoming text.");
+		enc.setKey("encoding");
+		sg.addOption(enc);
 		
+		ListOption orientation = new ListOption();
+		orientation.setTitle("Orientation");
+		orientation.setDescription("Sets the layout mode for the application. Automatic will switch the layout when the device rotates.");
+		orientation.setKey("orientation");
+		orientation.setValue(new Integer(0));
+		orientation.addItem("Automatic");
+		orientation.addItem("Landscape");
+		orientation.addItem("Portrait");
+		sg.addOption(orientation);
+		
+		BooleanOption screen_on = new BooleanOption();
+		screen_on.setTitle("Keep Screen On?");
+		screen_on.setDescription("Keep the screen on while the window is active.");
+		screen_on.setKey("screen_on");
+		screen_on.setValue(true);
+		sg.addOption(screen_on);
+		
+		BooleanOption fullscreen = new BooleanOption();
+		fullscreen.setTitle("Use Fullscreen Window?");
+		fullscreen.setDescription("Hides the notification bar. This can be toggled by typing .togglefullscreen");
+		fullscreen.setKey("fullscreen");
+		fullscreen.setValue(true);
+		sg.addOption(fullscreen);
+
+		//SettingsGroup window = token.getSettings();
+		
+		
+		SettingsGroup input = new SettingsGroup();
+		input.setTitle("Input");
+		input.setDescription("Options that deal with the input box and editors.");
+		
+		BooleanOption fullscreen_editor = new BooleanOption();
+		fullscreen_editor.setTitle("Fullscreen Editor?");
+		fullscreen_editor.setDescription("Show the full screen editor when the input bar is clicked.");
+		fullscreen_editor.setKey("fullscreen_editor");
+		fullscreen_editor.setValue(false);
+		input.addOption(fullscreen_editor);
+		
+		BooleanOption use_suggestions = new BooleanOption();
+		use_suggestions.setTitle("Use Suggestions?");
+		use_suggestions.setDescription("Attempt suggestions if the full screen editor is not used.");
+		use_suggestions.setKey("use_suggestions");
+		use_suggestions.setValue(false);
+		input.addOption(use_suggestions);
+		
+		BooleanOption keep_last = new BooleanOption();
+		keep_last.setTitle("Keep Last Entered?");
+		keep_last.setDescription("Keeps the last text entered in the window and highights after sending.");
+		keep_last.setKey("keep_last");
+		keep_last.setValue(false);
+		input.addOption(keep_last);
+		
+		BooleanOption compatilibility_mode = new BooleanOption();
+		compatilibility_mode.setTitle("Enable Compatibility Mode?");
+		compatilibility_mode.setDescription("Enable this if you have problems with bascpace not workin in the non-full screen editor.");
+		compatilibility_mode.setKey("compatibility_mode");
+		compatilibility_mode.setValue(false);
+		input.addOption(compatilibility_mode);
+		
+		sg.addOption(input);
+
+		
+		
+		SettingsGroup servOptions = new SettingsGroup();
+		servOptions.setTitle("Service");
+		servOptions.setDescription("Options for the background service and data processing.");
+		
+		BooleanOption local_echo = new BooleanOption();
+		local_echo.setTitle("Local Echo?");
+		local_echo.setDescription("Will the service echo data sent to the server?");
+		local_echo.setKey("local_echo");
+		local_echo.setValue(true);
+		servOptions.addOption(local_echo);
+		
+		BooleanOption process_system_commands = new BooleanOption();
+		process_system_commands.setTitle("Process System Commands?");
+		process_system_commands.setDescription("Perform system functions for input beginning with the specified system command marker.");
+		process_system_commands.setKey("process_system_commands");
+		process_system_commands.setValue(true);
+		servOptions.addOption(process_system_commands);
+		
+		BooleanOption echo_alias_updates = new BooleanOption();
+		echo_alias_updates.setTitle("Echo Alias Updates?");
+		echo_alias_updates.setDescription("Local echo system command updates to aliases.");
+		echo_alias_updates.setKey("echo_alias_updates");
+		echo_alias_updates.setValue(true);
+		servOptions.addOption(echo_alias_updates);
+		
+		BooleanOption keep_wifi_alive = new BooleanOption();
+		keep_wifi_alive.setTitle("Keep Wifi Alive?");
+		keep_wifi_alive.setDescription("Attempt to keep WiFi radio active while connected.");
+		keep_wifi_alive.setKey("keep_wifi_alive");
+		keep_wifi_alive.setValue(true);
+		servOptions.addOption(keep_wifi_alive);
+		
+		BooleanOption cull_extraneous = new BooleanOption();
+		cull_extraneous.setTitle("Cull Extraneous Colors?");
+		cull_extraneous.setDescription("Removes extraneous color codes.");
+		cull_extraneous.setKey("cull_extraneous_color");
+		cull_extraneous.setValue(true);
+		servOptions.addOption(cull_extraneous);
+		
+		BooleanOption debug_telnet = new BooleanOption();
+		debug_telnet.setTitle("Debug Telnet?");
+		debug_telnet.setDescription("Shows data involving telnet option transactions in the window.");
+		debug_telnet.setKey("debug_telnet");
+		debug_telnet.setValue(false);
+		servOptions.addOption(debug_telnet);
+		
+		sg.addOption(servOptions);
+		
+		SettingsGroup bellOptions = new SettingsGroup();
+		bellOptions.setTitle("Bell");
+		bellOptions.setDescription("Options for what happens when the bell character is recieved.");
+		
+		BooleanOption bell_vibrate = new BooleanOption();
+		bell_vibrate.setTitle("Vibrate?");
+		bell_vibrate.setDescription("Plays a short vibrate pattern when the bell is recieved.");
+		bell_vibrate.setKey("bell_vibrate");
+		bell_vibrate.setValue(true);
+		bellOptions.addOption(bell_vibrate);
+		
+		BooleanOption bell_notification = new BooleanOption();
+		bell_notification.setTitle("Generate Notification?");
+		bell_notification.setDescription("Spawns a new notification when bell is recieved.");
+		bell_notification.setKey("bell_notification");
+		bell_notification.setValue(false);
+		bellOptions.addOption(bell_notification);
+		
+		BooleanOption bell_display = new BooleanOption();
+		bell_display.setTitle("Display Bell?");
+		bell_display.setDescription("Displays a small alert on the screen when the bell character is recieved.");
+		bell_display.setKey("bell_display");
+		bell_display.setValue(false);
+		bellOptions.addOption(bell_display);
+		
+		sg.addOption(bellOptions);
+		
+		this.getSettings().setOptions(sg);
 	}
 
 	public static enum LINK_MODE {

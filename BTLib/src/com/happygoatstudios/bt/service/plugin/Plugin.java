@@ -1003,11 +1003,15 @@ public class Plugin {
 	
 	public void addTrigger(TriggerData data) {
 		this.getSettings().getTriggers().put(data.getName(), data);
+		parent.buildTriggerSystem();
 	}
 
 	public void updateTrigger(TriggerData from, TriggerData to) {
-		this.getSettings().getTriggers().remove(from.getName());
+		TriggerData tmp = this.getSettings().getTriggers().remove(from.getName());
 		this.getSettings().getTriggers().put(to.getName(),to);
+		tmp = null;
+		this.sortTriggers();
+		parent.buildTriggerSystem();
 	}
 	
 	public void buildAliases() {

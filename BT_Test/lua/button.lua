@@ -1,6 +1,10 @@
 
 Color = luajava.bindClass("android.graphics.Color")
-
+Path = luajava.bindClass("android.graphics.Path")
+PathDirection = luajava.bindClass("android.graphics.Path$Direction")
+--PathDirection_CCW = PathDirection.CCW
+--RegionOp = luajava.bindClass("android.graphics.Region$Op")
+--RegionOp_REVERSE_DIFFERENCE = RegionOp.INTERSECT
 BUTTONSET_DATA = {
 						height 			= 80,
 						width 			= 80,
@@ -9,7 +13,12 @@ BUTTONSET_DATA = {
 						labelColor		= Color:argb(0xAA,0xAA,0xAA,0xAA),
 						selectedColor 	= Color:argb(0x88,0x00,0xFF,0x00),
 						flipColor 		= Color:argb(0x88,0xFF,0x00,0x00),
-						flipLabelColor 	= Color:argb(0x88,0x00,0x00,0xFF)			
+						flipLabelColor 	= Color:argb(0x88,0x00,0x00,0xFF),
+						command = "",
+						label = "LABEL",
+						flipLabel = "",
+						flipCommand = "",
+						switchTo = "",			
 			  		}
 function BUTTONSET_DATA:new(o)
 	o = o or {}
@@ -26,11 +35,11 @@ BUTTON_DATA = 	 {
 						y				= 100,
 						--height 			= 80,
 						--width 			= 80,
-						command 		= "",
-						label 			= "LABEL",
+						--command 		= "",
+						--label 			= "LABEL",
 						--labelSize 		= 23,
-						flipLabel		= "",
-						flipCommand 	= "",
+						--flipLabel		= "",
+						--flipCommand 	= "",
 						--primaryColor 	= Color:argb(0x88,0x00,0x00,0xFF),
 						--labelColor		= Color:argb(0xAA,0xAA,0xAA,0xAA),
 						--selectedColor 	= Color:argb(0x88,0x00,0xFF,0x00),
@@ -65,7 +74,11 @@ function BUTTON:new(data,density)
 	local o = {}
 	o.paintOpts = luajava.newInstance("android.graphics.Paint")
 	o.paintOpts:setAntiAlias(true)
+	o.paintOpts:setXfermode(xferModeSRC)
 	o.rect = luajava.newInstance("android.graphics.RectF")
+	o.inset = luajava.newInstance("android.graphics.RectF")
+	--o.clip = luajava.new(Path)
+	--o.clip:addRoundRect(o.rect,25,25,PathDirection_CCW)
 	o.data = BUTTON_DATA:new(data)
 	o.selected = false
 	setmetatable(o,self)
@@ -90,13 +103,28 @@ function BUTTON:updateRect()
 	local top = self.data.y - (self.data.height/2)*self.density
 	local bottom = self.data.y + (self.data.height/2)*self.density
 	local tmp = self.rect
+
+	
 	tmp:set(left,top,right,bottom)
+	self.inset:set(left+1.0,top+1.0,right-1.0,bottom-1.0)
+	--self.clip:reset()
+	--temporarily adjust this rect.
+	--debugPrint(tmp:toString())
+	--tmp:inset(10.0,10.0)
+	--debugPrint(tmp:toString())
+	--self.clip:addRoundRect(tmp,25,25,PathDirection_CCW)
+	--tmp:offset(1.0,1.0)
+	--debugPrint(tmp:toString())
 end
 
 function BUTTON:draw(state,canvas)
 	if(canvas == nil) then
 		error("canvas parameter must not be null")
 	end
+	
+	--canvas:save()
+	--canvas:clipPath(self.clip,RegionOp_REVERSE_DIFFERENCE)
+	
 	
 	local usestate = 0
 	local p = self.paintOpts
@@ -105,16 +133,22 @@ function BUTTON:draw(state,canvas)
 		usestate = state
 	end
 	
+	local rect = self.rect
+	
 	if(usestate == 0) then
 		p:setColor(self.data.primaryColor)
+		canvas:drawRoundRect(rect,25,25,p)
 	elseif(usestate == 1) then
 		p:setColor(self.data.selectedColor)
+		canvas:drawRoundRect(self.inset,25,25,p)
 	elseif(usestate == 2) then
 		p:setColor(self.data.flipColor)
+		canvas:drawRoundRect(self.inset,25,25,p)
 	end
 	
 	
-	canvas:drawRoundRect(self.rect,5,5,p)
+	
+	--canvas:drawRect(self.rect,p)
 	--c:drawBitmap(bmp,b.x,b.y,nil)
 	local label = nil
 	if(usestate == 0 or usestate == 1) then
@@ -135,16 +169,18 @@ function BUTTON:draw(state,canvas)
 	local tY = self.data.y + (p:getTextSize()/2)
 	
 	canvas:drawText(label,tX,tY,p)
+	--canvas:restore()
 	--debugPrint(string.format("Drawn button at: x=%d y=%d",self.data.x,self.data.y))
 end
 
 PorterDuffMode = luajava.bindClass("android.graphics.PorterDuff$Mode")
-xferMode = luajava.newInstance("android.graphics.PorterDuffXfermode",PorterDuffMode.CLEAR)
+xferModeClear = luajava.newInstance("android.graphics.PorterDuffXfermode",PorterDuffMode.CLEAR)
+xferModeSRC = luajava.newInstance("android.graphics.PorterDuffXfermode",PorterDuffMode.SRC)
 
 function BUTTON:clearButton(canvas)
 --local canvas = buttonCanvas
 	local p = self.paintOpts
-	p:setXfermode(xferMode)
+	p:setXfermode(xferModeClear)
 	canvas:drawRoundRect(self.rect,5,5,p)
 	p:setXfermode(nil)
 end

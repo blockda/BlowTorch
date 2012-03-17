@@ -33,4 +33,6 @@ interface IConnectionBinderCallback {
 	void reloadBuffer();
 	void loadWindowSettings();
 	void markWindowsDirty();
+	void markSettingsDirty();
+	void setKeepLast(boolean keep);
 }

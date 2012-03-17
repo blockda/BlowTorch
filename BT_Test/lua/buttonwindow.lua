@@ -256,6 +256,12 @@ function managerTouch.onTouch(v,e)
 		--find if press was in a button
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
+			--if(b.selected) then
+				--launch the editor.
+			--else
+			--	b.selected = true
+				
+			--end
 			fingerdown = true
 			touchedbutton = b
 			touchedindex = index
@@ -270,6 +276,7 @@ function managerTouch.onTouch(v,e)
 			return true
 		else
 			--we are draggin now
+			
 			if(manage) then
 				dragstart.x = x
 				dragstart.y = y
@@ -316,21 +323,21 @@ function managerTouch.onTouch(v,e)
 			checkIntersects()
 			invalidate()
 			return true
-		end
-
-		if(fingerdown and manage) then
-			local modx = (math.floor(e:getX()/gridwidth)*gridwidth)+(gridwidth/2)
-			local mody = (math.floor(e:getY()/gridwidth)*gridwidth)+(gridwidth/2)
+		
+		 end
+		 --if(fingerdown and manage) then
+		--	local modx = (math.floor(e:getX()/gridwidth)*gridwidth)+(gridwidth/2)
+		--	local mody = (math.floor(e:getY()/gridwidth)*gridwidth)+(gridwidth/2)
 			
-			touchedbutton.data.x = modx
-			touchedbutton.data.y = mody
-			touchedbutton:updateRect()
-			drawButtons()
-			invalidate()
-			return true
-		else
-			return true
-		end
+		--	touchedbutton.data.x = modx
+		--	touchedbutton.data.y = mody
+		--	touchedbutton:updateRect()
+		--	drawButtons()
+		--	invalidate()
+		--	return true
+		--else
+		--	return true
+		--end
 	end
 
 	if(e:getAction() == MotionEvent.ACTION_UP) then
@@ -365,6 +372,20 @@ function managerTouch.onTouch(v,e)
 			touchedbutton={}
 			fingerdown = false
 			return true
+		else
+			debugPrint("button_selected")
+			for i,b in ipairs(buttons) do
+				if(b.selected) then
+					b.selected = false
+					updateSelected(b,false)
+				end
+			end
+			touchedbutton.selected = true
+			updateSelected(touchedbutton,true)
+			invalidate()
+			fingerdown = false
+			touchedbutton = {}
+			
 		end
 
 		touchedbutton = {}
@@ -385,16 +406,17 @@ function normalTouch.onTouch(v,e)
 	local x = e:getX()
 	local y = e:getY()
 	--debugPrint("normal touch, start")
-	if(e:getAction() == MotionEvent.ACTION_DOWN) then
+	local action = e:getAction()
+	if(action == ACTION_DOWN) then
 		prevevent = 0
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
 			fingerdown = true
 			touchedbutton = b
 			touchedindex = index
-			clearButton(b)
+			--clearButton(b)
 			normalTouchState = 1
-			clearButton(b)
+			--clearButton(b)
 			b:draw(normalTouchState,buttonCanvas)
 			invalidate()
 			return true
@@ -402,12 +424,8 @@ function normalTouch.onTouch(v,e)
 			fingerdown = false;
 			--debugPrint("action down, returning false")
 			return false
-		end
-	end
-	
-	--debugPrint("move0")
-			
-	if(e:getAction() == MotionEvent.ACTION_MOVE) then
+		end			
+	elseif(action == ACTION_MOVE) then
 		--debugPrint("move1")
 		
 		if(fingerdown == false) then
@@ -437,13 +455,13 @@ function normalTouch.onTouch(v,e)
 			if(r:contains(x,y)) then
 				if(normalTouchState ~= 1) then
 					normalTouchState = 1
-					clearButton(b)
+					--clearButton(b)
 					b:draw(normalTouchState,buttonCanvas)
 				end
 			else
 				if(normalTouchState ~= 2) then
 					normalTouchState = 2
-					clearButton(b)
+					--clearButton(b)
 					b:draw(normalTouchState,buttonCanvas)
 				end
 			end
@@ -455,22 +473,29 @@ function normalTouch.onTouch(v,e)
 			--debugPrint("reached end of normal touch handler, returning false")
 			return false
 		end
-	end
-	
-	if(e:getAction() == MotionEvent.ACTION_UP) then
+	elseif(action == ACTION_UP) then
 		if(fingerdown) then
+			fingerdown = false
 			local r = touchedbutton.rect
 			if(r:contains(x,y)) then
 				--process primary touch
+				if(touchedbutton.data.switchTo ~= nil and touchedbutton.data.switchTo ~= "") then
+					PluginXCallS("loadButtonSet",touchedbutton.data.switchTo)
+					return true
+				end
 				sendToServer(touchedbutton.data.command)
 				debugPrint("primary touch")
 			else
 				--process secondary touch
+				if(touchedbutton.data.switchTo ~= nil and touchedbutton.data.switchTo ~= "") then
+					PluginXCallS("loadButtonSet",touchedbutton.data.switchTo)
+					return true
+				end
 				debugPrint("secondary touch")
 				sendToServer(touchedbutton.data.flipCommand)
 			end
 			normalTouchState = 0
-			clearButton(touchedbutton)
+			--clearButton(touchedbutton)
 			touchedbutton:draw(normalTouchState,buttonCanvas)
 			invalidate()
 			return true
@@ -488,15 +513,16 @@ view:setOnTouchListener(normalTouch_cb)
 RectFClass = luajava.bindClass("android.graphics.RectF")
 function updateSelected(b,sel)
 	local p = b.paintOpts
-	clearButton(b)
-	local redrawScreen = false
+	--clearButton(b)
+	--local redrawScreen = false
 	if(sel) then
-		p:setShadowLayer(1,0,0,Color.WHITE)
+		--p:setShadowLayer(1,0,0,Color.WHITE)
 		b.selected = true
-		b:draw(0,buttonCanvas)
+		b:draw(1,buttonCanvas)
 	else
-		p:setShadowLayer(0,0,0,Color.WHITE)
+		--p:setShadowLayer(0,0,0,Color.WHITE)
 		b.selected = false
+		b:draw(0,buttonCanvas)
 	end
 	
 	
@@ -537,12 +563,12 @@ function checkIntersects()
 				if(RectFClass:intersects(dragRect,rect) or dragRect:contains(rect)) then
 				if(b.selected == false) then
 					updateSelected(b,true)
-					anySelected = true
+					--anySelected = true
 				end
 			else
 				if(b.selected == true) then
 					updateSelected(b,false)
-					redrawscreen = true
+					--redrawscreen = true
 				end
 			end
 		end
@@ -551,12 +577,12 @@ function checkIntersects()
 			if(dragRect:contains(rect)) then
 				if(b.selected == false) then
 					updateSelected(b,true)
-					anySelected = true
+					--anySelected = true
 				end
 			else
 				if(b.selected == true) then
 					updateSelected(b,false)
-					redrawscreen = true
+					--redrawscreen = true
 				end
 			end	
 		end
@@ -564,9 +590,9 @@ function checkIntersects()
 		
 	end 
 	
-	if(redrawscreen) then
-		drawButtons()
-	end
+	--if(redrawscreen) then
+	--	drawButtons()
+	--end
 end
 
 
@@ -603,22 +629,23 @@ managerCanvas = nil
 
 cpaint = luajava.new(PaintClass)
 cpaint:setARGB(0x00,0x00,0x00,0x00)
-cpaint:setXfermode(xferMode)
+cpaint:setXfermode(xferModeClear)
 
 drawManagerLayer = true
 function enterManagerMode()
+	gridwidth = defaults.width + 25
 	if(drawManagerLayer) then
 		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
 		debugPrint("drawingManagerLayer")
 		drawManagerGrid()
 	end
-	
+
 	--set up and add the back/options widget.
 	backWidget = makeBackWidget()
 	local parent = view:getParent()
 	parent:addView(backWidget)
-	
+	touchedbutton = nil
 		--paint:setShadowLayer(1,0,0,Color.WHITE)
 	view:setOnTouchListener(managerTouch_cb)
 	manage = true
@@ -1172,7 +1199,7 @@ end
 function clearButton(b)
 	local canvas = buttonCanvas
 	local p = b.paintOpts
-	p:setXfermode(xferMode)
+	p:setXfermode(xferModeClear)
 	canvas:drawRoundRect(b.rect,5,5,b.paintOpts)
 	p:setXfermode(nil)
 	--c:drawBitmap(bmp,b.x,b.y,nil)
@@ -1185,6 +1212,9 @@ end
 touchedbutton = {}
 touchedindex = 0
 MotionEvent = luajava.bindClass("android.view.MotionEvent")
+ACTION_MOVE = MotionEvent.ACTION_MOVE
+ACTION_DOWN = MotionEvent.ACTION_DOWN
+ACTION_UP = MotionEvent.ACTION_UP
 prevevent = 0;
 
 dragmoving = false
@@ -1434,6 +1464,7 @@ function OnSizeChanged(w,h,oldw,oldh)
 	
 	
 	if(buttonLayer) then
+		debugPrint("freeing button layer")
 		buttonCanvas = nil
 		buttonLayer:recycle()
 		buttonLayer = nil
@@ -1446,6 +1477,8 @@ function OnSizeChanged(w,h,oldw,oldh)
 		selectedLayer = nil
 		
 	end
+	
+	collectgarbage("collect")
 	
 	buttonLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 	buttonCanvas = luajava.newInstance("android.graphics.Canvas",buttonLayer)
@@ -1500,7 +1533,7 @@ function OnDestroy()
 	debugPrint("freeing button layer")
 	if(buttonLayer ~= nil) then
 		debugPrint("recycle")
-		--buttonLayer:recycle()
+		buttonLayer:recycle()
 		debugPrint("layer to nil")
 		buttonLayer = nil
 		debugPrint("canvas to nil")
@@ -1564,7 +1597,7 @@ function editorDone.onClick(v)
 	heighttmp = heightEdit:getText()
 	
 	height = tonumber(heighttmp:toString())
-	debugPrint("height read from editor"..height)
+	--debugPrint("height read from editor"..height)
 	widthtmp = widthEdit:getText()
 	width = tonumber(widthtmp:toString())
 	
@@ -1572,7 +1605,7 @@ function editorDone.onClick(v)
 		tmp = buttons[lastselectedindex]
 
 		
-		debugPrint("EDITING SINGLE BUTTON BEFORE BUTTON:"..tmp.data.height)
+		--debugPrint("EDITING SINGLE BUTTON BEFORE BUTTON:"..tmp.data.height)
 		--printTable("button",tmp)
 		
 		
@@ -1594,14 +1627,14 @@ function editorDone.onClick(v)
 		tmp.data.flipCommand = flipcmd
 		
 		tmp:updateRect()
-		debugPrint("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
+		--debugPrint("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
 		--printTable("edited",tmp)
 		
 	elseif(numediting > 1) then
 		for i,b in ipairs(buttons) do
 			if(b.selected == true) then
 				--do the settings update for relevent data
-				if(width ~= editorValues.width) then
+				if(width ~= nil and width ~= editorValues.width) then
 					b.data.width = width
 				end
 				
@@ -1700,7 +1733,7 @@ function showEditorDialog()
 		editorValues.flipColor = button.data.flipColor
 		editorValues.flipLabelColor = button.data.flipLabelColor
 		editorValues.height = button.data.height
-		
+		editorValues.switchTo = button.data.switchTo
 		editorValues.width = button.data.width
 		
 		editorValues.labelSize = button.data.labelSize
@@ -2013,7 +2046,7 @@ function showEditorDialog()
 	if(parent ~= nil) then
 		parent:removeView(scrollerpage)
 	end
-	buttonNameRow:setVisibility(View.VISIBLE)
+	--buttonNameRow:setVisibility(View.VISIBLE)
 	controlRowTwo:setVisibility(View.VISIBLE)
 	labelRowFour:setVisibility(View.VISIBLE)
 	
@@ -2117,7 +2150,12 @@ function makeAdvancedPage()
 		buttonNameRow:setLayoutParams(fillparams)
 		advancedPage:addView(buttonNameRow)
 	end
-	buttonNameRow:setVisibility(View.VISIBLE)
+	if(numediting > 1) then
+		buttonNameRow:setVisibility(View.GONE)
+	else
+		buttonNameRow:setVisibility(View.VISIBLE)
+	end
+	
 	
 	buttonNameLabelParams = fnew(LinearLayoutParams,80,WRAP_CONTENT)
 	if(buttonNameLabel == nil) then
@@ -2140,12 +2178,57 @@ function makeAdvancedPage()
 		buttonNameRow:addView(buttonNameEdit)
 	end
 	if(numediting > 1) then
+		buttonNameEdit:setText("")
 		buttonNameEdit:setEnabled(false)
 	else
 		if(editorValues.name ~= nil) then
+			buttonNameEdit:setEnabled(true)
 			buttonNameEdit:setText(editorValues.name)
 		end
 	end
+	
+	if(buttonTargetSetRow == nil) then
+		buttonTargetSetRow = fnew(LinearLayout,context)
+		buttonTargetSetRow:setLayoutParams(fillparams)
+		advancedPage:addView(buttonTargetSetRow)
+	end
+	if(numediting > 1) then
+		buttonTargetSetRow:setVisibility(View.GONE)
+	else
+		buttonTargetSetRow:setVisibility(View.VISIBLE)
+	end
+	
+	buttonTargetSetLabelParams = fnew(LinearLayoutParams,80,WRAP_CONTENT)
+	if(buttonTargetSetLabel == nil) then
+		buttonTargetSetLabel = fnew(TextView,context)
+		
+		buttonTargetSetLabel:setLayoutParams(buttonNameLabelParams)
+		buttonTargetSetLabel:setText("Target Set:")
+		buttonTargetSetLabel:setTextSize(24)
+		buttonTargetSetLabel:setGravity(Gravity.RIGHT)
+		buttonTargetSetRow:addView(buttonTargetSetLabel)
+	end
+	
+	buttonTargetSetEditParams = fnew(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+		
+	if(buttonTargetSetEdit == nil) then
+		buttonTargetSetEdit = fnew(EditText,context)	
+		buttonTargetSetEdit:setTextSize(18)
+		buttonTargetSetEdit:setLines(1)
+		buttonTargetSetEdit:setLayoutParams(buttonTargetSetEditParams)
+		buttonTargetSetRow:addView(buttonTargetSetEdit)
+	end
+	if(numediting > 1) then
+		buttonTargetSetEdit:setEnabled(false)
+		buttonTargetSetEdit:setText("")
+		
+	else
+		if(editorValues.switchTo ~= nil) then
+			buttonTargetSetEdit:setEnabled(true)
+			buttonTargetSetEdit:setText(editorValues.switchTo)
+		end
+	end
+	
 	
 	colortopLabelParams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
 		
@@ -2258,13 +2341,13 @@ function makeAdvancedPage()
 		labelRowOne:addView(pressedLabel)
 	end
 	
-	if(flipLabel == nil) then
-		flipLabel = fnew(TextView,context)
-		flipLabel:setLayoutParams(fillparams)
-		flipLabel:setGravity(GRAVITY_CENTER)
-		flipLabel:setText("Flipped")
-		flipLabel:setTextSize(15)
-		labelRowOne:addView(flipLabel)
+	if(flippedLabel == nil) then
+		flippedLabel = fnew(TextView,context)
+		flippedLabel:setLayoutParams(fillparams)
+		flippedLabel:setGravity(GRAVITY_CENTER)
+		flippedLabel:setText("Flipped")
+		flippedLabel:setTextSize(15)
+		labelRowOne:addView(flippedLabel)
 	end
 	
 	if(colorRowTwo == nil) then
@@ -2395,7 +2478,7 @@ function makeAdvancedPage()
 		controlHolderA:addView(labelSizeEdit)
 	end
 	if(editorValues.labelSize == "MULTI") then
-		
+		labelSizeEdit:setText("")
 	else
 		labelSizeEdit:setText(tostring(editorValues.labelSize))
 	end
@@ -2414,7 +2497,7 @@ function makeAdvancedPage()
 		controlHolderB:addView(widthEdit)
 	end
 	if(editorValues.width == "MULTI") then
-		
+		widthEdit:setText("")
 	else
 		widthEdit:setText(tostring(editorValues.width))
 	end
@@ -2433,7 +2516,7 @@ function makeAdvancedPage()
 		controlHolderC:addView(heightEdit)
 	end
 	if(editorValues.height == "MULTI") then
-		
+		heightEdit:setText("")
 	else
 		heightEdit:setText(tostring(editorValues.height))
 	end
@@ -2494,6 +2577,7 @@ function makeAdvancedPage()
 	end
 	if(editorValues.x == "MULTI") then
 		debugPrint("setting x string:MULTI")
+		xcoordEdit:setText("")
 	else
 		debugPrint("setting x string:"..editorValues.x)
 		xcoordEdit:setText(tostring(editorValues.x))
@@ -2513,7 +2597,7 @@ function makeAdvancedPage()
 		controlHolderE:addView(ycoordEdit)
 	end
 	if(editorValues.y == "MULTI") then
-		
+		ycoordEdit:setText("")
 	else
 		ycoordEdit:setText(tostring(editorValues.y))
 	end
@@ -2556,7 +2640,7 @@ function makeAdvancedPage()
 		labelRowFour:addView(ycoordLabel)
 	end
 	
-	if(invisibleControlLabel == nil) then
+	if(invisControlLabel == nil) then
 		invisControlLabel = fnew(TextView,context)
 		invisControlLabel:setLayoutParams(fillparams)
 		invisControlLabel:setGravity(GRAVITY_CENTER)
@@ -2843,7 +2927,7 @@ function setSettingsButtonListener.onClick(v)
 	editorValues.flipColor = defaults.flipColor
 	editorValues.labelColor = defaults.labelColor
 	editorValues.flipLabelColor = defaults.flipLabelColor
-	
+	editorValues.switchTo = ""
 	editorValues.height = defaults.height
 	editorValues.width = defaults.width
 	editorValues.labelSize = defaults.labelSize
@@ -2872,7 +2956,7 @@ function setSettingsButtonListener.onClick(v)
 	
 	titletext:setLayoutParams(titletextParams)
 	titletext:setTextSize(36)
-	titletext:setText("TITLE BAR")
+	titletext:setText("BUTTON EDITOR")
 	titletext:setGravity(GRAVITY_CENTER)
 	titletext:setId(1)
 	top:addView(titletext)

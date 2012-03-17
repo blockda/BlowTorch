@@ -56,6 +56,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,6 +74,7 @@ import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -91,6 +93,7 @@ import com.happygoatstudios.bt.button.SlickButton;
 import com.happygoatstudios.bt.button.SlickButtonData;
 import com.happygoatstudios.bt.button.manager.ButtonManagerDialog;
 import com.happygoatstudios.bt.service.*;
+import com.happygoatstudios.bt.service.plugin.settings.BaseOption;
 import com.happygoatstudios.bt.service.plugin.settings.OptionsDialog;
 import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.settings.ColorSetSettings;
@@ -163,6 +166,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_MARKWINDOWSDIRTY = 894;
 	protected static final int MESSAGE_MARKSETTINGSDIRTY = 895;
 	//private TextTree tree = new TextTree();
+	protected static final int MESSAGE_SETKEEPLAST = 896;
 
 	protected boolean settingsDialogRun = false;
 	
@@ -176,7 +180,7 @@ public class MainWindow extends Activity {
 	private boolean isFullScreen = false;
 	
 	private boolean windowShowing = false;
-	
+	private RelativeLayout mRootView = null;
 	String host;
 	int port;
 	
@@ -274,7 +278,7 @@ public class MainWindow extends Activity {
 				serviceConnected = true;
 			}
 			//finishInitializiation();
-			
+			//loadSettings();
 		}
 
 		public void onServiceDisconnected(ComponentName arg0) {
@@ -384,8 +388,8 @@ public class MainWindow extends Activity {
 				if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					
 					String cmd = history.getNext();
-					try {
-						if(service.isKeepLast()) {
+					//try {
+						if(isKeepLast) {
 							if(historyWidgetKept) {
 								String tmp = history.getNext();
 								mInputBox.setText(tmp);
@@ -400,9 +404,9 @@ public class MainWindow extends Activity {
 							mInputBox.setText(cmd);
 							mInputBox.setSelection(cmd.length());
 						}
-					} catch (RemoteException e) {
-						throw new RuntimeException(e);
-					}
+					//} catch (RemoteException e) {
+					//	throw new RuntimeException(e);
+					//}
 					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getPrev();
@@ -477,6 +481,9 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_SETKEEPLAST:
+					MainWindow.this.setKeepLast((msg.arg1 == 1) ? true : false);
+					break;
 				case MESSAGE_MARKSETTINGSDIRTY:
 					MainWindow.this.markSettingsDirty();
 					break;
@@ -532,6 +539,8 @@ public class MainWindow extends Activity {
 					if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
 					}
+					
+					loadSettings();
 					MainWindow.this.initiailizeWindows();
 					
 					try {
@@ -628,7 +637,7 @@ public class MainWindow extends Activity {
 					break;
 				case MESSAGE_DODISCONNECT:
 					//Log.e("WINDOW","SHOW MESSAGE");
-					DoDisconnectMessage();
+					DoDisconnectMessage((String)msg.obj);
 					break;
 				case MESSAGE_KEYBOARD:
 					boolean add = (msg.arg2 > 0) ? true : false;
@@ -845,17 +854,17 @@ public class MainWindow extends Activity {
 				case MESSAGE_RESETINPUTWINDOW:
 					//Log.e("WINDOW","Attempting to reset input bar.");
 					
-					try {
-						if(service.isKeepLast()) {
+					//try {
+						if(isKeepLast) {
 							mInputBox.setSelection(0, mInputBox.getText().length());
 							historyWidgetKept = true;
 						} else {
 							mInputBox.clearComposingText();
 							mInputBox.setText("");
 						}
-					} catch (RemoteException e1) {
-						throw new RuntimeException(e1);
-					}
+					//} catch (RemoteException e1) {
+					//	throw new RuntimeException(e1);
+					//}
 					break;
 				case MESSAGE_RAWINC:
 					
@@ -926,8 +935,8 @@ public class MainWindow extends Activity {
 						public void onClick(View arg0) {
 							//EditText input_box = (EditText)findViewById(R.id.textinput);
 							String cmd = history.getNext();
-							try {
-								if(service.isKeepLast()) {
+							//try {
+								if(isKeepLast) {
 									if(historyWidgetKept) {
 										String tmp = history.getNext();
 										mInputBox.setText(tmp);
@@ -941,9 +950,9 @@ public class MainWindow extends Activity {
 									mInputBox.setText(cmd);
 									mInputBox.setSelection(cmd.length());
 								}
-							} catch (RemoteException e) {
-								throw new RuntimeException(e);
-							}
+							//} catch (RemoteException e) {
+							//	throw new RuntimeException(e);
+							//}
 						}
 					});
 					
@@ -1122,8 +1131,40 @@ public class MainWindow extends Activity {
 		};
 		
 		mInputBox.setListener(mInputBarAnimationListener);
+		mRootView = (RelativeLayout)this.findViewById(R.id.window_container);
+		
+		if(supportsActionBar()) {
+			Button b = new Button(this);
+			b.setBackgroundColor(0xFFFF0000);
+			LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
+			b.setLayoutParams(tmp);
+			b.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					Log.e("lsfs","FLSDF");
+				}
+			});
+			b.setOnTouchListener(new View.OnTouchListener() {
+				
+				@Override
+				public boolean onTouch(View v, MotionEvent event) {
+					// TODO Auto-generated method stub
+					Log.e("lsfd","sldjfs");
+					
+					return mRootView.dispatchTouchEvent(event);
+				}
+			});
+			this.getActionBar().setCustomView(b);
+			this.getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+		}
+		
 	}
 	
+	protected void setKeepLast(boolean b) {
+		this.isKeepLast = b;
+	}
+
 	protected void markSettingsDirty() {
 		// TODO Auto-generated method stub
 		
@@ -1175,15 +1216,15 @@ public class MainWindow extends Activity {
 		return true;
 	}*/
 	
-	private void DoDisconnectMessage() {
+	private void DoDisconnectMessage(final String str) {
 		AlertDialog.Builder err = new AlertDialog.Builder(this);
 		err.setTitle("Disconnected");
-		err.setMessage("The connection has closed. Reconnect?");
+		err.setMessage("Connection to "+str+ " has closed. Reconnect?");
 		err.setPositiveButton("Reconnect", new DialogInterface.OnClickListener() {
 			
 			public void onClick(DialogInterface dialog, int which) {
 				try {
-					service.reconnect();
+					service.reconnect(str);
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
@@ -1193,9 +1234,21 @@ public class MainWindow extends Activity {
 		err.setNegativeButton("Close", new DialogInterface.OnClickListener() {
 			
 			public void onClick(DialogInterface dialog, int which) {
-				cleanExit();
-				dialog.dismiss();
-				MainWindow.this.finish();
+				try {
+					if(service.getConnections().size() > 1) {
+						service.closeConnection(str);
+						//switch to the next one. service will do this for us.
+						
+					} else {
+					
+						cleanExit();
+						dialog.dismiss();
+						MainWindow.this.finish();
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 		
@@ -1241,6 +1294,16 @@ public class MainWindow extends Activity {
 					hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 				}
 			}
+			
+//			Button b = new Button(this);
+//			b.setText("YEA YAAAA");
+//			LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT);
+//			b.setLayoutParams(tmp);
+//			
+//			int count = this.getActionBar().getTabCount();
+//			for(int i = 0;i<count;i++) {
+//				Log.e("menu tab","tab tab:"+this.getActionBar().getTabAt(i).getText());
+//			}
 			
 			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -1326,7 +1389,7 @@ public class MainWindow extends Activity {
 			break;
 		case 901:
 			try {
-				service.reconnect();
+				service.reconnect(service.getConnectedTo());
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
@@ -1799,7 +1862,13 @@ public class MainWindow extends Activity {
 	
 	public void onPause() {
 		//Log.e("WINDOW","onDestroy()");
-		windowShowing = false;
+		//windowShowing = false;
+		try {
+			service.windowShowing(false);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		//screen2.pauseDrawing();
 		//screen2.clearAllText();
 		isResumed = false;
@@ -1808,7 +1877,7 @@ public class MainWindow extends Activity {
 	
 	public void onResume() {
 		
-		windowShowing = true;
+		//windowShowing = true;
 		
 		if(!isBound) {
 			/*if("com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE".equals(this.getIntent().getAction())) {
@@ -1834,7 +1903,12 @@ public class MainWindow extends Activity {
 
 		} else {
 			//request buffer.
-			
+			try {
+				service.windowShowing(true);
+			} catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			Intent i = this.getIntent();
 			Log.e("LOG","RESUMING WINDOW WITH INTENT: display="+i.getStringExtra("DISPLAY")+" host="+i.getStringExtra("HOST")+" port="+i.getStringExtra("PORT"));
 			String display = i.getStringExtra("DISPLAY");
@@ -2050,8 +2124,11 @@ public class MainWindow extends Activity {
 			//screen2.setLinkColor(service.getHyperLinkColor());
 			
 			//screen2.setLinksEnabled(service.isHyperLinkEnabled());
-			
-			if(service.isFullScreen()) {
+			//if(!service.isConnected()) { return; }
+			SettingsGroup group = service.getSettings();
+			if(group == null) return; //haven't fully loaded yet.
+			boolean fullscreen = (Boolean)((BaseOption)group.findOptionByKey("fullscreen")).getValue();
+			if(fullscreen) {
 			    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 			} else {
@@ -2060,10 +2137,13 @@ public class MainWindow extends Activity {
 			}
 
 			MainWindow.this.findViewById(R.id.window_container).requestLayout();
-			isFullScreen = service.isFullScreen();
+			isFullScreen = fullscreen;
 			//BetterEditText input_box = (BetterEditText)findViewById(R.id.textinput);
 			mInputBox.setBackSpaceBugFix(true);
-			mInputBox.setKeepScreenOn(service.isKeepScreenOn());
+			
+			boolean keep_screen_on = (Boolean)((BaseOption)group.findOptionByKey("screen_on")).getValue();
+			
+			mInputBox.setKeepScreenOn(keep_screen_on);
 		
 			
 			//screen2.setEncoding(service.getEncoding());
@@ -2071,7 +2151,8 @@ public class MainWindow extends Activity {
 			//screen2.setCullExtraneous(service.isRemoveExtraColor());
 			
 			//int or = MainWindow.this.getRequestedOrientation();
-			switch(service.getOrientation()) {
+			int orientation = (Integer)((BaseOption)group.findOptionByKey("orientation")).getValue();
+			switch(orientation) {
 			case 0:
 				MainWindow.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
 				break;
@@ -2092,7 +2173,7 @@ public class MainWindow extends Activity {
 			//screen2.setMaxLines(service.getMaxLines());
 			
 			//get the font name 
-			String tmpname = service.getFontName();
+			//String tmpname = service.getFontName();
 			//Typeface font = loadFontFromName(tmpname);
 			
 			//screen2.setFont(loadFontFromName(tmpname));
@@ -2103,8 +2184,9 @@ public class MainWindow extends Activity {
 			//	screen2.reBreakBuffer();
 			//}
 			
+			boolean useExtractUI = (Boolean)((BaseOption)group.findOptionByKey("fullscreen_editor")).getValue();
 			
-			if(service.getUseExtractUI()) {
+			if(useExtractUI) {
 				
 				
 				int current = mInputBox.getImeOptions();
@@ -2132,28 +2214,32 @@ public class MainWindow extends Activity {
 			}
 			
 			
-			if(service.isKeepLast()) {
-				isKeepLast = true;
-			} else {
-				isKeepLast = false;
-			}
+			isKeepLast = (Boolean)((BaseOption)group.findOptionByKey("keep_last")).getValue();
+			
+			//if(service.isKeepLast()) {
+			//	isKeepLast = true;
+			//} else {
+			//	isKeepLast = false;
+			//}
 			
 			//handle auto launch
-			autoLaunch = service.isAutoLaunchEditor();
+			///autoLaunch = service.isAutoLaunchEditor();
 			//handle disable color
-			if(service.isDisableColor()) {
+			//if(service.isDisableColor()) {
 				//set the slick view debug mode to 3.
 				//screen2.setColorDebugMode(3);
-			} else {
+			//} else {
 				//screen2.setColorDebugMode(0);
-			}
-			//handle overridehf.
-			overrideHF = service.HapticFeedbackMode();
+			//}
+			///handle overridehf.
+			//overrideHF = service.HapticFeedbackMode();
 			
-			overrideHFPress = service.getHFOnPress();
-			overrideHFFlip = service.getHFOnFlip();
+			//overrideHFPress = service.getHFOnPress();
+			//overrideHFFlip = service.getHFOnFlip();
 			
-			if(service.isBackSpaceBugFix()) {
+			boolean compatibility = (Boolean)((BaseOption)group.findOptionByKey("compatibility_mode")).getValue();
+			
+			if(compatibility) {
 				//Log.e("WINDOW","APPLYING BACK SPACE BUG FIX");
 				//BetterEditText tmp_bar = (BetterEditText)input_box;
 				mInputBox.setBackSpaceBugFix(true);
@@ -2173,7 +2259,7 @@ public class MainWindow extends Activity {
 			throw new RuntimeException(e1);
 		}
 		
-		initiailizeWindows();
+		//initiailizeWindows();
 		//int i = R.id.textinput;
 	}
 	
@@ -2331,8 +2417,8 @@ public class MainWindow extends Activity {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_KEYBOARD,p,a,txt));
 		}
 
-		public void doDisconnectNotice() throws RemoteException {
-			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+		public void doDisconnectNotice(String display) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_DODISCONNECT, display));
 			
 		}
 
@@ -2434,6 +2520,11 @@ public class MainWindow extends Activity {
 		@Override
 		public void markSettingsDirty() throws RemoteException {
 			myhandler.sendEmptyMessage(MESSAGE_MARKSETTINGSDIRTY);
+		}
+
+		@Override
+		public void setKeepLast(boolean keep) throws RemoteException {
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_SETKEEPLAST, (keep==true) ? 1 : 0, 0));
 		}
 	};
 	
