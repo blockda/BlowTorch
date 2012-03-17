@@ -117,6 +117,7 @@ public class StellarService extends Service {
 	protected static final int MESSAGE_SWITCH = 2;
 	protected static final int MESSAGE_RELOADSETTINGS = 3;
 
+	private boolean windowShowing = true;
 	//public static final String ALIAS_PREFS = "ALIAS_SETTINGS";
 	//TreeMap<String, String> aliases = new TreeMap<String, String>();
 	//RemoteCallbackList<IStellarServiceCallback_BAK> callbacks = new RemoteCallbackList<IStellarServiceCallback_BAK>();
@@ -834,12 +835,13 @@ public class StellarService extends Service {
 		doShutdown();
 	}
 	
-	private void DoDisconnect(String message) {
+	public void DoDisconnect(Connection c) {
 		//attempt to display the disconnection dialog.
-		/*final int N = callbacks.beginBroadcast();
+		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			try {
-				callbacks.getBroadcastItem(i).doDisconnectNotice();
+				
+				callbacks.getBroadcastItem(i).doDisconnectNotice(c.display);
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}
@@ -849,9 +851,9 @@ public class StellarService extends Service {
 		
 		if(N < 1) {
 			//no listeneres, just shutdown and put up a new notification.
-			ShowDisconnectedNotification(message);
+			ShowDisconnectedNotification(c);
 			//doShutdown();
-		}*/
+		}
 		
 	}
 	
@@ -1506,18 +1508,18 @@ public class StellarService extends Service {
 //	}
 //	
 //	
-//	public void DispatchDialog(String message) {
-//		final int N = callbacks.beginBroadcast();
-//		for(int i = 0;i<N;i++) {
-//			try {
-//				callbacks.getBroadcastItem(i).showDialog(message);
-//			} catch (RemoteException e) {
-//				throw new RuntimeException(e);
-//			}
-//			//notify listeners that data can be read
-//		}
-//		callbacks.finishBroadcast();
-//	}
+	public void DispatchDialog(String message) {
+		final int N = callbacks.beginBroadcast();
+		for(int i = 0;i<N;i++) {
+			try {
+				callbacks.getBroadcastItem(i).showDialog(message);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			}
+			//notify listeners that data can be read
+		}
+		callbacks.finishBroadcast();
+	}
 	/*
 	StringBuffer dataToServer = new StringBuffer();
 	StringBuffer dataToWindow = new StringBuffer();
@@ -1865,7 +1867,7 @@ public class StellarService extends Service {
 //		}
 //		callbacks.finishBroadcast();
 		
-		return true;
+		return windowShowing;
 	}
 	
 	/*private void DoBreakAt(int pLines) {
@@ -2256,7 +2258,7 @@ public class StellarService extends Service {
 		//initPlugins();
 	}
 	
-	private void ShowDisconnectedNotification(String message) {
+	private void ShowDisconnectedNotification(Connection c) {
 		
 		
 		//mNM.cancel(5545);
@@ -2269,6 +2271,7 @@ public class StellarService extends Service {
 		CharSequence contentTitle = brandName + " Disconnected";
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = null;
+		String message = "Click to reconnect";
 		if(message != null && !message.equals("")) {
 			contentText = message;
 		} else {
@@ -2321,16 +2324,24 @@ public class StellarService extends Service {
 		this.stopSelf();
 	}
 	
-	private void showNotification() {
+	public void showNotification() {
 		
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
 		
-		Notification note = new Notification(resId,"BlowTorch Initialized",System.currentTimeMillis());
+		Notification note = new Notification(resId,"BlowTorch Connected",System.currentTimeMillis());
 		Context context = getApplicationContext();
+		CharSequence contentTitle = null;
+		CharSequence contentText = null;
+		if(connections.size() > 1) {
+			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+			contentText = connections.size() + " connections";
+		} else {
+			Connection c = connections.get(connectionClutch);
+			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+			contentText = "Connected: ("+ c.host +":"+ c.port + ")";
+		}
 		
-		CharSequence contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
-		//CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
 		Intent notificationIntent = null;
 		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
 		notificationIntent = new Intent(windowAction);
@@ -2355,11 +2366,15 @@ public class StellarService extends Service {
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
-		//notificationIntent.putExtra("DISPLAY", display);
+		
+		Connection c = connections.get(connectionClutch);
+		notificationIntent.putExtra("DISPLAY", c.display);
+		notificationIntent.putExtra("HOST", c.host);
+		notificationIntent.putExtra("PORT", Integer.toString(c.port));
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = resId;
 		note.flags = Notification.FLAG_ONGOING_EVENT;
 		this.startForeground(5545, note);
@@ -2627,8 +2642,7 @@ public class StellarService extends Service {
 		}
 
 		public void saveSettings() throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).saveMainSettings();
 		}
 
 		public void setNotificationText(CharSequence seq)
@@ -2934,7 +2948,8 @@ public class StellarService extends Service {
 		}
 
 		public boolean isKeepLast() throws RemoteException {
-			return the_settings.isKeepLast();
+			//return the_settings.isKeepLast();
+			return connections.get(connectionClutch).isKeepLast();
 		}
 
 		public boolean isBackSpaceBugFix() throws RemoteException {
@@ -3001,8 +3016,9 @@ public class StellarService extends Service {
 			c.processor.setDisplayDimensions(rows, cols);
 		}
 
-		public void reconnect() throws RemoteException {
-			connections.get(connectionClutch).doReconnect();
+		public void reconnect(String str) throws RemoteException {
+			if(str == null || str.equals("")) str = connectionClutch;
+			connections.get(str).doReconnect();
 		}
 
 		public Map getTimers() throws RemoteException {
@@ -3123,11 +3139,12 @@ public class StellarService extends Service {
 		}
 
 		public boolean isFullScreen() throws RemoteException {
-			return the_settings.isFullScreen();
+			return connections.get(connectionClutch).isFullScren();
 		}
 
 		public void setFullScreen(boolean use) throws RemoteException {
 			the_settings.setFullScreen(use);
+			
 		}
 
 		public boolean isRoundButtons() throws RemoteException {
@@ -3433,6 +3450,10 @@ public class StellarService extends Service {
 
 		@Override
 		public SettingsGroup getSettings() throws RemoteException {
+			if(connections.size() == 0) { return null; }
+			Log.e("sf","getting settings" + connections.size() + " clutch:" + connectionClutch);
+			SettingsGroup sg = connections.get(connectionClutch).getSettings();
+			if(sg == null) { Log.e("fsds","settings are null."); };
 			return connections.get(connectionClutch).getSettings();
 		}
 
@@ -3495,6 +3516,22 @@ public class StellarService extends Service {
 				int amount) throws RemoteException {
 			connections.get(connectionClutch).updateWindowBufferMaxValue(plugin,window,amount);
 		}
+		
+		@Override
+		public void closeConnection(String display) {
+			Connection c = connections.get(display);
+			c.killNetThreads();
+			connections.remove(display);
+			//switch to the next active connection.
+			//connectionClutch = connections.
+			showNotification();
+		}
+		
+		@Override
+		public void windowShowing(boolean show) {
+			Log.e("Log","window showing: " + show);
+			windowShowing = show;
+		}
 
 	};
 
@@ -3515,21 +3552,21 @@ public class StellarService extends Service {
 	}
 
 		public boolean isWindowConnected() {
-			boolean showing = false;
-			int N = callbacks.beginBroadcast();
-			for(int i =0;i<N;i++) {
-				try {
-					showing = callbacks.getBroadcastItem(i).isWindowShowing();
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if(showing) {
-					break;
-				}
-			}
-			callbacks.finishBroadcast();
-			return showing;
+//			boolean showing = false;
+//			int N = callbacks.beginBroadcast();
+//			for(int i =0;i<N;i++) {
+//				try {
+//					showing = callbacks.getBroadcastItem(i).isWindowShowing();
+//				} catch (RemoteException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				if(showing) {
+//					break;
+//				}
+//			}
+//			callbacks.finishBroadcast();
+			return windowShowing;
 		}
 
 		public void doClearAllButtons() {
@@ -3572,11 +3609,11 @@ public class StellarService extends Service {
 			callbacks.finishBroadcast();
 		}
 
-		public void doExecuteFullscreen() {
+		public void doExecuteFullscreen(boolean set) {
 			final int N = callbacks.beginBroadcast();
 			for(int i = 0;i<N;i++) {
 				try {
-					callbacks.getBroadcastItem(i).setScreenMode(!the_settings.isFullScreen());
+					callbacks.getBroadcastItem(i).setScreenMode(set);
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
@@ -3622,6 +3659,20 @@ public class StellarService extends Service {
 					
 				}
 			}
+		}
+
+		public void dispatchKeepLast(Boolean value) {
+			final int N = callbacks.beginBroadcast();
+			for(int i=0;i<N;i++) {
+				try{
+					callbacks.getBroadcastItem(i).setKeepLast((boolean)value);
+				} catch(RemoteException e) {
+					
+				}
+			}
+			
+			callbacks.finishBroadcast();
+			
 		}
 
 }

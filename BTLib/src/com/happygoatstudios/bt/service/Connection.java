@@ -752,7 +752,7 @@ public class Connection implements SettingsChangedListener {
 	
 	public void buildTriggerSystem() {
 		//start with the global settings.
-		long start = System.currentTimeMillis();
+		//long start = System.currentTimeMillis();
 		sortedTriggerMap = new HashMap<Integer,TriggerData>();
 		triggerPluginMap = new HashMap<Integer,Plugin>();
 		int currentgroup = 1;
@@ -771,7 +771,7 @@ public class Connection implements SettingsChangedListener {
 					
 				} else {
 					if(t.isEnabled()) {
-						if(i == 0) {
+						if(!addseparator) {
 							triggerBuilder.append("(");
 							triggerBuilder.append(t.getPattern());
 							triggerBuilder.append(")");
@@ -831,8 +831,8 @@ public class Connection implements SettingsChangedListener {
 		//Log.e("MASSIVE",massiveTriggerString);
 		massiveMatcher = massivePattern.matcher("");
 		
-		long delta = System.currentTimeMillis() - start;
-		Log.e("TRIGGERS","TIMEPROFILE trigger system took " + delta + " millis to build.");
+		//long delta = System.currentTimeMillis() - start;
+		//Log.e("TRIGGERS","TIMEPROFILE trigger system took " + delta + " millis to build.");
 	}
 	
 	private HashMap<String,ArrayList<String>> linkMap = new HashMap<String,ArrayList<String>>();
@@ -950,6 +950,7 @@ public class Connection implements SettingsChangedListener {
 	
 	protected void DoDisconnect(Object object) {
 		//TODO: if window showing, show disconnection.
+		service.DoDisconnect(this);
 	}
 
 	protected void killNetThreads() {
@@ -1007,7 +1008,7 @@ public class Connection implements SettingsChangedListener {
 	HashMap<Integer,Plugin> triggerPluginMap = null;
 	HashMap<Integer,Integer> lineStartMap = new HashMap<Integer,Integer>();
 	private void dispatch(byte[] data) throws UnsupportedEncodingException {
-		long start = System.currentTimeMillis();
+		//long start = System.currentTimeMillis();
 		
 		
 		byte[] raw = processor.RawProcess(data);
@@ -1152,7 +1153,7 @@ public class Connection implements SettingsChangedListener {
 							}
 							for(TriggerResponder responder : t.getResponders()) {
 								try {
-									boolean ret = responder.doResponse(service.getApplicationContext(), working, lineNumber, it, l, tmpstart,tmpend,matched, t, display, StellarService.getNotificationId(), true, handler, captureMap, p.getLuaState(), t.getName(), the_settings.getEncoding());
+									boolean ret = responder.doResponse(service.getApplicationContext(), working, lineNumber, it, l, tmpstart,tmpend,matched, t, display, StellarService.getNotificationId(), service.isWindowConnected(), handler, captureMap, p.getLuaState(), t.getName(), the_settings.getEncoding());
 									if(ret == true) {
 										keepEvaluating = false;
 										rebuildTriggers = true;
@@ -1410,15 +1411,15 @@ public class Connection implements SettingsChangedListener {
 		//}
 		
 		
-		long now = System.currentTimeMillis();
-		Log.e("Connection","TIMEPROFILE trigger parsing took:" + Long.toString(now - start) + " millis.");
+		//long now = System.currentTimeMillis();
+		//Log.e("Connection","TIMEPROFILE trigger parsing took:" + Long.toString(now - start) + " millis.");
 		sendBytesToWindow(proc);
 		
 		
 	}
 	
 	protected void DispatchDialog(String str) {
-		//service.DispatchDialog(str);
+		service.DispatchDialog(str);
 	}
 
 	public void sendDataToWindow(String message) {
@@ -1437,7 +1438,7 @@ public class Connection implements SettingsChangedListener {
 			service.sendRawDataToWindow(data);
 		}*/
 		
-		long start = System.currentTimeMillis();
+		//long start = System.currentTimeMillis();
 		//synchronized(callbackSync) {
 		//int N = mWindowCallbacks.beginBroadcast();
 		
@@ -1459,8 +1460,8 @@ public class Connection implements SettingsChangedListener {
 		//mWindowCallbacks.finishBroadcast();
 		//}
 		
-		long now = System.currentTimeMillis();
-		Log.e("Connection","TIMEPROFILE sendBytesToWindow:" + Long.toString(now -start) + " millis.");
+		//long now = System.currentTimeMillis();
+		//Log.e("Connection","TIMEPROFILE sendBytesToWindow:" + Long.toString(now -start) + " millis.");
 		
 	}
 
@@ -1484,7 +1485,7 @@ public class Connection implements SettingsChangedListener {
 		//show notification somehow.
 		isConnected = true;
 		
-		
+		service.showNotification();
 	}
 	
 	/*private void loadConnectionData() {
@@ -1659,7 +1660,7 @@ public class Connection implements SettingsChangedListener {
 		d.visString = dataToWindow.toString();
 		//if(the_settings.isSemiIsNewLine()) {
 			if(d.visString.endsWith(";")) {
-				d.visString = d.visString.substring(0,d.visString.length()-1) + "\n";
+				d.visString = d.visString.substring(0,d.visString.length()-1);
 			}
 			if(!d.visString.endsWith(crlf)) {
 				d.visString = d.visString + crlf;
@@ -2089,11 +2090,13 @@ public class Connection implements SettingsChangedListener {
 			p.getSettings().getTriggers().remove(which);
 			p.sortTriggers();
 		}
+		buildTriggerSystem();
 	}
 
 	public void deleteTrigger(String which) {
 		the_settings.getSettings().getTriggers().remove(which);
 		the_settings.sortTriggers();
+		buildTriggerSystem();
 	}
 
 	public void setAliases(Map map) {
@@ -2325,6 +2328,7 @@ public class Connection implements SettingsChangedListener {
 
 	public SettingsGroup getSettings() {
 		// TODO Auto-generated method stub
+		if(the_settings == null) return new SettingsGroup();
 		return the_settings.getSettings().getOptions();
 	}
 	
@@ -2398,28 +2402,28 @@ public class Connection implements SettingsChangedListener {
 	}
 	
 	public void handleWindowSettingsChanged(String window,String key,String value) {
-		synchronized(callbackSync) {
-		int N = mWindowCallbacks.beginBroadcast();
+		//synchronized(callbackSync) {
+		//int N = mWindowCallbacks.beginBroadcast();
 		
-		for(int i=0;i<N;i++) {
-			IWindowCallback callback = mWindowCallbacks.getBroadcastItem(i);
+		//for(int i=0;i<N;i++) {
+			IWindowCallback callback = windowCallbackMap.get(window);
 			try{
-				if(callback.getName().equals(window)) {
+				//if(callback.getName().equals(window)) {
 					callback.updateSetting(key,value);
-				}
+				//}
 			} catch (RemoteException e) {
 				
 			}
-		}
+		//}
 		
-		mWindowCallbacks.finishBroadcast();
-		}
+		//mWindowCallbacks.finishBroadcast();
+		//}
 		
 	}
 
 	@Override
 	public void updateSetting(String key, String value) {
-		
+		if(the_settings == null) return; //this is for when the settings are first being loaded.
 		BaseOption o = (BaseOption)the_settings.getSettings().getOptions().findOptionByKey(key);
 		try {
 			KEYS tmp = KEYS.valueOf(key);
@@ -2435,12 +2439,14 @@ public class Connection implements SettingsChangedListener {
 			case screen_on:
 				break;
 			case fullscreen:
+				service.doExecuteFullscreen((Boolean)o.getValue());
 				break;
 			case fullscreen_editor:
 				break;
 			case use_suggestions:
 				break;
 			case keep_last:
+				this.doSetKeepLast((Boolean)o.getValue());
 				break;
 			case compatibility_mode:
 				break;
@@ -2468,6 +2474,10 @@ public class Connection implements SettingsChangedListener {
 		}
 	}
 	
+	private void doSetKeepLast(Boolean value) {
+		service.dispatchKeepLast(value);
+	}
+
 	private void doUpdateEncoding(String value) {
 		processor.setEncoding(value);
 		//this.encoding = value;
@@ -2479,11 +2489,11 @@ public class Connection implements SettingsChangedListener {
 			w.getBuffer().setEncoding(value);
 		}
 		
-		synchronized(callbackSync) {
-			int N = mWindowCallbacks.beginBroadcast();
+		//synchronized(callbackSync) {
+			//int N = mWindowCallbacks.beginBroadcast();
 			
-			for(int i=0;i<N;i++) {
-				IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
+			for(IWindowCallback w : windowCallbackMap.values()) {
+				//IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
 				try {
 					w.setEncoding(value);
 				} catch (RemoteException e) {
@@ -2492,8 +2502,8 @@ public class Connection implements SettingsChangedListener {
 				}
 			}
 			
-			mWindowCallbacks.finishBroadcast();
-		}
+			//mWindowCallbacks.finishBroadcast();
+		//}
 		
 		for(int i=0;i<plugins.size();i++) {
 			Plugin p = plugins.get(i);
@@ -2822,6 +2832,12 @@ public class Connection implements SettingsChangedListener {
 							L.setTable(-3);
 						}
 						
+						if(button.getTargetSet() != null && !button.getTargetSet().equals("")) {
+							L.pushString("switchTo");
+							L.pushString(button.getTargetSet());
+							L.setTable(-3);
+						}
+						
 						L.pushString("x");
 						L.pushNumber(button.getX());
 						L.setTable(-3);
@@ -2941,159 +2957,22 @@ public class Connection implements SettingsChangedListener {
 			pl.doBackgroundStartup();
 		}
 		
+		the_settings.buildAliases();
 		for(Plugin pl : plugins) {
 			pl.buildAliases();
 		}
 		
-		SettingsGroup sg = new SettingsGroup();
-		sg.setTitle("Program Settings");
-		sg.setListener(this);
-
-		EncodingOption enc = new EncodingOption();
-		enc.setTitle("System Encoding");
-		enc.setDescription("Specifies the encoding used to process incoming text.");
-		enc.setKey("encoding");
-		sg.addOption(enc);
-		
-		ListOption orientation = new ListOption();
-		orientation.setTitle("Orientation");
-		orientation.setDescription("Sets the layout mode for the application. Automatic will switch the layout when the device rotates.");
-		orientation.setKey("orientation");
-		orientation.setValue(new Integer(0));
-		orientation.addItem("Automatic");
-		orientation.addItem("Landscape");
-		orientation.addItem("Portrait");
-		sg.addOption(orientation);
-		
-		BooleanOption screen_on = new BooleanOption();
-		screen_on.setTitle("Keep Screen On?");
-		screen_on.setDescription("Keep the screen on while the window is active.");
-		screen_on.setKey("screen_on");
-		screen_on.setValue(true);
-		sg.addOption(screen_on);
-		
-		BooleanOption fullscreen = new BooleanOption();
-		fullscreen.setTitle("Use Fullscreen Window?");
-		fullscreen.setDescription("Hides the notification bar. This can be toggled by typing .togglefullscreen");
-		fullscreen.setKey("fullscreen");
-		fullscreen.setValue(true);
-		sg.addOption(fullscreen);
-
-		//SettingsGroup window = token.getSettings();
 		mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
-		sg.addOption(mWindows.get(0).getSettings());
+		the_settings.getSettings().getOptions().addOptionAt(mWindows.get(0).getSettings(),4);
 		
-		SettingsGroup input = new SettingsGroup();
-		input.setTitle("Input");
-		input.setDescription("Options that deal with the input box and editors.");
-		
-		BooleanOption fullscreen_editor = new BooleanOption();
-		fullscreen_editor.setTitle("Fullscreen Editor?");
-		fullscreen_editor.setDescription("Show the full screen editor when the input bar is clicked.");
-		fullscreen_editor.setKey("fullscreen_editor");
-		fullscreen_editor.setValue(false);
-		input.addOption(fullscreen_editor);
-		
-		BooleanOption use_suggestions = new BooleanOption();
-		use_suggestions.setTitle("Use Suggestions?");
-		use_suggestions.setDescription("Attempt suggestions if the full screen editor is not used.");
-		use_suggestions.setKey("use_suggestions");
-		use_suggestions.setValue(false);
-		input.addOption(use_suggestions);
-		
-		BooleanOption keep_last = new BooleanOption();
-		keep_last.setTitle("Keep Last Entered?");
-		keep_last.setDescription("Keeps the last text entered in the window and highights after sending.");
-		keep_last.setKey("keep_last");
-		keep_last.setValue(false);
-		input.addOption(keep_last);
-		
-		BooleanOption compatilibility_mode = new BooleanOption();
-		compatilibility_mode.setTitle("Enable Compatibility Mode?");
-		compatilibility_mode.setDescription("Enable this if you have problems with bascpace not workin in the non-full screen editor.");
-		compatilibility_mode.setKey("compatibility_mode");
-		compatilibility_mode.setValue(false);
-		input.addOption(compatilibility_mode);
-		
-		sg.addOption(input);
+		//the_settings.getSettings().setOptions(sg);
+	}
 
-		
-		
-		SettingsGroup servOptions = new SettingsGroup();
-		servOptions.setTitle("Service");
-		servOptions.setDescription("Options for the background service and data processing.");
-		
-		BooleanOption local_echo = new BooleanOption();
-		local_echo.setTitle("Local Echo?");
-		local_echo.setDescription("Will the service echo data sent to the server?");
-		local_echo.setKey("local_echo");
-		local_echo.setValue(true);
-		servOptions.addOption(local_echo);
-		
-		BooleanOption process_system_commands = new BooleanOption();
-		process_system_commands.setTitle("Process System Commands?");
-		process_system_commands.setDescription("Perform system functions for input beginning with the specified system command marker.");
-		process_system_commands.setKey("process_system_commands");
-		process_system_commands.setValue(true);
-		servOptions.addOption(process_system_commands);
-		
-		BooleanOption echo_alias_updates = new BooleanOption();
-		echo_alias_updates.setTitle("Echo Alias Updates?");
-		echo_alias_updates.setDescription("Local echo system command updates to aliases.");
-		echo_alias_updates.setKey("echo_alias_updates");
-		echo_alias_updates.setValue(true);
-		servOptions.addOption(echo_alias_updates);
-		
-		BooleanOption keep_wifi_alive = new BooleanOption();
-		keep_wifi_alive.setTitle("Keep Wifi Alive?");
-		keep_wifi_alive.setDescription("Attempt to keep WiFi radio active while connected.");
-		keep_wifi_alive.setKey("keep_wifi_alive");
-		keep_wifi_alive.setValue(true);
-		servOptions.addOption(keep_wifi_alive);
-		
-		BooleanOption cull_extraneous = new BooleanOption();
-		cull_extraneous.setTitle("Cull Extraneous Colors?");
-		cull_extraneous.setDescription("Removes extraneous color codes.");
-		cull_extraneous.setKey("cull_extraneous_color");
-		cull_extraneous.setValue(true);
-		servOptions.addOption(cull_extraneous);
-		
-		BooleanOption debug_telnet = new BooleanOption();
-		debug_telnet.setTitle("Debug Telnet?");
-		debug_telnet.setDescription("Shows data involving telnet option transactions in the window.");
-		debug_telnet.setKey("debug_telnet");
-		debug_telnet.setValue(false);
-		servOptions.addOption(debug_telnet);
-		
-		sg.addOption(servOptions);
-		
-		SettingsGroup bellOptions = new SettingsGroup();
-		bellOptions.setTitle("Bell");
-		bellOptions.setDescription("Options for what happens when the bell character is recieved.");
-		
-		BooleanOption bell_vibrate = new BooleanOption();
-		bell_vibrate.setTitle("Vibrate?");
-		bell_vibrate.setDescription("Plays a short vibrate pattern when the bell is recieved.");
-		bell_vibrate.setKey("bell_vibrate");
-		bell_vibrate.setValue(true);
-		bellOptions.addOption(bell_vibrate);
-		
-		BooleanOption bell_notification = new BooleanOption();
-		bell_notification.setTitle("Generate Notification?");
-		bell_notification.setDescription("Spawns a new notification when bell is recieved.");
-		bell_notification.setKey("bell_notification");
-		bell_notification.setValue(false);
-		bellOptions.addOption(bell_notification);
-		
-		BooleanOption bell_display = new BooleanOption();
-		bell_display.setTitle("Display Bell?");
-		bell_display.setDescription("Displays a small alert on the screen when the bell character is recieved.");
-		bell_display.setKey("bell_display");
-		bell_display.setValue(false);
-		bellOptions.addOption(bell_display);
-		
-		sg.addOption(bellOptions);		
-		
-		the_settings.getSettings().setOptions(sg);
+	public boolean isKeepLast() {
+		return (Boolean)((BooleanOption)the_settings.getSettings().getOptions().findOptionByKey("keep_last")).getValue();
+	}
+
+	public boolean isFullScren() {
+		return (Boolean)((BooleanOption)the_settings.getSettings().getOptions().findOptionByKey("fullscreen")).getValue();
 	}
 }

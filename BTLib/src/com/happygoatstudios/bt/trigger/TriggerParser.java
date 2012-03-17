@@ -25,7 +25,8 @@ import android.sax.StartElementListener;
 
 public final class TriggerParser {
 	public static void registerListeners(Element root,PluginParser.NewItemCallback callback,Object obj,TriggerData current_trigger,TimerData current_timer) {
-		Element trigger = root.getChild(BasePluginParser.TAG_TRIGGER);
+		Element triggers = root.getChild("triggers");
+		Element trigger = triggers.getChild(BasePluginParser.TAG_TRIGGER);
 		TriggerElementListener listener = new TriggerElementListener(callback,current_trigger);
 		
 		trigger.setElementListener(listener);

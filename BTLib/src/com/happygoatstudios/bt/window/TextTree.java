@@ -274,6 +274,7 @@ public class TextTree {
 	private final byte n = (byte)0x6E;
 	
 	public void addBytesImplSimple(byte[] data) {
+		//int startcount = this.getBrokenLineCount();
 		ByteBuffer sb = ByteBuffer.allocate(data.length);
 		for(int i=0;i<data.length;i++) {
 			if(data[i] == NEWLINE) {
@@ -333,7 +334,7 @@ public class TextTree {
 	LinkedList<Integer> prev_color = null;
 	Color lastColor = null;
 	byte[] strag = null;
-	public void addBytesImpl(byte[] data) throws UnsupportedEncodingException {
+	public int addBytesImpl(byte[] data) throws UnsupportedEncodingException {
 		//if(simpleMode) {
 		//	addBytesImplSimple(data);
 		//}
@@ -342,6 +343,7 @@ public class TextTree {
 		//int projected = totalbytes + data.length;
 		//Log.e("TREE","ADDING: " + data.length + " bytes, buffer has " + totalbytes + " total bytes. " + projected + " projected.");
 		//LinkedList<Line> lines = new LinkedList<Line>();
+		int startcount = this.getBrokenLineCount();
 		int linesadded = 0;
 		Line tmp = null;
 		
@@ -439,7 +441,9 @@ public class TextTree {
 					//Log.e("TEXTTREE",getLastTwenty(false));
 					
 					//Log.e("TREE","HOLDOVER EVENENT, ESC ONLY");
-					return;
+					int endcount = this.getBrokenLineCount();
+					//prune();
+					return endcount - startcount;
 				}
 				//start ansi process sequence.
 				if(data[i+1] != BRACKET) {
@@ -460,7 +464,9 @@ public class TextTree {
 					linesadded += tmp.breaks + 1;
 					//Log.e("TEXTTREE",getLastTwenty(false));
 					//Log.e("TREE","HOLDOVER EVENT, ESC AND [");
-					return;
+					int endcount = this.getBrokenLineCount();
+					//prune();
+					return endcount - startcount;
 				}
 				
 				for(int j=i+2;j<data.length;j++) {
@@ -536,7 +542,9 @@ public class TextTree {
 					addLine(tmp);
 					linesadded += tmp.breaks + 1;
 					//Log.e("TREE","WARNING: UNTERMINATED ASCII SEQUENCE: " + new String(holdover,encoding));
-					return;
+					int endcount = this.getBrokenLineCount();
+					//prune();
+					return startcount - endcount;
 				}
 				break;
 			case TAB:
@@ -648,7 +656,11 @@ public class TextTree {
 		if(debugLineAdd) {
 			Log.e("TREE","ADDED " + linesadded + " LINES TO TREE");
 		}
+		
+		int endcount = this.getBrokenLineCount();
 		prune();
+		
+		return endcount - startcount;
 	}
 	
 	public void prune() {

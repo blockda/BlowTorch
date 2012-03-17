@@ -1114,7 +1114,7 @@ public class TriggerSelectionDialog extends Dialog {
 				finishDelete();
 				break;
 			case 103:
-				finishScroll(msg.arg1);
+				//finishScroll(msg.arg1);
 				break;
 			case MESSAGE_NEW_TRIGGER:
 				TriggerData tmp = (TriggerData)msg.obj;
