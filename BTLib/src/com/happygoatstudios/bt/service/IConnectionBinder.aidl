@@ -123,7 +123,7 @@ interface IConnectionBinder {
 	void setHFOnPress(String use);
 	void setHFOnFlip(String use);
 	void setDisplayDimensions(int rows,int cols);
-	void reconnect();
+	void reconnect(String str);
 	Map getTimers();
 	Map getPluginTimers(String plugin);
 	TimerData getTimer(String ordinal);
@@ -203,4 +203,6 @@ interface IConnectionBinder {
 	void updateStringSetting(String key,String value);
 	void updatePluginStringSetting(String plugin,String key,String value);
 	void updateWindowBufferMaxValue(String plugin,String window,int amount);
+	void closeConnection(String display);
+	void windowShowing(boolean show);
 }

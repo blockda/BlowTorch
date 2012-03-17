@@ -2,9 +2,10 @@
 <blowtorch xmlversion="2">
   <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" script="uiBootStrap" id="6666"/>
   <windows>
-    <window name="mainDisplay" id="6666" script="uiBootStrap">
+    <window name="mainDisplay" id="6666">
       <layoutGroup target="normal">
-        <layout orientation="portrait" leftOf="6010" above="10" below="5010" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+      	<layout orientation="landscape" above="10" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+        <layout orientation="portrait" above="10" alignParentLeft="true" width="fill_parent" height="fill_parent" />
       </layoutGroup>
       <options/>
     </window>
@@ -54,7 +55,7 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   ]]>
   </script>
   <plugins>
-  	 <link file="plugin.xml"/>
+  	 <!-- <link file="plugin.xml"/> -->
   	 <plugin author="Daniel Block" name="button_window" id="10">
   	 	<windows>
   	 		<window name="button_window" id="10203" script="buttonwindow">

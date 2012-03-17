@@ -23,9 +23,9 @@ public final class AckResponderParser {
 	}
 	
 	public static void saveResponderToXML(XmlSerializer out,AckResponder r) throws IllegalArgumentException, IllegalStateException, IOException {
-		out.startTag("", BasePluginParser.ATTR_ACKWITH);
+		out.startTag("", BasePluginParser.TAG_ACKRESPONDER);
 		out.attribute("", BasePluginParser.ATTR_ACKWITH, r.getAckWith());
 		out.attribute("", BasePluginParser.ATTR_FIRETYPE, r.getFireType().getString());
-		out.endTag("",BasePluginParser.ATTR_ACKWITH);
+		out.endTag("",BasePluginParser.TAG_ACKRESPONDER);
 	}
 }

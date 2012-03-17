@@ -249,6 +249,11 @@ public class SettingsGroup extends Option implements Parcelable {
 			}
 		}
 	}
+
+	public void addOptionAt(Option option, int i) {
+		updateOptionsMap(option,listener);
+		options.add(i,option);
+	}
 	
 	/*public interface BlandNewOption {
 		

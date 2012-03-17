@@ -29,6 +29,7 @@ import com.happygoatstudios.bt.trigger.TriggerParser;
 import android.content.Context;
 import android.os.Handler;
 import android.sax.Element;
+import android.sax.ElementListener;
 import android.sax.EndElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
@@ -38,6 +39,26 @@ import android.util.Xml;
 
 public class ConnectionSetttingsParser extends PluginParser {
 
+	public enum OPTION_KEY {
+		encoding,
+		orientation,
+		screen_on,
+		fullscreen,
+		fullscreen_editor,
+		use_suggestions,
+		keep_last,
+		compatibility_mode,
+		local_echo,
+		process_system_commands,
+		echo_alias_updates,
+		keep_wifi_alive,
+		cull_extraneous_color,
+		debug_telnet,
+		bell_vibrate,
+		bell_notification,
+		bell_display,
+	}
+	
 	ConnectionSettingsPlugin settings = null;
 	public ConnectionSetttingsParser(String location, Context context,
 			ArrayList<Plugin> plugins, Handler serviceHandler,Connection parent) {
@@ -121,6 +142,23 @@ public class ConnectionSetttingsParser extends PluginParser {
 			
 		});
 		
+		Element options = root.getChild("options");
+		Element option = options.getChild("option");
+		option.setTextElementListener(new TextElementListener() {
+			String current_key = null;
+			@Override
+			public void start(Attributes a) {
+				current_key = a.getValue("","key");
+			}
+
+			@Override
+			public void end(String body) {
+				if(current_key != null) {
+					settings.getSettings().getOptions().setOption(current_key, body);
+				}
+			}
+			
+		});
 		super.attatchListeners(root);
 		
 		
@@ -206,6 +244,8 @@ public class ConnectionSetttingsParser extends PluginParser {
 		
 		out.endTag("", "windows");
 		
+		outputOptions(out,p);
+		
 		out.startTag("", "triggers");
 		for(TriggerData t : p.getSettings().getTriggers().values()) {
 			TriggerParser.saveTriggerToXML(out, t);
@@ -262,6 +302,123 @@ public class ConnectionSetttingsParser extends PluginParser {
 		out.endDocument();
 		
 		return writer.toString();
+	}
+	
+	private static void outputOptions(XmlSerializer out,ConnectionSettingsPlugin p) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "options");
+		SettingsGroup g = p.getSettings().getOptions();
+		dumpOptions(out,g);
+		out.endTag("", "options");
+	}
+	
+	private static void dumpOptions(XmlSerializer out,SettingsGroup o) throws IllegalArgumentException, IllegalStateException, IOException {
+		for(Option tmp : o.getOptions()) {
+			if(tmp instanceof SettingsGroup) {
+				dumpOptions(out,(SettingsGroup)tmp);
+			} else {
+				BaseOption opt = (BaseOption)tmp;
+				try {
+					boolean dooutput = false;
+					OPTION_KEY key = OPTION_KEY.valueOf(opt.getKey());
+					switch(key) {
+					case encoding:
+						if(!((String)opt.getValue()).equals("ISO-8859-1")) {
+							dooutput = true;
+						}
+						break;
+					case orientation:
+						if((Integer)opt.getValue() != 0) {
+							dooutput = true;
+						}
+						break;
+					case screen_on:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case fullscreen:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case fullscreen_editor:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case use_suggestions:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case keep_last:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case compatibility_mode:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case local_echo:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case process_system_commands:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case echo_alias_updates:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case keep_wifi_alive:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case cull_extraneous_color:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case debug_telnet:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case bell_vibrate:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case bell_notification:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case bell_display:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					}
+					if(dooutput) {
+						out.startTag("", "option");
+						out.attribute("", "key", opt.getKey());
+						out.text(opt.getValue().toString());
+						out.endTag("", "option");
+					}
+				} catch (IllegalArgumentException e){
+					
+				}
+			}
+		}
+
 	}
 
 }
