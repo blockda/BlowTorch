@@ -747,6 +747,12 @@ public class OptionsDialog extends Dialog {
 	@Override
 	public void onBackPressed() {
 		if(backStack.size() == 0) {
+			try {
+				service.saveSettings();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			this.dismiss();
 		} else {
 			SettingsGroup key = backStack.pop();

@@ -16,7 +16,7 @@ interface IConnectionBinderCallback {
 	void doVisualBell();
 	void setScreenMode(boolean fullscreen);
 	void showKeyBoard(String txt,boolean popup,boolean add,boolean flush,boolean clear,boolean close);
-	void doDisconnectNotice();
+	void doDisconnectNotice(String display);
 	void doLineBreak(int i);
 	void reloadButtons(String setName);
 	void clearAllButtons();
@@ -34,4 +34,5 @@ interface IConnectionBinderCallback {
 	void loadWindowSettings();
 	void markWindowsDirty();
 	void markSettingsDirty();
+	void setKeepLast(boolean keep);
 }

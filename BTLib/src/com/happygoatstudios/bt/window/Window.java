@@ -161,7 +161,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public static final int MESSAGE_ADDTEXT = 0;
 
 	private static final int MESSAGE_DRAW = 117;
-
+	
 	protected static final int MESSAGE_FLUSHBUFFER = 118;
 	protected static final int MESSAGE_SHUTDOWN = 119;
 	public static final int MESSAGE_PROCESSXCALLS = 4;
@@ -265,9 +265,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private void init(String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
 		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
 		homeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.happygoatstudios.bt.R.drawable.homewidget);
-		textSelectionCancelBitmap = BitmapFactory.decodeResource(this.getResources(), com.happygoatstudios.bt.R.drawable.cancel_tiny);
-		textSelectionCopyBitmap = BitmapFactory.decodeResource(this.getResources(), com.happygoatstudios.bt.R.drawable.copy_tiny);
-		textSelectionSwapBitmap = BitmapFactory.decodeResource(this.getResources(), com.happygoatstudios.bt.R.drawable.swap);
+		textSelectionCancelBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.happygoatstudios.bt.R.drawable.cancel_tiny);
+		textSelectionCopyBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.happygoatstudios.bt.R.drawable.copy_tiny);
+		textSelectionSwapBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.happygoatstudios.bt.R.drawable.swap);
 		
 		textSelectionIndicatorPaint.setStyle(Paint.Style.STROKE);
 		textSelectionIndicatorPaint.setStrokeWidth(2);
@@ -1742,6 +1742,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			cancelPaint.setAntiAlias(true);
 			cancelPaint.setColor(0xFFFF0000);
 			int third = (selectionIndicatorHalfDimension*2)/3;
+			if(textSelectionCopyBitmap.isRecycled()) {
+				Log.e("sf","bitmap is recycled");
+			}
 			mSelectionIndicatorCanvas.drawBitmap(textSelectionCopyBitmap, 0,0, null);
 			mSelectionIndicatorCanvas.drawBitmap(textSelectionCancelBitmap, 0,2*third, null);
 			mSelectionIndicatorCanvas.drawBitmap(textSelectionSwapBitmap, 2*third,0, null);
@@ -1952,8 +1955,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int oldbrokencount = the_tree.getBrokenLineCount();
 			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
 			//synchronized(synch) {
+			int linesadded = 0;
 			try {
-				the_tree.addBytesImpl(obj);
+				linesadded = the_tree.addBytesImpl(obj);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
@@ -1972,8 +1976,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						double new_max = the_tree.getBrokenLineCount()*PREF_LINESIZE;
 						int lines = (int) ((new_max - old_max)/PREF_LINESIZE);
 						
-						scrollback += new_max - old_max;
-						//Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
+						scrollback += linesadded*PREF_LINESIZE;
+						Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
 						
 					} else {
 						scrollback = SCROLL_MIN;
@@ -2422,6 +2426,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 	
+	
 	boolean noScript = true;
 	public void loadScript(String body) {
 		
@@ -2466,9 +2471,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void runScriptOnCreate() {
+		if(L == null) return;
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
+		
 		
 		L.getGlobal("OnCreate");
 		if(L.isFunction(L.getTop())) {
