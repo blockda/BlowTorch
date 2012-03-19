@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Stack;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -60,7 +61,7 @@ public class OptionsDialog extends Dialog {
 	String[] mEncodings = null;
 	//FragmentManager mFragementManager;
 	
-	
+	HashMap<Integer,String> pluginSettingsMap = new HashMap<Integer,String>();
 	boolean toggle = true;
 	
 	Stack<SettingsGroup> backStack = new Stack<SettingsGroup>();
@@ -74,7 +75,7 @@ public class OptionsDialog extends Dialog {
 
 	public void onCreate(Bundle b) {
 		super.onCreate(b);
-		
+		pluginSettingsMap.clear();
 		Vector<String> items = new Vector<String>();
 		for(Charset set : Charset.availableCharsets().values()) {
 			items.add(set.displayName());
@@ -131,6 +132,21 @@ public class OptionsDialog extends Dialog {
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		try {
+			HashMap<String,String> map = (HashMap<String, String>) service.getPluginList();
+			for(String plugin : map.keySet()) {
+				int pos = mCurrent.getOptions().size();
+				SettingsGroup settings = service.getPluginSettings(plugin);
+				if(settings.getOptions().size() > 0) {
+					pluginSettingsMap.put(pos, plugin);
+					mCurrent.addOption(settings);
+				}
+			}
+			
+		} catch(RemoteException e) {
+		
 		}
 		
 		title.setText(mCurrent.getTitle());
@@ -227,7 +243,7 @@ public class OptionsDialog extends Dialog {
 				break;
 			case GROUP:
 				v.setTag(o);
-				v.setOnClickListener(new GroupClickedListener());
+				v.setOnClickListener(new GroupClickedListener(position));
 				break;
 			case LIST:
 				//set up list dialog clicker.
@@ -615,9 +631,21 @@ public class OptionsDialog extends Dialog {
 	
 	private class GroupClickedListener implements View.OnClickListener {
 
+		private int pos = -1;
+		public GroupClickedListener(int pos) {
+			this.pos = pos;
+		}
+		
 		@Override
 		public void onClick(View v) {
 			//get the tag for this view, it will be the key.
+			if(backStack.size() == 0) {
+				//we need to switch the current plugin so the appropriate settingsgroup gets updated.
+				if(pluginSettingsMap.containsKey(this.pos)) {
+					OptionsDialog.this.selectedPlugin = pluginSettingsMap.get(this.pos);
+				}
+				//proceed as usual.
+			}
 			
 			Option key = (Option) v.getTag();
 			backStack.push(mCurrent);
@@ -756,6 +784,9 @@ public class OptionsDialog extends Dialog {
 			this.dismiss();
 		} else {
 			SettingsGroup key = backStack.pop();
+			if(backStack.size() == 0) {
+				selectedPlugin = "main";
+			}
 			//Option key = (Option) v.getTag();
 			//backStack.push(mCurrent);
 			mCurrent = (SettingsGroup) key;

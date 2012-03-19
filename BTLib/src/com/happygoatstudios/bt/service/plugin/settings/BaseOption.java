@@ -1,5 +1,9 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.IOException;
+
+import org.xmlpull.v1.XmlSerializer;
+
 public abstract class BaseOption extends Option {
 
 	protected Object value;
@@ -10,5 +14,5 @@ public abstract class BaseOption extends Option {
 	abstract public Object getDefaultValue();
 	abstract public void setDefaultValue(Object o);
 	
-	
+	abstract public void saveToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException;
 }

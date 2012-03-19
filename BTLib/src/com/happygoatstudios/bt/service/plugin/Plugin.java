@@ -41,6 +41,7 @@ import com.happygoatstudios.bt.responder.IteratorModifiedException;
 import com.happygoatstudios.bt.responder.TriggerResponder;
 import com.happygoatstudios.bt.responder.toast.ToastResponder;
 import com.happygoatstudios.bt.service.Connection;
+import com.happygoatstudios.bt.service.SettingsChangedListener;
 import com.happygoatstudios.bt.service.StellarService;
 import com.happygoatstudios.bt.service.WindowToken;
 import com.happygoatstudios.bt.service.plugin.function.DrawWindowFunction;
@@ -55,7 +56,7 @@ import com.happygoatstudios.bt.trigger.TriggerData;
 import com.happygoatstudios.bt.trigger.TriggerParser;
 import com.happygoatstudios.bt.window.TextTree;
 
-public class Plugin {
+public class Plugin implements SettingsChangedListener {
 	//we are a lua plugin.
 	//we can give users 
 	Matcher colorStripper = StellarService.colordata.matcher("");
@@ -1453,4 +1454,24 @@ public class Plugin {
 	Matcher massiveMatcher = null;
 	HashMap<Integer,TriggerData> sortedTriggerMap = null;
 	//HashMap<Integer,Plugin> triggerPluginMap = null;
+
+	@Override
+	public void updateSetting(String key, String value) {
+		if(L != null) {
+			L.getGlobal("debug");
+			L.getField(-1, "traceback");
+			L.remove(-2);
+			
+			L.getGlobal("OnOptionChanged");
+			if(L.getLuaObject(-1).isFunction()) {
+				L.pushString(key);
+				L.pushString(value);
+				int ret = L.pcall(2, 1, -4);
+				if(ret != 0) {
+					Log.e("LUA","Error in OnOptionsChanged:"+L.getLuaObject(-1).getString());
+					
+				}
+			}
+		}
+	}
 }

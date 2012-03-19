@@ -1,6 +1,9 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.IOException;
 import java.util.ArrayList;
+
+import org.xmlpull.v1.XmlSerializer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -26,6 +29,29 @@ public class ListOption extends BaseOption implements Parcelable {
 		for(int i=0;i<size;i++) {
 			items.add(p.readString());
 		}
+	}
+	
+	public ListOption copy() {
+		ListOption tmp = new ListOption();
+		tmp.key = this.key;
+		tmp.value = this.value;
+		tmp.title = this.title;
+		tmp.description = this.description;
+		
+		tmp.items = new ArrayList<String>();
+		for(String item : this.items) {
+			tmp.items.add(item);
+		}
+		
+		return tmp;
+	}
+	
+	public void reset() {
+		this.key = "";
+		this.value = new Object();
+		this.description = "";
+		this.title = "";
+		this.items.clear();
 	}
 
 	public void addItem(String item) {
@@ -96,4 +122,23 @@ public class ListOption extends BaseOption implements Parcelable {
 			return new ListOption[arg0];
 		}
 	};
+	
+	public void saveToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "list");
+		out.attribute("", "key", this.key);
+		out.attribute("", "title", this.title);
+		out.attribute("", "summary", this.description);
+		//out.attribute("","value",Integer.toString((Integer)this.value));
+		out.startTag("", "value");
+		out.text(Integer.toString((Integer)this.value));
+		out.endTag("", "value");
+		//have to save the list items.
+		for(String item : items) {
+			out.startTag("", "item");
+			out.text(item);
+			out.endTag("", "item");
+		}
+		
+		out.endTag("", "list");
+	}
 }

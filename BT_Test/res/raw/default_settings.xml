@@ -64,6 +64,30 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   	 			</layoutGroup>
   	 		</window>
   	 	</windows>
+  	 	<options title="Button" summary="Haptic feedback, roundess and other button options.">
+  	 		<boolean title="Automatically launch editor" key="auto_launch" summary="Automatically launch the editor on the long press action.">true</boolean>
+  	 		<boolean title="Automatically create buttons" key="auto_create" summary="Will add new buttons to emty regions that are long pressed.">true</boolean>
+  	 		<integer title="Button roundness" key="roundess" summary="Radius of button corners.">6</integer>
+  	 		<list title="Haptic feedback on editor launch." key="haptic_edit" summary="Perform haptic feedback when the editor is opened.">
+  	 			<value>0</value>
+  	 			<item>Auto. Obey System Setting</item>
+  	 			<item>Always. Override System Setting</item>
+  	 			<item>Off</item>
+  	 		</list>
+  	 		<list title="Haptic feedback on press." key="haptic_press" summary="Perform haptic feedback when pressed.">
+  	 			<value>0</value>
+  	 			<item>Auto. Obey System Setting</item>
+  	 			<item>Always. Override System Setting</item>
+  	 			<item>Off</item>
+  	 		</list>
+  	 		<list title="Haptic feedback on flip." key="haptic_flip" summary="Perform Haptic feedback when flipped (swipe action).">
+  	 			<value>0</value>
+  	 			<item>Auto. Obey System Setting</item>
+  	 			<item>Always. Override System Setting</item>
+  	 			<item>Off</item>
+  	 		</list>
+  	 		
+  	 	</options>
 		<script name="bootstrap">
 		<![CDATA[
 			dofile("/mnt/sdcard/BlowTorch/buttonserver.lua")

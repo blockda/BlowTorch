@@ -1135,7 +1135,7 @@ public class MainWindow extends Activity {
 		
 		if(supportsActionBar()) {
 			Button b = new Button(this);
-			b.setBackgroundColor(0xFFFF0000);
+			b.setBackgroundColor(0x00000000);
 			LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
 			b.setLayoutParams(tmp);
 			b.setOnClickListener(new View.OnClickListener() {
@@ -1160,6 +1160,7 @@ public class MainWindow extends Activity {
 		}
 		
 	}
+	
 	
 	protected void setKeepLast(boolean b) {
 		this.isKeepLast = b;
