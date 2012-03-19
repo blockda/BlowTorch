@@ -478,14 +478,17 @@ public class Connection implements SettingsChangedListener {
 		//}
 	}
 
-	protected void windowXCallS(String token, String function, Object o) throws RemoteException {
+	public void windowXCallS(String token, String function, Object o) throws RemoteException {
 		//synchronized(callbackSync) {
 		//int N = mWindowCallbacks.beginBroadcast();
 		//for(int i=0;i<N;i++) {
 			IWindowCallback c = windowCallbackMap.get(token);
 		//	String name = c.getName();
 		//	if(c.getName().equals(token)) {
+			if(c != null) {
 				c.xcallS(function,(String)o);
+			}
+			//return ret;
 		//		i=N;
 		//	}
 		//}
@@ -661,6 +664,8 @@ public class Connection implements SettingsChangedListener {
 			if(p.getSettings().getWindows().size() > 0) {
 				mWindows.addAll(p.getSettings().getWindows().values());
 			}
+			
+			p.pushOptionsToLua();
 		}
 		
 		for(WindowToken w : mWindows) {

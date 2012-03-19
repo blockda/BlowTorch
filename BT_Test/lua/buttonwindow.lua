@@ -29,6 +29,7 @@ TranslateAnimation = luajava.bindClass("android.view.animation.TranslateAnimatio
 ScrollView = luajava.bindClass("android.widget.ScrollView")
 AnimationSet = luajava.bindClass("android.view.animation.AnimationSet")
 LayoutAnimationController = luajava.bindClass("android.view.animation.LayoutAnimationController")
+HapticFeedbackConstants = luajava.bindClass("android.view.HapticFeedbackConstants")
 lastLoadedSet = nil
 function loadButtons(args)
 
@@ -472,7 +473,9 @@ function normalTouch.onTouch(v,e)
 		prevevent = 0
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
-			scheduleCallback(100,"doEdit",1000)
+			if options.auto_launch == "true" then
+				scheduleCallback(100,"doEdit",1000)
+			end
 			fingerdown = true
 			--touchedbutton.selected = false
 			touchedbutton = b
@@ -530,6 +533,7 @@ function normalTouch.onTouch(v,e)
 					--clearButton(b)
 					b:draw(normalTouchState,buttonCanvas)
 				end
+				performHapticFlip()
 			end
 			invalidate()
 			--debugPrint("action move, moving button, returning true")
@@ -550,17 +554,21 @@ function normalTouch.onTouch(v,e)
 				--process primary touch
 				if(touchedbutton.data.switchTo ~= nil and touchedbutton.data.switchTo ~= "") then
 					PluginXCallS("loadButtonSet",touchedbutton.data.switchTo)
+					
 					return true
 				end
+				performHapticPress()
 				sendToServer(touchedbutton.data.command)
 				debugPrint("primary touch")
 			else
 				--process secondary touch
 				if(touchedbutton.data.switchTo ~= nil and touchedbutton.data.switchTo ~= "") then
 					PluginXCallS("loadButtonSet",touchedbutton.data.switchTo)
+					
 					return true
 				end
 				debugPrint("secondary touch")
+				
 				sendToServer(touchedbutton.data.flipCommand)
 			end
 			normalTouchState = 0
@@ -583,6 +591,7 @@ function doEdit()
 	--this is launched from the long press
 	debugPrint("EDITING")
 	manage = true
+	performHapticEdit()
 	enterManagerMode()
 end
 --this window is a full screen window, so we don't really need to concern ourselves with bounds and the such, but we do need to create a button class.
@@ -3219,6 +3228,51 @@ function setEditorDoneListener.onClick(v)
 	drawButtons()
 end
 seteditorDone_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorDoneListener)
+
+function loadOptions(data)
+	debugPrint("incoming options wad:"..data)
+	options = loadstring(data)()
+	buttonRoundness = tonumber(options.roundness)
+	drawButtons()
+	--debugPrint("loaded button options:"..options.auto_edit)
+end
+
+function performHapticPress()
+	debugPrint("performing haptic press")
+	if(options.haptic_press == "2") then return end
+	
+	flags = 1
+	if(options.haptic_press == "1") then
+	debugPrint("overriding system")
+		flags = 3
+	end
+	
+	view:performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY,flags)
+end
+
+function performHapticFlip()
+	debugPrint("performing haptic flip")
+	if(options.haptic_flip == "2") then return end
+	
+	flags = 1
+	if(options.haptic_flip == "1") then
+	debugPrint("overriding system")
+		flags = 3
+	end
+	
+	view:performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY,flags)
+end
+
+function performHapticEdit()
+	if(options.haptic_edit == "2") then return end
+	
+	flags = 1
+	if(options.haptic_edit == "1") then
+		flags = 3
+	end
+	
+	view:performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY,flags)
+end
 
 view:bringToFront()
 PluginXCallS("buttonLayerReady","")
