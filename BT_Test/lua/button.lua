@@ -2,6 +2,8 @@
 Color = luajava.bindClass("android.graphics.Color")
 Path = luajava.bindClass("android.graphics.Path")
 PathDirection = luajava.bindClass("android.graphics.Path$Direction")
+
+buttonRoundness = 6
 --PathDirection_CCW = PathDirection.CCW
 --RegionOp = luajava.bindClass("android.graphics.Region$Op")
 --RegionOp_REVERSE_DIFFERENCE = RegionOp.INTERSECT
@@ -137,13 +139,13 @@ function BUTTON:draw(state,canvas)
 	
 	if(usestate == 0) then
 		p:setColor(self.data.primaryColor)
-		canvas:drawRoundRect(rect,25,25,p)
+		canvas:drawRoundRect(rect,buttonRoundness,buttonRoundness,p)
 	elseif(usestate == 1) then
 		p:setColor(self.data.selectedColor)
-		canvas:drawRoundRect(self.inset,25,25,p)
+		canvas:drawRoundRect(self.inset,buttonRoundness,buttonRoundness,p)
 	elseif(usestate == 2) then
 		p:setColor(self.data.flipColor)
-		canvas:drawRoundRect(self.inset,25,25,p)
+		canvas:drawRoundRect(self.inset,buttonRoundness,buttonRoundness,p)
 	end
 	
 	

@@ -411,6 +411,7 @@ end
 
 function buttonLayerReady()
 	loadButtonSet(current_set)
+	loadOptions()
 end
 
 function legacyButtonsImported()
@@ -421,41 +422,72 @@ end
 
 function OnOptionChanged(key,value)
 	debugPrint(key..":"..value)
-	if(key
+	local func = optionsTable[key]
+	func(value)
+	
+end
+
+--boolean windowReady
+function loadOptions()
+	WindowXCallS("button_window","loadOptions",serialize(options))
 end
 
 function setAutoLaunch(value)
-
+	
+	options.auto_launch = value
+	if(userPresent()) then
+		loadOptions()
+	end
 end
 
 function setAutoCreate(value)
-
+	options.auto_create = value
+	if(userPresent()) then
+		loadOptions()
+	end
 end 
 
 function setRoundness(value)
-
+	options.roundness = value
+	if(userPresent()) then
+		loadOptions()
+	end
 end
 
 function setHapticFeedbackEditor(value)
-
+	options.haptic_edit = value
+	if(userPresent()) then
+		loadOptions()
+	end
 end
 
 function setHapticFeedbackPressed(value)
-
+	options.haptic_press = value
+	if(userPresent()) then
+		loadOptions()
+	end
 end
 
 function setHapticFeedbackFlipped(value)
-
+	options.haptic_flip = value
+	if(userPresent()) then
+		loadOptions()
+	end
 end
 
 optionsTable = {}
-optionsTable.haptic_edit = setHapidFeedbackEditor
+optionsTable.haptic_edit = setHapticFeedbackEditor
 optionsTable.haptic_press = setHapticFeedbackPressed
 optionsTable.haptic_flip = setHapticFeedbackFlipped
-optionsTable.roundess = setRoundess
+optionsTable.roundess = setRoundness
 optionsTable.auto_launch = setAutoLaunch
 optionsTable.auto_create = setAutoCreate
 
+options = {}
 options.haptic_edit = 0
-options.haptic_edit
+options.haptic_press = 0
+options.haptic_flip = 0
+options.roundness = 6
+options.auto_launch = true
+options.auto_create = true
 

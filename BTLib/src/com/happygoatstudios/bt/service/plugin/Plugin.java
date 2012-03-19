@@ -31,6 +31,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Xml;
@@ -50,6 +51,7 @@ import com.happygoatstudios.bt.service.plugin.function.TriggerEnabledFunction;
 import com.happygoatstudios.bt.service.plugin.settings.BaseOption;
 import com.happygoatstudios.bt.service.plugin.settings.Option;
 import com.happygoatstudios.bt.service.plugin.settings.PluginSettings;
+import com.happygoatstudios.bt.service.plugin.settings.SettingsGroup;
 import com.happygoatstudios.bt.timer.TimerData;
 import com.happygoatstudios.bt.timer.TimerParser;
 import com.happygoatstudios.bt.trigger.TriggerData;
@@ -149,6 +151,7 @@ public class Plugin implements SettingsChangedListener {
 		AppendLineToWindowFunction altwf = new AppendLineToWindowFunction(L);
 		InvalidateWindowTextFunction iwtf = new InvalidateWindowTextFunction(L);
 		GMCPSendFunction gsf = new GMCPSendFunction(L);
+		UserPresentFunction upf = new UserPresentFunction(L);
 		wf.register("NewWindow");
 		mwf.register("GetWindowTokenByName");
 		esf.register("ExecuteScript");
@@ -161,6 +164,7 @@ public class Plugin implements SettingsChangedListener {
 		gsf.register("Send_GMCP_Packet");
 		SaveSettingsFunction ssfun = new SaveSettingsFunction(L);
 		ssfun.register("saveSettings");
+		upf.register("userPresent");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -587,13 +591,19 @@ public class Plugin implements SettingsChangedListener {
 			}*/
 			//mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_X, obj))
 			Message msg = mHandler.obtainMessage(Connection.MESSAGE_WINDOWXCALLS,foo.getString());
-			
+			//String str = "";
+			//try {
+			//	str = parent.windowXCallS(token, function, foo.getString());
+			//} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
 			msg.getData().putString("TOKEN",token);
 			msg.getData().putString("FUNCTION", function);
-			
+			//L.pushString(str);
 			mHandler.sendMessage(msg);
 			// TODO Auto-generated method stub
-			return 0;
+			return 1;
 		}
 		
 		public HashMap<String,Object> dumpTable(String tablePath,int idx) {
@@ -712,6 +722,21 @@ public class Plugin implements SettingsChangedListener {
 			return 0;
 		}
 		
+		
+	}
+	
+	private class UserPresentFunction extends JavaFunction {
+
+		public UserPresentFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			L.pushBoolean(parent.isWindowShowing());
+			return 1;
+		}
 		
 	}
 
@@ -1470,6 +1495,34 @@ public class Plugin implements SettingsChangedListener {
 				if(ret != 0) {
 					Log.e("LUA","Error in OnOptionsChanged:"+L.getLuaObject(-1).getString());
 					
+				}
+			}
+		}
+	}
+
+	public void pushOptionsToLua() {
+		dumpOption(this.getSettings().getOptions());
+	}
+	
+	private void dumpOption(SettingsGroup group) {
+		ArrayList<Option> options = group.getOptions();
+		for(Option o : options) {
+			if(o instanceof SettingsGroup) {
+				dumpOption((SettingsGroup)o);
+			} else {
+				BaseOption tmp = (BaseOption)o;
+				L.getGlobal("debug");
+				L.getField(-1, "traceback");
+				L.remove(-2);
+				
+				L.getGlobal("OnOptionChanged");
+				if(L.getLuaObject(-1).isFunction()) {
+					L.pushString(tmp.getKey());
+					L.pushString(tmp.getValue().toString());
+					int ret = L.pcall(2, 1, -4);
+					if(ret != 0) {
+						Log.e("LUA","Error in OnOptionChanged:"+L.getLuaObject(-1).getString());
+					}
 				}
 			}
 		}
