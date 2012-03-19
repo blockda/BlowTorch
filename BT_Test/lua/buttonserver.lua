@@ -419,4 +419,43 @@ function legacyButtonsImported()
 	printTable("buttonset_defaults",buttonset_defaults)
 end
 
+function OnOptionChanged(key,value)
+	debugPrint(key..":"..value)
+	if(key
+end
+
+function setAutoLaunch(value)
+
+end
+
+function setAutoCreate(value)
+
+end 
+
+function setRoundness(value)
+
+end
+
+function setHapticFeedbackEditor(value)
+
+end
+
+function setHapticFeedbackPressed(value)
+
+end
+
+function setHapticFeedbackFlipped(value)
+
+end
+
+optionsTable = {}
+optionsTable.haptic_edit = setHapidFeedbackEditor
+optionsTable.haptic_press = setHapticFeedbackPressed
+optionsTable.haptic_flip = setHapticFeedbackFlipped
+optionsTable.roundess = setRoundess
+optionsTable.auto_launch = setAutoLaunch
+optionsTable.auto_create = setAutoCreate
+
+options.haptic_edit = 0
+options.haptic_edit
 
