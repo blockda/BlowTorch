@@ -1,9 +1,13 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.IOException;
 import java.math.BigInteger;
+
+import org.xmlpull.v1.XmlSerializer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 public class ColorOption extends BaseOption implements Parcelable {
 
@@ -41,7 +45,8 @@ public class ColorOption extends BaseOption implements Parcelable {
 			try {
 				String str = (String)o;
 				if(str.startsWith("#")) {
-					BigInteger bigint = new BigInteger(str.substring(1,str.length()-1),16);
+					//Log.e("COLOR","COLOR VALUE SET:"+str.substring(1, str.length()));
+					BigInteger bigint = new BigInteger(str.substring(1,str.length()),16);
 					value = bigint.intValue();
 				} else {
 					int num = Integer.parseInt((String)o);
@@ -81,4 +86,13 @@ public class ColorOption extends BaseOption implements Parcelable {
 			return new ColorOption[arg0];
 		}
 	};
+	
+	public void saveToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "color");
+		out.attribute("", "key", this.key);
+		out.attribute("", "title", this.title);
+		out.attribute("", "summary", this.description);
+		out.text("#"+Integer.toHexString((Integer)this.value).toUpperCase());
+		out.endTag("", "color");
+	}
 }

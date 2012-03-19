@@ -1,6 +1,9 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.IOException;
 import java.util.ArrayList;
+
+import org.xmlpull.v1.XmlSerializer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -121,4 +124,60 @@ public class FileOption extends ListOption implements Parcelable {
 			return new FileOption[arg0];
 		}
 	};
+	
+	@Override
+	public void saveToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		//this is a different xml serializer routine than the list option.
+		out.startTag("", "file");
+		out.attribute("", "key", this.key);
+		out.attribute("", "title", this.title);
+		out.attribute("", "summary", this.description);
+		//out.attribute("", "value", (String)this.value);
+		out.startTag("", "value");
+		out.text((String)this.value);
+		out.endTag("", "value");
+		for(String path : paths) {
+			out.startTag("", "path");
+			out.text(path);
+			out.endTag("", "path");
+		}
+		
+		for(String ext : extensions) {
+			out.startTag("", "extension");
+			out.text(ext);
+			out.endTag("", "extension");
+		}
+		out.endTag("", "file");
+	}
+	
+	@Override
+	public FileOption copy() {
+		FileOption tmp = new FileOption();
+		tmp.title = this.title;
+		tmp.description = this.description;
+		tmp.key = this.key;
+		tmp.value = this.value;
+		
+		tmp.paths = new ArrayList<String>();
+		for(String path : this.paths) {
+			tmp.paths.add(path);
+		}
+		
+		tmp.extensions = new ArrayList<String>();
+		for(String extension : this.extensions) {
+			tmp.extensions.add(extension);
+		}
+		
+		return tmp;
+	}
+	
+	@Override
+	public void reset() {
+		this.title = "";
+		this.description = "";
+		this.value = new Object();
+		this.key = "";
+		this.extensions.clear();
+		this.paths.clear();
+	}
 }

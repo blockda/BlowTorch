@@ -1,5 +1,9 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.IOException;
+
+import org.xmlpull.v1.XmlSerializer;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -70,5 +74,14 @@ public class EncodingOption extends BaseOption implements Parcelable {
 			return new EncodingOption[arg0];
 		}
 	};
+	
+	public void saveToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "encoding");
+		out.attribute("", "key", this.key);
+		out.attribute("", "title", this.title);
+		out.attribute("", "summary", this.description);
+		out.text((String)this.value);
+		out.endTag("", "encoding");
+	}
 
 }

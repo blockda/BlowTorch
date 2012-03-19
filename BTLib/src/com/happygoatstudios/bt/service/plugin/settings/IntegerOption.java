@@ -1,6 +1,9 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
+import java.io.IOException;
 import java.math.BigInteger;
+
+import org.xmlpull.v1.XmlSerializer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -82,5 +85,14 @@ public class IntegerOption extends BaseOption implements Parcelable {
 			return new IntegerOption[arg0];
 		}
 	};
+	
+	public void saveToXML(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+		out.startTag("", "integer");
+		out.attribute("", "key", this.key);
+		out.attribute("", "title", this.title);
+		out.attribute("", "summary", this.description);
+		out.text(Integer.toString((Integer)this.value));
+		out.endTag("", "integer");
+	}
 
 }
