@@ -136,9 +136,26 @@ function moveTouch.onTouch(v,e)
 			moveCurrent.x = x
 			moveCurrent.y = y
 			--debugPrint("moving box")
-			totalDelta.x = totalDelta.x + moveDelta.x
-			totalDelta.y = totalDelta.y + moveDelta.y
-			moveBounds:offset(moveDelta.x,moveDelta.y)
+			if(gridsnap) then
+				--debugPrint("gridsnapping")
+				--totalDelta.x = totalDelta.x + moveDelta.x
+				--totalDelta.y = totalDelta.y + moveDelta.y
+				local tmpx = x % (gridwidth/2)
+				local tmpy = y % (gridwidth/2)
+				local gridx = math.floor(x/(gridwidth/2))
+				local gridy = math.floor(y/(gridwidth/2))
+				lastgridx = 
+				debugPrint("gridx:"..gridx.." gridy:"..gridy)
+				local wtmp = (moveBounds.right - moveBounds.left)/2
+				local htmp = (moveBounds.bottom - moveBounds.top)/2
+				totalDelta.x = totalDelta.x - (moveBounds.left - (gridx*(gridwidth/2)-wtmp))
+				totalDelta.y = totalDelta.y - (moveBounds.top - (gridy*(gridwidth/2)-htmp))
+				moveBounds:offsetTo(gridx*(gridwidth/2)-wtmp,gridy*(gridwidth/2)-htmp)
+			else
+				totalDelta.x = totalDelta.x + moveDelta.x
+				totalDelta.y = totalDelta.y + moveDelta.y
+				moveBounds:offset(moveDelta.x,moveDelta.y)
+			end
 			invalidate()
 			return true
 		else
@@ -152,6 +169,10 @@ function moveTouch.onTouch(v,e)
 			moveBitmap = nil
 			local dx = totalDelta.x
 			local dy = totalDelta.y
+			--if(gridsnap) then
+				--dx = 
+			--end
+			
 			totalDelta.x = 0
 			totalDelta.y = 0
 			for i,b in pairs(buttons) do
@@ -235,7 +256,7 @@ function enterMoveMode()
 	moveCanvas:translate(-1*x1,-1*y1)
 	for i,b in pairs(buttons) do
 		if(b.selected == true) then
-			b:draw(0,moveCanvas)
+			b:draw(1,moveCanvas)
 			--debugPrint("debugprinting:"..x1.."x"..y1)
 			--moveCanvas:drawRect(b.rect,b.paintOpts)
 		end
@@ -246,6 +267,7 @@ function enterMoveMode()
 end
 
 managerTouch = {}
+gridsnap = true
 function managerTouch.onTouch(v,e)
 	--debugPrint("ALT TOUCH ROUTINE YEA!"..e:getX().." "..e:getY())
 	local x = e:getX()
@@ -265,6 +287,15 @@ function managerTouch.onTouch(v,e)
 			fingerdown = true
 			touchedbutton = b
 			touchedindex = index
+			b.selected = true
+			updateSelected(b,true)
+			invalidate()
+			if(b.selected) then
+				debugPrint("SELECTEDTOUCHSTART")
+				selectedtouchstart = true
+			else
+				selectedtouchstart = false
+			end
 			debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.data.x,touchedbutton.data.y))
 			--if(#buttons > 50 and not manage) then
 			--	aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
@@ -276,7 +307,19 @@ function managerTouch.onTouch(v,e)
 			return true
 		else
 			--we are draggin now
-			
+			buttoncleared = false
+			fingerdown = false
+			for i,b in ipairs(buttons) do
+				if b.selected then
+					b.selected = false
+					updateSelected(b,false)
+					buttoncleared = true
+				end
+			end
+			if buttoncleared then 
+				invalidate() 
+				
+			end
 			if(manage) then
 				dragstart.x = x
 				dragstart.y = y
@@ -286,7 +329,7 @@ function managerTouch.onTouch(v,e)
 	end
 
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
-
+	
 		--if(not manage
 		--debugPrint("manager move move")
 		if(prevevent == 0) then
@@ -325,6 +368,24 @@ function managerTouch.onTouch(v,e)
 			return true
 		
 		 end
+		 
+		 if(fingerdown and selectedtouchstart) then
+		 	debugPrint("ENTERING MOVE MODE")
+		 	touchMoving = true
+		 	moveCurrent.x = x
+			moveCurrent.y = y
+			if(moveCapOnce) then
+				moveStart.x = x
+				moveStart.y = y
+				--boundsStart.x = moveBounds:centerX()
+				--boundsStart.y = moveBounds:centerY()
+				moveCapOnce = false
+			end
+			fingerdown = false
+			selectedtouchstart = false
+		 	enterMoveMode()
+		 	return true
+		 end
 		 --if(fingerdown and manage) then
 		--	local modx = (math.floor(e:getX()/gridwidth)*gridwidth)+(gridwidth/2)
 		--	local mody = (math.floor(e:getY()/gridwidth)*gridwidth)+(gridwidth/2)
@@ -351,7 +412,7 @@ function managerTouch.onTouch(v,e)
 			invalidate()
 			return true
 		end
-		if(manage and not fingerdown) then
+		if(manage and not fingerdown and not buttoncleared) then
 		debugPrint("new button")
 			--lawl, make new button
 			local modx = (math.floor(x/gridwidth)*gridwidth)+(gridwidth/2)
@@ -365,14 +426,14 @@ function managerTouch.onTouch(v,e)
 			invalidate()
 			return true
 		end
-		if(manage and fingerdown and touchedbutton.selected == true) then
+		if(manage and fingerdown and touchedbutton.selected == true and selectedtouchstart) then
 			--launch editor selection screen
 			debugPrint("selected touched")
 			showEditorSelection()
 			touchedbutton={}
 			fingerdown = false
 			return true
-		else
+		elseif(manage and fingerdown and touchedbutton.selected == false) then
 			debugPrint("button_selected")
 			for i,b in ipairs(buttons) do
 				if(b.selected) then
@@ -411,13 +472,17 @@ function normalTouch.onTouch(v,e)
 		prevevent = 0
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
+			scheduleCallback(100,"doEdit",1000)
 			fingerdown = true
+			--touchedbutton.selected = false
 			touchedbutton = b
+			b.selected = true
 			touchedindex = index
 			--clearButton(b)
 			normalTouchState = 1
 			--clearButton(b)
 			b:draw(normalTouchState,buttonCanvas)
+			selectedtouchstart = true
 			invalidate()
 			return true
 		else
@@ -459,6 +524,7 @@ function normalTouch.onTouch(v,e)
 					b:draw(normalTouchState,buttonCanvas)
 				end
 			else
+				cancelCallback(100)
 				if(normalTouchState ~= 2) then
 					normalTouchState = 2
 					--clearButton(b)
@@ -475,7 +541,10 @@ function normalTouch.onTouch(v,e)
 		end
 	elseif(action == ACTION_UP) then
 		if(fingerdown) then
+			cancelCallback(100)
 			fingerdown = false
+			selectedtouchstart = false
+			touchedbutton.selected = false
 			local r = touchedbutton.rect
 			if(r:contains(x,y)) then
 				--process primary touch
@@ -509,6 +578,13 @@ function normalTouch.onTouch(v,e)
 end
 normalTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",normalTouch)
 view:setOnTouchListener(normalTouch_cb)
+
+function doEdit()
+	--this is launched from the long press
+	debugPrint("EDITING")
+	manage = true
+	enterManagerMode()
+end
 --this window is a full screen window, so we don't really need to concern ourselves with bounds and the such, but we do need to create a button class.
 RectFClass = luajava.bindClass("android.graphics.RectF")
 function updateSelected(b,sel)
@@ -633,7 +709,7 @@ cpaint:setXfermode(xferModeClear)
 
 drawManagerLayer = true
 function enterManagerMode()
-	gridwidth = defaults.width + 25
+	gridwidth = defaults.width*density
 	if(drawManagerLayer) then
 		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
@@ -645,7 +721,7 @@ function enterManagerMode()
 	backWidget = makeBackWidget()
 	local parent = view:getParent()
 	parent:addView(backWidget)
-	touchedbutton = nil
+	--touchedbutton = nil
 		--paint:setShadowLayer(1,0,0,Color.WHITE)
 	view:setOnTouchListener(managerTouch_cb)
 	manage = true
@@ -668,6 +744,7 @@ function exitManagerMode()
 	local tmp = {}
 	for i,b in pairs(buttons) do
 		tmp[i] = b.data
+		if(b.selected) then b.selected = false end
 	end
 		
 	PluginXCallS("saveButtons",serialize(tmp))
@@ -678,23 +755,20 @@ end
 checkchange = {}
 function checkchange.onCheckedChanged(v,ischecked)
 	debugPrint("starting check change")
-	drawManagerLayer = ischecked
-	if(manage == true and ischecked == true) then
-		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
-		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
-		debugPrint("drawingManagerLayer")
-		drawManagerGrid()
-		--drawButtons()
-		invalidate()
-	else
-		managerCanvas = nil
-		managerLayer:recycle()
-		managerLayer = nil
-		--drawManagerLayer = false
-		--drawManagerGrid()
-		--drawButtons()
-		invalidate()
-	end
+	gridsnap = ischecked
+	--drawManagerLayer = ischecked
+	--if(manage == true and ischecked == true) then
+	--	managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
+	--	managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
+	--	debugPrint("drawingManagerLayer")
+	--	drawManagerGrid()	
+	--	invalidate()
+	--else
+	--	managerCanvas = nil
+	--	managerLayer:recycle()
+	--	managerLayer = nil
+	--	invalidate()
+	--end
 
 end
 
@@ -705,7 +779,7 @@ function drawManagerGrid()
 		debugPrint("starting draw")
 		c:drawRect(0,0,width,height,cpaint)
 		debugPrint("canvas is not null")
-		c:drawARGB(0xFF,0x0A,0x0A,0x0A)
+		c:drawARGB(manageropacity,0x0A,0x0A,0x0A)
 		--draw dashed lines.
 		local times = width / gridwidth
 		for x=1,times do
@@ -725,7 +799,9 @@ gridwidth = 67 * density
 seeker = {}
 function seeker.onProgressChanged(v,prog,state)
 	debugPrint("seekbarchanged:"..prog)
-	gridwidth = (32 + prog)*density
+	local tmp = 32 + prog
+	gridwidth = tmp*density
+	gridSizeLabel:setText("Grid Size: "..tmp)
 	--managerCanvas:clearCanvas()
 	drawManagerGrid()
 	--drawButtons()
@@ -733,6 +809,19 @@ function seeker.onProgressChanged(v,prog,state)
 end
 
 seeker_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",seeker)
+
+opacitySeeker = {}
+function opacitySeeker.onProgressChanged(v,prog,state)
+	dpaint:setAlpha(prog)
+	manageropacity = prog
+	debugPrint("manageropacity now:"..manageropacity)
+	local opacitypct = math.floor((manageropacity / 255)*100)
+	gridOpacityLabel:setText("Grid Opacity: "..opacitypct.."%")
+	drawManagerGrid()
+	invalidate()
+end
+
+opacitySeeker_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",opacitySeeker)
 
 radio = {}
 function radio.onCheckedChanged(group,id)
@@ -1055,30 +1144,59 @@ function buttonOptions()
 	ll:setOrientation(1)
 	
 	fillparams = luajava.new(LinearLayoutParams,LinearLayoutParams.FILL_PARENT,LinearLayoutParams.WRAP_CONTENT,1)
-	
+	wrapparams = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT,1)
+	wrapparams:setMargins(0,15,0,0)
 	--lp = luajava.newInstance("android.view.ViewGroup$LayoutParams",-1,-2)
 
 	cb = luajava.newInstance("android.widget.CheckBox",ctex)
-	cb:setChecked(manage)
-	cb:setText("Show Grid/Manage Buttons")
+	cb:setChecked(gridsnap)
+	cb:setText("Snap To Grid")
 	cb:setOnCheckedChangeListener(checkchange_cb)
 	cb:setLayoutParams(fillparams)
+	
+	local subrow = luajava.new(LinearLayout,ctex)
+	subrow:setLayoutParams(fillparams)
+	
+	--gridSizeRow = luajava.newInstance("android.widget.LinearLayout",ctex)
+	--gridSizeRow:setOrientation(1)
 	
 	debugPrint("seekbar creation")
 	sb = luajava.newInstance("android.widget.SeekBar",ctex)
 	sb:setOnSeekBarChangeListener(seeker_cb)
 	sb:setLayoutParams(fillparams)
+	gridSizeLabel = luajava.newInstance("android.widget.TextView",ctex)
+	gridSizeLabel:setLayoutParams(wrapparams)
+	gridSizeLabel:setTextSize(8*density)
+	gridSizeLabel:setText("Grid Size: "..gridwidth)
+	
+	--//gridSizeIndicator
 	--sb:setMinimum(10)
 	--sb:setMax(200)
-	--sb:setProgress(gridwidth)
+	sb:setProgress((gridwidth/density)-32)
 	
+	opacity = luajava.newInstance("android.widget.SeekBar",ctex)
 	
+	opacity:setLayoutParams(fillparams)
+	opacity:setMax(255)
+	--debugPrint("settings opacity slider to:"..manageropacity)
+	opacity:setProgress(manageropacity)
+	opacity:setOnSeekBarChangeListener(opacitySeeker_cb)
+	
+	gridOpacityLabel = luajava.newInstance("android.widget.TextView",ctex)
+	gridOpacityLabel:setLayoutParams(wrapparams)
+	gridOpacityLabel:setTextSize(8*density)
+	gridOpacityLabel:setText("Grid Opacity: "..manageropacity)
 	
 	rg_static = luajava.bindClass("android.widget.RadioGroup")
 	
+	--local subrow2 = luajava.new(LinearLayout,ctex)
+	--subrow2:setLayoutParams(fillparams)
+	
 	rg = luajava.newInstance("android.widget.RadioGroup",ctex)
-	rg:setLayoutParams(fillparams)
+	rgLayoutParams = luajava.newInstance("android.widget.LinearLayout$LayoutParams",-2,-2)
+	rg:setLayoutParams(rgLayoutParams)
 	rg:setOnCheckedChangeListener(radio_cb)
+	rg:setOrientation(0)
 	
 	contain = luajava.newInstance("android.widget.RadioButton",ctex)
 	contain:setText("Contains")
@@ -1088,18 +1206,25 @@ function buttonOptions()
 	intersect:setText("Intersect")
 	intersect:setId(0)
 	
-	local subrow = luajava.new(LinearLayout,ctex)
-	subrow:setLayoutParams(fillparams)
+	
 	
 	rg_lp = luajava.bindClass("android.widget.RadioGroup$LayoutParams")
 	
 	rg_lp_gen = luajava.new(rg_lp,fillparams)
-	
-	
+	rg_lp_gen2 = luajava.new(rg_lp,fillparams)
+	rg_lp_gen2:setMargins(25,0,0,0)
 	
 	rg:addView(intersect,0,rg_lp_gen)
-	rg:addView(contain,1,rg_lp_gen)
+	rg:addView(contain,1,rg_lp_gen2)
 	rg:check(intersectMode)
+	
+	selectionTextLabel = luajava.newInstance("android.widget.TextView",ctex)
+	selectionTextLabel:setLayoutParams(wrapparams)
+	selectionTextLabel:setTextSize(8*density)
+	selectionTextLabel:setText("Drag rectangle selection test:")
+	
+	--subrow2:addView(selectionTextLabel)
+	--subrow2:addView(rg)
 	
 	setSettingsButton = luajava.new(Button,ctex)
 	setSettingsButton:setLayoutParams(fillparams)
@@ -1107,13 +1232,19 @@ function buttonOptions()
 	setSettingsButton:setOnClickListener(setSettingsButton_cb)
 	debugPrint("adding views")
 	
-	ll:addView(cb)
-	ll:addView(sb)
-	subrow:addView(rg)
-	--ll:addView(rg)
+	subrow:addView(cb)
 	subrow:addView(setSettingsButton)
-	--ll:addView(setSettingsButton)
 	ll:addView(subrow)
+	ll:addView(gridSizeLabel)
+	ll:addView(sb)
+	ll:addView(gridOpacityLabel)
+	ll:addView(opacity)
+	ll:addView(selectionTextLabel)
+	ll:addView(rg)
+	--ll:addView(rg)
+	
+	--ll:addView(setSettingsButton)
+	--ll:addView(subrow)
 	--set up the show editor settings button.
 	debugPrint("builder alert creation")
 	builder = luajava.newInstance("android.app.AlertDialog$Builder",ctex)
@@ -1137,7 +1268,8 @@ dpaint = luajava.new(PaintClass)
 Paint = luajava.bindClass("android.graphics.Paint")
 Color = luajava.bindClass("android.graphics.Color")
 --dpaint:setStyle(Paint.Style.STROKE)
-dpaint:setARGB(0xFF,0xFF,0x00,0x00)
+manageropacity = 255
+dpaint:setARGB(manageropacity,0xFF,0x00,0x00)
 --dpaint:setShadowLayer(6,0,0,Color.YELLOW)
 
 
@@ -1171,7 +1303,11 @@ function drawButtons()
 	--local counter = 0
 	for i,b in pairs(buttons) do
 		--debugPrint("DRAWING BUTTON"..i)
-		b:draw(0,buttonCanvas)
+		if(b.selected) then
+			b:draw(1,buttonCanvas)
+		else
+			b:draw(0,buttonCanvas)
+		end
 		--counter = counter + 1
 	end
 	--debugPrint("DRAWING "..counter.." BUTTONS")

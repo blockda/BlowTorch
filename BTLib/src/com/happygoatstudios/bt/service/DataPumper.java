@@ -272,7 +272,9 @@ public class DataPumper extends Thread {
 					}
 				}
 			};
-			handler.sendEmptyMessage(MESSAGE_RETRIEVE);
+			if(reader!=null) {
+				handler.sendEmptyMessage(MESSAGE_RETRIEVE);
+			}
 			Looper.loop();
 		}
 		

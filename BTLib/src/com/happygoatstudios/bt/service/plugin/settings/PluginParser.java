@@ -1,6 +1,7 @@
 package com.happygoatstudios.bt.service.plugin.settings;
 
 import java.io.FileNotFoundException;
+import java.math.BigInteger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import com.happygoatstudios.bt.alias.AliasParser;
 import android.content.Context;
 import android.os.Handler;
 import android.sax.Element;
+import android.sax.ElementListener;
 import android.sax.EndElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
@@ -71,6 +73,8 @@ public class PluginParser extends BasePluginParser {
 	final AliasData current_alias = new AliasData();
 	final String current_script_body = new String();
 	final WindowToken current_window = new WindowToken();
+	final FileOption currentFileOption = new FileOption();
+	final ListOption currentListOption = new ListOption();
 	String current_script_name = new String();
 	
 	public ArrayList<Plugin> load() throws FileNotFoundException, IOException, SAXException {
@@ -86,7 +90,7 @@ public class PluginParser extends BasePluginParser {
 		//do alternate parsing for plugin data.
 		RootElement root2 = new RootElement("blowtorch");
 		Element data = root2.getChild(PluginParser.TAG_PLUGINS).getChild(PluginParser.TAG_PLUGIN);
-		
+		//data.
 		//upon encountering.
 		//ok, so here is now where bootstrapping happens.
 		//TODO: change this to something like "bootstrap" or ""
@@ -227,7 +231,7 @@ public class PluginParser extends BasePluginParser {
 					p = new Plugin(serviceHandler,parent);
 					tmp.setPath(path);
 					p.setSettings(tmp);
-					
+					p.getSettings().getOptions().setListener(p);
 					plugins.add(p);
 				} catch (LuaException e) {
 					// TODO Auto-generated catch block
@@ -235,6 +239,292 @@ public class PluginParser extends BasePluginParser {
 				}
 				tmp = new PluginSettings();
 				
+			}
+			
+		});
+		
+		Element options = plugin.getChild("options");
+		options.setStartElementListener(new StartElementListener() {
+
+			@Override
+			public void start(Attributes a) {
+				String title = tmp.getName() + " Options";
+				String summary = "";
+				if(a.getValue("","title") != null) {
+					title = a.getValue("","title");
+				}
+				
+				if(a.getValue("","summary") != null) {
+					summary = a.getValue("","summary");
+				}
+				
+				tmp.getOptions().setTitle(title);
+				tmp.getOptions().setDescription(summary);
+			}
+			
+		});
+		
+		Element fileO = options.getChild("file");
+		Element boolO = options.getChild("boolean");
+		Element inteO = options.getChild("integer");
+		Element coloO = options.getChild("color");
+		Element encoO = options.getChild("encoding");
+		Element listO = options.getChild("list");
+		
+		//set up sub listeners for attributes that need them.
+		Element fileValue = fileO.getChild("value");
+		Element filePath = fileO.getChild("path");
+		Element fileExt = fileO.getChild("extension");
+		
+		Element listValue = listO.getChild("value");
+		Element listItem = listO.getChild("item");
+		
+		//set up handlers.
+		boolO.setTextElementListener(new TextElementListener() {
+			BooleanOption opt = null;
+			@Override
+			public void start(Attributes a) {
+				opt = new BooleanOption();
+				if(a.getValue("","key") != null) {
+					opt.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					opt.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					opt.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end(String body) {
+				if(body.equals("true")) {
+					opt.setValue(true);
+				} else {
+					opt.setValue(false);
+				}
+				
+				tmp.getOptions().addOption(opt);
+			}
+			
+		});
+		
+		coloO.setTextElementListener(new TextElementListener() {
+			ColorOption opt = null;
+			@Override
+			public void start(Attributes a) {
+				opt = new ColorOption();
+				if(a.getValue("","key") != null) {
+					opt.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					opt.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					opt.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end(String body) {
+				
+				opt.setValue(body);
+				tmp.getOptions().addOption(opt);
+				//try {
+					//BigInteger num = new BigInteger(body,16);
+					
+				//	opt.setValue(num.intValue());
+					
+				//	tmp.getOptions().addOption(opt);
+				//}catch(NumberFormatException e) {
+					
+				//}
+			}
+			
+		});
+		
+		fileO.setElementListener(new ElementListener() {
+
+			@Override
+			public void start(Attributes a) {
+				if(a.getValue("","key") != null) {
+					currentFileOption.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					currentFileOption.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					currentFileOption.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end() {
+				tmp.getOptions().addOption(currentFileOption.copy());
+				currentFileOption.reset();
+			}
+			
+		});
+		
+		fileValue.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				//has no attributes
+			}
+
+			@Override
+			public void end(String body) {
+				currentFileOption.setValue(body);
+			}
+			
+		});
+		
+		filePath.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				//no attributes
+			}
+
+			@Override
+			public void end(String body) {
+				currentFileOption.paths.add(body);
+			}
+			
+		});
+		
+		fileExt.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				//has no attributes
+			}
+
+			@Override
+			public void end(String body) {
+				currentFileOption.extensions.add(body);
+			}
+			
+		});
+		
+		listO.setElementListener(new ElementListener() {
+
+			@Override
+			public void start(Attributes a) {
+				if(a.getValue("","key") != null) {
+					currentListOption.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					currentListOption.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					currentListOption.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end() {
+				tmp.getOptions().addOption(currentListOption.copy());
+				currentListOption.reset();
+			}
+			
+		});
+		
+		listValue.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				//no attributes
+			}
+
+			@Override
+			public void end(String body) {
+				try {
+				int num = Integer.parseInt(body);
+					currentListOption.setValue(num);
+				} catch (NumberFormatException e) {
+					currentListOption.setValue(0);
+				}
+			}
+			
+		});
+		
+		listItem.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				//no attributes
+			}
+
+			@Override
+			public void end(String body) {
+				currentListOption.items.add(body);
+			}
+			
+		});
+		
+		inteO.setTextElementListener(new TextElementListener() {
+			IntegerOption o = null;
+			@Override
+			public void start(Attributes a) {
+				o = new IntegerOption();
+				if(a.getValue("","key") != null) {
+					o.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					o.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					o.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end(String body) {
+				try {
+					int num = Integer.parseInt(body);
+					o.setValue(num);
+					tmp.getOptions().addOption(o);
+				} catch(NumberFormatException e) {
+					
+				}
+			}
+			
+		});
+		
+		encoO.setTextElementListener(new TextElementListener() {
+			EncodingOption o = null;
+			@Override
+			public void start(Attributes a) {
+				o = new EncodingOption();
+				if(a.getValue("","key") != null) {
+					o.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					o.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					o.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end(String body) {
+				o.setValue(body);
+				tmp.getOptions().addOption(o);
 			}
 			
 		});
@@ -307,6 +597,17 @@ public class PluginParser extends BasePluginParser {
 		}
 		out.endTag("", "timers");
 		
+		out.startTag("", "options");
+		if(plugin.getSettings().getOptions().title != null && !plugin.getSettings().getOptions().title.equals("")) {
+			out.attribute("", "title", plugin.getSettings().getOptions().title);
+		}
+		if(plugin.getSettings().getOptions().description != null && !plugin.getSettings().getOptions().description.equals("")) {
+			out.attribute("", "summary", plugin.getSettings().getOptions().description);
+		}
+		
+		dumpPluginOptions(out,plugin.getSettings().getOptions());
+		out.endTag("", "options");
+		
 		for(String scriptName : plugin.getSettings().getScripts().keySet()) {
 			out.startTag("", "script");
 			out.attribute("", "name", scriptName);
@@ -317,6 +618,17 @@ public class PluginParser extends BasePluginParser {
 		plugin.scriptXmlExport(out);
 		
 		out.endTag("", "plugin");
+	}
+	
+	private static void dumpPluginOptions(XmlSerializer out,SettingsGroup o) throws IllegalArgumentException, IllegalStateException, IOException {
+		for(Option tmp : o.getOptions()) {
+			if(tmp instanceof SettingsGroup) {
+				dumpPluginOptions(out,(SettingsGroup)tmp);
+			} else {
+				BaseOption opt = (BaseOption)tmp;
+				opt.saveToXML(out);
+			}
+		}
 	}
 	
 }
