@@ -32,6 +32,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -1518,6 +1521,16 @@ public class MainWindow extends Activity {
 		//if(this.getClass().getM)
 		//return false;
 	}
+	
+	private boolean supportsRotation() {
+		try {
+			android.view.Display.class.getMethod("getRotation", null);
+			return true;
+		} catch (NoSuchMethodException e) {
+			return false;
+		}
+		//return false;
+	}
 
 
 	Handler extporthandler = new Handler() {
@@ -2549,8 +2562,12 @@ public class MainWindow extends Activity {
 		cleanupWindows();
 		
 		Display display = ((WindowManager)this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-		
-		landscape = (display.getRotation() == Surface.ROTATION_180 || display.getRotation() == Surface.ROTATION_90) ? true : false;
+		//if(supportsRotation()) {
+		//	landscape = (display.getRotation() == Surface.ROTATION_180 || display.getRotation() == Surface.ROTATION_90) ? true : false;
+		//} else {
+			
+		//}
+		landscape = isLandscape();
 		windowsInitialized = true;
 		
 		try {
@@ -2588,6 +2605,15 @@ public class MainWindow extends Activity {
 				}
 			}
 		} 
+			ApplicationInfo ai = null;
+			try {
+				ai = this.getPackageManager().getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA);
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			String dataDir = ai.dataDir;
+		
 			//initialize windows.
 			for(Object x : mWindows) {
 				WindowToken w = null;
@@ -2596,7 +2622,7 @@ public class MainWindow extends Activity {
 				} else {
 					//err.
 				}
-				initWindow(w);
+				initWindow(w,dataDir);
 				
 				
 			}
@@ -2615,7 +2641,7 @@ public class MainWindow extends Activity {
 		//}
 	}
 	
-	private void initWindow(WindowToken w) {
+	private void initWindow(WindowToken w,String dataDir) {
 		RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
 		View v = rl.findViewWithTag(w.getName());
 		if(v == null) {
@@ -2623,7 +2649,7 @@ public class MainWindow extends Activity {
 				long sfs = System.currentTimeMillis();
 				sfs = sfs + 10;
 			}
-			com.happygoatstudios.bt.window.Window tmp = new com.happygoatstudios.bt.window.Window(this,w.getName(),w.getPluginName(),myhandler,w.getSettings());
+			com.happygoatstudios.bt.window.Window tmp = new com.happygoatstudios.bt.window.Window(dataDir,this,w.getName(),w.getPluginName(),myhandler,w.getSettings());
 			
 			//determine the appropriate layout group to load.
 			int screenLayout = this.getResources().getConfiguration().screenLayout;
@@ -2734,5 +2760,24 @@ public class MainWindow extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private boolean isLandscape() {
+	    Display getOrient = getWindowManager().getDefaultDisplay();
+	    int orientation = Configuration.ORIENTATION_UNDEFINED;
+	    if(getOrient.getWidth()==getOrient.getHeight()){
+	        orientation = Configuration.ORIENTATION_SQUARE;
+	    } else{ 
+	        if(getOrient.getWidth() < getOrient.getHeight()){
+	            orientation = Configuration.ORIENTATION_PORTRAIT;
+	        }else { 
+	             orientation = Configuration.ORIENTATION_LANDSCAPE;
+	        }
+	    }
+	    if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
+	    	return true;
+	    } else {
+	    	return false;
+	    }
 	}
 }

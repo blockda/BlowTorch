@@ -51,7 +51,7 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   <timers />
   <script name="uiBootStrap">
   <![CDATA[
-  	dofile("/mnt/sdcard/BlowTorch/uibootstrap.lua")
+  	dofile(GetExternalStorageDirectory().."/BlowTorch/uibootstrap.lua")
   ]]>
   </script>
   <plugins>
@@ -90,12 +90,12 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   	 	</options>
 		<script name="bootstrap">
 		<![CDATA[
-			dofile("/mnt/sdcard/BlowTorch/buttonserver.lua")
+			dofile(GetExternalStorageDirectory().."/BlowTorch/buttonserver.lua")
 		]]>
 		</script>
 		<script name="buttonwindow">
 			<![CDATA[
-			dofile("/mnt/sdcard/BlowTorch/buttonwindow.lua")
+			dofile(GetExternalStorageDirectory().."/BlowTorch/buttonwindow.lua")
 			--debugPrint("custom loaded file go!")
 		]]>
   		</script>
@@ -111,6 +111,19 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
 			</buttonset>
 			<selected>a</selected>
   		</buttonsets>
+	</plugin>
+	<plugin name="dbtest" id="10" author="Daniel Block">
+		<triggers>
+			<trigger title="room_mapper" pattern="%room.info" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="got_gmcp_room" fireWhen="always"/>
+			</trigger>
+			<trigger title="area_mapper" pattern="%room.area" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="update_gmcp_area" fireWhen="always"/>
+			</trigger>
+		</triggers>
+		<script name="bootstrap">
+		dofile(GetExternalStorageDirectory()..""/BlowTorch/simpledb.lua")
+		</script>
 	</plugin>
   </plugins>
 </blowtorch>

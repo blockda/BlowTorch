@@ -166,6 +166,7 @@ public class BaseParser {
 			path = location;
 	}
 	
+	
 	protected InputStream getInputStream() throws FileNotFoundException {
 		
 			FileInputStream input = null;

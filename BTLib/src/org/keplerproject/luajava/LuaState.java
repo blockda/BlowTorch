@@ -33,7 +33,7 @@ package org.keplerproject.luajava;
  */
 public class LuaState
 {
-  private final static String LUAJAVA_LIB = "luajava-1.1";
+  private final static String LUAJAVA_LIB = "lua";
 
   final public static Integer LUA_GLOBALSINDEX  = new Integer(-10002);
   final public static Integer LUA_REGISTRYINDEX = new Integer(-10000);
@@ -89,6 +89,7 @@ public class LuaState
    */
   static
   {
+	//System.loadLibrary("lua");
     System.loadLibrary(LUAJAVA_LIB);
   }
 
@@ -186,6 +187,7 @@ public class LuaState
   private synchronized native int    _toInteger(CPtr ptr, int idx);
   private synchronized native int    _toBoolean(CPtr ptr, int idx);
   private synchronized native String _toString(CPtr ptr, int idx);
+  private synchronized native byte[] _toBytes(CPtr ptr,int idx);
   private synchronized native int    _objlen(CPtr ptr, int idx);
   private synchronized native CPtr   _toThread(CPtr ptr, int idx);
 
@@ -457,6 +459,11 @@ public class LuaState
   public String toString(int idx)
   {
     return _toString(luaState, idx);
+  }
+  
+  public byte[] toBytes(int idx)
+  {
+	  return _toBytes(luaState,idx);
   }
   
   public int strLen(int idx)

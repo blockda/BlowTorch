@@ -90,10 +90,10 @@ public class ConnectionSetttingsParser extends PluginParser {
 		//Element trigger = triggers.getChild("trigger");
 		//Element alias = aliases.getChild("alias");
 		Element script = root.getChild("script");
-		
+		Element triggers = root.getChild("triggers");
 		
 		//do our attatch listener dance.
-		TriggerParser.registerListeners(root, GLOBAL_HANDLER, new TriggerData(), current_trigger, current_timer);
+		TriggerParser.registerListeners(triggers, GLOBAL_HANDLER, new TriggerData(), current_trigger, current_timer);
 		AliasParser.registerListeners(root, GLOBAL_HANDLER, current_alias);
 		TimerParser.registerListeners(root, GLOBAL_HANDLER, new TimerData(), current_trigger, current_timer);
 		WindowTokenParser.registerListeners(window, current_window, GLOBAL_HANDLER);

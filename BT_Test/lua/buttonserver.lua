@@ -1,8 +1,11 @@
 --debugPrint("package path:"..package.path)
-package.path = "/mnt/sdcard/BlowTorch/?.lua"
+package.path = package.path..";"..GetExternalStorageDirectory().."/BlowTorch/?.lua"
+--package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
+
 --debugPrint("package path:"..package.path)
 require("button")
 require("serialize")
+local marshal = require("marshal")
 --this is the back end of the script, it will take care of reading/writing buttons to disk
 --and storing all the loaded buttons in memory.
 
@@ -55,7 +58,34 @@ function loadButtonSet(args)
 		--local lob = {}
 		current_set = args
 		--debugPrint(serialize(lob))
-		WindowXCallS("button_window","loadButtons",serialize(lob))
+		--WindowXCallS("button_window","loadButtons",serialize(lob))
+		--local orig = { answer = 42}
+		
+		
+		--assert(marshal.encode(orig))
+		
+		--local str = marshal.encode(orig)
+		--debugPrint("attempting byte dump")
+		--for i=1,#str do
+		--	local c = str:sub(i,i)
+			--local df = tonumber(c)
+			--if(df ~= nil) then
+		--		debugPrint("byte: "..string.byte(c))
+			--else
+			--	debugPrint("byte nil, probably 0x8e");
+			--end
+		--end
+		
+		
+		--debugPrint("trying to copy")
+		--local copy = marshal.clone(orig)
+		--debugPrint("cloned value"..copy.answer)
+		--local copy = marshal.decode(str)
+		
+		--debugPrint(copy.answer)
+		
+		--debugPrint(str)
+		WindowXCallB("button_window","loadButtons",marshal.encode(lob))
 		
 	end
 	
@@ -71,7 +101,8 @@ function loadAndEditSet(data)
 	
 	if(lob.set ~= nil) then
 		current_set = data
-		WindowXCallS("button_window","loadAndEditSet",serialize(lob))
+		--WindowXCallS("button_window","loadAndEditSet",serialize(lob))
+		WindowXCallB("button_window","loadAndEditSet",luabins.save(lob))
 	end
 end
 

@@ -366,6 +366,18 @@ public class LuaObject
 			return str;
 		}
 	}
+	
+	public byte[] getBytes()
+	{
+		synchronized(L)
+		{
+			push();
+			byte[] tmp = L.toBytes(-1);
+			L.pop(1);
+			return tmp;
+		}
+		
+	}
 
 	public Object getObject() throws LuaException
 	{
