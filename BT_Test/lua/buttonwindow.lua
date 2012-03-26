@@ -1,8 +1,11 @@
 --debugPrint("package path:"..package.path)
-package.path = "/mnt/sdcard/BlowTorch/?.lua"
+package.path = package.path..";"..GetExternalStorageDirectory().."/BlowTorch/?.lua"
+--package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
 --debugPrint("package path:"..package.path)
 require("button")
 require("serialize")
+require("bit")
+local marshal = require("marshal")
 defaults = nil
 
 --set up the density value.
@@ -31,6 +34,17 @@ AnimationSet = luajava.bindClass("android.view.animation.AnimationSet")
 LayoutAnimationController = luajava.bindClass("android.view.animation.LayoutAnimationController")
 HapticFeedbackConstants = luajava.bindClass("android.view.HapticFeedbackConstants")
 lastLoadedSet = nil
+
+		--assert(marshal.encode(orig))
+		
+		--local str = marshal.encode(orig)
+		--local copy = marshal.decode(str)
+		--debugPrint("trying to copy")
+local bit1 = bit.tobit(7)
+local bit2 = bit.bnot(bit1)
+local bit3 = bit.tohex(bit2)
+debugPrint("BitOp Test:"..bit3)		
+
 function loadButtons(args)
 
 	--debugPrint("WindowXCallS Succeeded!")
@@ -39,7 +53,12 @@ function loadButtons(args)
 	--	debugPrint(i.."=>"..v)
 	--end
 	--printTable("args",args)
-	local tmp = loadstring(args)()
+	
+	
+	--local tmp = loadstring(args)()
+	--assert(marshal.decode(args))
+	local tmp = marshal.decode(args)
+	--debugPrint("deserialized table: answer="..tmp.answer)
 	--printTable("defs",tmp.default)
 	lastLoadedSet = tmp.name
 	--set up metatables.

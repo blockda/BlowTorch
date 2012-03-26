@@ -54,11 +54,16 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -181,7 +186,10 @@ public class StellarService extends Service {
 	//HashMap<String,TimerExtraTask> timerTasks = new HashMap<String,TimerExtraTask>();
 	
 	static {
-		System.loadLibrary("luajava-1.1");
+		System.loadLibrary("sqlite3");
+		System.loadLibrary("lua");
+		//System.loadLibrary("lsqlite3");
+		//System.loadLibrary("luabins");
 	}
 	
 	public void onLowMemory() {
@@ -472,7 +480,6 @@ public class StellarService extends Service {
 			return 0;
 		}
 
-		
 	}
 	
 	LuaState L = null;
@@ -482,7 +489,7 @@ public class StellarService extends Service {
 	Handler handler = null;
 	public void onCreate() {
 		
-		Debug.waitingForDebugger();
+		//Debug.waitForDebugger();
 		
 		connections = new HashMap<String,Connection>();
 		
@@ -494,6 +501,34 @@ public class StellarService extends Service {
 		
 		
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
+		
+		int libsver = prefs.getInt("CURRENT_LUA_LIBS_VERSION", 0);
+		ComponentName myservice = new ComponentName(this,this.getClass());
+		Bundle meta = null;
+		try {
+			meta = this.getPackageManager().getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData;
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int packagever = meta.getInt("BLOWTORCH_LUA_LIBS_VERSION");
+		if(packagever != libsver) {
+			//copy new libs.
+			try {
+				updateLibs();
+			} catch (NameNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//SharedPreferences.Editor editor = prefs.edit();
+			//editor.putInt("CURRENT_LUA_LIBS_VERSION", packagever);
+			//editor.commit();
+ catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		//settingslocation = prefs.getString("SETTINGS_PATH", "");
 		//if(settingslocation.equals("")) {
 			//Log.e("SERVICE","LAUNCHER FAILED TO PROVIDE SETTINGS PATH");
@@ -3674,5 +3709,76 @@ public class StellarService extends Service {
 			callbacks.finishBroadcast();
 			
 		}
-
+		
+		private void updateLibs() throws NameNotFoundException, IOException {
+			ApplicationInfo ai = this.getPackageManager().getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA);
+			//ai.dataDir;
+			String dataDir = ai.dataDir;
+			File libs = new File(dataDir + "/lua/lib");
+			deleteRecursive(libs);
+			File share = new File(dataDir + "/lua/share");
+			deleteRecursive(share);
+			
+			File lualib = new File(dataDir + "/lua/lib/5.1/");
+			if(!lualib.exists()) lualib.mkdirs();
+			
+			File luashare = new File(dataDir + "/lua/share/5.1/");
+			if(!luashare.exists()) luashare.mkdirs();
+			
+			//copy new file.
+			AssetManager assetManager = this.getAssets();
+			String[] files = null;
+			try {
+				files = assetManager.list("lib/lua/5.1");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			for(String filename : files) {
+				//Log.e("asset name:","name:"+filename);
+				InputStream in = assetManager.open("lib/lua/5.1/"+filename);
+				File tmp = new File(lualib,filename);
+				if(!tmp.exists()) { tmp.createNewFile(); }
+				OutputStream out = new FileOutputStream(tmp);
+				copyfile(in,out);
+				in.close();
+				in = null;
+				out.flush();
+				out.close();
+				out = null;
+			}
+			
+			files = assetManager.list("share/lua/5.1");
+			for(String filename : files) {
+				InputStream in = assetManager.open("share/lua/5.1/" + filename);
+				File tmp = new File(luashare,filename);
+				if(!tmp.exists()) { tmp.createNewFile(); }
+				OutputStream out = new FileOutputStream(tmp);
+				copyfile(in,out);
+				in.close();
+				in = null;
+				out.flush();
+				out.close();
+				out = null;
+			}
+		}
+		
+		private void deleteRecursive(File file) {
+			if(file.isDirectory()) {
+				for(File child : file.listFiles()) {
+					deleteRecursive(child);
+				}
+			} else {
+				file.delete();
+			}
+		}
+		
+		private void copyfile(InputStream in,OutputStream out) throws IOException {
+			byte[] buffer = new byte[1024];
+			int read;
+			while((read = in.read(buffer)) != -1) {
+				out.write(buffer,0,read);
+			}
+		}
 }

@@ -108,7 +108,7 @@ public class LayerManager {
 				long sfs = System.currentTimeMillis();
 				sfs = sfs + 10;
 			}
-			Window tmp = new Window(mContext,w.getName(),w.getPluginName(),rootHandler,w.getSettings());
+			Window tmp = new Window("",mContext,w.getName(),w.getPluginName(),rootHandler,w.getSettings());
 			
 			//determine the appropriate layout group to load.
 			int screenLayout = mContext.getResources().getConfiguration().screenLayout;
