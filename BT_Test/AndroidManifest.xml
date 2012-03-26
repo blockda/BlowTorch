@@ -5,6 +5,7 @@
       android:versionName="1.1.3">
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST">
      	<meta-data android:value="1" android:name="BLOWTORCH_TEST_VERSION"/>
+     	<meta-data android:value="2" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
      	<activity android:name="com.happygoatstudios.bttest.TestLauncher"
                   android:label="BlowTorch TEST">
             <intent-filter>
