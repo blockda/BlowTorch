@@ -28,7 +28,11 @@ import org.keplerproject.luajava.LuaStateFactory;
 import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
@@ -82,6 +86,52 @@ public class Plugin implements SettingsChangedListener {
 		setSettings(new PluginSettings());
 		mHandler = h;
 		L = LuaStateFactory.newLuaState();
+		L.openLibs();
+		//set up the path and cpath.
+		String dataDir = null;
+		try {
+			ApplicationInfo ai = parent.service.getPackageManager().getApplicationInfo(parent.service.getPackageName(), PackageManager.GET_META_DATA);
+			dataDir = ai.dataDir;
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if(dataDir == null) {
+			//this is bad.
+			
+		} else {
+			//set up the path/cpath.
+			L.getGlobal("package");
+			L.getField(-1, "path");
+			String str = L.toString(-1);
+			L.pushString(dataDir + "/lua/share/5.1/?.lua");
+			L.pop(1);
+			L.setField(-2, "path");
+			
+			L.pushString(dataDir + "/lua/lib/5.1/?.so");
+			L.setField(-2, "cpath");
+			L.pop(1);
+			
+		}
+		
+		
+		//this is going to get ugly.
+		//L.newTable();
+		//L.pushString("package");
+		//L.pushValue(-2);
+		//L.setTable(LuaState.LUA_GLOBALSINDEX);
+		
+		//L.newTable();
+		//L.pushString("preload");
+		//L.pushValue(-2);
+		//L.setTable(-4);
+		//L.remove(-2);
+		
+		//L.pushString("lsqlite3");
+		//--L.
+		
+		
 		this.parent = parent;
 		initTimers();
 		initLua();
@@ -127,7 +177,7 @@ public class Plugin implements SettingsChangedListener {
 
 	private void initLua() throws LuaException {
 		//need to set up global functions, it all goes here.
-		L.openLibs();
+		
 		
 		TriggerEnabledFunction tef = new TriggerEnabledFunction(L,this,mHandler);
 		tef.register("TriggerEnabled");
@@ -152,6 +202,8 @@ public class Plugin implements SettingsChangedListener {
 		InvalidateWindowTextFunction iwtf = new InvalidateWindowTextFunction(L);
 		GMCPSendFunction gsf = new GMCPSendFunction(L);
 		UserPresentFunction upf = new UserPresentFunction(L);
+		WindowXCallBFunction wxcbf = new WindowXCallBFunction(L);
+		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
 		wf.register("NewWindow");
 		mwf.register("GetWindowTokenByName");
 		esf.register("ExecuteScript");
@@ -159,12 +211,14 @@ public class Plugin implements SettingsChangedListener {
 		rfc.register("RegisterSpecialCommand");
 		df.register("debugPrint");
 		wxctf.register("WindowXCallS");
+		wxcbf.register("WindowXCallB");
 		altwf.register("appendLineToWindow");
 		iwtf.register("invalidateWindowText");
 		gsf.register("Send_GMCP_Packet");
 		SaveSettingsFunction ssfun = new SaveSettingsFunction(L);
 		ssfun.register("saveSettings");
 		upf.register("userPresent");
+		gesdf.register("GetExternalStorageDirectory");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -605,39 +659,61 @@ public class Plugin implements SettingsChangedListener {
 			// TODO Auto-generated method stub
 			return 1;
 		}
-		
-		public HashMap<String,Object> dumpTable(String tablePath,int idx) {
-			
-			HashMap<String,Object> tmp = new HashMap<String,Object>();
-			int counter = 1;
-			L.pushNil();
-			while(L.next(idx) != 0) {
-				//String id = L.toString(-2);
-				String id = null;
-				if(L.isNumber(-2)) {
-					id = Integer.toString(counter);
-					counter++;
-				} else if(L.isString(-2)) {
-					id = L.toString(-2);
-				}
-				LuaObject l = L.getLuaObject(-1);
-				if(l.isTable()) {
-					//need to dump more tables
-					tmp.put(id, dumpTable(tablePath+"."+id,L.getTop()));
-					//Log.e("PLUGIN","TABLE RECURSIVE DUMP:"+L.getTop()+":"+(L.getLuaObject(L.getTop()).toString()));
-				
-				} else {
-					//Log.e("PLUGIN","WXCALLT:"+tablePath+"|"+id+"<==>"+l.getString());
-					tmp.put(id, l.getString());
-				}
-				
-				L.pop(1);
+	}
+	
+	private class GetExternalStorageDirectoryFunction extends JavaFunction {
+
+		public GetExternalStorageDirectoryFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//Log.e("PLUGIN","Get External storage state:"+Environment)
+			if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
+			} else {
+				L.pushNil();
 			}
-			
-			//L.pop(1);
-			return tmp;
+			return 1;
 		}
 		
+	}
+	
+	private class WindowXCallBFunction extends JavaFunction {
+
+		public WindowXCallBFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String token = this.getParam(2).getString();
+			String function = this.getParam(3).getString();
+			byte[] foo = null;
+			//try {
+				foo = this.getParam(4).getBytes();
+			//} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			//}
+			//L.L
+			Message msg = mHandler.obtainMessage(Connection.MESSAGE_WINDOWXCALLB,foo);
+			//String str = "";
+			//try {
+			//	str = parent.windowXCallS(token, function, foo.getString());
+			//} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			msg.getData().putString("TOKEN",token);
+			msg.getData().putString("FUNCTION", function);
+			//L.pushString(str);
+			mHandler.sendMessage(msg);
+			return 0;
+		}
 		
 	}
 	

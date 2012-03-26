@@ -116,6 +116,7 @@ public class Connection implements SettingsChangedListener {
 	public static final int MESSAGE_EXPORTFILE = 22;
 	public static final int MESSAGE_IMPORTFILE = 23;
 	public static final int MESSAGE_SENDGMCPDATA = 24;
+	public static final int MESSAGE_WINDOWXCALLB = 25;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -238,6 +239,17 @@ public class Connection implements SettingsChangedListener {
 						e3.printStackTrace();
 					}
 					break;
+				case MESSAGE_WINDOWXCALLB:
+					byte[] bytesa = (byte[]) msg.obj;
+					String tokens = msg.getData().getString("TOKEN");
+					String functions = msg.getData().getString("FUNCTION");
+					try {
+						Connection.this.windowXCallB(tokens, functions, bytesa);
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
+					break;
 				case MESSAGE_ADDFUNCTIONCALLBACK:
 					Bundle data = msg.getData();
 					String id = data.getString("ID");
@@ -306,17 +318,31 @@ public class Connection implements SettingsChangedListener {
 					sendToServer((byte[])msg.obj);
 					break;
 				case MESSAGE_SENDGMCPDATA:
-					Log.e("COnn","CONNECTION SENDING GMCP:"+((String)msg.obj));
+					
 					//construct the gmcp packet.
-					char IAC = 0xFF;
-					char SB = 0xFA;
-					char SE = 0xF0;
-					char DO = 0xFD;
-					char GMCP = (char) TC.GMCP;
-					String pkt = IAC + SB+GMCP + ((String)msg.obj) + IAC + SE;
+					byte IAC = (byte) 0xFF;
+					byte SB = (byte) 0xFA;
+					byte SE = (byte) 0xF0;
+					byte DO = (byte) 0xFD;
+					byte GMCP = TC.GMCP;
+					int size = ((String)msg.obj).length() + 5;
+					ByteBuffer fub = ByteBuffer.allocate(size);
+					fub.put(IAC).put(SB).put(GMCP);
+					try {
+						fub.put(((String)msg.obj).getBytes("ISO-8859-1"));
+					} catch (UnsupportedEncodingException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+					fub.put(IAC).put(SE);
+					byte[] fubtmp = new byte[size];
+					//String pkt = IAC + SB+GMCP + ((String)msg.obj) + IAC + SE;
+					fub.rewind();
+					fub.get(fubtmp);
 					if(pump != null && pump.isConnected()) {
 						try {
-							pump.sendData(pkt.getBytes("ISO-8859-1"));
+							Log.e("COnn","CONNECTION SENDING GMCP:"+new String(fubtmp,"ISO-8859-1"));
+							pump.sendData(fubtmp);
 						} catch (UnsupportedEncodingException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -495,6 +521,13 @@ public class Connection implements SettingsChangedListener {
 		
 		//mWindowCallbacks.finishBroadcast();
 		//}
+	}
+
+	protected void windowXCallB(String tokens, String functions, byte[] bytes) throws RemoteException {
+		IWindowCallback c = windowCallbackMap.get(tokens);
+		if(c != null) {
+			c.xcallB(functions, bytes);
+		}
 	}
 
 	public void reloadSettings() {
@@ -2697,6 +2730,7 @@ public class Connection implements SettingsChangedListener {
 		shutdownPlugins();
 		
 		VersionProbeParser vpp = new VersionProbeParser(path,service.getApplicationContext());
+
 		
 		try {
 			boolean isLegacy = vpp.isLegacy();

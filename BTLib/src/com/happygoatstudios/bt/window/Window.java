@@ -37,6 +37,8 @@ import android.R;
 import android.animation.ObjectAnimator;
 import android.app.Service;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -174,6 +176,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected static final int MESSAGE_SCROLLUP=10;
 	protected static final int MESSAGE_SCROLLRIGHT = 11;
 	protected static final int MESSAGE_SCROLLLEFT = 12;
+	protected static final int MESSAGE_XCALLB = 13;
 	//public static final int MESSAGE_SENDDATA = 0;
 	
 	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
@@ -224,9 +227,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		init();
 	} */
 	
-	public Window(Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
+	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
 		super(context);
-		init(name,owner,mainWindowHandler,settings);
+		init(dataDir,name,owner,mainWindowHandler,settings);
 	}
 	
 	
@@ -262,7 +265,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 //		//doDelayedDraw(0);
 //	}
 	
-	private void init(String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
+	private String dataDir = null;
+	
+	private void init(String dataDir,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
+		this.dataDir = dataDir;
 		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
 		homeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.happygoatstudios.bt.R.drawable.homewidget);
 		textSelectionCancelBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.happygoatstudios.bt.R.drawable.cancel_tiny);
@@ -344,6 +350,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				case MESSAGE_DRAW:
 					Window.this.invalidate();
 					break;
+					
 				case MESSAGE_ADDTEXT:
 					//String str = new String((byte[])msg.obj);
 					//Log.e("window","adding text:\n"+str);
@@ -358,6 +365,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				case MESSAGE_PROCESSXCALLS:
 					Window.this.xcallS(msg.getData().getString("FUNCTION"),(String)msg.obj);
 					
+					break;
+				case MESSAGE_XCALLB:
+					//try {
+					try {
+						Window.this.xcallB(msg.getData().getString("FUNCTION"),(byte[])msg.obj);
+					} catch (LuaException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					//} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+					//	e.printStackTrace();
+					//}
 					break;
 				}
 			}
@@ -413,6 +433,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
+	protected void xcallB(String string,byte[] bytes) throws LuaException {
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal(string);
+		if(L.getLuaObject(-1).isFunction()) {
+			L.pushObjectValue(bytes);
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("LUA","WindowXCallB calling: " + string + " error:"+L.getLuaObject(-1).getString());
+			}
+		}
+	}
+
+
+
 	private void startSelection(int line,int column) {
 		
 		theSelection = the_tree.getSelectionForPoint(line,column);
@@ -2273,6 +2310,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public void setEncoding(String value) {
 			mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_ENCODINGCHANGED,value));
 		}
+
+		@Override
+		public void xcallB(String function, byte[] raw) throws RemoteException {
+			Message m = mHandler.obtainMessage(MESSAGE_XCALLB,raw);
+			m.getData().putString("FUNCTION", function);
+			mHandler.sendMessage(m);
+		}
 		
 	};
 	
@@ -2399,6 +2443,31 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private void initLua() {
 		L.openLibs();
 		
+		//String dataDir = null;
+		//try {
+		//	ApplicationInfo ai = this..getPackageManager().getApplicationInfo(parent.service.getPackageName(), PackageManager.GET_META_DATA);
+		//	dataDir = ai.dataDir;
+		//} catch (NameNotFoundException e) {
+		//	// TODO Auto-generated catch block
+		//	e.printStackTrace();
+		//}
+		
+		if(dataDir == null) {
+			//this is bad.
+		} else {
+			
+			//set up the path/cpath.
+			L.getGlobal("package");
+			L.pushString(dataDir + "/lua/share/5.1/?.lua");
+			L.setField(-2, "path");
+			
+			L.pushString(dataDir + "/lua/lib/5.1/?.so");
+			L.setField(-2, "cpath");
+			L.pop(1);
+			
+		}
+		
+		
 		InvalidateFunction iv = new InvalidateFunction(L);
 		DebugFunction df = new DebugFunction(L);
 		BoundsFunction bf = new BoundsFunction(L);
@@ -2409,6 +2478,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		CancelSheduleCallbackFunction cscf = new CancelSheduleCallbackFunction(L);
 		GetDisplayDensityFunction gddf = new GetDisplayDensityFunction(L); 
 		SendToServerFunction stsf = new SendToServerFunction(L);
+		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
@@ -2420,6 +2490,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			cscf.register("cancelCallback");
 			gddf.register("getDisplayDensity");
 			stsf.register("sendToServer");
+			gesdf.register("GetExternalStorageDirectory");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2779,6 +2850,26 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
 			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,this.getParam(2).getString()));
 			return 0;
+		}
+		
+	}
+	
+	private class GetExternalStorageDirectoryFunction extends JavaFunction {
+
+		public GetExternalStorageDirectoryFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//Log.e("PLUGIN","Get External storage state:"+Environment)
+			if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
+			} else {
+				L.pushNil();
+			}
+			return 1;
 		}
 		
 	}
