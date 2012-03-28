@@ -17,6 +17,7 @@ public class Validator {
 	public static int VALIDATE_PORT_NUMBER = 0x04;
 	public static int VALIDATE_NUMBER = 0x08;
 	public static int VALIDATE_NUMBER_NOT_ZERO = 0x10;
+	public static int VALIDATE_NUMBER_OR_BLANK = 0x20;
 	
 	public Validator() {
 		//nothing to construct.
@@ -33,6 +34,10 @@ public class Validator {
 		} else {
 			validation_list.put(message, item);		
 		}
+	}
+	
+	public void reset() {
+		validation_list.clear();
 	}
 	
 	public String validate() {
@@ -109,6 +114,17 @@ public class Validator {
 						}
 					} catch (NumberFormatException e) {
 						//they should use VALIDATE_NUMBER ALSO ON THIS.
+					}
+				}
+			}
+			
+			if((tmp.What & VALIDATE_NUMBER_OR_BLANK) == VALIDATE_NUMBER_OR_BLANK) {
+				if(!tmp.field.getText().toString().equals("")) {
+					try {
+						Integer i = Integer.parseInt(tmp.field.getText().toString());
+					} catch (NumberFormatException e) {
+						validated = false;
+						message += field + " must contain a number or be blank.\n";
 					}
 				}
 			}
