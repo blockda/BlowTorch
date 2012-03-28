@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -170,6 +171,8 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_MARKSETTINGSDIRTY = 895;
 	//private TextTree tree = new TextTree();
 	protected static final int MESSAGE_SETKEEPLAST = 896;
+	public static final int MESSAGE_PUSHMENUSTACK = 897;
+	public static final int MESSAGE_POPMENUSTACK = 898;
 
 	protected boolean settingsDialogRun = false;
 	
@@ -484,6 +487,12 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_POPMENUSTACK:
+					MainWindow.this.popMenuStack();
+					break;
+				case MESSAGE_PUSHMENUSTACK:
+					MainWindow.this.pushMenuStack((String)msg.obj);
+					break;
 				case MESSAGE_SETKEEPLAST:
 					MainWindow.this.setKeepLast((msg.arg1 == 1) ? true : false);
 					break;
@@ -1164,7 +1173,22 @@ public class MainWindow extends Activity {
 		
 	}
 	
-	
+	protected void popMenuStack() {
+		menuStack.pop();
+		if(supportsActionBar()) {
+			this.invalidateOptionsMenu();
+		}
+	}
+
+	Stack<String> menuStack = new Stack<String>();
+	protected void pushMenuStack(String obj) {
+		menuStack.push(obj);
+		if(supportsActionBar()) {
+			this.invalidateOptionsMenu();
+		}
+	}
+
+
 	protected void setKeepLast(boolean b) {
 		this.isKeepLast = b;
 	}
@@ -1287,9 +1311,25 @@ public class MainWindow extends Activity {
 	}
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
+		RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
+		
+		if(menuStack.size() > 0) {
+			com.happygoatstudios.bt.window.Window tmp = (com.happygoatstudios.bt.window.Window)rl.findViewWithTag(menuStack.peek());
+			tmp.populateMenu(menu);
+			return true;
+		}
+		
+		if(mWindows != null) {
+			for(WindowToken w : mWindows) {
+				com.happygoatstudios.bt.window.Window tmp = (com.happygoatstudios.bt.window.Window)rl.findViewWithTag(w.getName());
+				tmp.populateMenu(menu);
+			}
+		}
+		
+		
 		//MenuItem tmp = null;
 		if(supportsActionBar()) {
-			for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
+			/*for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
 				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
 				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
 					hurdur.setIcon(scriptCallbacks.get(i-1000).getDrawable());
@@ -1297,7 +1337,7 @@ public class MainWindow extends Activity {
 				} else {
 					hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 				}
-			}
+			}*/
 			
 //			Button b = new Button(this);
 //			b.setText("YEA YAAAA");
@@ -1309,14 +1349,14 @@ public class MainWindow extends Activity {
 //				Log.e("menu tab","tab tab:"+this.getActionBar().getTabAt(i).getText());
 //			}
 			
-			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		} else {
 			
-			for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
+			/*for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
 				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
 				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
 					hurdur.setIcon(scriptCallbacks.get(i-1000).getDrawable());
@@ -1324,24 +1364,22 @@ public class MainWindow extends Activity {
 				} else {
 					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 				}
-			}
-			menu.add(0,99,0,"Aliases").setIcon(R.drawable.ic_menu_alias);
-			menu.add(0,100,0,"Triggers").setIcon(R.drawable.ic_menu_triggers);
-			menu.add(0,105,0,"Timers").setIcon(R.drawable.ic_menu_timers);
-			menu.add(0,103,0,"Options").setIcon(R.drawable.ic_menu_options);
-			menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
+			}*/
+			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias);
+			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers);
+			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers);
+			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options);
+			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
 			
 		}
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
-		menu.add(0, 905, 0 ,"Speedwalk Directions");
-		menu.add(0,907,0,"Vitals Options");
-		menu.add(0,912,0,"Button Manager");
-		menu.add(0, 901, 0, "Reconnect");
-		menu.add(0, 902, 0, "Disconnect");
-		menu.add(0, 903, 0, "Quit");
-		menu.add(0, 906, 0, "Help/About");
-		menu.add(0, 908,0,"Reload Settings");
-		menu.add(0, 909, 0, "Plugins");
+		menu.add(0, 500, 500 ,"Speedwalk Directions");
+		menu.add(0, 600, 600, "Reconnect");
+		menu.add(0, 700, 700, "Disconnect");
+		menu.add(0, 800, 800, "Quit");
+		menu.add(0, 900, 900, "Help/About");
+		menu.add(0, 1000,1000,"Reload Settings");
+		menu.add(0, 1100, 1100, "Plugins");
 		
 		
 		return true;
@@ -1352,19 +1390,19 @@ public class MainWindow extends Activity {
 	
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if(item.getItemId() >= 1000) {
-			//script callback
-			ScriptOptionCallback callback = scriptCallbacks.get(item.getItemId()-1000);
-			callWindowScript(callback.getWindow(),callback.getCallback());
-			return true;
-		}
+//		if(item.getItemId() >= 1000) {
+//			//script callback
+//			ScriptOptionCallback callback = scriptCallbacks.get(item.getItemId()-1000);
+//			callWindowScript(callback.getWindow(),callback.getCallback());
+//			return true;
+//		}
 		
 		switch(item.getItemId()) {
-		case 909:
+		case 1100:
 			PluginDialog pd = new PluginDialog(this,service);
 			pd.show();
 			break;
-		case 908:
+		case 1000:
 			try {
 				service.reloadSettings();
 			} catch (RemoteException e2) {
@@ -1372,39 +1410,35 @@ public class MainWindow extends Activity {
 				e2.printStackTrace();
 			}
 			break;
-		case 912:
-			ButtonManagerDialog bm = new ButtonManagerDialog("name",service,this);
-			bm.show();
-			break;
-		case 906: //Help/About
+		case 900: //Help/About
 			AboutDialog abtdialog = new AboutDialog(this);
 			abtdialog.show();
 			break;
-		case 905: //speedwalk config
+		case 500: //speedwalk config
 			SpeedWalkConfigurationDialog swDialog = new SpeedWalkConfigurationDialog(this,service);
 			swDialog.show();
 			break;
-		case 903:
+		case 800:
 			this.cleanExit();
 			this.finish();
 			break;
-		case 902:
+		case 700:
 			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
 			break;
-		case 901:
+		case 600:
 			try {
 				service.reconnect(service.getConnectedTo());
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
 			break;
-		case 105:
+		case 300:
 			TimerSelectionDialog tsel = null;
 			tsel = new TimerSelectionDialog(MainWindow.this,service);
 			tsel.show();
 			
 			break;
-		case 99:
+		case 100:
 			AliasSelectionDialog d = null;
 			try {
 				d = new AliasSelectionDialog(this,(HashMap<String,AliasData>)service.getAliases(),service);
@@ -1414,23 +1448,23 @@ public class MainWindow extends Activity {
 			d.setTitle("Edit Aliases:");
 			d.show();
 			break;
-		case 102:
-			//show the button set selector dialog
-			ButtonSetSelectorDialog buttoneditor = null;
-			try{
-				buttoneditor = new ButtonSetSelectorDialog(this,myhandler,(HashMap<String,Integer>)service.getButtonSetListInfo(),service.getLastSelectedSet(),service);
-				buttoneditor.setTitle("Select Button Set");
-				buttoneditor.show();
-			} catch(RemoteException e) {
-				e.printStackTrace();
-			}
-			break;
-		case 101:
-			
-			MainWindow.this.myhandler.postDelayed(new Runnable() { public void run() { openOptionsMenu();}}, 1);
-			
-			break;
-		case 103:
+//		case 102:
+//			//show the button set selector dialog
+//			ButtonSetSelectorDialog buttoneditor = null;
+//			try{
+//				buttoneditor = new ButtonSetSelectorDialog(this,myhandler,(HashMap<String,Integer>)service.getButtonSetListInfo(),service.getLastSelectedSet(),service);
+//				buttoneditor.setTitle("Select Button Set");
+//				buttoneditor.show();
+//			} catch(RemoteException e) {
+//				e.printStackTrace();
+//			}
+//			break;
+//		case 400:
+//			
+//			MainWindow.this.myhandler.postDelayed(new Runnable() { public void run() { openOptionsMenu();}}, 1);
+//			
+//			break;
+		case 400:
 			//enter new routine.
 			/*SettingsGroup sg = null;
 			try {
@@ -1499,7 +1533,7 @@ public class MainWindow extends Activity {
 //			this.startActivityForResult(settingintent, 0);
 //
 //			//break;
-		case 100:
+		case 200:
 			//launch the sweet trigger dialog.
 			TriggerSelectionDialog trigger_selector = new TriggerSelectionDialog(this,service);
 			trigger_selector.show();
@@ -2639,6 +2673,10 @@ public class MainWindow extends Activity {
 			}
 			//mRootLayout.requestLayout();
 		//}
+			
+		if(supportsActionBar()) {
+			this.invalidateOptionsMenu();
+		}
 	}
 	
 	private void initWindow(WindowToken w,String dataDir) {

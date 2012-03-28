@@ -107,8 +107,14 @@ function loadAndEditSet(data)
 end
 
 RegisterSpecialCommand("loadset","loadButtonSet")
+RegisterSpecialCommand("clearbuttons","clearButtons")
 
 current_set = DEFAULT
+
+function clearButtons()
+	--all that needs to be done is call into the window to kick the process off
+	WindowXCallS("button_window","clearButtons","")
+end
 
 function saveButtons(arg)
 	debugPrint("SAVE BUTTONS IMPL")

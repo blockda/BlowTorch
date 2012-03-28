@@ -65,6 +65,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 //import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -786,7 +787,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		        finger_down_to_up = true;
 		         
 				if(touchInLink > -1) {
-					dataDispatch.sendMessage(dataDispatch.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
+					mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
 			        touchInLink = -1;
 				}
 				
@@ -2479,6 +2480,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		GetDisplayDensityFunction gddf = new GetDisplayDensityFunction(L); 
 		SendToServerFunction stsf = new SendToServerFunction(L);
 		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
+		PushMenuStackFunction pmsf = new PushMenuStackFunction(L);
+		PopMenuStackFunction popmsf = new PopMenuStackFunction(L);
 		try {
 			iv.register("invalidate");
 			df.register("debugPrint");
@@ -2491,6 +2494,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			gddf.register("getDisplayDensity");
 			stsf.register("sendToServer");
 			gesdf.register("GetExternalStorageDirectory");
+			pmsf.register("PushMenuStack");
+			popmsf.register("PopMenuStack");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2870,6 +2875,36 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				L.pushNil();
 			}
 			return 1;
+		}
+		
+	}
+	
+	private class PushMenuStackFunction extends JavaFunction {
+
+		public PushMenuStackFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_PUSHMENUSTACK,Window.this.mName));
+			return 0;
+		}
+		
+	}
+	
+	private class PopMenuStackFunction extends JavaFunction {
+
+		public PopMenuStackFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_POPMENUSTACK));
+			return 0;
 		}
 		
 	}
@@ -3825,6 +3860,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public boolean isScrollingEnabled() {
 		return this.scrollingEnabled;
 	}
+	
+	public void jumpToStart() {
+		scrollback = SCROLL_MIN;
+		this.invalidate();
+	}
 
 	private int scrollRepeatRateStep = 1;
 	private int scrollRepeatRateInitial = 300;
@@ -3832,6 +3872,24 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private int scrollRepeatRateMin = 60;
 	
 	public int gravity = Gravity.LEFT;
+
+	public void populateMenu(Menu menu) {
+		if(L == null) return;
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
+		
+		L.getGlobal("PopulateMenu");
+		if(L.getLuaObject(-1).isFunction()) {
+			L.pushJavaObject(menu);
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				Log.e("LUA","Error in PopulateMenu:"+L.getLuaObject(-1).getString());
+			}
+		} else {
+			L.pop(1);
+		}
+	}
 	
 //	private class ThreadUpdater extends Thread {
 //		public final static int MESSAGE_ADDTEXT = 1;
