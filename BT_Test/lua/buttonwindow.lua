@@ -33,6 +33,12 @@ ScrollView = luajava.bindClass("android.widget.ScrollView")
 AnimationSet = luajava.bindClass("android.view.animation.AnimationSet")
 LayoutAnimationController = luajava.bindClass("android.view.animation.LayoutAnimationController")
 HapticFeedbackConstants = luajava.bindClass("android.view.HapticFeedbackConstants")
+Validator = luajava.newInstance("com.happygoatstudios.bt.validator.Validator")
+MenuItem = luajava.bindClass("android.view.MenuItem")
+Validator_Number = Validator.VALIDATE_NUMBER
+Validator_Not_Blank = Validator.VALIDATE_NOT_BLANK
+Validator_Number_Not_Blank = bit.bor(Validator_Number,Validator_Not_Blank)
+Validator_Number_Or_Blank = Validator.VALIDATE_NUMBER_OR_BLANK
 lastLoadedSet = nil
 
 		--assert(marshal.encode(orig))
@@ -72,9 +78,12 @@ function loadButtons(args)
 	--defaults.__index = 
 	buttons = {}
 	--setmetatable(BUTTON_DATA,defaults)
-	for i,v in pairs(tmp.set) do
+	local set = tmp.set
+	for i=1,#set do
+	--for i,v in pairs(tmp.set) do
+		--local v = set[i]
 		--debugPrint("PROCESSING NEW BUTTON"..i)
-		buttons[i] = BUTTON:new(v,density)
+		buttons[i] = BUTTON:new(set[i],density)
 	end
 	debugPrint(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
 	--for i,v in pairs(buttons) do
@@ -286,6 +295,8 @@ function enterMoveMode()
 	invalidate()
 end
 
+touchStartX = 0
+touchStartY = 0
 managerTouch = {}
 gridsnap = true
 function managerTouch.onTouch(v,e)
@@ -304,6 +315,8 @@ function managerTouch.onTouch(v,e)
 			--	b.selected = true
 				
 			--end
+			touchStartX = x
+			touchStartY = y
 			fingerdown = true
 			touchedbutton = b
 			touchedindex = index
@@ -377,7 +390,7 @@ function managerTouch.onTouch(v,e)
 			dragcurrent.y = y
 			--compute distance
 			distance = math.sqrt(math.pow(dragcurrent.x-dragstart.x,2)+math.pow(dragcurrent.y-dragstart.y,2))
-			if(distance < 10) then
+			if(distance < 10*density) then
 				return true
 			end
 			dragmoving = true
@@ -390,6 +403,16 @@ function managerTouch.onTouch(v,e)
 		 end
 		 
 		 if(fingerdown and selectedtouchstart) then
+		 	local diffx = math.abs(x - touchStartX)
+		 	local diffy = math.abs(y - touchStartY)
+		 	
+		 	local dist = math.sqrt(diffx*diffx + diffy*diffy)
+		 	--debugPrint("DIST IS NOW:"..touchStartX)
+		 	if(dist < 10*density) then
+		 		--don't actually enter move
+		 		return true
+		 	end
+		 
 		 	debugPrint("ENTERING MOVE MODE")
 		 	touchMoving = true
 		 	moveCurrent.x = x
@@ -497,6 +520,8 @@ function normalTouch.onTouch(v,e)
 			end
 			fingerdown = true
 			--touchedbutton.selected = false
+			touchStartX = x
+			touchStartY = y
 			touchedbutton = b
 			b.selected = true
 			touchedindex = index
@@ -551,8 +576,9 @@ function normalTouch.onTouch(v,e)
 					normalTouchState = 2
 					--clearButton(b)
 					b:draw(normalTouchState,buttonCanvas)
+					performHapticFlip()
 				end
-				performHapticFlip()
+				
 			end
 			invalidate()
 			--debugPrint("action move, moving button, returning true")
@@ -571,6 +597,11 @@ function normalTouch.onTouch(v,e)
 			local r = touchedbutton.rect
 			if(r:contains(x,y)) then
 				--process primary touch
+				if(buttonsCleared) then
+					revertButtons()
+					return true
+				end
+				mainwindow:jumpToStart()
 				if(touchedbutton.data.switchTo ~= nil and touchedbutton.data.switchTo ~= "") then
 					PluginXCallS("loadButtonSet",touchedbutton.data.switchTo)
 					
@@ -746,9 +777,9 @@ function enterManagerMode()
 	end
 
 	--set up and add the back/options widget.
-	backWidget = makeBackWidget()
-	local parent = view:getParent()
-	parent:addView(backWidget)
+	--backWidget = makeBackWidget()
+	--local parent = view:getParent()
+	--parent:addView(backWidget)
 	--touchedbutton = nil
 		--paint:setShadowLayer(1,0,0,Color.WHITE)
 	view:setOnTouchListener(managerTouch_cb)
@@ -777,6 +808,29 @@ function exitManagerMode()
 		
 	PluginXCallS("saveButtons",serialize(tmp))
 	drawButtons()
+	invalidate()
+end
+
+function exitManagerModeNoSave()
+	if(drawManagerLayer ~= nil) then
+		managerCanvas = nil
+		managerLayer:recycle()
+		managerLayer = nil
+	end
+	view:setOnTouchListener(normalTouch_cb)
+	manage = false
+	
+	local parent = view:getParent()
+	parent:removeView(backWidget)
+	
+	local tmp = {}
+	for i,b in pairs(buttons) do
+		tmp[i] = b.data
+		if(b.selected) then b.selected = false end
+	end
+	
+	
+	PluginXCallS("loadButtonSet",lastLoadedSet)
 	invalidate()
 end
 
@@ -1329,12 +1383,14 @@ function drawButtons()
 	--	canvas:drawBitmap(managerBitmap,0,0,nil)
 	--end
 	--local counter = 0
-	for i,b in pairs(buttons) do
+	for i=1,#buttons do
+	--for i,b in pairs(buttons) do
+		local b = buttons[i]
 		--debugPrint("DRAWING BUTTON"..i)
 		if(b.selected) then
-			b:draw(1,buttonCanvas)
+			b:draw(1,canvas)
 		else
-			b:draw(0,buttonCanvas)
+			b:draw(0,canvas)
 		end
 		--counter = counter + 1
 	end
@@ -1592,7 +1648,9 @@ function addButton(pX,pY)
 end
 
 function buttonTouched(x,y)
-	for i,b in pairs(buttons) do
+	for i=1,#buttons do
+	--for i,b in pairs(buttons) do
+		local b = buttons[i]
 		local z = b.rect
 		if(z:contains(x,y)) then
 			return true,b,i
@@ -1652,6 +1710,10 @@ function OnSizeChanged(w,h,oldw,oldh)
 	--managerLayer = Bitmap.create(w,h,BitmapConfig.ARGB_8888)
 	drawButtons()
 	draw = true
+	
+	revertButtonData.x = w - revertButtonData.width*2
+	revertButtonData.y = h - revertButtonData.height*2
+	revertButton:updateRect()
 end
 
 dragDashPaint = luajava.new(PaintClass)
@@ -1739,6 +1801,12 @@ editorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",editor
 editorDone = {}
 function editorDone.onClick(v)
 	--apply the settings out.
+	
+	local str = Validator:validate()
+	if(str ~= nil) then
+		Validator:showMessage(view:getContext(),str)
+		return
+	end
 	
 	labeltmp = clickLabelEdit:getText()
 	label = labeltmp:toString()
@@ -1930,32 +1998,34 @@ function showEditorDialog()
 				end
 				
 				if(editorValues.labelSize == nil) then
-					editorValues.labelSize = b.data.labelSize
-				elseif(editorValues.labelSize ~= b.data.labelSize) then
+					editorValues.labelSize = tonumber(b.data.labelSize)
+				elseif(editorValues.labelSize ~= tonumber(b.data.labelSize)) then
 					editorValues.labelSize = "MULTI"
 				end
 				
 				if(editorValues.height == nil) then
-					editorValues.height = b.data.height
-				elseif(editorValues.height ~= b.data.height) then
+					editorValues.height = tonumber(b.data.height)
+				elseif(editorValues.height ~= tonumber(b.data.height)) then
 					editorValues.height = "MULTI"
 				end
 				
 				if(editorValues.width == nil) then
-					editorValues.width = b.data.width
-				elseif(editorValues.width ~= b.data.width) then
+					editorValues.width = tonumber(b.data.width)
+					debugPrint("editorValue set to "..b.data.width)
+				elseif(editorValues.width ~= tonumber(b.data.width)) then
 					editorValues.width = "MULTI"
+					debugPrint("editorValue set to multi because "..b.data.width)
 				end
 				
 				if(editorValues.x == nil) then
-					editorValues.x = b.data.x
-				elseif(editorValues.x ~= b.data.x) then
+					editorValues.x = tonumber(b.data.x)
+				elseif(editorValues.x ~= tonumber(b.data.x)) then
 					editorValues.x = "MULTI"
 				end
 				
 				if(editorValues.y == nil) then
-					editorValues.y = b.data.y
-				elseif(editorValues.y ~= b.data.y) then
+					editorValues.y = tonumber(b.data.y)
+				elseif(editorValues.y ~= tonumber(b.data.y)) then
 					editorValues.y = "MULTI"
 				end
 			end
@@ -2213,6 +2283,37 @@ function showEditorDialog()
 	--buttonNameRow:setVisibility(View.VISIBLE)
 	controlRowTwo:setVisibility(View.VISIBLE)
 	labelRowFour:setVisibility(View.VISIBLE)
+	
+	Validator:reset()
+	if(editorValues.width ~= "MULTI") then
+		Validator:add(widthEdit,Validator_Number_Not_Blank,"Width")
+	else
+		Validator:add(widthEdit,Validator_Number_Or_Blank,"Width")
+	end
+	
+	if(editorValues.height ~= "MULTI") then
+		Validator:add(heightEdit,Validator_Number_Not_Blank,"Height")
+	else
+		Validator:add(heightEdit,Validator_Number_Or_Blank,"Height")
+	end
+	
+	if(editorValues.x ~= "MULTI") then
+		Validator:add(xcoordEdit,Validator_Number_Not_Blank,"X Coordinate")
+	else
+		Validator:add(xcoordEdit,Validator_Number_Or_Blank,"X Coordinate")
+	end
+	
+	if(editorValues.y ~="MULTI") then
+		Validator:add(ycoordEdit,Validator_Number_Not_Blank,"Y Coordinate")
+	else
+		Validator:add(ycoordEdit,Validator_Number_Or_Blank,"Y Coordinate")
+	end
+	
+	if(editorValues.labelSize ~= "MULTI") then
+		Validator:add(labelSizeEdit,Validator_Number_Not_Blank,"Label size")
+	else
+		Validator:add(labelSizeEdit,Validator_Number_Or_Blank,"Label size")
+	end
 	
 	content:addView(scrollerpage)
 	tab3:setIndicator(label3)
@@ -2830,6 +2931,9 @@ function toolbarModifyClicked.onClick(v)
 	end
 
 	enterManagerMode()
+	showeditormenu = true
+	PushMenuStack()
+	
 	mSelectorDialog:dismiss()
 end
 toolbarModifyClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarModifyClicked)
@@ -3095,6 +3199,7 @@ function setSettingsButtonListener.onClick(v)
 	editorValues.height = defaults.height
 	editorValues.width = defaults.width
 	editorValues.labelSize = defaults.labelSize
+	editorValues.name = lastLoadedSet
 	editorValues.x = 0
 	editorValues.y = 0	
 
@@ -3104,9 +3209,16 @@ function setSettingsButtonListener.onClick(v)
 		parent:removeView(page)
 	end
 	
-	buttonNameRow:setVisibility(View.GONE)
+	buttonTargetSetRow:setVisibility(View.GONE)
+	buttonNameRow:setVisibility(View.VISIBLE)
 	controlRowTwo:setVisibility(View.GONE)
 	labelRowFour:setVisibility(View.GONE)
+	
+	Validator:reset()
+	Validator:add(buttonNameEdit,Validator_Not_Blank,"Set name")
+	Validator:add(widthEdit,Validator_Number_Not_Blank,"Width")
+	Validator:add(heightEdit,Validator_Number_Not_Blank,"Height")
+	Validator:add(labelSizeEdit,Validator_Number_Not_Blank,"Label size")
 	
 
 	local top = luajava.new(RelativeLayout,context)
@@ -3179,6 +3291,13 @@ seteditorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",set
 setEditorDoneListener = {}
 function setEditorDoneListener.onClick(v)
 	--apply the settings.
+	local str = Validator:validate()
+	if(str ~= nil) then
+		Validator:showMessage(view:getContext(),str)
+		return
+	end
+	
+	
 	labelsizetmp = labelSizeEdit:getText()
 	labelsize = tonumber(labelsizetmp:toString())
 	--debugPrint(
@@ -3291,6 +3410,128 @@ function performHapticEdit()
 	end
 	
 	view:performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY,flags)
+end
+
+buttonsCleared = false
+clearSet = {}
+revertButtonData = {}
+revertButtonData.label = "BACK"
+revertButtonData.width = 80*density
+revertButtonData.height = 25*density
+revertButtonData.x = 100
+revertButtonData.y = 100
+revertButton = BUTTON:new(revertButtonData,density)
+revertButtonSet = {}
+revertButtonSet[1] = revertButton
+function clearButtons()
+	if(buttonsCleared) then return end
+	buttonsCleared = true
+	revertset = buttons
+	buttons = revertButtonSet
+	drawButtons()
+	invalidate()
+end
+
+function revertButtons()
+	buttonsCleared = false
+	buttons = revertset
+	drawButtons()
+	invalidate()
+end
+
+rootHolder = view:getParent()
+mainwindow = rootHolder:findViewById(6666)
+
+
+showeditormenu = false
+editmenu = nil
+topMenuItem = nil
+function PopulateMenu(menu)
+	debugPrint("in options menu populate")
+	
+		if(showeditormenu) then
+			local settings = menu:add("Editor Options")
+			settings:setIcon(resLoader(GetExternalStorageDirectory().."/BlowTorch/button_window","settings.png"))
+			settings:setOnMenuItemClickListener(buttonsetSettingsClicked_cb)
+			local done = menu:add("Done")
+			done:setIcon(resLoader(GetExternalStorageDirectory().."/BlowTorch/button_window","done.png"))
+			done:setOnMenuItemClickListener(buttonsetMenuDoneClicked_cb)
+			local cancel = menu:add("Cancel")
+			cancel:setIcon(resLoader(GetExternalStorageDirectory().."/BlowTorch/button_window","cancel.png"))
+			cancel:setOnMenuItemClickListener(buttonsetCancelClicked_cb)
+			foo = function(item) item:setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS) end
+			pcall(foo,done)
+			pcall(foo,settings)
+			pcall(foo,cancel)
+			return
+		end
+	
+	--if(topMenuItem == nil) then
+		topMenuItem = menu:add(0,401,401,"Lua Button Sets")
+		topMenuItem:setIcon(R_drawable.ic_menu_button_sets)
+		topMenuItem:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
+		
+		debugPrint("populated lua button sets")
+		foo = function(item) item:setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS) end
+		if(not pcall(foo,topMenuItem))  then
+			debugPrint("action bar not supported,android version < 3.0")
+		end
+		
+	--else
+	--	menu:add(topMenuItem)
+	--end
+end
+
+buttonsetMenuClicked = {}
+function buttonsetMenuClicked.onMenuItemClick(item)
+	debugPrint("menu item clicked")
+	buttonList()
+	--showeditormenu = true
+	--PushMenuStack()
+	
+	return true
+end
+buttonsetMenuClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",buttonsetMenuClicked)
+
+buttonsetMenuDoneClicked = {}
+function buttonsetMenuDoneClicked.onMenuItemClick(item)
+	showeditormenu = false
+	exitManagerMode()
+	PopMenuStack()
+	return true
+end
+buttonsetMenuDoneClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",buttonsetMenuDoneClicked)
+
+buttonsetSettingsClicked = {}
+function buttonsetSettingsClicked.onMenuItemClick(item)
+	buttonOptions()
+	return true
+end
+buttonsetSettingsClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",buttonsetSettingsClicked)
+
+buttonsetCancelClicked = {}
+function buttonsetCancelClicked.onMenuItemClick(item)
+	showeditormenu = false
+	PopMenuStack()
+	exitManagerModeNoSave()
+	return true
+end
+buttonsetCancelClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",buttonsetCancelClicked)
+
+resources = view:getContext():getResources()
+function resLoader(root,bmp)
+	local target = nil
+	local metrics = resources:getDisplayMetrics()
+	local d = metrics.density
+	if(d < 1.0) then
+		target = luajava.newInstance("android.graphics.drawable.BitmapDrawable",resources,root.."/ldpi/"..bmp)
+	elseif(d >= 1.0 and d < 1.5) then
+		target = luajava.newInstance("android.graphics.drawable.BitmapDrawable",resources,root.."/mdpi/"..bmp)
+	elseif(d >= 1.5) then
+		target = luajava.newInstance("android.graphics.drawable.BitmapDrawable",resources,root.."/hdpi/"..bmp)
+	end
+	
+	return target
 end
 
 view:bringToFront()
