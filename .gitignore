@@ -2,6 +2,7 @@ gen/
 bin/
 BTLib/gen
 BTLib/bin
+BTLib/obj
 BT_Test/gen
 BT_Test/bin
 BT_Pro/gen
