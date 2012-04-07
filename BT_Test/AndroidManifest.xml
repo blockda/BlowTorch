@@ -3,22 +3,22 @@
       package="com.happygoatstudios.bttest"
       android:versionCode="39"
       android:versionName="1.1.3">
-    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST">
+    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:process="com.offsetnull.bttest">
      	<meta-data android:value="1" android:name="BLOWTORCH_TEST_VERSION"/>
      	<meta-data android:value="2" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
-     	<activity android:name="com.happygoatstudios.bttest.TestLauncher"
+     	<activity android:name="com.offsetnull.bttest.TestLauncher"
                   android:label="BlowTorch TEST">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
+        <activity android:name="com.offsetnull.bt.launcher.Launcher"
                   android:label="BlowTorch"
                   >
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
-        <activity android:name="com.happygoatstudios.bt.window.MainWindow"
+        <activity android:name="com.offsetnull.bt.window.MainWindow"
         		  android:windowSoftInputMode="adjustPan|stateHidden"
         		  android:label="BlowTorch"
         		 
@@ -27,26 +27,26 @@
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	
-        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.TEST_MODE"/>
+        		  	<action android:name="com.offsetnull.bt.window.MainWindow.TEST_MODE"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
+        <activity android:name="com.offsetnull.bt.settings.HyperSettingsActivity"
         		  android:label="Settings Editor"
         		  
         		  
         		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
         		  android:noHistory = "true">
         		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"/>
+        		  	<action android:name="com.offsetnull.bt.settings.HyperSettingsActivity"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <service android:name="com.happygoatstudios.bt.service.StellarService"
-        		 android:process=":stellar_test">
+        <service android:name="com.offsetnull.bt.service.StellarService"
+        		 android:process="com.offsetnull.bttest_stellar_test">
         		 <intent-filter>
         		 	
-        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.MODE_TEST"/>
+        		 	<action android:name="com.offsetnull.bt.service.IStellarService.MODE_TEST"/>
         		 
         		 </intent-filter>
         </service>

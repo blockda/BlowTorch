@@ -1,36 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.happygoatstudios.bt"
-      android:versionName="1.1.3" android:versionCode="19">
+      android:versionName="1.1.4" android:versionCode="20">
       
       
-    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
-     	<activity android:name="com.happygoatstudios.btfree.FreeLauncher"
+    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:process="com.offsetnull.bt">
+    <meta-data android:value="2" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
+     	<activity android:name="com.offsetnull.btfree.FreeLauncher"
                   android:label="BlowTorch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
+        <activity android:name="com.offsetnull.bt.launcher.Launcher"
                   android:label="BlowTorch"
                   >
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
-        <activity android:name="com.happygoatstudios.bt.window.MainWindow"
-        		  android:windowSoftInputMode="adjustResize"
+        <activity android:name="com.offsetnull.bt.window.MainWindow"
+        		  android:windowSoftInputMode="adjustPan|stateHidden"
         		  android:label="BlowTorch"
-        		 
-        		  
-				  android:configChanges="orientation|keyboard|keyboardHidden"
+				  android:configChanges="orientation|keyboard|keyboardHidden|screenLayout"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	
-        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE"/>
+        		  	<action android:name="com.offsetnull.bt.window.MainWindow.NORMAL_MODE"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
+        <activity android:name="com.offsetnull.settings.HyperSettingsActivity"
         		  android:label="Settings Editor"
         		  
         		  
@@ -41,17 +40,17 @@
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <service android:name="com.happygoatstudios.bt.service.StellarService"
-        		 android:process=":stellar_free">
+        <service android:name="com.offsetnull.bt.service.StellarService"
+        		 android:process="com.offsetnull.bt_stellar">
         		 <intent-filter>
         		 	
-        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.MODE_NORMAL"/>
+        		 	<action android:name="com.offsetnull.bt.service.IStellarService.MODE_NORMAL"/>
         		 </intent-filter>
         </service>
         		  
 
     </application>
-    <uses-sdk android:minSdkVersion="7" />
+    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="11"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
