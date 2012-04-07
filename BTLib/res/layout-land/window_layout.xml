@@ -24,7 +24,7 @@
     	android:textColor="#9999FF"
     	android:text="|DOWN|"/>
     
-    <com.happygoatstudios.bt.window.BetterEditText
+    <com.offsetnull.bt.window.BetterEditText
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:minHeight = "20dip"

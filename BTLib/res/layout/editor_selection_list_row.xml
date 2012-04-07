@@ -59,7 +59,7 @@
   		android:textSize="14dip"
   		android:id="@+id/infoExtended"/>
   	 
-  	 <com.happygoatstudios.bt.window.AnimatedRelativeLayout
+  	 <com.offsetnull.bt.window.AnimatedRelativeLayout
   	     android:id="@+id/toolbarholder"
   	     android:layout_width="wrap_content"
   	     android:layout_height="fill_parent"
