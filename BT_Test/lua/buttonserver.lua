@@ -102,7 +102,7 @@ function loadAndEditSet(data)
 	if(lob.set ~= nil) then
 		current_set = data
 		--WindowXCallS("button_window","loadAndEditSet",serialize(lob))
-		WindowXCallB("button_window","loadAndEditSet",luabins.save(lob))
+		WindowXCallB("button_window","loadAndEditSet",marshal.encode(lob))
 	end
 end
 
@@ -124,6 +124,12 @@ function saveButtons(arg)
 	buttonsets[current_set] = tmp
 	--printTable("arg",arg)
 	saveSettings()
+end
+
+function makeNewButtonSet(name)
+	buttonset_defaults[name] = {}
+	buttonsets[name] = {}
+	loadAndEditSet(name)
 end
 
 

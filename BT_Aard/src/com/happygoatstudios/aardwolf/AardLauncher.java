@@ -1,7 +1,7 @@
 package com.happygoatstudios.aardwolf;
 
-import com.happygoatstudios.bt.R;
-import com.happygoatstudios.bt.settings.ConfigurationLoader;
+import com.offsetnull.bt.R;
+import com.offsetnull.bt.settings.ConfigurationLoader;
 
 import android.app.Activity;
 import android.content.Intent;
