@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.happygoatstudios.bt"
+      package="com.offsetnull.bt"
       android:versionCode="11"
       android:versionName="1.0.7">
     <application android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
@@ -25,7 +25,7 @@
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
+        <activity android:name="com.offsetnull.bt.settings.HyperSettingsActivity"
         		  android:label="Settings Editor"
         		  
         		  
@@ -36,7 +36,7 @@
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <service android:name="com.happygoatstudios.bt.service.StellarService"
+        <service android:name="com.offsetnull.bt.service.StellarService"
         		 android:process=":remote">
         		 <intent-filter>
         		 	<action android:name="com.happygoatstudios.bt.service.IStellarService"/>

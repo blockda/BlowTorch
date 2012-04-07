@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <blowtorch xmlversion="2">
-  <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" script="uiBootStrap" id="6666"/>
+  <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" id="6666"/>
   <windows>
     <window name="mainDisplay" id="6666">
       <layoutGroup target="normal">
@@ -49,11 +49,6 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   </buttonsets>
   <triggers />
   <timers />
-  <script name="uiBootStrap">
-  <![CDATA[
-  	dofile(GetExternalStorageDirectory().."/BlowTorch/uibootstrap.lua")
-  ]]>
-  </script>
   <plugins>
   	 <!-- <link file="plugin.xml"/> -->
   	 <plugin author="Daniel Block" name="button_window" id="10">
@@ -90,29 +85,31 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   	 	</options>
 		<script name="bootstrap">
 		<![CDATA[
-			dofile(GetExternalStorageDirectory().."/BlowTorch/buttonserver.lua")
+			require("buttonserver")
 		]]>
 		</script>
 		<script name="buttonwindow">
 			<![CDATA[
-			dofile(GetExternalStorageDirectory().."/BlowTorch/buttonwindow.lua")
+			require("buttonwindow")
 			--debugPrint("custom loaded file go!")
 		]]>
   		</script>
   		<buttonsets>
-			<buttonset name="a" primaryColor="7799FF22" selectedColor="77FF3300" flipColor="770033FF">
-				<button label="smorp" x="200" y="400"/>
-				<button label="spliz" x="300" y="400"/>
-			</buttonset>
-			<buttonset name="b">
-				<button label="blah" x="100" y="100"/>
-				<button label="bliz" x="200" y="200"/>
-				<button label="bloop" x="300" y="300" primaryColor="FFFF00FF"/>
-			</buttonset>
-			<selected>a</selected>
+   			<buttonset setName="default" width="48" height="48">
+     			<button x="77" y="24" label="N" command="north" flipCommand="open n" labelSize="24" />
+     			<button x="130" y="77" label="E" command="east" flipCommand="open e" labelSize="24" />
+     			<button x="77" y="130" label="S" command="south" flipCommand="open s" labelSize="24" />
+     			<button x="24" y="77" label="W" command="west" flipCommand="open w" labelSize="24" />
+     			<button x="24" y="24" label="U" command="up" flipCommand="open u" labelSize="24" />
+     			<button x="24" y="130" label="D" command="down" flipCommand="open d" labelSize="24" />
+     			<button x="130" y="130" label="LOOK" command="look" />
+     			<button x="130" y="24" label="SCORE" command="score" />
+     			<button x="130" y="183" label="CLEAR" command=".clearbuttons" />
+    		</buttonset>
+			<selected>default</selected>
   		</buttonsets>
 	</plugin>
-	<plugin name="dbtest" id="10" author="Daniel Block">
+	<!-- <plugin name="dbtest" id="10" author="Daniel Block">
 		<triggers>
 			<trigger title="room_mapper" pattern="%room.info" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
 				<script function="got_gmcp_room" fireWhen="always"/>
@@ -124,6 +121,6 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
 		<script name="bootstrap">
 		dofile(GetExternalStorageDirectory()..""/BlowTorch/simpledb.lua")
 		</script>
-	</plugin>
+	</plugin> -->
   </plugins>
 </blowtorch>
