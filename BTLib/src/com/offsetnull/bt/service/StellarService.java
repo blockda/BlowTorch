@@ -936,9 +936,6 @@ public class StellarService extends Service {
 		buildAliases();
 		//buildTriggerData();
 		
-		
-		
-		
 		//L.pushJavaObject(((the_settings.getAliases())));
 		//L.setGlobal("foo");
 		
