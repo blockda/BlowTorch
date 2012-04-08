@@ -859,12 +859,24 @@ public class Connection implements SettingsChangedListener {
 					if(t.isEnabled()) {
 						if(!addseparator) {
 							triggerBuilder.append("(");
+							if(!t.isInterpretAsRegex()) {
+								triggerBuilder.append("\\Q");
+							}
 							triggerBuilder.append(t.getPattern());
+							if(!t.isInterpretAsRegex()) {
+								triggerBuilder.append("\\E");
+							}
 							triggerBuilder.append(")");
 							addseparator = true;
 						} else {
 							triggerBuilder.append("|(");
+							if(!t.isInterpretAsRegex()) {
+								triggerBuilder.append("\\Q");
+							}
 							triggerBuilder.append(t.getPattern());
+							if(!t.isInterpretAsRegex()) {
+								triggerBuilder.append("\\E");
+							}
 							triggerBuilder.append(")");
 						}
 						sortedTriggerMap.put(currentgroup, t);
@@ -892,12 +904,24 @@ public class Connection implements SettingsChangedListener {
 						if(t.isEnabled()) {
 							if(i == 0 && addseparator == false) {
 								triggerBuilder.append("(");
+								if(!t.isInterpretAsRegex()) {
+									triggerBuilder.append("\\Q");
+								}
 								triggerBuilder.append(t.getPattern());
+								if(!t.isInterpretAsRegex()) {
+									triggerBuilder.append("\\E");
+								}
 								triggerBuilder.append(")");
 								addseparator = true;
 							} else {
 								triggerBuilder.append("|(");
+								if(!t.isInterpretAsRegex()) {
+									triggerBuilder.append("\\Q");
+								}
 								triggerBuilder.append(t.getPattern());
+								if(!t.isInterpretAsRegex()) {
+									triggerBuilder.append("\\E");
+								}
 								triggerBuilder.append(")");
 							}
 							sortedTriggerMap.put(currentgroup, t);
@@ -909,12 +933,12 @@ public class Connection implements SettingsChangedListener {
 			}
 		
 		}
-		
 		massiveTriggerString = triggerBuilder.toString();
-		
+		String trgstr = triggerBuilder.toString();
+		trgstr = trgstr.replace("|", "\n");
+		Log.e("MASSIVE",trgstr);
 		massivePattern = Pattern.compile(massiveTriggerString,Pattern.MULTILINE);
-		//massiveTriggerString = massiveTriggerString.replace("|", "\n");
-		//Log.e("MASSIVE",massiveTriggerString);
+		
 		massiveMatcher = massivePattern.matcher("");
 		
 		//long delta = System.currentTimeMillis() - start;
@@ -3092,7 +3116,7 @@ public class Connection implements SettingsChangedListener {
 				
 				
 				
-				the_settings.importV1Settings(s);
+				
 				WindowToken tmp = the_settings.getSettings().getWindows().get("mainDisplay");
 				tmp.importV1Settings(s);
 				
@@ -3125,6 +3149,7 @@ public class Connection implements SettingsChangedListener {
 					buttonops.setOption("haptic_flip", Integer.toString(2));
 				}
 				loadPlugins(tmpplugs);
+				the_settings.importV1Settings(s);
 				if(!s.isRoundButtons()) {
 					buttonops.setOption("button_roundness", Integer.toString(0));
 				} 
@@ -3174,6 +3199,7 @@ public class Connection implements SettingsChangedListener {
 		
 		}
 		
+		buildTriggerSystem();
 	}
 	
 	private void loadInternalSettings() {
