@@ -12,10 +12,10 @@ currentChannel = "main"
 buffers = {}
 buffers[currentChannel] = chatWindow:getBuffer()
 
-altbuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree");
+altbuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree");
 altbuffer:addString("i am the alternate buffer, rock on.")
 
-foobuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree");
+foobuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree");
 foobuffer:addString("this is the foo buffer, buffffererere.")
 
 --buffers["alt"] = altbuffer;
@@ -86,7 +86,7 @@ function processChat(name,line,replaceMap)
 		else
 			channelBuffer = buffers[channel]
 			if(channelBuffer == nil) then
-				channelBuffer = luajava.newInstance("com.happygoatstudios.bt.window.TextTree")
+				channelBuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree")
 				--channelBuffer:appendLine(line)
 				buffers[channel] = channelBuffer
 				updateUIButtons()
@@ -95,7 +95,7 @@ function processChat(name,line,replaceMap)
 		end
 	else
 		--create a new buffer
-		newchannel = luajava.newInstance("com.happygoatstudios.bt.window.TextTree")
+		newchannel = luajava.newInstance("com.offsetnull.bt.window.TextTree")
 		--attatch a copy of this line to the new buffer
 		newchannel:appendLine(line)
 		--keep track of new buffer in buffer map, under the name of the matched channel.
