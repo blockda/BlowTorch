@@ -179,7 +179,7 @@ hider_cb = luajava.createProxy("android.view.View$OnClickListener",hider)
 rootView = view:getParentView()
 rootView:removeView(view)
 
-parentView = luajava.newInstance("com.happygoatstudios.bt.window.AnimatedRelativeLayout",view:getContext())
+parentView = luajava.newInstance("com.offsetnull.bt.window.AnimatedRelativeLayout",view:getContext())
 parentView:setAnimationListener(view)
 viewParams = view:getLayoutParams()
 chatWindowParams = luajava.new(RelativeLayoutParams,viewParams.width,viewParams.height)
