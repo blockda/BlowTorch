@@ -34,6 +34,7 @@ import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
 
 import android.R;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -92,6 +93,9 @@ import com.offsetnull.bt.window.TextTree.Unit;
 public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener,SettingsChangedListener {
 
 	//private DrawRunner _runner = null;
+	
+	private int statusBarHeight = 0;
+	private MainWindow parent = null;
 	private Bitmap homeWidgetDrawable = null;
 	private Bitmap textSelectionCancelBitmap = null;
 	private Bitmap textSelectionCopyBitmap = null;
@@ -239,8 +243,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.colorRed + message + Colorizer.colorWhite + "\n"));
 	}
 	
-	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
+	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings,MainWindow activity) {
 		super(context);
+		this.parent = activity;
 		init(dataDir,name,owner,mainWindowHandler,settings);
 	}
 	
@@ -472,6 +477,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		PREF_FONTSIZE = (Integer)fontsize.getValue();
 		setCharacterSizes(PREF_FONTSIZE,PREF_LINEEXTRA);
 		
+		Log.e("WINDOW","WINDOW COLOR VALUE("+this.getName()+"): " + (Integer)colorOption.getValue());
 		switch((Integer)colorOption.getValue()) {
 		case 0:
 			this.setColorDebugMode(0);
@@ -2545,7 +2551,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
 		PushMenuStackFunction pmsf = new PushMenuStackFunction(L);
 		PopMenuStackFunction popmsf = new PopMenuStackFunction(L);
+		GetStatusBarHeight gsbshf = new GetStatusBarHeight(L);
 		try {
+			
+			gsbshf.register("GetStatusBarHeight");
 			iv.register("invalidate");
 			df.register("debugPrint");
 			bf.register("getBounds");
@@ -2559,6 +2568,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			gesdf.register("GetExternalStorageDirectory");
 			pmsf.register("PushMenuStack");
 			popmsf.register("PopMenuStack");
+			
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2984,6 +2994,38 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException {
 			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_POPMENUSTACK));
 			return 0;
+		}
+		
+	}
+	
+	private class GetActivityFunction extends JavaFunction {
+
+		public GetActivityFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+
+			this.L.pushJavaObject(Window.this.parent);
+			return 1;
+		}
+		
+	}
+	
+	private class GetStatusBarHeight extends JavaFunction {
+
+		public GetStatusBarHeight(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushString(Integer.toString((int)Window.this.parent.getStatusBarHeight()));
+			return 1;
 		}
 		
 	}

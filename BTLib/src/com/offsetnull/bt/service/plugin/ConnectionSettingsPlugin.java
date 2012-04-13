@@ -643,7 +643,7 @@ public final static int DEFAULT_HYPERLINK_COLOR = 0xFF3333AA;
 		
 		this.getSettings().getOptions().setOption("hyperlink_color", Integer.toString(oldSettings.getHyperLinkColor()));
 		this.getSettings().getOptions().setOption("word_wrap", Boolean.toString(oldSettings.isWordWrap()));
-		this.getSettings().getOptions().setOption("color_option", Integer.toString((oldSettings.isDisableColor() == true) ? 0 : 1));
+		this.getSettings().getOptions().setOption("color_option", Integer.toString((oldSettings.isDisableColor() == true) ? 1 : 0));
 		this.getSettings().getOptions().setOption("font_size", Integer.toString(oldSettings.getLineSize()));
 		this.getSettings().getOptions().setOption("line_extra", Integer.toString(oldSettings.getLineSpaceExtra()));
 		this.getSettings().getOptions().setOption("buffer_size", Integer.toString(oldSettings.getMaxLines()));

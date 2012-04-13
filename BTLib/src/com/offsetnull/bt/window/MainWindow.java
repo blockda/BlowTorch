@@ -2471,6 +2471,7 @@ public class MainWindow extends Activity {
 				MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 				MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			}
+			//
 
 			MainWindow.this.findViewById(R.id.window_container).requestLayout();
 			isFullScreen = fullscreen;
@@ -3017,7 +3018,8 @@ public class MainWindow extends Activity {
 			//	long sfs = System.currentTimeMillis();
 			//	sfs = sfs + 10;
 			//}
-			com.offsetnull.bt.window.Window tmp = new com.offsetnull.bt.window.Window(dataDir,this,w.getName(),w.getPluginName(),myhandler,w.getSettings());
+			Log.e("WINDOW","INITIALIZING WINDOW: " + w.getName() + " id:" + w.getId());
+			com.offsetnull.bt.window.Window tmp = new com.offsetnull.bt.window.Window(dataDir,this,w.getName(),w.getPluginName(),myhandler,w.getSettings(),this);
 			
 			//determine the appropriate layout group to load.
 			int screenLayout = this.getResources().getConfiguration().screenLayout;
@@ -3154,5 +3156,18 @@ public class MainWindow extends Activity {
 	    } else {
 	    	return false;
 	    }
+	    
+	}
+	
+	public double getStatusBarHeight() {
+		// TODO Auto-generated method stub
+		if(isFullScreen) {
+			return statusBarHeight;
+		} else {
+			return 0;
+			
+		}
+		
+		//return 0;
 	}
 }
