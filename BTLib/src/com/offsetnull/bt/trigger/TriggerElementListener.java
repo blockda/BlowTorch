@@ -24,10 +24,18 @@ public class TriggerElementListener implements ElementListener {
 	}
 	
 	public void start(Attributes a) {
+		
+		if(a.getValue("", BasePluginParser.ATTR_TRIGGERLITERAL) == null) {
+			current_trigger.setInterpretAsRegex((a.getValue("","regexp") == null) ? false : ( a.getValue("","regexp").equals("true") ? true : false));
+		} else {
+			current_trigger.setInterpretAsRegex( (a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL) == null) ? false : a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL).equals("true") ? true : false);
+		}
+		
 		current_trigger.setName(a.getValue("",BasePluginParser.ATTR_TRIGGERTITLE));
 		current_trigger.setPattern(a.getValue("",BasePluginParser.ATTR_TRIGGERPATTERN));
-		current_trigger.setInterpretAsRegex( a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL).equals("true") ? true : false);
-		current_trigger.setFireOnce(a.getValue("",BasePluginParser.ATTR_TRIGGERONCE).equals("true") ? true : false);
+		 
+
+		current_trigger.setFireOnce((a.getValue("",BasePluginParser.ATTR_TRIGGERONCE) == null) ? false : a.getValue("",BasePluginParser.ATTR_TRIGGERONCE).equals("true") ? true : false);
 		current_trigger.setHidden( (a.getValue("",BasePluginParser.ATTR_TRIGGERHIDDEN) == null) ? false : (a.getValue("",BasePluginParser.ATTR_TRIGGERHIDDEN)).equals("true") ? true : false);
 		current_trigger.setEnabled( (a.getValue("",BasePluginParser.ATTR_TRIGGERENEABLED) == null) ? true : (a.getValue("",BasePluginParser.ATTR_TRIGGERENEABLED)).equals("true") ? true : false);
 		current_trigger.setSequence( (a.getValue("",BasePluginParser.ATTR_SEQUENCE) == null) ? 10 : Integer.parseInt(a.getValue("",BasePluginParser.ATTR_SEQUENCE)));

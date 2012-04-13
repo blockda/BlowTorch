@@ -1,5 +1,5 @@
 --debugPrint("package path:"..package.path)
-package.path = "/mnt/sdcard/BlowTorch/?.lua"
+--package.path = "/mnt/sdcard/BlowTorch/?.lua"
 
 --make a button.
 --debugPrint("in the chat window")
@@ -197,6 +197,23 @@ view:setId(59595)
 rootView:addView(parentView)
 parentView:addView(uiButtonBar)
 parentView:addView(view)
+
+--make divider
+divider = luajava.new(View,view:getContext())
+dividerparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,3*getDisplayDensity())
+dividerparams:addRule(RelativeLayout.BELOW,parentView:getId())
+divider:setId(59596)
+divider:setLayoutParams(dividerparams)
+divider:setBackgroundColor(Color:argb(255,68,68,136))
+
+mainWindow = rootView:findViewById(6666)
+local mainparams = mainWindow:getLayoutParams()
+mainparams:addRule(RelativeLayout.BELOW,divider:getId())
+mainparams:addRule(RelativeLayout.ABOVE,40)
+
+mainWindow:setLayoutParams(mainparams)
+
+rootView:addView(divider)
 
 toucher = {}
 function toucher.onLongClick(v)

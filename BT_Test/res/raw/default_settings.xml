@@ -4,8 +4,8 @@
   <windows>
     <window name="mainDisplay" id="6666">
       <layoutGroup target="normal">
-      	<layout orientation="landscape" above="10" alignParentLeft="true" width="fill_parent" height="fill_parent" />
-        <layout orientation="portrait" above="10" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+      	<layout orientation="landscape" above="40" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+        <layout orientation="portrait" above="40" alignParentLeft="true" width="fill_parent" height="fill_parent" />
       </layoutGroup>
       <options/>
     </window>
