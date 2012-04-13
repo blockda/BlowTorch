@@ -397,6 +397,11 @@ public class MainWindow extends Activity {
         //mana.setValue(90);
         //health.setValue(10);
 		
+		View divider = findViewById(R.id.divider);
+		RelativeLayout.LayoutParams dividerparams = (android.widget.RelativeLayout.LayoutParams) divider.getLayoutParams();
+		dividerparams.addRule(RelativeLayout.ABOVE,10);
+		divider.setId(40);
+		
         View v = findViewById(R.id.textinput);
         //v.setTag("inputbar");
         //EditText input_box = (EditText)v;
@@ -2117,6 +2122,8 @@ public class MainWindow extends Activity {
 			mode = LAUNCH_MODE.TEST;
 		}*/
 		if(supportsActionBar()) {
+		//int height = this.getActionBar().getHeight();
+		//Log.e("ACFLSAFD","ACTION BAR HEIGHT(fg) IS :" + height);
 		this.getActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
 		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME);
 		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
@@ -3097,14 +3104,19 @@ public class MainWindow extends Activity {
 		}
 		
 		int counter = 0;
-		while(rl.getChildCount() > 1) {
+		/*while(rl.getChildCount() > 2) {
 			View v = rl.getChildAt(rl.getChildCount()-1);
 			if(v.getId() != 10) {
 				rl.removeView(v);
 			} else {
 				rl.removeViewAt(rl.getChildCount()-2);
 			}
-		}
+		}*/
+		View inputbar = rl.findViewById(10);
+		View divider = rl.findViewById(40);
+		rl.removeAllViews();
+		rl.addView(inputbar);
+		rl.addView(divider);
 	}
 	
 	public void callWindowScript(String window, String callback) {

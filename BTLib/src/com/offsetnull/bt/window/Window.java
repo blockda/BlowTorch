@@ -1685,7 +1685,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 //			Border b = borders.get(i);
 //			c.drawLine(b.p1.x, b.p1.y, b.p2.x, b.p2.y, p);
 //		}
-		if(edgeLeft) {
+		/*if(edgeLeft) {
 			c.drawLine(0, 0, 0, mHeight, borderPaint);
 		}
 		if(edgeRight) {
@@ -1696,7 +1696,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		if(edgeBottom) {
 			c.drawLine(0, mHeight, mWidth, mHeight, borderPaint);
-		}
+		}*/
 		
 		c.restore();
 		
