@@ -127,27 +127,27 @@ public class PluginDialog extends Dialog {
 		list.setEmptyView(findViewById(R.id.empty));
 		buildList();
 		
-		/*Button newbutton = (Button)findViewById(R.id.trigger_new_button);
-		
-		newbutton.setOnClickListener(new View.OnClickListener() {
+		Button load = (Button)findViewById(R.id.add);
+		load.setText("Load");
+		load.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler);
-				editor.show();
+				PluginSelectorDialog loader = new PluginSelectorDialog(PluginDialog.this.getContext());
+				loader.show();
 			}
-		});*/
+		});
 		
 		
 		
-		/*Button cancelbutton = (Button)findViewById(R.id.trigger_cancel_button);
+		Button cancelbutton = (Button)findViewById(R.id.done);
 		
 		cancelbutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				TriggerSelectionDialog.this.dismiss();
+				PluginDialog.this.dismiss();
 			}
 			
-		});*/
+		});
 	}
 	
 	private void buildList() {

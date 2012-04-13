@@ -518,6 +518,25 @@ function setHapticFeedbackFlipped(value)
 	end
 end
 
+
+Integer = luajava.newInstance("java.lang.Integer",0)
+IntegerClass = Integer:getClass()
+RawInteger = IntegerClass.TYPE
+
+function makeIntArray(table)
+	newarray = Array:newInstance(RawInteger,#table)
+	for i,v in ipairs(table) do
+		index = i-1
+		intval = luajava.new(Integer,v)
+		Array:setInt(newarray,index,intval:intValue())
+	end
+	
+	return newarray
+end
+
+android_R_attr = luajava.bindClass("android.R$attr")
+android_R_style = luajava.bindClass("android.R$style")
+android_R_dimen = luajava.bindClass("android.R$dimen")
 function alignDefaultButtons()
 	margin = 7
 	right = 0
@@ -526,7 +545,7 @@ function alignDefaultButtons()
 	top = 1000000
 	density = GetDisplayDensity()
 	
-	local set = buttons["default"]
+	local set = buttonsets["default"]
 	local defaults = buttonset_defaults["default"]
 
 	for i,b in pairs(set) do
@@ -552,13 +571,24 @@ function alignDefaultButtons()
 	
 	heightPixels = context:getResources():getDisplayMetrics().heightPixels
 	widthPixels = context:getResources():getDisplayMetrics().widthPixels
-	width = widthPixesl
+	width = widthPixels
 	if(width < heightPixels) then width = heightPixels end
 		
-	offset = width - right - (margin*density)
-		
+	xoffset = width - right - (margin*density)
+	yoffset = 0
+	pcall(function ()
+		local attrs = {}
+		local id = android_R_attr.actionBarSize
+		--if it doesn't get here then it is not honeycomb, so no actionbar
+		yoffset = 55*density
+		--debugPrint("attempting dimension lookup")
+		--debugPrint("ACTION BAR DIMENSION: "..android_R_dimen.action_bar_height)
+	end)
+	--pcall(getActionBarHeight)
+	debugPrint("ACTION BAR HEIGHT IS:"..yoffset)
 	for i,b in pairs(set) do
-		b.x = b.x + offset
+		b.x = b.x + xoffset
+		b.y = b.y + yoffset
 	end
 end
 

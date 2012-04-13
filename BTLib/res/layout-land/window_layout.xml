@@ -45,8 +45,17 @@
     android:isScrollContainer = "false"
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"/>
+    
+
 
     </LinearLayout>
+    
+       <View
+        android:layout_height="3dip"
+        android:layout_width="fill_parent"
+        android:layout_above="@id/inputbar"
+        android:id="@+id/divider"
+        android:background="#FF444488"/>
 <!-- 
 <RelativeLayout
 	android:layout_height="20dip"

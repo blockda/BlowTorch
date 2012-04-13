@@ -934,9 +934,9 @@ public class Connection implements SettingsChangedListener {
 		
 		}
 		massiveTriggerString = triggerBuilder.toString();
-		String trgstr = triggerBuilder.toString();
-		trgstr = trgstr.replace("|", "\n");
-		Log.e("MASSIVE",trgstr);
+		//String trgstr = triggerBuilder.toString();
+		//trgstr = trgstr.replace("|", "\n");
+		//Log.e("MASSIVE",trgstr);
 		massivePattern = Pattern.compile(massiveTriggerString,Pattern.MULTILINE);
 		
 		massiveMatcher = massivePattern.matcher("");

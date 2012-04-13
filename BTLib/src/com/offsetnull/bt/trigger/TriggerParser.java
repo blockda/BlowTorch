@@ -47,10 +47,16 @@ public final class TriggerParser {
 			out.startTag("", BasePluginParser.TAG_TRIGGER);
 			out.attribute("", BasePluginParser.ATTR_TRIGGERTITLE, trigger.getName());
 			out.attribute("", BasePluginParser.ATTR_TRIGGERPATTERN, trigger.getPattern());
-			out.attribute("", BasePluginParser.ATTR_TRIGGERLITERAL, trigger.isInterpretAsRegex() ? "true" : "false");
-			out.attribute("", BasePluginParser.ATTR_TRIGGERONCE, trigger.isFireOnce() ? "true" : "false");
+			if(trigger.isInterpretAsRegex()) {
+				out.attribute("", "regexp", trigger.isInterpretAsRegex() ? "true" : "false");
+			}
+			if(trigger.isFireOnce()) {
+				out.attribute("", BasePluginParser.ATTR_TRIGGERONCE, trigger.isFireOnce() ? "true" : "false");
+			}
 			if(trigger.isHidden())  out.attribute("", BasePluginParser.ATTR_TRIGGERHIDDEN, "true");
-			out.attribute("", BasePluginParser.ATTR_TRIGGERENEABLED, trigger.isEnabled() ? "true" : "false");
+			if(!trigger.isEnabled()) {
+				out.attribute("", BasePluginParser.ATTR_TRIGGERENEABLED, trigger.isEnabled() ? "true" : "false");
+			}
 			out.attribute("", BasePluginParser.ATTR_SEQUENCE, Integer.toString(trigger.getSequence()));
 			if(!trigger.getGroup().equals(TriggerData.DEFAULT_GROUP)) out.attribute("", BasePluginParser.ATTR_GROUP, trigger.getGroup());
 			out.attribute("", BasePluginParser.ATTR_KEEPEVALUATING, trigger.isKeepEvaluating() ? "true" : "false");

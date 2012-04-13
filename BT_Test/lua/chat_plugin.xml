@@ -27,12 +27,12 @@
 		</windows>
 		<script name="bootstrap">
 			<![CDATA[
-				dofile("/mnt/sdcard/BlowTorch/chatserver.lua")
+				dofile(GetExternalStorageDirectory().."/BlowTorch/chatserver.lua")
 			]]>
 		</script>
 		<script name="chatwindow">
 			<![CDATA[
-				dofile("/mnt/sdcard/BlowTorch/chatwindow.lua")
+				dofile(GetExternalStorageDirectory().."/BlowTorch/chatwindow.lua")
 			]]>
 		</script>
 	</plugin>

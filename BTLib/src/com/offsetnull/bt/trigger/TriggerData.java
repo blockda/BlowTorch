@@ -72,10 +72,11 @@ public class TriggerData implements Parcelable {
 	}
 	
 	private void buildData() {
+		//if(p == null || p.equals("")) return;
 		if(this.interpretAsRegex) {
-			this.p = Pattern.compile(pattern,Pattern.MULTILINE);
+			this.p = Pattern.compile(pattern);
 		} else {
-			this.p = Pattern.compile("\\Q"+pattern+"\\E",Pattern.MULTILINE);
+			this.p = Pattern.compile("\\Q"+pattern+"\\E");
 		}
 		this.m = p.matcher("");
 	}
@@ -215,7 +216,7 @@ public class TriggerData implements Parcelable {
 
 	public void setInterpretAsRegex(boolean interpretAsRegex) {
 		this.interpretAsRegex = interpretAsRegex;
-		buildData();
+		//buildData();
 	}
 
 	public boolean isInterpretAsRegex() {

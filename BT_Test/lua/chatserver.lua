@@ -1,5 +1,5 @@
 --debugPrint("package path:"..package.path)
-package.path = "/mnt/sdcard/BlowTorch/?.lua"
+--package.path = "/mnt/sdcard/BlowTorch/?.lua"
 
 require("serialize")
 --make a button.
@@ -107,8 +107,6 @@ function processChat(name,line,replaceMap)
 	--mainBuffer = buffers["main"]
 	
 end
-
-
 
 
 
