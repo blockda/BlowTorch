@@ -7,6 +7,7 @@ import com.offsetnull.bt.service.SettingsChangedListener;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 public class SettingsGroup extends Option implements Parcelable {
 	
@@ -214,7 +215,13 @@ public class SettingsGroup extends Option implements Parcelable {
 	public void setOption(String key,String value) {
 		BaseOption o = (BaseOption) optionsMap.get(key);
 		if(o != null) {
+			if(key.equals("color_option")) {
+				Log.e("WINDOW","WINDOW OPTION CHANGED TO: " + value);
+			}
 			o.setValue(value);
+			if(key.equals("color_option")) {
+				Log.e("WINDOW","WINDOW OPTION CHANGED TO: " + value + " actual:" + o.getValue().toString());
+			}
 			SettingsChangedListener tmp = listenerMap.get(key);
 			if(tmp != null) {
 				tmp.updateSetting(key, value);
