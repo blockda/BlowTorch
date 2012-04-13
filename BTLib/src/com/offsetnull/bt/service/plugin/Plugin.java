@@ -194,7 +194,6 @@ public class Plugin implements SettingsChangedListener {
 		DrawWindowFunction dwf = new DrawWindowFunction(L,this,mHandler);
 		dwf.register("DrawWindow");
 		
-		
 		WindowFunction wf = new WindowFunction(L);
 		ExecuteScriptFunction esf = new ExecuteScriptFunction(L);
 		GetWindowFunction mwf = new GetWindowFunction(L);
@@ -250,6 +249,7 @@ public class Plugin implements SettingsChangedListener {
 	public PluginSettings getSettings() {
 		return settings;
 	}
+	
 	private final HashMap<String,String> captureMap = new HashMap<String,String>();
 	public void process(TextTree input,StellarService service,boolean windowOpen,Handler pump,String display) {
 		//if(this.settings.getName().equals("map_miniwindow")) {

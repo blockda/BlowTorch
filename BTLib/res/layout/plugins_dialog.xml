@@ -61,8 +61,8 @@
   <Button
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:text="New Alias"
-  	android:id="@+id/pnew"
+  	android:text="Load"
+  	android:id="@+id/load"
   	android:layout_toLeftOf="@id/cancel"
   	android:layout_alignParentBottom="true"/>
   
@@ -73,7 +73,7 @@
 		android:layout_height="fill_parent"
 		android:layout_margin="0dip"
 		android:padding="0dip"
-		android:layout_above="@id/pnew"
+		android:layout_above="@id/load"
   		android:layout_below="@id/titlebar">
   <ListView
   	android:layout_width="275dip"
