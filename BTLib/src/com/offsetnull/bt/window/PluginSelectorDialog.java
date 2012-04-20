@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.TranslateAnimation;
+import android.webkit.WebView;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -64,14 +65,14 @@ public class PluginSelectorDialog extends Dialog {
 		
 		
 		
-		LinearLayout content = (LinearLayout) li.inflate(R.layout.options_dialog_content, null);
+		RelativeLayout content = (RelativeLayout) li.inflate(R.layout.options_dialog_content, null);
 		
 		//list = (ListView) content.findViewById(R.id.list);
 		TextView title = (TextView) content.findViewById(R.id.title);
 		
 		//build list
 		
-		title.setText("Plugin Search");
+		title.setText("/mnt/sdcard/BlowTorch/plugins");
 		
 		//ViewFlipper flipper = (ViewFlipper) root.findViewById(R.id.flipper);
 		//flipper.addView(content);
@@ -109,7 +110,7 @@ public class PluginSelectorDialog extends Dialog {
 
 					TextView title = (TextView) newContent.findViewById(R.id.title);
 					
-					title.setText("Plugin Description");
+					title.setText(path);
 					
 					
 					ListView list = (ListView) newContent.findViewById(R.id.list);
@@ -121,6 +122,10 @@ public class PluginSelectorDialog extends Dialog {
 					//newContent.removeView(list);
 					
 					//newContent.addView(list);
+					
+					PluginInfoAdapter adapter = new PluginInfoAdapter(this.getContext(),0,info);
+					list.setAdapter(adapter);
+					adapter.notifyDataSetInvalidated();
 					
 					InfoStackItem i = new InfoStackItem();
 					i.setInfoPage(newContent);
@@ -152,11 +157,11 @@ public class PluginSelectorDialog extends Dialog {
 		LayoutInflater li = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		
-		LinearLayout newContent = (LinearLayout) li.inflate(R.layout.options_dialog_content, null);
+		RelativeLayout newContent = (RelativeLayout) li.inflate(R.layout.options_dialog_content, null);
 
 		TextView title = (TextView) newContent.findViewById(R.id.title);
 		
-		title.setText("Plugin Search");
+		title.setText(path);
 		
 		
 		ListView list = (ListView) newContent.findViewById(R.id.list);
@@ -382,6 +387,41 @@ public class PluginSelectorDialog extends Dialog {
 		}
 		public void setInfoPage(View infopage) {
 			this.infoPage = infopage;
+		}
+		
+	}
+	
+	private class PluginInfoAdapter extends ArrayAdapter<PluginDescription> {
+
+		private LayoutInflater inflater = null;
+		public PluginInfoAdapter(Context context, int resource, PluginDescription[] objects) {
+			super(context, resource, objects);
+			inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			
+		}
+		
+		@Override
+		public View getView(int pos,View view,ViewGroup root) {
+			if(view == null) {
+				view = inflater.inflate(R.layout.plugin_info_dialog_list_row, null);
+			}
+			
+			((LinearLayout)view.findViewById(R.id.icon).getParent()).setVisibility(View.GONE);
+			view.findViewById(R.id.widget_frame).setVisibility(View.GONE);
+			
+			PluginDescription desc = this.getItem(pos);
+			
+			TextView title = (TextView) view.findViewById(R.id.infoTitle);
+			
+			WebView content = (WebView) view.findViewById(R.id.infoExtended);
+			
+			title.setText(desc.getName());
+			content.setBackgroundColor(0xFF000000);
+			//content.setFo
+			
+			content.loadDataWithBaseURL("/mnt/sdcard/BlowTorch/plugins/aardwolf/", desc.getDescription(), null, null, null);
+			
+			return view;
 		}
 		
 	}

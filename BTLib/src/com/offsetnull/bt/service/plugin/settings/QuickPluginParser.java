@@ -12,6 +12,7 @@ import android.sax.Element;
 import android.sax.ElementListener;
 import android.sax.RootElement;
 import android.sax.StartElementListener;
+import android.sax.TextElementListener;
 import android.util.Xml;
 
 public class QuickPluginParser extends BasePluginParser {
@@ -47,7 +48,37 @@ public class QuickPluginParser extends BasePluginParser {
 		Element script = plugin.getChild("script");
 		Element windows = plugin.getChild("windows");
 		Element window = windows.getChild("window");
+		Element author = plugin.getChild("author");
+		Element description = plugin.getChild("description");
 		
+		author.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				
+			}
+
+			@Override
+			public void end(String body) {
+				current_author = body;
+			}
+			
+		});
+		
+		description.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void end(String body) {
+				current_description = body;
+			}
+			
+		});
 		plugin.setElementListener(new ElementListener() {
 
 			@Override
@@ -63,17 +94,8 @@ public class QuickPluginParser extends BasePluginParser {
 					current_plugin = a.getValue("","name");
 				}
 				
-				if(a.getValue("","author") == null) {
-					current_author = "Unknown";
-				} else {
-					current_plugin = a.getValue("","author");
-				}
-				
-				if(a.getValue("","description") == null) {
-					current_description = "No description";
-				} else {
-					current_description = a.getValue("","description");
-				}
+				current_author = "";
+				current_description = "";
 				
 			}
 
@@ -83,7 +105,7 @@ public class QuickPluginParser extends BasePluginParser {
 				PluginDescription desc = new PluginDescription();
 				desc.setName(current_plugin);
 				desc.setAuthor(current_author);
-				desc.setName(current_description);
+				desc.setDescription(current_description);
 				desc.setTriggers(trigger_count);
 				desc.setAliases(alias_count);
 				desc.setTimers(timer_count);
