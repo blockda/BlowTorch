@@ -19,6 +19,7 @@ import android.content.res.Configuration;
 import android.os.Parcel;
 import android.os.Parcelable;
 //import android.util.Log;
+import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 
@@ -458,7 +459,8 @@ public class WindowToken implements Parcelable {
 		}
 		
 		p.writeParcelable(settings, arg1);
-		
+		ListOption o = (ListOption) settings.findOptionByKey("color_option");
+		Log.e("WINDOW","WINDOWTOKEN PARCELING, "+ this.getName() + " color option value is: " + o.getValue().toString());
 	}
 	public void setBuffer(TextTree buffer) {
 		this.buffer = buffer;
@@ -701,7 +703,11 @@ public class WindowToken implements Parcelable {
 		
 		this.getSettings().setOption("hyperlink_color", Integer.toString(s.getHyperLinkColor()));
 		this.getSettings().setOption("word_wrap", Boolean.toString(s.isWordWrap()));
+		Log.e("WINDOW","WINDOWTOKEN IMPORT OLD SETTING: " + s.isDisableColor() + " name: " + this.getName());
 		this.getSettings().setOption("color_option", Integer.toString((s.isDisableColor() == true)?1:0));
+		ListOption o = (ListOption)this.getSettings().findOptionByKey("color_option");
+		
+		Log.e("WINDOW","WINDOWTOKEN ABSORBED COLOR SETTING, NOW: " + o.getValue().toString() + " name: " + this.getName());
 		this.getSettings().setOption("font_size", Integer.toString(s.getLineSize()));
 		this.getSettings().setOption("line_extra", Integer.toString(s.getLineSpaceExtra()));
 		this.getSettings().setOption("buffer_size",Integer.toString(s.getMaxLines()));

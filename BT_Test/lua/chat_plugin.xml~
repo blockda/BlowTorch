@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<blowtorch xmlversion="2">
+<plugins>
+	<plugin author="Daniel Block" name="chat_miniwindow" id="50">
+		<triggers>
+			<trigger title="chats" pattern="^\{chan ch=(\w*)\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+				<replace fireWhen="always"/>
+				<script function="processChat" fireWhen="always"/>
+				<gag fireWhen="always"/>
+			</trigger>
+			<!-- <trigger title="testmeo" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="5">
+				<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
+			</trigger>
+			<trigger title="colorize" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="3">
+				<color>45</color>
+			</trigger> -->
+		</triggers>
+		<windows>
+			<window name="chats" id="5010" script="chatwindow">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
+				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape" width="fill_parent" height="77" alignParentTop="true" alignParentRight="true"/>
+				</layoutGroup>
+			</window>
+		</windows>
+		<script name="bootstrap">
+			<![CDATA[
+				dofile(GetExternalStorageDirectory().."/BlowTorch/chatserver.lua")
+			]]>
+		</script>
+		<script name="chatwindow">
+			<![CDATA[
+				dofile(GetExternalStorageDirectory().."/BlowTorch/chatwindow.lua")
+			]]>
+		</script>
+	</plugin>
+</plugins>
+</blowtorch>

@@ -220,7 +220,7 @@ function moveTouch.onTouch(v,e)
 					b.data.y = b.data.y + dy
 					b.selected = false
 					updateSelected(b,false)
-					b:updateRect()
+					b:updateRect(statusoffset)
 				end
 			end
 			drawButtons()
@@ -443,7 +443,7 @@ function managerTouch.onTouch(v,e)
 			
 		--	touchedbutton.data.x = modx
 		--	touchedbutton.data.y = mody
-		--	touchedbutton:updateRect()
+		--	touchedbutton:updateRect(statusoffset)
 		--	drawButtons()
 		--	invalidate()
 		--	return true
@@ -469,7 +469,7 @@ function managerTouch.onTouch(v,e)
 			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
 			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
 			debugPrint("new button at: "..modx..","..mody)
-			local butt = addButton(modx,mody)
+			local butt = addButton(modx,mody-statusoffset)
 			--butt.width = gridwidth
 			--butt.height = gridwidth
 			--canvas:drawRoundRect(butt.rect,5,5,paint)
@@ -1766,7 +1766,7 @@ function addButton(pX,pY)
 	--newb.rect = luajava.newInstance("android.graphics.RectF")
 	--newb.paintOpts = luajava.new(PaintClass,paint)
 	--newb.selected = false
-	newb:updateRect()
+	newb:updateRect(statusoffset)
 	table.insert(buttons,newb)
 	return newb
 end
@@ -1786,21 +1786,35 @@ end
 function updateRect(b)
 	left = b.x - (b.width/2)
 	right = b.x + (b.width/2)
-	top = b.y - (b.height/2)
-	bottom = b.y + (b.height/2)
+	top = b.y - (b.height/2) + statusoffset
+	bottom = b.y + (b.height/2) + statusoffset
 	tmp = b.rect
-	tmp:set(left,top,right,bottom)
+	tmp:set(left,top,right,bottom) 
 end
 
 buttonLayer = nil
 buttonCanvas = nil
 draw = false
+statusoffset = GetStatusBarHeight()
 Integer = luajava.bindClass("java.lang.Integer")
 function OnSizeChanged(w,h,oldw,oldh)
 	if(w == 0 and h == 0) then
 		draw = false
 		return
 	end
+	
+	newoffset = tonumber(GetStatusBarHeight())
+	if(statusoffset ~= newoffset) then
+		for i=1,#buttons do
+			local b = buttons[i]
+			b:updateRect(newoffset)
+		end
+	
+	end
+	
+	statusoffset = newoffset
+	
+	debugPrint("status offset is: "..statusoffset)
 	local ccl = luajava.bindClass("android.graphics.Color")
 	local colord = ccl:argb(0x88,0x00,0x00,0xFF)
 	
@@ -1837,7 +1851,7 @@ function OnSizeChanged(w,h,oldw,oldh)
 	
 	revertButtonData.x = w - revertButtonData.width*2
 	revertButtonData.y = h - revertButtonData.height*2
-	revertButton:updateRect()
+	revertButton:updateRect(statusoffset)
 end
 
 dragDashPaint = luajava.new(PaintClass)
@@ -1850,6 +1864,9 @@ dragBoxPaint = luajava.new(PaintClass)
 dragBoxPaint:setARGB(0x33,0x77,0x00,0x33)
 
 function OnDraw(canvas)
+	--canvas:save()
+	--canvas:translate(0,statusoffset)
+
 	if(manage and drawManagerLayer) then
 		canvas:drawBitmap(managerLayer,0,0,nil)
 	end
@@ -1868,6 +1885,8 @@ function OnDraw(canvas)
 	if(moveBitmap ~= nil) then
 		canvas:drawBitmap(moveBitmap,moveBounds.left,moveBounds.top,nil)
 	end
+	
+	--canvas:restore()
 	
 end
 
@@ -1982,7 +2001,7 @@ function editorDone.onClick(v)
 		tmp.data.flipLabel = fliplabel
 		tmp.data.flipCommand = flipcmd
 		
-		tmp:updateRect()
+		tmp:updateRect(statusoffset)
 		--debugPrint("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
 		--printTable("edited",tmp)
 		
@@ -2030,7 +2049,7 @@ function editorDone.onClick(v)
 					b.data.flipLabelColor = theFlipLabelColor
 				end
 				
-				b:updateRect()
+				b:updateRect(statusoffset)
 			end
 		end
 	end
