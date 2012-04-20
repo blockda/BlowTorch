@@ -653,7 +653,7 @@ public class OptionsDialog extends Dialog {
 			
 			LayoutInflater li = (LayoutInflater) OptionsDialog.this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			
-			LinearLayout newContent = (LinearLayout) li.inflate(R.layout.options_dialog_content, null);
+			RelativeLayout newContent = (RelativeLayout) li.inflate(R.layout.options_dialog_content, null);
 			ListView list = (ListView) newContent.findViewById(R.id.list);
 			
 			OptionsAdapter newAdapt = new OptionsAdapter(mCurrent);

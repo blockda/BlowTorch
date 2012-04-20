@@ -1,19 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/holder"
     android:layout_height="fill_parent"
     android:layout_width="fill_parent"
     android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/title_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:background="#FF999999">
+    <ImageButton
+        android:id="@+id/back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/reverse_button"/>
     <TextView 
       	android:id="@+id/title"
        	android:layout_width="fill_parent"
       	android:layout_height="wrap_content"
-      	android:textSize="26dip"
-       	android:gravity="center"/>
+      	android:textAppearance="?android:attr/textAppearanceLarge"
+      	android:textColor="#FF333333"
+		android:background="#FF999999"
+       	android:gravity="center"
+       	android:ellipsize="start"
+       	android:lines="1"/>
+    </LinearLayout>
 	<ListView
 		android:id="@+id/list"
+		android:layout_below="@id/title_bar"
 		android:layout_height="fill_parent"
 		android:layout_width="fill_parent"/>
-</LinearLayout>
+</RelativeLayout>
