@@ -63,12 +63,12 @@ body {
 		</windows>
 		<script name="bootstrap">
 			<![CDATA[
-				dofile(GetExternalStorageDirectory().."/BlowTorch/chatserver.lua")
+			dofile(GetExternalStorageDirectory().."/BlowTorch/plugins/aardwolf/chatserver.lua")
 			]]>
 		</script>
 		<script name="chatwindow">
 			<![CDATA[
-				dofile(GetExternalStorageDirectory().."/BlowTorch/chatwindow.lua")
+			dofile(GetExternalStorageDirectory().."/BlowTorch/plugins/aardwolf/chatwindow.lua")
 			]]>
 		</script>
 	</plugin>

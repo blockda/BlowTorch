@@ -2,6 +2,7 @@
 Color = luajava.bindClass("android.graphics.Color")
 Path = luajava.bindClass("android.graphics.Path")
 PathDirection = luajava.bindClass("android.graphics.Path$Direction")
+statusoffset = 0
 
 buttonRoundness = 6
 --PathDirection_CCW = PathDirection.CCW
@@ -86,7 +87,7 @@ function BUTTON:new(data,density)
 	setmetatable(o,self)
 	self.__index = self
 	o.density = density
-	o:updateRect()
+	o:updateRect(statusoffset)
 	
 	
 	return o
@@ -98,12 +99,12 @@ end
 
 --end
 
-function BUTTON:updateRect()
+function BUTTON:updateRect(statusoffset)
 	--local r = self.rect
 	local left = self.data.x - (self.data.width/2)*self.density
 	local right = self.data.x + (self.data.width/2)*self.density
-	local top = self.data.y - (self.data.height/2)*self.density
-	local bottom = self.data.y + (self.data.height/2)*self.density
+	local top = self.data.y - (self.data.height/2)*self.density + statusoffset
+	local bottom = self.data.y + (self.data.height/2)*self.density + statusoffset
 	local tmp = self.rect
 
 	
@@ -168,7 +169,7 @@ function BUTTON:draw(state,canvas)
 		
 	end
 	local tX = self.data.x - (p:measureText(label)/2)
-	local tY = self.data.y + (p:getTextSize()/2)
+	local tY = self.data.y + (p:getTextSize()/2) + statusoffset
 	
 	canvas:drawText(label,tX,tY,p)
 	--canvas:restore()
