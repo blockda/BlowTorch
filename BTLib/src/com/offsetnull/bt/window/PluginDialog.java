@@ -132,7 +132,7 @@ public class PluginDialog extends Dialog {
 		load.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				PluginSelectorDialog loader = new PluginSelectorDialog(PluginDialog.this.getContext());
+				PluginSelectorDialog loader = new PluginSelectorDialog(PluginDialog.this.getContext(),service);
 				loader.show();
 			}
 		});
