@@ -125,6 +125,7 @@ public class Connection implements SettingsChangedListener {
 	public static final int MESSAGE_WINDOWXCALLB = 25;
 	public static final int MESSAGE_PLUGINLUAERROR = 26;
 	private static final int MESSAGE_DORESETSETTINGS = 27;
+	protected static final int MESSAGE_ADDLINK = 28;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -209,6 +210,9 @@ public class Connection implements SettingsChangedListener {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_ADDLINK:
+					doAddLink((String)msg.obj);
+					break;
 				case MESSAGE_DORESETSETTINGS:
 					doResetSettings();
 					break;
@@ -3361,5 +3365,15 @@ public class Connection implements SettingsChangedListener {
 
 	public void startLoadSettingsSequence(String path) {
 		handler.sendMessage(handler.obtainMessage(MESSAGE_IMPORTFILE,path));
+	}
+	
+	public void doAddLink(String path) {
+		the_settings.getLinks().add(path);
+		saveMainSettings();
+		reloadSettings();
+	}
+	
+	public void addLink(String path) {
+		handler.sendMessage(handler.obtainMessage(MESSAGE_ADDLINK,path));
 	}
 }
