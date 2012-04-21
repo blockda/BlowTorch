@@ -890,7 +890,7 @@ public class StellarService extends Service {
 		
 		if(N < 1) {
 			//no listeneres, just shutdown and put up a new notification.
-			ShowDisconnectedNotification(c);
+			ShowDisconnectedNotification(c,c.display,c.host,c.port);
 			//doShutdown();
 		}
 		
@@ -2296,7 +2296,7 @@ public class StellarService extends Service {
 		//initPlugins();
 	}
 	
-	private void ShowDisconnectedNotification(Connection c) {
+	private void ShowDisconnectedNotification(Connection c,String display,String host,int port) {
 		
 		
 		//mNM.cancel(5545);
@@ -2309,7 +2309,7 @@ public class StellarService extends Service {
 		CharSequence contentTitle = brandName + " Disconnected";
 		//CharSequence contentText = "Hello World!";
 		CharSequence contentText = null;
-		String message = "Click to reconnect";
+		String message = "Click to reconnect: " + host + ":" + port;;
 		if(message != null && !message.equals("")) {
 			contentText = message;
 		} else {
@@ -2328,7 +2328,7 @@ public class StellarService extends Service {
 		Class<?> w = null;
     	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
     	try {
-			w = Class.forName("com.happygoatstudios.bt.window.MainWindow",false,cl);
+			w = Class.forName("com.offsetnull.bt.window.MainWindow",false,cl);
 		} catch (ClassNotFoundException e1) {
 			e1.printStackTrace();
 		}
@@ -2339,9 +2339,9 @@ public class StellarService extends Service {
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
-		//notificationIntent.putExtra("DISPLAY",display);
-		//notificationIntent.putExtra("HOST", host);
-		//notificationIntent.putExtra("PORT", Integer.toString(port));
+		notificationIntent.putExtra("DISPLAY",display);
+		notificationIntent.putExtra("HOST", host);
+		notificationIntent.putExtra("PORT", Integer.toString(port));
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -2357,7 +2357,7 @@ public class StellarService extends Service {
 		//editor.commit();
 		//editor.commit();
 		this.stopForeground(true);
-		//mNM.notify(5546,note);
+		mNM.notify(5546,note);
 		showdcmessage = true;
 		this.stopSelf();
 	}
@@ -3571,6 +3571,11 @@ public class StellarService extends Service {
 		@Override
 		public void dispatchLuaError(String message) throws RemoteException {
 			connections.get(connectionClutch).dispatchLuaError(message);
+		}
+		
+		@Override
+		public void addLink(String path) {
+			connections.get(connectionClutch).addLink(path);
 		}
 
 	};

@@ -49,6 +49,7 @@ import android.widget.ViewFlipper;
 
 public class OptionsDialog extends Dialog {
 
+	BackPressedListener backListener = null;
 	//ListView primeList;
 	//ListView altList;
 	IConnectionBinder service;
@@ -110,9 +111,9 @@ public class OptionsDialog extends Dialog {
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
+		backListener = new BackPressedListener();
 		
-		
-		LinearLayout content = (LinearLayout) li.inflate(R.layout.options_dialog_content, null);
+		RelativeLayout content = (RelativeLayout) li.inflate(R.layout.options_dialog_content, null);
 		
 		//LinearLayout prime = (LinearLayout) root.findViewById(R.id.primelistholder);
 		
@@ -123,6 +124,7 @@ public class OptionsDialog extends Dialog {
 		ListView list = (ListView) content.findViewById(R.id.list);
 		TextView title = (TextView) content.findViewById(R.id.title);
 		
+		content.findViewById(R.id.back).setOnClickListener(backListener);
 		//View empty = root.findViewById(R.id.empty);
 		//list.setEmptyView(empty);
 		
@@ -148,6 +150,7 @@ public class OptionsDialog extends Dialog {
 		} catch(RemoteException e) {
 		
 		}
+		
 		
 		title.setText(mCurrent.getTitle());
 		
@@ -664,6 +667,7 @@ public class OptionsDialog extends Dialog {
 			TextView title = (TextView) newContent.findViewById(R.id.title);
 			title.setText(key.getTitle());
 			ViewFlipper f = (ViewFlipper) OptionsDialog.this.findViewById(R.id.flipper);
+			newContent.findViewById(R.id.back).setOnClickListener(backListener);
 			f.addView(newContent);
 			//int amount = altList.getWidth();
 			//int amount = 600;
@@ -834,6 +838,15 @@ public class OptionsDialog extends Dialog {
 			
 			f.showPrevious();
 		}
+	}
+	
+	private class BackPressedListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			OptionsDialog.this.onBackPressed();
+		}
+		
 	}
 	
 }

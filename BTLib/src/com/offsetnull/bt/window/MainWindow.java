@@ -3032,8 +3032,11 @@ public class MainWindow extends Activity {
 			//RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			//p.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 			//p.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-			
-			tmp.setLayoutParams(w.getLayout(screenSize,landscape));
+			RelativeLayout.LayoutParams params = (android.widget.RelativeLayout.LayoutParams) w.getLayout(screenSize, landscape);
+			if(params == null) {
+				params = (android.widget.RelativeLayout.LayoutParams) w.getLayout(screenSize, !landscape);
+			}
+			tmp.setLayoutParams(params);
 			tmp.setTag(w.getName());
 			tmp.setVisibility(View.GONE);
 			tmp.setId(w.getId());

@@ -21,14 +21,23 @@
         android:src="@drawable/reverse_button"/>
     <TextView 
       	android:id="@+id/title"
-       	android:layout_width="fill_parent"
+       	android:layout_width="wrap_content"
       	android:layout_height="wrap_content"
       	android:textAppearance="?android:attr/textAppearanceLarge"
       	android:textColor="#FF333333"
+      	android:layout_weight="1"
 		android:background="#FF999999"
        	android:gravity="center"
        	android:ellipsize="start"
-       	android:lines="1"/>
+       	android:singleLine="true"
+       	android:lines="1"
+       	android:maxLines="1"
+       	android:minLines="1"/>
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/reverse_button"
+        android:visibility="invisible"/>
     </LinearLayout>
     <LinearLayout
       	android:layout_width="fill_parent"
