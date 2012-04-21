@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.xml.sax.SAXException;
 
 import com.offsetnull.bt.R;
+import com.offsetnull.bt.service.IConnectionBinder;
 import com.offsetnull.bt.service.plugin.settings.PluginDescription;
 import com.offsetnull.bt.service.plugin.settings.QuickPluginParser;
 
@@ -21,6 +22,9 @@ import android.app.Dialog;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.RemoteException;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +43,7 @@ import android.widget.ViewFlipper;
 
 public class PluginSelectorDialog extends Dialog {
 
+	BackPressedListener backListener = null;
 	Pattern xmlpattern = Pattern.compile("^.+\\.[xX][mM][lL]$");
 	final Matcher xmlmatch = xmlpattern.matcher("");
 	PluginSearchAdapter adapter = null;
@@ -46,10 +51,11 @@ public class PluginSelectorDialog extends Dialog {
 	Stack<InfoStackItem> infoCacheStack = new Stack<InfoStackItem>();
 	
 	private InfoStackItem current_item = null;
+	private IConnectionBinder service;
 	//HashMap<String,PluginDescription[]> infoCache = new HashMap<String,PluginDescription[]>();
-	public PluginSelectorDialog(Context context) {
+	public PluginSelectorDialog(Context context,IConnectionBinder service) {
 		super(context);
-		// TODO Auto-generated constructor stub
+		this.service = service;
 	}
 
 	public void onCreate(Bundle b) {
@@ -63,7 +69,7 @@ public class PluginSelectorDialog extends Dialog {
 		this.getWindow().requestFeature(android.view.Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
 		
-		
+		backListener = new BackPressedListener();
 		
 		RelativeLayout content = (RelativeLayout) li.inflate(R.layout.options_dialog_content, null);
 		
@@ -88,7 +94,9 @@ public class PluginSelectorDialog extends Dialog {
 
 		
 		//launch the real list building.
-		addPage("/mnt/sdcard/BlowTorch/plugins");
+		String extDir = Environment.getExternalStorageDirectory().getAbsolutePath();
+		
+		addPage(extDir + "/BlowTorch/plugins");
 	}
 	
 	private void addPage(String path) {
@@ -112,7 +120,7 @@ public class PluginSelectorDialog extends Dialog {
 					
 					title.setText(path);
 					
-					
+					newContent.findViewById(R.id.back).setOnClickListener(backListener);
 					ListView list = (ListView) newContent.findViewById(R.id.list);
 					
 					//TextView test = new TextView(this.getContext());
@@ -122,6 +130,7 @@ public class PluginSelectorDialog extends Dialog {
 					//newContent.removeView(list);
 					
 					//newContent.addView(list);
+					newContent.findViewById(R.id.install).setOnClickListener(new InstallClickedListener(path));
 					
 					PluginInfoAdapter adapter = new PluginInfoAdapter(this.getContext(),0,info);
 					list.setAdapter(adapter);
@@ -163,7 +172,7 @@ public class PluginSelectorDialog extends Dialog {
 		
 		title.setText(path);
 		
-		
+		newContent.findViewById(R.id.back).setOnClickListener(backListener);
 		ListView list = (ListView) newContent.findViewById(R.id.list);
 		
 		list.setAdapter(adapter);
@@ -186,14 +195,14 @@ public class PluginSelectorDialog extends Dialog {
 		
 		ViewFlipper f = (ViewFlipper) PluginSelectorDialog.this.findViewById(R.id.flipper);
 		f.addView(newContent);
-		if(infoCacheStack.size() == 1) {
+		//if(infoCacheStack.size() == 1) {
 			TranslateAnimation outAnim = new TranslateAnimation(Animation.RELATIVE_TO_SELF,0.0f,Animation.RELATIVE_TO_SELF,-1.0f,Animation.RELATIVE_TO_SELF,0.0f,Animation.RELATIVE_TO_SELF,0.0f);
 			TranslateAnimation inAnim  = new TranslateAnimation(Animation.RELATIVE_TO_SELF,1.0f,Animation.RELATIVE_TO_SELF,0.0f,Animation.RELATIVE_TO_SELF,0.0f,Animation.RELATIVE_TO_SELF,0.0f);
 			outAnim.setDuration(500);
 			inAnim.setDuration(500);
 			f.setInAnimation(inAnim);
 			f.setOutAnimation(outAnim);
-		}
+		//}
 		f.showNext();
 	}
 	
@@ -226,6 +235,7 @@ public class PluginSelectorDialog extends Dialog {
 	
 	@Override
 	public void onBackPressed() {
+		Log.e("INFO","INFO CACHE SIZE:" + infoCacheStack.size());
 		if(infoCacheStack.size() == 1) {
 			//try {
 			//	service.saveSettings();
@@ -236,6 +246,8 @@ public class PluginSelectorDialog extends Dialog {
 			this.dismiss();
 		} else {
 			InfoStackItem prev = infoCacheStack.pop();
+			
+			
 			//if(backStack.size() == 0) {
 			//	selectedPlugin = "main";
 			//}
@@ -286,6 +298,8 @@ public class PluginSelectorDialog extends Dialog {
 			
 			f.showPrevious();
 		}
+		
+		Log.e("INFO","INFO CACHE SIZE END:" + infoCacheStack.size());
 	}
 	
 	private class PluginSearchAdapter extends ArrayAdapter<File> {
@@ -422,6 +436,40 @@ public class PluginSelectorDialog extends Dialog {
 			content.loadDataWithBaseURL("/mnt/sdcard/BlowTorch/plugins/aardwolf/", desc.getDescription(), null, null, null);
 			
 			return view;
+		}
+		
+	}
+	
+	private class BackPressedListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View arg0) {
+			PluginSelectorDialog.this.onBackPressed();
+		}
+		
+	}
+	
+	private class InstallClickedListener implements View.OnClickListener {
+
+		String path;
+		
+		public InstallClickedListener(String path) {
+			this.path = path;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			try {
+				//get the substring path.
+				String extDir = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/";
+				
+				String subpath = path.substring(extDir.length(), path.length());
+				
+				service.addLink(subpath);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 	}

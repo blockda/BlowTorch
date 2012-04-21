@@ -206,4 +206,5 @@ interface IConnectionBinder {
 	void closeConnection(String display);
 	void windowShowing(boolean show);
 	void dispatchLuaError(String message);
+	void addLink(String path);
 }
