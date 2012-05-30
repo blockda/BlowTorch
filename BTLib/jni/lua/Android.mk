@@ -5,7 +5,7 @@ ifeq ($(TARGET_ARCH_ABI),armeabi)
 include $(CLEAR_VARS)
 LOCAL_MODULE := lua
 LOCAL_ARM_MODE := arm
-LOCAL_CFLAGS := -O2 -fno-omit-frame-pointer -shared -std=c99 -DLUA_USE_DLOPEN
+LOCAL_CFLAGS := -O2 -shared -std=c99 -DLUA_USE_DLOPEN
 LOCAL_SRC_FILES :=  lapi.c \
 	lauxlib.c \
 	lbaselib.c \
