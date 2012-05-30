@@ -7,7 +7,7 @@ LOCAL_MODULE_FILENAME := marshal
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lua
 LOCAL_SRC_FILES := ./lmarshal.c
 LOCAL_SHARED_LIBRARIES := liblua
-LOCAL_CFLAGS := -fno-omit-frame-pointer -fpic -std=c99 -shared
+LOCAL_CFLAGS := -O0 -fpic -std=c99 -shared
 include $(BUILD_SHARED_LIBRARY)
 
 endif

@@ -684,7 +684,7 @@ public class Plugin implements SettingsChangedListener {
 			if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
 			} else {
-				L.pushNil();
+				L.pushString("/mnt/sdcard/");
 			}
 			return 1;
 		}
