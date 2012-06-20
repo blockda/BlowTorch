@@ -126,6 +126,7 @@ public class Connection implements SettingsChangedListener {
 	public static final int MESSAGE_PLUGINLUAERROR = 26;
 	private static final int MESSAGE_DORESETSETTINGS = 27;
 	protected static final int MESSAGE_ADDLINK = 28;
+	private static final int MESSAGE_DELETEPLUGIN = 29;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -210,6 +211,9 @@ public class Connection implements SettingsChangedListener {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_DELETEPLUGIN:
+					doDeletePlugin((String)msg.obj);
+					break;
 				case MESSAGE_ADDLINK:
 					doAddLink((String)msg.obj);
 					break;
@@ -3375,5 +3379,30 @@ public class Connection implements SettingsChangedListener {
 	
 	public void addLink(String path) {
 		handler.sendMessage(handler.obtainMessage(MESSAGE_ADDLINK,path));
+	}
+
+	private void doDeletePlugin(String plugin) {
+		Plugin p = pluginMap.remove(plugin);
+		if(p.getStorageType().equals("EXTERNAL")) {
+			for(String path : the_settings.getLinks()) {
+				if(p.getFullPath().contains(path)) {
+					the_settings.getLinks().remove(path);
+				}
+			}
+		}
+		plugins.remove(p);
+		//the_settings.get
+		saveMainSettings();
+		reloadSettings();
+	}
+	public void deletePlugin(String plugin) {
+		handler.sendMessage(handler.obtainMessage(MESSAGE_DELETEPLUGIN,plugin));
+	}
+
+	public void setPluginEnabled(String plugin, boolean enabled) {
+		Plugin p = pluginMap.get(plugin);
+		p.setEnabled(enabled);
+		saveMainSettings();
+		reloadSettings();
 	}
 }

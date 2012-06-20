@@ -3417,6 +3417,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					//}
 				}
 				break;
+				
 			case MotionEvent.ACTION_MOVE:
 				if(selectionButtonDown != null && selectionButtonDown == SelectionWidgetButtons.CENTER) {
 					widgetCenterMovedX += (x - widgetCenterMoveXLast);
