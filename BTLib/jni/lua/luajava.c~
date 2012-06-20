@@ -65,6 +65,10 @@ static jclass    java_function_class  = NULL;
 static jmethodID java_function_method = NULL;
 static jclass    luajava_api_class    = NULL;
 static jclass    java_lang_class      = NULL;
+static jmethodID luajava_new_method   = NULL;
+static jmethodID luajava_new_instance_method = NULL;
+static jmethodID luajava_object_index_method = NULL;
+static jmehtodID luajava_check_field_method = NULL;
 
 
 /***************************************************************************
@@ -990,28 +994,31 @@ int javaNew( lua_State * L )
       lua_error( L );
    }
 
-   clazz = ( *javaEnv )->FindClass( javaEnv , "java/lang/Class" );
+   //clazz = ( *javaEnv )->FindClass( javaEnv , "java/lang/Class" );
 
    userData = ( jobject * ) lua_touserdata( L , 1 );
 
    classInstance = ( jobject ) *userData;
 
-   if ( ( *javaEnv )->IsInstanceOf( javaEnv , classInstance , clazz ) == JNI_FALSE )
-   {
-      lua_pushstring( L , "Argument not a valid Java Class." );
-      lua_error( L );
-   }
+	//clazz = (*javaEnv)->GetObjectClass(javaEnv,classInstance);
 
-   method = ( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNew" , 
-                                             "(ILjava/lang/Class;)I" );
+   //if ( ( *javaEnv )->IsInstanceOf( javaEnv , classInstance , java_lang_class ) == JNI_FALSE )
+  // {
+   //   lua_pushstring( L , "Argument not a valid Java Class." );
+  //    lua_error( L );
+   //}
 
-   if ( clazz == NULL || method == NULL )
-   {
-      lua_pushstring( L , "Invalid method org.keplerproject.luajava.LuaJavaAPI.javaNew." );
-      lua_error( L );
-   }
+   //method = ( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNew" , 
+                                             //"(ILjava/lang/Class;)I" );
 
-   ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , clazz , method , (jint)stateIndex , classInstance );
+  // if ( clazz == NULL || luajava_new_method == NULL )
+  // {
+  //    lua_pushstring( L , "Invalid method org.keplerproject.luajava.LuaJavaAPI.javaNew." );
+  //    lua_error( L );
+  // }
+
+   //ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , clazz , method , (jint)stateIndex , classInstance );
+	ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , luajava_api_class , luajava_new_method , (jint)stateIndex , classInstance );
 
    exp = ( *javaEnv )->ExceptionOccurred( javaEnv );
 
@@ -1089,12 +1096,12 @@ int javaNewInstance( lua_State * L )
       lua_error( L );
    }
 
-   method = ( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNewInstance" ,
-                                             "(ILjava/lang/String;)I" );
+   //method = ( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNewInstance" ,
+     //                                        "(ILjava/lang/String;)I" );
 
    javaClassName = ( *javaEnv )->NewStringUTF( javaEnv , className );
    
-   ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , luajava_api_class , method, (jint)stateIndex , 
+   ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , luajava_api_class , luajava_new_instance_method, (jint)stateIndex , 
                                             javaClassName );
 
    exp = ( *javaEnv )->ExceptionOccurred( javaEnv );
@@ -1591,6 +1598,17 @@ JNIEXPORT void JNICALL Java_org_keplerproject_luajava_LuaState_luajava_1open
       fprintf( stderr , "Could not bind to LuaJavaAPI class\n" );
       exit( 1 );
     }
+
+	luajava_new_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "javaNew" , 
+                                             "(ILjava/lang/Class;)I" );
+    luajava_new_instance_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "javaNewInstance" , 
+                                             "(ILjava/lang/String;)I" );	
+	luajava_check_field_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "checkField" ,
+                                             "(ILjava/lang/Object;Ljava/lang/String;)I" );
+	luajava_object_index_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "objectIndex" ,
+                                             "(ILjava/lang/Object;Ljava/lang/String;)I" );
+	//( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNewInstance" ,
+                                             //"(ILjava/lang/String;)I" );
   }
 
   if ( java_function_class == NULL )
@@ -2425,7 +2443,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_keplerproject_luajava_LuaState__1toBytes
 
 	lua_State * L = getStateFromCPtr(env,cptr);
 
-	lua_pushvalue(L,idx)
+	lua_pushvalue(L,idx);
 
 	lua_getglobal(L,"string");
 	lua_getfield(L,-1,"len");

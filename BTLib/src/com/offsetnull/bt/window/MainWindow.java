@@ -192,6 +192,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_EXPORTSETTINGS = 906;
 
 	protected boolean settingsDialogRun = false;
+	boolean mHideIcons = true;
 	
 	private BetterEditText mInputBox = null;
 	
@@ -411,7 +412,29 @@ public class MainWindow extends Activity {
         View inputBar = findViewById(R.id.inputbar);
         
         inputBar.setId(10);
+       // mInputBox.setSelectAllOnFocus(true);
+        mInputBox.setFocusable(true);
+        //mInputBox.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			
+		//	@Override
+		//	public void onFocusChange(View v, boolean hasFocus) {
+		//		Log.e("Selection","Setting selection for focus.");
+		//		if(hasFocus) {
+					
+		//			((EditText)v).selectAll();
+		//		}
+		//	}
+		//});
         
+//        mInputBox.setOnClickListener(new View.OnClickListener() {
+//			
+//			@Override
+//			public void onClick(View v) {
+//				
+//				myhandler.sendEmptyMessageDelayed(MESSAGE_RESETINPUTWINDOW, 3000);
+//			}
+//		});
+//        
         
         mInputBox.setOnKeyListener(new TextView.OnKeyListener() {
 
@@ -919,6 +942,7 @@ public class MainWindow extends Activity {
 					//try {
 						if(isKeepLast) {
 							mInputBox.setSelection(0, mInputBox.getText().length());
+							mInputBox.selectAll();
 							historyWidgetKept = true;
 						} else {
 							mInputBox.clearComposingText();
@@ -1433,6 +1457,16 @@ public class MainWindow extends Activity {
 			for(WindowToken w : mWindows) {
 				com.offsetnull.bt.window.Window tmp = (com.offsetnull.bt.window.Window)rl.findViewWithTag(w.getName());
 				tmp.populateMenu(menu);
+
+			}
+		}
+		
+		if(supportsActionBar()) {
+			if(mHideIcons) {
+				for(int i=0;i<menu.size();i++) {
+					MenuItem m = menu.getItem(i);
+					m.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+				}
 			}
 		}
 		
@@ -1458,11 +1492,12 @@ public class MainWindow extends Activity {
 //			for(int i = 0;i<count;i++) {
 //				Log.e("menu tab","tab tab:"+this.getActionBar().getTabAt(i).getText());
 //			}
-			
-			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			boolean hide = true;
+			menu.add(0,0,0,"Hide Icons").setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
 			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		} else {
 			
@@ -1524,8 +1559,10 @@ public class MainWindow extends Activity {
 			doImportDialog();
 			break;
 		case 600:
-			PluginDialog pd = new PluginDialog(this,service);
+			BetterPluginSelectionDialog pd = new BetterPluginSelectionDialog(this,service);
 			pd.show();
+			//PluginDialog pd = new PluginDialog(this,service);
+			//pd.show();
 			break;
 		case 1100:
 			try {
@@ -1910,6 +1947,7 @@ public class MainWindow extends Activity {
 				return;
 			}
 		}
+		
 		if(newconfig.keyboardHidden == Configuration.KEYBOARDHIDDEN_NO) {
 			if(keyboardShowing == false) {
 				keyboardShowing = true;
@@ -2196,6 +2234,7 @@ public class MainWindow extends Activity {
 	public void onPause() {
 		//Log.e("WINDOW","onDestroy()");
 		//windowShowing = false;
+		if(service == null) { super.onPause(); return; };
 		try {
 			service.windowShowing(false);
 		} catch (RemoteException e) {
@@ -3035,6 +3074,9 @@ public class MainWindow extends Activity {
 			RelativeLayout.LayoutParams params = (android.widget.RelativeLayout.LayoutParams) w.getLayout(screenSize, landscape);
 			if(params == null) {
 				params = (android.widget.RelativeLayout.LayoutParams) w.getLayout(screenSize, !landscape);
+			}
+			if(supportsActionBar()) {
+				tmp.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 			}
 			tmp.setLayoutParams(params);
 			tmp.setTag(w.getName());

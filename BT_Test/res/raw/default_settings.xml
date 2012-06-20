@@ -55,7 +55,8 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   	 	<windows>
   	 		<window name="button_window" id="10203" script="buttonwindow">
   	 			<layoutGroup target="normal">
-  	 				<layout orientation="landscape" height="fill_parent" width="fill_parent" above="10"/>
+  	 				<layout orientation="landscape" height="fill_parent" width="fill_parent" above="40"/>
+  	 				<layout orientation="portrait" height="fill_parent" width="fill_parent" above="40"/>
   	 			</layoutGroup>
   	 		</window>
   	 	</windows>
