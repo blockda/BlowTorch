@@ -75,7 +75,6 @@ public class BetterEditText extends EditText {
 		return BackSpaceBugFix;
 	}
 	
-	
 	@Override
 	protected void onAnimationEnd() {
 		Log.e("BET","IN THE ANIMATION END LISTENER");
@@ -84,6 +83,7 @@ public class BetterEditText extends EditText {
 			listener.onAnimationEnd();
 		}
 	}
+	
 	
 	public void setListener(AnimationEndListener listener) {
 		this.listener = listener;
@@ -98,7 +98,6 @@ public class BetterEditText extends EditText {
 	public interface AnimationEndListener {
 		public void onAnimationEnd();
 	}
-	
 	
 	//protected boolean getDefaultEditable() {
 	//	return true;

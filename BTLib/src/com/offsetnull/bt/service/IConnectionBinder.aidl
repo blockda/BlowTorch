@@ -207,4 +207,6 @@ interface IConnectionBinder {
 	void windowShowing(boolean show);
 	void dispatchLuaError(String message);
 	void addLink(String path);
+	void deletePlugin(String plugin);
+	void setPluginEnabled(String plugin,boolean enabled);
 }

@@ -1,0 +1,86 @@
+package com.offsetnull.bt.window;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+
+import android.content.Context;
+import android.os.RemoteException;
+import android.util.Log;
+import android.view.View;
+
+import com.offsetnull.bt.service.IConnectionBinder;
+
+public class BetterPluginSelectionDialog extends StandardSelectionDialog implements BaseSelectionDialog.UtilityToolbarListener {
+
+	ArrayList<String> items = new ArrayList<String>();
+	
+	public BetterPluginSelectionDialog(Context context,
+			IConnectionBinder service) {
+		super(context, service);
+		
+		this.setToolbarListener(this);
+		//on creation, get the list of stuff and prepare the dialog.
+		HashMap<String,String> plist = null;
+		try {
+			plist = (HashMap<String,String>)service.getPluginList();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		mListItems.clear();
+		//plist.key
+		List<String> sortedSet = new ArrayList<String>(plist.keySet());
+		Collections.sort(sortedSet);
+		for(String key : sortedSet) {
+			String info = plist.get(key);
+			items.add(key);
+			this.addListItem(key, info, 0, 0, true);
+		}
+	}
+
+	@Override
+	public void onButtonPressed(View v, int row, int index) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onButtonStateChanged(View v, int row, int index, boolean state) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onItemDeleted(int row) {
+		String plugin = items.remove(row);
+		
+		try {
+			service.deletePlugin(plugin);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onNewPressed(View v) {
+		PluginSelectorDialog loader = new PluginSelectorDialog(v.getContext(),service);
+		loader.show();
+	}
+
+	@Override
+	public void onDonePressed(View v) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onOptionItemClicked(int row) {
+		Log.e("Foo","Option Item " + row + " clicked.");
+		this.hideOptionsMenu();
+	}
+
+}

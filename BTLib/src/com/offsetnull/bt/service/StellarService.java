@@ -3578,6 +3578,17 @@ public class StellarService extends Service {
 			connections.get(connectionClutch).addLink(path);
 		}
 
+		@Override
+		public void deletePlugin(String plugin) throws RemoteException {
+			connections.get(connectionClutch).deletePlugin(plugin);
+		}
+
+		@Override
+		public void setPluginEnabled(String plugin, boolean enabled)
+				throws RemoteException {
+			connections.get(connectionClutch).setPluginEnabled(plugin,enabled);
+		}
+
 	};
 
 	public void sendRawDataToWindow(byte[] data) {
