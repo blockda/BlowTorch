@@ -469,6 +469,7 @@ public class PluginDialog extends Dialog {
 			list.setFocusable(false);
 			try {
 				service.deleteTrigger(entries.get(entry).extra);
+				//service.remove
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}

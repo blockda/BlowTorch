@@ -55,9 +55,11 @@ body {
 			<window name="chats" id="5010" script="chatwindow">
 				<layoutGroup target="xlarge">
 					<layout orientation="landscape" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
+					<layout orientation="portrait" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
 				</layoutGroup>
 				<layoutGroup target="large">
 					<layout orientation="landscape" width="fill_parent" height="77" alignParentTop="true" alignParentRight="true"/>
+					<layout orientation="portrait" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
 				</layoutGroup>
 			</window>
 		</windows>

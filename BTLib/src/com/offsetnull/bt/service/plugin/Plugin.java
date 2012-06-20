@@ -82,6 +82,7 @@ public class Plugin implements SettingsChangedListener {
 	String mEncoding = "ISO-8859-1";
 	Pattern whiteSpace = Pattern.compile("\\s");
 	HashMap<String,CustomTimerTask> timerTasks = new HashMap<String,CustomTimerTask>();
+	private boolean enabled = true;
 	
 	public Plugin(Handler h,Connection parent) throws LuaException {
 		setSettings(new PluginSettings());
@@ -1651,5 +1652,13 @@ public class Plugin implements SettingsChangedListener {
 				}
 			}
 		}
+	}
+
+	public void setEnabled(boolean enabled) {
+		enabled = true;
+	}
+	
+	public boolean isEnabled() {
+		return enabled;
 	}
 }

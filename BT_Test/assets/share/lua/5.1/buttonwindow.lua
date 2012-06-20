@@ -6,6 +6,14 @@ respath = package.path
 respath = string.sub(respath,0,string.find(respath,"?")-1).."res"
 debugPrint("RESPATH: "..respath)
 
+debugPrint("NEW BUTTON LAYER INIT")
+status = jit.status()
+if(status) then
+debugPrint("Jit is on")
+else
+debugPrint("Jit is off")
+end
+
 require("button")
 require("serialize")
 require("bit")
@@ -99,7 +107,8 @@ function loadButtons(args)
 	--end
 	--buttons = foo
 	drawButtons()
-	invalidate()
+	--invalidate()
+	view:invalidate()
 	--else
 	--end
 	
@@ -193,7 +202,7 @@ function moveTouch.onTouch(v,e)
 				totalDelta.y = totalDelta.y + moveDelta.y
 				moveBounds:offset(moveDelta.x,moveDelta.y)
 			end
-			invalidate()
+			view:invalidate()
 			return true
 		else
 			return true
@@ -226,7 +235,7 @@ function moveTouch.onTouch(v,e)
 			drawButtons()
 			view:setOnTouchListener(managerTouch_cb)
 			
-			invalidate()
+			view:invalidate()
 			return true
 		else
 			touchmoving = false
@@ -249,14 +258,14 @@ function enterMoveMode()
 		if(b.selected == true) then
 			local r = b.rect
 			if(first) then
-				debugPrint("here")
+				--debugPrint("here")
 				x1 = r.left
 				y1 = r.top
 				x2 = r.right
 				y2 = r.bottom
 				first = false
 			else
-				debugPrint("there")
+				--debugPrint("there")
 				if(r.left < x1) then
 					x1 = r.left
 				end
@@ -273,19 +282,19 @@ function enterMoveMode()
 			end
 		end
 	end
-	debugPrint("nhere")
+	--debugPrint("nhere")
 	moveBounds:set(x1,y1,x2,y2)
 	
 	moveBounds:inset(-40,-40)
 	
-	debugPrint("mhere")
+	--debugPrint("mhere")
 	local width = moveBounds.right - moveBounds.left
 	local height = moveBounds.bottom - moveBounds.top
-	debugPrint("making new bitmap:"..width.."x"..height)
+	--debugPrint("making new bitmap:"..width.."x"..height)
 	moveBitmap = Bitmap:createBitmap(width,height,BitmapConfig.ARGB_8888)
 	moveCanvas = luajava.newInstance("android.graphics.Canvas",moveBitmap)
 	--draw the shiz.
-	debugPrint("zhere")
+	--debugPrint("zhere")
 	moveCanvas:drawARGB(0x88,0x88,0x88,0x88)
 	view:setOnTouchListener(moveTouch_cb)
 	moveCanvas:save()
@@ -300,7 +309,7 @@ function enterMoveMode()
 	end
 	drawButtonsNoSelected()
 	moveCanvas:restore()
-	invalidate()
+	view:invalidate()
 end
 
 touchStartX = 0
@@ -313,7 +322,7 @@ function managerTouch.onTouch(v,e)
 	local y = e:getY()
 	--debugPrint("on touch event started")
 	if(e:getAction() == MotionEvent.ACTION_DOWN) then
-		debugPrint("manager move down")
+		--debugPrint("manager move down")
 		--find if press was in a button
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
@@ -330,14 +339,14 @@ function managerTouch.onTouch(v,e)
 			touchedindex = index
 			b.selected = true
 			updateSelected(b,true)
-			invalidate()
+			view:invalidate()
 			if(b.selected) then
-				debugPrint("SELECTEDTOUCHSTART")
+				--debugPrint("SELECTEDTOUCHSTART")
 				selectedtouchstart = true
 			else
 				selectedtouchstart = false
 			end
-			debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.data.x,touchedbutton.data.y))
+			--debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.data.x,touchedbutton.data.y))
 			--if(#buttons > 50 and not manage) then
 			--	aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
 				--aa = AlphaAnimation.new(1.0,0.0)
@@ -358,7 +367,7 @@ function managerTouch.onTouch(v,e)
 				end
 			end
 			if buttoncleared then 
-				invalidate() 
+				view:invalidate() 
 				
 			end
 			if(manage) then
@@ -405,7 +414,7 @@ function managerTouch.onTouch(v,e)
 			
 			--drawDragBox()
 			checkIntersects()
-			invalidate()
+			view:invalidate()
 			return true
 		
 		 end
@@ -421,7 +430,7 @@ function managerTouch.onTouch(v,e)
 		 		return true
 		 	end
 		 
-		 	debugPrint("ENTERING MOVE MODE")
+		 	--debugPrint("ENTERING MOVE MODE")
 		 	touchMoving = true
 		 	moveCurrent.x = x
 			moveCurrent.y = y
@@ -453,18 +462,18 @@ function managerTouch.onTouch(v,e)
 	end
 
 	if(e:getAction() == MotionEvent.ACTION_UP) then
-		debugPrint("manager move up")
+		--debugPrint("manager move up")
 		if(dragmoving) then
-		debugPrint("dragmoving")
+		--debugPrint("dragmoving")
 			--redraw the screen without the drag rect
 
 			--drawButtons()
 			dragmoving = false
-			invalidate()
+			view:invalidate()
 			return true
 		end
 		if(manage and not fingerdown and not buttoncleared) then
-		debugPrint("new button")
+		--debugPrint("new button")
 			--lawl, make new button
 			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
 			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
@@ -474,18 +483,18 @@ function managerTouch.onTouch(v,e)
 			--butt.height = gridwidth
 			--canvas:drawRoundRect(butt.rect,5,5,paint)
 			butt:draw(0,buttonCanvas)
-			invalidate()
+			view:invalidate()
 			return true
 		end
 		if(manage and fingerdown and touchedbutton.selected == true and selectedtouchstart) then
 			--launch editor selection screen
-			debugPrint("selected touched")
+			--debugPrint("selected touched")
 			showEditorSelection()
 			touchedbutton={}
 			fingerdown = false
 			return true
 		elseif(manage and fingerdown and touchedbutton.selected == false) then
-			debugPrint("button_selected")
+			--debugPrint("button_selected")
 			for i,b in ipairs(buttons) do
 				if(b.selected) then
 					b.selected = false
@@ -494,7 +503,7 @@ function managerTouch.onTouch(v,e)
 			end
 			touchedbutton.selected = true
 			updateSelected(touchedbutton,true)
-			invalidate()
+			view:invalidate()
 			fingerdown = false
 			touchedbutton = {}
 			
@@ -538,7 +547,7 @@ function normalTouch.onTouch(v,e)
 			--clearButton(b)
 			b:draw(normalTouchState,buttonCanvas)
 			selectedtouchstart = true
-			invalidate()
+			view:invalidate()
 			return true
 		else
 			fingerdown = false;
@@ -559,7 +568,7 @@ function normalTouch.onTouch(v,e)
 		else
 			now = e:getEventTime()
 			local elapsed = now - prevevent
-			if(elapsed > 60) then
+			if(elapsed > 5) then
 			--proceed
 				--debugPrint("processing move event")
 				prevevent = now
@@ -577,6 +586,7 @@ function normalTouch.onTouch(v,e)
 					normalTouchState = 1
 					--clearButton(b)
 					b:draw(normalTouchState,buttonCanvas)
+					view:invalidate()
 				end
 			else
 				cancelCallback(100)
@@ -585,10 +595,11 @@ function normalTouch.onTouch(v,e)
 					--clearButton(b)
 					b:draw(normalTouchState,buttonCanvas)
 					performHapticFlip()
+					view:invalidate()
 				end
 				
 			end
-			invalidate()
+			
 			--debugPrint("action move, moving button, returning true")
 			
 			return true
@@ -617,7 +628,7 @@ function normalTouch.onTouch(v,e)
 				end
 				performHapticPress()
 				sendToServer(touchedbutton.data.command)
-				debugPrint("primary touch")
+				--debugPrint("primary touch")
 			else
 				--process secondary touch
 				if(touchedbutton.data.switchTo ~= nil and touchedbutton.data.switchTo ~= "") then
@@ -625,14 +636,14 @@ function normalTouch.onTouch(v,e)
 					
 					return true
 				end
-				debugPrint("secondary touch")
+				--debugPrint("secondary touch")
 				
 				sendToServer(touchedbutton.data.flipCommand)
 			end
 			normalTouchState = 0
 			--clearButton(touchedbutton)
 			touchedbutton:draw(normalTouchState,buttonCanvas)
-			invalidate()
+			view:invalidate()
 			return true
 		else
 			--debugPrint("button not touched, returning false")
@@ -796,7 +807,7 @@ function enterManagerMode()
 	view:setOnTouchListener(managerTouch_cb)
 	manage = true
 	drawButtons()
-	invalidate()
+	view:invalidate()
 end
 
 function exitManagerMode()
@@ -819,7 +830,7 @@ function exitManagerMode()
 		
 	PluginXCallS("saveButtons",serialize(tmp))
 	drawButtons()
-	invalidate()
+	view:invalidate()
 end
 
 function exitManagerModeNoSave()
@@ -842,7 +853,7 @@ function exitManagerModeNoSave()
 	
 	
 	PluginXCallS("loadButtonSet",lastLoadedSet)
-	invalidate()
+	view:invalidate()
 end
 
 checkchange = {}
@@ -899,7 +910,7 @@ function seekerX.onProgressChanged(v,prog,state)
 	--managerCanvas:clearCanvas()
 	drawManagerGrid()
 	--drawButtons()
-	invalidate()
+	view:invalidate()
 end
 seekerX_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",seekerX)
 
@@ -912,7 +923,7 @@ function seekerY.onProgressChanged(v,prog,state)
 	--managerCanvas:clearCanvas()
 	drawManagerGrid()
 	--drawButtons()
-	invalidate()
+	view:invalidate()
 end
 seekerY_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",seekerY)
 
@@ -925,22 +936,22 @@ function opacitySeeker.onProgressChanged(v,prog,state)
 	local opacitypct = math.floor((manageropacity / 255)*100)
 	gridOpacityLabel:setText("Grid Opacity: "..opacitypct.."%")
 	drawManagerGrid()
-	invalidate()
+	view:invalidate()
 end
 
 opacitySeeker_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",opacitySeeker)
 
 radio = {}
 function radio.onCheckedChanged(group,id)
-	debugPrint("radio buttons changed")
+	--debugPrint("radio buttons changed")
 	if(id == 0) then
 	 --intersect
-	 debugPrint("intersect selected")
+	 --debugPrint("intersect selected")
 	 intersectMode = id
 	end
 	if(id == 1) then
 	 --contains
-	 debugPrint("contains selected")
+	 --debugPrint("contains selected")
 	 intersectMode = id
 	end
 end
@@ -1046,12 +1057,12 @@ toolbarTabCloseListener_cb = luajava.createProxy("android.view.View$OnClickListe
 
 buttonListAdapter = {}
 function buttonListAdapter.getView(pos,v,parent)
-	newview = nil
+	local newview = nil
 	if(v ~= nil) then
 		newview = v
 		
 	else
-		debugPrint("inflating view")
+		--debugPrint("inflating view")
 		newview = layoutInflater:inflate(R_layout.editor_selection_list_row,nil)
 	
 		local root = newview:findViewById(R_id.root)
@@ -1091,9 +1102,9 @@ function buttonListAdapter.getView(pos,v,parent)
 		--newview:setId(pos)
 	end
 	
-	if(newview ~= nil) then
-		debugPrint("returning newview, it is not null")
-	end
+	--if(newview ~= nil) then
+	--	debugPrint("returning newview, it is not null")
+	--end
 	return newview
 	
 	
@@ -1633,7 +1644,7 @@ function OldTouchEvent(e)
 			dragcurrent.y = y
 			--drawDragBox()
 			checkIntersects()
-			invalidate()
+			view:invalidate()
 			return true
 		end
 
@@ -1646,7 +1657,7 @@ function OldTouchEvent(e)
 			updateRect(touchedbutton)
 			--drawButton(touchedbutton)
 			drawButtons()
-			invalidate()
+			view:invalidate()
 			return true
 		else
 			return false
@@ -1659,7 +1670,7 @@ function OldTouchEvent(e)
 
 			--drawButtons()
 			dragmoving = false
-			invalidate()
+			view:invalidate()
 			return true
 		end
 		if(manage and not fingerdown) then
@@ -1672,7 +1683,7 @@ function OldTouchEvent(e)
 			--butt.height = gridwidth
 			--canvas:drawRoundRect(butt.rect,5,5,paint)
 			butt:draw(0,buttonCanvas)
-			invalidate()
+			view:invalidate()
 			return true
 		end
 		if(manage and fingerdown and touchedbutton.selected == true) then
@@ -1723,7 +1734,7 @@ function editorListener.onClick(dialog,which)
 		end
 		buttons=newbuttons
 		drawButtons()
-		invalidate()
+		view:invalidate()
 	end
 	if(which == 0) then
 		enterMoveMode()
@@ -3540,12 +3551,12 @@ function loadOptions(data)
 end
 
 function performHapticPress()
-	debugPrint("performing haptic press")
+	--debugPrint("performing haptic press")
 	if(options.haptic_press == "2") then return end
 	
 	flags = 1
 	if(options.haptic_press == "1") then
-	debugPrint("overriding system")
+	--debugPrint("overriding system")
 		flags = 3
 	end
 	
@@ -3553,12 +3564,12 @@ function performHapticPress()
 end
 
 function performHapticFlip()
-	debugPrint("performing haptic flip")
+	--debugPrint("performing haptic flip")
 	if(options.haptic_flip == "2") then return end
 	
 	flags = 1
 	if(options.haptic_flip == "1") then
-	debugPrint("overriding system")
+	--debugPrint("overriding system")
 		flags = 3
 	end
 	
@@ -3593,14 +3604,14 @@ function clearButtons()
 	revertset = buttons
 	buttons = revertButtonSet
 	drawButtons()
-	invalidate()
+	view:invalidate()
 end
 
 function revertButtons()
 	buttonsCleared = false
 	buttons = revertset
 	drawButtons()
-	invalidate()
+	view:invalidate()
 end
 
 rootHolder = view:getParent()
@@ -3611,7 +3622,7 @@ showeditormenu = false
 editmenu = nil
 topMenuItem = nil
 function PopulateMenu(menu)
-	debugPrint("in options menu populate")
+	--debugPrint("in options menu populate")
 	
 		if(showeditormenu) then
 			local settings = menu:add("Editor Options")
