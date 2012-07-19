@@ -1641,7 +1641,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				//this.invalidate();
 				//Log.e("SFS","fling redrawing");
 				//fling_velocity = 0;
-				this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
+				if(!mHandler.hasMessages(MESSAGE_DRAW)) {
+					this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
+				}
 			} else {
 				fling_velocity = 0;
 			}

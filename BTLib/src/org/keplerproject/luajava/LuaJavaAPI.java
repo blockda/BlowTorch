@@ -28,6 +28,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 
 /**
  * Class that contains functions accessed by lua.
@@ -36,6 +37,8 @@ import java.lang.reflect.Modifier;
  */
 public final class LuaJavaAPI
 {
+	
+	private static HashMap<Class,Method[]> mCache = new HashMap<Class,Method[]>();
 
   private LuaJavaAPI()
   {
@@ -71,7 +74,14 @@ public final class LuaJavaAPI
         clazz = obj.getClass();
       }
 
-      Method[] methods = clazz.getMethods();
+      Method[] methods = null;
+      if(mCache.containsKey(clazz)) {
+    	  methods = mCache.get(clazz);
+      } else {
+    	  methods = clazz.getMethods();
+    	  mCache.put(clazz, methods);
+      }
+      
       Method method = null;
 
       // gets method and arguments
