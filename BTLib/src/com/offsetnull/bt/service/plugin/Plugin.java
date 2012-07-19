@@ -1429,11 +1429,15 @@ public class Plugin implements SettingsChangedListener {
 	
 	public void pauseTimer(String key) {
 		CustomTimerTask task = timerTasks.get(key);
-		long taskStartTime = task.getStartTime();
+		
 		if(task != null) {
 			task.cancel();
 			timerTasks.remove(key);
+		} else {
+			return;
 		}
+		
+		long taskStartTime = task.getStartTime();
 		
 		TimerData d = getSettings().getTimers().get(key);
 		if(d != null) {

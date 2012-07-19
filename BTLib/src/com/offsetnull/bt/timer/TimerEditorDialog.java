@@ -15,6 +15,7 @@ import com.offsetnull.bt.responder.toast.ToastResponder;
 import com.offsetnull.bt.responder.toast.ToastResponderEditor;
 import com.offsetnull.bt.service.IConnectionBinder;
 import com.offsetnull.bt.validator.Validator;
+import com.offsetnull.bt.window.PluginFilterSelectionDialog;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -59,7 +60,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 	
 	private boolean isEditor = false;
 	
-	String plugin = "main";
+	String plugin = PluginFilterSelectionDialog.MAIN_SETTINGS;
 	
 	public TimerEditorDialog(Context c,String plugin,TimerData input,IConnectionBinder pService,Handler reportto) {
 		super(c);
@@ -156,7 +157,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				
 				//responders should be handled already.
 				try {
-					if(plugin.equals("main")) {
+					if(plugin.equals(PluginFilterSelectionDialog.MAIN_SETTINGS)) {
 						service.updateTimer(orig_timer, the_timer);
 					} else {
 						service.updatePluginTimer(plugin, orig_timer, the_timer);
@@ -164,7 +165,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				finish_with.sendMessage(finish_with.obtainMessage(99, the_timer.getOrdinal().toString()));
+				finish_with.sendMessageDelayed(finish_with.obtainMessage(100, the_timer),10);
 			} else {
 				the_timer.setName(theName);
 				the_timer.setSeconds(Integer.parseInt(theSeconds));
@@ -172,7 +173,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				
 				try {
 					//the_timer.setOrdinal(service.getNextTimerOrdinal());
-					if(plugin.equals("main")) {
+					if(plugin.equals(PluginFilterSelectionDialog.MAIN_SETTINGS)) {
 						service.addTimer(the_timer);
 					} else {
 						service.addPluginTimer(plugin,the_timer);
@@ -181,7 +182,7 @@ public class TimerEditorDialog extends Dialog implements DialogInterface.OnClick
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				finish_with.sendMessage(finish_with.obtainMessage(100,the_timer.getOrdinal().toString()));
+				finish_with.sendMessageDelayed(finish_with.obtainMessage(100,the_timer),10);
 			}
 			
 			

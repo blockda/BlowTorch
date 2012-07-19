@@ -3589,6 +3589,30 @@ public class StellarService extends Service {
 			connections.get(connectionClutch).setPluginEnabled(plugin,enabled);
 		}
 
+		@Override
+		public List getPluginsWithAliases() {
+			ArrayList<String> list = new ArrayList<String>();
+			Connection c = connections.get(connectionClutch);
+			for(Plugin p : c.plugins) {
+				if(p.getSettings().getAliases().size() > 0) {
+					list.add(p.getName());
+				}
+			}
+			return list;
+		}
+
+		@Override
+		public List getPluginsWithTimers() throws RemoteException {
+			ArrayList<String> list = new ArrayList<String>();
+			Connection c = connections.get(connectionClutch);
+			for(Plugin p : c.plugins) {
+				if(p.getSettings().getTimers().size() > 0) {
+					list.add(p.getName());
+				}
+			}
+			return list;
+		}
+
 	};
 
 	public void sendRawDataToWindow(byte[] data) {
