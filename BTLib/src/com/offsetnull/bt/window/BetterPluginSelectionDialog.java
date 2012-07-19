@@ -9,10 +9,12 @@ import android.content.Context;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 import com.offsetnull.bt.service.IConnectionBinder;
 
-public class BetterPluginSelectionDialog extends StandardSelectionDialog implements BaseSelectionDialog.UtilityToolbarListener {
+public class BetterPluginSelectionDialog extends StandardSelectionDialog implements BaseSelectionDialog.UtilityToolbarListener,BaseSelectionDialog.OptionItemClickListener {
 
 	ArrayList<String> items = new ArrayList<String>();
 	
@@ -37,7 +39,7 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 		for(String key : sortedSet) {
 			String info = plist.get(key);
 			items.add(key);
-			this.addListItem(key, info, 0, 0, true);
+			this.addListItem(key, info, 0, true);
 		}
 	}
 
@@ -48,7 +50,7 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 	}
 
 	@Override
-	public void onButtonStateChanged(View v, int row, int index, boolean state) {
+	public void onButtonStateChanged(ImageButton v, int row, int index, boolean state) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -81,6 +83,18 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 	public void onOptionItemClicked(int row) {
 		Log.e("Foo","Option Item " + row + " clicked.");
 		this.hideOptionsMenu();
+	}
+
+	@Override
+	public void willShowToolbar(LinearLayout v, int row) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void willHideToolbar(LinearLayout v, int row) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

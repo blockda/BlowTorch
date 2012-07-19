@@ -1209,7 +1209,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				//int index = screenIt.previousIndex();
 				//boolean started = false;
 				Line l = screenIt.previous();
-				String tmpstr = TextTree.deColorLine(l).toString();
+				//String tmpstr = TextTree.deColorLine(l).toString();
 				/*if(mName.equals("map_window")) {
 					Log.e("map","map window line: "+tmpstr+"|"+l.viswidth+" calc:"+CALCULATED_ROWSINWINDOW);
 				}

@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
@@ -54,6 +55,9 @@ public class BaseSelectionDialog extends Dialog {
 	private TranslateAnimation animateOut;
 	private TranslateAnimation animateOutNoTransition;
 	
+	//private ArrayList<Drawable> miniIcons;
+	
+	
 	
 	private LinearLayout mToolbar;
 	
@@ -78,8 +82,15 @@ public class BaseSelectionDialog extends Dialog {
 		mToolbarButtons.add(edit);
 		mToolbarButtons.add(delete);
 		
+		//mToolbarButtons.
+		
+		//miniIcons = new ArrayList<Drawable>();
+		
+		//miniIcons.add(context.getResources().getDrawable(R.drawable.toolbar_mini_disabled));
+		//miniIcons.add(context.getResources().getDrawable(R.drawable.toolbar_mini_enabled));
+		
 		//mListItems = new ArrayList<ItemEntry>();
-		ItemEntry first = new ItemEntry();
+		/*ItemEntry first = new ItemEntry();
 		ItemEntry second = new ItemEntry();
 		ItemEntry third = new ItemEntry();
 		
@@ -119,8 +130,10 @@ public class BaseSelectionDialog extends Dialog {
 		optionItems.add(divider);
 		optionItems.add(foo);
 		optionItems.add(bar);
-		optionItems.add(baz);
+		optionItems.add(baz);*/
 	}
+	
+	
 	
 	public void onCreate(Bundle b) {
 		
@@ -135,6 +148,8 @@ public class BaseSelectionDialog extends Dialog {
 		mList.setScrollbarFadingEnabled(false);
 		
 		mList.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+		
+		mList.setOnFocusChangeListener(new ListFocusFixerListener());
 		
 		mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -181,7 +196,7 @@ public class BaseSelectionDialog extends Dialog {
 		
 		mList.setEmptyView(findViewById(R.id.empty));
 		
-		buildList();
+		buildRawList();
 		
 		Button newbutton = (Button)findViewById(R.id.add);
 		
@@ -265,8 +280,8 @@ public class BaseSelectionDialog extends Dialog {
 						
 						mOptionsButton.performClick();
 					}*/
-					if(mToolbarListener != null) {
-						mToolbarListener.onOptionItemClicked(pos);
+					if(mOptionItemClickListener != null) {
+						mOptionItemClickListener.onOptionItemClicked(pos);
 					}					
 			}
 		});
@@ -332,20 +347,34 @@ public class BaseSelectionDialog extends Dialog {
 		
 	}
 	
-	ArrayList<ItemEntry> mListItems = new ArrayList<ItemEntry>();
+	protected ArrayList<ItemEntry> mListItems = new ArrayList<ItemEntry>();
 	
-	public void addListItem(String name,String extra,int icon_on,int icon_off,boolean enabled) {
+	public void addListItem(String name,String extra,int mini_icon,boolean enabled) {
 		ItemEntry newEntry = new ItemEntry();
 		newEntry.title = name;
 		newEntry.extra = extra;
 		newEntry.enabled = enabled;
-		newEntry.mini_icon_on = icon_on; 
-		newEntry.mini_icon_off = icon_off;
+		newEntry.mini_icon = mini_icon;
+		//newEntry.mini_icon_on = icon_on; 
+		//newEntry.mini_icon_off = icon_off;
 		mListItems.add(newEntry);
 	}
 	
+	public void clearListItems() {
+		this.mListItems.clear();
+	}
+	
+	public void clearOptionItems() {
+		this.optionItems.clear();
+	}
+	
+	public void invalidateList() {
+		if(mAdapter == null) return;
+		this.mAdapter.notifyDataSetChanged();
+		this.mAdapter.notifyDataSetInvalidated();
+	}
 	//@SuppressWarnings("unchecked")
-	private void buildList() {
+	private void buildRawList() {
 		if(mAdapter == null) {
 			mAdapter = new ItemAdapter(BaseSelectionDialog.this.getContext(), R.layout.editor_selection_list_row, mListItems);
 			mList.setAdapter(mAdapter);
@@ -367,12 +396,15 @@ public class BaseSelectionDialog extends Dialog {
 				mLastSelectedIndex = pos;
 				RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
 				rl.setLayoutAnimation(animateInController);
-				ItemEntry data = mAdapter.getItem(mLastSelectedIndex);
+				ItemEntry data = mAdapter.getItem(pos);
 				/*if(data.enabled) {
 					((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_on);
 				} else {
 					((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_off);
 				}*/
+				if(mToolbarListener != null) {
+					mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
+				}
 				rl.addView(mToolbar);
 			} else if(mLastSelectedIndex != pos) {
 				Log.e("SLDF","AM I EVEN HERE");
@@ -384,7 +416,9 @@ public class BaseSelectionDialog extends Dialog {
 						holder.startAnimation(animateOut);
 						mTargetIndex = pos;
 						targetHolder = (RelativeLayout) v.findViewById(R.id.toolbarholder);
-						
+						if(mToolbarListener != null) {
+							mToolbarListener.willHideToolbar(mToolbar, mLastSelectedIndex);
+						}
 					} else {
 						holder.removeAllViews();
 						RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
@@ -395,7 +429,11 @@ public class BaseSelectionDialog extends Dialog {
 						} else {
 							((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_off);
 						}*/
+						if(mToolbarListener != null) {
+							mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
+						}
 						rl.addView(mToolbar);
+						//rl.addView(mToolbar);
 					}
 				}
 				//theToolbar.startAnimation(animateOut);
@@ -412,6 +450,10 @@ public class BaseSelectionDialog extends Dialog {
 					} else {
 						((ImageButton)mToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
 					}*/
+					if(mToolbarListener != null) {
+						mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
+					}
+					//rl.addView(mToolbar);
 					holder.addView(mToolbar);
 				} else {
 					mTargetIndex = pos;
@@ -503,7 +545,7 @@ public class BaseSelectionDialog extends Dialog {
 			
 			
 			ImageView iv = (ImageView) v.findViewById(R.id.icon);
-			if(e.enabled) {
+			/*if(e.enabled) {
 				if(e.mini_icon_on != 0) {
 					iv.setImageResource(e.mini_icon_on);
 				}
@@ -511,7 +553,11 @@ public class BaseSelectionDialog extends Dialog {
 				if(e.mini_icon_off != 0) {
 					iv.setImageResource(e.mini_icon_off);
 				}
-			}
+			}*/
+			iv.setImageResource(e.mini_icon);
+			//iv.setImage
+			
+			//iv.setIma
 			return v;
 		}
 		
@@ -522,8 +568,9 @@ public class BaseSelectionDialog extends Dialog {
 		public String extra;
 		public boolean selected;
 		public boolean enabled;
-		public int mini_icon_on;
-		public int mini_icon_off;
+		public int mini_icon;
+		//public int mini_icon_on;
+		//public int mini_icon_off;
 	}
 	
 	public class ItemSorter implements Comparator<ItemEntry>{
@@ -803,7 +850,7 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 			
 			entry.toggle = !entry.toggle;
 			if(mToolbarListener != null) {
-				mToolbarListener.onButtonStateChanged(v, index, entry.id, entry.toggle);
+				mToolbarListener.onButtonStateChanged((ImageButton)v, index, entry.id, entry.toggle);
 			}
 			
 		}
@@ -953,11 +1000,22 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 	
 	public interface UtilityToolbarListener {
 		public void onButtonPressed(View v,int row,int index);
-		public void onButtonStateChanged(View v,int row,int index, boolean state);
+		public void onButtonStateChanged(ImageButton v,int row,int index, boolean state);
 		public void onItemDeleted(int row);
 		public void onNewPressed(View v);
-		public void onDonePressed(View v);
+		public void onDonePressed(View v);	
+		public void willShowToolbar(LinearLayout v, int row);
+		public void willHideToolbar(LinearLayout v, int row);
+	}
+	
+	public interface OptionItemClickListener {
 		public void onOptionItemClicked(int row);
+	}
+	
+	private OptionItemClickListener mOptionItemClickListener;
+	
+	public void setOptionItemClickListener(OptionItemClickListener listener) {
+		mOptionItemClickListener = listener;
 	}
 	
 	private UtilityToolbarListener mToolbarListener;
@@ -990,6 +1048,105 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 		if(mOptionsList.getVisibility() == View.VISIBLE) {
 			mOptionsButton.performClick();
 		}
+	}
+	
+	public void addOptionItem(String name,boolean centered) {
+		OptionItem item = new OptionItem();
+		item.title = name;
+		item.centered = centered;
+		this.optionItems.add(item);
+	}
+	
+	public void addOptionDivider(String name,boolean centered) {
+		DividerItem divider = new DividerItem();
+		divider.title = name;
+		divider.centered = centered;
+		this.optionItems.add(divider);
+	}
+	
+	public void setItemMiniIcon(int row,int resource) {
+		ItemEntry entry = mAdapter.getItem(row);
+		
+		entry.mini_icon = resource;
+		//if the toolbar is out, fetch up the icon and change it, otherwise invalidate the list
+		if(mToolbar.getParent() != null) {
+			RelativeLayout root = (RelativeLayout)mToolbar.getParent().getParent();
+			((ImageView)root.findViewById(R.id.icon)).setImageResource(entry.mini_icon);
+			
+		} else {
+			mAdapter.notifyDataSetChanged();
+		}
+	}
+	
+	public void rebuildList() {
+		mList.setFocusable(false);
+		mList.setOnFocusChangeListener(null);
+		buildRawList();
+		mList.setOnFocusChangeListener(new ListFocusFixerListener());
+		mList.setFocusable(true);
+	}
+	
+	public void scrollToSelection(String str) {
+		for(int i=0;i<mAdapter.getCount();i++) {
+			ItemEntry foo = mAdapter.getItem(i);
+			if(str.equals(foo.title)) {
+				mList.setSelection(i);
+				return;
+			}
+		}
+	}
+	
+	public class ListFocusFixerListener implements View.OnFocusChangeListener {
+		public void onFocusChange(View v, boolean hasFocus) {
+			if(hasFocus) {
+				for(int i=0;i<mAdapter.getCount();i++) {
+					View view = mList.getChildAt(i);
+					if(view != null)  {
+						//view.findViewById(R.id.toolbar_tab).setFocusable(false);
+					}
+				}
+				if(mLastSelectedIndex < 0) {
+					
+				} else {
+					Log.e("LIST","SETTING FOCUS ON:" + mLastSelectedIndex);
+					int index = mLastSelectedIndex;
+					int first = mList.getFirstVisiblePosition();
+					int last = mList.getLastVisiblePosition();
+					if(first <= index && index <= last) {
+						index = index - first;
+					} else {
+						index = mList.getFirstVisiblePosition();
+					}
+					mList.setSelection(mLastSelectedIndex);
+					mList.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(true);
+					mList.getChildAt(index).findViewById(R.id.toolbar_tab).requestFocus();
+				}
+				
+			}
+			Log.e("FOCUS","FOCUS CHANGE LISTENER FIRE, focus is " + hasFocus);
+		}
+	}
+	
+	public void addToolbarButton(int drawable,int id) {
+		UtilityButton edit = new UtilityButton();
+		edit.id = id;
+		edit.action = UTILITY_BUTTON_ACTION.NORMAL;
+		edit.imageResource = drawable;
+		
+		mToolbarButtons.add(edit);
+	}
+	
+	public void addToolbarDeleteButton(int drawable,int id) {
+		UtilityButton edit = new UtilityButton();
+		edit.id = id;
+		edit.action = UTILITY_BUTTON_ACTION.DELETE;
+		edit.imageResource = drawable;
+		
+		mToolbarButtons.add(edit);
+	}
+	
+	public void clearToolbarButtons() {
+		mToolbarButtons.clear();
 	}
 	
 }
