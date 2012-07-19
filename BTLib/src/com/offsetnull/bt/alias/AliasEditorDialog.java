@@ -291,7 +291,7 @@ public class AliasEditorDialog extends Dialog {
 						suffix = "";
 					}
 					
-					boolean checked = ((CheckBox)AliasEditorDialog.this.findViewById(R.id.dollar)).isChecked();
+					boolean checked = ((CheckBox)AliasEditorDialog.this.findViewById(R.id.enabledcheck)).isChecked();
 					
 					reportto.editAliasDialogDone(prefix + pre.getText().toString() + suffix, post.getText().toString(),checked,old_pos,original_alias);
 					AliasEditorDialog.this.dismiss();

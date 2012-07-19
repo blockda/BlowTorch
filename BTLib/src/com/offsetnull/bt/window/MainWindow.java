@@ -24,6 +24,7 @@ import org.keplerproject.luajava.LuaState;
 import org.keplerproject.luajava.LuaStateFactory;
 
 
+import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -101,6 +102,7 @@ import com.offsetnull.bt.service.IConnectionBinder;
 import com.offsetnull.bt.service.IConnectionBinderCallback;
 import com.offsetnull.bt.alias.AliasData;
 import com.offsetnull.bt.alias.AliasSelectionDialog;
+import com.offsetnull.bt.alias.BetterAliasSelectionDialog;
 import com.offsetnull.bt.button.ButtonEditorDialog;
 import com.offsetnull.bt.button.ButtonSetSelectorDialog;
 import com.offsetnull.bt.button.SlickButton;
@@ -114,9 +116,12 @@ import com.offsetnull.bt.settings.ConfigurationLoader;
 import com.offsetnull.bt.settings.HyperSettings;
 import com.offsetnull.bt.settings.HyperSettingsActivity;
 import com.offsetnull.bt.speedwalk.SpeedWalkConfigurationDialog;
+import com.offsetnull.bt.timer.BetterTimerSelectionDialog;
 import com.offsetnull.bt.timer.TimerSelectionDialog;
+import com.offsetnull.bt.trigger.BetterTriggerSelectionDialog;
 import com.offsetnull.bt.trigger.TriggerSelectionDialog;
 
+@TargetApi(11)
 public class MainWindow extends Activity {
 	
 	public static String TEST_MODE = "blowTorchTestMode";
@@ -1595,18 +1600,20 @@ public class MainWindow extends Activity {
 			}
 			break;
 		case 300:
-			TimerSelectionDialog tsel = null;
-			tsel = new TimerSelectionDialog(MainWindow.this,service);
-			tsel.show();
+			BetterTimerSelectionDialog sel = new BetterTimerSelectionDialog(this,service);
+			sel.show();
+			//TimerSelectionDialog tsel = null;
+			//tsel = new TimerSelectionDialog(MainWindow.this,service);
+			//tsel.show();
 			
 			break;
 		case 100:
-			AliasSelectionDialog d = null;
-			try {
-				d = new AliasSelectionDialog(this,(HashMap<String,AliasData>)service.getAliases(),service);
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
+			BetterAliasSelectionDialog d = null;
+			//try {
+			d = new BetterAliasSelectionDialog(this,service);
+			//} catch (RemoteException e) {
+			//	throw new RuntimeException(e);
+			//}
 			d.setTitle("Edit Aliases:");
 			d.show();
 			break;
@@ -1697,8 +1704,10 @@ public class MainWindow extends Activity {
 //			//break;
 		case 200:
 			//launch the sweet trigger dialog.
-			TriggerSelectionDialog trigger_selector = new TriggerSelectionDialog(this,service);
-			trigger_selector.show();
+			//TriggerSelectionDialog trigger_selector = new TriggerSelectionDialog(this,service);
+			//trigger_selector.show();
+			BetterTriggerSelectionDialog btsd = new BetterTriggerSelectionDialog(this,service);
+			btsd.show();
 			break;
 		default:
 			break;

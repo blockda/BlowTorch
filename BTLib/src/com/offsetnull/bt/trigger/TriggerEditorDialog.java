@@ -43,6 +43,7 @@ import com.offsetnull.bt.responder.script.ScriptResponderEditor;
 import com.offsetnull.bt.responder.toast.*;
 import com.offsetnull.bt.service.IConnectionBinder;
 import com.offsetnull.bt.validator.Validator;
+import com.offsetnull.bt.window.PluginFilterSelectionDialog;
 
 public class TriggerEditorDialog extends Dialog implements DialogInterface.OnClickListener,TriggerResponderEditorDoneListener{
 
@@ -289,31 +290,8 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				the_trigger.setInterpretAsRegex(!literal.isChecked());
 				
 				//i don't care anymore about the checkchanged listeners. it was a neat idea, but here goes.
-				
-				/*TableLayout table = (TableLayout)findViewById(R.id.trigger_notification_table);
-				//Log.e("TEDITOR","SENDING TRIGGER TO SERVICE:");
-				for(TriggerResponder responder : the_trigger.getResponders()) {
-					//Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType());
-					int position = the_trigger.getResponders().indexOf(responder);
-					CheckBox open = (CheckBox)table.findViewById(checkopens.get(position));
-					CheckBox closed = (CheckBox)table.findViewById(checkclosed.get(position));
-					if(open.isChecked() && closed.isChecked()) {
-						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO BOTH");
-						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_BOTH);
-					} else if(open.isChecked()) {
-						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO OPEN");
-						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_OPEN);
-					} else if(closed.isChecked()) {
-						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_CLOSED);
-						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO CLOSED");
-					} else {
-						//Log.e("TEDITOR","EDITOR ATTEMPING TO SET RESPONDER TO NONE");
-						the_trigger.getResponders().get(position).setFireType(FIRE_WHEN.WINDOW_NEVER);
-					}
-					//Log.e("TEDITOR","RESPONDER TYPE " + responder.getType() + " RESPONDS " + responder.getFireType() + " AFTER MY LITTLE \"PUSH\"");
-				}*/
 				try {
-					if(selectedPlugin.equals("main")) {
+					if(selectedPlugin.equals(PluginFilterSelectionDialog.MAIN_SETTINGS)) {
 						service.updateTrigger(original_trigger,the_trigger);
 					} else {	
 						service.updatePluginTrigger(selectedPlugin,original_trigger,the_trigger);
@@ -327,7 +305,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				the_trigger.setPattern(pattern.getText().toString());
 				the_trigger.setInterpretAsRegex(!literal.isChecked());
 				try {
-					if(selectedPlugin.equals("main")) {
+					if(selectedPlugin.equals(PluginFilterSelectionDialog.MAIN_SETTINGS)) {
 						service.newTrigger(the_trigger);
 					} else {
 						service.newPluginTrigger(selectedPlugin,the_trigger);
@@ -335,7 +313,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
-				finish_with.sendEmptyMessage(101);
+				finish_with.sendMessageDelayed(finish_with.obtainMessage(100,the_trigger),10);
 			}
 			
 			TriggerEditorDialog.this.dismiss();
