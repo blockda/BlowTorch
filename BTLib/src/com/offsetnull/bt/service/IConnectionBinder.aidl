@@ -209,4 +209,6 @@ interface IConnectionBinder {
 	void addLink(String path);
 	void deletePlugin(String plugin);
 	void setPluginEnabled(String plugin,boolean enabled);
+	List getPluginsWithAliases();
+	List getPluginsWithTimers();
 }
