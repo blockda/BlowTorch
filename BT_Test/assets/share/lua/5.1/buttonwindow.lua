@@ -1056,13 +1056,22 @@ end
 toolbarTabCloseListener_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarTabCloseListener)
 
 buttonListAdapter = {}
+
+local TOOLBARHOLDER_ID = R_id.toolbarholder
+local ROOT_ID = R_id.root
+local EDITOR_SELECTION_LIST_ROW_ID = R_layout.editor_selection_list_row
+local INFOTITLE_ID = R_id.infoTitle
+local INFOEXTENDED = R_id.infoExtended		
+local ICON_ID = R_id.icon
+local VIEW_GONE = View.GONE
+
 function buttonListAdapter.getView(pos,v,parent)
 	local newview = nil
 	if(v ~= nil) then
 		newview = v
 		
 	else
-		--debugPrint("inflating view")
+		debugPrint("inflating view")
 		newview = layoutInflater:inflate(R_layout.editor_selection_list_row,nil)
 	
 		local root = newview:findViewById(R_id.root)
