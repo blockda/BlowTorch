@@ -5,7 +5,7 @@
       android:versionName="1.1.3">
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:process="com.offsetnull.bttest" android:debuggable="true" android:hardwareAccelerated="true">
      	<meta-data android:value="1" android:name="BLOWTORCH_TEST_VERSION"/>
-     	<meta-data android:value="4" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
+     	<meta-data android:value="16" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
      	<activity android:name="com.offsetnull.bttest.TestLauncher"
                   android:label="BlowTorch TEST">
             <intent-filter>

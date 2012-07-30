@@ -3,6 +3,7 @@ package com.offsetnull.bt.window;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
@@ -99,6 +100,28 @@ public class BetterEditText extends EditText {
 		public void onAnimationEnd();
 	}
 	
+	
+	@Override
+	public boolean onKeyPreIme(int keyCode, KeyEvent event)
+    {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK)
+        {
+            if(mListener != null) {
+            	mListener.onBackPressed();
+            }
+        }
+        return super.onKeyPreIme(keyCode, event);
+    }
+	
+	BackPressedListener mListener;
+	
+	public void setOnBackPressedListener(BackPressedListener l) {
+		mListener = l;
+	}
+	
+	public interface BackPressedListener {
+		public void onBackPressed();
+	}
 	//protected boolean getDefaultEditable() {
 	//	return true;
 	//}
