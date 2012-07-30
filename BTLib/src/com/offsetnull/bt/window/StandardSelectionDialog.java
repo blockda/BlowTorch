@@ -10,7 +10,7 @@ import android.view.View;
 
 public class StandardSelectionDialog extends BaseSelectionDialog {
 	
-	IConnectionBinder service;
+	protected IConnectionBinder service;
 	
 	
 	public StandardSelectionDialog(Context context,IConnectionBinder service)  {

@@ -72,6 +72,7 @@ import com.offsetnull.bt.timer.TimerData;
 import com.offsetnull.bt.trigger.TriggerData;
 import com.offsetnull.bt.window.TextTree;
 import com.offsetnull.bt.window.TextTree.Line;
+import com.offsetnull.bt.window.Window;
 
 import com.offsetnull.bt.alias.AliasData;
 import com.offsetnull.bt.button.SlickButtonData;
@@ -609,6 +610,7 @@ public class Connection implements SettingsChangedListener {
 		
 		//}
 		//loadSettings();
+		
 		service.markWindowsDirty();
 		loadInternalSettings();
 		
@@ -744,6 +746,9 @@ public class Connection implements SettingsChangedListener {
 
 		tmpPlugs.remove(0);
 		
+		pluginMap.clear();
+		linkMap.clear();
+		
 		plugins.addAll(tmpPlugs);
 		
 		
@@ -757,9 +762,14 @@ public class Connection implements SettingsChangedListener {
 			p.pushOptionsToLua();
 		}
 		
-		for(WindowToken w : mWindows) {
-			if(bufferSaves.get(w.getName()) != null) {
-				w.setBuffer(bufferSaves.get(w.getName()));
+		if(bufferSaves != null) {
+			for(WindowToken w : mWindows) {
+				if(w != null) {
+					
+					if(bufferSaves.get(w.getName()) != null) {
+						w.setBuffer(bufferSaves.get(w.getName()));
+					}
+				}
 			}
 		}
 		
@@ -2029,7 +2039,7 @@ public class Connection implements SettingsChangedListener {
 		}
 	}
 	
-	public void saveSettings(String filename)  {
+	/*public void saveSettings(String filename)  {
 		try {
 			FileOutputStream fos = service.openFileOutput(filename,Context.MODE_PRIVATE);
 			
@@ -2111,7 +2121,7 @@ public class Connection implements SettingsChangedListener {
 			throw new RuntimeException(e);
 		}
 		
-	}
+	}*/
 
 	public static int getResId(String variableName, Context context, Class<?> c) {
 
@@ -2193,6 +2203,7 @@ public class Connection implements SettingsChangedListener {
 			TriggerData data = p.getSettings().getTriggers().get(key);
 			if(data != null) {
 				data.setEnabled(enabled);
+				p.getSettings().setDirty(true);
 				buildTriggerSystem();
 			}
 		}
@@ -2210,6 +2221,7 @@ public class Connection implements SettingsChangedListener {
 		Plugin p = pluginMap.get(selectedPlugin);
 		if(p != null) {
 			p.getSettings().getTriggers().remove(which);
+			p.getSettings().setDirty(true);
 			p.sortTriggers();
 		}
 		buildTriggerSystem();
@@ -2230,6 +2242,7 @@ public class Connection implements SettingsChangedListener {
 		Plugin p = pluginMap.get(plugin);
 		if(p != null) {
 			p.getSettings().setAliases((HashMap<String,AliasData>)map);
+			p.getSettings().setDirty(true);
 			p.buildAliases();
 		}
 	}
@@ -2285,6 +2298,7 @@ public class Connection implements SettingsChangedListener {
 			AliasData data = p.getSettings().getAliases().get(key);
 			if(data != null) {
 				data.setEnabled(enabled);
+				p.getSettings().setDirty(true);
 				p.buildAliases();
 			}
 		}
@@ -2363,6 +2377,7 @@ public class Connection implements SettingsChangedListener {
 		if(p != null) {
 			newtimer.setRemainingTime(newtimer.getSeconds());
 			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
+			p.getSettings().setDirty(true);
 		}
 	}
 
@@ -2372,6 +2387,7 @@ public class Connection implements SettingsChangedListener {
 		if(p != null) {
 			p.getSettings().getTimers().remove(old.getName());				
 			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
+			p.getSettings().setDirty(true);
 		}
 		
 	}
@@ -2522,6 +2538,8 @@ public class Connection implements SettingsChangedListener {
 		}
 		
 	}
+	
+
 	
 	public void handleWindowSettingsChanged(String window,String key,String value) {
 		//synchronized(callbackSync) {
@@ -2849,8 +2867,49 @@ public class Connection implements SettingsChangedListener {
 		try {
 			File file = new File(filename);
 			FileOutputStream fos = new FileOutputStream(file);
-			fos.write(ConnectionSetttingsParser.outputXML(the_settings,plugins).getBytes());
+			String foo = ConnectionSetttingsParser.outputXML(the_settings,plugins);
+			fos.write(foo.getBytes());
 			fos.close();
+			
+			for(String link : linkMap.keySet()) {
+				ArrayList<String> plugins  = linkMap.get(link);
+				boolean doExport = false;
+				String fullpath = "";
+				for(String plugin : plugins) {
+					Plugin p = pluginMap.get(plugin);
+					if(p.getSettings().isDirty()) {
+						doExport = true;
+						fullpath = p.getFullPath();
+					}
+				}
+				
+				if(doExport) {
+					XmlSerializer out = Xml.newSerializer();
+					StringWriter writer = new StringWriter();
+					
+					out.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+					out.setOutput(writer);
+					out.startDocument("UTF-8", true);
+					out.startTag("", "blowtorch");
+					out.attribute("", "xmlversion", "2");
+					out.startTag("", "plugins");
+					for(String plugin :plugins) {
+						Plugin p = pluginMap.get(plugin);
+						PluginParser.saveToXml(out, p);
+						p.getSettings().setDirty(false);
+					}
+					
+					out.endTag("", "plugins");
+					out.endTag("", "blowtorch");
+					out.endDocument();
+					
+					File extfile = new File(fullpath);
+					FileOutputStream extfilestream = new FileOutputStream(extfile);
+					extfilestream.write(writer.toString().getBytes());
+					extfilestream.close();
+				}
+				
+			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -3268,7 +3327,26 @@ public class Connection implements SettingsChangedListener {
 		mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
 		the_settings.getSettings().getOptions().addOptionAt(mWindows.get(0).getSettings(),4);
 		
+		
+		//go through all the plugins and add thier options if they have them.
+		/*for(Plugin p : plugins) {
+			if(p.getSettings().getWindows().size() > 0) {
+				for(String token : p.getSettings().getWindows().keySet()) {
+					WindowToken w = p.getSettings().getWindows().get(token);
+					p.getSettings().getOptions().addOption(w.getSettings());
+				}
+			}
+			
+			if(p.getSettings().getOptions().getOptions().size() > 0) {
+				the_settings.getSettings().getOptions().addOption(p.getSettings().getOptions());
+			}
+		}*/
+		
 		//the_settings.getSettings().setOptions(sg);
+	}
+	
+	public void attatchWindowSettingsChangedListener(WindowToken w) {
+		w.getSettings().setListener(new WindowSettingsChangedListener(w.getName()));
 	}
 
 	public boolean isKeepLast() {
@@ -3404,5 +3482,14 @@ public class Connection implements SettingsChangedListener {
 		p.setEnabled(enabled);
 		saveMainSettings();
 		reloadSettings();
+	}
+
+	public Map getDirectionData() {
+		// TODO Auto-generated method stub
+		return the_settings.getDirections();
+	}
+
+	public void setDirectionData(Map data) {
+		the_settings.setDirections((HashMap<String, DirectionData>) data);
 	}
 }

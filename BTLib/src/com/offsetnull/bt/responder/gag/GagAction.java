@@ -96,6 +96,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 		tmp.setGagLog(this.isGagLog());
 		tmp.setGagOutput(this.gagOutput);
 		tmp.setRetarget(this.getRetarget());
+		tmp.setFireType(this.getFireType());
 		return tmp;
 	}
 	

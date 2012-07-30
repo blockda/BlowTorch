@@ -25,6 +25,7 @@ public class SettingsGroup extends Option implements Parcelable {
 	private ArrayList<Option> options;
 	
 	private SettingsChangedListener listener;
+	private boolean skip = false;
 	
 	public SettingsGroup() {
 		options = new ArrayList<Option>();
@@ -260,6 +261,14 @@ public class SettingsGroup extends Option implements Parcelable {
 	public void addOptionAt(Option option, int i) {
 		updateOptionsMap(option,listener);
 		options.add(i,option);
+	}
+
+	public void setSkipForPluginSave(boolean b) {
+		skip  = b;
+	}
+	
+	public boolean getSkipForPluginSave() {
+		return skip;
 	}
 	
 	/*public interface BlandNewOption {

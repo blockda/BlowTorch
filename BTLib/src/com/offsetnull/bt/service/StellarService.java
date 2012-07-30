@@ -2901,13 +2901,12 @@ public class StellarService extends Service {
 		}
 
 		public Map getDirectionData() throws RemoteException {
-			// TODO Auto-generated method stub
-			return null;
+			
+			return connections.get(connectionClutch).getDirectionData();
 		}
 
 		public void setDirectionData(Map data) throws RemoteException {
-			// TODO Auto-generated method stub
-			
+			connections.get(connectionClutch).setDirectionData(data);
 		}
 
 		public void newTrigger(TriggerData data) throws RemoteException {

@@ -1,6 +1,8 @@
 package com.offsetnull.bt.service.plugin.settings;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -92,6 +94,8 @@ public class ConnectionSetttingsParser extends PluginParser {
 		//Element alias = aliases.getChild("alias");
 		Element script = root.getChild("script");
 		Element triggers = root.getChild("triggers");
+		Element directions = root.getChild("directions");
+		Element dirEntries = directions.getChild("entry");
 		
 		//do our attatch listener dance.
 		TriggerParser.registerListeners(triggers, GLOBAL_HANDLER, new TriggerData(), current_trigger, current_timer);
@@ -117,6 +121,19 @@ public class ConnectionSetttingsParser extends PluginParser {
 				}
 				//current_script_body = body;
 				settings.getSettings().getScripts().put(current_script_name, body);
+			}
+			
+		});
+		
+		dirEntries.setStartElementListener(new StartElementListener() {
+
+			@Override
+			public void start(Attributes a) {
+				DirectionData d = new DirectionData();
+				d.setDirection(a.getValue("","dir"));
+				d.setCommand(a.getValue("","cmd"));
+				
+				settings.getDirections().put(d.getDirection(), d);
 			}
 			
 		});
@@ -301,6 +318,19 @@ public class ConnectionSetttingsParser extends PluginParser {
 		out.endTag("", "plugins");
 		out.endTag("", "blowtorch");
 		out.endDocument();
+		
+		//go back through the link list and check if the settings are dirty, if so then save the link.
+		/*for(String link : p.getLinks()) {
+			for(Plugin plugin : plugins) {
+				if(plugin.getStorageType().equals("EXTERNAL") && plugin.getSettings().isDirty() &&) {
+					String filename = plugin.getFullPath();
+					File file = new File(filename);
+					FileOutputStream fos = new FileOutputStream(file);
+					fos.write(Plugin.outputXML(plugin.getSettings()).getBytes());
+					fos.close();
+				}
+			}
+		}*/
 		
 		return writer.toString();
 	}
