@@ -719,7 +719,9 @@ public class WindowToken implements Parcelable {
 	}
 	
 
-	
+	//public void addSettingsToParent() {
+		
+	//}
 
 	
 	//public void setBuffer(TextTree buffer) {

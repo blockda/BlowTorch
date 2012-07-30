@@ -63,6 +63,10 @@ body {
 				</layoutGroup>
 			</window>
 		</windows>
+		<options title="Chat Window" summary="Sizing and window options.">
+  	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>	
+  	 	</options>
+		
 		<script name="bootstrap">
 			<![CDATA[
 			dofile(GetExternalStorageDirectory().."/BlowTorch/plugins/aardwolf/chatserver.lua")

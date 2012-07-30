@@ -1815,7 +1815,11 @@ end
 buttonLayer = nil
 buttonCanvas = nil
 draw = false
-statusoffset = GetStatusBarHeight()
+
+statusHidden = IsStatusBarHidden()
+if(statusHidden) then
+	statusoffset = -1*GetStatusBarHeight()
+end
 Integer = luajava.bindClass("java.lang.Integer")
 function OnSizeChanged(w,h,oldw,oldh)
 	if(w == 0 and h == 0) then
@@ -1823,18 +1827,28 @@ function OnSizeChanged(w,h,oldw,oldh)
 		return
 	end
 	
-	newoffset = tonumber(GetStatusBarHeight())
-	if(statusoffset ~= newoffset) then
+	hiddenNow = IsStatusBarHidden()
+	if(statusHidden and not hiddenNow) then
+		statusoffset = 0
+	end
+	
+	if(not statusHidden and hiddenNow) then 
+		statusoffset = -1*GetStatusBarHeight()
+	end
+	debugPrint("status offset is: "..statusoffset)
+	
+	
+	if(statusHidden ~= statusNow) then
 		for i=1,#buttons do
 			local b = buttons[i]
-			b:updateRect(newoffset)
+			b:updateRect(statusoffset)
 		end
 	
 	end
 	
-	statusoffset = newoffset
+	statusHidden = hiddenNow
 	
-	debugPrint("status offset is: "..statusoffset)
+	--debugPrint("status offset is: "..statusoffset)
 	local ccl = luajava.bindClass("android.graphics.Color")
 	local colord = ccl:argb(0x88,0x00,0x00,0xFF)
 	
@@ -2212,7 +2226,7 @@ function showEditorDialog()
 	
 	local context = view:getContext()
 	top = luajava.new(RelativeLayout,context)
-	topparams = luajava.new(RelativeLayoutParams,450,350)
+	topparams = luajava.new(RelativeLayoutParams,450*density,WRAP_CONTENT)
 	
 
 	
@@ -2238,7 +2252,7 @@ function showEditorDialog()
 	--fillparams:setGravity(Gravity.FILL_HORIZONTAL)
 	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
 	
-	hostparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.FILL_PARENT)
+	hostparams = luajava.new(RelativeLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	host = luajava.new(TabHost,context)
 	hostparams:addRule(RelativeLayout.BELOW,1)
 	hostparams:addRule(RelativeLayout.ABOVE,2)
@@ -2315,7 +2329,7 @@ function showEditorDialog()
 	clickLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
 	clickLabel:setText("Label:")
 	clickLabel:setGravity(Gravity.RIGHT)
-	clickLabelParams = luajava.new(LinearLayoutParams,80,WRAP_CONTENT)
+	clickLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	clickLabel:setLayoutParams(clickLabelParams)
 	
 	clickLabelEdit = luajava.new(EditText,context)
@@ -2343,7 +2357,7 @@ function showEditorDialog()
 	clickCmdLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
 	clickCmdLabel:setText("CMD:")
 	clickCmdLabel:setGravity(Gravity.RIGHT)
-	clickCmdLabelParams = luajava.new(LinearLayoutParams,80,WRAP_CONTENT)
+	clickCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	clickCmdLabel:setLayoutParams(clickLabelParams)
 	
 	clickCmdEdit = luajava.new(EditText,context)
@@ -2389,7 +2403,7 @@ function showEditorDialog()
 	flipLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
 	flipLabel:setText("Label:")
 	flipLabel:setGravity(Gravity.RIGHT)
-	flipLabelParams = luajava.new(LinearLayoutParams,80,WRAP_CONTENT)
+	flipLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	flipLabel:setLayoutParams(flipLabelParams)
 	
 	flipLabelEdit = luajava.new(EditText,context)
@@ -2416,7 +2430,7 @@ function showEditorDialog()
 	flipCmdLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
 	flipCmdLabel:setText("CMD:")
 	flipCmdLabel:setGravity(Gravity.RIGHT)
-	flipCmdLabelParams = luajava.new(LinearLayoutParams,80,WRAP_CONTENT)
+	flipCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	flipCmdLabel:setLayoutParams(clickLabelParams)
 	
 	flipCmdEdit = luajava.new(EditText,context)
@@ -2604,7 +2618,7 @@ function makeAdvancedPage()
 	end
 	
 	
-	buttonNameLabelParams = fnew(LinearLayoutParams,80,WRAP_CONTENT)
+	buttonNameLabelParams = fnew(LinearLayoutParams,80*density,WRAP_CONTENT)
 	if(buttonNameLabel == nil) then
 		buttonNameLabel = fnew(TextView,context)
 		
@@ -2645,7 +2659,7 @@ function makeAdvancedPage()
 		buttonTargetSetRow:setVisibility(View.VISIBLE)
 	end
 	
-	buttonTargetSetLabelParams = fnew(LinearLayoutParams,80,WRAP_CONTENT)
+	buttonTargetSetLabelParams = fnew(LinearLayoutParams,80*density,WRAP_CONTENT)
 	if(buttonTargetSetLabel == nil) then
 		buttonTargetSetLabel = fnew(TextView,context)
 		
@@ -2917,7 +2931,7 @@ function makeAdvancedPage()
 		controlRowOne:addView(controlHolderA)
 	end
 	
-	numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
+	numbereditorParams = fnew(LinearLayoutParams,120*density,WRAP_CONTENT)
 	if(labelSizeEdit == nil) then
 		labelSizeEdit = fnew(EditText,context)
 		labelSizeEdit:setLayoutParams(numbereditorParams)
@@ -3406,7 +3420,7 @@ function setSettingsButtonListener.onClick(v)
 	
 
 	local top = luajava.new(RelativeLayout,context)
-	local topparams = luajava.new(RelativeLayoutParams,450,400)
+	local topparams = luajava.new(RelativeLayoutParams,450*density,WRAP_CONTENT)
 	
 	top:setLayoutParams(topparams)
 	--top:setOrientation(LinearLayout.VERTICAL)
@@ -3437,7 +3451,7 @@ function setSettingsButtonListener.onClick(v)
 	
 	local holder = luajava.new(LinearLayout,context)
 	holder:addView(page,contentparams)
-	local holderparam = luajava.new(RelativeLayoutParams,FILL_PARENT,FILL_PARENT)
+	local holderparam = luajava.new(RelativeLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	holderparam:addRule(RelativeLayout.ABOVE,2)
 	holderparam:addRule(RelativeLayout.BELOW,1)
 	holderparam:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
@@ -3656,7 +3670,7 @@ function PopulateMenu(menu)
 		topMenuItem:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
 		
 		debugPrint("populated lua button sets")
-		foo = function(item) item:setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS) end
+		foo = function(item) item:setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER) end
 		if(not pcall(foo,topMenuItem))  then
 			debugPrint("action bar not supported,android version < 3.0")
 		end

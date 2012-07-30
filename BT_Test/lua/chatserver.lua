@@ -6,25 +6,26 @@ require("serialize")
 debugPrint("in the chat server")
 
 chatWindow = GetWindowTokenByName("chats")
+AppendWindowSettings("chats")
 chatWindowName = "chats"
 
 currentChannel = "main"
 buffers = {}
 buffers[currentChannel] = chatWindow:getBuffer()
 
-altbuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree");
-altbuffer:addString("i am the alternate buffer, rock on.")
+--altbuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree");
+--altbuffer:addString("i am the alternate buffer, rock on.")
 
-foobuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree");
-foobuffer:addString("this is the foo buffer, buffffererere.")
+--foobuffer = luajava.newInstance("com.offsetnull.bt.window.TextTree");
+--foobuffer:addString("this is the foo buffer, buffffererere.")
 
 --buffers["alt"] = altbuffer;
-buffers["filler"] = foobuffer;
-buffers["lots"] = foobuffer;
-buffers["and"] = foobuffer;
-buffers["lots"] = foobuffer;
-buffers["more"] = foobuffer;
-buffers["channels"] = foobuffer;
+--buffers["filler"] = foobuffer;
+--buffers["lots"] = foobuffer;
+--buffers["and"] = foobuffer;
+--buffers["lots"] = foobuffer;
+--buffers["more"] = foobuffer;
+--buffers["channels"] = foobuffer;
 --buffers[""] = foobuffer;
 --buffers["channels"] = foobuffer;
 
@@ -107,6 +108,33 @@ function processChat(name,line,replaceMap)
 	--mainBuffer = buffers["main"]
 	
 end
+
+function OnOptionChanged(key,value)
+	debugPrint("in on option changed, key:"..key)
+	local func = optionsTable[key]
+	if(func ~= nil) then
+		func(value)
+	end
+end
+
+function setWindowSize(size)
+	debugPrint("in setWindowSize()")
+	local layouts = chatWindow:getLayouts()
+	local keys = layouts:keySet()
+	local iterator = keys:iterator()
+	while(iterator:hasNext()) do
+		local key = iterator:next()
+		local layoutGroup = layouts:get(key)
+		layoutGroup:setPortraitHeight(tonumber(size))
+		layoutGroup:setLandscapeHeight(tonumber(size))
+	end
+	if(userPresent()) then
+		WindowXCallS(chatWindowName,"setWindowSize",tostring(size))
+	end
+end
+
+optionsTable = {}
+optionsTable.height = setWindowSize
 
 
 
