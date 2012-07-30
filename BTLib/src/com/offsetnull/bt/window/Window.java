@@ -2554,6 +2554,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		PushMenuStackFunction pmsf = new PushMenuStackFunction(L);
 		PopMenuStackFunction popmsf = new PopMenuStackFunction(L);
 		GetStatusBarHeight gsbshf = new GetStatusBarHeight(L);
+		StatusBarHiddenMethod sghm = new StatusBarHiddenMethod(L);
 		try {
 			
 			gsbshf.register("GetStatusBarHeight");
@@ -2570,6 +2571,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			gesdf.register("GetExternalStorageDirectory");
 			pmsf.register("PushMenuStack");
 			popmsf.register("PopMenuStack");
+			sghm.register("IsStatusBarHidden");
 			
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
@@ -3027,6 +3029,22 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException {
 			// TODO Auto-generated method stub
 			L.pushString(Integer.toString((int)Window.this.parent.getStatusBarHeight()));
+			return 1;
+		}
+		
+	}
+	
+	private class StatusBarHiddenMethod extends JavaFunction {
+
+		public StatusBarHiddenMethod(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushBoolean(Window.this.parent.isStatusBarHidden());
 			return 1;
 		}
 		

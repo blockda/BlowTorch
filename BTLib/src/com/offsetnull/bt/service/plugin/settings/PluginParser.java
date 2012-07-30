@@ -155,6 +155,9 @@ public class PluginParser extends BasePluginParser {
 		
 		Element plugin = pgroup.getChild(BasePluginParser.TAG_PLUGIN);
 		//Element aliases = plugin.getChild(BasePluginParser.TAG_ALIASES);
+		Element author = plugin.getChild("author");
+		Element desc = plugin.getChild("description");
+		
 		Element triggers = plugin.getChild(BasePluginParser.TAG_TRIGGERS);
 		Element timers = plugin.getChild(BasePluginParser.TAG_TIMERS);
 		Element scripts = plugin.getChild(BasePluginParser.TAG_SCRIPT);
@@ -199,7 +202,7 @@ public class PluginParser extends BasePluginParser {
 				
 				Log.e("Parse","Parsing plugin: "+a.getValue("",BasePluginParser.ATTR_NAME));
 				tmp.setName(a.getValue("",BasePluginParser.ATTR_NAME));
-				tmp.setAuthor(a.getValue("",BasePluginParser.ATTR_AUTHOR));
+				//tmp.setAuthor(a.getValue("",BasePluginParser.ATTR_AUTHOR));
 				tmp.setId(Integer.parseInt(a.getValue("",BasePluginParser.ATTR_ID)));
 				/*if(a.getValue("","location") == null) {
 					tmp.setLocationType(PLUGIN_LOCATION.INTERNAL);
@@ -239,6 +242,36 @@ public class PluginParser extends BasePluginParser {
 				}
 				tmp = new PluginSettings();
 				
+			}
+			
+		});
+		
+		author.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void end(String body) {
+				tmp.setAuthor(body);
+			}
+			
+		});
+		
+		desc.setTextElementListener(new TextElementListener() {
+
+			@Override
+			public void start(Attributes attributes) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void end(String body) {
+				tmp.setDescription(body);
 			}
 			
 		});
@@ -569,8 +602,24 @@ public class PluginParser extends BasePluginParser {
 	public static void saveToXml(XmlSerializer out, Plugin plugin) throws IllegalArgumentException, IllegalStateException, IOException {
 		out.startTag("", "plugin");
 		out.attribute("", "name", plugin.getName());
-		out.attribute("", "author", plugin.getSettings().getAuthor());
 		out.attribute("", "id", Integer.toString(plugin.getSettings().getId()));
+		
+		if(plugin.getSettings().getAuthor() != null) {
+			out.startTag("", "author");
+			out.text(plugin.getSettings().getAuthor());
+			out.endTag("", "author");
+		}
+		
+		if(plugin.getSettings().getDescription() != null) {
+			out.startTag("", "description");
+			out.cdsect(plugin.getSettings().getDescription());
+			out.endTag("", "description");
+		}
+		
+		/*if(plugin.getSettings(). != null) {
+			out.startTag("", "author");
+			out.text(plugin.getSettings().getAuthor());
+		}*/
 		
 		out.startTag("","windows");
 		for(WindowToken w : plugin.getSettings().getWindows().values()) {
@@ -623,7 +672,9 @@ public class PluginParser extends BasePluginParser {
 	private static void dumpPluginOptions(XmlSerializer out,SettingsGroup o) throws IllegalArgumentException, IllegalStateException, IOException {
 		for(Option tmp : o.getOptions()) {
 			if(tmp instanceof SettingsGroup) {
-				dumpPluginOptions(out,(SettingsGroup)tmp);
+				if(!((SettingsGroup)tmp).getSkipForPluginSave()) {
+					dumpPluginOptions(out,(SettingsGroup)tmp);
+				}
 			} else {
 				BaseOption opt = (BaseOption)tmp;
 				opt.saveToXML(out);

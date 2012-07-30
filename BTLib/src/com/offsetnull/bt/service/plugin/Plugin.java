@@ -83,6 +83,8 @@ public class Plugin implements SettingsChangedListener {
 	Pattern whiteSpace = Pattern.compile("\\s");
 	HashMap<String,CustomTimerTask> timerTasks = new HashMap<String,CustomTimerTask>();
 	private boolean enabled = true;
+	//private ArrayList<Integer> optionSkipSaveList = new ArrayList<Integer>();
+	
 	
 	public Plugin(Handler h,Connection parent) throws LuaException {
 		setSettings(new PluginSettings());
@@ -209,6 +211,7 @@ public class Plugin implements SettingsChangedListener {
 		WindowXCallBFunction wxcbf = new WindowXCallBFunction(L);
 		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
 		GetDisplayDensityFunction gdsdf = new GetDisplayDensityFunction(L);
+		AppendWindowSettingsFunction awsf = new AppendWindowSettingsFunction(L);
 		wf.register("NewWindow");
 		mwf.register("GetWindowTokenByName");
 		esf.register("ExecuteScript");
@@ -225,6 +228,7 @@ public class Plugin implements SettingsChangedListener {
 		upf.register("userPresent");
 		gesdf.register("GetExternalStorageDirectory");
 		gdsdf.register("GetDisplayDensity");
+		awsf.register("AppendWindowSettings");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -846,6 +850,35 @@ public class Plugin implements SettingsChangedListener {
 		}
 		
 	}
+	
+	private class AppendWindowSettingsFunction extends JavaFunction {
+
+		public AppendWindowSettingsFunction(LuaState L) {
+			super(L);
+			
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//float density = parent.getContext().getResources().getDisplayMetrics().density;
+			//if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+			//	density = density * 1.5f;
+			//}
+			//Log.e("WINODW","PUSHING DENSITY:"+Float.toString(density));
+			//L.pushNumber(density);
+			String name = this.getParam(2).getString();
+			WindowToken w = Plugin.this.getSettings().getWindows().get(name);
+			if(w != null) {
+				//mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
+				parent.attatchWindowSettingsChangedListener(w);
+				w.getSettings().setSkipForPluginSave(true);
+				Plugin.this.getSettings().getOptions().addOption(w.getSettings());
+				//optionSkipSaveList.add(Plugin.this.getSettings().getOptions().getOptions().size()-1);
+			}
+			return 0;
+		}
+		
+	}
 
 	public void shutdown() {
 		// TODO Auto-generated method stub
@@ -1148,6 +1181,7 @@ public class Plugin implements SettingsChangedListener {
 	public void addTrigger(TriggerData data) {
 		this.getSettings().getTriggers().put(data.getName(), data);
 		parent.buildTriggerSystem();
+		settings.setDirty(true);
 	}
 
 	public void updateTrigger(TriggerData from, TriggerData to) {
@@ -1156,6 +1190,7 @@ public class Plugin implements SettingsChangedListener {
 		tmp = null;
 		this.sortTriggers();
 		parent.buildTriggerSystem();
+		settings.setDirty(true);
 	}
 	
 	public void buildAliases() {
@@ -1465,21 +1500,22 @@ public class Plugin implements SettingsChangedListener {
 	
 	public void updateBooleanSetting(String key,boolean value) {
 		settings.getOptions().updateBoolean(key,value);
+		settings.setDirty(true);
 	}
 	
 	public void updateIntegerSetting(String key,int value) {
 		settings.getOptions().updateInteger(key,value);
-		//o.setValue(value);
+		settings.setDirty(true);
 	}
 	
 	public void updateFloatSetting(String key,float value) {
 		settings.getOptions().updateFloat(key,value);
-		//o.setValue(value);
+		settings.setDirty(true);
 	}
 	
 	public void updateStringSetting(String key,String value) {
 		settings.getOptions().updateString(key,value);
-		//o.setValue(value);
+		settings.setDirty(true);
 	}
 	
 	public void setEncoding(String encoding) {
@@ -1665,4 +1701,5 @@ public class Plugin implements SettingsChangedListener {
 	public boolean isEnabled() {
 		return enabled;
 	}
+	
 }

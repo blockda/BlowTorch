@@ -554,7 +554,11 @@ public class BaseSelectionDialog extends Dialog {
 					iv.setImageResource(e.mini_icon_off);
 				}
 			}*/
-			iv.setImageResource(e.mini_icon);
+			if(e.mini_icon == 0) {
+				iv.setVisibility(View.GONE);
+			} else {
+				iv.setImageResource(e.mini_icon);
+			}
 			//iv.setImage
 			
 			//iv.setIma

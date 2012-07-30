@@ -43,4 +43,12 @@ public class LayoutGroup {
 	public LayoutGroup.LAYOUT_TYPE getType() {
 		return this.type;
 	}
+	
+	public void setPortraitHeight(int size) {
+		this.portraitParams.height = size;
+	}
+	
+	public void setLandscapeHeight(int size) {
+		this.landscapeParams.height = size;
+	}
 }

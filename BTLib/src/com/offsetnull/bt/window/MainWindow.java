@@ -115,6 +115,7 @@ import com.offsetnull.bt.settings.ColorSetSettings;
 import com.offsetnull.bt.settings.ConfigurationLoader;
 import com.offsetnull.bt.settings.HyperSettings;
 import com.offsetnull.bt.settings.HyperSettingsActivity;
+import com.offsetnull.bt.speedwalk.BetterSpeedWalkConfigurationDialog;
 import com.offsetnull.bt.speedwalk.SpeedWalkConfigurationDialog;
 import com.offsetnull.bt.timer.BetterTimerSelectionDialog;
 import com.offsetnull.bt.timer.TimerSelectionDialog;
@@ -489,9 +490,21 @@ public class MainWindow extends Activity {
         mInputBox.setDrawingCacheEnabled(true);
         mInputBox.setVisibility(View.VISIBLE);
         mInputBox.setEnabled(true);
+        
+        mInputBox.setOnBackPressedListener(new BetterEditText.BackPressedListener() {
+			
+			@Override
+			public void onBackPressed() {
+				Log.e("log","intercepting back press");
+				
+				mInputBox.setOnTouchListener(mEditBoxTouchListener);
+			}
+		});
         //TextView filler = (TextView)findViewById(R.id.filler);
         //filler.setFocusable(false);
         //filler.setClickable(false);
+        
+        mInputBox.setOnTouchListener(mEditBoxTouchListener);
         
         
         mInputBox.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -747,6 +760,7 @@ public class MainWindow extends Activity {
 					if(popup) {
 						InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 						mgr.showSoftInput(mInputBox, InputMethodManager.SHOW_FORCED);
+						mInputBox.setOnTouchListener(null);
 					}
 				
 					break;
@@ -1246,6 +1260,21 @@ public class MainWindow extends Activity {
 		//Log.e("Window","End on create");
 	}
 	
+	View.OnTouchListener mEditBoxTouchListener = new View.OnTouchListener() {
+		
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			switch(event.getAction()) {
+			case MotionEvent.ACTION_UP:
+				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		        imm.showSoftInput(mInputBox, InputMethodManager.SHOW_FORCED);
+		        mInputBox.setOnTouchListener(null);
+				break;
+			}
+			return true;
+		}
+	};
+	
 	protected void doExportSettings(String path) {
 		try {
 			service.ExportSettingsToPath(path);
@@ -1582,7 +1611,7 @@ public class MainWindow extends Activity {
 			abtdialog.show();
 			break;
 		case 500: //speedwalk config
-			SpeedWalkConfigurationDialog swDialog = new SpeedWalkConfigurationDialog(this,service);
+			BetterSpeedWalkConfigurationDialog swDialog = new BetterSpeedWalkConfigurationDialog(this,service);
 			swDialog.show();
 			break;
 		case 900:
@@ -2020,6 +2049,7 @@ public class MainWindow extends Activity {
 		//EditText input_box = (EditText)findViewById(R.id.textinput);
 		imm.hideSoftInputFromWindow(mInputBox.getWindowToken(), 0);
 		//Log.e("WINDOW","ATTEMPTING TO HIDE THE KEYBOARD");
+		mInputBox.setOnTouchListener(mEditBoxTouchListener);
 	}
 	
 	private void DoHapticFeedback() {
@@ -3214,14 +3244,11 @@ public class MainWindow extends Activity {
 	}
 	
 	public double getStatusBarHeight() {
-		// TODO Auto-generated method stub
-		if(isFullScreen) {
-			return statusBarHeight;
-		} else {
-			return 0;
-			
-		}
-		
-		//return 0;
+		return statusBarHeight;
+
+	}
+	
+	public boolean isStatusBarHidden() {
+		return isFullScreen;
 	}
 }

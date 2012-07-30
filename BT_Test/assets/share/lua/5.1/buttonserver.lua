@@ -466,7 +466,9 @@ end
 function OnOptionChanged(key,value)
 	debugPrint(key..":"..value)
 	local func = optionsTable[key]
-	func(value)
+	if(func ~= nil) then
+		func(value)
+	end
 	
 end
 

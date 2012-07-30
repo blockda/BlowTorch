@@ -12,8 +12,11 @@ public class PluginSettings implements Cloneable {
 	private String name;
 	private int id;
 	private String author;
+	private String description;
 	
 	private SettingsGroup options;
+	
+	private boolean dirty = false;
 	
 	public enum PLUGIN_LOCATION {
 		INTERNAL,
@@ -146,5 +149,23 @@ public class PluginSettings implements Cloneable {
 
 	public void setOptions(SettingsGroup options) {
 		this.options = options;
+	}
+	
+	public boolean isDirty() {
+		return dirty;
+	}
+	
+	public void setDirty(boolean dirty) {
+		this.dirty = dirty;
+	}
+
+
+	public String getDescription() {
+		return description;
+	}
+
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 }
