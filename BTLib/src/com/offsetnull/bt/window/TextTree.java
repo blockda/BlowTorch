@@ -929,6 +929,30 @@ public class TextTree {
 			return c;
 		}
 		
+		public Color newBackgroundColor(int color)
+		{
+			Color c = new Color();
+			c.operations.add(48);
+			c.operations.add(5);
+			c.operations.add(color);
+			c.bytecount = 1 + 1 + 2 + 1 + 1 + 1 + (Integer.toString(color)).length() + 1;
+			//           ESC  [  38   ;   5   ;   color data, can be up to 3           m
+			String foo = null;
+			try {
+				foo = new String(new byte[]{ESC},encoding) + "[48;5;"+color+"m";
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				c.bin = foo.getBytes(encoding);
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return c;
+		}
+		
 		private int breakAt(ListIterator<Unit> i, Unit u, int amount, int length) {
 			int charsinline;
 			boolean removed;

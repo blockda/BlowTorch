@@ -36,6 +36,7 @@ public class BetterTimerSelectionDialog extends PluginFilterSelectionDialog impl
 		this.addToolbarButton(R.drawable.toolbar_modify_button,2);
 		this.addToolbarDeleteButton(R.drawable.toolbar_delete_button,3);
 		
+		this.setTitle("TIMERS");
 	}
 
 	@Override
@@ -159,7 +160,12 @@ public class BetterTimerSelectionDialog extends PluginFilterSelectionDialog impl
 
 	@Override
 	public void onDonePressed(View v) {
-		
+		try {
+			service.saveSettings();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

@@ -254,7 +254,9 @@ public class Processor {
 		
 		if(action == TC.WILL && option == TC.GMCP) {
 			//so we are responding accordingly, but we want to "initialize" the gmcp
-			initGMCP();
+			if(useGMCP) {
+				initGMCP();
+			}
 		}
 		
 	}
@@ -432,12 +434,10 @@ public class Processor {
 	}
 	
 	public void initGMCP() {
-		String hello = "core.hello {\"client\": \"BlowTorch\"," +
-			"\"version\": \"1.4\"}";
-		String support = "core.supports.set [\"char 1\",\"room 1\",\"comm 1\"]";
+		
 		try {
-			byte[] hellob = getGMCPResponse(hello);
-			byte[] supportb = getGMCPResponse(support);
+			byte[] hellob = getGMCPResponse(mGMCPHello);
+			byte[] supportb = getGMCPResponse(mGMCPSupports);
 			
 			String out_hello = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(hellob) + "]" + Colorizer.telOptColorEnd + "\n";
 			String out_support = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(supportb) + "]" + Colorizer.telOptColorEnd + "\n";
@@ -515,6 +515,11 @@ public class Processor {
 	}
 	
 	public HashMap<String,ArrayList<GMCPWatcher>> gmcpTriggers = new HashMap<String,ArrayList<GMCPWatcher>>();
+	String mGMCPHello = "core.hello {\"client\": \"BlowTorch\",\"version\": \"1.4\"}";
+	//		;
+	//String support = "core.supports.set [\"char 1\",\"room 1\",\"comm 1\"]";
+	private Boolean useGMCP = false;
+	private String mGMCPSupports = "core.supports.set [\"char 1\"]";
 	
 	public void addWatcher(String module,String plugin,String callback) {
 		GMCPWatcher tmp = new GMCPWatcher(plugin,callback);
@@ -528,6 +533,15 @@ public class Processor {
 			list.add(tmp);
 		}
 		
+	}
+
+	public void setUseGMCP(Boolean value) {
+		useGMCP = value;
+		opthandler.setUseGMCP(useGMCP);
+	}
+
+	public void setGMCPSupports(String value) {
+		mGMCPSupports = "core.supports.set [" + value + "]";
 	}
 }
 

@@ -1818,7 +1818,7 @@ draw = false
 
 statusHidden = IsStatusBarHidden()
 if(statusHidden) then
-	statusoffset = -1*GetStatusBarHeight()
+	statusoffset = GetStatusBarHeight()
 end
 Integer = luajava.bindClass("java.lang.Integer")
 function OnSizeChanged(w,h,oldw,oldh)
@@ -1833,7 +1833,7 @@ function OnSizeChanged(w,h,oldw,oldh)
 	end
 	
 	if(not statusHidden and hiddenNow) then 
-		statusoffset = -1*GetStatusBarHeight()
+		statusoffset = GetStatusBarHeight()
 	end
 	debugPrint("status offset is: "..statusoffset)
 	

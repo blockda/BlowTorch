@@ -28,6 +28,7 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 		super(context, service);
 		buildList();
 		this.setToolbarListener(this);
+		this.setTitle("TRIGGERS");
 	}
 
 	@Override
@@ -87,7 +88,12 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 
 	@Override
 	public void onDonePressed(View v) {
-		
+		try {
+			service.saveSettings();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

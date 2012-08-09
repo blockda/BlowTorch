@@ -29,6 +29,7 @@ public class BetterAliasSelectionDialog extends PluginFilterSelectionDialog impl
 		super(context, service);
 		buildList();
 		this.setToolbarListener(this);
+		this.setTitle("ALIASES");
 	}
 
 	@Override
@@ -88,7 +89,12 @@ public class BetterAliasSelectionDialog extends PluginFilterSelectionDialog impl
 
 	@Override
 	public void onDonePressed(View v) {
-		
+		try {
+			service.saveSettings();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

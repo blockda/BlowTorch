@@ -37,6 +37,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 		super(pType);
 		setWith(null);
 		setRetarget(null);
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 		//setWindowTarget(null);
 	}
 
@@ -44,6 +45,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 		super(RESPONDER_TYPE.REPLACE);
 		setWith(null);
 		setRetarget(null);
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 		//setWindowTarget(null);
 	}
 	
@@ -81,6 +83,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	public ReplaceResponder copy() {
 		ReplaceResponder tmp = new ReplaceResponder();
 		tmp.with = this.with;
+		tmp.retarget = this.retarget;
 		tmp.setFireType(this.getFireType());
 		tmp.setRetarget(this.getRetarget());
 		//tmp.setWindowTarget(this.getWindowTarget());
@@ -113,6 +116,7 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 		} else {
 			p.writeInt(0);
 		}
+		
 	}
 
 	@Override

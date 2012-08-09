@@ -17,6 +17,8 @@ public class StandardSelectionDialog extends BaseSelectionDialog {
 		super(context);
 		this.service = service;
 	}
+	
+	
 
 
 }

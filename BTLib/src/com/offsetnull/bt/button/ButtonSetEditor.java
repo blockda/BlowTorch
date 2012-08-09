@@ -62,12 +62,12 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 		sv.setScrollbarFadingEnabled(false);
 		//attempt to fetch the settings.
 		//ColorSetSettings the_settings =  null;
-		try {
-			newsettings = service.getColorSetDefaultsForSet(set);
-		} catch (RemoteException e) {
-			throw new RuntimeException(e);
-		}
-		
+		//try {
+			//newsettings = service.getColorSetDefaultsForSet(set);
+		//} catch (RemoteException e) {
+		//	throw new RuntimeException(e);
+		//}
+		//
 		oldsettings = newsettings.copy();
 		
 		normalColor = (Button)findViewById(R.id.btnset_defaultcolor);
@@ -174,12 +174,12 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				
 				//get set names
 				List<String> takenNames = null;
-				try {
-					takenNames = service.getButtonSetNames();
-				} catch (RemoteException e1) {
+				//try {
+					//takenNames = service.getButtonSetNames();
+				//} catch (RemoteException e1) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				//	e1.printStackTrace();
+				//}
 				
 				for(String str : takenNames) {
 					if(nameEditor.getText().toString().equals(str) && !nameEditor.getText().toString().equals(set)) {
@@ -198,12 +198,12 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 				newsettings.setLockEditButtons(lockEditButtons.isChecked());
 				
 				if(!(nameEditor.getText().toString().equals(set))) {
-					try {
-						service.updateAndRenameSet(set, nameEditor.getText().toString(), newsettings);
-					} catch (RemoteException e) {
+					//try {
+						//service.updateAndRenameSet(set, nameEditor.getText().toString(), newsettings);
+					//} catch (RemoteException e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					//	e.printStackTrace();
+					//}
 					notifychanged.sendMessage(notifychanged.obtainMessage(101,nameEditor.getText().toString()));
 					ButtonSetEditor.this.dismiss();
 					return;
@@ -213,11 +213,11 @@ public class ButtonSetEditor extends Dialog implements ColorPickerDialog.OnColor
 
 				} else {
 					//changes made, notify the service that the change has been made, and notify the settings dialog that when it exits it needs to reload whatever button set changed.
-					try {
-						service.setColorSetDefaultsForSet(set, newsettings);
-					} catch (RemoteException e) {
-						throw new RuntimeException(e);
-					}
+					//try {
+						//service.setColorSetDefaultsForSet(set, newsettings);
+					//} catch (RemoteException e) {
+					//	throw new RuntimeException(e);
+					//}
 					notifychanged.sendEmptyMessage(100);
 				}
 				ButtonSetEditor.this.dismiss();

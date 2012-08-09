@@ -55,11 +55,13 @@ public class ConnectionSetttingsParser extends PluginParser {
 		process_semicolon,
 		echo_alias_updates,
 		keep_wifi_alive,
+		auto_reconnect,
+		auto_reconnect_limit,
 		cull_extraneous_color,
 		debug_telnet,
 		bell_vibrate,
 		bell_notification,
-		bell_display,
+		bell_display, use_gmcp, gmcp_supports
 	}
 	
 	ConnectionSettingsPlugin settings = null;
@@ -427,6 +429,16 @@ public class ConnectionSetttingsParser extends PluginParser {
 							dooutput = true;
 						}
 						break;
+					case use_gmcp:
+						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case gmcp_supports:
+						if(!((String)opt.getValue()).equals("\"char 1\"]")) {
+							dooutput = true;
+						}
+						break;
 					case bell_vibrate:
 						if((Boolean)opt.getValue() != true) {
 							dooutput = true;
@@ -439,6 +451,15 @@ public class ConnectionSetttingsParser extends PluginParser {
 						break;
 					case bell_display:
 						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+					case auto_reconnect:
+						if((Boolean)opt.getValue() != true) {
+							dooutput = true;
+						}
+						break;
+					case auto_reconnect_limit:
+						if((Integer)opt.getValue() != 5) {
 							dooutput = true;
 						}
 						break;
