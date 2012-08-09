@@ -36,6 +36,7 @@ public class BetterSpeedWalkConfigurationDialog extends StandardSelectionDialog 
 		this.addToolbarButton(R.drawable.toolbar_modify_button,0);
 		this.addToolbarDeleteButton(R.drawable.toolbar_delete_button,1);
 		
+		this.setTitle("DIRECTIONS");
 	}
 	
 	private void buildList() {
@@ -104,8 +105,12 @@ public class BetterSpeedWalkConfigurationDialog extends StandardSelectionDialog 
 
 	@Override
 	public void onDonePressed(View v) {
-		saveList();
-		this.dismiss();
+		try {
+			service.saveSettings();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override

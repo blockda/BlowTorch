@@ -65,14 +65,14 @@ public class ButtonSetSelectorDialog extends Dialog {
 		entries.clear();
 		ListView lv = (ListView) findViewById(R.id.buttonset_list);
 		
-		try {
-			data = (HashMap<String, Integer>) service.getButtonSetListInfo();
-			selected_set = service.getLastSelectedSet();
-		} catch (RemoteException e) {
+		//try {
+			//data = (HashMap<String, Integer>) service.getButtonSetListInfo();
+			//selected_set = service.getLastSelectedSet();
+		//} catch (RemoteException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return;
-		}
+		//	e.printStackTrace();
+		//	return;
+		//}
 		
 		for(String key : data.keySet()) {
 			ButtonEntry tmp = new ButtonEntry(key,data.get(key));
@@ -156,11 +156,11 @@ public class ButtonSetSelectorDialog extends Dialog {
 					//ListView lv = (ListView)ButtonSetSelectorDialog.this.findViewById(R.id.buttonset_list);
 					//ButtonEntry item = adapter.getItem(lv.getSelectedItemPosition());
 					Message reloadbuttonset = null;
-					try {
-						reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
-					} catch (RemoteException e) {
-						throw new RuntimeException(e);
-					}
+					//try {
+						//reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
+					//} catch (RemoteException e) {
+					//	throw new RuntimeException(e);
+					//}
 					dispater.sendMessage(reloadbuttonset);
 				}
 				ButtonSetSelectorDialog.this.dismiss();
@@ -283,11 +283,11 @@ public class ButtonSetSelectorDialog extends Dialog {
 			//ListView lv = (ListView)ButtonSetSelectorDialog.this.findViewById(R.id.buttonset_list);
 			//ButtonEntry item = adapter.getItem(lv.getSelectedItemPosition());
 			Message reloadbuttonset = null;
-			try {
-				reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
+			//try {
+			//	reloadbuttonset = dispater.obtainMessage(MainWindow.MESSAGE_CHANGEBUTTONSET,service.getLastSelectedSet());
+			//} catch (RemoteException e) {
+			//	throw new RuntimeException(e);
+			//}
 			dispater.sendMessage(reloadbuttonset);
 		}
 		this.dismiss();
@@ -664,11 +664,11 @@ public class ButtonSetSelectorDialog extends Dialog {
 		public void onAnimationEnd(Animation animation) {
 			list.setOnFocusChangeListener(null);
 			list.setFocusable(false);
-			try {
-				service.deleteButtonSet(entries.get(entry).name);
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
+			//try {
+			//	service.deleteButtonSet(entries.get(entry).name);
+			//} catch (RemoteException e) {
+			//	throw new RuntimeException(e);
+			//}
 			/*Message delset = dispater.obtainMessage(MainWindow.MESSAGE_DELETEBUTTONSET);
 			delset.obj = (entries.get(picked)).name;
 			dispater.sendMessage(delset);*/

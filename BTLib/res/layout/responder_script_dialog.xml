@@ -37,7 +37,11 @@
   <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_above="@id/done" android:layout_below="@id/titlebar">
   <TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="*">
   	<TableRow>
-  		<TextView android:text="Execute Script Function:"/>
+
+  		<TextView
+  		    android:id="@+id/action_label"
+  		    android:text="Execute Script Function:" />
+
   	</TableRow>
   		<EditText android:id="@+id/function" android:singleLine="true"/>
   </TableLayout>

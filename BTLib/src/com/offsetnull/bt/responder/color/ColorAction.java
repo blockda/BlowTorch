@@ -26,16 +26,24 @@ import com.offsetnull.bt.window.TextTree.Unit;
 public class ColorAction extends TriggerResponder implements Parcelable {
 
 	private int color = DEFAULT_COLOR; //xterm 256 color? otherwise this should be an int.
+	private int backgroundColor = DEFAULT_BACKGROUND_COLOR;
 	public static int DEFAULT_COLOR = 256;
+	public static int DEFAULT_BACKGROUND_COLOR = 232;
+	
 	public ColorAction(RESPONDER_TYPE pType) {
 		super(pType);
 		// TODO Auto-generated constructor stub
 		color = DEFAULT_COLOR;
+		backgroundColor = DEFAULT_BACKGROUND_COLOR;
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 	}
 	
 	public ColorAction() {
 		super(RESPONDER_TYPE.COLOR);
+		//color = DEFAULT_COLOR;
 		color = DEFAULT_COLOR;
+		backgroundColor = DEFAULT_BACKGROUND_COLOR;
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 	}
 
 	public int describeContents() {
@@ -46,6 +54,8 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 	public void writeToParcel(Parcel o, int flags) {
 		// TODO Auto-generated method stub
 		o.writeInt(color);
+		o.writeInt(backgroundColor);
+		o.writeString(this.getFireType().getString());
 	}
 
 	@Override
@@ -56,7 +66,7 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		//well. this is sort of duplication of effort from the replacer action. but whatever.
 		//int start = matched.start();
 		//int end = matched.end()-1;
-		
+		end = end + 1;
 		Unit u = null;
 		line.resetIterator();
 		ListIterator<Unit> it = line.getIterator();
@@ -64,6 +74,8 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		LinkedList<Unit> newLine = new LinkedList<Unit>();
 		
 		int working = 0;
+		
+		Color bleed = tree.getBleedColor();
 		
 		int splitAt = 0;
 		boolean preEmptiveChop = false;
@@ -91,6 +103,9 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 					newLine.add(u);
 				}
 			} else {
+				if(u instanceof TextTree.Color) {
+					bleed = (Color)u;
+				}
 				newLine.add(u);
 			}
 			
@@ -107,12 +122,15 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		//here is where we would insert replaced text if this were a replacer.
 		//instead, this is where we insert a new color unit denoting which color we would like.
 		newLine.add(line.newColor(color));
+		if(backgroundColor != 0 && backgroundColor != 16 && backgroundColor != 231) {
+			newLine.add(line.newBackgroundColor(backgroundColor));
+		}
 		newLine.add(line.newText(matched));
 		if(preEmptiveChop) {
 			int length = ((Text)u).getString().length();
 			Text post = line.newText(((Text)u).getString().substring(length-preEmptiveChopAt,length));
 			//insert bleed color to complete the "text color change"
-			newLine.add(tree.getBleedColor());
+			newLine.add(bleed);
 			newLine.add(post);
 		} else {
 			//normal "find and chop" procedure.
@@ -140,9 +158,14 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 				int length = ((Text)chop).getString().length();
 				Text post = line.newText(((Text)chop).getString().substring(length-chopAt,length));
 				//insert bleed color
-				newLine.add(line.newColor(color));
+				newLine.add(bleed);
+				
 				newLine.add(post);
+			} else {
+			
+				newLine.add(bleed);
 			}
+			//newLine.add(post);
 		}
 		
 		//finish out units if there are any.
@@ -156,12 +179,12 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		line.setData(newLine);
 		line.resetIterator();
 		it = line.getIterator();
-		while(it.hasNext()) {
+		/*while(it.hasNext()) {
 			Unit a = it.next();
 			if(a instanceof Color) {
 				Log.e("COLORIZE","OMG WE REPLACED COLOR");
 			}
-		}
+		}*/
 		
 		//return
 		return false;
@@ -171,6 +194,8 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 	public TriggerResponder copy() {
 		ColorAction tmp = new ColorAction(RESPONDER_TYPE.COLOR);
 		tmp.color = this.color;
+		tmp.backgroundColor = this.backgroundColor;
+		tmp.setFireType(this.getFireType());
 		return tmp;
 	}
 	
@@ -180,18 +205,41 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		ColorAction b= (ColorAction)o;
 		ColorAction a = this;
 		if(a.color != b.color) return false;
+		if(a.backgroundColor != b.backgroundColor) return false;
+		if(a.getFireType() != b.getFireType()) return false;
 		
 		return true;
 	}
 	
 	public ColorAction(Parcel in) {
 		super(RESPONDER_TYPE.COLOR);
+		
 		readFromParcel(in);
 	}
 
 	private void readFromParcel(Parcel in) {
 		// TODO Auto-generated method stub
 		this.color = in.readInt();
+		this.backgroundColor = in.readInt();
+		
+		String fireType = in.readString();
+		//Log.e("ACKRESPONDER","READING FROM PARCEL, FIRE TYPE:" + fireType);
+		if(fireType.equals(FIRE_WINDOW_OPEN)) {
+			//Log.e("ACKRESPONDER","attempting to set open");
+			setFireType(FIRE_WHEN.WINDOW_OPEN);
+		} else if (fireType.equals(FIRE_WINDOW_CLOSED)) {
+			//Log.e("ACKRESPONDER","attempting to set closed");
+			setFireType(FIRE_WHEN.WINDOW_CLOSED);
+		} else if (fireType.equals(FIRE_ALWAYS)) {
+			//Log.e("ACKRESPONDER","attempting to set both");
+			setFireType(FIRE_WHEN.WINDOW_BOTH);
+		} else if (fireType.equals(FIRE_NEVER)) {
+			//Log.e("ACKRESPONDER","attempting to set never");
+			setFireType(FIRE_WHEN.WINDOW_NEVER);
+		} else {
+			//Log.e("ACKRESPONDER","defaulting to both");
+			setFireType(FIRE_WHEN.WINDOW_BOTH);
+		}
 	}
 	
 	public static Parcelable.Creator<ColorAction> CREATOR = new Parcelable.Creator<ColorAction>() {
@@ -219,6 +267,14 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 
 	public int getColor() {
 		return color;
+	}
+	
+	public void setBackgroundColor(int color) {
+		this.backgroundColor = color;
+	}
+	
+	public int getBackgroundColor() {
+		return backgroundColor;
 	}
 	
 }

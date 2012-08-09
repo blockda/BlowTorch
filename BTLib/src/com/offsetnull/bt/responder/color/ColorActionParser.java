@@ -20,7 +20,10 @@ public final class ColorActionParser {
 	
 	public static void saveColorActionToXML(XmlSerializer out,ColorAction r) throws IllegalArgumentException, IllegalStateException, IOException {
 		out.startTag("", BasePluginParser.TAG_COLORACTION);
-		out.text(Integer.toString(r.getColor()));
+		out.attribute("", "text", Integer.toString(r.getColor()));
+		out.attribute("", "background", Integer.toString(r.getBackgroundColor()));
+		//out.text(Integer.toString(r.getColor()));
+		
 		out.endTag("", BasePluginParser.TAG_COLORACTION);
 	}
 }

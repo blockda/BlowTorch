@@ -12,9 +12,11 @@ import android.os.Handler;
 import com.offsetnull.bt.service.Connection;
 import com.offsetnull.bt.service.plugin.settings.BooleanOption;
 import com.offsetnull.bt.service.plugin.settings.EncodingOption;
+import com.offsetnull.bt.service.plugin.settings.IntegerOption;
 import com.offsetnull.bt.service.plugin.settings.ListOption;
 import com.offsetnull.bt.service.plugin.settings.PluginSettings;
 import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
+import com.offsetnull.bt.service.plugin.settings.StringOption;
 import com.offsetnull.bt.settings.HyperSettings;
 import com.offsetnull.bt.speedwalk.DirectionData;
 import com.offsetnull.bt.trigger.TriggerData;
@@ -39,6 +41,7 @@ public class ConnectionSettingsPlugin extends Plugin {
 		enc.setTitle("System Encoding");
 		enc.setDescription("Specifies the encoding used to process incoming text.");
 		enc.setKey("encoding");
+		enc.setValue("ISO-8859-1");
 		sg.addOption(enc);
 		
 		ListOption orientation = new ListOption();
@@ -143,6 +146,23 @@ public class ConnectionSettingsPlugin extends Plugin {
 		keep_wifi_alive.setValue(true);
 		servOptions.addOption(keep_wifi_alive);
 		
+		BooleanOption auto_reconnect = new BooleanOption();
+		auto_reconnect.setTitle("Auto Reconnect?");
+		auto_reconnect.setDescription("Automatically reconnect when disconnected.");
+		auto_reconnect.setKey("auto_reconnect");
+		auto_reconnect.setValue(true);
+		servOptions.addOption(auto_reconnect);
+		
+		IntegerOption auto_reconnect_limit = new IntegerOption();
+		auto_reconnect_limit.setTitle("Auto Reconnect Tries");
+		auto_reconnect_limit.setDescription("Hard limit of how many times reconnection will be attempted.");
+		auto_reconnect_limit.setKey("auto_reconnect_limit");
+		auto_reconnect_limit.setValue(new Integer(5));
+		servOptions.addOption(auto_reconnect_limit);
+		
+		//auto_reconnect,
+		//auto_reconnect_limit,
+		
 		BooleanOption cull_extraneous = new BooleanOption();
 		cull_extraneous.setTitle("Cull Extraneous Colors?");
 		cull_extraneous.setDescription("Removes extraneous color codes.");
@@ -156,6 +176,26 @@ public class ConnectionSettingsPlugin extends Plugin {
 		debug_telnet.setKey("debug_telnet");
 		debug_telnet.setValue(false);
 		servOptions.addOption(debug_telnet);
+		
+		SettingsGroup gmcpOptions = new SettingsGroup();
+		gmcpOptions.setTitle("GMCP Options");
+		gmcpOptions.setDescription("Options for the GMCP out of band communication channel.");
+		
+		BooleanOption use_gmcp = new BooleanOption();
+		use_gmcp.setTitle("Use GMCP?");
+		use_gmcp.setDescription("Enable or disable GMCP.");
+		use_gmcp.setKey("use_gmcp");
+		use_gmcp.setValue(false);
+		gmcpOptions.addOption(use_gmcp);
+	
+		StringOption gmcp_supports = new StringOption();
+		gmcp_supports.setTitle("Supports String");
+		gmcp_supports.setDescription("Enables specified modules on initial negotiation.");
+		gmcp_supports.setKey("gmcp_supports");
+		gmcp_supports.setValue("\"char 1\"");
+		gmcpOptions.addOption(gmcp_supports);
+		
+		servOptions.addOption(gmcpOptions);
 		
 		sg.addOption(servOptions);
 		

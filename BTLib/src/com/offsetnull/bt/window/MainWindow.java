@@ -330,6 +330,7 @@ public class MainWindow extends Activity {
 		}
 		
 	};
+	private int titleBarHeight;
 	
 	//private LayerManager mLayers = null;
 	public void onCreate(Bundle icicle) {
@@ -352,7 +353,7 @@ public class MainWindow extends Activity {
 		
 		SharedPreferences sprefs = this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getResources().getDisplayMetrics().density));
-		
+		titleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
 		setContentView(R.layout.window_layout);
 		
 		history = new CommandKeeper(10);
@@ -772,30 +773,26 @@ public class MainWindow extends Activity {
 					boolean needschange = false;
 					if(fullscreen && !isFullScreen) {
 						//switch to fullscreen.
-						try {
-							service.setFullScreen(true);
-							isFullScreen = true;
-						    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-						    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-						    needschange = true;
-						} catch (RemoteException e) {
-							throw new RuntimeException(e);
-						}
+						
+							//service.setFullScreen(true);
+						isFullScreen = true;
+					    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					    MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+					    needschange = true;
+						
 					}
 					
 					if(!fullscreen && isFullScreen) {
 						//switch to non full screen.
-						try {
-							service.setFullScreen(false);
-							isFullScreen = false;
-							MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-							MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 						
-							//MainWindow.this.findViewById(R.id.window_container).requestLayout();
-							needschange = true;
-						} catch (RemoteException e) {
-							throw new RuntimeException(e);
-						}
+						//service.setFullScreen(false);
+						isFullScreen = false;
+						MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+						MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					
+						//MainWindow.this.findViewById(R.id.window_container).requestLayout();
+						needschange = true;
+						
 					}
 					
 					if(needschange) {
@@ -926,6 +923,11 @@ public class MainWindow extends Activity {
 					//ByteBuffer buf = ByteBuffer.allocate(pdata.length());
 					ByteBuffer buf = null;
 					try {
+						String enc = service.getEncoding();
+						if(enc == null) {
+							Log.e("uh oh","null pointer incoming");
+						}
+						
 						buf = ByteBuffer.allocate(pdata.getBytes(service.getEncoding()).length);
 					} catch (UnsupportedEncodingException e2) {
 						throw new RuntimeException(e2);
@@ -1452,26 +1454,6 @@ public class MainWindow extends Activity {
 		d.show();
 	}
 	
-	private void showNoButtonMessage(boolean newset) {
-		
-		//if we are here then we loaded a blank button set, show the button set info message
-		try {
-			String message = "";
-			if(newset) {
-				message = "Button set " + service.getLastSelectedSet() + " created!";
-			} else {
-				message = "No buttons loaded for " + service.getLastSelectedSet() + " set.";
-			}
-			message += "\nNew buttons can be made by long pressing the window.";
-			message += "\nButtons may be moved after press + hold.";
-			message += "\nButtons may be edited after press + hold + hold.";
-			Toast t = Toast.makeText(MainWindow.this, message, Toast.LENGTH_LONG);
-			t.show();
-		} catch (RemoteException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
 		onCreateOptionsMenu(menu);
@@ -1527,7 +1509,7 @@ public class MainWindow extends Activity {
 //				Log.e("menu tab","tab tab:"+this.getActionBar().getTabAt(i).getText());
 //			}
 			boolean hide = true;
-			menu.add(0,0,0,"Hide Icons").setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+			
 			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -2003,17 +1985,15 @@ public class MainWindow extends Activity {
 			//OREINTATION = Configuration.ORIENTATION_PORTRAIT;
 			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
 			myhandler.sendEmptyMessageDelayed(MESSAGE_RENAWS, 80);
-			try {
-				if(service.getOrientation() == 1) { //if we are selected as landscape
-					newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
-					//HideKeyboard();
-					//myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 1000);
-					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-					
-				}
-			} catch (RemoteException e) {
-				e.printStackTrace();
+			
+			if(orientation == 1) { //if we are selected as landscape
+				newconfig.orientation = Configuration.ORIENTATION_LANDSCAPE;
+				//HideKeyboard();
+				//myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 1000);
+				this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+				
 			}
+			
 			break;
 		case Configuration.ORIENTATION_LANDSCAPE:
 		//	this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -2022,16 +2002,14 @@ public class MainWindow extends Activity {
 			//OREINTATION = Configuration.ORIENTATION_LANDSCAPE;
 			myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 10);
 			myhandler.sendEmptyMessageDelayed(MESSAGE_RENAWS, 80);
-			try {
-				if(service.getOrientation() == 2) { //if we are selected as landscape
-					newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
-					//HideKeyboard();
-					//myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 1000);
-					this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-				}
-			} catch (RemoteException e) {
-				e.printStackTrace();
+			
+			if(orientation == 2) { //if we are selected as landscape
+				newconfig.orientation = Configuration.ORIENTATION_PORTRAIT;
+				//HideKeyboard();
+				//myhandler.sendEmptyMessageDelayed(MESSAGE_HIDEKEYBOARD, 1000);
+				this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 			}
+			
 			break;
 		}
 		
@@ -2338,7 +2316,7 @@ public class MainWindow extends Activity {
 			
 			
 			//try {
-				loadSettings();
+				//loadSettings();
 				//if(service.hasBuffer()) {
 				//	setHyperLinkSettings();
 				//	service.requestBuffer();
@@ -2384,6 +2362,7 @@ public class MainWindow extends Activity {
 		
 	}
 	
+	private int orientation;
 	private void loadSettings() {
 		//TODO: NEW LOAD SETTINGS PLACE
 		//if(!isResumed || !screen2.loaded()) {
@@ -2394,141 +2373,7 @@ public class MainWindow extends Activity {
 		//attemppt to load button sets.
 		@SuppressWarnings("unused")
 		boolean fontSizeChanged = false;
-		//boolean fullscreen_now = false;
-		if(settingsDialogRun) {
-			//so, if we a are here, then the dialog screen has been run.
-			//we need to read in the values and supply them to the service
-			settingsDialogRun = false;
-			//Log.e("WINDOW","SETTINGS DIALOG HAS BEEN RUN! LOAD CHANGES!");
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainWindow.this);
-			//Integer font_size = new Integer(prefs.getString("FONT_SIZE", "18"));
-			Integer font_size = Integer.parseInt(prefs.getString("FONT_SIZE", "18"));
-			Integer line_space = new Integer(prefs.getString("FONT_SIZE_EXTRA", "2"));
-			Integer max_lines = new Integer(prefs.getString("MAX_LINES", "300"));
-			String font_name = prefs.getString("FONT_NAME", "monospace");
-			boolean process_periods = prefs.getBoolean("PROCESS_PERIOD", true);
-			boolean use_semi = prefs.getBoolean("PROCESS_SEMI", true);
-			boolean use_extractui = prefs.getBoolean("USE_EXTRACTUI", false);
-			boolean throttle_background = prefs.getBoolean("THROTTLE_BACKGROUND", false);
-			boolean wifi_keepalive = prefs.getBoolean("WIFI_KEEPALIVE", true);
-			boolean use_suggestions = prefs.getBoolean("USE_SUGGESTIONS", true);
-			boolean keeplast = prefs.getBoolean("KEEPLAST", false);
-			boolean bsbugfix = prefs.getBoolean("BACKSPACE_BUGFIX", false);
-			boolean autolaunch = prefs.getBoolean("AUTOLAUNCH_EDITOR",true);
-			boolean disablecolor = prefs.getBoolean("DISABLE_COLOR", false);
-			String overrideHF = prefs.getString("OVERRIDE_HAPTICFEEDBACK","auto");
-			String overrideHFPress = prefs.getString("HAPTIC_PRESS", "auto");
-			String overrideHFFlip = prefs.getString("HAPTIC_FLIP", "none");
-			String sel_encoding = prefs.getString("ENCODING", "ISO-8859-1");
-			
-			boolean keepscreen = prefs.getBoolean("KEEP_SCREEN_ON",true);
-			boolean localecho = prefs.getBoolean("LOCAL_ECHO",true);
-			boolean bellvibrate = prefs.getBoolean("BELL_VIBRATE",true);
-			boolean bellnotify = prefs.getBoolean("BELL_NOTIFY",false);
-			boolean belldisplay = prefs.getBoolean("BELL_DISPLAY",false);
-			boolean fullscreen_now = prefs.getBoolean("WINDOW_FULLSCREEN", false);
-			boolean roundbutt = prefs.getBoolean("ROUND_BUTTONS",true);
-			
-			int breakvalue = prefs.getInt("BREAK_AMOUNT", 0);
-			int orientationvalue = prefs.getInt("ORIENTATION", 0);
-			boolean wordwrapvalue = prefs.getBoolean("WORD_WRAP", true);
-			
-			boolean removeextracolor = prefs.getBoolean("REMOVE_EXTRA_COLOR",true);
-			boolean debugtelnet = prefs.getBoolean("DEBUG_TELNET", false);
-			boolean echoaliasupdate = prefs.getBoolean("ECHO_ALIAS_UPDATE", true);
-			String hyperLinkMode = prefs.getString("HYPERLINK_MODE", "highlight_color_bland_only");
-			int hyperLinkColor = prefs.getInt("HYPERLINK_COLOR", HyperSettings.DEFAULT_HYPERLINK_COLOR);
-			//boolean fitmessage = prefs.getBoolean("FIT_MESSAGE", true);
-			boolean hyperLinkEnabled = prefs.getBoolean("HYPERLINK_ENABLED", true);
-			//Log.e("WINDOW","LOADED KEEPLAST AS " + keeplast);
-			
-			try {
-				if(font_size != service.getFontSize()) {
-					fontSizeChanged = true;
-				}
-				
-				service.setFontSize(font_size);
-				service.setFontSpaceExtra(line_space);
-				service.setMaxLines(max_lines);
-				service.setFontName(font_name);
-				service.setProcessPeriod(process_periods);
-				service.setUseExtractUI(use_extractui);
-				service.setThrottleBackground(throttle_background);
-				service.setSemiOption(use_semi);
-				service.setKeepWifiActive(wifi_keepalive);
-				service.setAttemptSuggestions(use_suggestions);
-				service.setKeepLast(keeplast);
-				service.setBackSpaceBugFix(bsbugfix);
-				service.setAutoLaunchEditor(autolaunch);
-				service.setDisableColor(disablecolor);
-				service.setHapticFeedbackMode(overrideHF);
-				service.setHFOnPress(overrideHFPress);
-				service.setHFOnFlip(overrideHFFlip);
-				service.setEncoding(sel_encoding);
-				service.setKeepScreenOn(keepscreen);
-				service.setLocalEcho(localecho);
-				service.setVibrateOnBell(bellvibrate);
-				service.setNotifyOnBell(bellnotify);
-				service.setDisplayOnBell(belldisplay);
-				service.setFullScreen(fullscreen_now);
-				service.setRoundButtons(roundbutt);
-				service.setOrientation(orientationvalue);
-				service.setWordWrap(wordwrapvalue);
-				service.setBreakAmount(breakvalue);
-				service.setRemoveExtraColor(removeextracolor);
-				service.setDebugTelnet(debugtelnet);
-				service.setEchoAliasUpdate(echoaliasupdate);
-				service.setHyperLinkMode(hyperLinkMode);
-				service.setHyperLinkColor(hyperLinkColor);
-				service.setHyperLinkEnabled(hyperLinkEnabled);
-				//service.setShowFitMessage(fitmessage);
-				service.saveSettings();
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			
-			String importPath = prefs.getString("IMPORT_PATH","");
-			String exportPath = prefs.getString("EXPORT_PATH", "");
-			String defaultSettings = prefs.getString("SETTINGS_TO_DEFAULT", "");
-			
-
-			
-			SharedPreferences.Editor editor = prefs.edit();
-			
-			if(defaultSettings.equals("doit")) {
-				editor.putString("SETTINGS_TO_DEFAULT", "");
-				try {
-					service.resetSettings();
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-			}
-			
-			if(!importPath.equals("")) {
-				try {
-					service.LoadSettingsFromPath(importPath);
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				editor.putString("IMPORT_PATH", "");
-			}
-			
-			if(!exportPath.equals("")) {
-				//export needed
-				String exportDir = ConfigurationLoader.getConfigurationValue("exportDirectory", this);
-				String fullPath = "/"+exportDir+"/" + exportPath;
-				try {
-					service.ExportSettingsToPath(fullPath);
-				} catch (RemoteException e) {
-					throw new RuntimeException(e);
-				}
-				editor.putString("EXPORT_PATH","");
-			}
-			
-			editor.commit();
-			
-		}
-		
+		//boolean fullscreen_now = false;		
 		
 		try {
 			//calculate80CharFontSize();
@@ -2540,7 +2385,9 @@ public class MainWindow extends Activity {
 			//screen2.setLinksEnabled(service.isHyperLinkEnabled());
 			//if(!service.isConnected()) { return; }
 			SettingsGroup group = service.getSettings();
+			
 			if(group == null) return; //haven't fully loaded yet.
+			if(group.getOptions().size() == 0) return;
 			boolean fullscreen = (Boolean)((BaseOption)group.findOptionByKey("fullscreen")).getValue();
 			if(fullscreen) {
 			    MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -2566,7 +2413,7 @@ public class MainWindow extends Activity {
 			//screen2.setCullExtraneous(service.isRemoveExtraColor());
 			
 			//int or = MainWindow.this.getRequestedOrientation();
-			int orientation = (Integer)((BaseOption)group.findOptionByKey("orientation")).getValue();
+			orientation = (Integer)((BaseOption)group.findOptionByKey("orientation")).getValue();
 			doSetOrientiation(orientation);
 			
 			
@@ -2595,6 +2442,8 @@ public class MainWindow extends Activity {
 			
 			
 			isKeepLast = (Boolean)((BaseOption)group.findOptionByKey("keep_last")).getValue();
+			
+			//orientation = (Integer)((BaseOption)group.findOptionByKey("orientation")).getValue();
 			
 			//if(service.isKeepLast()) {
 			//	isKeepLast = true;
@@ -3250,5 +3099,52 @@ public class MainWindow extends Activity {
 	
 	public boolean isStatusBarHidden() {
 		return isFullScreen;
+	}
+	
+	public double getTitleBarHeight() {
+		return titleBarHeight;
+	}
+	
+	@Override
+	public void onNewIntent(Intent i) {
+		//this is if the activity is currently open, and a new intent has been posted.
+		Log.e("new intent","new intent : " + i.getStringExtra("DISPLAY"));
+		
+		this.setIntent(i);
+		/*try {
+			service.windowShowing(true);
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		//Intent i = this.getIntent();
+		//Log.e("LOG","RESUMING WINDOW WITH INTENT: display="+i.getStringExtra("DISPLAY")+" host="+i.getStringExtra("HOST")+" port="+i.getStringExtra("PORT"));
+		String display = i.getStringExtra("DISPLAY");
+		
+		try {
+			if(!service.getConnectedTo().equals(display)) {
+				//Log.e("LOG","ATTEMPTING TO SWITCH TO: " + display);
+				service.switchTo(display);
+			}
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		
+		
+		//try {
+			//loadSettings();
+	}
+
+	public String getPathForPlugin(String mOwner) {
+		try {
+			String path = service.getPluginPath(mOwner);
+			return path;
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 }

@@ -1,6 +1,7 @@
 package com.offsetnull.bt.window;
 
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 
 import java.util.ArrayList;
@@ -2462,6 +2463,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 	boolean hasOnSizeChanged = true;
+	
+	
 	private void pushTable(String key,Map<String,Object> map) {
 		/*if(!key.equals("")) {
 			L.pushString(key);
@@ -2555,6 +2558,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		PopMenuStackFunction popmsf = new PopMenuStackFunction(L);
 		GetStatusBarHeight gsbshf = new GetStatusBarHeight(L);
 		StatusBarHiddenMethod sghm = new StatusBarHiddenMethod(L);
+		GetActionBarHeightFunction gabhf = new GetActionBarHeightFunction(L);
+		GetPluginInstallDirectoryFunction gpisdf = new GetPluginInstallDirectoryFunction(L);
 		try {
 			
 			gsbshf.register("GetStatusBarHeight");
@@ -2572,7 +2577,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			pmsf.register("PushMenuStack");
 			popmsf.register("PopMenuStack");
 			sghm.register("IsStatusBarHidden");
-			
+			gabhf.register("GetActionBarHeight");
+			gpisdf.register("GetPluginInstallDirectory");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2956,6 +2962,30 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
+	private class GetPluginInstallDirectoryFunction extends JavaFunction {
+
+		public GetPluginInstallDirectoryFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//Log.e("PLUGIN","Get External storage state:"+Environment)
+			/*if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
+			} else {
+				L.pushNil();
+			}*/
+			String path = parent.getPathForPlugin(mOwner);
+			File file = new File(path);
+			String dir = file.getParent();
+			//file.getPar
+			L.pushString(dir);
+			return 1;
+		}
+		
+	}
 	private class PushMenuStackFunction extends JavaFunction {
 
 		public PushMenuStackFunction(LuaState L) {
@@ -3045,6 +3075,22 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException {
 			// TODO Auto-generated method stub
 			L.pushBoolean(Window.this.parent.isStatusBarHidden());
+			return 1;
+		}
+		
+	}
+	
+	private class GetActionBarHeightFunction extends JavaFunction {
+
+		public GetActionBarHeightFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushString(Integer.toString(((int)Window.this.parent.getTitleBarHeight())));
 			return 1;
 		}
 		

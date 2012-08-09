@@ -23,6 +23,8 @@ import android.content.Context;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,6 +37,8 @@ import android.webkit.WebView;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -131,6 +135,18 @@ public class PluginSelectorDialog extends Dialog {
 					
 					//newContent.addView(list);
 					newContent.findViewById(R.id.install).setOnClickListener(new InstallClickedListener(path));
+					Button b = (Button) newContent.findViewById(R.id.install);
+					
+					try {
+						if(service.isLinkLoaded(path)) {
+							b.setText("Already Installed");
+							b.setEnabled(false);
+						}
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 					
 					PluginInfoAdapter adapter = new PluginInfoAdapter(this.getContext(),0,info);
 					list.setAdapter(adapter);
@@ -204,6 +220,7 @@ public class PluginSelectorDialog extends Dialog {
 			f.setOutAnimation(outAnim);
 		//}
 		f.showNext();
+	
 	}
 	
 	private PluginSearchAdapter buildList(String path) {
@@ -324,6 +341,7 @@ public class PluginSelectorDialog extends Dialog {
 			
 			TextView title = (TextView) view.findViewById(R.id.infoTitle);
 			TextView extra = (TextView) view.findViewById(R.id.infoExtended);
+			ImageView icon = (ImageView) view.findViewById(R.id.icon);
 			
 			//get the path
 			File file = this.getItem(pos);
@@ -332,11 +350,24 @@ public class PluginSelectorDialog extends Dialog {
 			if(info == null) {
 				title.setText(file.getName());
 				extra.setText("");
+				icon.setImageResource(R.drawable.icon_folder);
 			} else {
+				try {
+					boolean foo = service.isLinkLoaded(file.getAbsolutePath());
+					if(foo) {
+						icon.setImageResource(R.drawable.icon_plugin_installed);
+					} else {
+						icon.setImageResource(R.drawable.icon_plugin);
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				if(info.length > 1) {
 					title.setText(file.getName());
 					extra.setText(info.length + " plugins.");
 				} else {
+					
 					title.setText(file.getName());
 					extra.setText(info[0].getName() + " written by " + info[0].getAuthor() + ".");
 				}
@@ -470,8 +501,17 @@ public class PluginSelectorDialog extends Dialog {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			//PluginSelectionDialog.this.
+			dismissTimer.sendEmptyMessageDelayed(100, 1500);
 		}
 		
 	}
+	
+	private Handler dismissTimer = new Handler() {
+		public void handleMessage(Message msg) {
+			PluginSelectorDialog.this.dismiss();
+		}
+	};
 	
 }
