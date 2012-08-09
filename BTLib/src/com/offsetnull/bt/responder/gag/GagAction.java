@@ -30,10 +30,11 @@ public class GagAction extends TriggerResponder implements Parcelable {
 	private boolean gagLog = DEFAULT_GAGLOG;
 	private boolean gagOutput = DEFAULT_GAGOUTPUT;
 	
-	private String retarget = null;
+	private String retarget = "";
 	public GagAction(RESPONDER_TYPE pType) {
 		super(pType);
 		// TODO Auto-generated constructor stub
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 	}
 
 	public int describeContents() {
@@ -45,6 +46,8 @@ public class GagAction extends TriggerResponder implements Parcelable {
 		// TODO Auto-generated method stub
 		o.writeInt(gagLog ? 1:0);
 		o.writeInt(gagOutput ? 1:0);
+		o.writeString(retarget);
+		o.writeString(this.getFireType().getString());
 	}
 
 	@Override
@@ -53,6 +56,12 @@ public class GagAction extends TriggerResponder implements Parcelable {
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name,String encoding) throws IteratorModifiedException {
 			//iterator.pr
+			if(windowIsOpen) {
+				if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+			} else {
+				if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+			}
+		
 			int prevloc = -1;
 			ListIterator<TextTree.Line> lineit = tree.getLines().listIterator(lineNumber);
 			if(lineit.hasPrevious()) {
@@ -107,23 +116,41 @@ public class GagAction extends TriggerResponder implements Parcelable {
 		GagAction a = this;
 		if(a.gagLog != b.gagLog) return false;
 		if(a.gagOutput != b.gagOutput) return false;
+		if(!a.retarget.equals(b.retarget)) return false;
+		if(a.getFireType() != b.getFireType()) return false;
 		return true;
 	}
 	
 	public GagAction(Parcel in) {
 		super(RESPONDER_TYPE.GAG);
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 		readFromParcel(in);
 	}
 
 	public GagAction() {
 		// TODO Auto-generated constructor stub
 		super(RESPONDER_TYPE.GAG);
+		this.setFireType(FIRE_WHEN.WINDOW_BOTH);
 	}
 
 	private void readFromParcel(Parcel in) {
 		// TODO Auto-generated method stub
 		this.setGagLog((in.readInt() == 1) ? true : false );
 		this.setGagOutput((in.readInt() == 1) ? true : false );
+		this.setRetarget(in.readString());
+		String fireType = in.readString();
+		
+		if(fireType.equals(FIRE_WINDOW_OPEN)) {
+			setFireType(FIRE_WHEN.WINDOW_OPEN);
+		} else if (fireType.equals(FIRE_WINDOW_CLOSED)) {
+			setFireType(FIRE_WHEN.WINDOW_CLOSED);
+		} else if (fireType.equals(FIRE_ALWAYS)) {
+			setFireType(FIRE_WHEN.WINDOW_BOTH);
+		} else if (fireType.equals(FIRE_NEVER)) {
+			setFireType(FIRE_WHEN.WINDOW_NEVER);
+		} else {
+			setFireType(FIRE_WHEN.WINDOW_BOTH);
+		}
 	}
 
 	@Override

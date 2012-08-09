@@ -58,6 +58,7 @@ import com.offsetnull.bt.service.plugin.settings.EncodingOption;
 import com.offsetnull.bt.service.plugin.settings.FileOption;
 import com.offsetnull.bt.service.plugin.settings.IntegerOption;
 import com.offsetnull.bt.service.plugin.settings.ListOption;
+import com.offsetnull.bt.service.plugin.settings.StringOption;
 import com.offsetnull.bt.service.plugin.settings.Option;
 import com.offsetnull.bt.service.plugin.settings.PluginParser;
 import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
@@ -83,6 +84,7 @@ import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.DeadObjectException;
 import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
@@ -128,6 +130,8 @@ public class Connection implements SettingsChangedListener {
 	private static final int MESSAGE_DORESETSETTINGS = 27;
 	protected static final int MESSAGE_ADDLINK = 28;
 	private static final int MESSAGE_DELETEPLUGIN = 29;
+	static final int MESSAGE_CONNECTED = 30;
+	private static final int MESSAGE_RECONNECT = 31;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -163,6 +167,8 @@ public class Connection implements SettingsChangedListener {
 	//Pattern whiteSpace = Pattern.compile("\\s");
 	
 	public Object callbackSync = new Object();
+	private int statusBarHeight;
+	private int titleBarHeight;
 	
 	public Connection(String display,String host,int port,StellarService service) {
 		
@@ -212,6 +218,12 @@ public class Connection implements SettingsChangedListener {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_RECONNECT:
+					doReconnect();
+					break;
+				case MESSAGE_CONNECTED:
+					mAutoReconnectAttempt = 0;
+					break;
 				case MESSAGE_DELETEPLUGIN:
 					doDeletePlugin((String)msg.obj);
 					break;
@@ -260,7 +272,7 @@ public class Connection implements SettingsChangedListener {
 						Connection.this.windowXCallS(token,function,o);
 					} catch (RemoteException e3) {
 						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						//e3.printStackTrace();
 					}
 					break;
 				case MESSAGE_WINDOWXCALLB:
@@ -271,7 +283,7 @@ public class Connection implements SettingsChangedListener {
 						Connection.this.windowXCallB(tokens, functions, bytesa);
 					} catch (RemoteException e3) {
 						// TODO Auto-generated catch block
-						e3.printStackTrace();
+						//e3.printStackTrace();
 					}
 					break;
 				case MESSAGE_ADDFUNCTIONCALLBACK:
@@ -477,7 +489,11 @@ public class Connection implements SettingsChangedListener {
 		
 		WindowToken bwin = new WindowToken("button_window",0,0,0,0,"buttonwindow","plugin");
 		mWindows.add(bwin);*/
-		loadInternalSettings();
+		SharedPreferences sprefs = this.getContext().getSharedPreferences("STATUS_BAR_HEIGHT", 0);
+		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getContext().getResources().getDisplayMetrics().density));
+		titleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
+		
+		
 		
 		
 		
@@ -961,6 +977,7 @@ public class Connection implements SettingsChangedListener {
 		
 		//long delta = System.currentTimeMillis() - start;
 		//Log.e("TRIGGERS","TIMEPROFILE trigger system took " + delta + " millis to build.");
+		triggersDirty = false;
 	}
 	
 	private HashMap<String,ArrayList<String>> linkMap = new HashMap<String,ArrayList<String>>();
@@ -1013,7 +1030,8 @@ public class Connection implements SettingsChangedListener {
 						//}
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
+						//e.printStackTrace();
+						
 					}
 				//}
 				//mWindowCallbacks.finishBroadcast();
@@ -1078,6 +1096,17 @@ public class Connection implements SettingsChangedListener {
 	
 	protected void DoDisconnect(Object object) {
 		//TODO: if window showing, show disconnection.
+		if(mAutoReconnect) {
+			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
+				mAutoReconnectAttempt++;
+				String message = "\n" + Colorizer.colorRed + "Network connection disconnected.\n" + "Attmempting reconnect in 3 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) + " tries remaining."+Colorizer.colorWhite+"\n";
+				handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(message)));
+				handler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, 3000);
+				return;
+			}
+		}
+		
+		
 		service.DoDisconnect(this);
 	}
 
@@ -1125,6 +1154,11 @@ public class Connection implements SettingsChangedListener {
 			return 0;
 		}
 
+	}
+	
+	private boolean triggersDirty = false;
+	public void setTriggersDirty() {
+		triggersDirty = true;
 	}
 	
 	TreeSet<Range> lineMap = new TreeSet<Range>(new RangeComparator());
@@ -1188,7 +1222,9 @@ public class Connection implements SettingsChangedListener {
 		
 		//Log.e("LOG","TRIGGER TESTING:\n"+stripped);
 		//build up the newline map.
-		
+		if(triggersDirty) {
+			buildTriggerSystem();
+		}
 
 		
 		ListIterator<TextTree.Line> it = working.getLines().listIterator(working.getLines().size());
@@ -1283,10 +1319,16 @@ public class Connection implements SettingsChangedListener {
 								try {
 									boolean ret = responder.doResponse(service.getApplicationContext(), working, lineNumber, it, l, tmpstart,tmpend,matched, t, display,host,port, StellarService.getNotificationId(), service.isWindowConnected(), handler, captureMap, p.getLuaState(), t.getName(), the_settings.getEncoding());
 									if(ret == true) {
-										keepEvaluating = false;
-										rebuildTriggers = true;
+										//keepEvaluating = false;
+										//rebuildTriggers = true;
 										//this signals to rebuild the trigger system.
 										
+									}
+									
+									if(triggersDirty) {
+										keepEvaluating = false;
+										rebuildTriggers = true;
+										Log.e("dirty","triggers marked dirty, rebuilding.");
 									}
 									//TriggerResponder r = new GagAction();
 
@@ -1547,6 +1589,16 @@ public class Connection implements SettingsChangedListener {
 	}
 	
 	protected void DispatchDialog(String str) {
+		if(mAutoReconnect) {
+			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
+				mAutoReconnectAttempt++;
+				killNetThreads();
+				String message = "\n" + Colorizer.colorRed + "Network Error: "+str+"\n" + "Attmempting reconnect in 20 seconds. " + (mAutoReconnectLimit -mAutoReconnectAttempt) + " tries remaining."+Colorizer.colorWhite+"\n";
+				handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(message)));
+				handler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, 20000);
+				return;
+			}
+		}
 		service.DispatchDialog(str);
 	}
 
@@ -1576,7 +1628,9 @@ public class Connection implements SettingsChangedListener {
 			//for(int i=0;i<N;i++) {
 				IWindowCallback c = windowCallbackMap.get(outputWindow);
 		//		if(c.getName().equals(outputWindow)) {
+				if(c!=null) {
 					c.rawDataIncoming(data);
+				}
 		//		}
 		//	}
 			//}
@@ -1592,9 +1646,18 @@ public class Connection implements SettingsChangedListener {
 		//Log.e("Connection","TIMEPROFILE sendBytesToWindow:" + Long.toString(now -start) + " millis.");
 		
 	}
+	
 
 	private void doStartup() {
-		if(pump != null) return; //already started up.
+		//if(pump != null) {
+		killNetThreads();
+			
+			//pump = new DataPumper(host,port,handler);
+			//processor = null;
+			//processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext());
+			//pump.start();
+			//return; //already started up.
+		//}
 		//int tmpPort = 0;
 		//String host = "";
 		//String display = "";
@@ -1609,6 +1672,11 @@ public class Connection implements SettingsChangedListener {
 		}*/
 		processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext());
 		//processor.setDebugTelnet(the_settings.isDebugTelnet());
+		//boolean use = (Boolean)((BooleanOption)the_settings.getSettings().getOptions().findOptionByKey("use_gmcp")).getValue();
+		//String support = (String)((StringOption)the_settings.getSettings().getOptions().findOptionByKey("gmcp_supports")).getValue();
+		//processor.setUseGMCP(use);
+		//processor.setGMCPSupports(support);
+		
 		initSettings();
 		pump.start();
 		loadGMCPTriggers();
@@ -1991,6 +2059,9 @@ public class Connection implements SettingsChangedListener {
 	boolean activated = false;
 	
 	ArrayList<WindowToken> mWindows;
+	private Integer mAutoReconnectLimit;
+	private Integer mAutoReconnectAttempt = 0;
+	private Boolean mAutoReconnect;
 	
 	public WindowToken[] getWindows() {
 		if(loaded) {
@@ -2337,9 +2408,15 @@ public class Connection implements SettingsChangedListener {
 		return bytes;
 	}
 
+	public void startReconnect() {
+		handler.sendEmptyMessage(MESSAGE_RECONNECT);
+	}
+	
 	public void doReconnect() {
 		if(pump != null) {
-			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+			if(pump.handler != null) {
+				pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+			}
 			pump = null;
 		}
 		
@@ -2615,6 +2692,12 @@ public class Connection implements SettingsChangedListener {
 			case keep_wifi_alive:
 				this.doSetKeepWifiAlive((Boolean)o.getValue());
 				break;
+			case auto_reconnect:
+				this.setAutoReconnect((Boolean)o.getValue());
+				break;
+			case auto_reconnect_limit:
+				this.setAutoReconnectLimit((Integer)o.getValue());
+				break;
 			case cull_extraneous_color:
 				this.doSetCullExtraneousColor((Boolean)o.getValue());
 				break;
@@ -2630,12 +2713,34 @@ public class Connection implements SettingsChangedListener {
 			case bell_display:
 				this.doSeBellDisplay((Boolean)o.getValue());
 				break;
+			case use_gmcp:
+				this.doSetUseGMCP((Boolean)o.getValue());
+				break;
+			case gmcp_supports:
+				this.doSetGMCPSupports((String)o.getValue());
+				break;
 			}
 		} catch(IllegalArgumentException e) {
 			
 		}
 	}
 	
+	private void doSetGMCPSupports(String value) {
+		processor.setGMCPSupports(value);
+	}
+
+	private void doSetUseGMCP(Boolean value) {
+		processor.setUseGMCP(value);
+	}
+
+	private void setAutoReconnectLimit(Integer value) {
+		mAutoReconnectLimit = value;
+	}
+
+	private void setAutoReconnect(Boolean value) {
+		mAutoReconnect = value;
+	}
+
 	private void doSetBellVibrate(Boolean value) {
 		the_settings.setVibrateOnBell(value);		
 	}
@@ -2744,7 +2849,7 @@ public class Connection implements SettingsChangedListener {
 		debug_telent,
 		bell_vibrate,
 		bell_notification,
-		bell_display
+		bell_display, auto_reconnect, auto_reconnect_limit, use_gmcp, gmcp_supports
 	}
 	
 	private void sendToServer(byte[] bytes) {
@@ -2758,6 +2863,10 @@ public class Connection implements SettingsChangedListener {
 		}
 		
 		if(d == null) {
+			return;
+		}
+		
+		if(d.cmdString.equals("") && (d.visString != null && d.visString.replaceAll("\\s", "").equals(""))) {
 			return;
 		}
 		
@@ -3465,6 +3574,7 @@ public class Connection implements SettingsChangedListener {
 			for(String path : the_settings.getLinks()) {
 				if(p.getFullPath().contains(path)) {
 					the_settings.getLinks().remove(path);
+					linkMap.remove(path);
 				}
 			}
 		}
@@ -3492,4 +3602,45 @@ public class Connection implements SettingsChangedListener {
 	public void setDirectionData(Map data) {
 		the_settings.setDirections((HashMap<String, DirectionData>) data);
 	}
+
+	public int getTitleBarHeight() {
+		// TODO Auto-generated method stub
+		return titleBarHeight;
+	}
+
+	public int getStatusBarHeight() {
+		// TODO Auto-generated method stub
+		return statusBarHeight;
+	}
+
+	public boolean isLinkLoaded(String link) {
+		// TODO Auto-generated method stub
+		String foo = Environment.getExternalStorageDirectory() + "/BlowTorch/";
+		String bar = link.replace(foo, "");
+		
+		boolean ret = linkMap.containsKey(bar);
+		//Plugin p = pluginMap.get()
+		return ret;
+	}
+
+	public void initWindows() {
+		// TODO Auto-generated method stub
+		loadInternalSettings();
+	}
+
+	public void shutdown() {
+		this.killNetThreads();
+		for(Plugin p : plugins) {
+			p.shutdown();
+		}
+		
+		the_settings.shutdown();
+	}
+
+	public String getPluginPath(String plugin) {
+		Plugin p = pluginMap.get(plugin);
+		return p.getFullPath();
+	}
+	
+	
 }

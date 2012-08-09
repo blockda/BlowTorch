@@ -299,6 +299,10 @@ public class OptionsDialog extends Dialog {
 				v.setTag(o);
 				v.setOnClickListener(new FileOptionClickedListener());
 				break;
+			case STRING:
+				v.setTag(o);
+				v.setOnClickListener(new StringOptionClickedListener());
+				break;
 			}
 			
 			return v;
@@ -555,6 +559,89 @@ public class OptionsDialog extends Dialog {
 				}
 			
 			} catch(NumberFormatException e) {
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			dialog.dismiss();
+		}
+		
+	}
+	
+	private class StringOptionClickedListener implements View.OnClickListener {
+
+		//private TextView widget;
+		
+		public StringOptionClickedListener() {
+			//this.widget = widget;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			StringOption o = (StringOption) v.getTag();
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(OptionsDialog.this.getContext());
+			
+			builder.setTitle(o.getTitle());
+			EditText input = new EditText(OptionsDialog.this.getContext());
+			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
+			input.setLayoutParams(params);
+			input.setTextSize(26);
+			input.setText(((String)o.getValue()));
+			input.setInputType(InputType.TYPE_CLASS_TEXT);
+			input.setGravity(Gravity.LEFT);
+			builder.setView(input);
+			
+			//builder.setView(input);
+			
+			builder.setPositiveButton("Done", new StringOptionFinishedListener(o,input));
+			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			
+			AlertDialog dialog = builder.create();
+			dialog.show();
+			
+		}
+		
+	}
+	
+	private class StringOptionFinishedListener implements DialogInterface.OnClickListener {
+
+		private StringOption option;
+		EditText input;
+		//TextView widget;
+		
+		
+		public StringOptionFinishedListener(StringOption option,EditText input) {
+			this.option = option;
+			this.input = input;
+			//this.widget = widget;
+		}
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			
+			
+			String text = input.getText().toString();
+			
+			try{
+				//Integer number = Integer.parseInt(text);
+				
+				option.setValue(text);
+				//widget.setText(text);
+				if(selectedPlugin.equals("main")) {
+					service.updateStringSetting(option.getKey(), text);
+				} else {
+					service.updatePluginStringSetting(selectedPlugin,option.getKey(), text);
+				}
+			
+			
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -1,5 +1,6 @@
 package com.offsetnull.bt.service.plugin;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -212,6 +213,11 @@ public class Plugin implements SettingsChangedListener {
 		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
 		GetDisplayDensityFunction gdsdf = new GetDisplayDensityFunction(L);
 		AppendWindowSettingsFunction awsf = new AppendWindowSettingsFunction(L);
+		GetStatusBarHeight gsbshf = new GetStatusBarHeight(L);
+		//StatusBarHiddenMethod sghm = new StatusBarHiddenMethod(L);
+		GetActionBarHeightFunction gabhf = new GetActionBarHeightFunction(L);
+		GetPluginInstallDirectoryFunction gpidf = new GetPluginInstallDirectoryFunction(L);
+		SendToServerFunction stsf = new SendToServerFunction(L);
 		wf.register("NewWindow");
 		mwf.register("GetWindowTokenByName");
 		esf.register("ExecuteScript");
@@ -229,6 +235,10 @@ public class Plugin implements SettingsChangedListener {
 		gesdf.register("GetExternalStorageDirectory");
 		gdsdf.register("GetDisplayDensity");
 		awsf.register("AppendWindowSettings");
+		gsbshf.register("GetStatusBarHeight");
+		gabhf.register("GetActionBarHeight");
+		gpidf.register("GetPluginInstallDirectory");
+		stsf.register("SendToServer");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -875,6 +885,80 @@ public class Plugin implements SettingsChangedListener {
 				Plugin.this.getSettings().getOptions().addOption(w.getSettings());
 				//optionSkipSaveList.add(Plugin.this.getSettings().getOptions().getOptions().size()-1);
 			}
+			return 0;
+		}
+		
+	}
+	
+	private class GetStatusBarHeight extends JavaFunction {
+
+		public GetStatusBarHeight(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushString(Integer.toString((int)Plugin.this.parent.getStatusBarHeight()));
+			return 1;
+		}
+		
+	}
+	
+	private class GetActionBarHeightFunction extends JavaFunction {
+
+		public GetActionBarHeightFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushString(Integer.toString(((int)Plugin.this.parent.getTitleBarHeight())));
+			return 1;
+		}
+		
+	}
+	
+	private class GetPluginInstallDirectoryFunction extends JavaFunction {
+
+		public GetPluginInstallDirectoryFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//Log.e("PLUGIN","Get External storage state:"+Environment)
+			/*if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
+			} else {
+				L.pushNil();
+			}*/
+			String path = Plugin.this.getFullPath();
+			File file = new File(path);
+			String dir = file.getParent();
+			//file.getPar
+			L.pushString(dir);
+			return 1;
+		}
+		
+	}
+	
+	private class SendToServerFunction extends JavaFunction {
+
+		public SendToServerFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			if(this.getParam(2).isNil()) { return 0; }
+			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
+			parent.handler.sendMessage(parent.handler.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,this.getParam(2).getString()));
 			return 0;
 		}
 		
@@ -1701,5 +1785,12 @@ public class Plugin implements SettingsChangedListener {
 	public boolean isEnabled() {
 		return enabled;
 	}
+
+	public void markTriggersDirty() {
+		parent.setTriggersDirty();
+		
+	}
+	
+	
 	
 }

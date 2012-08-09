@@ -28,6 +28,8 @@ public class TriggerEnabledFunction extends PluginFunction {
 			}
 			Boolean state = this.getParam(3).getBoolean();
 			mPlugin.getSettings().getTriggers().get(trigger).setEnabled(state);
+			
+			mPlugin.markTriggersDirty();
 			//this.mPlugin.buildTriggerSystem();
 			L.pushBoolean(true);
 			return 1;

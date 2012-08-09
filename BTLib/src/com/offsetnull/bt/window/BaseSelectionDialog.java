@@ -60,6 +60,7 @@ public class BaseSelectionDialog extends Dialog {
 	
 	
 	private LinearLayout mToolbar;
+	private TextView mTitlebar;
 	
 	public BaseSelectionDialog(Context context) {
 		super(context);
@@ -134,13 +135,16 @@ public class BaseSelectionDialog extends Dialog {
 	}
 	
 	
-	
+	@Override
 	public void onCreate(Bundle b) {
 		
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
-		
+		this.setCanceledOnTouchOutside(false);
 		setContentView(R.layout.editor_selection_dialog);
+		
+		TextView tst = (TextView) this.findViewById(R.id.titlebar);
+		tst.setText(mTitle);
 		
 		//initialize the list view
 		mList = (ListView)findViewById(R.id.list);
@@ -216,6 +220,10 @@ public class BaseSelectionDialog extends Dialog {
 		cancelbutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
+				if(mToolbarListener != null) {
+					mToolbarListener.onDonePressed(arg0);
+				}
+				
 				BaseSelectionDialog.this.dismiss();
 			}
 			
@@ -336,15 +344,23 @@ public class BaseSelectionDialog extends Dialog {
 		});
 		//optionsButton.setOnClickListener()
 		
-		TextView titlebar = (TextView) this.findViewById(R.id.titlebar);
+		mTitlebar = (TextView) this.findViewById(R.id.titlebar);
 		
-		ViewParent parent = titlebar.getParent();
+		ViewParent parent = mTitlebar.getParent();
 		
-		parent.bringChildToFront(titlebar);
+		parent.bringChildToFront(mTitlebar);
 		parent.bringChildToFront(mOptionsButton);
 		
 		makeToolbar();
 		
+	}
+	
+	@Override
+	public void setTitle(CharSequence title) {
+		//((TextView) this.findViewById(R.id.titlebar)).setText(title);
+		mTitle = (String)title;
+		//this.setTitle(title);
+		super.setTitle(title);
 	}
 	
 	protected ArrayList<ItemEntry> mListItems = new ArrayList<ItemEntry>();
@@ -366,6 +382,14 @@ public class BaseSelectionDialog extends Dialog {
 	
 	public void clearOptionItems() {
 		this.optionItems.clear();
+	}
+	
+	@Override
+	public void onBackPressed() {
+		if(mToolbarListener!=null) {
+			mToolbarListener.onDonePressed(null);
+		}
+		this.dismiss();
 	}
 	
 	public void invalidateList() {

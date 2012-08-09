@@ -8,8 +8,10 @@ import java.util.regex.Pattern;
 
 import com.offsetnull.bt.responder.TriggerResponder;
 import com.offsetnull.bt.responder.ack.AckResponder;
+import com.offsetnull.bt.responder.color.ColorAction;
 import com.offsetnull.bt.responder.gag.GagAction;
 import com.offsetnull.bt.responder.notification.NotificationResponder;
+import com.offsetnull.bt.responder.replace.ReplaceResponder;
 import com.offsetnull.bt.responder.script.ScriptResponder;
 import com.offsetnull.bt.responder.toast.ToastResponder;
 
@@ -166,6 +168,14 @@ public class TriggerData implements Parcelable {
 			case TriggerResponder.RESPONDER_TYPE_GAG:
 				GagAction gag = in.readParcelable(com.offsetnull.bt.responder.gag.GagAction.class.getClassLoader());
 				responders.add(gag);
+				break;
+			case TriggerResponder.RESPONDER_TYPE_REPLACE:
+				ReplaceResponder rep = in.readParcelable(com.offsetnull.bt.responder.replace.ReplaceResponder.class.getClassLoader());
+				responders.add(rep);
+				break;
+			case TriggerResponder.RESPONDER_TYPE_COLOR:
+				ColorAction color = in.readParcelable(com.offsetnull.bt.responder.color.ColorAction.class.getClassLoader());
+				responders.add(color);
 				break;
 			}
 		}

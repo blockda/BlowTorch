@@ -24,15 +24,19 @@ public class ColorElementListener implements TextElementListener{
 	}
 	
 	public void start(Attributes a) {
-	
+		ColorAction tmp = new ColorAction();
+		if(a.getValue("","text") != null) {
+			tmp.setColor(Integer.parseInt(a.getValue("","text")));
+		}
+		
+		if(a.getValue("","background") != null) {
+			tmp.setBackgroundColor(Integer.parseInt(a.getValue("","background")));
+		}
+		current_trigger.getResponders().add(tmp.copy());
 	}
 
 	public void end(String body) {
-		ColorAction tmp = new ColorAction();
-		if(body != null && body.length() > 0) {
-			tmp.setColor(Integer.parseInt(body));
-		}
-		current_trigger.getResponders().add(tmp.copy());
+		
 	
 	}
 
