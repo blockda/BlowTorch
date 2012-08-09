@@ -41,6 +41,8 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 			items.add(key);
 			this.addListItem(key, info, 0, true);
 		}
+		
+		this.setTitle("PLUGINS");
 	}
 
 	@Override
@@ -61,6 +63,7 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 		
 		try {
 			service.deletePlugin(plugin);
+			service.saveSettings();
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -58,12 +58,12 @@ public class NewButtonSetEntryDialog extends Dialog {
 				
 				//step 2 validation
 				List<String> list = null;
-				try {
-					list = service.getButtonSetNames();
-				} catch (RemoteException e) {
+				//try {
+					//list = service.getButtonSetNames();
+				//} catch (RemoteException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				//	e.printStackTrace();
+				//}
 				
 				for(String str : list) {
 					if(ed.getText().toString().equals(str)) {

@@ -577,15 +577,8 @@ function alignDefaultButtons()
 	if(width < heightPixels) then width = heightPixels end
 		
 	xoffset = width - right - (margin*density)
-	yoffset = 0
-	pcall(function ()
-		local attrs = {}
-		local id = android_R_attr.actionBarSize
-		--if it doesn't get here then it is not honeycomb, so no actionbar
-		yoffset = 55*density
-		--debugPrint("attempting dimension lookup")
-		--debugPrint("ACTION BAR DIMENSION: "..android_R_dimen.action_bar_height)
-	end)
+	yoffset = GetActionBarHeight()
+	
 	--pcall(getActionBarHeight)
 	debugPrint("ACTION BAR HEIGHT IS:"..yoffset)
 	for i,b in pairs(set) do

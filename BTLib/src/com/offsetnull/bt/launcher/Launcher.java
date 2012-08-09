@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -42,6 +43,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -512,6 +514,12 @@ public class Launcher extends Activity implements ReadyListener {
 		}
 	}
 	
+	@Override
+	public void onResume() {
+		super.onResume();
+		buildList();
+	}
+	
 	public void onDestroy() {
 		//saveConnectionsToDisk();
 		saveXML();
@@ -571,6 +579,7 @@ public class Launcher extends Activity implements ReadyListener {
 	private class listItemClicked implements ListView.OnItemClickListener {
 		
 		//@Override
+		@TargetApi(11)
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 				long arg3) {
 			
@@ -579,12 +588,17 @@ public class Launcher extends Activity implements ReadyListener {
 		    win.getDecorView().getWindowVisibleDisplayFrame(rect);
 		    int statusBarHeight = rect.top;
 		    int contentViewTop = win.findViewById(Window.ID_ANDROID_CONTENT).getTop();
-		    int titleBarHeight = statusBarHeight - contentViewTop ;
+		    int titleBarHeight = contentViewTop - statusBarHeight;
 		    //Log.d("ID-ANDROID-CONTENT", "titleBarHeight = " + titleBarHeight );
+		    
+		    //if(Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB) {
+		    //	titleBarHeight += statusBarHeight;
+		    //}
 		    
 		    SharedPreferences pref = Launcher.this.getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 			Editor e = pref.edit();
-			e.putInt("STATUS_BAR_HEIGHT", titleBarHeight);
+			e.putInt("STATUS_BAR_HEIGHT", statusBarHeight);
+			e.putInt("TITLE_BAR_HEIGHT", titleBarHeight);
 		    e.commit();
 			
 			MudConnection muc = apdapter.getItem(arg2);		
@@ -708,7 +722,11 @@ public class Launcher extends Activity implements ReadyListener {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			Launcher.this.unbindService(connectionChecker);
+			try {
+				Launcher.this.unbindService(connectionChecker);
+			} catch (IllegalArgumentException e) {
+				
+			}
 			//buildList();
 			if(connectedList != null) {
 				for(int i=0;i<apdapter.getCount();i++) {
@@ -1366,7 +1384,7 @@ public class Launcher extends Activity implements ReadyListener {
     
 	private class ConnectionAdapter extends ArrayAdapter<MudConnection> {
 		private ArrayList<MudConnection> items;
-		
+		private int textcolor;
 		public ConnectionAdapter(Context context, int txtviewresid, ArrayList<MudConnection> objects) {
 			super(context, txtviewresid, objects);
 			
@@ -1378,6 +1396,8 @@ public class Launcher extends Activity implements ReadyListener {
 			if(v == null) {
 				LayoutInflater li = (LayoutInflater)this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 				v = li.inflate(R.layout.connection_row, null);
+				//TextView title = (TextView)v.findViewById(R.id.displayname);
+				//textcolor = title.getText
 			}
 			
 			MudConnection m = items.get(position);
@@ -1394,6 +1414,8 @@ public class Launcher extends Activity implements ReadyListener {
 				
 				if(m.isConnected()) {
 					title.setTextColor(0xFFFF0000);
+				} else {
+					title.setTextColor(0xAA222222);
 				}
 				//if(port != null) {
 				//	port.setText(" Port: " + m.getPortString());

@@ -151,6 +151,8 @@ public class DataPumper extends Thread {
 				connected = true;
 				reader = new BufferedInputStream(the_socket.getInputStream());
 				decompress = new Inflater(false);
+				
+				reportto.sendEmptyMessage(Connection.MESSAGE_CONNECTED);
 			} catch (SocketException e) {
 				DispatchDialog("Socket Exception: " + e.getMessage());
 				//Log.e("SERVICE","NET FAILURE:" + e.getMessage());
@@ -230,10 +232,16 @@ public class DataPumper extends Thread {
 						//Log.e("PUMP","PUMP QUITTING!");
 						
 						try {
-							writerThread.outhandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+							if(writerThread != null) {
+								writerThread.outhandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+							}
 							//writer.close();
-							reader.close();
+							if(reader != null) {
+								reader.close();
+							}
+							if(the_socket != null) {
 							the_socket.close();
+							}
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();

@@ -69,12 +69,12 @@ body {
 		
 		<script name="bootstrap">
 			<![CDATA[
-			dofile(GetExternalStorageDirectory().."/BlowTorch/plugins/aardwolf/chatserver.lua")
+			dofile(GetPluginInstallDirectory().."/chatserver.lua")
 			]]>
 		</script>
 		<script name="chatwindow">
 			<![CDATA[
-			dofile(GetExternalStorageDirectory().."/BlowTorch/plugins/aardwolf/chatwindow.lua")
+			dofile(GetPluginInstallDirectory().."/chatwindow.lua")
 			]]>
 		</script>
 	</plugin>

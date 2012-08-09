@@ -112,6 +112,9 @@ public class PluginParser extends BasePluginParser {
 				}
 			}
 			
+			//if(p.getName().equals("whichmob")) {
+			//	long time = System.currentTimeMillis();
+			//}
 			if(p.getSettings().getScripts().containsKey("bootstrap")) {
 				//run this script.
 				LuaState pL = p.getLuaState();
@@ -124,7 +127,7 @@ public class PluginParser extends BasePluginParser {
 				
 				int ret = p.getLuaState().pcall(0, 1, -2);
 				if(ret != 0) {
-					Log.e("PLUGIN","Error in Bootstrap:"+pL.getLuaObject(-1).getString());
+					Log.e("PLUGIN","Error in Bootstrap("+p.getName()+"):"+pL.getLuaObject(-1).getString());
 				} else {
 					//bootstrap success.
 					//i think i can use the existing traceback, but the pcall has left a nil on the stack
@@ -303,6 +306,7 @@ public class PluginParser extends BasePluginParser {
 		Element coloO = options.getChild("color");
 		Element encoO = options.getChild("encoding");
 		Element listO = options.getChild("list");
+		Element stringO = options.getChild("string");
 		
 		//set up sub listeners for attributes that need them.
 		Element fileValue = fileO.getChild("value");
@@ -365,7 +369,7 @@ public class PluginParser extends BasePluginParser {
 			@Override
 			public void end(String body) {
 				
-				opt.setValue(body);
+				opt.setValue(new String(body));
 				tmp.getOptions().addOption(opt);
 				//try {
 					//BigInteger num = new BigInteger(body,16);
@@ -444,6 +448,34 @@ public class PluginParser extends BasePluginParser {
 			public void end(String body) {
 				currentFileOption.extensions.add(body);
 			}
+			
+		});
+		
+		stringO.setTextElementListener(new TextElementListener() {
+			private StringOption opt = null;
+			@Override
+			public void start(Attributes a) {
+				opt = new StringOption();
+				if(a.getValue("","key") != null) {
+					opt.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					opt.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					opt.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end(String body) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			
 			
 		});
 		

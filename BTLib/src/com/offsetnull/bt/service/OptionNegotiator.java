@@ -65,8 +65,12 @@ public class OptionNegotiator {
 	    			response = IAC_DO;
 	    			break;
 	    		case GMCP:
-	    			Log.e("GMCP","IAC WILL GMP RECIEVED, RESPONDING DO");
-	    			response = IAC_DO;
+	    			if(mUseGMCP == true) {
+	    				Log.e("GMCP","IAC WILL GMP RECIEVED, RESPONDING DO");
+	    				response = IAC_DO;
+	    			} else {
+	    				response = IAC_DONT;
+	    			}
 	    			break;
 	    		default:
 	    			response = IAC_DONT;
@@ -224,6 +228,7 @@ public class OptionNegotiator {
 	//private int old_row = 0;
 	//private int old_col = 0;
 	private boolean donenaws = false;
+	private Boolean mUseGMCP = false;
 	public void setColumns(int columns) {
 		if(columns < 1) { return; }
 		if(this.columns != columns) {
@@ -284,5 +289,10 @@ public class OptionNegotiator {
 
 	public void reset() {
 		attempt = 0;		
+	}
+
+
+	public void setUseGMCP(Boolean useGMCP) {
+		mUseGMCP  = useGMCP;
 	}
 }

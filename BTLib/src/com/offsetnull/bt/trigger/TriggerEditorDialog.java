@@ -37,7 +37,13 @@ import com.offsetnull.bt.responder.*;
 import com.offsetnull.bt.responder.TriggerResponder.FIRE_WHEN;
 import com.offsetnull.bt.responder.TriggerResponder.RESPONDER_TYPE;
 import com.offsetnull.bt.responder.ack.*;
+import com.offsetnull.bt.responder.color.ColorAction;
+import com.offsetnull.bt.responder.color.ColorActionEditor;
+import com.offsetnull.bt.responder.gag.GagAction;
+import com.offsetnull.bt.responder.gag.GagActionEditorDialog;
 import com.offsetnull.bt.responder.notification.*;
+import com.offsetnull.bt.responder.replace.ReplaceActionEditorDialog;
+import com.offsetnull.bt.responder.replace.ReplaceResponder;
 import com.offsetnull.bt.responder.script.ScriptResponder;
 import com.offsetnull.bt.responder.script.ScriptResponderEditor;
 import com.offsetnull.bt.responder.toast.*;
@@ -360,6 +366,12 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				label.setText("Ack With: " + ((AckResponder)responder).getAckWith());
 			} else if(responder.getType() == RESPONDER_TYPE.SCRIPT) {
 				label.setText("Function: " + ((ScriptResponder)responder).getFunction());
+			} else if(responder.getType() == RESPONDER_TYPE.REPLACE) {
+				label.setText("Replace: " + ((ReplaceResponder)responder).getWith());
+			} else if(responder.getType() == RESPONDER_TYPE.GAG) {
+				label.setText("Gag");
+			} else if(responder.getType() == RESPONDER_TYPE.COLOR) {
+				label.setText("Color: " + Integer.toString(((ColorAction)responder).getColor()));
 			}
 			label.setGravity(Gravity.CENTER);
 			label.setSingleLine(true);
@@ -462,6 +474,19 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 			case SCRIPT:
 				ScriptResponderEditor sedit = new ScriptResponderEditor(TriggerEditorDialog.this.getContext(),(ScriptResponder)responder.copy(),TriggerEditorDialog.this);
 				sedit.show();
+				break;
+			case COLOR:
+				ColorActionEditor color = new ColorActionEditor(TriggerEditorDialog.this.getContext(),(ColorAction)responder.copy(),TriggerEditorDialog.this);
+				color.show();
+				break;
+			case GAG:
+				GagActionEditorDialog gag = new GagActionEditorDialog(TriggerEditorDialog.this.getContext(),(GagAction)responder.copy(),TriggerEditorDialog.this);
+				gag.show();
+				break;
+			case REPLACE:
+				ReplaceActionEditorDialog rep = new ReplaceActionEditorDialog(TriggerEditorDialog.this.getContext(),(ReplaceResponder)responder.copy(),TriggerEditorDialog.this);
+				rep.show();
+				break;
 			default:
 				break;
 			}
@@ -550,7 +575,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 
 		public void onClick(View v) {
 			//give out a list of options
-			CharSequence[] items = {"Notification","Toast Message","Ack With","Script"};
+			CharSequence[] items = {"Notification","Toast Message","Ack With","Script","Color","Gag","Replace"};
 			AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
 			builder.setTitle("Type:");
 			
@@ -616,6 +641,19 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		case 3:
 			ScriptResponderEditor edit = new ScriptResponderEditor(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
 			edit.show();
+			break;
+		case 4:
+			ColorActionEditor color = new ColorActionEditor(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
+			color.show();
+			break;
+		case 5:
+			GagActionEditorDialog gag = new GagActionEditorDialog(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
+			gag.show();
+			break;
+		case 6:
+			ReplaceActionEditorDialog rep = new ReplaceActionEditorDialog(TriggerEditorDialog.this.getContext(),null,TriggerEditorDialog.this);
+			rep.show();
+			break;
 		default:
 			break;
 		}
