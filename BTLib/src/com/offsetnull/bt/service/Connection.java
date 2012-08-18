@@ -132,6 +132,7 @@ public class Connection implements SettingsChangedListener {
 	private static final int MESSAGE_DELETEPLUGIN = 29;
 	static final int MESSAGE_CONNECTED = 30;
 	private static final int MESSAGE_RECONNECT = 31;
+	public static final int MESSAGE_TRIGGER_LUA_ERROR = 32;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -169,6 +170,7 @@ public class Connection implements SettingsChangedListener {
 	public Object callbackSync = new Object();
 	private int statusBarHeight;
 	private int titleBarHeight;
+	
 	
 	public Connection(String display,String host,int port,StellarService service) {
 		
@@ -218,6 +220,9 @@ public class Connection implements SettingsChangedListener {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_TRIGGER_LUA_ERROR:
+					dispatchLuaError((String)msg.obj);
+					break;
 				case MESSAGE_RECONNECT:
 					doReconnect();
 					break;
@@ -437,7 +442,7 @@ public class Connection implements SettingsChangedListener {
 					}
 					break;
 				case MESSAGE_DISCONNECTED:
-					killNetThreads();
+					killNetThreads(true);
 					DoDisconnect(null);
 					isConnected = false;
 					break;
@@ -622,6 +627,8 @@ public class Connection implements SettingsChangedListener {
 			}
 		}
 		
+		
+		windowCallbackMap.clear();
 		//mWindowCallbacks.finishBroadcast();
 		
 		//}
@@ -828,6 +835,8 @@ public class Connection implements SettingsChangedListener {
 						if(p.getSettings().getWindows().size() > 0) {
 							mWindows.addAll(p.getSettings().getWindows().values());
 						}
+						
+						p.pushOptionsToLua();
 					}
 					
 					plugins.addAll(group);
@@ -840,7 +849,12 @@ public class Connection implements SettingsChangedListener {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (SAXException e) {
-					// TODO Auto-generated catch block
+					try {
+						service.dispatchXMLError(e.getLocalizedMessage());
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 					e.printStackTrace();
 				}
 			}
@@ -1096,6 +1110,7 @@ public class Connection implements SettingsChangedListener {
 	
 	protected void DoDisconnect(Object object) {
 		//TODO: if window showing, show disconnection.
+		if(handler == null) return;
 		if(mAutoReconnect) {
 			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
@@ -1110,11 +1125,35 @@ public class Connection implements SettingsChangedListener {
 		service.DoDisconnect(this);
 	}
 
-	protected void killNetThreads() {
+	protected void killNetThreads(boolean noreconnect) {
+		
+		if(pump == null) return;
+		Log.e("TEST","Killing net threads");
 		if(pump != null) {
+			
 			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
-			pump = null;
+			pump.closeSocket();
+			pump.interrupt();
+			//pump = null;
+			try {
+				Log.e("TEST","waiting for thread death.");
+				pump.join();
+				Log.e("TEST","thread death completed.");
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		
+		processor = null;
+		
+		//synchronized(this) {
+		if(noreconnect) {
+			handler.removeMessages(MESSAGE_RECONNECT);	
+		}
+		//}
+		
+		pump = null;
 	}
 	
 	private void dispatchNoProcess(byte[] data) {
@@ -1592,7 +1631,7 @@ public class Connection implements SettingsChangedListener {
 		if(mAutoReconnect) {
 			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
-				killNetThreads();
+				killNetThreads(true);
 				String message = "\n" + Colorizer.colorRed + "Network Error: "+str+"\n" + "Attmempting reconnect in 20 seconds. " + (mAutoReconnectLimit -mAutoReconnectAttempt) + " tries remaining."+Colorizer.colorWhite+"\n";
 				handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(message)));
 				handler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, 20000);
@@ -1630,6 +1669,8 @@ public class Connection implements SettingsChangedListener {
 		//		if(c.getName().equals(outputWindow)) {
 				if(c!=null) {
 					c.rawDataIncoming(data);
+				} else {
+					mWindows.get(0).getBuffer().addBytesImplSimple(data);
 				}
 		//		}
 		//	}
@@ -1650,7 +1691,7 @@ public class Connection implements SettingsChangedListener {
 
 	private void doStartup() {
 		//if(pump != null) {
-		killNetThreads();
+		killNetThreads(true);
 			
 			//pump = new DataPumper(host,port,handler);
 			//processor = null;
@@ -3629,17 +3670,29 @@ public class Connection implements SettingsChangedListener {
 	}
 
 	public void shutdown() {
-		this.killNetThreads();
+		this.killNetThreads(true);
 		for(Plugin p : plugins) {
 			p.shutdown();
+			p = null;
 		}
 		
 		the_settings.shutdown();
+		the_settings = null;
+		
+		handler.removeMessages(MESSAGE_RECONNECT);
+		handler = null;
+		
+		
 	}
 
 	public String getPluginPath(String plugin) {
 		Plugin p = pluginMap.get(plugin);
 		return p.getFullPath();
+	}
+
+	public void dispatchLuaText(String str) {
+		handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_LUANOTE,str));
+		Log.e("lua text","lua text: " + str);
 	}
 	
 	

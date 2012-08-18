@@ -3,13 +3,14 @@
 -- Top level utility constants
 respath = GetPluginInstallDirectory().."/icons"
 context = view:getContext()
-density = getDisplayDensity()
+density = GetDisplayDensity()
 local chatOutputView = view
 
 --
 -- Classes needed by the script to do android-esque ui things.
 System = luajava.bindClass("java.lang.System")
 View = luajava.bindClass("android.view.View")
+Context = luajava.bindClass("android.content.Context")
 HorizontalScrollView = luajava.bindClass("android.widget.HorizontalScrollView")
 Drawable = luajava.bindClass("android.graphics.drawable.Drawable")
 RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
@@ -106,7 +107,22 @@ local expanded = false
 -- Construction of the "uitility bar" for the chat window, will hold the
 -- non-moveable utility buttons, and the resizable, horizontally scrolling 
 -- tab controller.
+local wm = context:getSystemService(Context.WINDOW_SERVICE)
+local display = wm:getDefaultDisplay()
+local displayWidth = display:getWidth()
+local displayHeight = display:getHeight()
+local use = displayWidth
+if(displayHeight < displayWidth) then
+	use = displayHeight
+end
+
+local dpi_bucket = use / density
+
 local uiButtonBarHeight = math.floor(35*density)
+if(dpi_bucket >= 600) then
+	uiButtonBarHeight = 45*density
+end
+
 local uiButtonBar = luajava.new(RelativeLayout,context)
 local uiButtonBarParams = luajava.new(RelativeLayoutParams,MATCH_PARENT,WRAP_CONTENT)
 uiButtonBarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
@@ -180,6 +196,7 @@ function onParentAnimationEnd()
 		end
 		mainOutputView:setLayoutParams(mainOutputViewLayoutParams)
 		replacementView:requestLayout()
+		chatOutputView:invalidate()
 		
 	else
 		mainOutputView:setLayoutParams(mainOutputViewLayoutParams)
@@ -295,7 +312,7 @@ function expandWindow()
 	if(pinned == false) then
 		wheight = chatOutputView:getHeight() + foldoutHeight - uiButtonBarHeight
 		tmp = chatOutputView:getLayoutParams();
-		--debugPrint("expanding:"..wheight .." foldout:"..foldoutHeight.." uiBarHeight:"..uiButtonBarHeight.." view:"..view:getHeight())
+		--Note("expanding:"..wheight .." foldout:"..foldoutHeight.." uiBarHeight:"..uiButtonBarHeight.." view:"..view:getHeight())
 		local p = luajava.new(LinearLayoutParams,tmp.width,wheight);
 		chatOutputView:setLayoutParams(p)
 		innerHolderView:startAnimation(windowMoveUpAnimation)
@@ -320,7 +337,7 @@ local moveLast = 0
 function longPressListener.onTouch(v,e)
 	action = e:getAction()
 	if(action == MotionEvent.ACTION_DOWN) then
-		scheduleCallback(100,"doExpand",1000)
+		ScheduleCallback(100,"doExpand",1000)
 		moveLast = e:getY()
 		moveTotal = 0
 		v:onTouchEvent(e)
@@ -329,13 +346,13 @@ function longPressListener.onTouch(v,e)
 		moveLast = e:getY()
 		moveTotal = moveTotal + moveDelta
 		if(moveTotal > 30) then
-			cancelCallback(100)
+			CancelCallback(100)
 		end
 		v:onTouchEvent(e)
 	elseif(action == MotionEvent.ACTION_UP) then
 		v:onTouchEvent(e) 
 		moveTotal = 0
-		cancelCallback(100)
+		CancelCallback(100)
 	end
 	return true
 end
@@ -678,14 +695,20 @@ function OnCreate()
 	maxHeight = inputbar:getTop()
 end
 
+runonce = true
 function setWindowSize(size)
+	--if not runonce then
 	--debugPrint("in the window set window size:"..size)
 	size = tonumber(size)
 	chatOutputViewParams = luajava.new(LinearLayoutParams,replacementViewParams.width,size)
 	minHeight = size + dividerHeight
-	parentParams = luajava.new(RelativeLayoutParams,replacementViewParams.width,WRAP_CONTENT)
+	parentParams = luajava.new(RelativeLayoutParams,replacementViewParams.width,size+dividerHeight+uiButtonBarHeight)
 	replacementView:setLayoutParams(parentParams)
 	chatOutputView:setLayoutParams(chatOutputViewParams)
 	chatOutputView:requestLayout()
+	replacementView:requestLayout()
 	
+	--else
+	--	runonce = false
+	--end
 end

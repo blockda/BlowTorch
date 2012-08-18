@@ -1091,8 +1091,8 @@ public class MainWindow extends Activity {
 				int foldoutbuttonwidth = 0;
 				ImageButton dc = (ImageButton)mFoldoutBar.findViewById(R.id.down_btn_c);
 				
-				foldoutbuttonwidth = dc.getDrawable().getIntrinsicWidth();
-				
+				//foldoutbuttonwidth = dc.getDrawable().getIntrinsicWidth();
+				foldoutbuttonwidth = (int) (100*MainWindow.this.getResources().getDisplayMetrics().density);
 				
 				float amount = foldoutbuttonwidth*3;
 
@@ -1104,14 +1104,19 @@ public class MainWindow extends Activity {
 					TranslateAnimation outanimC = new TranslateAnimation(0,-1*amount,0,0);
 					outanim.setDuration(320);
 					
+					TranslateAnimation nullanim = new TranslateAnimation(0,0,0,0);
+					nullanim.setDuration(320);
 					//LayoutAnimationController bac = new LayoutAnimationController(outanim,0.0f);
 					
 					input_controls_expanded = false;
 					//LinearLayout inputbar = (LinearLayout) MainWindow.this.findViewById(10);
 					mInputBox.setListener(mInputBarAnimationListener);
-					mInputBox.startAnimation(outanimB);
-					test_button.startAnimation(outanimC);
-					mFoldoutBar.startAnimation(outanim);
+					((View)mFoldoutBar.getParent()).startAnimation(outanim);
+					mInputBox.startAnimation(nullanim);
+					//test_button.startAnimation(outanimC);
+					//mInputBox.startAnimation(outanimB);
+					
+					
 					//inputbar.setLayoutAnimation(bac);
 					//inputbar.removeView(mFoldoutBar);
 					//inputbar.startAnimation(outanim);
@@ -1332,6 +1337,15 @@ public class MainWindow extends Activity {
 			e.printStackTrace();
 		}
 	}
+	
+	protected void dispatchLuaText(String obj) {
+		try {
+			service.dispatchLuaText(obj);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	protected void popMenuStack() {
 		menuStack.pop();
@@ -1477,14 +1491,14 @@ public class MainWindow extends Activity {
 			}
 		}
 		
-		if(supportsActionBar()) {
+		/*if(supportsActionBar()) {
 			if(mHideIcons) {
 				for(int i=0;i<menu.size();i++) {
 					MenuItem m = menu.getItem(i);
 					m.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 				}
 			}
-		}
+		}*/
 		
 		
 		//MenuItem tmp = null;
@@ -2519,7 +2533,7 @@ public class MainWindow extends Activity {
 			
 			//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 			mInputBox.setImeOptions(wanted);
-			mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+			mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 			//BetterEditText better = (BetterEditText)input_box;
 			mInputBox.setUseFullScreen(true);
 			//mInputBox.setBackSpaceBugFix(backSpaceBugFix)
@@ -2529,9 +2543,9 @@ public class MainWindow extends Activity {
 			//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 			mInputBox.setImeOptions(wanted);
 			if(useSuggestions) {
-				mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 			} else {
-				mInputBox.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				mInputBox.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 				//mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 					
 			}

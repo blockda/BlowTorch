@@ -18,8 +18,11 @@ import com.offsetnull.bt.service.IConnectionBinder;
 import com.offsetnull.bt.service.plugin.settings.PluginDescription;
 import com.offsetnull.bt.service.plugin.settings.QuickPluginParser;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.os.Environment;
@@ -43,6 +46,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 public class PluginSelectorDialog extends Dialog {
@@ -53,12 +57,14 @@ public class PluginSelectorDialog extends Dialog {
 	PluginSearchAdapter adapter = null;
 	//ListView list = null;
 	Stack<InfoStackItem> infoCacheStack = new Stack<InfoStackItem>();
+	private OnPluginLoadListener mListener = null;
 	
 	private InfoStackItem current_item = null;
 	private IConnectionBinder service;
 	//HashMap<String,PluginDescription[]> infoCache = new HashMap<String,PluginDescription[]>();
-	public PluginSelectorDialog(Context context,IConnectionBinder service) {
+	public PluginSelectorDialog(Context context,IConnectionBinder service,OnPluginLoadListener listener) {
 		super(context);
+		mListener = listener;
 		this.service = service;
 	}
 
@@ -111,6 +117,24 @@ public class PluginSelectorDialog extends Dialog {
 				PluginDescription[] info = map.get(path);
 				
 				if(info != null) {
+					
+					if(info.length == 1 && info[0].isError()) {
+						AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
+						builder.setTitle("Error In Plugin XML");
+						builder.setMessage(info[0].getErrorMessage());
+						builder.setIcon(R.drawable.icon_plugin_error);
+						builder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
+							
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+						});
+						
+						AlertDialog dialog = builder.create();
+						dialog.show();
+						return;
+					}
 					//build the info page. for the current infostack
 					//PluginDescription[] info = infoCacheStack.peek().getInfoMap();
 					
@@ -352,6 +376,7 @@ public class PluginSelectorDialog extends Dialog {
 				extra.setText("");
 				icon.setImageResource(R.drawable.icon_folder);
 			} else {
+				
 				try {
 					boolean foo = service.isLinkLoaded(file.getAbsolutePath());
 					if(foo) {
@@ -367,9 +392,14 @@ public class PluginSelectorDialog extends Dialog {
 					title.setText(file.getName());
 					extra.setText(info.length + " plugins.");
 				} else {
-					
-					title.setText(file.getName());
-					extra.setText(info[0].getName() + " written by " + info[0].getAuthor() + ".");
+					if(info[0].isError()) {
+						icon.setImageResource(R.drawable.icon_plugin_error);
+						title.setText(file.getName());
+						extra.setText("Error: " + info[0].getErrorMessage());
+					} else {
+						title.setText(file.getName());
+						extra.setText(info[0].getName() + " written by " + info[0].getAuthor() + ".");
+					}
 				}
 			}
 			return view;
@@ -396,9 +426,15 @@ public class PluginSelectorDialog extends Dialog {
 					e.printStackTrace();
 					return false;
 				} catch (SAXException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					return false;
+					PluginDescription[] tmp = new PluginDescription[1];
+					PluginDescription error = new PluginDescription();
+					tmp[0] = error;
+					error.setError(true);
+					error.setErrorMessage(e.getLocalizedMessage());
+					
+					HashMap<String,PluginDescription[]> infoCache = infoCacheStack.peek().getInfoMap();
+					infoCache.put(pathname.getAbsolutePath(), tmp);
+					return true;
 				}
 				if(info == null) {
 					return false;
@@ -510,8 +546,15 @@ public class PluginSelectorDialog extends Dialog {
 	
 	private Handler dismissTimer = new Handler() {
 		public void handleMessage(Message msg) {
+			Toast t = Toast.makeText(PluginSelectorDialog.this.getContext(), "Adding plugin and reloading settings.",Toast.LENGTH_LONG);
 			PluginSelectorDialog.this.dismiss();
+			PluginSelectorDialog.this.mListener.onPluginLoad();
+			t.show();
 		}
 	};
+	
+    public interface OnPluginLoadListener {
+    	public void onPluginLoad();
+    }
 	
 }

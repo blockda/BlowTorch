@@ -1198,6 +1198,7 @@ public class Launcher extends Activity implements ReadyListener {
 		apdapter.sort(ccmp);
 		
 		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+		this.startService(new Intent(action));
 		bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
 		
 		//apdapter.notifyDataSetChanged();
@@ -1623,7 +1624,7 @@ public class Launcher extends Activity implements ReadyListener {
 						//updateDialog = null;
 						reportTo.sendEmptyMessage(MESSAGE_UPTODATE);
 						
-						//return;
+						return;
 					}
 				} catch(NumberFormatException e) {
 				} catch (NameNotFoundException e) {
@@ -1673,7 +1674,27 @@ public class Launcher extends Activity implements ReadyListener {
 				Message m = reportTo.obtainMessage(MESSAGE_BYTESINCOMING,c.getContentLength());
 				reportTo.sendMessage(m);
 				String updatepath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/TestPackage.apk";
+				String btdir = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/";
+				//String launcherdir = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/launcher/";
+				File btdirF = new File(btdir);
+				File launcherdirF = new File(btdirF,"/launcher/");
+				if(!btdirF.exists()) {
+					btdirF.mkdirs();
+				}
+				
+				if(!launcherdirF.exists()) {
+					launcherdirF.mkdirs();
+				}
+				
 				File file = new File(updatepath);
+				
+				if(!file.exists()) {
+					boolean test = file.createNewFile();
+					if(test) {
+						long foo = System.currentTimeMillis();
+					}
+				}
+				
 				FileOutputStream fos = new FileOutputStream(file);
 				
 				InputStream is = c.getInputStream();

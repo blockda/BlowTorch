@@ -223,15 +223,15 @@ public class Plugin implements SettingsChangedListener {
 		esf.register("ExecuteScript");
 		wbf.register("WindowBuffer");
 		rfc.register("RegisterSpecialCommand");
-		df.register("debugPrint");
+		//df.register("debugPrint");
 		wxctf.register("WindowXCallS");
 		wxcbf.register("WindowXCallB");
-		altwf.register("appendLineToWindow");
-		iwtf.register("invalidateWindowText");
+		altwf.register("AppendLineToWindow");
+		iwtf.register("InvalidateWindowText");
 		gsf.register("Send_GMCP_Packet");
 		SaveSettingsFunction ssfun = new SaveSettingsFunction(L);
-		ssfun.register("saveSettings");
-		upf.register("userPresent");
+		ssfun.register("SaveSettings");
+		upf.register("UserPresent");
 		gesdf.register("GetExternalStorageDirectory");
 		gdsdf.register("GetDisplayDensity");
 		awsf.register("AppendWindowSettings");
@@ -266,7 +266,7 @@ public class Plugin implements SettingsChangedListener {
 	}
 	
 	private final HashMap<String,String> captureMap = new HashMap<String,String>();
-	public void process(TextTree input,StellarService service,boolean windowOpen,Handler pump,String display) {
+	/*public void process(TextTree input,StellarService service,boolean windowOpen,Handler pump,String display) {
 		//if(this.settings.getName().equals("map_miniwindow")) {
 			//inspection
 		//<String,TriggerData> triggers = this.settings.getTriggers();
@@ -431,7 +431,7 @@ public class Plugin implements SettingsChangedListener {
 		//}
 			
 		return modified;
-	}
+	}*/
 	
 	public void initScripts(ArrayList<WindowToken> windows) {
 		//for(Script)
@@ -994,11 +994,14 @@ public class Plugin implements SettingsChangedListener {
 				displayLuaError("Error calling function callback:"+settings.getName()+"("+callback+"):"+L.getLuaObject(-1).getString());
 			} else {
 				//Log.e("PLUGIN","Successfuly called plugin function:"+settings.getName()+"("+callback+")");
+				L.pop(2);
 			}
 		
 		} else {
 			L.pop(2);
 		}
+		
+		checkStack("ExecuteCallback");
 		
 	}
 
@@ -1016,10 +1019,13 @@ public class Plugin implements SettingsChangedListener {
 				displayLuaError("PluginXCallS Error:" + L.getLuaObject(-1).getString());
 			} else {
 				//success
+				L.pop(2);
 			}
 		} else {
 			L.pop(2);
 		}
+		
+		checkStack("PluginXCallS");
 	}
 	
 	private void pushTable(String key,Map<String,Object> map) {
@@ -1055,7 +1061,7 @@ public class Plugin implements SettingsChangedListener {
 		return L;
 	}
 	
-	public void outputXMLInternal(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
+	/*public void outputXMLInternal(XmlSerializer out) throws IllegalArgumentException, IllegalStateException, IOException {
 		//see if lua has a SaveXML method.
 		
 		L.getGlobal("saveXML");
@@ -1075,9 +1081,9 @@ public class Plugin implements SettingsChangedListener {
 		dumpPluginCommonData(out);
 		dumpLuaData(out);
 		out.endTag("", "plugin");
-	}
+	}*/
 	
-	private void dumpLuaData(XmlSerializer out) {
+	/*private void dumpLuaData(XmlSerializer out) {
 		//now call the saveXML function in lua.
 		L.getGlobal("debug");
 		L.getField(-1, "traceback");
@@ -1098,7 +1104,9 @@ public class Plugin implements SettingsChangedListener {
 		} else {
 			L.pop(2);
 		}
-	}
+		
+		checkStack("SaveXML");
+	}*/
 	
 /*	public void outputXMLExternal(StellarService service) {
 		L.getGlobal("saveXML");
@@ -1255,11 +1263,14 @@ public class Plugin implements SettingsChangedListener {
 				displayLuaError("Error calling gmcp callback:" + callback + " error:\n"+L.getLuaObject(-1).getString());
 			} else {
 				//success.
+				L.pop(2);
 			}
 		} else {
 			//callback not defined.
 			L.pop(2);
 		}
+		
+		//checkStack("GMCP Callback");
 	}
 	
 	public void addTrigger(TriggerData data) {
@@ -1616,10 +1627,14 @@ public class Plugin implements SettingsChangedListener {
 			int ret = L.pcall(0, 1, -2);
 			if(ret != 0) {
 				displayLuaError("Error in OnBackgroundStartup:"+L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
 		} else {
 			L.pop(2);
 		}
+		
+		checkStack("OnBackgroundStartup");
 	}
 
 	public void scriptXmlExport(XmlSerializer out) {
@@ -1633,10 +1648,14 @@ public class Plugin implements SettingsChangedListener {
 			int retval = L.pcall(1, 1, -3);
 			if(retval != 0) {
 				displayLuaError("Plugin: "+this.getName()+" OnXmlExport() Error:" + L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
 		} else {
 			L.pop(2);
 		}
+		checkStack("OnXmlExport");
+		
 	}
 	
 	private ArrayList<TriggerData> sortedTriggers = null;
@@ -1739,12 +1758,16 @@ public class Plugin implements SettingsChangedListener {
 				L.pushString(value);
 				int ret = L.pcall(2, 1, -4);
 				if(ret != 0) {
-					displayLuaError("Error in OnOptionsChanged:"+L.getLuaObject(-1).getString());
+					displayLuaError("Error in OnOptionChanged:"+L.getLuaObject(-1).getString());
 					
+				} else {
+					L.pop(2);
 				}
 			} else {
 				L.pop(2);
 			}
+			
+			checkStack("OnOptionChanged");
 		}
 	}
 
@@ -1754,6 +1777,9 @@ public class Plugin implements SettingsChangedListener {
 	
 	private void dumpOption(SettingsGroup group) {
 		ArrayList<Option> options = group.getOptions();
+		if(!this.getSettings().getName().equals("button_window")) {
+			long foo = System.currentTimeMillis();
+		}
 		for(Option o : options) {
 			if(o instanceof SettingsGroup) {
 				dumpOption((SettingsGroup)o);
@@ -1770,10 +1796,14 @@ public class Plugin implements SettingsChangedListener {
 					int ret = L.pcall(2, 1, -4);
 					if(ret != 0) {
 						displayLuaError("Error in OnOptionChanged:"+L.getLuaObject(-1).getString());
+					} else {
+						L.pop(2);
 					}
 				} else {
 					L.pop(2);
 				}
+				
+				checkStack("OnOptionChanged");
 			}
 		}
 	}
@@ -1789,6 +1819,12 @@ public class Plugin implements SettingsChangedListener {
 	public void markTriggersDirty() {
 		parent.setTriggersDirty();
 		
+	}
+	
+	private boolean debug = true;
+	private void checkStack(String method) {
+		int top = L.getTop();
+		//Log.e("PLUGIN","checking stack after "+method+" size: "+Integer.toString(top));
 	}
 	
 	

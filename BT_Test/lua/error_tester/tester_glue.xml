@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<blowtorch xmlversion="2">
+<plugins>
+	<plugin name="error_tester" id="543">
+		<author>Daniel Block</author>
+		<description>
+		<![CDATA[
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+body {
+	color: #999;
+}
+</style>
+</head>
+
+<body>
+<h3>Mapper summary
+  </p>
+</h3>
+<p>Just some scripts that are designed to fail.</p>
+
+</body>
+</html>
+		]]>
+		</description>
+		<triggers>
+			<trigger title="roommonitor" pattern="%room.info" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="got_gmcp_room" fireWhen="always"/>
+			</trigger>
+			<trigger title="areamonitor" pattern="%room.area" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="update_gmcp_area" fireWhen="always"/>
+			</trigger>
+			<trigger title="trigger" pattern="starving" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="triggered_line" fireWhen="always"/>
+			</trigger>
+		</triggers>
+		<windows>
+			<window name="error_window" id="6344" script="foregroundwindow">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape" width="fill_parent" height="20" alignParentRight="true" above="40"/>
+					<layout orientation="portrait" width="fill_parent" height="20"  alignParentRight="true" above="40"/>
+				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape" width="fill_parent" height="20"  alignParentRight="true" above="40"/>
+					<layout orientation="portrait" width="fill_parent" height="20"  alignParentRight="true" above="40"/>
+				</layoutGroup>
+			</window>
+		</windows>
+		<options title="Error test" summary="Option to just be here.">
+  	 		<integer title="Window Height" key="height" summary="just a number">77</integer>	
+  	 	</options>
+		<script name="bootstrap">
+			<![CDATA[
+			dofile(GetPluginInstallDirectory().."/background.lua")
+			]]>
+		</script>
+		<script name="foregroundwindow">
+			<![CDATA[
+			dofile(GetPluginInstallDirectory().."/foreground.lua")
+			]]>
+		</script>
+	</plugin>
+</plugins>
+</blowtorch>

@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<blowtorch xmlversion="2">
+<plugins>
+	<plugin name="chat_miniwindow" id="50">
+		<author>Daniel Block</author>
+		<description>
+		<![CDATA[
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+body {
+	color: #999;
+}
+</style>
+</head>
+
+<body>
+<h3>Chat window summary
+  </p>
+</h3>
+<p>The chat window plugin installs and manages a seperate window to filter and show chat channel information. Chat channels are created based off of the first capture group in the chat channel trigger.</p><h3>UI Behavior:
+</h3>
+<p>The chat window exists in 2 states, the non expanded normal state, and the expanded state.</p><h4>Normal State</p>
+</h4>
+<p>	Long press the window in the normal state to expand the window. Text can be scrolled while in the normal state.</p>
+<h4>Expanded State</h4>
+<p>Filtering controls and window resizing controls are displayed in the expanded state. Long pressing text in this state will activate text selection. From left to right, the control bar buttons are</p>
+<ul>
+  <li><strong>Pull</strong> - This is intended to resize the window in a click and drag action. Press this button and drag up and down to resize the expanded window.</li>
+  <li><strong>Delete</strong> - Will delete the currenttly selected chat channel.</li>
+  <li><strong>Channel Filter Tabs</strong> - Will horizontally scroll if there are more tabs than fit on the screen. Press action will select the tab and filter the chat data so that only that channel's information is displayed. Long pressing a tab will pre-load the channel tag into the chat bar.</li>
+  <li><strong>Pin/Unpin</strong> - This button toggles the filtering controls &quot;pinned&quot; state. If the controls are pinned, they will be shown when the chat window is in the normal, non expanded state.</li>
+  <li><strong>Hide</strong> - Will shrink the window and hide the controlls if they are not pinned.</li>
+</ul>
+</body>
+</html>
+		]]>
+		</description>
+		<triggers>
+			<trigger title="chats" pattern="^\{chan ch=(\w*)\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+				<replace fireWhen="always"/>
+				<script function="processChat" fireWhen="always"/>
+				<gag fireWhen="always"/>
+			</trigger>
+			<!-- <trigger title="testmeo" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="5">
+				<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
+			</trigger>
+			<trigger title="colorize" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="3">
+				<color>45</color>
+			</trigger> -->
+		</triggers>
+		<windows>
+			<window name="chats" id="5010" script="chatwindow">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
+					<layout orientation="portrait" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
+				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape" width="fill_parent" height="77" alignParentTop="true" alignParentRight="true"/>
+					<layout orientation="portrait" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
+				</layoutGroup>
+			</window>
+		</windows>
+		<options title="Chat Window" summary="Sizing and window options.">
+  	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>	
+  	 	</options>
+		
+		<script name="bootstrap">
+			<![CDATA[
+			dofile(GetPluginInstallDirectory().."/chatserver.lua")
+			]]>
+		</script>
+		<script name="chatwindow">
+			<![CDATA[
+			dofile(GetPluginInstallDirectory().."/chatwindow.lua")
+			]]>
+		</script>
+	</plugin>
+</plugins>
+</blowtorch>

@@ -12,16 +12,7 @@
   </windows>
   
   <service processSemi="true" throttle="false" processPeriod="true" keepWifiActive="true" localEcho="true" vibrateOnBell="true" notifyOnBell="false" displayOnBell="false" />
-  <aliases>
-  	<alias pre="fosfsdf" post="skfdsdf"/>
-  	<alias pre="fxcvvx" post="wrwkjfe"/>
-  	<alias pre="hfdfhsdh" post="asf"/>
-  	<alias pre="gjkfgk" post="afdghrh"/>
-  	<alias pre="trlkyhk" post="ugfe"/>
-  	<alias pre="fdhkjtk" post="shjjyr"/>
-  	<alias pre="afskjf" post="ghfyh"/>
-  	<alias pre="hrhtrlkj" post="ergeg"/>
-  </aliases>
+  <aliases/>
   <directions>
     <entry dir="w" cmd="w" />
     <entry dir="e" cmd="e" />
