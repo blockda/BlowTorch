@@ -1,17 +1,17 @@
---debugPrint("package path:"..package.path)
+--Note("package path:"..package.path)
 --package.path = package.path..";"..GetExternalStorageDirectory().."/BlowTorch/?.lua"
 --package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
---debugPrint("package path:"..package.path)
+--Note("package path:"..package.path)
 respath = package.path
 respath = string.sub(respath,0,string.find(respath,"?")-1).."res"
-debugPrint("RESPATH: "..respath)
+--Note("RESPATH: "..respath)
 
-debugPrint("NEW BUTTON LAYER INIT")
+--Note("NEW BUTTON LAYER INIT")
 status = jit.status()
 if(status) then
-debugPrint("Jit is on")
+--Note("Jit is on")
 else
-debugPrint("Jit is off")
+--Note("Jit is off")
 end
 
 require("button")
@@ -24,7 +24,7 @@ defaults = nil
 --local ctmp = view:getContext()
 --local res = ctmp:getResources()
 --local displaymetrics = res:getDisplayMetrics()
-density = getDisplayDensity()
+density = GetDisplayDensity()
 Configuration = luajava.bindClass("android.content.res.Configuration")
 
 TypedValue = luajava.bindClass("android.util.TypedValue")
@@ -61,18 +61,18 @@ DisplayMetrics = view:getContext():getResources():getDisplayMetrics()
 		
 		--local str = marshal.encode(orig)
 		--local copy = marshal.decode(str)
-		--debugPrint("trying to copy")
+		--Note("trying to copy")
 local bit1 = bit.tobit(7)
 local bit2 = bit.bnot(bit1)
 local bit3 = bit.tohex(bit2)
-debugPrint("BitOp Test:"..bit3)		
+--Note("BitOp Test:"..bit3)		
 
 function loadButtons(args)
 
-	--debugPrint("WindowXCallS Succeeded!")
+	--Note("WindowXCallS Succeeded!")
 	--for i,v in pairs(args) do
 	--	if(istable(v)) then
-	--	debugPrint(i.."=>"..v)
+	--	Note(i.."=>"..v)
 	--end
 	--printTable("args",args)
 	
@@ -80,7 +80,7 @@ function loadButtons(args)
 	--local tmp = loadstring(args)()
 	--assert(marshal.decode(args))
 	local tmp = marshal.decode(args)
-	--debugPrint("deserialized table: answer="..tmp.answer)
+	--Note("deserialized table: answer="..tmp.answer)
 	--printTable("defs",tmp.default)
 	lastLoadedSet = tmp.name
 	--set up metatables.
@@ -98,12 +98,12 @@ function loadButtons(args)
 	for i=1,#set do
 	--for i,v in pairs(tmp.set) do
 		--local v = set[i]
-		--debugPrint("PROCESSING NEW BUTTON"..i)
+		--Note("PROCESSING NEW BUTTON"..i)
 		buttons[i] = BUTTON:new(set[i],density)
 	end
-	--debugPrint(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
+	--Note(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
 	--for i,v in pairs(buttons) do
-	--	debugPrint("buuuuuton"..i)
+	--	Note("buuuuuton"..i)
 	--end
 	--buttons = foo
 	drawButtons()
@@ -119,7 +119,7 @@ function printTable(key,o)
 		if(type(v)=="table") then
 			printTable(key.."."..i,v)
 		else 
-			debugPrint(key.."."..i.."<==>"..v)
+			--Note(key.."."..i.."<==>"..v)
 		end
 	end
 end
@@ -181,7 +181,7 @@ function moveTouch.onTouch(v,e)
 			moveDelta.y = y - moveCurrent.y
 			moveCurrent.x = x
 			moveCurrent.y = y
-			--debugPrint("moving box")
+			--Note("moving box")
 			if(gridsnap) then
 				--debugPrint("gridsnapping")
 				--totalDelta.x = totalDelta.x + moveDelta.x
@@ -477,7 +477,7 @@ function managerTouch.onTouch(v,e)
 			--lawl, make new button
 			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
 			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
-			debugPrint("new button at: "..modx..","..mody)
+			--Note("new button at: "..modx..","..mody)
 			local butt = addButton(modx,mody-statusoffset)
 			--butt.width = gridwidth
 			--butt.height = gridwidth
@@ -533,7 +533,7 @@ function normalTouch.onTouch(v,e)
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
 			if options.auto_launch == "true" then
-				scheduleCallback(100,"doEdit",1000)
+				ScheduleCallback(100,"doEdit",1000)
 			end
 			fingerdown = true
 			--touchedbutton.selected = false
@@ -589,7 +589,7 @@ function normalTouch.onTouch(v,e)
 					view:invalidate()
 				end
 			else
-				cancelCallback(100)
+				CancelCallback(100)
 				if(normalTouchState ~= 2) then
 					normalTouchState = 2
 					--clearButton(b)
@@ -609,7 +609,7 @@ function normalTouch.onTouch(v,e)
 		end
 	elseif(action == ACTION_UP) then
 		if(fingerdown) then
-			cancelCallback(100)
+			CancelCallback(100)
 			fingerdown = false
 			selectedtouchstart = false
 			touchedbutton.selected = false
@@ -627,7 +627,7 @@ function normalTouch.onTouch(v,e)
 					return true
 				end
 				performHapticPress()
-				sendToServer(touchedbutton.data.command)
+				SendToServer(touchedbutton.data.command)
 				--debugPrint("primary touch")
 			else
 				--process secondary touch
@@ -638,7 +638,7 @@ function normalTouch.onTouch(v,e)
 				end
 				--debugPrint("secondary touch")
 				
-				sendToServer(touchedbutton.data.flipCommand)
+				SendToServer(touchedbutton.data.flipCommand)
 			end
 			normalTouchState = 0
 			--clearButton(touchedbutton)
@@ -658,7 +658,7 @@ view:setOnTouchListener(normalTouch_cb)
 
 function doEdit()
 	--this is launched from the long press
-	debugPrint("EDITING")
+	--Note("EDITING")
 	manage = true
 	performHapticEdit()
 	enterManagerMode()
@@ -766,7 +766,7 @@ bounds = nil
 
 
 function OnCreate()
-	debugPrint("in oncreate, loading "..#buttons.." buttons.")	
+	--Note("in oncreate, loading "..#buttons.." buttons.")	
 	for i,b in ipairs(buttons) do
 		updateRect(b)
 	end
@@ -774,7 +774,7 @@ function OnCreate()
 	--bounds = getBounds()
 	--drawButtons()
 	--addOptionCallback("buttonOptions","Lua Button Options",nil)
-	addOptionCallback("buttonList","Lua Button Sets",nil)
+	AddOptionCallback("buttonList","Lua Button Sets",nil)
 	view:bringToFront()
 end
 
@@ -794,7 +794,7 @@ function enterManagerMode()
 	if(drawManagerLayer) then
 		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
-		debugPrint("drawingManagerLayer")
+		--Note("drawingManagerLayer")
 		drawManagerGrid()
 	end
 
@@ -858,7 +858,7 @@ end
 
 checkchange = {}
 function checkchange.onCheckedChanged(v,ischecked)
-	debugPrint("starting check change")
+	--Note("starting check change")
 	gridsnap = ischecked
 	--drawManagerLayer = ischecked
 	--if(manage == true and ischecked == true) then
@@ -880,9 +880,9 @@ function drawManagerGrid()
 		local c = managerCanvas
 		local width = view:getWidth()
 		local height = view:getHeight()
-		debugPrint("starting draw")
+		--Note("starting draw")
 		c:drawRect(0,0,width,height,cpaint)
-		debugPrint("canvas is not null")
+		--Note("canvas is not null")
 		c:drawARGB(manageropacity,0x0A,0x0A,0x0A)
 		--draw dashed lines.
 		local times = width / gridXwidth
@@ -903,7 +903,7 @@ gridXwidth = 67 * density
 gridYwidth = 67 * density
 seekerX = {}
 function seekerX.onProgressChanged(v,prog,state)
-	--debugPrint("seekbarchanged:"..prog)
+	----Note("seekbarchanged:"..prog)
 	local tmp = 32 + prog
 	gridXwidth = tmp*density
 	gridXSizeLabel:setText("Grid X Spacing: "..tmp)
@@ -932,7 +932,7 @@ opacitySeeker = {}
 function opacitySeeker.onProgressChanged(v,prog,state)
 	dpaint:setAlpha(prog)
 	manageropacity = prog
-	debugPrint("manageropacity now:"..manageropacity)
+	--Note("manageropacity now:"..manageropacity)
 	local opacitypct = math.floor((manageropacity / 255)*100)
 	gridOpacityLabel:setText("Grid Opacity: "..opacitypct.."%")
 	drawManagerGrid()
@@ -1071,7 +1071,7 @@ function buttonListAdapter.getView(pos,v,parent)
 		newview = v
 		
 	else
-		debugPrint("inflating view")
+		--Note("inflating view")
 		newview = layoutInflater:inflate(R_layout.editor_selection_list_row,nil)
 	
 		local root = newview:findViewById(R_id.root)
@@ -1186,7 +1186,7 @@ end
 
 newButtonSetButton = {}
 function newButtonSetButton.onClick(v)
-	debugPrint("new button pressed")
+	--Note("new button pressed")
 	mSelectorDialog:dismiss()
 	local context = view:getContext()
 	--make the new button set text input dialog and show it.
@@ -1252,12 +1252,13 @@ doneButtonListener_cb = luajava.createProxy("android.view.View$OnClickListener",
 mSelectorDialog = nil
 
 function showButtonList(data)
-	debugPrint(data)
+	--Note(data)
 	setdata = loadstring(data)()
 
+	makeToolbar()
 	--sort the list.
 	--table.sort(setdata)
-	debugPrint("got "..#setdata.." sets.")
+	--Note("got "..#setdata.." sets.")
 	for k in pairs(buttonSetList) do
 		buttonSetList[k] = nil
 	end
@@ -1281,7 +1282,7 @@ function showButtonList(data)
 		end
 		counter = counter + 1
 	end
-	debugPrint("selected Item index is"..selectedIndex.." lastloadedset is:"..lastLoadedSet)
+	--Note("selected Item index is"..selectedIndex.." lastloadedset is:"..lastLoadedSet)
 	
 	--if(mSelectorDialog == nil) then
 		fakeRelativeLayout = luajava.newInstance("android.widget.RelativeLayout",mContext)
@@ -1320,9 +1321,6 @@ end
 function buttonOptions()
 	ctex = view:getContext()
 
-	
-	
-
 	ll = luajava.newInstance("android.widget.LinearLayout",ctex)
 	ll:setOrientation(1)
 	llparams = luajava.new(LinearLayoutParams,350*density,LinearLayoutParams.WRAP_CONTENT,1)
@@ -1352,7 +1350,7 @@ function buttonOptions()
 	--gridSizeRow = luajava.newInstance("android.widget.LinearLayout",ctex)
 	--gridSizeRow:setOrientation(1)
 	
-	debugPrint("seekbar creation")
+	--Note("seekbar creation")
 	sbX = luajava.newInstance("android.widget.SeekBar",ctex)
 	sbX:setOnSeekBarChangeListener(seekerX_cb)
 	sbX:setLayoutParams(fillparams)
@@ -1375,7 +1373,7 @@ function buttonOptions()
 	
 	opacity:setLayoutParams(fillparams)
 	opacity:setMax(255)
-	--debugPrint("settings opacity slider to:"..manageropacity)
+	----Note("settings opacity slider to:"..manageropacity)
 	opacity:setProgress(manageropacity)
 	opacity:setOnSeekBarChangeListener(opacitySeeker_cb)
 	
@@ -1429,7 +1427,7 @@ function buttonOptions()
 	setSettingsButton:setLayoutParams(fillparams)
 	setSettingsButton:setText("Edit Defaults")
 	setSettingsButton:setOnClickListener(setSettingsButton_cb)
-	debugPrint("adding views")
+	--Note("adding views")
 	
 	subrow:addView(cb)
 	subrow:addView(setSettingsButton)
@@ -1460,7 +1458,7 @@ function buttonOptions()
 	--ll:addView(setSettingsButton)
 	--ll:addView(subrow)
 	--set up the show editor settings button.
-	debugPrint("builder alert creation")
+	--Note("builder alert creation")
 	--builder = luajava.newInstance("android.app.AlertDialog$Builder",ctex)
 	alert = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",ctex,scroller,false,nil)
 	alert:show()
@@ -1530,7 +1528,7 @@ function drawButtons()
 	for i=1,#buttons do
 	--for i,b in pairs(buttons) do
 		local b = buttons[i]
-		--debugPrint("DRAWING BUTTON"..i)
+		----Note("DRAWING BUTTON"..i)
 		if(b.selected) then
 			b:draw(1,canvas)
 		else
@@ -1538,7 +1536,7 @@ function drawButtons()
 		end
 		--counter = counter + 1
 	end
-	--debugPrint("DRAWING "..counter.." BUTTONS")
+	--Note("DRAWING "..counter.." BUTTONS")
 end
 
 function drawButtonsNoSelected()
@@ -1596,7 +1594,7 @@ function OldTouchEvent(e)
 
 	x = e:getX()
 	y = e:getY()
-	--debugPrint("on touch event started")
+	--Note("on touch event started")
 	if(e:getAction() == MotionEvent.ACTION_DOWN) then
 		--find if press was in a button
 		ret,b,index = buttonTouched(x,y)
@@ -1604,7 +1602,7 @@ function OldTouchEvent(e)
 			fingerdown = true
 			touchedbutton = b
 			touchedindex = index
-			debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.x,touchedbutton.y))
+			--Note(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.x,touchedbutton.y))
 			if(#buttons > 50 and not manage) then
 				aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
 				--aa = AlphaAnimation.new(1.0,0.0)
@@ -1634,7 +1632,7 @@ function OldTouchEvent(e)
 			local elapsed = now - prevevent
 			if(elapsed > 30) then
 			--proceed
-				--debugPrint("processing move event")
+				--Note("processing move event")
 				prevevent = now
 			else
 				return true --consume but dont process.
@@ -1644,7 +1642,7 @@ function OldTouchEvent(e)
 
 
 
-		--debugPrint("ACTION MOVING"..touchedbutton.x)
+		--Note("ACTION MOVING"..touchedbutton.x)
 
 		if(not fingerdown and manage) then
 			--we are drag moving now.
@@ -1686,7 +1684,7 @@ function OldTouchEvent(e)
 			--lawl, make new button
 			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
 			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
-			debugPrint("new button at: "..modx..","..mody)
+			--Note("new button at: "..modx..","..mody)
 			local butt = addButton(modx,mody)
 			--butt.width = gridwidth
 			--butt.height = gridwidth
@@ -1730,7 +1728,7 @@ Array:set(editorItems,2,"Delete")
 
 editorListener = {}
 function editorListener.onClick(dialog,which)
-	debugPrint("Editor: "..Array:get(editorItems,which).." selected.")
+	--Note("Editor: "..Array:get(editorItems,which).." selected.")
 	local newbuttons = {}
 	if(which == 2) then
 		while(table.getn(buttons) > 0) do 
@@ -1835,7 +1833,7 @@ function OnSizeChanged(w,h,oldw,oldh)
 	if(not statusHidden and hiddenNow) then 
 		statusoffset = GetStatusBarHeight()
 	end
-	debugPrint("status offset is: "..statusoffset)
+	--Note("status offset is: "..statusoffset)
 	
 	
 	if(statusHidden ~= statusNow) then
@@ -1848,17 +1846,17 @@ function OnSizeChanged(w,h,oldw,oldh)
 	
 	statusHidden = hiddenNow
 	
-	--debugPrint("status offset is: "..statusoffset)
+	--Note("status offset is: "..statusoffset)
 	local ccl = luajava.bindClass("android.graphics.Color")
 	local colord = ccl:argb(0x88,0x00,0x00,0xFF)
 	
-	debugPrint("DebugString: "..string.format("%d,%s",colord,Integer:toHexString(colord)))
+	--Note("DebugString: "..string.format("%d,%s",colord,Integer:toHexString(colord)))
 	
-	debugPrint("Window Sized Changed:"..w.."x"..h)
+	--Note("Window Sized Changed:"..w.."x"..h)
 	
 	
 	if(buttonLayer) then
-		debugPrint("freeing button layer")
+		--Note("freeing button layer")
 		buttonCanvas = nil
 		buttonLayer:recycle()
 		buttonLayer = nil
@@ -1910,7 +1908,7 @@ function OnDraw(canvas)
 	end
 	
 	if(dragmoving) then
-		--debugPrint("I SHOULD BE DRAG MOVING")
+		----Note("I SHOULD BE DRAG MOVING")
 		canvas:drawRect(dragstart.x,dragstart.y,dragcurrent.x,dragcurrent.y,dragBoxPaint)
 		canvas:drawRect(dragstart.x,dragstart.y,dragcurrent.x,dragcurrent.y,dragDashPaint)
 		
@@ -1927,22 +1925,22 @@ end
 
 
 function OnDestroy()
-	debugPrint("destroying button window")
+	--Note("destroying button window")
 	if(managerLayer ~= nil) then
 		managerLayer:recycle()
 		managerLayer = nil
 		managerCanvas = nil
 	end
-	debugPrint("freeing button layer")
+	--Note("freeing button layer")
 	if(buttonLayer ~= nil) then
-		debugPrint("recycle")
+		--Note("recycle")
 		buttonLayer:recycle()
-		debugPrint("layer to nil")
+		--Note("layer to nil")
 		buttonLayer = nil
-		debugPrint("canvas to nil")
+		--Note("canvas to nil")
 		buttonCanvas = nil
 	end
-	debugPrint("finished destroying window")
+	--Note("finished destroying window")
 end
 
 TabHost = luajava.bindClass("android.widget.TabHost")
@@ -2002,11 +2000,11 @@ function editorDone.onClick(v)
 	ycoord = tonumber(ycoordtmp:toString())
 	labelsizetmp = labelSizeEdit:getText()
 	labelsize = tonumber(labelsizetmp:toString())
-	--debugPrint(
+	----Note(
 	heighttmp = heightEdit:getText()
 	
 	height = tonumber(heighttmp:toString())
-	--debugPrint("height read from editor"..height)
+	--Note("height read from editor"..height)
 	widthtmp = widthEdit:getText()
 	width = tonumber(widthtmp:toString())
 	
@@ -2014,7 +2012,7 @@ function editorDone.onClick(v)
 		tmp = buttons[lastselectedindex]
 
 		
-		--debugPrint("EDITING SINGLE BUTTON BEFORE BUTTON:"..tmp.data.height)
+		--Note("EDITING SINGLE BUTTON BEFORE BUTTON:"..tmp.data.height)
 		--printTable("button",tmp)
 		
 		
@@ -2036,7 +2034,7 @@ function editorDone.onClick(v)
 		tmp.data.flipCommand = flipcmd
 		
 		tmp:updateRect(statusoffset)
-		--debugPrint("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
+		--Note("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
 		--printTable("edited",tmp)
 		
 	elseif(numediting > 1) then
@@ -2130,8 +2128,8 @@ screenlayout = view:getContext():getResources():getConfiguration().screenLayout
 local test = bit.band(screenlayout,Configuration.SCREENLAYOUT_SIZE_MASK)
 
 local function foo()
-	debugPrint(test)
-	debugPrint(Configuration.SCREENLAYOUT_SIZE_XLARGE)
+	--Note(test)
+	--Note(Configuration.SCREENLAYOUT_SIZE_XLARGE)
 	if(test == Configuration.SCREENLAYOUT_SIZE_XLARGE) then
 		textSize = 26
 		textSizeSmall = 17
@@ -2163,8 +2161,8 @@ function showEditorDialog()
 		editorValues.labelSize = button.data.labelSize
 		editorValues.x = button.data.x
 		editorValues.y = button.data.y
-		debugPrint("single editor loading:"..editorValues.x)
-		debugPrint("single editor loading:"..editorValues.y)
+		--Note("single editor loading:"..editorValues.x)
+		--Note("single editor loading:"..editorValues.y)
 	else 
 		for i,b in pairs(buttons) do
 			if(b.selected == true) then
@@ -2203,10 +2201,10 @@ function showEditorDialog()
 				
 				if(editorValues.width == nil) then
 					editorValues.width = tonumber(b.data.width)
-					debugPrint("editorValue set to "..b.data.width)
+					--Note("editorValue set to "..b.data.width)
 				elseif(editorValues.width ~= tonumber(b.data.width)) then
 					editorValues.width = "MULTI"
-					debugPrint("editorValue set to multi because "..b.data.width)
+					--Note("editorValue set to multi because "..b.data.width)
 				end
 				
 				if(editorValues.x == nil) then
@@ -2225,8 +2223,25 @@ function showEditorDialog()
 	end
 	
 	local context = view:getContext()
+	local wm = context:getSystemService(Context.WINDOW_SERVICE)
+	local display = wm:getDefaultDisplay()
+	local displayWidth = display:getWidth()
+	local displayHeight = display:getHeight()
+	local use = displayWidth
+	if(displayHeight < displayWidth) then
+		use = displayHeight
+	end
+	
+	local dpi_bucket = use / density
+	
+	local height_param = LinearLayoutParams.WRAP_CONTENT
+	if(dpi_bucket >= 600) then
+		height_param = 300*density
+	end
+	
+	
 	top = luajava.new(RelativeLayout,context)
-	topparams = luajava.new(RelativeLayoutParams,450*density,WRAP_CONTENT)
+	topparams = luajava.new(RelativeLayoutParams,450*density,height_param)
 	
 
 	
@@ -2530,7 +2545,7 @@ function showEditorDialog()
 	--dialogView = top
 	--else
 		--set up the dialog
-		--debugPrint("already constructed editor"..dialogView:toString())
+		--Note("already constructed editor"..dialogView:toString())
 	--end
 	
 	editorDialog = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",context,top,false,nil)
@@ -2595,7 +2610,7 @@ function makeAdvancedPage()
 		--slp = advancedPageScroller
 		--slp.__FunctionCalled = "setLayoutParams"
 		advancedPageScroller:setId(3)
-		debugPrint("makeing advanced page:")
+		--Note("makeing advanced page:")
 	else
 		--return advancedPageScroller
 	end
@@ -2712,7 +2727,7 @@ function makeAdvancedPage()
 		colorHolderA = fnew(LinearLayout,context)
 		colorHolderA:setLayoutParams(fillparams)
 		colorHolderA:setGravity(GRAVITY_CENTER)
-		debugPrint("addiing normal color holder")
+		--Note("addiing normal color holder")
 		colorRowOne:addView(colorHolderA)
 	end
 	
@@ -2726,7 +2741,7 @@ function makeAdvancedPage()
 		normalColor:setBackgroundColor(theNormalColor)
 		normalColor:setTag("normal")
 		normalColor:setOnClickListener(swatchclicked_cb)
-		debugPrint("addiing normal color")
+		--Note("addiing normal color")
 		colorHolderA:addView(normalColor)
 	else 
 		theNormalColor = editorValues.primaryColor
@@ -2737,7 +2752,7 @@ function makeAdvancedPage()
 		colorHolderB = fnew(LinearLayout,context)
 		colorHolderB:setLayoutParams(fillparams)
 		colorHolderB:setGravity(GRAVITY_CENTER)
-		debugPrint("addiing pressed color holder")
+		--Note("addiing pressed color holder")
 		colorRowOne:addView(colorHolderB)
 	end
 	
@@ -2749,7 +2764,7 @@ function makeAdvancedPage()
 		--thePressedColor = Color:argb(255,120,250,250)
 		thePressedColor = editorValues.selectedColor
 		pressedColor:setBackgroundColor(thePressedColor)
-		debugPrint("addiing pressed color")
+		--Note("addiing pressed color")
 		colorHolderB:addView(pressedColor)
 	else
 		thePressedColor = editorValues.selectedColor
@@ -2760,7 +2775,7 @@ function makeAdvancedPage()
 		colorHolderC = fnew(LinearLayout,context)
 		colorHolderC:setLayoutParams(fillparams)
 		colorHolderC:setGravity(GRAVITY_CENTER)
-		debugPrint("addiing flip colo hodlerr")
+		--Note("addiing flip colo hodlerr")
 		colorRowOne:addView(colorHolderC)
 	end
 	
@@ -2770,7 +2785,7 @@ function makeAdvancedPage()
 		flipColor:setTag("flip")
 		flipColor:setOnClickListener(swatchclicked_cb)
 		theFlipColor = editorValues.flipColor
-		debugPrint("addiing flip color")
+		--Note("addiing flip color")
 		flipColor:setBackgroundColor(theFlipColor)
 		colorHolderC:addView(flipColor)
 	else
@@ -3037,10 +3052,10 @@ function makeAdvancedPage()
 		controlHolderD:addView(xcoordEdit)
 	end
 	if(editorValues.x == "MULTI") then
-		debugPrint("setting x string:MULTI")
+		--Note("setting x string:MULTI")
 		xcoordEdit:setText("")
 	else
-		debugPrint("setting x string:"..editorValues.x)
+		--Note("setting x string:"..editorValues.x)
 		xcoordEdit:setText(tostring(math.floor(editorValues.x)))
 	end
 	
@@ -3120,7 +3135,7 @@ function toolbarModifyClicked.onClick(v)
 	
 	--local adapter = mListView:getAdapter()
 	local entry = buttonSetList[lastSelectedIndex+1]
-	debugPrint("toolbarModifyClicked:"..entry.name)
+	--Note("toolbarModifyClicked:"..entry.name)
 	if(entry.name ~= lastLoadedSet) then
 		PluginXCallS("loadAndEditSet",entry.name)
 		return
@@ -3145,7 +3160,7 @@ end
 toolbarLoadClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarLoadClicked)
 
 function loadAndEditSet(data)
-	debugPrint("Loading and editing: "..data)
+	--Note("Loading and editing: "..data)
 	loadButtons(data)
 	enterManagerMode()
 	showeditormenu = true
@@ -3190,7 +3205,7 @@ function makeToolbar()
 	
 	toolbarToggle:setOnClickListener(toolbarLoadClicked_cb)
 	toolbarModify:setOnClickListener(toolbarModifyClicked_cb)
-	debugPrint("THE MODIFYCLICKER IS SET")
+	--Note("THE MODIFYCLICKER IS SET")
 	toolbarDelete:setOnClickListener(toolbarDeleteClicked_cb)
 	
 	thetoolbar:addView(toolbarToggle)
@@ -3223,20 +3238,27 @@ function makeToolbar()
 	
 	animateOutNoTransition = luajava.new(TranslateAnimation,0,thetoolbarlength,0,0)
 	animateOutNoTransition:setDuration(300)
+	--Note("attatching removal listener")
 	animateOutNoTransition:setAnimationListener(animateOutNoTransition_cb)	
 	
 end
 
-makeToolbar()
+
 
 animateOutNoTransition_handler = {}
-function animateOutNoTransition_handler.onAnimationEnd()
-	local rl = thetoolbar:getParent()
-	rl:removeAllViews()
+function animateOutNoTransition_handler.onAnimationEnd(animation)
+	--local rl = thetoolbar:getParent()
+	--//rl:removeAllViews()
+	
+	--Note("animate out animation end firing.")
+	local parent = thetoolbar:getParent()
+	parent:removeAllViews()
+	parent:invalidate()
 	lastSelectedIndex = -1
 end
 animateOutNoTransition_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",animateOutNoTransition_handler)
 
+makeToolbar()
 
 targetholder = nil
 lastSelectedPosition = -1
@@ -3252,9 +3274,9 @@ function rowClicker.onClick(v)
 		local adapter = mListView:getAdapter()
 		entry = adapter:getItem(lastSelectedIndex)
 		holder:addView(thetoolbar)
-		debugPrint("row clicked, none selected")
+		--Note("row clicked, none selected")
 	elseif(lastSelectedIndex ~= pos) then
-		debugPrint("row clicked, not the selected row")
+		--Note("row clicked, not the selected row")
 		local parent = thetoolbar:getParent()
 		if(parent ~= nil) then
 			if(mListView:getFirstVisiblePosition() <= lastSelectedIndex and mListView:getLastVisiblePosition() >= lastSelectedIndex) then
@@ -3262,17 +3284,17 @@ function rowClicker.onClick(v)
 				parent:startAnimation(animateOut)
 				targetIndex = pos
 				targetHolder = v:findViewById(R_id.toolbarholder)
-				debugPrint("starting custom animation")
+				--Note("starting custom animation")
 			else
 				parent:removeAllViews()
 				local holder = v:findViewById(R_id.toolbarholder)
 				holder:setLayoutAnimation(animateInController)
 				holder:addView(thetoolbar)
-				debugPrint("not starting custom animation")
+				--Note("not starting custom animation")
 			end
 		end
 	else
-		debugPrint("selected row clicked")
+		--Note("selected row clicked")
 		local parent = thetoolbar:getParent()
 		if(parent == nil) then
 			lastSelectedIndex = pos
@@ -3297,14 +3319,14 @@ function toolbarCustomAnimationListener.onCustomAnimationEnd()
 		targetHolder:setLayoutAnimation(animateInController)
 		targetHolder:addView(thetoolbar)
 	end
-	debugPrint("customanimationlistener fired,"..lastSelectedIndex.." target:"..targetIndex)
+	--Note("customanimationlistener fired,"..lastSelectedIndex.." target:"..targetIndex)
 	lastSelectedIndex = targetIndex
 end
 toolbarCustomAnimationListener_cb = luajava.createProxy("com.offsetnull.bt.window.AnimatedRelativeLayout$OnAnimationEndListener",toolbarCustomAnimationListener)
 
 managerDoneButtonListener = {}
 function managerDoneButtonListener.onClick(v)
-	debugPrint("exiting manager mode")
+	--Note("exiting manager mode")
 	exitManagerMode()
 end
 
@@ -3323,12 +3345,12 @@ backWidgetMoveTotal = 0
 function backWidgetMoveTouchListener.onTouch(v,e)
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
 		local dy = e:getY() - backWidgetMoveLastY
-		debugPrint("touch y event at: "..e:getY())
+		--Note("touch y event at: "..e:getY())
 		backWidgetMoveLastY = e:getY()
 		backWidgetMoveTotal = backWidgetMoveTotal - dy
 		backWidgetMovePaddingBottom = backWidgetMovePaddingBottom + backWidgetMoveTotal
 		backWidget:setPadding(0,0,0,backWidgetMovePaddingBottom)
-		debugPrint("relayotging:"..backWidgetMovePaddingBottom.." dy:"..dy)
+		--Note("relayotging:"..backWidgetMovePaddingBottom.." dy:"..dy)
 		backWidget:requestLayout()
 	elseif(e:getAction() == MotionEvent.ACTION_UP) then
 		backWidgetMoveTotal = 0
@@ -3498,11 +3520,11 @@ function setEditorDoneListener.onClick(v)
 	
 	labelsizetmp = labelSizeEdit:getText()
 	labelsize = tonumber(labelsizetmp:toString())
-	--debugPrint(
+	----Note(
 	heighttmp = heightEdit:getText()
 	
 	height = tonumber(heighttmp:toString())
-	debugPrint("height read from editor"..height)
+	--Note("height read from editor"..height)
 	widthtmp = widthEdit:getText()
 	width = tonumber(widthtmp:toString())
 	
@@ -3566,20 +3588,20 @@ end
 seteditorDone_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorDoneListener)
 
 function loadOptions(data)
-	debugPrint("incoming options wad:"..data)
+	--Note("incoming options wad:"..data)
 	options = loadstring(data)()
 	buttonRoundness = tonumber(options.roundness)
 	drawButtons()
-	--debugPrint("loaded button options:"..options.auto_edit)
+	--Note("loaded button options:"..options.auto_edit)
 end
 
 function performHapticPress()
-	--debugPrint("performing haptic press")
+	--Note("performing haptic press")
 	if(options.haptic_press == "2") then return end
 	
 	flags = 1
 	if(options.haptic_press == "1") then
-	--debugPrint("overriding system")
+	--Note("overriding system")
 		flags = 3
 	end
 	
@@ -3587,12 +3609,12 @@ function performHapticPress()
 end
 
 function performHapticFlip()
-	--debugPrint("performing haptic flip")
+	--Note("performing haptic flip")
 	if(options.haptic_flip == "2") then return end
 	
 	flags = 1
 	if(options.haptic_flip == "1") then
-	--debugPrint("overriding system")
+	--Note("overriding system")
 		flags = 3
 	end
 	
@@ -3669,10 +3691,10 @@ function PopulateMenu(menu)
 		topMenuItem:setIcon(R_drawable.ic_menu_button_sets)
 		topMenuItem:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
 		
-		debugPrint("populated lua button sets")
+		--Note("populated lua button sets")
 		foo = function(item) item:setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER) end
 		if(not pcall(foo,topMenuItem))  then
-			debugPrint("action bar not supported,android version < 3.0")
+			--Note("action bar not supported,android version < 3.0")
 		end
 		
 	--else
@@ -3682,7 +3704,7 @@ end
 
 buttonsetMenuClicked = {}
 function buttonsetMenuClicked.onMenuItemClick(item)
-	debugPrint("menu item clicked")
+	--Note("menu item clicked")
 	buttonList()
 	--showeditormenu = true
 	--PushMenuStack()

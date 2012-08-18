@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/newtriggerlayout"
+  android:layout_width="400dip"
+  android:layout_height="350dip"
+  android:layout_marginLeft="10dip"
+  android:layout_marginRight="10dip">
+  
+  <TextView
+		android:id="@+id/titlebar"
+		android:layout_width="400dip"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:text="TIMER EDITOR"
+		android:textColor="#FF333333"
+		android:background="#FF999999"
+		android:textSize="15dip"
+		android:textStyle="bold"
+		android:gravity="center"/>
+  
+    <Button
+    android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:id="@+id/timer_editor_cancel"
+  	android:layout_alignParentBottom="true"
+  	android:layout_alignParentRight="true"
+  	android:text="Cancel" />
+  
+  <Button
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Done"
+  	android:id="@+id/timer_editor_done_button"
+  	android:layout_toLeftOf="@id/timer_editor_cancel"
+  	android:layout_alignParentBottom="true"/>
+  
+  <ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_above="@id/timer_editor_done_button" android:layout_below="@id/titlebar"
+  android:id="@+id/timer_editor_scroll_container">
+  	<LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content"  android:stretchColumns="*">
+  			<TableRow>
+  				<TextView
+  					android:text="Name:"
+  					android:layout_marginLeft="10dip"
+  					android:layout_marginRight="5dip"
+  					android:layout_width="40dip"
+  					android:gravity="right"/>
+  				<EditText
+  					android:id="@+id/timer_editor_name"
+  					
+  					android:layout_marginRight="10dip"
+  					android:width="300dip"
+  					android:singleLine="true"
+  					android:hint="Timer Function"
+  					android:inputType="text"/>
+  			</TableRow>
+  		</TableLayout>
+  		<TableLayout android:layout_width="fill_parent" android:layout_height="wrap_content"  android:shrinkColumns="1,2" android:stretchColumns="0,3">
+  			<TableRow>
+  				<TextView
+  					android:text="Seconds:"
+  					android:layout_marginLeft="10dip"
+  					android:layout_marginRight="5dip"
+  					android:layout_width="40dip"
+  					android:gravity="right"
+  					
+  					/>
+  				<EditText
+  					android:id="@+id/timer_editor_seconds"
+  					
+  					android:layout_marginRight="10dip"
+  					android:layout_width="60dip"
+  					android:singleLine="true"
+  					android:hint="30"
+  					
+  					android:inputType="number"/>
+  				<CheckBox
+  						android:id="@+id/timer_repeat_checkbox"
+  						android:text="Repeat?"
+  						android:textSize="13sp"
+  						android:layout_marginRight="10dip"
+  						android:layout_marginLeft="30dip"
+  						android:layout_width="215dip" android:layout_height="wrap_content"/>
+  			</TableRow>
+  		</TableLayout>
+  		<!-- <TableLayout android:layout_width="390dip" android:layout_height="wrap_content" android:stretchColumns="*"> -->
+  		
+  					
+  				
+  		<TextView android:layout_width="fill_parent"
+  					android:layout_height="wrap_content"
+  					android:text="EXECUTE ACTIONS"
+  					android:layout_marginLeft="10dip"
+  					android:layout_marginRight="10dip"
+  					android:background="#FF999999"
+  					android:gravity="center"
+  					android:textStyle="bold"
+  					android:textColor="#FF111111"/>
+  		<!-- <TableLayout android:id="@+id/trigger_notification_table" android:layout_width="fill_parent" android:layout_height="wrap_content" android:stretchColumns="0" android:shrinkColumns="1,2,3" android:layout_marginLeft="10dip" android:layout_marginRight="10dip" android:background="@drawable/movemethod_frame"> -->
+  		<TableLayout android:id="@+id/timer_notification_table" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="10dip" android:layout_marginRight="10dip" android:background="@drawable/movemethod_frame">
+  			<TableRow android:id="@+id/timer_notification_legend">
+  				<TextView
+  					android:text="TYPE"
+  					android:gravity="center"
+  					/>
+  				<TextView
+  					android:text="Window\nOpen"
+  					android:gravity="center"
+  					android:layout_marginRight="10dip" android:layout_marginLeft="10dip"/>
+  				<TextView
+  					android:text="Window\nClosed"
+  					android:gravity="center"
+  					android:layout_marginRight="10dip" android:layout_marginLeft="10dip"/>
+  				<TextView
+  					android:text="Delete"
+  					android:id="@+id/timer_delete_responder"
+  					android:gravity="center"
+  					android:layout_marginRight="5dip" android:layout_marginLeft="5dip"/>
+  			</TableRow>
+  			<TableRow android:id="@+id/timer_new_responder_row">
+  				<Button android:id="@+id/timer_new_notification" android:text="New Action" android:paddingLeft="30dip" android:paddingRight="30dip"/>
+  				<TextView android:text=""/>
+  				<TextView android:text=""/>
+  			</TableRow>
+  		</TableLayout>
+  	</LinearLayout>
+  	
+  </ScrollView>
+
+
+  
+</RelativeLayout>

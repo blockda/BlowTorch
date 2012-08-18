@@ -28,6 +28,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.StringTokenizer;
 
+import android.util.Log;
+
 /**
  * This class represents a Lua object of any type. A LuaObject is constructed by a {@link LuaState} object using one of
  * the four methods:
@@ -481,6 +483,12 @@ public class LuaObject
 				res[i - 1] = L.toJavaObject(-1);
 				L.pop(1);
 			}
+			
+			L.pop(1); //need to clear the error handler out
+			//private void checkStack(String method) {
+				//int tmp = L.getTop();
+				//Log.e("PLUGIN","checking stack after Proxy Handler size: "+Integer.toString(tmp));
+			//}
 			return res;
 		}
 	}

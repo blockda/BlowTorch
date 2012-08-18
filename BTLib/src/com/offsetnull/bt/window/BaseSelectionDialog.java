@@ -61,6 +61,7 @@ public class BaseSelectionDialog extends Dialog {
 	
 	private LinearLayout mToolbar;
 	private TextView mTitlebar;
+	private CharSequence mNewTitle = "New";
 	
 	public BaseSelectionDialog(Context context) {
 		super(context);
@@ -203,6 +204,7 @@ public class BaseSelectionDialog extends Dialog {
 		buildRawList();
 		
 		Button newbutton = (Button)findViewById(R.id.add);
+		newbutton.setText(mNewTitle );
 		
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
@@ -353,6 +355,10 @@ public class BaseSelectionDialog extends Dialog {
 		
 		makeToolbar();
 		
+	}
+	
+	public void setNewButtonLabel(String str) {
+		mNewTitle = str;
 	}
 	
 	@Override
@@ -780,6 +786,17 @@ public class BaseSelectionDialog extends Dialog {
 		
 		ImageButton close = (ImageButton)mToolbar.findViewById(R.id.toolbar_tab_close);
 		close.setOnKeyListener(theButtonKeyListener);
+		
+		close.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				LinearLayout linear = (LinearLayout) v.getParent();
+				RelativeLayout line = (RelativeLayout)linear.getParent().getParent();
+				line.performClick();
+			}
+		});
 		
 		toolbarLength = toolbarLength + close.getDrawable().getIntrinsicWidth();// + (((ImageButton)(mToolbar.getChildAt(0))).getDrawable().getIntrinsicWidth() * 3); 
 		

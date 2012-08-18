@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<blowtorch xmlversion="2">
+<plugins>
+	<plugin name="mapper" id="99">
+		<author>Daniel Block</author>
+		<description>
+		<![CDATA[
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+body {
+	color: #999;
+}
+</style>
+</head>
+
+<body>
+<h3>Mapper summary
+  </p>
+</h3>
+<p>This thing does so much. So. Very. Much.</p>
+
+</body>
+</html>
+		]]>
+		</description>
+		<triggers>
+			<trigger title="roommonitor" pattern="%room.info" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="got_gmcp_room" fireWhen="always"/>
+			</trigger>
+			<trigger title="areamonitor" pattern="%room.area" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="update_gmcp_area" fireWhen="always"/>
+			</trigger>
+		</triggers>
+		<windows>
+			<window name="map_window" id="1290" script="mapwindow">
+				<layoutGroup target="xlarge">
+					<layout orientation="landscape" width="100" height="177" alignParentRight="true" above="40" below="5010"/>
+					<layout orientation="portrait" width="100" height="177"  alignParentRight="true" above="40" below="5010"/>
+				</layoutGroup>
+				<layoutGroup target="large">
+					<layout orientation="landscape" width="100" height="177"  alignParentRight="true" above="40" below="5010"/>
+					<layout orientation="portrait" width="100" height="177"  alignParentRight="true" above="40" below="5010"/>
+				</layoutGroup>
+			</window>
+		</windows>
+		<options title="Mapper" summary="Aww yea, mapper yo.">
+  	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>	
+  	 	</options>
+		
+		<script name="bootstrap">
+			<![CDATA[
+			dofile(GetPluginInstallDirectory().."/simpledb.lua")
+			]]>
+		</script>
+		<script name="mapwindow">
+			<![CDATA[
+			dofile(GetPluginInstallDirectory().."/mapwindow.lua")
+			]]>
+		</script>
+	</plugin>
+</plugins>
+</blowtorch>

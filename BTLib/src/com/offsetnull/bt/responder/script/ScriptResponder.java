@@ -16,6 +16,8 @@ import android.util.Log;
 
 import com.offsetnull.bt.responder.TriggerResponder;
 import com.offsetnull.bt.responder.ack.AckResponder;
+import com.offsetnull.bt.service.Colorizer;
+import com.offsetnull.bt.service.Connection;
 import com.offsetnull.bt.window.TextTree;
 
 public class ScriptResponder extends TriggerResponder {
@@ -110,10 +112,10 @@ public class ScriptResponder extends TriggerResponder {
 			
 		
 			L.getGlobal(function);
-			if(function.equals("processChat")) {
+			/*if(function.equals("processChat")) {
 				int foo = 100;
 				foo = foo + function.length();
-			}
+			}*/
 			if(!L.isFunction(L.getTop())) {
 				Log.e("LUA",function + " is not a function.");
 				return false;
@@ -131,12 +133,16 @@ public class ScriptResponder extends TriggerResponder {
 			
 			//L.call(2, 0);
 			if(L.pcall(3,1,-5) != 0) {
-				Log.e("FOO","Error running("+function+"): " + L.getLuaObject(-1).getString());
+				String str = "Error in trigger callback("+function+"): " + L.getLuaObject(-1).getString();
+				dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.colorRed + str + Colorizer.colorWhite + "\n"));
+				//dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_TRIGGER_LUA_ERROR, str));
 			} else {
 				if(L.getLuaObject(-1).getBoolean() == true) {
 					return true;
 				}
 			}
+			
+			L.pop(2);
 			//return 2;
 			
 			return false;

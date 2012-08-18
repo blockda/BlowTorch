@@ -37,14 +37,15 @@
     android:editable="true"
     android:layout_marginLeft="3sp"
     android:id="@+id/textinput"
-    android:inputType = "textMultiLine"
     android:nextFocusUp = "@id/textinput"
     android:nextFocusDown = "@id/textinput"
     android:nextFocusLeft = "@id/textinput"
     android:nextFocusRight = "@id/textinput"
     android:isScrollContainer = "false"
     android:keepScreenOn = "true"
-    android:imeOptions = "actionSend"/>
+    android:imeOptions = "actionSend"
+    android:maxLines = "8"
+    android:inputType = "textMultiLine"/>
     
 
 
