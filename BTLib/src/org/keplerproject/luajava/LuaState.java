@@ -91,6 +91,7 @@ public class LuaState
   {
 	//System.loadLibrary("lua");
     System.loadLibrary(LUAJAVA_LIB);
+    System.loadLibrary("sqlite3");
   }
 
   private CPtr luaState;

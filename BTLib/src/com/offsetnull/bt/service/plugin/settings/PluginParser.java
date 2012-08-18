@@ -127,7 +127,7 @@ public class PluginParser extends BasePluginParser {
 				
 				int ret = p.getLuaState().pcall(0, 1, -2);
 				if(ret != 0) {
-					Log.e("PLUGIN","Error in Bootstrap("+p.getName()+"):"+pL.getLuaObject(-1).getString());
+					p.displayLuaError("Error in Bootstrap("+p.getName()+"):"+pL.getLuaObject(-1).getString());
 				} else {
 					//bootstrap success.
 					//i think i can use the existing traceback, but the pcall has left a nil on the stack
@@ -137,12 +137,16 @@ public class PluginParser extends BasePluginParser {
 					pL.remove(-2);
 					
 					pL.getGlobal("OnPrepareXML");
-					pL.pushJavaObject(data);
-					int r2 = pL.pcall(1, 1, -3);
-					if(r2 != 0) {
-						Log.e("PLUGIN","Error in OnPrepareXML"+pL.getLuaObject(-1).getString());
+					if(pL.isFunction(-1)) {
+						pL.pushJavaObject(data);
+						int r2 = pL.pcall(1, 1, -3);
+						if(r2 != 0) {
+							p.displayLuaError("Error in OnPrepareXML: "+pL.getLuaObject(-1).getString());
+						} else {
+							pL.pop(2);
+						}
 					} else {
-						
+						pL.pop(2);
 					}
 				}
 			}

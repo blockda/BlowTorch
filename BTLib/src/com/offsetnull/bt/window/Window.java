@@ -510,7 +510,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int ret = L.pcall(1, 1, -3);
 			if(ret != 0) {
 				displayLuaError("WindowXCallB calling: " + string + " error:"+L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
+		} else {
+			L.pop(2);
 		}
 	}
 
@@ -1677,9 +1681,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					} else {
 						//Log.e("LUAWINDOW","OnDraw success!");
 						//hasDrawRoutine = false;
+						L.pop(2);
 					}
 				} else {
 					hasDrawRoutine = false;
+					L.pop(2);
 				}
 			}
 		} else {
@@ -1743,7 +1749,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			return; //no scroller to show.
 		}
 		
-		if(scrollback > SCROLL_MIN) {
+		if(scrollback > SCROLL_MIN && the_tree.getBrokenLineCount() > CALCULATED_LINESINWINDOW) {
 			homeWidgetShowing = true;
 			//c.save();
 			//c.translate(homeWidgetRect.left, homeWidgetRect.bottom);
@@ -2278,10 +2284,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
 			//calculate how few.
+			int offset = 0;
+			if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
+				
+				offset = ((PREF_LINESIZE) * CALCULATED_LINESINWINDOW) - this.getHeight();
+				//Log.e("STARTY","STARTY IS:"+y);
+			}
+			//int offset =
 			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount()-1);
 			while(drawingIterator.hasNext()) {drawingIterator.next(); startline += 1;}
 			//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
-			return new IteratorBundle(drawingIterator,under*pLineSize,0,startline);
+			
+			return new IteratorBundle(drawingIterator,under*pLineSize-(offset+(PREF_LINESIZE/3)),0,startline);
 		}
 		
 		//double target = Math.floor(pY/pLineSize);
@@ -2456,10 +2470,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int ret = L.pcall(4, 1, -6);
 			if(ret != 0) {
 				displayLuaError("Window("+mName+") OnSizeChangedError: " + L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
 		} else {
 			//Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
 			hasOnSizeChanged = false;
+			L.pop(2);
 		}
 	}
 	boolean hasOnSizeChanged = true;
@@ -2507,10 +2524,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				displayLuaError("WindowXCallT Error:" + L.getLuaObject(-1).getString());
 			} else {
 				//success!
+				L.pop(2);
 			}
 			
 		} else {
-			
+			L.pop(2);
 		}
 	}
 	
@@ -2547,7 +2565,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		DebugFunction df = new DebugFunction(L);
 		BoundsFunction bf = new BoundsFunction(L);
 		OptionsMenuFunction omf = new OptionsMenuFunction(L);
-		TableAdapterFunction taf = new TableAdapterFunction(L);
 		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
 		SheduleCallbackFunction scf = new SheduleCallbackFunction(L);
 		CancelSheduleCallbackFunction cscf = new CancelSheduleCallbackFunction(L);
@@ -2563,16 +2580,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		try {
 			
 			gsbshf.register("GetStatusBarHeight");
-			iv.register("invalidate");
-			df.register("debugPrint");
-			bf.register("getBounds");
-			omf.register("addOptionCallback");
-			taf.register("getTableAdapter");
+			iv.register("Invalidate");
+			df.register("Note");
+			bf.register("GetBounds");
+			omf.register("AddOptionCallback");
 			pxcf.register("PluginXCallS");
-			scf.register("scheduleCallback");
-			cscf.register("cancelCallback");
-			gddf.register("getDisplayDensity");
-			stsf.register("sendToServer");
+			scf.register("ScheduleCallback");
+			cscf.register("CancelCallback");
+			gddf.register("GetDisplayDensity");
+			stsf.register("SendToServer");
 			gesdf.register("GetExternalStorageDirectory");
 			pmsf.register("PushMenuStack");
 			popmsf.register("PopMenuStack");
@@ -2625,6 +2641,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			displayLuaError("Error Loading Script: "+L.getLuaObject(L.getTop()).getString());
 		} else {
 			//Log.e("LUAWINDOW","Loaded script body for: " + mName);
+			L.pop(2);
 		}
 
 	}
@@ -2632,18 +2649,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public void runScriptOnCreate() {
 		if(L == null) return;
 		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
+		L.getField(-1, "traceback");
 		L.remove(-2);
 		
 		
 		L.getGlobal("OnCreate");
-		if(L.isFunction(L.getTop())) {
-			int tmp = L.pcall(0, 1, -3);
+		if(L.getLuaObject(-1).isFunction()) {
+			int tmp = L.pcall(0, 1, -2);
 			if(tmp != 0) {
 				displayLuaError("Calling OnCreate: "+L.getLuaObject(-1).getString());
 			} else {
-				//Log.e("LUAWINDOW","OnCreate Success!");
+				Log.e("LUAWINDOW","OnCreate Success for window ("+this.getName()+")!");
+				L.pop(2);
 			}
+		} else {
+			L.pop(2);
 		}
 	}
 	
@@ -2688,7 +2708,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException {
 			String foo = this.getParam(2).getString();
-			Log.e("LUAWINDOW","DEBUG:"+foo);
+			//Log.e("LUAWINDOW","DEBUG:"+foo);
+			Window.this.parent.dispatchLuaText(foo);
 			return 0;
 		}
 		
@@ -2823,9 +2844,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int ret = L.pcall(1, 1, -3);
 			if(ret != 0) {
 				displayLuaError("Scheduled callback("+callback+") error:"+L.getLuaObject(-1).toString());
+			} else {
+				L.pop(2);
 			}
 		} else {
 			//error no function.
+			L.pop(2);
 		}
 	}
 	
@@ -3106,12 +3130,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(L.isFunction(L.getTop())) {
 			int tmp = L.pcall(0, 1, -2);
 			if(tmp != 0) {
-				displayLuaError("Error calling script callback: "+L.getLuaObject(-1).getString());
+				displayLuaError("Error calling window script function "+callback+": "+L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
+		} else {
+			L.pop(2);
 		}
 	}
 	
-	public void callFunction(String callback,Object o) {
+	/*public void callFunction(String callback,Object o) {
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
@@ -3123,9 +3151,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int tmp = L.pcall(1, 1, -3);
 			if(tmp != 0) {
 				displayLuaError("Error calling script callback: "+L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
+		} else {
+			L.pop(2);
 		}
-	}
+	}*/
 
 
 
@@ -3933,9 +3965,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int ret = L.pcall(0, 1, -2);
 			if(ret != 0) {
 				displayLuaError("Error in OnDestroy: "+L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
 		} else {
 			//no method.
+			L.pop(2);
 		}
 		
 		//callbackHandler.removeCallbacksAndMessages(token)
@@ -4073,9 +4108,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int ret = L.pcall(1, 1, -3);
 			if(ret != 0) {
 				displayLuaError("Error in PopulateMenu:"+L.getLuaObject(-1).getString());
+			} else {
+				L.pop(2);
 			}
 		} else {
-			L.pop(1);
+			L.pop(2);
 		}
 	}
 

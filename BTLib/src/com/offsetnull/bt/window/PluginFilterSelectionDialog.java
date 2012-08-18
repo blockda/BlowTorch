@@ -7,6 +7,7 @@ import com.offsetnull.bt.service.IConnectionBinder;
 import android.content.Context;
 import android.os.RemoteException;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class PluginFilterSelectionDialog extends BaseSelectionDialog implements BaseSelectionDialog.OptionItemClickListener {
 
@@ -56,10 +57,14 @@ public class PluginFilterSelectionDialog extends BaseSelectionDialog implements 
 		// TODO Auto-generated method stub
 		switch(row) {
 		case 0:
+			Toast t = Toast.makeText(this.getContext(), "Help not implemented.", Toast.LENGTH_LONG);
+			t.show();
 			onHelp();
 			break;
 		case 1:
 			onEnableAll();
+			Toast h = Toast.makeText(this.getContext(), "Enable all toggle not implemented.", Toast.LENGTH_LONG);
+			h.show();
 			break;
 		case 2:
 			//divier

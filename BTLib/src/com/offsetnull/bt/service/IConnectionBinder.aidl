@@ -134,4 +134,5 @@ interface IConnectionBinder {
 	List getPluginsWithTimers();
 	boolean isLinkLoaded(String link);
 	String getPluginPath(String plugin);
+	void dispatchLuaText(String str);
 }

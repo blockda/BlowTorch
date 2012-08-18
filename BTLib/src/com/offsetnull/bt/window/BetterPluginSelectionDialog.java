@@ -14,7 +14,7 @@ import android.widget.LinearLayout;
 
 import com.offsetnull.bt.service.IConnectionBinder;
 
-public class BetterPluginSelectionDialog extends StandardSelectionDialog implements BaseSelectionDialog.UtilityToolbarListener,BaseSelectionDialog.OptionItemClickListener {
+public class BetterPluginSelectionDialog extends StandardSelectionDialog implements BaseSelectionDialog.UtilityToolbarListener,BaseSelectionDialog.OptionItemClickListener, PluginSelectorDialog.OnPluginLoadListener {
 
 	ArrayList<String> items = new ArrayList<String>();
 	
@@ -42,9 +42,12 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 			this.addListItem(key, info, 0, true);
 		}
 		
+		this.setNewButtonLabel("Load");
+		
 		this.setTitle("PLUGINS");
 	}
-
+	
+	
 	@Override
 	public void onButtonPressed(View v, int row, int index) {
 		// TODO Auto-generated method stub
@@ -72,7 +75,7 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 
 	@Override
 	public void onNewPressed(View v) {
-		PluginSelectorDialog loader = new PluginSelectorDialog(v.getContext(),service);
+		PluginSelectorDialog loader = new PluginSelectorDialog(v.getContext(),service,this);
 		loader.show();
 	}
 
@@ -98,6 +101,11 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 	public void willHideToolbar(LinearLayout v, int row) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	@Override
+	public void onPluginLoad() {
+		this.dismiss();
 	}
 
 }

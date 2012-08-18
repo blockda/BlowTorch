@@ -1,8 +1,8 @@
---debugPrint("package path:"..package.path)
+--Note("package path:"..package.path)
 package.path = package.path..";"..GetExternalStorageDirectory().."/BlowTorch/?.lua"
 --package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
 
---debugPrint("package path:"..package.path)
+--Note("package path:"..package.path)
 require("button")
 require("serialize")
 local marshal = require("marshal")
@@ -10,7 +10,7 @@ local marshal = require("marshal")
 --and storing all the loaded buttons in memory.
 
 --communicates back and fourth with the window script to huck data.
-debugPrint("STARTING THE WHO BOOTSTRAP SEQUENCE!")
+--Note("STARTING THE WHO BOOTSTRAP SEQUENCE!")
 buttonsets = {} --raw table, holds tables of buttons.
 buttonset_defaults = {} --raw table, holds defaults for a set name.
 
@@ -44,7 +44,7 @@ lob = {}
 
 function loadButtonSet(args)
 	
-	--debugPrint("trying to load.."..args.." setcount:"..#buttonsets)
+	--Note("trying to load.."..args.." setcount:"..#buttonsets)
 	
 	--for i,b in pairs(buttonsets) do
 	--	printTable(i,b)
@@ -57,7 +57,7 @@ function loadButtonSet(args)
 	if(lob.set ~= nil) then
 		--local lob = {}
 		current_set = args
-		--debugPrint(serialize(lob))
+		--Note(serialize(lob))
 		--WindowXCallS("button_window","loadButtons",serialize(lob))
 		--local orig = { answer = 42}
 		
@@ -65,26 +65,26 @@ function loadButtonSet(args)
 		--assert(marshal.encode(orig))
 		
 		--local str = marshal.encode(orig)
-		--debugPrint("attempting byte dump")
+		--Note("attempting byte dump")
 		--for i=1,#str do
 		--	local c = str:sub(i,i)
 			--local df = tonumber(c)
 			--if(df ~= nil) then
-		--		debugPrint("byte: "..string.byte(c))
+		--		Note("byte: "..string.byte(c))
 			--else
-			--	debugPrint("byte nil, probably 0x8e");
+			--	Note("byte nil, probably 0x8e");
 			--end
 		--end
 		
 		
-		--debugPrint("trying to copy")
+		--Note("trying to copy")
 		--local copy = marshal.clone(orig)
-		--debugPrint("cloned value"..copy.answer)
+		--Note("cloned value"..copy.answer)
 		--local copy = marshal.decode(str)
 		
-		--debugPrint(copy.answer)
+		--Note(copy.answer)
 		
-		--debugPrint(str)
+		--Note(str)
 		WindowXCallB("button_window","loadButtons",marshal.encode(lob))
 		
 	end
@@ -117,13 +117,13 @@ function clearButtons()
 end
 
 function saveButtons(arg)
-	debugPrint("SAVE BUTTONS IMPL")
+	--Note("SAVE BUTTONS IMPL")
 	
 	local tmp = loadstring(arg)()
 	
 	buttonsets[current_set] = tmp
 	--printTable("arg",arg)
-	saveSettings()
+	SaveSettings()
 end
 
 function makeNewButtonSet(name)
@@ -138,7 +138,7 @@ function printTable(key,o)
 		if(type(v)=="table") then
 			printTable(key.."."..i,v)
 		else 
-			debugPrint(key.."."..i.."<==>"..v)
+			--Note(key.."."..i.."<==>"..v)
 		end
 	end
 end
@@ -150,7 +150,7 @@ function bset.start(a)
 	
 	local tmp = {}
 	tmp.name = a:getValue("","name") or "default"
-	debugPrint("NEW BUTTON SET:"..tmp.name)
+	--Note("NEW BUTTON SET:"..tmp.name)
 	tmp.width = a:getValue("","width") or "80"
 	tmp.height = a:getValue("","height") or "80"
 	tmp.labelSize = a:getValue("","labelSize") or "23"
@@ -194,7 +194,7 @@ end
 
 button = {}
 function button.start(a)
-	--debugPrint("NEW BUTTON:"..working_set)
+	----Note("NEW BUTTON:"..working_set)
 	
 	local tmp = {}
 	tmp.x = a:getValue("","x")
@@ -251,7 +251,7 @@ bset_cb = luajava.createProxy("android.sax.StartElementListener",bset)
 button_cb = luajava.createProxy("android.sax.StartElementListener",button)
 
 function handleSelected(body)
-	debugPrint("found the selectedNode:"..body)
+	--Note("found the selectedNode:"..body)
 	current_set = body
 end
 
@@ -262,7 +262,7 @@ selectedListener["end"] = handleSelected
 selected_cb = luajava.createProxy("android.sax.TextElementListener",selectedListener)
 
 function handleButtonSerializer(body)
-	debugPrint("doing string serailze for buttons")
+	--Note("doing string serailze for buttons")
 	buttonsets = loadstring(body)()
 end
 buttonserializer = {}
@@ -270,7 +270,7 @@ buttonserializer["end"] = handleButtonSerializer
 buttonserializer_cb = luajava.createProxy("android.sax.TextElementListener",buttonserializer)
 
 function handleButtonSetSerializer(body)
-	debugPrint("doing string serailze for buttonsets")
+	--Note("doing string serailze for buttonsets")
 	buttonset_defaults = loadstring(body)()
 end
 buttonsetserializer = {}
@@ -278,7 +278,7 @@ buttonsetserializer["end"] = handleButtonSetSerializer
 buttonsetserializer_cb = luajava.createProxy("android.sax.TextElementListener",buttonsetserializer)
 
 function OnPrepareXML(root)
-	debugPrint("XMLLXLXLXLMXMXLMXLXMLXMXLMLLXMLXMXLXMLXMX")
+	--Note("XMLLXLXLXLMXMXLMXLXMLXMXLMLLXMLXMXLXMLXMX")
 	sets = root:getChild("buttonsets")
 	set = sets:getChild("buttonset")
 	button = set:getChild("button")
@@ -294,11 +294,11 @@ function OnPrepareXML(root)
 	buttons:setTextElementListener(buttonserializer_cb)
 	defaults:setTextElementListener(buttonsetserializer_cb)
 end
-debugPrint("loaded button prototypes")
+--Note("loaded button prototypes")
 
 function getButtonSetList(s)
 	
-	debugPrint("getting button list")
+	--Note("getting button list")
 
 	setdata = {}
 	for i,v in pairs(buttonsets) do
@@ -320,12 +320,12 @@ end
 function OnXmlExport(out)
 	--local System = luajava.bindClass("java.lang.System")
 	--now = System:currentTimeMillis()
-	debugPrint("buttonset save routine GO!")
+	--Note("buttonset save routine GO!")
 	
 	if(out ~= nil) then
-		debugPrint("xmlserializer is not null")
+		--Note("xmlserializer is not null")
 	else
-		debugPrint("xmlserializer is null")
+		--Note("xmlserializer is null")
 	end
 	--local startTag = out.startTag(out)
 	--local out = xout
@@ -338,7 +338,7 @@ function OnXmlExport(out)
 	out:startTag("","buttonsets")
 	--for i,b in pairs(bsets) do
 	--	out:startTag("","buttonset")
-	----	debugPrint("attempting to output set"..i)
+	----	--Note("attempting to output set"..i)
 	--	local defs = bset_defaults[i]
 	--	out:attribute("","name",i)
 		
@@ -449,7 +449,7 @@ function OnXmlExport(out)
 	out:endTag("","defaults")
 	out:endTag("","buttonsets")
 	--delta = System:currentTimeMillis() - now
-	--debugPrint("saved all buttons, took "..delta.." millis.")
+	----Note("saved all buttons, took "..delta.." millis.")
 end
 
 function buttonLayerReady()
@@ -458,13 +458,13 @@ function buttonLayerReady()
 end
 
 function legacyButtonsImported()
-	debugPrint("doing button import")
+	--Note("doing button import")
 	printTable("buttonsets",buttonsets)
 	printTable("buttonset_defaults",buttonset_defaults)
 end
 
 function OnOptionChanged(key,value)
-	debugPrint(key..":"..value)
+	--Note("\n"..key..":"..value.."\n")
 	local func = optionsTable[key]
 	if(func ~= nil) then
 		func(value)
@@ -480,42 +480,42 @@ end
 function setAutoLaunch(value)
 	
 	options.auto_launch = value
-	if(userPresent()) then
+	if(UserPresent()) then
 		loadOptions()
 	end
 end
 
 function setAutoCreate(value)
 	options.auto_create = value
-	if(userPresent()) then
+	if(UserPresent()) then
 		loadOptions()
 	end
 end 
 
 function setRoundness(value)
 	options.roundness = value
-	if(userPresent()) then
+	if(UserPresent()) then
 		loadOptions()
 	end
 end
 
 function setHapticFeedbackEditor(value)
 	options.haptic_edit = value
-	if(userPresent()) then
+	if(UserPresent()) then
 		loadOptions()
 	end
 end
 
 function setHapticFeedbackPressed(value)
 	options.haptic_press = value
-	if(userPresent()) then
+	if(UserPresent()) then
 		loadOptions()
 	end
 end
 
 function setHapticFeedbackFlipped(value)
 	options.haptic_flip = value
-	if(userPresent()) then
+	if(UserPresent()) then
 		loadOptions()
 	end
 end
@@ -580,7 +580,7 @@ function alignDefaultButtons()
 	yoffset = GetActionBarHeight()
 	
 	--pcall(getActionBarHeight)
-	debugPrint("ACTION BAR HEIGHT IS:"..yoffset)
+	--Note("ACTION BAR HEIGHT IS:"..yoffset)
 	for i,b in pairs(set) do
 		b.x = b.x + xoffset
 		b.y = b.y + yoffset

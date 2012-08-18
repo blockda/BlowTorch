@@ -21,10 +21,7 @@ public class NoteFunction extends PluginFunction {
 		String str = this.getParam(2).getString();
 		Log.e("LUA","NOTE FUNCTION("+L.getStateId()+"):"+str);
 		mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_LUANOTE,str));
-		
-		
 		return 0;
-
 	}
 
 }

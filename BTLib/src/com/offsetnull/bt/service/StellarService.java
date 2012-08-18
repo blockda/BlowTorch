@@ -86,6 +86,7 @@ import android.os.RemoteException;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 //import android.util.Log;
 
 //import com.happygoatstudios.bt.service.IStellarServiceCallback;
@@ -204,10 +205,14 @@ public class StellarService extends Service {
 	
 	@Override
 	public int onStartCommand(Intent intent,int flags,int startId) {
+		//Debug.waitForDebugger();
+		
 		if(intent == null) {
 			//Log.e("SERVICE","onStartCommand passed null intent");
 			return Service.START_STICKY;
 		}
+		
+		
 		//Log.e("SERVICE","onStartCommand");
 		if(ConfigurationLoader.isTestMode(this.getApplicationContext())) {
 			//Thread.setDefaultUncaughtExceptionHandler(new com.happygoatstudios.bt.crashreport.CrashReporter(this.getApplicationContext()));
@@ -506,7 +511,7 @@ public class StellarService extends Service {
 		//port = BAD_PORT;
 
 		
-		
+		//Debug.waitForDebugger();
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
 		
 		int libsver = prefs.getInt("CURRENT_LUA_LIBS_VERSION", 0);
@@ -1434,11 +1439,11 @@ public class StellarService extends Service {
 	}
 	
 	public void dispatchXMLError(String error) throws RemoteException {
-		/*final int N = callbacks.beginBroadcast();
+		final int N = callbacks.beginBroadcast();
 		for(int i = 0;i<N;i++) {
 			callbacks.getBroadcastItem(i).displayXMLError(error);
 		}
-		callbacks.finishBroadcast();*/
+		callbacks.finishBroadcast();
 	}
 	
 	public void sendBuffer() throws RemoteException {
@@ -2381,9 +2386,10 @@ public class StellarService extends Service {
 		
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
-		
+		//Debug.waitForDebugger();
 		Notification note = new Notification(resId,"BlowTorch Connected",System.currentTimeMillis());
 		Context context = getApplicationContext();
+		
 		CharSequence contentTitle = null;
 		CharSequence contentText = null;
 		if(connections.size() > 1) {
@@ -2475,10 +2481,13 @@ public class StellarService extends Service {
 		for(Connection c : connections.values()) {
 			//c.killNetThreads();
 			c.shutdown();
+			
+			c = null;
 		}
 		
 		this.stopForeground(true);
 		
+		Log.e("service","service termination complete");
 		this.stopSelf();
 		
 		
@@ -3226,7 +3235,7 @@ public class StellarService extends Service {
 		@Override
 		public void closeConnection(String display) {
 			Connection c = connections.get(display);
-			c.killNetThreads();
+			c.shutdown();
 			connections.remove(display);
 			//switch to the next active connection.
 			//connectionClutch = connections.
@@ -3296,6 +3305,11 @@ public class StellarService extends Service {
 			String path = connections.get(connectionClutch).getPluginPath(plugin);
 			if(path == null) path = "";
 			return path;
+		}
+
+		@Override
+		public void dispatchLuaText(String str) throws RemoteException {
+			connections.get(connectionClutch).dispatchLuaText(str);
 		}
 
 	};
