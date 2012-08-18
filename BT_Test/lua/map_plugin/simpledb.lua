@@ -2,13 +2,15 @@
 --package.path = GetExternalStorageDirectory().."/BlowTorch/?.lua"
 --package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
 
+dbPath = GetPluginInstallDirectory().."/mapper-db"
+
 require("luabins")
 
-debugPrint("loaded luabins")
+--debugPrint("loaded luabins")
 
 require("lsqlite3")
 
-local db = sqlite3.open("/mnt/sdcard/BlowTorch/testdb.lua");
+local db = sqlite3.open(dbPath);
 
 function create_tables ()
    -- create rooms table
@@ -119,12 +121,20 @@ function dbcheck (code, query)
    end -- if
 end -- dbcheck 
 
+current_uid = nil
+
 function got_gmcp_room(inroom)
-	debugPrint("mapping room:"..inroom.num);
+	--debugPrint("mapping room:"..inroom.num);
    local room_number = inroom.num
    if not(room_number) then 
       return
    end
+   
+   local setHasRooms = nil
+   if(current_uid == nil) then
+   		setHasRooms = function () WindowXCallS("map_window","setHasRooms",true) end
+   end
+   current_uid = room_number
    
    --dumpTable("","inroom",inroom)
    
@@ -149,6 +159,7 @@ function got_gmcp_room(inroom)
    end
    
    current_room = room_number
+   WindowXCallS("map_window","updateCurrentRoom",current_room)
    
    local area_exists = false
    for n in db:nrows (string.format ("SELECT uid FROM areas where uid=%s", fixsql(gmcproom.area))) do
@@ -209,13 +220,13 @@ function got_gmcp_room(inroom)
       end
       dbCheckExecute("BEGIN TRANSACTION;")
       local success = save_room_to_database(room_number, gmcproom)
-      debugPrint("saved room"..room_number)
+      --debugPrint("saved room"..room_number)
       if success then
-      	debugPrint("saved room success, attempting exits")
+      	Note("\nsaved room success, attempting exits\n")
          rooms[room_number] = gmcproom
          if not same_exits or not same_area then
             save_room_exits(room_number)
-            debugPrint("saved room exits success")
+            --debugPrint("saved room exits success")
          end
       end     
       dbCheckExecute("COMMIT;") 
@@ -235,9 +246,9 @@ function got_gmcp_room(inroom)
 end
 
 function save_room_exits(uid) 
-	debugPrint("saving room exits")
+	--debugPrint("saving room exits")
    if rooms[uid] == nil then
-   	debugPrint("rooms[uid] == nil")
+   	--debugPrint("rooms[uid] == nil")
       return
    end
    dumpTable("","rooms[uid]",rooms[uid])
@@ -253,7 +264,7 @@ function save_room_exits(uid)
             ))
 
             --if show_database_mods then
-              debugPrint ("Added exit: ".. dir.. "from room: "..uid.. " to room: ".. touid.. " to database.")
+              --debugPrint ("Added exit: ".. dir.. "from room: "..uid.. " to room: ".. touid.. " to database.")
             --end -- if
 
             if rooms[uid].exits[dir] ~= touid then
@@ -650,7 +661,7 @@ function checkDatabaseIntegrity()
 end
 
 function update_gmcp_area(gmcparea)
-	debugPrint("saving area"..gmcparea.name)
+	--debugPrint("saving area"..gmcparea.name)
    local areaid = gmcparea.id
    local areaname = gmcparea.name
    local texture = gmcparea.texture
@@ -695,7 +706,7 @@ function findpath(src, dst, noportals, norecalls)
    end
    
    if src == dst or src == nil or dst == nil then
-   	  debugPrint("src or dst is nil or equal")
+   	  --debugPrint("src or dst is nil or equal")
       return {}
    end
    
@@ -733,7 +744,7 @@ function findpath(src, dst, noportals, norecalls)
     
       -- get all exits to any room in the previous set
       local q = string.format ("select fromuid, touid, dir from exits where touid in (%s) and fromuid not in (%s) and level <= %s order by length(dir) asc",table.concat(rooms_list,","), visited, 9999)
-      debugPrint("findpath query:"..q)
+      --debugPrint("findpath query:"..q)
       local dcount = 0
       room_sets[depth] = {}
       for row in db:nrows(q) do
@@ -749,13 +760,13 @@ function findpath(src, dst, noportals, norecalls)
       end -- for select
 
       if dcount == 0 then
-      	debugPrint("no path from here to there")
+      	Note("\nno path from here to there\n")
          return -- there is no path from here to there
       end -- if dcount
    end -- while
   
    if found == false then
-   		debugPrint("did the bizness and didn't find a path")
+   		Note("\ndid the bizness and didn't find a path\n")
       return
    end
   
@@ -800,7 +811,7 @@ function findpath(src, dst, noportals, norecalls)
       depth = depth - 1
       ftd = room_sets[depth][next_room]
       next_room = ftd.touid
-      debugPrint("building back:"..next_room)
+      --debugPrint("building back:"..next_room)
 -- this caching is probably not noticeably useful, so disable it for now
 --      if not rooms[ftd.touid] then -- if not in memory yet, get it
 --         rooms[ftd.touid] = load_room_from_database (ftd.touid)
@@ -811,23 +822,23 @@ function findpath(src, dst, noportals, norecalls)
    return path, found_depth
 end -- function findpath
 
-function doFindPath()
+function doFindPath(target_uid)
 	--findpath.
-	debugPrint("trying to find paths")
-	local found,depth = findpath(32418,28634)
+	Note("\ntrying to find paths from "..current_uid.." to "..target_uid.."\n")
+	local found,depth = findpath(current_uid,target_uid)
 	local sw = ""
 	for i,v in ipairs(found) do
 		sw = sw..v.dir
 	end
-	debugPrint("path found:"..sw)
-	sendToServer("run "..sw)
+	Note("\npath found:"..sw.."\n")
+	SendToServer("run "..sw)
 end
 
 areas = {}
 rooms = {}
 room_not_in_database = {}
 create_tables()
-debugPrint("created tables")
+--debugPrint("created tables")
 RegisterSpecialCommand("dumpdb","doSomething")
 
 RegisterSpecialCommand("findpath","doFindPath")
@@ -837,6 +848,11 @@ function doSomething()
 	for row in db:nrows("SELECT * FROM exits") do
 	  dumpTable("","row",row)
 	end
+end
+
+function runtoRoom(uid)
+	uid = tonumber(uid)
+	doFindPath(uid)
 end
 
 function fixsql (s)
@@ -865,7 +881,7 @@ function dumpTable(indent,name,t)
 		if(type(v) == "table") then
 			dumpTable(indent.."  ",name.."."..i,v)
 		else
-			debugPrint(indent..name.."."..i..":"..v)
+			Note("\n"..indent..name.."."..i..":"..v.."\n")
 		end
 	end
 end

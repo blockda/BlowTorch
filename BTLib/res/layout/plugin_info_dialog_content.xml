@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/holder"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/title_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:background="#FF999999">
+    <ImageButton
+        android:id="@+id/back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/reverse_button"/>
+    <TextView 
+      	android:id="@+id/title"
+       	android:layout_width="wrap_content"
+      	android:layout_height="wrap_content"
+      	android:textAppearance="?android:attr/textAppearanceLarge"
+      	android:textColor="#FF333333"
+      	android:layout_weight="1"
+		android:background="#FF999999"
+       	android:gravity="center"
+       	android:ellipsize="start"
+       	android:singleLine="true"
+       	android:lines="1"
+       	android:maxLines="1"
+       	android:minLines="1"/>
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/reverse_button"
+        android:visibility="invisible"/>
+    </LinearLayout>
+    <LinearLayout
+      	android:layout_width="fill_parent"
+      	android:layout_height="wrap_content"
+      	android:orientation="horizontal"
+      	android:id="@+id/install_bar"
+      	android:layout_alignParentBottom="true"
+      	android:gravity="center">
+	    <Button
+		    android:id="@+id/install"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_alignParentBottom="true"
+		    android:text="INSTALL PLUGIN" />
+    </LinearLayout>
+	<ListView
+		android:id="@+id/list"
+		android:layout_height="fill_parent"
+		android:layout_width="fill_parent"
+		android:layout_above="@id/install_bar"
+		android:layout_below="@id/title_bar"/>
+</RelativeLayout>

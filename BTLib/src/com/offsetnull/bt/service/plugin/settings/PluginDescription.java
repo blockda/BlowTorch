@@ -9,6 +9,8 @@ public class PluginDescription {
 	private int timers;
 	private int scripts;
 	private int windows;
+	private boolean error;
+	private String errorMessage;
 	public String getName() {
 		return name;
 	}
@@ -56,5 +58,18 @@ public class PluginDescription {
 	}
 	public void setWindows(int windows) {
 		this.windows = windows;
+	}
+	public void setError(boolean b) {
+		this.error = true;
+	}
+	public void setErrorMessage(String localizedMessage) {
+		this.errorMessage = localizedMessage;
+	}
+	public boolean isError() {
+		// TODO Auto-generated method stub
+		return error;
+	}
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 }

@@ -84,9 +84,12 @@ public class DataPumper extends Thread {
 								DispatchDialog(e1.getMessage());
 								connected = false;
 							}
-						break;
+							break;
 						case MESSAGE_END:
+							Log.e("TEST","OUTPUT WRITER THREAD SHUTTING DOWN");
+							
 							this.getLooper().quit();
+							break;
 						}
 					}
 				};
@@ -230,22 +233,33 @@ public class DataPumper extends Thread {
 						//break;
 					case MESSAGE_END:
 						//Log.e("PUMP","PUMP QUITTING!");
-						
+						handler.removeMessages(MESSAGE_RETRIEVE);
+						Log.e("TEST","DATA PUMPER STARTING END SEQUENCE");
 						try {
 							if(writerThread != null) {
 								writerThread.outhandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+								try {
+									Log.e("TEST","KILLING WRITER THREAD");
+									writerThread.join();
+									Log.e("TEST","WRITER THREAD DEAD");
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 							}
 							//writer.close();
 							if(reader != null) {
 								reader.close();
 							}
 							if(the_socket != null) {
-							the_socket.close();
+								the_socket.close();
 							}
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
+						Log.e("TEST","Net reader thread stopping self.");
+					
 						this.getLooper().quit();
 						break;
 					case MESSAGE_INITXFER:
@@ -270,7 +284,7 @@ public class DataPumper extends Thread {
 					
 					//if(!restart)
 					//keep the pump flowing.
-					if(!handler.hasMessages(MESSAGE_RETRIEVE)) {
+					if(!handler.hasMessages(MESSAGE_RETRIEVE) && connected) {
 						//only send if there are no messages already in queue.
 						if(!throttle) {
 							handler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 100);
@@ -512,6 +526,20 @@ public class DataPumper extends Thread {
 	public boolean isConnected() {
 		// TODO Auto-generated method stub
 		return connected ;
+	}
+
+	public void closeSocket() {
+		try {
+			
+			//reader.close();
+			connected = false;
+			the_socket.close();
+			this.interrupt();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	//public void sendGMCPData(String obj) {

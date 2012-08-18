@@ -3,7 +3,7 @@
 
 require("serialize")
 --make a button.
-debugPrint("in the chat server")
+--Note("in the chat server")
 
 chatWindow = GetWindowTokenByName("chats")
 AppendWindowSettings("chats")
@@ -45,7 +45,7 @@ function updateSelection(newChannel)
 	--update the chat window (hypothetically, through
 	chatWindow:setBuffer(buffer)
 	
-	invalidateWindowText(chatWindowName)
+	InvalidateWindowText(chatWindowName)
 
 end
 
@@ -72,7 +72,7 @@ function processChat(name,line,replaceMap)
 	channel = replaceMap["1"]
 	
 	if(currentChannel == "main") then
-		appendLineToWindow(chatWindowName,line)
+		AppendLineToWindow(chatWindowName,line)
 	else
 		mainBuffer = buffers["main"]
 		mainBuffer:appendLine(line)
@@ -83,7 +83,7 @@ function processChat(name,line,replaceMap)
 		--append this line to it
 		
 		if(currentChannel == channel) then
-			appendLineToWindow(chatWindowName,line)
+			AppendLineToWindow(chatWindowName,line)
 		else
 			channelBuffer = buffers[channel]
 			if(channelBuffer == nil) then
@@ -110,7 +110,7 @@ function processChat(name,line,replaceMap)
 end
 
 function OnOptionChanged(key,value)
-	debugPrint("in on option changed, key:"..key)
+	--Note("\n chatwindow in on option changed, key:"..key.."\n")
 	local func = optionsTable[key]
 	if(func ~= nil) then
 		func(value)
@@ -118,7 +118,7 @@ function OnOptionChanged(key,value)
 end
 
 function setWindowSize(size)
-	debugPrint("in setWindowSize()")
+	--debugPrint("in setWindowSize()")
 	local layouts = chatWindow:getLayouts()
 	local keys = layouts:keySet()
 	local iterator = keys:iterator()
@@ -128,7 +128,7 @@ function setWindowSize(size)
 		layoutGroup:setPortraitHeight(tonumber(size))
 		layoutGroup:setLandscapeHeight(tonumber(size))
 	end
-	if(userPresent()) then
+	if(UserPresent()) then
 		WindowXCallS(chatWindowName,"setWindowSize",tostring(size))
 	end
 end
