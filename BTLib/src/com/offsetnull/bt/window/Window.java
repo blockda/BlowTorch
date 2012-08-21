@@ -1749,7 +1749,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			return; //no scroller to show.
 		}
 		
-		if(scrollback > SCROLL_MIN && the_tree.getBrokenLineCount() > CALCULATED_LINESINWINDOW) {
+		if(scrollback > SCROLL_MIN +3*density && the_tree.getBrokenLineCount() > CALCULATED_LINESINWINDOW) {
 			homeWidgetShowing = true;
 			//c.save();
 			//c.translate(homeWidgetRect.left, homeWidgetRect.bottom);
@@ -4086,6 +4086,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	public void jumpToStart() {
 		scrollback = SCROLL_MIN;
+		fling_velocity=0;
 		this.invalidate();
 	}
 

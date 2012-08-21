@@ -35,7 +35,7 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 		mListItems.clear();
 		//plist.key
 		List<String> sortedSet = new ArrayList<String>(plist.keySet());
-		Collections.sort(sortedSet);
+		Collections.sort(sortedSet,String.CASE_INSENSITIVE_ORDER);
 		for(String key : sortedSet) {
 			String info = plist.get(key);
 			items.add(key);

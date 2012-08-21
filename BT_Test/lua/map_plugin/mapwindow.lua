@@ -15,10 +15,10 @@ local rooms = {}
 local room_not_in_database = {}
 
 local density = GetDisplayDensity()
-local boxSize = 40*density
+local boxSize = 20*density
 local ROOM_SIZE = boxSize
 local HALF_ROOM = boxSize/2
-local DISTANCE_TO_NEXT_ROOM = 80*density
+local DISTANCE_TO_NEXT_ROOM = 30*density
 local THIRD_WAY = DISTANCE_TO_NEXT_ROOM /3
 local HALF_WAY = DISTANCE_TO_NEXT_ROOM / 2
  connectors = {
@@ -26,7 +26,9 @@ local HALF_WAY = DISTANCE_TO_NEXT_ROOM / 2
       s =  { x1 = 0,            y1 =   HALF_ROOM, x2 = 0,                             y2 =   HALF_ROOM + HALF_WAY, at = { 0,  1 } }, 
       e =  { x1 =   HALF_ROOM,  y1 = 0,           x2 =   HALF_ROOM + HALF_WAY,  y2 = 0,                            at = {  1,  0 }}, 
       w =  { x1 = - HALF_ROOM,  y1 = 0,           x2 = - HALF_ROOM - HALF_WAY,  y2 = 0,                            at = { -1,  0 }}, 
-   
+   	  --u = { x1 = - HALF_ROOM,  y1 = - HALF_ROOM, x2 = - HALF_ROOM , y2 = - HALF_ROOM, at = {-1, -1 } }, 
+      --d = { x1 =   HALF_ROOM,  y1 =   HALF_ROOM, x2 =   HALF_ROOM , y2 =   HALF_ROOM, at = { 1,  1 } }, 
+      
       ne = { x1 =   HALF_ROOM,  y1 = - HALF_ROOM, x2 =   HALF_ROOM + HALF_WAY , y2 = - HALF_ROOM - HALF_WAY, at = { 1, -1 } }, 
       se = { x1 =   HALF_ROOM,  y1 =   HALF_ROOM, x2 =   HALF_ROOM + HALF_WAY , y2 =   HALF_ROOM + HALF_WAY, at = { 1,  1 } }, 
       nw = { x1 = - HALF_ROOM,  y1 = - HALF_ROOM, x2 = - HALF_ROOM - HALF_WAY , y2 = - HALF_ROOM - HALF_WAY, at = {-1, -1 } }, 
@@ -327,9 +329,16 @@ function get_room (uid)
    if not ourroom then
       ourroom = load_room_from_database (uid)
       rooms [uid] = ourroom -- cache for later
+      if ourroom then
+      	--Note("\nloaded room from database:\n")
+      	--dumpTable("",string.format("rooms[%s]",tostring(uid)),ourroom)
+      else
+      	--Note("\nunknown room:"..tostring(uid))
+      end
    end -- not in cache
    
    if not ourroom then
+   
       return { unknown = true }
    end -- if
    
@@ -384,6 +393,19 @@ end -- load_room_from_database
 
 local boxStroke = nil
 local boxFill = nil
+local unknownStroke = luajava.new(Paint)
+unknownStroke:setStyle(PaintStyle.STROKE)
+unknownStroke:setColor(Color:argb(255,190,190,190))
+unknownStroke:setStrokeWidth(4*density)
+
+local unknownFill = luajava.new(Paint)
+unknownFill:setStyle(PaintStyle.FILL)
+unknownFill:setColor(Color:argb(255,40,40,40))
+
+local exitStroke = luajava.new(Paint)
+exitStroke:setStyle(PaintStyle.STROKE)
+exitStroke:setColor(Color:argb(255,40,40,40))
+exitStroke:setStrokeWidth(4*density)
 
 local roomRect = nil
 
@@ -393,7 +415,28 @@ local roomRect = nil
 local current_room = nil
 
 function updateCurrentRoom(uid)
-	current_room = tonumber(uid)
+	--current_room = tonumber(uid)
+	current_room = uid
+	--Note("\nsetting current room")
+	if(rooms[current_room] ~= nil) then
+		--Note("\nsetting into mapped room")
+		if(rooms[current_room].unknown) then
+			--Note("\nclearning unknown room")
+			rooms[current_room] = nil
+			room_not_in_database[current_room] = false
+			--local room = get_room(tonumber(uid))
+			--rooms[current_room] = room
+			--if(room ~= nil) then
+			--	dumpTable("",string.format("rooms[%s]",current_room),room)
+			--else
+			--	Note("nil table")
+			--end
+		end
+	else
+		--Note("\n")
+		--rooms[current_room] = get_room(uid)
+	end
+	
 	view:invalidate()
 end
 
@@ -432,7 +475,7 @@ function OnDraw(c)
 	drawn_coords = {}
 	plan_to_draw = {}
 	area_exits = {}
-	Note("window size: "..viewWidth.." x "..viewHeight.."\n")
+	--Note("window size: "..viewWidth.." x "..viewHeight.."\n")
 	table.insert(rooms_to_be_drawn,add_another_room(current_room,{},viewWidth/2,viewHeight/2))
 	
 	--return
@@ -456,12 +499,15 @@ end  -- add_another_room
 
 function draw_room(uid,path,x,y,c)
 	local coords = string.format("%i,%i",math.floor(x),math.floor(y))
-	Note("drawing room "..uid.." at "..x.." x "..y.."\n")
+	--Note("drawing room "..uid.." at "..x.." x "..y.."\n")
 	drawn_coords[coords] = uid
 	
 	if drawn[uid] then
 		return
 	end	
+	
+	local stroke = boxStroke
+	local fill = boxFill
 	
 	drawn[uid] = {coords = coords,path = path}
 	
@@ -472,7 +518,13 @@ function draw_room(uid,path,x,y,c)
 		rooms[uid] = room
 	end
 	
-	if not room or room.unknown then return end
+	--if not room or room.unknown then return end
+	
+	if(room.unknown) then
+		fill = unknownFill
+        stroke = unknownStroke
+        if(not room.exits) then room.exits = {} end
+	end
 	
 	local left, top, right, bottom = x - HALF_ROOM, y - HALF_ROOM, x + HALF_ROOM, y + HALF_ROOM
    
@@ -494,12 +546,12 @@ function draw_room(uid,path,x,y,c)
       if dir == "u" then
          exit_info = connectors.nw
          stub_exit_info = half_connectors.nw
-         arrow = arrows.nw
+         --arrow = arrows.nw
         -- exit_line_colour = (locked_exit and 0x0000FF) or config.EXIT_COLOUR_UP_DOWN.colour
       elseif dir == "d" then
          exit_info = connectors.se
          stub_exit_info = half_connectors.se
-         arrow = arrows.se
+         --arrow = arrows.se
         -- exit_line_colour = (locked_exit and 0x0000FF) or config.EXIT_COLOUR_UP_DOWN.colour
       end -- if down
       
@@ -516,18 +568,20 @@ function draw_room(uid,path,x,y,c)
          
          if rooms [exit_uid].unknown then
             --linetype = miniwin.pen_dot -- dots
+            
          end -- if
          
          local next_x = x + exit_info.at [1] * (ROOM_SIZE + DISTANCE_TO_NEXT_ROOM)
          local next_y = y + exit_info.at [2] * (ROOM_SIZE + DISTANCE_TO_NEXT_ROOM)
          
          local next_coords = string.format ("%i,%i", math.floor (next_x), math.floor (next_y))
-         Note(string.format("\nroom %s exit %s to %s at %i,%i\n",uid,dir,exit_uid,math.floor(next_x),math.floor(next_y)))
+         --Note(string.format("\nroom %s exit %s to %s at %i,%i\n",uid,dir,exit_uid,math.floor(next_x),math.floor(next_y)))
          -- remember if a zone exit (first one only)
 --      if show_area_exits and room.area ~= rooms [exit_uid].area then
          if show_area_exits and room.area ~= rooms [exit_uid].area and not rooms[exit_uid].unknown then
             area_exits [ rooms [exit_uid].area ] = area_exits [ rooms [exit_uid].area ] or {x = x, y = y}
          end -- if
+         
          
          -- if another room (not where this one leads to) is already there, only draw "stub" lines
          if drawn_coords [next_coords] and drawn_coords [next_coords] ~= exit_uid then
@@ -538,16 +592,16 @@ function draw_room(uid,path,x,y,c)
             --linetype = miniwin.pen_dash -- dash
          else
          --if (not show_other_areas and rooms [exit_uid].area ~= current_area) or
-            if (not show_other_areas and rooms [exit_uid].area ~= current_area and not rooms[exit_uid].unknown) or
-               (not show_up_down and (dir == "u" or dir == "d")) then
-               exit_info = stub_exit_info    -- don't show other areas
-            else
+            --if (not show_other_areas and rooms [exit_uid].area ~= current_area and not rooms[exit_uid].unknown) or
+           --    (not show_up_down and (dir == "u" or dir == "d")) then
+           --    exit_info = stub_exit_info    -- don't show other areas
+          --  else
                -- if we are scheduled to draw the room already, only draw a stub this time
-               if plan_to_draw [exit_uid] and plan_to_draw [exit_uid] ~= next_coords then
+              -- if plan_to_draw [exit_uid] and plan_to_draw [exit_uid] ~= next_coords then
                   -- here if room already going to be drawn
-                  exit_info = stub_exit_info
+                --  exit_info = stub_exit_info
                   --linetype = miniwin.pen_dash -- dash
-               else
+               --else
                   -- remember to draw room next iteration
                   local new_path = copytable.deep (path)
                   table.insert (new_path, { dir = dir, uid = exit_uid })
@@ -565,12 +619,12 @@ function draw_room(uid,path,x,y,c)
                   --      linewidth = 2
                   --   end -- if
                   --end -- if
-               end -- if
-            end -- if
+               --end -- if
+            --end -- if
          end -- if drawn on this spot
 
          --WindowLine (win, x + exit_info.x1, y + exit_info.y1, x + exit_info.x2, y + exit_info.y2, exit_line_colour, linetype + 0x0200, linewidth)
-         
+         c:drawLine(x+exit_info.x1,y+exit_info.y1,x+exit_info.x2,y+exit_info.y2,exitStroke)
          -- one-way exit?
          
          --if not rooms [exit_uid].unknown then
@@ -598,12 +652,12 @@ function draw_room(uid,path,x,y,c)
    
    --actually draw the window
    	c:save()
-   	Note("\nDrawing room("..uid..") @ "..x.." x "..y.."\n")
+   	--Note("\nDrawing room("..uid..") @ "..x.." x "..y.."\n")
    	
 	c:translate(x,y)
 	
-	c:drawRect(roomRect,boxFill)
-	c:drawRect(roomRect,boxStroke)
+	c:drawRect(roomRect,fill)
+	c:drawRect(roomRect,stroke)
 	
 	c:restore()
 end
@@ -617,6 +671,7 @@ function fixsql (s)
 end -- fixsql
 
 function dumpTable(indent,name,t)
+	if(not t) then return end
 	for i,v in pairs(t) do
 		if(type(v) == "table") then
 			dumpTable(indent.."  ",name.."."..i,v)

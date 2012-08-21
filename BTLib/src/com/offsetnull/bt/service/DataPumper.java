@@ -533,7 +533,9 @@ public class DataPumper extends Thread {
 			
 			//reader.close();
 			connected = false;
-			the_socket.close();
+			if(the_socket != null) {
+				the_socket.close();
+			}
 			this.interrupt();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
