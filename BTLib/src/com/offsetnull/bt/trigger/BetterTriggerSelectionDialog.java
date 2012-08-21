@@ -121,7 +121,8 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 		
 		sortedKeys = new String[dataMap.size()];
 		sortedKeys = dataMap.keySet().toArray(sortedKeys);
-		Arrays.sort(sortedKeys);
+		//Arrays.sort(sortedKeys);
+		Arrays.sort(sortedKeys,String.CASE_INSENSITIVE_ORDER);
 		clearListItems();
 		for(int i=0;i<sortedKeys.length;i++) {
 			TriggerData data = dataMap.get(sortedKeys[i]);

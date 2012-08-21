@@ -130,6 +130,7 @@ public class MainWindow extends Activity {
 	
 	//public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	//public String PREFS_NAME;
+	private int MAIN_WINDOW_ID = -1;
 	protected static final int MESSAGE_HTMLINC = 110;
 	protected static final int MESSAGE_RAWINC = 111;
 	protected static final int MESSAGE_BUFFINC = 112;
@@ -969,7 +970,12 @@ public class MainWindow extends Activity {
 							mInputBox.clearComposingText();
 							mInputBox.setText("");
 						}
-					//} catch (RemoteException e1) {
+						
+						com.offsetnull.bt.window.Window w = (com.offsetnull.bt.window.Window) MainWindow.this.findViewById(MAIN_WINDOW_ID);
+						if(w != null) {
+							w.jumpToStart();
+						}
+						//} catch (RemoteException e1) {
 					//	throw new RuntimeException(e1);
 					//}
 					break;
@@ -2925,6 +2931,9 @@ public class MainWindow extends Activity {
 					w = (WindowToken)x;
 				} else {
 					//err.
+				}
+				if(MAIN_WINDOW_ID == -1) {
+					MAIN_WINDOW_ID = w.getId();
 				}
 				initWindow(w,dataDir);
 				

@@ -637,7 +637,7 @@ function normalTouch.onTouch(v,e)
 					return true
 				end
 				--debugPrint("secondary touch")
-				
+				mainwindow:jumpToStart()
 				SendToServer(touchedbutton.data.flipCommand)
 			end
 			normalTouchState = 0

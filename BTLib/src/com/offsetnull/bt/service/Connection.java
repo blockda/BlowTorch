@@ -982,9 +982,9 @@ public class Connection implements SettingsChangedListener {
 		
 		}
 		massiveTriggerString = triggerBuilder.toString();
-		//String trgstr = triggerBuilder.toString();
-		//trgstr = trgstr.replace("|", "\n");
-		//Log.e("MASSIVE",trgstr);
+		String trgstr = triggerBuilder.toString();
+		trgstr = trgstr.replace("|", "\n");
+		Log.e("MASSIVE",trgstr);
 		massivePattern = Pattern.compile(massiveTriggerString,Pattern.MULTILINE);
 		
 		massiveMatcher = massivePattern.matcher("");
@@ -1254,7 +1254,7 @@ public class Connection implements SettingsChangedListener {
 		//Log.e("PARSING","TIMEPROFILE triggers did " + deltatmp2 + " of necessary prep.");
 		
 		//long firstpart = System.currentTimeMillis();
-		
+		working.setModCount(0);
 		//strip the color out.
 		colorStripper.reset(new String(raw,the_settings.getEncoding()));
 		String stripped = colorStripper.replaceAll("");
@@ -1274,7 +1274,7 @@ public class Connection implements SettingsChangedListener {
 		while(lineMatcher.find()) {
 			found = true;
 			
-			//Log.e("LINE MAP","MAPPING POSITIONS: {" + lineMatcher.start() + ":" + lineMatcher.end() + "} to line:" + lineNumber + " + data:" + lineMatcher.group());
+			Log.e("LINE MAP","MAPPING POSITIONS: {" + lineMatcher.start() + ":" + lineMatcher.end() + "} to line:" + lineNumber + " + data:" + lineMatcher.group());
 			lineMap.add(new Range(lineMatcher.start(),lineMatcher.end(),lineNumber));
 			lineNumber = lineNumber -1;
 		}
@@ -1308,7 +1308,6 @@ public class Connection implements SettingsChangedListener {
 					int tmpstart = s - tmp.first().getStart();
 					int tmpend = (e-1) - tmp.first().getStart();
 	
-
 					
 					int index = -1;
 					for(int i=1;i<=massiveMatcher.groupCount();i++) {
@@ -1327,28 +1326,41 @@ public class Connection implements SettingsChangedListener {
 						
 						TriggerData t = sortedTriggerMap.get(index);
 						Plugin p = triggerPluginMap.get(index);
+						Log.e("TRIGGER","TRIGGER "+t.getName()+" FIRED ON LINE:"+tmpline);
+						
 //						if(t.getName().equals("map_capture_end") || t.getName().equals("map_capture")) {
 //							Log.e("Parse","Debug Me");
 //						}
 						//Log.e("TRIGGER","trigger matched:" + t.getName() + " :"+massiveMatcher.group());
 						//String matched3 = massiveMatcher.group();
-						if(lineNumber >= tmpline) {
+						boolean gagged = false;
+						if(lineNumber > tmpline) {
 							int amount = (lineNumber - tmpline);
 							for(int i=0;i<amount;i++) {
 								l = it.previous();
 							}
+							working.setModCount(0);
+							lineNumber = tmpline;
+							Log.e("TRIGGER","Line Data:" + TextTree.deColorLine(l));
 							if(it.hasNext()) {
-								it.next();
+								//Line tmpl = it.next();
+								//it.previous();
 								lineNumber = tmpline;
+								
 							} else {
 							//	Log.e("TRIGGER","DEBUG ME");
-								lineNumber = working.getLines().size()-1;
+								//lineNumber = working.getLines().size()-1;
 								
 							}
+							Log.e("TRIGGER","TRIGGER FOUND AND PROCESSING ON LINE:"+lineNumber);
 							
+						} else if(tmpline > lineNumber) {
+							gagged = true;
+						} else {
+							//l = it.next();
 						}
 						//Log.e("MATCHED","MATCHED TRIGGER:" + matched3 + " : " + t.getName());
-						if(t != null && t.isEnabled()) {
+						if(t != null && t.isEnabled() && gagged == false) {
 							captureMap.clear();
 							for(int i=index;i<=(t.getMatcher().groupCount()+index);i++) {
 								
@@ -1374,8 +1386,15 @@ public class Connection implements SettingsChangedListener {
 								} catch(IteratorModifiedException e1) {
 									it = e1.getIterator();
 									int now = working.getLines().size();
-									lineNumber = it.nextIndex();
+									working.setModCount(0);
+									lineNumber = it.previousIndex();
 									linedelta = now - linesize;
+									if(it.hasPrevious()) {
+										l = it.previous();
+									} else {
+										keepEvaluating = false;
+									}
+									//it.next();
 									//int linesize = 
 									//if(responder instanceof GagAction) {
 										//gagged, working tree now contains.
@@ -1385,6 +1404,7 @@ public class Connection implements SettingsChangedListener {
 //										Log.e("GAG","GAG("+i+"):"+lff);
 //										//lf = lf-1;
 //									}
+									
 									
 									//}
 								}
@@ -1399,6 +1419,7 @@ public class Connection implements SettingsChangedListener {
 					}
 				}
 				if(rebuildTriggers) {
+					working.setModCount(0);
 					done = false;
 					keepEvaluating = true;
 					//get the triggering sequence start and end.
@@ -3417,6 +3438,7 @@ public class Connection implements SettingsChangedListener {
 		}
 		
 		buildTriggerSystem();
+		this.saveMainSettings();
 	}
 	
 	private void loadInternalSettings() {

@@ -129,7 +129,7 @@ public class BetterAliasSelectionDialog extends PluginFilterSelectionDialog impl
 			//if(key.endsWith("$")) { key = key.substring(0, key.length()-1); }
 		//	sortedKeys[i] = key;
 		//}
-		Arrays.sort(sortedKeys);
+		Arrays.sort(sortedKeys,String.CASE_INSENSITIVE_ORDER);
 		clearListItems();
 		for(int i=0;i<sortedKeys.length;i++) {
 			AliasData data = dataMap.get(sortedKeys[i]);
