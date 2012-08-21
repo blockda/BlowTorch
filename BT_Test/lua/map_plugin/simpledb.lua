@@ -159,7 +159,7 @@ function got_gmcp_room(inroom)
    end
    
    current_room = room_number
-   WindowXCallS("map_window","updateCurrentRoom",current_room)
+   
    
    local area_exists = false
    for n in db:nrows (string.format ("SELECT uid FROM areas where uid=%s", fixsql(gmcproom.area))) do
@@ -236,6 +236,7 @@ function got_gmcp_room(inroom)
       end
    end -- if room not there
   
+  WindowXCallS("map_window","updateCurrentRoom",current_room)
    --mapper.draw(room_number)
 
    --if expected_exit == "0" and from_room then

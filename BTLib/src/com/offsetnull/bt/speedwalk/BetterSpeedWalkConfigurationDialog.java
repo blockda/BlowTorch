@@ -49,7 +49,7 @@ public class BetterSpeedWalkConfigurationDialog extends StandardSelectionDialog 
 		}
 		sortedKeys = new String[dataMap.size()];
 		sortedKeys = dataMap.keySet().toArray(sortedKeys);
-		Arrays.sort(sortedKeys);
+		Arrays.sort(sortedKeys,String.CASE_INSENSITIVE_ORDER);
 		clearListItems();
 		String tag = "";
 		for(int i=0;i<sortedKeys.length;i++) {
