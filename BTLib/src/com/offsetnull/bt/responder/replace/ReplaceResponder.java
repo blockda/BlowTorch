@@ -120,13 +120,17 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int start,int pend,String matched,Object source, String displayname,String host,int port, int triggernumber,
+	public boolean doResponse(Context c,TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,TextTree.Line line,int pstart,int pend,String matched,Object source, String displayname,String host,int port, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name,String encoding) throws IteratorModifiedException {
 			if(line == null) {
 				return false;
 			}
-			int end = pend  + 1;
+			int end = pend  + 1 + tree.getModCount();
+			
+			int start = pstart + tree.getModCount();
+			
+			
 			//so here we go, meat of the replacer code.
 			//int start = matched.start();
 			//int end = matched.end()-1;
@@ -136,8 +140,14 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			while(it.hasPrevious()) {
 				it.previous();
 			}
-			String replaced = this.translate(this.getWith(), captureMap);
 			
+			String replaced = this.translate(this.getWith(), captureMap);
+			int delta = (replaced.length()-1) - (end - start);
+			if(delta < 0) {
+				//delta = delta -1;
+			}
+			//if(delta < 0)
+			tree.setModCount(tree.getModCount()+delta);
 			//TextTree.Line newLine = new TextTree.Line();
 			LinkedList<TextTree.Unit> newLine = new LinkedList<TextTree.Unit>();
 			
@@ -190,6 +200,8 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			
 			Unit text = line.newText(replaced);
 			newLine.add(text);
+			
+			
 			
 			if(preEmptiveChop) {
 				//means that the matched group landed entirely within a textual unit.

@@ -1275,6 +1275,7 @@ public class Plugin implements SettingsChangedListener {
 	
 	public void addTrigger(TriggerData data) {
 		this.getSettings().getTriggers().put(data.getName(), data);
+		this.sortTriggers();
 		parent.buildTriggerSystem();
 		settings.setDirty(true);
 	}

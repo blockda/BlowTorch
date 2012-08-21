@@ -74,6 +74,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 			//if(tree.getLines().size()-1 <= lineNumber) {
 				tree.getLines().remove(lineNumber);
 			//} else {
+				//tree.updateMetrics();
 			//	return false; //not really sure why that is happening.
 			//}
 			
@@ -93,9 +94,13 @@ public class GagAction extends TriggerResponder implements Parcelable {
 				iterator = tree.getLines().listIterator(prevloc+1);
 				IteratorModifiedException e = new IteratorModifiedException(iterator);
 				throw e;
+			} else {
+				iterator = tree.getLines().listIterator(0);
+				IteratorModifiedException e = new IteratorModifiedException(iterator);
+				throw e;
 			}
 			
-			return false;
+			//return false;
 			
 	}
 

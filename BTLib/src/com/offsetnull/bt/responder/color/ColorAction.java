@@ -59,14 +59,15 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 	}
 
 	@Override
-	public boolean doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, int start, int end,String matched,
+	public boolean doResponse(Context c, TextTree tree,int lineNumber,ListIterator<TextTree.Line> iterator,Line line, int pstart, int pend,String matched,
 			Object source, String displayname,String host,int port, int triggernumber,
 			boolean windowIsOpen, Handler dispatcher,
 			HashMap<String, String> captureMap, LuaState L, String name,String encoding) {
 		//well. this is sort of duplication of effort from the replacer action. but whatever.
 		//int start = matched.start();
 		//int end = matched.end()-1;
-		end = end + 1;
+		int end = pend + 1 + tree.getModCount();
+		int start = pstart + tree.getModCount();
 		Unit u = null;
 		line.resetIterator();
 		ListIterator<Unit> it = line.getIterator();

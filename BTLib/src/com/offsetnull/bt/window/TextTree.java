@@ -24,6 +24,8 @@ public class TextTree {
 	Pattern colordata = Pattern.compile("\\x1B\\x5B.+m");
 	Matcher colormatch = colordata.matcher("");
 	
+	private int modCount;
+	
 	public boolean debugLineAdd = false;
 	//Pattern newlinelookup = Pattern.compile("\n");
 	//Pattern tab = Pattern.compile(new String(new byte[]{0x09}));
@@ -1810,6 +1812,14 @@ public class TextTree {
 		//return null;
 	}
 	
+	public int getModCount() {
+		return modCount;
+	}
+
+	public void setModCount(int modCount) {
+		this.modCount = modCount;
+	}
+
 	public class SelectionCursor {
 		public int line,column;
 		
