@@ -126,6 +126,13 @@ public class ReplaceResponder extends TriggerResponder implements Parcelable {
 			if(line == null) {
 				return false;
 			}
+			
+			if(windowIsOpen) {
+				if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+			} else {
+				if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+			}
+			
 			int end = pend  + 1 + tree.getModCount();
 			
 			int start = pstart + tree.getModCount();

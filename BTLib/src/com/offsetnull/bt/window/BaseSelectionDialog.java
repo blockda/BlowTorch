@@ -1005,6 +1005,8 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 				mToolbarListener.onItemDeleted(mLastSelectedIndex);
 			}
 			
+			((AnimatedRelativeLayout)mToolbar.getParent()).removeView(mToolbar);
+			
 			mLastSelectedIndex = -1;
 			
 

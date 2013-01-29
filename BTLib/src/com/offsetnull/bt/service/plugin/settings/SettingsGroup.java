@@ -19,6 +19,7 @@ public class SettingsGroup extends Option implements Parcelable {
 	private static final int OPTION_COLOR = 6;
 	private static final int OPTION_FILE = 7;
 	private static final int OPTION_STRING = 8;
+	private static final int OPTION_CALLBACK = 9;
 	
 	private HashMap<String,Option> optionsMap = new HashMap<String,Option>();
 	private HashMap<String,SettingsChangedListener> listenerMap = new HashMap<String,SettingsChangedListener>();
@@ -73,6 +74,9 @@ public class SettingsGroup extends Option implements Parcelable {
 				break;
 			case OPTION_STRING:
 				o = p.readParcelable(com.offsetnull.bt.service.plugin.settings.StringOption.class.getClassLoader());
+				break;
+			case OPTION_CALLBACK:
+				o = p.readParcelable(com.offsetnull.bt.service.plugin.settings.CallbackOption.class.getClassLoader());
 				break;
 			}
 
@@ -140,6 +144,9 @@ public class SettingsGroup extends Option implements Parcelable {
 				break;
 			case STRING:
 				p.writeInt(OPTION_STRING);
+				break;
+			case CALLBACK:
+				p.writeInt(OPTION_CALLBACK);
 				break;
 			}
 			p.writeParcelable(o, flags);

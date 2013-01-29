@@ -5,6 +5,13 @@ require("serialize")
 --make a button.
 --Note("in the chat server")
 
+NewTrigger("test","pattern",{enabled=true,once=true,regex=true},{type="gag",fire="always"},{type="replace",text="fsdfs",fire="never"})
+NewTrigger("test2","pattern2",{enabled=false,once=false,regex=false},{type="notification",title="foo",message="bar"},{type="toast",message="toasty",duration=1},{type="send",text="foo",fire="windowClosed"},{type="replace",text="haha",fire="windowOpen"},{type="gag",output=false,log=false,retarget="chats"},{type="color",foreground=212,background=40,fire="never"})
+
+DeleteTrigger("test")
+DeleteTrigger("test2")
+
+
 chatWindow = GetWindowTokenByName("chats")
 AppendWindowSettings("chats")
 chatWindowName = "chats"
@@ -117,8 +124,62 @@ function OnOptionChanged(key,value)
 	end
 end
 
+function finishUpdate()
+	--Note("\nStarting finishupdate\n")
+	--get the window settings:
+	local wsettings = chatWindow:getSettings()
+	local psettings = GetPluginSettings()
+	
+	--backup settings keys to sharedprefs
+	prefs = context:getSharedPreferences(string.format("chat_window_%d",GetPluginID()),0)
+	
+	ed = prefs:edit()
+	local op = psettings:findOptionByKey("height")
+	local opval = op:getValue()
+	
+	ed:putString("height",tostring(opval))
+	
+	ed:commit()
+	--Note("\nReloading settings\n")
+	ReloadSettings()
+	--reboot
+end
+
+function OnBackgroundStartup()
+	--Note("\nbackground startup started\n")
+	if(PluginSupports("button_window","testxcall")) then
+	
+		CallPlugin("button_window","testxcall","datataa")
+	else
+		Note("Button window plugin does not support testxcall")
+	end
+	
+	local psettings = GetPluginSettings()
+	
+	--backup settings keys to sharedprefs
+	local prefs = context:getSharedPreferences(string.format("chat_window_%d",GetPluginID()),0)
+	if(prefs:contains("height")) then
+		local val = prefs:getString("height","77")
+		--Note("\nContains height key "..tostring(val).."\n")
+		
+		psettings:findOptionByKey("height"):setValue(val)
+		local ed = prefs:edit()
+		ed:clear()
+		ed:commit()
+		setWindowSize(val)
+	else
+		--Note("\nchat window update prefs not found\n")
+	end
+	
+	
+end
+
+function recvxcall(data)
+	Note("chat window recieved data:"..data)
+end
+
 function setWindowSize(size)
-	--debugPrint("in setWindowSize()")
+	--Note("\nin setWindowSize()"..size.."\n")
 	local layouts = chatWindow:getLayouts()
 	local keys = layouts:keySet()
 	local iterator = keys:iterator()
@@ -136,8 +197,20 @@ end
 optionsTable = {}
 optionsTable.height = setWindowSize
 
+RegisterSpecialCommand("http","testHttp")
 
+function testHttp()
+	WindowXCallS(chatWindowName,"runDatRunner","FOO")
+end
 
+function startUpdate()
+	--Note("\ntesting\n")
+	WindowXCallS(chatWindowName,"runDatRunner","FOO")
+end
+
+function EchoText(text)
+	AppendLineToWindow(chatWindowName,text)
+end
 
 
 

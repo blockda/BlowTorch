@@ -6,6 +6,8 @@ context = view:getContext()
 density = GetDisplayDensity()
 local chatOutputView = view
 
+local current_version = 12
+
 --
 -- Classes needed by the script to do android-esque ui things.
 System = luajava.bindClass("java.lang.System")
@@ -32,11 +34,13 @@ ShapeDrawable = luajava.bindClass("android.graphics.drawable.ShapeDrawable")
 LayerDrawable = luajava.bindClass("android.graphics.drawable.LayerDrawable")
 StateListDrawable = luajava.bindClass("android.graphics.drawable.StateListDrawable")
 R_attr = luajava.bindClass("android.R$attr")
-
+Class = luajava.bindClass("java.lang.Class")
+Gravity = luajava.bindClass("android.view.Gravity")
 --
 -- Utility 'java primitive array' creation code
 Integer = luajava.bindClass("java.lang.Integer")
 Float = luajava.bindClass("java.lang.Float")
+Byte = luajava.bindClass("java.lang.Byte")
 
 IntegerInstance = luajava.new(Integer,0)
 IntegerClass = IntegerInstance:getClass()
@@ -45,6 +49,10 @@ RawInteger = IntegerClass.TYPE
 FloatInstance = luajava.new(Float,0)
 FloatClass = FloatInstance:getClass()
 RawFloat = FloatClass.TYPE
+
+ByteInstance = luajava.new(Byte,0)
+ByteClass = ByteInstance:getClass()
+RawByte = ByteClass.TYPE
 
 function makeFloatArray(table)
 	newarray = Array:newInstance(RawFloat,#table)
@@ -287,14 +295,21 @@ function expandWindow()
 		return true;
 	end
 	
+	--Note("expanding window:")
+	
 	theight = replacementView:getHeight()
 	twidth = replacementView:getWidth()
 	theight = theight + foldoutHeight
+	--Note("expanding window:"..theight..":"..foldoutHeight)
 	
 	if(theight > maxHeight) then
 		theight = maxHeight
 		--foldoutHeight = 0
+		--Note("window height is greater than max")
 	end
+	
+	--Note("expanding window:"..theight)
+	
 	replacementView:setDimensions(tonumber(twidth),tonumber(theight))
 	
 	altMainOutputViewLayoutParams = luajava.new(RelativeLayoutParams,mainOutputViewLayoutParams.width,mainOutputView:getHeight())
@@ -688,11 +703,14 @@ end
 PluginXCallS("initReady","now")
 
 function OnCreate()
-	
+	--EchoText("in create")
 	--debugPrint("OnCreate for CHATWINDOW"..minHeight)
 	inputbar = rootView:findViewById(10)
 	
 	maxHeight = inputbar:getTop()
+	--EchoText("in create, max height is: "..maxHeight)
+	
+	PluginXCallS("EchoText",string.format("Chat Plugin v1.%d Loaded...\n\n",current_version))
 end
 
 runonce = true
@@ -711,4 +729,283 @@ function setWindowSize(size)
 	--else
 	--	runonce = false
 	--end
+end
+
+function makeRunner()
+	runner = {}
+	function runner.run()
+	
+
+		
+		--start version check
+		EchoText("\nChecking for updates...\n\n")
+		local url = luajava.newInstance("java.net.URL","http://bt.happygoatstudios.com/test/chat_plugin_version");
+	
+		local c = url:openConnection()
+	
+		c:setRequestMethod("GET")
+		c:setDoOutput(true)
+		c:connect()
+	
+		
+
+		reader = luajava.newInstance("java.io.InputStreamReader",c:getInputStream())
+		
+		bufferedreader = luajava.newInstance("java.io.BufferedReader",reader)
+		
+		line = bufferedreader:readLine()
+		
+		--Note(string.format("Server chat plugin version is: %s",line))
+		
+		c:disconnect()
+		
+		url = nil
+		
+		server_version = tonumber(line)
+		
+		if(current_version < server_version) then
+			--need to download and unpack
+			--runOnUIThread(function()
+			--	updateTextView:setText("Downloading Update...")
+			--end)
+				
+			local foo = function()
+				local url = luajava.newInstance("java.net.URL","http://bt.happygoatstudios.com/test/chat_plugin_package.zip");
+	
+				local c = url:openConnection()
+				c:setDefaultUseCaches(false)
+				c:setUseCaches(false)
+				c:setRequestProperty("Cache-Control", "no-cache");
+				c:setRequestMethod("GET")
+				c:setDoOutput(true)
+				
+				c:connect()
+			
+				local size = c:getContentLength()
+			
+			
+			
+				local b = luajava.array(RawByte,1024)
+			
+				--local sizeb = Array:getLength(b)
+				--Note("\nArray Size:"..sizeb.."\n\n")
+				--for i=0,1023 do
+				--	Array:setByte(b,i,ByteInstance:byteValue())
+				--end
+			
+				--Note("\n"..b.."\n\n")
+			
+				local istream = c:getInputStream()
+		
+				local outputFile = luajava.newInstance("java.io.File",string.format("%s/update.zip",GetPluginInstallDirectory()))
+
+				local ostream = luajava.newInstance("java.io.FileOutputStream",outputFile)
+			
+				EchoText("\nOutput file location:"..outputFile:getPath().."\n\n")
+			
+				local length = istream:read(b)
+			
+				while(length ~= -1) do
+					ostream:write(b,0,length)
+					length = istream:read(b)
+				end
+			
+				ostream:close()
+			
+				c:disconnect()
+			
+				local fis = luajava.newInstance("java.io.FileInputStream",outputFile)
+			
+				local bis = luajava.newInstance("java.io.BufferedInputStream",fis)
+			
+				local zis = luajava.newInstance("java.util.zip.ZipInputStream",bis)
+			
+				--local zipEntry = luajava.newInstance("java.util.zip.ZipEntry")
+			
+				local entry = zis:getNextEntry()
+			
+				while(entry ~= nil) do
+					if(entry:isDirectory()) then
+						--Note("\nentry is a directory\n")
+					else
+						local file = entry:getName()
+						local path = string.format("%s/%s",GetPluginInstallDirectory(),file)
+						local oldpath = string.format("%s/%s.old",GetPluginInstallDirectory(),file)
+						EchoText(string.format("\nDecompressing: %s\n\n",path))
+						local testfile = luajava.newInstance("java.io.File",path)
+						local oldfile = luajava.newInstance("java.io.File",oldpath)
+						if(testfile:exists()) then
+							EchoText("\nfile exists, renaming to"..oldpath.."\n")
+							testfile:renameTo(oldfile)
+						else
+							local parent = testfile:getParentFile()
+							if(parent:exists()) then
+							
+							else
+								parent:mkdirs()
+							end
+						end
+					
+						local realfile = luajava.newInstance("java.io.FileOutputStream",path)
+						local count = zis:read(b)
+						while(count ~= -1) do
+							realfile:write(b,0,count)
+							count = zis:read(b)
+						end
+				
+						realfile:close()
+						
+				
+						
+					end
+					zis:closeEntry()
+					entry = zis:getNextEntry()
+				end
+			
+				zis:close()
+			end --end local function encapsulation
+			
+			local status,err = pcall(foo,debug.traceback)
+			if(status) then
+				--clean up old files
+				local clean = function(file)
+					file:delete()
+					EchoText("\nDeleting: ".. file:getAbsolutePath().."\n")
+				end
+				cleanDirectory(GetPluginInstallDirectory(),clean)
+				
+				EchoText("\nFinished update, plugin settings must be reloaded.")
+				
+				CloseOptionsDialog()
+				runOnUIThread(function() showUpdateDoneDialog() end)
+				
+				--PluginXCallS("finishUpdate")
+			else
+				--rename old files back to original
+				EchoText("Error Decompressing:\n"..err)
+				local revert = function(file)
+					local path = file:getAbsolutePath()
+					local mod = path:sub(0,-4)
+					EchoText(string.format"\nreverting file: %s\n",mod)
+					local nfile = luajava.newInstance("java.io.File",mod)
+					if(nfile:exists()) then
+						nfile:delete()
+					end
+					file:renameTo(nfile)
+				end
+				
+				cleanDirectory(GetPluginInstallDirectory(),revert)
+			end
+			
+		else
+			runOnUIThread(function() showNoUpdateDialog() end)
+			EchoText("\nChat plugin is up to date.\n")
+		end
+		
+		--download and unpack zip file
+	end
+	runner_proxy = luajava.createProxy("java.lang.Runnable",runner)
+	runner_thread = luajava.newInstance("java.lang.Thread",runner_proxy)
+end
+
+function cleanDirectory(path,objective)
+	local f = luajava.newInstance("java.io.File",path)
+	if(f:isDirectory()) then
+		--make the filename filter
+		local tmp = {}
+		function tmp.accept(file)
+			local ret = false;
+			local tmpfile = file:getAbsolutePath()
+			
+			if(tmpfile:match("%.old$")) then
+				--Note("\nmatched file:"..tmpfile.."\n")
+				ret = true
+			end
+			
+			if(file:isDirectory()) then
+				ret = true
+			end
+			return ret
+		end
+		
+		local filter = luajava.createProxy("java.io.FileFilter",tmp)
+		
+		local list = f:listFiles(filter)
+		
+		local count = Array:getLength(list)
+		
+		for i=0,count-1 do
+			local file = Array:get(list,i)
+			if(file:isDirectory()) then
+				cleanDirectory(file:getAbsolutePath(),objective)
+			else
+				objective(file)
+			end
+		end
+		
+	else
+	--shouldn't really be called on things that arent directories.
+	end
+end
+
+function runDatRunner()
+	--showCheckingUpdateDialog()
+	makeRunner()
+	--Note("\nStarting background thread\n\n")
+	runner_thread:start()
+	--Note("\nBackground thread started\n\n")
+end
+
+function runOnUIThread(f)
+	--Note("\nAttempting to run on ui thread\n\n")
+	local tmp = {}
+	tmp.run = f
+	alertrunner = luajava.createProxy("java.lang.Runnable",tmp)
+	local activity = GetActivity()
+	activity:runOnUiThread(alertrunner)
+	--Note("\nFinished running in background\n\n")
+end
+
+function showUpdateDoneDialog()
+	--PluginXCallS("EchoText","\nBuilding foreground UI\n\n")
+	local builder = luajava.newInstance("android.app.AlertDialog$Builder",context)
+	builder:setTitle("Update Successfull")
+	builder:setMessage("The chat plugin has been successfully updated. Settings must be reloaded for changes to take effect.")
+	
+	local done = {}
+	function done.onClick(dialog,which)
+		PluginXCallS("finishUpdate")
+		dialog:dismiss()
+	end
+
+	local done_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",done)
+	
+	builder:setPositiveButton("Reload Settings",done_cb)
+	
+	progress_dialog = builder:create()
+	
+	progress_dialog:show()		
+end
+
+function showNoUpdateDialog()
+	local builder = luajava.newInstance("android.app.AlertDialog$Builder",context)
+	builder:setTitle("No Update Available")
+	builder:setMessage("The chat plugin is up to date.")
+	
+	local done = {}
+	function done.onClick(dialog,which)
+		dialog:dismiss()
+	end
+
+	local done_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",done)
+	
+	builder:setPositiveButton("Done",done_cb)
+	
+	progress_dialog = builder:create()
+	
+	progress_dialog:show()	
+end
+
+function EchoText(text)
+	PluginXCallS("EchoText",text)
 end
