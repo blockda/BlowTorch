@@ -79,6 +79,10 @@ function loadButtons(args)
 	
 	--local tmp = loadstring(args)()
 	--assert(marshal.decode(args))
+	--local String = luajava.bindClass("java.lang.String")
+	
+	--local data = luajava.new(String,args)
+	
 	local tmp = marshal.decode(args)
 	--Note("deserialized table: answer="..tmp.answer)
 	--printTable("defs",tmp.default)
@@ -211,31 +215,7 @@ function moveTouch.onTouch(v,e)
 	
 	if(e:getAction() == MotionEvent.ACTION_UP) then
 		if(touchMoving == false) then
-			moveCanvas = nil
-			moveBitmap = nil
-			local dx = totalDelta.x
-			local dy = totalDelta.y
-			--if(gridsnap) then
-				--dx = 
-			--end
-			
-			totalDelta.x = 0
-			totalDelta.y = 0
-			for i,b in pairs(buttons) do
-				if(b.selected == true) then
-					local r = b.rect
-					--r:offset(dx,dy)
-					b.data.x = b.data.x + dx
-					b.data.y = b.data.y + dy
-					b.selected = false
-					updateSelected(b,false)
-					b:updateRect(statusoffset)
-				end
-			end
-			drawButtons()
-			view:setOnTouchListener(managerTouch_cb)
-			
-			view:invalidate()
+			exitMoveMode()
 			return true
 		else
 			touchmoving = false
@@ -309,6 +289,34 @@ function enterMoveMode()
 	end
 	drawButtonsNoSelected()
 	moveCanvas:restore()
+	view:invalidate()
+end
+
+function exitMoveMode()
+	moveCanvas = nil
+	moveBitmap = nil
+	local dx = totalDelta.x
+	local dy = totalDelta.y
+			--if(gridsnap) then
+				--dx = 
+			--end
+			
+	totalDelta.x = 0
+	totalDelta.y = 0
+	for i,b in pairs(buttons) do
+		if(b.selected == true) then
+			local r = b.rect
+			--r:offset(dx,dy)
+			b.data.x = b.data.x + dx
+			b.data.y = b.data.y + dy
+			b.selected = false
+			updateSelected(b,false)
+			b:updateRect(statusoffset)
+		end
+	end
+	drawButtons()
+	view:setOnTouchListener(managerTouch_cb)
+	
 	view:invalidate()
 end
 
@@ -1151,6 +1159,10 @@ function buttonListAdapter.getViewTypeCount()
 --debugPrint("getViewTypeCount()")
 	return 1
 end
+function buttonListAdapter.getItemId(pos)
+	return 1
+end
+
 --function buttonListAdapter.
 buttonListAdapter_cb = luajava.createProxy("android.widget.ListAdapter",buttonListAdapter)
 
@@ -1909,8 +1921,29 @@ function OnDraw(canvas)
 	
 	if(dragmoving) then
 		----Note("I SHOULD BE DRAG MOVING")
-		canvas:drawRect(dragstart.x,dragstart.y,dragcurrent.x,dragcurrent.y,dragBoxPaint)
-		canvas:drawRect(dragstart.x,dragstart.y,dragcurrent.x,dragcurrent.y,dragDashPaint)
+		startx = 0
+		starty = 0
+		endx = 0
+		endy = 0
+		
+		if(dragstart.x < dragcurrent.x) then
+			startx = dragstart.x	
+			endx = dragcurrent.x	
+		else
+			startx = dragcurrent.x
+			endx = dragstart.x
+		end
+		
+		if(dragstart.y < dragcurrent.y) then
+			starty = dragstart.y
+			endy = dragcurrent.y		
+		else
+			starty = dragcurrent.y
+			endy = dragstart.y
+		end
+		
+		canvas:drawRect(startx,starty,endx,endy,dragBoxPaint)
+		canvas:drawRect(startx,starty,endx,endy,dragDashPaint)
 		
 	end
 	
@@ -2087,16 +2120,17 @@ function editorDone.onClick(v)
 	end
 	
 	
-	local tmp = {}
-	for i,b in pairs(buttons) do
-		tmp[i] = b.data
-	end
+	--local tmp = {}
+	--for i,b in pairs(buttons) do
+	--	tmp[i] = b.data
+	--end
 		
-	PluginXCallS("saveButtons",serialize(tmp))
+	--PluginXCallS("saveButtons",serialize(tmp))
 	
 	editorDialog:dismiss()
 	editorDialog = nil
 	drawButtons()
+	view:invalidate()
 end
 editorDone_cb = luajava.createProxy("android.view.View$OnClickListener",editorDone)
 
@@ -3716,6 +3750,9 @@ buttonsetMenuClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemC
 buttonsetMenuDoneClicked = {}
 function buttonsetMenuDoneClicked.onMenuItemClick(item)
 	showeditormenu = false
+	if(moveBitmap ~= nil) then
+		exitMoveMode()
+	end
 	exitManagerMode()
 	PopMenuStack()
 	return true
@@ -3733,6 +3770,9 @@ buttonsetCancelClicked = {}
 function buttonsetCancelClicked.onMenuItemClick(item)
 	showeditormenu = false
 	PopMenuStack()
+	if(moveBitmap ~= nil) then
+		exitMoveMode()
+	end
 	exitManagerModeNoSave()
 	return true
 end

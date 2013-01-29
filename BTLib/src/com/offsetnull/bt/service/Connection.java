@@ -34,6 +34,7 @@ import com.offsetnull.bt.responder.TriggerResponder;
 import com.offsetnull.bt.responder.gag.GagAction;
 import com.offsetnull.bt.responder.script.ScriptResponder;
 import com.offsetnull.bt.responder.toast.ToastResponder;
+import com.offsetnull.bt.script.ScriptData;
 import com.offsetnull.bt.service.IWindowCallback;
 import com.offsetnull.bt.service.function.BellCommand;
 import com.offsetnull.bt.service.function.ClearButtonCommand;
@@ -92,13 +93,13 @@ import android.os.Message;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
-//import android.util.Log;
+
 import android.util.Log;
 import android.util.Xml;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-public class Connection implements SettingsChangedListener {
+public class Connection implements SettingsChangedListener,ConnectionPluginCallback {
 	//base "connection class"
 	public final static int MESSAGE_STARTUP = 1;
 	public final static int MESSAGE_STARTCOMPRESS = 2;
@@ -133,6 +134,9 @@ public class Connection implements SettingsChangedListener {
 	static final int MESSAGE_CONNECTED = 30;
 	private static final int MESSAGE_RECONNECT = 31;
 	public static final int MESSAGE_TRIGGER_LUA_ERROR = 32;
+	public static final int MESSAGE_RELOADSETTINGS = 33;
+	public static final int MESSAGE_SETTRIGGERSDIRTY = 34;
+	private static final int MESSAGE_CALLPLUGIN = 35;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -220,6 +224,18 @@ public class Connection implements SettingsChangedListener {
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_CALLPLUGIN:
+					String ptmp = msg.getData().getString("PLUGIN");
+					String ftmp = msg.getData().getString("FUNCTION");
+					String dtmp = msg.getData().getString("DATA");
+					doCallPlugin(ptmp,ftmp,dtmp);
+					break;
+				case MESSAGE_SETTRIGGERSDIRTY:
+					setTriggersDirty();
+					break;
+				case MESSAGE_RELOADSETTINGS:
+					reloadSettings();
+					break;
 				case MESSAGE_TRIGGER_LUA_ERROR:
 					dispatchLuaError((String)msg.obj);
 					break;
@@ -342,7 +358,7 @@ public class Connection implements SettingsChangedListener {
 					}
 					break;
 				case MESSAGE_LINETOWINDOW:
-					TextTree.Line line = (TextTree.Line)msg.obj;
+					Object line = msg.obj;
 					String target = msg.getData().getString("TARGET");
 					Connection.this.lineToWindow(target,line);
 					break;
@@ -450,6 +466,8 @@ public class Connection implements SettingsChangedListener {
 					break;
 				}
 			}
+
+
 		};
 
 		//}
@@ -606,6 +624,12 @@ public class Connection implements SettingsChangedListener {
 		if(c != null) {
 			c.xcallB(functions, bytes);
 		}
+	}
+	
+	private void doCallPlugin(String plugin, String function,
+			String data) {
+		Plugin p = pluginMap.get(plugin);
+		p.callFunction(function,data);
 	}
 
 	public void reloadSettings() {
@@ -785,16 +809,7 @@ public class Connection implements SettingsChangedListener {
 			p.pushOptionsToLua();
 		}
 		
-		if(bufferSaves != null) {
-			for(WindowToken w : mWindows) {
-				if(w != null) {
-					
-					if(bufferSaves.get(w.getName()) != null) {
-						w.setBuffer(bufferSaves.get(w.getName()));
-					}
-				}
-			}
-		}
+
 		
 		
 		//private void loadDefaultDirections() {
@@ -868,6 +883,17 @@ public class Connection implements SettingsChangedListener {
 		//plugins.
 		//tmpPlug.initScripts(mWindows);
 		//tmpPlug.initScripts();
+		
+		if(bufferSaves != null) {
+			for(WindowToken w : mWindows) {
+				if(w != null) {
+					
+					if(bufferSaves.get(w.getName()) != null) {
+						w.setBuffer(bufferSaves.get(w.getName()));
+					}
+				}
+			}
+		}
 		
 		//plugins.add(tmpPlug);
 		buildSettingsPage();
@@ -984,7 +1010,7 @@ public class Connection implements SettingsChangedListener {
 		massiveTriggerString = triggerBuilder.toString();
 		String trgstr = triggerBuilder.toString();
 		trgstr = trgstr.replace("|", "\n");
-		Log.e("MASSIVE",trgstr);
+		//Log.e("MASSIVE",trgstr);
 		massivePattern = Pattern.compile(massiveTriggerString,Pattern.MULTILINE);
 		
 		massiveMatcher = massivePattern.matcher("");
@@ -1017,14 +1043,23 @@ public class Connection implements SettingsChangedListener {
 	}
 
 	
-	protected void lineToWindow(String target, Line line) {
+	protected void lineToWindow(String target, Object line) {
 		//synchronized(callbackSync) {
 		
 		for(WindowToken w : mWindows) {
 			if(w.getName().equals(target)) {
 				TextTree tmp = new TextTree();
 				tmp.setEncoding(the_settings.getEncoding());
-				tmp.appendLine(line);
+				if(line instanceof TextTree.Line) {
+					tmp.appendLine((TextTree.Line)line);
+				} else if (line instanceof String) {
+					try {
+						tmp.addBytesImpl(((String)line).getBytes(the_settings.getEncoding()));
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 				tmp.updateMetrics();
 				byte[] lol = tmp.dumpToBytes(false);
 				
@@ -1128,7 +1163,7 @@ public class Connection implements SettingsChangedListener {
 	protected void killNetThreads(boolean noreconnect) {
 		
 		if(pump == null) return;
-		Log.e("TEST","Killing net threads");
+		//Log.e("TEST","Killing net threads");
 		if(pump != null) {
 			
 			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
@@ -1136,9 +1171,9 @@ public class Connection implements SettingsChangedListener {
 			pump.interrupt();
 			//pump = null;
 			try {
-				Log.e("TEST","waiting for thread death.");
+				//Log.e("TEST","waiting for thread death.");
 				pump.join();
-				Log.e("TEST","thread death completed.");
+				//Log.e("TEST","thread death completed.");
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1149,7 +1184,7 @@ public class Connection implements SettingsChangedListener {
 		
 		//synchronized(this) {
 		if(noreconnect) {
-			handler.removeMessages(MESSAGE_RECONNECT);	
+			handler.removeMessages(MESSAGE_RECONNECT);
 		}
 		//}
 		
@@ -1157,6 +1192,7 @@ public class Connection implements SettingsChangedListener {
 	}
 	
 	private void dispatchNoProcess(byte[] data) {
+		mWindows.get(0).getBuffer().addBytesImplSimple(data);
 		sendBytesToWindow(data);
 	}
 
@@ -1274,7 +1310,7 @@ public class Connection implements SettingsChangedListener {
 		while(lineMatcher.find()) {
 			found = true;
 			
-			Log.e("LINE MAP","MAPPING POSITIONS: {" + lineMatcher.start() + ":" + lineMatcher.end() + "} to line:" + lineNumber + " + data:" + lineMatcher.group());
+			//Log.e("LINE MAP","MAPPING POSITIONS: {" + lineMatcher.start() + ":" + lineMatcher.end() + "} to line:" + lineNumber + " + data:" + lineMatcher.group());
 			lineMap.add(new Range(lineMatcher.start(),lineMatcher.end(),lineNumber));
 			lineNumber = lineNumber -1;
 		}
@@ -1326,7 +1362,7 @@ public class Connection implements SettingsChangedListener {
 						
 						TriggerData t = sortedTriggerMap.get(index);
 						Plugin p = triggerPluginMap.get(index);
-						Log.e("TRIGGER","TRIGGER "+t.getName()+" FIRED ON LINE:"+tmpline);
+						//Log.e("TRIGGER","TRIGGER "+t.getName()+" FIRED ON LINE:"+tmpline);
 						
 //						if(t.getName().equals("map_capture_end") || t.getName().equals("map_capture")) {
 //							Log.e("Parse","Debug Me");
@@ -1341,7 +1377,7 @@ public class Connection implements SettingsChangedListener {
 							}
 							working.setModCount(0);
 							lineNumber = tmpline;
-							Log.e("TRIGGER","Line Data:" + TextTree.deColorLine(l));
+							//Log.e("TRIGGER","Line Data:" + TextTree.deColorLine(l));
 							if(it.hasNext()) {
 								//Line tmpl = it.next();
 								//it.previous();
@@ -1352,7 +1388,7 @@ public class Connection implements SettingsChangedListener {
 								//lineNumber = working.getLines().size()-1;
 								
 							}
-							Log.e("TRIGGER","TRIGGER FOUND AND PROCESSING ON LINE:"+lineNumber);
+							//Log.e("TRIGGER","TRIGGER FOUND AND PROCESSING ON LINE:"+lineNumber);
 							
 						} else if(tmpline > lineNumber) {
 							gagged = true;
@@ -1379,7 +1415,7 @@ public class Connection implements SettingsChangedListener {
 									if(triggersDirty) {
 										keepEvaluating = false;
 										rebuildTriggers = true;
-										Log.e("dirty","triggers marked dirty, rebuilding.");
+										//Log.e("dirty","triggers marked dirty, rebuilding.");
 									}
 									//TriggerResponder r = new GagAction();
 
@@ -1438,7 +1474,8 @@ public class Connection implements SettingsChangedListener {
 					}
 					
 					if(lineNumber <= working.getLines().size()-1) {
-						while(working.getLines().size()-1 >= lineNumber) {
+						//while(working.getLines().size()-1 >= lineNumber) { // DCB 1/22/13 - this was to make the map window work.
+						while(working.getLines().size()-1 > lineNumber) {
 //							Log.e("GAG","-------------------------------------------");
 //							//while(sf.hasPrevious()) {
 //							for(int i=working.getLines().size()-1;i>=0;i--) {
@@ -2139,7 +2176,8 @@ public class Connection implements SettingsChangedListener {
 		for(Plugin p : plugins) {
 			if(p.getSettings().getName().equals(plugin)) {
 				if(p.getSettings().getScripts().containsKey(name)) {
-					return p.getSettings().getScripts().get(name);
+					ScriptData d = p.getSettings().getScripts().get(name);
+					return d.getData();
 				} else {
 					return "";
 				}
@@ -2149,7 +2187,8 @@ public class Connection implements SettingsChangedListener {
 		//if we are here, then it means the main window callback has attempted to load a script.
 		//if(the_settings.getSettings().getName().equals(plugin)) {
 			if(the_settings.getSettings().getScripts().containsKey(name)) {
-				return the_settings.getSettings().getScripts().get(name);
+				ScriptData d = the_settings.getSettings().getScripts().get(name);
+				return d.getData();
 			} else {
 				return "";
 			}
@@ -2978,6 +3017,7 @@ public class Connection implements SettingsChangedListener {
 				if(the_settings.isLocalEcho()) {
 					//preserve.
 					//buffer_tree.addBytesImplSimple(data)
+					mWindows.get(0).getBuffer().addBytesImplSimple(d.visString.getBytes(the_settings.getEncoding()));
 					sendBytesToWindow(d.visString.getBytes(the_settings.getEncoding()));
 				}
 			}
@@ -3148,6 +3188,7 @@ public class Connection implements SettingsChangedListener {
 		try {
 			boolean isLegacy = vpp.isLegacy();
 			if(isLegacy) {
+				Log.e("XMLPARSE","LOADING V1 SETTINGS FROM PATH: "+path);
 				HyperSAXParser p = new HyperSAXParser(path,service.getApplicationContext());
 				HyperSettings s = p.load();
 				
@@ -3394,6 +3435,7 @@ public class Connection implements SettingsChangedListener {
 			} else {
 				int version = vpp.getVersionNumber();
 				if(version == 2) {
+					Log.e("XMLPARSE","LOADING V2 SETTINGS FROM PATH: "+path);
 					ArrayList<Plugin> tmpplugs = new ArrayList<Plugin>();
 					ConnectionSetttingsParser csp = new ConnectionSetttingsParser(path,service.getApplicationContext(),tmpplugs,handler,this);
 					tmpplugs = csp.load(this);
@@ -3407,15 +3449,15 @@ public class Connection implements SettingsChangedListener {
 						if(L.isFunction(-1)) {
 							int ret = L.pcall(0, 1, -2);
 							if(ret != 0) {
-								Log.e("LUA","ERROR IN DEFAULT BUTTONS:"+(L.getLuaObject(-1).getString()));
+								Connection.this.dispatchLuaError("ERROR IN DEFAULT BUTTONS:"+(L.getLuaObject(-1).getString()));
 							}
 						} else {
 							L.pop(1);
 						}
 					}
 					loadPlugins(tmpplugs);
-					
-					
+				} else {
+					Log.e("XMLPARSE","ERROR IN LOADING V2 SETTINGS, DID NOT FIND PROPER XMLVERSION NUMBER");
 				}
 				
 			}
@@ -3466,7 +3508,7 @@ public class Connection implements SettingsChangedListener {
 
 		Long end = System.currentTimeMillis();
 		int dur = (int) (end - start);
-		Log.e("Connection","Took" + dur + " to load settings.");
+		//Log.e("Connection","Took" + dur + " to load settings.");
 	}
 	
 	
@@ -3714,7 +3756,40 @@ public class Connection implements SettingsChangedListener {
 
 	public void dispatchLuaText(String str) {
 		handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_LUANOTE,str));
-		Log.e("lua text","lua text: " + str);
+		//Log.e("lua text","lua text: " + str);
+	}
+
+	public void callPluginFunction(String plugin, String function) {
+		Plugin p = pluginMap.get(plugin);
+		p.callFunction(function);
+	}
+
+	@Override
+	public SettingsChangedListener getSettingsListener() {
+		// TODO Auto-generated method stub
+		return (SettingsChangedListener)this;
+	}
+
+	@Override
+	public void callPlugin(String plugin, String function, String data) {
+		Message m = handler.obtainMessage(MESSAGE_CALLPLUGIN);
+		m.getData().putString("PLUGIN",plugin);
+		m.getData().putString("FUNCTION", function);
+		m.getData().putString("DATA", data);
+		handler.sendMessage(m);
+	}
+
+	@Override
+	public boolean pluginSupports(String plugin,String function) {
+		Plugin p = pluginMap.get(plugin);
+		if(p != null) {
+			return p.checkPluginSupports(function);
+		}
+		return false;
+	}
+
+	public boolean isPluginInstalled(String desired) {
+		return pluginMap.containsKey(desired);
 	}
 	
 	

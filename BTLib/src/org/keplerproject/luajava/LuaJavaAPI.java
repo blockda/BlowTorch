@@ -24,6 +24,7 @@
 
 package org.keplerproject.luajava;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -89,6 +90,10 @@ public final class LuaJavaAPI
       }
       
       Method method = null;
+      
+      if(methodName.equals("read")) {
+    	  long str = System.currentTimeMillis();
+      }
 
       // gets method and arguments
       for (int i = 0; i < methods.length; i++)
@@ -249,6 +254,31 @@ public final class LuaJavaAPI
     {
       Object ret = getObjInstance(L, clazz);
 
+      L.pushJavaObject(ret);
+
+      return 1;
+    }
+  }
+  
+  /**
+   * javaArray returns a new array of a given clazz
+   * 
+   * @param luaState int that represents the state to be used
+   * @param clazz class to be instanciated
+   * @param int that is the size of the array
+   * @return number of returned objects
+   * @throws LuaException
+   */
+  public static int javaArray(int luaState, Class clazz,int size) throws LuaException
+  {
+    LuaState L = LuaStateFactory.getExistingState(luaState);
+
+    synchronized (L)
+    {
+      //Object ret = getObjInstance(L, clazz);
+
+      Object ret = Array.newInstance(clazz, size);
+      
       L.pushJavaObject(ret);
 
       return 1;
@@ -532,6 +562,13 @@ public final class LuaJavaAPI
       {
         obj = L.toString(idx);
       }
+      /*if(!okType) {
+      //hack for byte[] allowance since all byte[] objects that get pushed into lua get converted to strings
+    	if(parameter.isAssignableFrom(byte[].class)) {
+    	  okType = true;
+    	  obj = L.toBytes(idx);
+      	}
+      }*/
     }
     else if (L.isFunction(idx))
     {

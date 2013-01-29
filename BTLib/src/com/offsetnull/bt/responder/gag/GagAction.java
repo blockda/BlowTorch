@@ -77,7 +77,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 				//tree.updateMetrics();
 			//	return false; //not really sure why that is happening.
 			//}
-			
+				//Log.e("GAG","GAGGING: " + TextTree.deColorLine(line));
 			
 			if(retarget != null) {
 				Message msg = dispatcher.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);

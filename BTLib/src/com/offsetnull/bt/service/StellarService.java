@@ -117,6 +117,7 @@ import com.offsetnull.bt.settings.HyperSAXParser;
 import com.offsetnull.bt.settings.HyperSettings;
 import com.offsetnull.bt.alias.AliasData;
 import com.offsetnull.bt.button.SlickButtonData;
+import com.offsetnull.bt.docs.DocumentsHolder;
 
 import dalvik.system.PathClassLoader;
 
@@ -225,282 +226,15 @@ public class StellarService extends Service {
 		return Service.START_STICKY;
 	}
 	
-	/*private class LogFunction extends JavaFunction {
-		Handler the_handler = null;
-		public LogFunction(Handler h,LuaState L) {
-			super(L);
-			the_handler = h;
-			// TODO Auto-generated constructor stub
-		}
-		@Override
-		public int execute() throws LuaException {
-			
-			the_handler.sendMessage(the_handler.obtainMessage(101010101,this.getParam(2).getString()));
-			
-			return 0;
-		}
-		
-	}
+	//LuaState L = null;
+	//String theLuaString = null;
 	
-	private class FieldFunction extends JavaFunction {
-
-		public FieldFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			// TODO Auto-generated method stub
-			//LuaObject o = this.getParam(2);
-			//o.
-			//Log.e("LUA","FIELD FUNCTION CALLED WITH " + n + " paramters");
-			L.pushNil();
-			
-			//boolean clean = false;
-			ContentValues cv = new ContentValues();
-			while(L.next(2) != 0) {
-				//clean = true;
-				String id = L.toString(-2);
-				String name = L.toString(-1);
-				//Log.e("LUA",id + " <==> " +name);
-				
-				cv.put(id, name);
-				L.pop(1);
-			}
-			L.pop(1);
-			L.pushJavaObject(cv);
-			
-			return 1;
-			
-		}
-		
-	}
-	
-	private class RowFunction extends JavaFunction {
-		Handler the_handler = null;
-		public RowFunction(Handler h,LuaState L) {
-			super(L);
-			the_handler = h;
-			// TODO Auto-generated constructor stub
-		}
-		@Override
-		public int execute() throws LuaException {
-			
-			
-			int n = L.getTop();
-			String[] str = new String[n-1];
-			for(int i=2;i<=n;i++) {
-				str[i-2]=L.toString(i);
-			}
-			
-			
-			//L.pop(n-1);
-			
-			L.pushJavaObject(str);
-			
-			return 1;
-			//ArrayList<String>
-			//L.pushNil();
-			
-			//while(L.next(2) != 0) {
-			//	String id = L.toString(-2);
-			//	String name = L.toString(-1);
-				
-			//}
-			//String param1 = this.getParam(2).getString();
-			//String param2 = this.getParam(3).getString();
-			
-			//L.pushObjectValue(new String[] {param1,param2});
-			//return 1;
-		}
-		
-	}
-	
-	private class GMCPFunction extends JavaFunction {
-		Processor proc = null;
-		public GMCPFunction(Processor proc,LuaState L) {
-			super(L);
-			this.proc = proc;
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//L.pushObjectValue(proc.)
-			//L.pushObjectValue(proc.getGMCPValue(this.getParam(2).getString()));
-			//ok, so we need to check and see if what we want is a table.
-			String args = this.getParam(2).getString();
-			
-			//String parts[] = args.split(".");
-			
-			
-			
-			HashMap<String,Object> tmp = proc.getGMCPTable(args);
-			if(tmp == null) {
-				//somehow return
-			} else {
-				//begin iterative lua dump.
-				dumpNode(tmp,"");
-			}
-			//should be one table on top of the stack.
-			return 1;
-			//return 0;
-		}
-		
-		private void dumpNode(HashMap<String,Object> node,String key) {
-			if(!key.equals("")) {
-				this.L.pushString(key);
-			}
-			this.L.newTable();
-			
-			for(String tmp : node.keySet()) {
-				
-				
-				Object o = node.get(tmp);
-				if(o instanceof HashMap) {
-					//we recurse
-					//Log.e("GMCPDUMP","DUMPING SUB TABLE");
-					dumpNode((HashMap<String,Object>)o,tmp);
-				} else {
-					this.L.pushString(tmp);
-					if(o instanceof String) {
-						this.L.pushString((String)o);
-					}
-					if(o instanceof Integer) {	
-						//TODO: apparantly there is no _pushInteger implementation. wtfxors.
-						this.L.pushString(((Integer)o).toString());
-					}
-					this.L.setTable(-3);
-				}
-			}
-			if(!key.equals("")) {
-				this.L.setTable(-3);
-			}
-			//this.L.setTable(-3);
-			
-			
-		}
-		
-	}*/
-	
-	SQLiteDatabase database = null;
-	SQLiteHelper helper = null;
-	private class TriggerFunction extends JavaFunction {
-		HyperSettings settings = null;
-		public TriggerFunction(HyperSettings the_settings, LuaState L) {
-			super(L);
-			settings = the_settings;
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//attempt to access trigger data.
-			
-			//synchronized(the_settings) {
-				String key = this.getParam(2).getString();
-				//Log.e("LUA","ATTEMPTING TO RETURN TRIGGER: " + key);
-				TriggerData dat = settings.getTriggers().get(key);
-				if(dat == null) {
-					L.pushNil();
-				} else {
-					L.pushObjectValue(dat);
-				}
-			//}
-			
-			return 1;
-		}
-		
-	}
-	
-	private class ServerSendFunction extends JavaFunction {
-		//HyperSettings settings = null;
-		public ServerSendFunction(LuaState L) {
-			super(L);
-			//settings = the_settings;
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//attempt to access trigger data.
-			
-			//synchronized(the_settings) {
-				String key = this.getParam(2).getString();
-				
-				//try {
-					//StellarService.this.myhandler.sendMessage(StellarService.this.myhandler.obtainMessage(MESSAGE_SENDDATA, key.getBytes(the_settings.getEncoding())));
-				//} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-				//	e.printStackTrace();
-				//}
-				//Log.e("LUA","ATTEMPTING TO RETURN TRIGGER: " + key);
-				/*TriggerData dat = settings.getTriggers().get(key);
-				if(dat == null) {
-					L.pushNil();
-				} else {
-					L.pushObjectValue(dat);
-				}*/
-			//}
-			
-			return 1;
-		}
-		
-	}
-	
-	private class NewTriggerFunction extends JavaFunction {
-
-		public NewTriggerFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			// TODO Auto-generated method stub
-			//expected arguments.
-			//label
-			//pattern
-			//literal
-			//fireonce
-			//responders
-			
-			//TODO:CHECK INPUT, RETURN BAD ERROR
-			
-			String label = this.getParam(2).getString();
-			String pattern = this.getParam(3).getString();
-			Boolean literal = this.getParam(4).getBoolean();
-			String function = this.getParam(5).getString();
-			//Boolean fireonce = this.getParam(5).getBoolean();
-			//ArrayList<TriggerResponder> responders = (ArrayList<TriggerResponder>)this.getParam(7).getObject();
-			
-			//StellarService.this.makeTmpScriptTrigger(label,pattern,literal,function);
-			return 0;
-		}
-		
-	}
-	
-	private class DeleteTriggerFunction extends JavaFunction {
-
-		public DeleteTriggerFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			String name = this.getParam(2).getString();
-			//deleteTrigger(name);
-			return 0;
-		}
-
-	}
-	
-	LuaState L = null;
-	String theLuaString = null;
-	
-	Plugin plugin = null;
+	//Plugin plugin = null;
 	Handler handler = null;
 	public void onCreate() {
-		
+		DocumentsHolder holder = new DocumentsHolder();
+		int x = DocumentsHolder.getInt();
+		x = (int) System.currentTimeMillis() + x;
 		//Debug.waitForDebugger();
 		//Debug.startMethodTracing("service");
 		connections = new HashMap<String,Connection>();
@@ -1087,16 +821,16 @@ public class StellarService extends Service {
 	Boolean hasListener = false;
 	protected boolean isConnected = false;
 	
-	Pattern newline = Pattern.compile("\n");
-	Pattern semicolon = Pattern.compile(";");
+	//Pattern newline = Pattern.compile("\n");
+	//Pattern semicolon = Pattern.compile(";");
 
 	//Pattern commandPattern = Pattern.compile("^.(\\w+)\\s+(.+)$");
-	Pattern commandPattern = Pattern.compile("^.(\\w+)\\s*(.*)$");
-	Matcher commandMatcher = commandPattern.matcher("");
+	//Pattern commandPattern = Pattern.compile("^.(\\w+)\\s*(.*)$");
+	//Matcher commandMatcher = commandPattern.matcher("");
 	
-	Character cr = new Character((char)13);
-	Character lf = new Character((char)10);
-	String crlf = cr.toString() + lf.toString();
+	//Character cr = new Character((char)13);
+	//Character lf = new Character((char)10);
+	//String crlf = cr.toString() + lf.toString();
 	
 	/*public String ProcessCommands(String input) {
 		
@@ -1365,9 +1099,9 @@ public class StellarService extends Service {
 		}
 	}*/
 	
-	public Bundle CountNewLine(String ISOLATINstring,int maxlines) {
+	/*public Bundle CountNewLine(String ISOLATINstring,int maxlines) {
 		
-		Matcher match = newline.matcher(ISOLATINstring);
+		//Matcher match = newline.matcher(ISOLATINstring);
 		
 		int prunelocation = 0;
 		int numberfound = 0;
@@ -1391,7 +1125,7 @@ public class StellarService extends Service {
 		dat.putInt("PRUNELOC", prunelocation);
 		
 		return dat;
-	}
+	}*/
 	
 	/*StringBuffer joined_alias = new StringBuffer();
 	private void buildAliases() {
@@ -1832,87 +1566,6 @@ public class StellarService extends Service {
 //		}
 //	}
 	
-	private class LuaCommand extends SpecialCommand {
-		public LuaCommand() {
-			this.commandName = "lua";
-		}
-		
-		public Object execute(Object o) {
-			
-			String str = (String)o;
-			
-			int result = L.LdoString(str);
-			if(result == 0) {
-				//try {
-					//StellarService.this.doDispatchNoProcess("\nFuckin Lua. How does it work?!\n".getBytes("ISO-8859-1"));
-					//if(theInterpreter.toString(1) != null) {
-					//	StellarService.this.doDispatchNoProcess(theInterpreter.toString(1).getBytes("ISO-8859-1"));
-					//}
-					LuaObject obj = L.getLuaObject("foo");
-					//Log.e("LUA","FOO OBJECT:"+obj.getString());
-					try {
-						StellarService.this.doDispatchNoProcess(str.getBytes("ISO-8859-1"));
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				//} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-				//	e.printStackTrace();
-				//} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-				//	e.printStackTrace();
-				//}
-				//success
-			} else {
-				
-				try {
-					StellarService.this.doDispatchNoProcess(("\n"+L.toString(-1)+"\n").getBytes("ISO-8859-1"));
-				} catch (RemoteException e) {
-					
-					e.printStackTrace();
-				} catch (UnsupportedEncodingException e) {
-					
-					e.printStackTrace();
-				}
-			}
-			
-			
-			
-			return null;
-		}
-	}
-	
-	private class Lua2Command extends SpecialCommand {
-		public Lua2Command() {
-			this.commandName = "lua2";
-		}
-		
-		public Object execute(Object o) {
-			
-			
-//			int N = callbacks.beginBroadcast();
-//			
-//			for(int i=0;i<N;i++) {
-//				try {
-//					callbacks.getBroadcastItem(i).luaOmg(L.getStateId());
-//				} catch (RemoteException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				
-//			}
-//			callbacks.finishBroadcast();
-			
-			
-			return null;
-		}
-	}
-
-	
 	private boolean isWindowShowing() {
 		boolean result = false;
 //		final int N = callbacks.beginBroadcast();
@@ -1943,14 +1596,14 @@ public class StellarService extends Service {
 	
 
 	
-	private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();
+	//private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();
 	
 	
 	
 	//Colorizer colorer = new Colorizer();
-	public static Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
+	//public static Pattern colordata = Pattern.compile("\\x1B\\x5B(([0-9]{1,2});)?([0-9]{1,2})m");
 	//StringBuffer regexp_test = new StringBuffer();
-	Vector<String> test_set = new Vector<String>();
+	//Vector<String> test_set = new Vector<String>();
 	
 	boolean firstDispatch = true;
 	
@@ -3310,6 +2963,18 @@ public class StellarService extends Service {
 		@Override
 		public void dispatchLuaText(String str) throws RemoteException {
 			connections.get(connectionClutch).dispatchLuaText(str);
+		}
+
+		@Override
+		public void callPluginFunction(String plugin, String function)
+				throws RemoteException {
+			connections.get(connectionClutch).callPluginFunction(plugin,function);
+		}
+
+		@Override
+		public boolean isPluginInstalled(String desired) throws RemoteException {
+			return connections.get(connectionClutch).isPluginInstalled(desired);
+			//return false;
 		}
 
 	};
