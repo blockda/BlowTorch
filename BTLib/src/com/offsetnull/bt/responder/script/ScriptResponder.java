@@ -106,6 +106,12 @@ public class ScriptResponder extends TriggerResponder {
 				Log.e("LUA","value: " + two + " data: " + one);
 			}*/
 		
+		if(windowIsOpen) {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+		} else {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+		}
+		
 			L.getGlobal("debug");
 			L.getField(L.getTop(), "traceback");
 			L.remove(-2);

@@ -135,4 +135,6 @@ interface IConnectionBinder {
 	boolean isLinkLoaded(String link);
 	String getPluginPath(String plugin);
 	void dispatchLuaText(String str);
+	void callPluginFunction(String plugin,String function);
+	boolean isPluginInstalled(String desired);
 }

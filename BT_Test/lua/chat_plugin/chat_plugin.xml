@@ -65,6 +65,7 @@ body {
 		</windows>
 		<options title="Chat Window" summary="Sizing and window options.">
   	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>	
+  	 		<callback title="Check Update" key="update" summary="Check the web for updates for this script.">startUpdate</callback>
   	 	</options>
 		
 		<script name="bootstrap">

@@ -72,6 +72,7 @@ static jmethodID luajava_check_field_method = NULL;
 static jmethodID luajava_class_index_method = NULL;
 static jmethodID luajava_create_proxy_method = NULL;
 static jmethodID java_lang_class_forname_method = NULL;
+static jmethodID luajava_new_array_method = NULL;
 
 
 /***************************************************************************
@@ -206,6 +207,23 @@ static jmethodID java_lang_class_forname_method = NULL;
 
    static int javaNew( lua_State * L );
 
+/***************************************************************************
+*
+* $FC Function javaArray
+* 
+* $ED Description
+*    Implementation of lua function luajava.array
+* 
+* $EP Function Parameters
+*    $P L - lua State
+*    $P Stack - Parameters will be received by the stack
+* 
+* $FV Returned Value
+*    int - Number of values to be returned by the function
+* 
+*$. **********************************************************************/
+
+   static int javaArray( lua_State * L );
 
 /***************************************************************************
 *
@@ -1572,6 +1590,10 @@ JNIEXPORT void JNICALL Java_org_keplerproject_luajava_LuaState_luajava_1open
   lua_pushcfunction( L , &javaNew );
   lua_settable( L , -3 );
 
+  lua_pushstring( L , "array" );
+  lua_pushcfunction( L , &javaArray );
+  lua_settable( L , -3 );
+
   lua_pushstring( L , "newInstance" );
   lua_pushcfunction( L , &javaNewInstance );
   lua_settable( L , -3 );
@@ -1604,6 +1626,8 @@ JNIEXPORT void JNICALL Java_org_keplerproject_luajava_LuaState_luajava_1open
 
 	luajava_new_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "javaNew" , 
                                              "(ILjava/lang/Class;)I" );
+	luajava_new_array_method = (*env)->GetStaticMethodID(env,luajava_api_class,"javaArray",
+											 "(ILjava/lang/Class;I)I");
     luajava_new_instance_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "javaNewInstance" , 
                                              "(ILjava/lang/String;)I" );	
 	luajava_check_field_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "checkField" ,
@@ -1612,7 +1636,7 @@ JNIEXPORT void JNICALL Java_org_keplerproject_luajava_LuaState_luajava_1open
                                              "(ILjava/lang/Object;Ljava/lang/String;)I" );
 	luajava_class_index_method =  ( *env )->GetStaticMethodID( env , luajava_api_class , "classIndex" ,
                                              "(ILjava/lang/Class;Ljava/lang/String;)I" );
-	luajava_create_proxy_method = ( *env )->GetStaticMethodID( javaEnv , luajava_api_class , "createProxyObject" ,
+	luajava_create_proxy_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "createProxyObject" ,
                                              "(ILjava/lang/String;)I" );
 	
 	//( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNewInstance" ,

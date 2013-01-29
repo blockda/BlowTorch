@@ -1838,4 +1838,13 @@ public class TextTree {
 		}
 		
 	}
+	
+	/*public Line makeLine(String str) {
+		Line l = new Line();
+		LinkedList<Unit> tmp = new LinkedList<Unit>();
+		Text t = l.newText(str);
+		tmp.add(t);
+		l.setData(tmp);
+		return l;
+	}*/
 }

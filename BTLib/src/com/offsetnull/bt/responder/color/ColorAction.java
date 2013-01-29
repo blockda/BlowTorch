@@ -66,6 +66,12 @@ public class ColorAction extends TriggerResponder implements Parcelable {
 		//well. this is sort of duplication of effort from the replacer action. but whatever.
 		//int start = matched.start();
 		//int end = matched.end()-1;
+		if(windowIsOpen) {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_CLOSED || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+		} else {
+			if(this.getFireType() == FIRE_WHEN.WINDOW_OPEN || this.getFireType() == FIRE_WHEN.WINDOW_NEVER) return false;
+		}
+		
 		int end = pend + 1 + tree.getModCount();
 		int start = pstart + tree.getModCount();
 		Unit u = null;

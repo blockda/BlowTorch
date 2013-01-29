@@ -303,6 +303,10 @@ public class OptionsDialog extends Dialog {
 				v.setTag(o);
 				v.setOnClickListener(new StringOptionClickedListener());
 				break;
+			case CALLBACK:
+				v.setTag(o);
+				v.setOnClickListener(new CallbackOptionClickedListener());
+				break;
 			}
 			
 			return v;
@@ -311,6 +315,21 @@ public class OptionsDialog extends Dialog {
 
 
 		
+	}
+	
+	private class CallbackOptionClickedListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			CallbackOption option = (CallbackOption)v.getTag();
+			try {
+				service.callPluginFunction(selectedPlugin, (String)option.getValue());
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	
 	}
 	
 	private class FileOptionClickedListener implements View.OnClickListener {

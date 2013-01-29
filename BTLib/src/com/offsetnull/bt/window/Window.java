@@ -25,13 +25,7 @@ import com.offsetnull.bt.service.plugin.settings.FileOption;
 import com.offsetnull.bt.service.plugin.settings.IntegerOption;
 import com.offsetnull.bt.service.plugin.settings.ListOption;
 import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
-//import com.happygoatstudios.bt.window.LuaWindow.BoundsFunction;
-//import com.happygoatstudios.bt.window.LuaWindow.DebugFunction;
-//import com.happygoatstudios.bt.window.LuaWindow.DrawFunction;
-//import com.happygoatstudios.bt.window.LuaWindow.InvalidateFunction;
-//import com.happygoatstudios.bt.window.LuaWindow.OptionsMenuFunction;
-//import com.happygoatstudios.bt.window.LuaWindow.PluginXCallSFunction;
-//import com.happygoatstudios.bt.window.LuaWindow.TableAdapterFunction;
+
 
 import android.R;
 import android.animation.ObjectAnimator;
@@ -64,8 +58,7 @@ import android.os.RemoteException;
 import android.text.ClipboardManager;
 import android.util.AttributeSet;
 import android.util.Log;
-//import android.util.Log;
-//import android.util.Log;
+
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -91,12 +84,19 @@ import com.offsetnull.bt.window.TextTree.Selection;
 import com.offsetnull.bt.window.TextTree.SelectionCursor;
 import com.offsetnull.bt.window.TextTree.Unit;
 
+
+/*! \brief Window
+ *
+ *  The Window.java class is the programmable mini-window that also houses the ansi drawing routine.
+ */
+
 public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener,SettingsChangedListener {
 
-	//private DrawRunner _runner = null;
-	
-	private int statusBarHeight = 0;
-	private MainWindow parent = null;
+	/*! \brief test
+	 * 
+	 *  Seriously how does this work.
+	 */
+	private MainWindowCallback parent = null; /*!< for calling back into the Activity.*/
 	private Bitmap homeWidgetDrawable = null;
 	private Bitmap textSelectionCancelBitmap = null;
 	private Bitmap textSelectionCopyBitmap = null;
@@ -109,7 +109,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private int PREF_FONTSIZE = 18;
 	private int mHeight = 1;
 	private int mWidth = 1;
-	int one_char_is_this_wide = 1;
+	int one_char_is_this_wide = 1; /*!< gah! how does this work*/
 	private float density;
 	LuaState L = null;
 	String mOwner;
@@ -121,11 +121,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public int CALCULATED_ROWSINWINDOW;
 	private boolean textSelectionEnabled = true;
 	private double fling_velocity;
-	//boolean buttondropstarted=false;
+	
 	boolean increadedPriority = false;
-	//boolean lockButtonMoves = false;
-	//boolean lockButtonEdits = false;
-	//private RelativeLayout parent_layout = null;
+
 	private boolean bufferText = false;
 	private View new_text_in_buffer_indicator = null;
 
@@ -222,29 +220,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	Rect selectionIndicatorCenterButtonRect = new Rect();
 	
 	Rect selectionIndicatorRect = new Rect();
-	/*public Window(Context context,LayerManager manager) {
-		super(context);
-		//getHolder().addCallback(this);
-		init();
-		mManager = manager;
-		mContext = context;
-	}
-	
-	public Window(Context context,AttributeSet attrib) {
-		super(context,attrib);
-		//getHolder().addCallback(this);
-		//_runner = new DrawRunner(getHolder(),this,touchLock);
-		//Log.e("VIEW","VIEW STARTING UP!");
-		//createhandler();
-		//this.setZOrderOnTop(true);
-		init();
-	} */
 	
 	public void displayLuaError(String message) {
 		mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.colorRed + message + Colorizer.colorWhite + "\n"));
 	}
 	
-	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings,MainWindow activity) {
+	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings,MainWindowCallback activity) {
 		super(context);
 		this.parent = activity;
 		init(dataDir,name,owner,mainWindowHandler,settings);
@@ -1664,6 +1645,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//c.drawBitmap(bmp, 0, 0, null);
 		if(hasDrawRoutine){
 			if(L != null) {
+				
+/*! \page entry_points
+ * \section window Window Lua State Entry Points
+ * \subsection OnDraw OnDraw
+ * This function is called whenever the window is dirty and needs redrawing of custom content.
+ * 
+ * \param canvas
+ * 
+ * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
+ */
+				
 				L.getGlobal("debug");
 				L.getField(L.getTop(), "traceback");
 				L.remove(-2);
@@ -2058,6 +2050,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 //			addBytesImpl(obj,jumpToEnd);
 //		}
 	}
+	
+	public void addText(String str,boolean jumpToEnd) {
+		try {
+			addBytesImpl(str.getBytes(the_tree.getEncoding()),jumpToEnd);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
 	private void addBytesImpl(byte[] obj,boolean jumpToEnd) {
 		if(obj.length == 0) return;
 		
@@ -2561,9 +2564,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 		
-		InvalidateFunction iv = new InvalidateFunction(L);
-		DebugFunction df = new DebugFunction(L);
-		BoundsFunction bf = new BoundsFunction(L);
+		//InvalidateFunction iv = new InvalidateFunction(L);
+		NoteFunction df = new NoteFunction(L);
+		//BoundsFunction bf = new BoundsFunction(L);
 		OptionsMenuFunction omf = new OptionsMenuFunction(L);
 		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
 		SheduleCallbackFunction scf = new SheduleCallbackFunction(L);
@@ -2577,12 +2580,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		StatusBarHiddenMethod sghm = new StatusBarHiddenMethod(L);
 		GetActionBarHeightFunction gabhf = new GetActionBarHeightFunction(L);
 		GetPluginInstallDirectoryFunction gpisdf = new GetPluginInstallDirectoryFunction(L);
+        CloseOptionsDialogFunction codf = new CloseOptionsDialogFunction(L);
+        GetActivityFunction gaf = new GetActivityFunction(L);
+        PluginInstalledFunction pif = new PluginInstalledFunction(L);
+        WindowSupportsFunction wsf = new WindowSupportsFunction(L);
+        WindowCallFunction wcf = new WindowCallFunction(L);
+        WindowBroadcastFunction wbcf = new WindowBroadcastFunction(L);
 		try {
 			
 			gsbshf.register("GetStatusBarHeight");
-			iv.register("Invalidate");
+			//iv.register("Invalidate");
 			df.register("Note");
-			bf.register("GetBounds");
+			//bf.register("GetBounds");
 			omf.register("AddOptionCallback");
 			pxcf.register("PluginXCallS");
 			scf.register("ScheduleCallback");
@@ -2595,6 +2604,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			sghm.register("IsStatusBarHidden");
 			gabhf.register("GetActionBarHeight");
 			gpisdf.register("GetPluginInstallDirectory");
+			codf.register("CloseOptionsDialog");
+			gaf.register("GetActivity");
+			pif.register("PluginInstalled");
+			wcf.register("WindowCall");
+			wsf.register("WindowSupports");
+			wbcf.register("WindowBroadcast");
 		} catch (LuaException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2624,12 +2639,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		initLua();
 		L.pushJavaObject(this);
 		L.setGlobal("view");
-		DrawFunction draw = new DrawFunction(L);
-		try {
-			draw.register("draw");
-		} catch (LuaException e) {
-			e.printStackTrace();
-		}
+		//DrawFunction draw = new DrawFunction(L);
+		//try {
+		//	draw.register("draw");
+		//} catch (LuaException e) {
+		//	e.printStackTrace();
+		//}
+		
+		//L.pushJavaObject(parent);
+		
 		
 		
 		L.getGlobal("debug");
@@ -2667,69 +2685,34 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 	
-	
-	class DrawFunction extends JavaFunction {
-
-		public DrawFunction(LuaState L) {
-			super(L);
-			
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//this takes no arguments and recieves none.
-			Window.this.invalidate();
-			return 0;
-		}
-		
-	}
-	
-	private class InvalidateFunction extends JavaFunction {
-
-		public InvalidateFunction(LuaState L) {
-			super(L);
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			Window.this.invalidate();
-			return 0;
-		}
-		
-	}
-	
-	private class DebugFunction extends JavaFunction {
-
-		public DebugFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			String foo = this.getParam(2).getString();
-			//Log.e("LUAWINDOW","DEBUG:"+foo);
-			Window.this.parent.dispatchLuaText(foo);
-			return 0;
-		}
-		
-	}
-	
-	private class BoundsFunction extends JavaFunction {
-
-		public BoundsFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//this.L.pushJavaObject(mBounds);
-			return 1;
-		}
-		
-	}
-	
+	/*! \page page1
+	* \section window Window Functions
+	* \subsection sec2 AddOptionCallback
+	* Add a top level menu item that will call a global function when pressed.
+	* 
+	* \par Full Signature
+	* \code
+	* AddOptionCallback(functionName,menuText,iconDrawable)
+	* \endcode
+	* \param functionName \c string value of the function name that will be called when the menu item is pressed.
+	* \param menuText \c string value that will appear on the menu item.
+	* \param iconDrawable \c android.graphics.drawable.Drawable the drawable resource that will be used for the icon.
+	* \returns nothing
+	* \par Example with no icon
+	* \code
+	* AddOptionCallback("functionName","Click Me!",nil)
+	* \endcode
+	* \par Example with icon
+	* \code
+	* drawable = luajava.newInstance("android.drawable.BitmapDrawable",context:getResources(),"/path/to/image.png")
+	* function menuClicked()
+	* 	Note("Menu Item Clicked!")
+	* end
+	* 
+	* AddOptionCallback("menuClicked","Click Me!",drawable)
+	* \endcode
+	* 
+	*/
 	private class OptionsMenuFunction extends JavaFunction {
 
 		public OptionsMenuFunction(LuaState L) {
@@ -2765,44 +2748,22 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
-	private class TableAdapterFunction extends JavaFunction {
-
-		public TableAdapterFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			String table = this.getParam(2).getString();
-			String viewFunc = this.getParam(3).getString();
-			TableAdapter tb = new TableAdapter(this.L,table,viewFunc);
-			L.pushJavaObject(tb);
-			return 1;
-		}
-		
-	}
-	
-	private class SheduleCallbackFunction extends JavaFunction {
-
-		public SheduleCallbackFunction(LuaState L) {
-			super(L);
-
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			int id = (int)this.getParam(2).getNumber();
-			String callback = this.getParam(3).getString();
-			long delay = Long.parseLong(this.getParam(4).getString());
-			//callScheduleCallback(id,callback);
-			Message msg = callbackHandler.obtainMessage(id,callback);
-			callbackHandler.sendMessageDelayed(msg, delay);
-			return 0;
-		}
-		
-	}
-	
+  /*! \page page1
+	* \subsection sec4 CancelCallback
+	* Cancel a scheduled call made with ScheduleCallback.
+	* \note This will cancel all pending callbacks with the given identifier.
+	* 
+	* \par Full Signature
+	* \code
+	* CancelCallback(id)
+	* \endcode
+	* \param id \c number the callback id to cancel
+	* \returns nothing
+	* \par Example 
+	* \code
+	* CancelCallback(100)
+	* \endcode
+	*/
 	private class CancelSheduleCallbackFunction extends JavaFunction {
 
 		public CancelSheduleCallbackFunction(LuaState L) {
@@ -2821,38 +2782,238 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
-	private Handler callbackHandler = new Handler() {
-		public void handleMessage(Message msg) {
-			//
-			//just call the string.
-			Window.this.callScheduleCallback(msg.arg1,(String)msg.obj);
-			
-			
+  /*! \page page1
+	* \subsection sec16 CloseOptionsDialog
+	* Closes the Options dialog if it is currently open.
+	* 
+	* \par Full Signature
+	* \code
+	* CloseOptionsDialog()
+	* \endcode
+	* \param none
+	* \returns nothing
+	* \par Example 
+	* \code
+	* CloseOptionsDialog()
+	* \endcode
+	*/
+	private class CloseOptionsDialogFunction extends JavaFunction {
+		public CloseOptionsDialogFunction(LuaState L) {
+			super(L);
 		}
-	};
-	
-	private void callScheduleCallback(int id,String callback) {
-		if(L == null) return;
-		L.getGlobal("debug");
-		L.getField(-1, "traceback");
-		L.remove(-2);
 		
-		L.getGlobal(callback);
-		if(L.getLuaObject(-1).isFunction()) {
-			//prepare to call.
-			L.pushString(Integer.toString(id));
-			int ret = L.pcall(1, 1, -3);
-			if(ret != 0) {
-				displayLuaError("Scheduled callback("+callback+") error:"+L.getLuaObject(-1).toString());
-			} else {
-				L.pop(2);
-			}
-		} else {
-			//error no function.
-			L.pop(2);
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_CLOSEOPTIONSDIALOG));
+			return 0;
 		}
 	}
 	
+	private class GetActionBarHeightFunction extends JavaFunction {
+
+		public GetActionBarHeightFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushString(Integer.toString(((int)Window.this.parent.getTitleBarHeight())));
+			return 1;
+		}
+		
+	}
+	
+ /*! \page page1
+	* \subsection sec0 GetActivity
+	* Get a handle to the current Activity that is hosting the foreground window process.
+	* 
+	* \par Full Signature
+	* \code
+	* GetActivity()
+	* \endcode
+	* \param none
+	* \returns \c android.app.Activity the current Activity that is hosting the foreground processes.
+	* \par Example 
+	* \code
+	* activity = GetActivity()
+	* \endcode
+	*/
+	private class GetActivityFunction extends JavaFunction {
+
+		public GetActivityFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//Log.e("PLUGIN","Get External storage state:"+Environment)
+			L.pushJavaObject((Activity)parent.getActivity());
+			return 1;
+		}
+		
+	}
+	
+	private class GetDisplayDensityFunction extends JavaFunction {
+
+		public GetDisplayDensityFunction(LuaState L) {
+			super(L);
+			
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			float density = Window.this.getContext().getResources().getDisplayMetrics().density;
+			//if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+			//	density = density * 1.5f;
+			//}
+			//Log.e("WINODW","PUSHING DENSITY:"+Float.toString(density));
+			L.pushNumber(density);
+			return 1;
+		}
+		
+	}
+	
+
+		private class GetExternalStorageDirectoryFunction extends JavaFunction {
+
+			public GetExternalStorageDirectoryFunction(LuaState L) {
+				super(L);
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public int execute() throws LuaException {
+				//Log.e("PLUGIN","Get External storage state:"+Environment)
+				if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+					L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
+				} else {
+					L.pushNil();
+				}
+				return 1;
+			}
+			
+		}
+		
+	 
+		
+
+	private class GetPluginInstallDirectoryFunction extends JavaFunction {
+
+		public GetPluginInstallDirectoryFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			//Log.e("PLUGIN","Get External storage state:"+Environment)
+			/*if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
+			} else {
+				L.pushNil();
+			}*/
+			String path = parent.getPathForPlugin(mOwner);
+			File file = new File(path);
+			String dir = file.getParent();
+			//file.getPar
+			L.pushString(dir);
+			return 1;
+		}
+		
+	}
+	
+
+	private class GetStatusBarHeight extends JavaFunction {
+
+		public GetStatusBarHeight(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushString(Integer.toString((int)Window.this.parent.getStatusBarHeight()));
+			return 1;
+		}
+		
+	}
+	
+	/*! \page page1
+	* \subsection sec14 IsStatusBarHidden
+	* Gets the state of the status bar.
+	* 
+	* \par Full Signature
+	* \code
+	* IsStatusBarHidden()
+	* \endcode
+	* \param none
+	* \returns \c bool true if the status bar is hidden (full screen), false if the status bar is being shown (non full screen)
+	* \par Example 
+	* \code
+	* if(IsStatusBarHidden()) then
+	*  Note("status bar hidden")
+	* else
+	*  Note("status bar not hidden")
+	* end
+	* \endcode
+	*/
+	private class StatusBarHiddenMethod extends JavaFunction {
+
+		public StatusBarHiddenMethod(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			// TODO Auto-generated method stub
+			L.pushBoolean(Window.this.parent.isStatusBarHidden());
+			return 1;
+		}
+		
+	}
+	
+	
+
+	protected class NoteFunction extends JavaFunction {
+
+		public NoteFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String foo = this.getParam(2).getString();
+			//Log.e("LUAWINDOW","DEBUG:"+foo);
+			Window.this.parent.dispatchLuaText(foo);
+			return 0;
+		}
+		
+	}
+	
+  /*! \page page1
+	* \subsection PluginXCallS PluginXCallS
+	* Calls a function in the parent plugin's lua state. Provides one way signaling across the aidl bridge to the plugin host running in the background.
+	* 
+	* \par Full Signature
+	* \code
+	* PluginXCallS(functionName,data)
+	* \endcode
+	* \param functionName \c string the global function in the plugin's host lua state.
+	* \param data \c string the data to pass as a argument to the given function
+	* \returns nothing
+	* \par Example 
+	* \code
+	* PluginXCallS("saveData","300")
+	* \endcode
+	* \note tables can be serialized to a string and reconstituted in the plugin using loadstring(...) but the performance may suffer if the tables are large. See PluginXCallB for a slightly faster method of communication that doesn't involve the heavy java string manipulation.
+	*/
 	private class PluginXCallSFunction extends JavaFunction {
 		//HashMap<String,String> 
 		public PluginXCallSFunction(LuaState L) {
@@ -2929,87 +3090,58 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
-	private class GetDisplayDensityFunction extends JavaFunction {
 
-		public GetDisplayDensityFunction(LuaState L) {
-			super(L);
-			
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			float density = Window.this.getContext().getResources().getDisplayMetrics().density;
-			//if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
-			//	density = density * 1.5f;
-			//}
-			//Log.e("WINODW","PUSHING DENSITY:"+Float.toString(density));
-			L.pushNumber(density);
-			return 1;
-		}
-		
-	}
 	
-	private class SendToServerFunction extends JavaFunction {
+  /*! \page page1
+	* \subsection sec12 PopMenuStack
+	* Removes the current menu item and returns the menu stack to its previous state.
+	* 
+	* \par Full Signature
+	* \code
+	* PopMenuStack()
+	* \endcode
+	* \param none
+	* \returns nothing
+	* \par Example 
+	* \code
+	* PopMenuStack()
+	* \endcode
+	* \see PushMenuStack
+	*/
+	private class PopMenuStackFunction extends JavaFunction {
 
-		public SendToServerFunction(LuaState L) {
+		public PopMenuStackFunction(LuaState L) {
 			super(L);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
 		public int execute() throws LuaException {
-			if(this.getParam(2).isNil()) { return 0; }
-			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
-			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,this.getParam(2).getString()));
+			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_POPMENUSTACK));
 			return 0;
 		}
 		
 	}
-	
-	private class GetExternalStorageDirectoryFunction extends JavaFunction {
-
-		public GetExternalStorageDirectoryFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//Log.e("PLUGIN","Get External storage state:"+Environment)
-			if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
-			} else {
-				L.pushNil();
-			}
-			return 1;
-		}
 		
-	}
-	
-	private class GetPluginInstallDirectoryFunction extends JavaFunction {
-
-		public GetPluginInstallDirectoryFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			//Log.e("PLUGIN","Get External storage state:"+Environment)
-			/*if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-				L.pushString(Environment.getExternalStorageDirectory().getAbsolutePath());
-			} else {
-				L.pushNil();
-			}*/
-			String path = parent.getPathForPlugin(mOwner);
-			File file = new File(path);
-			String dir = file.getParent();
-			//file.getPar
-			L.pushString(dir);
-			return 1;
-		}
-		
-	}
+ /*! \page page1
+	* \subsection sec11 PushMenuStack
+	* Starts a new menu object, providing a global function name to call that will populate the menu
+	* 
+	* \par Full Signature
+	* \code
+	* PushMenuStack(callbackName)
+	* \endcode
+	* \param \c string the name of a global function to call in order to populate the new menu item.
+	* \returns nothing
+	* \par Example 
+	* \code
+	* function addMenu(menu)
+	*  menu:addItem(0,0,0,foo)
+	* end
+	* PushMenuStack("addMenu")
+	* \endcode
+	* \see this relies largely on the android Menu and MenuItem classes, please refer to the documentation and other menu related sample code.
+	*/
 	private class PushMenuStackFunction extends JavaFunction {
 
 		public PushMenuStackFunction(LuaState L) {
@@ -3041,94 +3173,116 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
-	private class PopMenuStackFunction extends JavaFunction {
 
-		public PopMenuStackFunction(LuaState L) {
+	private class SendToServerFunction extends JavaFunction {
+
+		public SendToServerFunction(LuaState L) {
 			super(L);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
 		public int execute() throws LuaException {
-			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_POPMENUSTACK));
+			if(this.getParam(2).isNil()) { return 0; }
+			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
+			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,this.getParam(2).getString()));
+			return 0;
+		}
+		
+	}
+		
+  /*! \page page1
+	* \subsection sec3 ScheduleCallback
+	* Add a top level menu item that will call a global function when pressed.
+	* 
+	* \par Full Signature
+	* \code
+	* ScheduleCallback(id,callbackName,delayMillis)
+	* \endcode
+	* \param id \c number unique identifier associated with this event, will be passed to the callback.
+	* \param callbackName \c string name of the global function to call after the desired elapsed time.
+	* \param delayMillis \c dumber how long in milliseconds to delay the execution of the callback
+	* \returns nothing
+	* \par Example
+	* \code
+	* function delayCallback(id)
+	*  Note(string.format("event %d fired.",id))
+	* end
+	* 
+	* ScheduleCallback(100,"delayCallback",3000)
+	* ScheduleCallback(104,"delayCallback",5000)
+	* \endcode
+	* \tableofcontents
+	*/
+	private class SheduleCallbackFunction extends JavaFunction {
+
+		public SheduleCallbackFunction(LuaState L) {
+			super(L);
+
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			int id = (int)this.getParam(2).getNumber();
+			String callback = this.getParam(3).getString();
+			long delay = Long.parseLong(this.getParam(4).getString());
+			//callScheduleCallback(id,callback);
+			Message msg = callbackHandler.obtainMessage(id,callback);
+			callbackHandler.sendMessageDelayed(msg, delay);
 			return 0;
 		}
 		
 	}
 	
-	private class GetActivityFunction extends JavaFunction {
 
-		public GetActivityFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
+	
+	private Handler callbackHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			//
+			//just call the string.
+			Window.this.callScheduleCallback(msg.arg1,(String)msg.obj);
+			
+			
 		}
-
-		@Override
-		public int execute() throws LuaException {
-
-			this.L.pushJavaObject(Window.this.parent);
-			return 1;
-		}
+	};
+	
+	
+	
+	private void callScheduleCallback(int id,String callback) {
+		if(L == null) return;
+		L.getGlobal("debug");
+		L.getField(-1, "traceback");
+		L.remove(-2);
 		
+		L.getGlobal(callback);
+		if(L.getLuaObject(-1).isFunction()) {
+			//prepare to call.
+			L.pushString(Integer.toString(id));
+			int ret = L.pcall(1, 1, -3);
+			if(ret != 0) {
+				displayLuaError("Scheduled callback("+callback+") error:"+L.getLuaObject(-1).toString());
+			} else {
+				L.pop(2);
+			}
+		} else {
+			//error no function.
+			L.pop(2);
+		}
 	}
 	
-	private class GetStatusBarHeight extends JavaFunction {
-
-		public GetStatusBarHeight(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			// TODO Auto-generated method stub
-			L.pushString(Integer.toString((int)Window.this.parent.getStatusBarHeight()));
-			return 1;
-		}
-		
-	}
-	
-	private class StatusBarHiddenMethod extends JavaFunction {
-
-		public StatusBarHiddenMethod(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			// TODO Auto-generated method stub
-			L.pushBoolean(Window.this.parent.isStatusBarHidden());
-			return 1;
-		}
-		
-	}
-	
-	private class GetActionBarHeightFunction extends JavaFunction {
-
-		public GetActionBarHeightFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			// TODO Auto-generated method stub
-			L.pushString(Integer.toString(((int)Window.this.parent.getTitleBarHeight())));
-			return 1;
-		}
-		
-	}
-
-
-	public void callFunction(String callback) {
+	public void callFunction(String callback, String data) {
 		L.getGlobal("debug");
 		L.getField(L.getTop(), "traceback");
 		L.remove(-2);
 		
 		L.getGlobal(callback);
 		if(L.isFunction(L.getTop())) {
-			int tmp = L.pcall(0, 1, -2);
+			if(data != null) {
+				L.pushString(data);
+			} else {
+				L.pushNil();
+			}
+			int tmp = L.pcall(1, 1, -2);
 			if(tmp != 0) {
 				displayLuaError("Error calling window script function "+callback+": "+L.getLuaObject(-1).getString());
 			} else {
@@ -3137,6 +3291,79 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		} else {
 			L.pop(2);
 		}
+	}
+	
+	private class PluginInstalledFunction extends JavaFunction {
+
+		public PluginInstalledFunction(LuaState L) {
+			super(L);
+			
+		}
+
+		@Override
+		public int execute() throws LuaException, RemoteException {
+			String desired = this.getParam(2).getString();
+			boolean result = parent.isPluginInstalled(desired);
+			//parent.isPluginInstalled();
+			L.pushBoolean(result);
+			return 1;
+		}
+		
+	}
+	
+	private class WindowSupportsFunction extends JavaFunction {
+
+		public WindowSupportsFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException, RemoteException {
+			String desired = this.getParam(2).getString();
+			String function = this.getParam(2).getString();
+			boolean ret = parent.checkWindowSupports(desired,function);
+			L.pushBoolean(ret);
+			return 1;
+		}
+		
+	}
+	
+	private class WindowBroadcastFunction extends JavaFunction {
+
+		public WindowBroadcastFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException, RemoteException {
+			String function = this.getParam(2).getString();
+			String data = this.getParam(3).getString();
+			parent.windowBroadcast(function, data);
+			
+			return 0;
+		}
+		
+	}
+	
+	private class WindowCallFunction extends JavaFunction {
+
+		public WindowCallFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException, RemoteException {
+			String window = this.getParam(2).getString();
+			String function = this.getParam(3).getString();
+			String data = this.getParam(4).getString();
+			
+			parent.windowCall(window,function,data);
+			return 0;
+		}
+		
 	}
 	
 	/*public void callFunction(String callback,Object o) {
@@ -3210,13 +3437,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 	public void onCustomAnimationEnd() {
 		//call into lua to notify that the parent animation has completed.
-		callFunction("onParentAnimationEnd");
+		callFunction("onParentAnimationEnd",null);
 	}
 	
 	@Override
 	public void onAnimationEnd() {
 		//call into lua to notify that the parent animation has completed.
-		callFunction("onAnimationEnd");
+		callFunction("onAnimationEnd",null);
 	}
 	
 	/*public void addView(View v) {
@@ -3952,6 +4179,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private boolean selectionFingerDown = false;
 	private boolean scrollingEnabled = true;
 
+/*! \page entry_points
+ * \subsection OnDestroy OnDestroy
+ * When the foreground process is being terimnated normally, this function will be called and it is appropriate to put memory management stuff here (freeing custom bitmaps, data, stuff that needs to be garbage collected).
+ * 
+ * \param none
+ * 
+ * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
+ */
+		
 	public void shutdown() {
 		//Log.e("LUAWINDOW","SHUTTING DOWN: "+mName);
 		if(L == null) return;
@@ -4097,6 +4333,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	public int gravity = Gravity.LEFT;
 
+	
 	public void populateMenu(Menu menu) {
 		if(L == null) return;
 		L.getGlobal("debug");
@@ -4121,6 +4358,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		// TODO Auto-generated method stub
 		this.the_tree = buffer;
 		
+	}
+
+	public boolean checkSupports(String function) {
+		if(L != null) {
+			L.getGlobal(function);
+			
+			boolean ret = L.isFunction(-1);
+			L.pop(1);
+			return ret;
+		}
+		return false;
 	}
 	
 //	private class ThreadUpdater extends Thread {
