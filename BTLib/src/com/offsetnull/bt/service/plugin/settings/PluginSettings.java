@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 
 import com.offsetnull.bt.alias.AliasData;
+import com.offsetnull.bt.script.ScriptData;
 import com.offsetnull.bt.service.WindowToken;
 import com.offsetnull.bt.timer.TimerData;
 import com.offsetnull.bt.trigger.TriggerData;
@@ -30,7 +31,7 @@ public class PluginSettings implements Cloneable {
 	private HashMap<String,AliasData> aliases = null;
 	private HashMap<String,TriggerData> triggers = null;
 	private HashMap<String,TimerData> timers = null;
-	private HashMap<String,String> scripts = null;
+	private HashMap<String,ScriptData> scripts = null;
 	
 	private HashMap<String,WindowToken> windows = null;
 	
@@ -44,7 +45,7 @@ public class PluginSettings implements Cloneable {
 		setAliases(new HashMap<String,AliasData>());
 		setTriggers(new HashMap<String,TriggerData>());
 		setTimers(new HashMap<String,TimerData>());
-		setScripts(new HashMap<String,String>());
+		setScripts(new HashMap<String,ScriptData>());
 		setWindows(new HashMap<String,WindowToken>());
 		setOptions(new SettingsGroup());
 		
@@ -102,12 +103,12 @@ public class PluginSettings implements Cloneable {
 	}
 
 
-	public void setScripts(HashMap<String,String> scripts) {
+	public void setScripts(HashMap<String,ScriptData> scripts) {
 		this.scripts = scripts;
 	}
 
 
-	public HashMap<String,String> getScripts() {
+	public HashMap<String,ScriptData> getScripts() {
 		return scripts;
 	}
 

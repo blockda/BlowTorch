@@ -10,6 +10,7 @@ import org.xmlpull.v1.XmlSerializer;
 import android.os.Handler;
 
 import com.offsetnull.bt.service.Connection;
+import com.offsetnull.bt.service.ConnectionPluginCallback;
 import com.offsetnull.bt.service.plugin.settings.BooleanOption;
 import com.offsetnull.bt.service.plugin.settings.EncodingOption;
 import com.offsetnull.bt.service.plugin.settings.IntegerOption;
@@ -22,12 +23,12 @@ import com.offsetnull.bt.speedwalk.DirectionData;
 import com.offsetnull.bt.trigger.TriggerData;
 
 public class ConnectionSettingsPlugin extends Plugin {
-	public ConnectionSettingsPlugin(Handler h,Connection parent) throws LuaException {
+	public ConnectionSettingsPlugin(Handler h,ConnectionPluginCallback parent) throws LuaException {
 		super(h,parent);
 		init();
 	}
 	
-	public ConnectionSettingsPlugin(PluginSettings settings,Handler h,Connection parent) throws LuaException {
+	public ConnectionSettingsPlugin(PluginSettings settings,Handler h,ConnectionPluginCallback parent) throws LuaException {
 		super(settings,h,parent);
 		init();
 	}
@@ -35,7 +36,7 @@ public class ConnectionSettingsPlugin extends Plugin {
 	private void init() {
 		SettingsGroup sg = new SettingsGroup();
 		sg.setTitle("Program Settings");
-		sg.setListener(parent);
+		sg.setListener(parent.getSettingsListener());
 
 		EncodingOption enc = new EncodingOption();
 		enc.setTitle("System Encoding");

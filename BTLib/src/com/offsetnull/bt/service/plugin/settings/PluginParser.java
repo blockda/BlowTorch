@@ -15,7 +15,9 @@ import org.xmlpull.v1.XmlSerializer;
 
 import com.offsetnull.bt.alias.AliasData;
 import com.offsetnull.bt.alias.AliasParser;
+import com.offsetnull.bt.script.ScriptData;
 import com.offsetnull.bt.service.Connection;
+import com.offsetnull.bt.service.ConnectionPluginCallback;
 import com.offsetnull.bt.service.WindowToken;
 import com.offsetnull.bt.service.WindowTokenParser;
 import com.offsetnull.bt.service.plugin.Plugin;
@@ -46,7 +48,7 @@ public class PluginParser extends BasePluginParser {
 	ArrayList<Plugin> plugins = null;
 	PluginSettings tmp = null;
 	Handler serviceHandler = null;
-	Connection parent = null;
+	ConnectionPluginCallback parent = null;
 	
 	enum TYPE {
 		EXTERNAL,
@@ -76,6 +78,7 @@ public class PluginParser extends BasePluginParser {
 	final FileOption currentFileOption = new FileOption();
 	final ListOption currentListOption = new ListOption();
 	String current_script_name = new String();
+	boolean current_script_execute = false;
 	
 	public ArrayList<Plugin> load() throws FileNotFoundException, IOException, SAXException {
 		RootElement root = new RootElement("blowtorch");
@@ -115,38 +118,51 @@ public class PluginParser extends BasePluginParser {
 			//if(p.getName().equals("whichmob")) {
 			//	long time = System.currentTimeMillis();
 			//}
-			if(p.getSettings().getScripts().containsKey("bootstrap")) {
-				//run this script.
-				LuaState pL = p.getLuaState();
-				pL.getGlobal("debug");
-				pL.getField(-1, "traceback");
-				pL.remove(-2);
-				
-				String datas = p.getSettings().getScripts().get("bootstrap");
-				pL.LloadString(datas);
-				
-				int ret = p.getLuaState().pcall(0, 1, -2);
-				if(ret != 0) {
-					p.displayLuaError("Error in Bootstrap("+p.getName()+"):"+pL.getLuaObject(-1).getString());
-				} else {
-					//bootstrap success.
-					//i think i can use the existing traceback, but the pcall has left a nil on the stack
-					//L.pop(1);
+			for(ScriptData d : p.getSettings().getScripts().values()) {
+				if(d.getName().equals("bootstrap") || d.isExecute()) {
+					//run this script.
+					LuaState pL = p.getLuaState();
 					pL.getGlobal("debug");
 					pL.getField(-1, "traceback");
 					pL.remove(-2);
 					
-					pL.getGlobal("OnPrepareXML");
-					if(pL.isFunction(-1)) {
-						pL.pushJavaObject(data);
-						int r2 = pL.pcall(1, 1, -3);
-						if(r2 != 0) {
-							p.displayLuaError("Error in OnPrepareXML: "+pL.getLuaObject(-1).getString());
+					String datas = d.getData();
+					pL.LloadString(datas);
+					
+					int ret = pL.pcall(0, 1, -2);
+					if(ret != 0) {
+						p.displayLuaError("Error in Bootstrap("+p.getName()+"):"+pL.getLuaObject(-1).getString());
+					} else {
+						//bootstrap success.
+						//i think i can use the existing traceback, but the pcall has left a nil on the stack
+						//L.pop(1);
+						
+/*! \page entry_points
+ * \subsection OnPrepareXML OnPrepareXML
+ * This function is called during the loading process when it is time for a script to attatch custom xml element listeners in order to parse custom data that is saved in the descriptor file.
+ * 
+ * \param none
+ * 
+ * \note This is not the best way to do this, it came out of a necessity for dealing with legacy button data in the new button plugin. It is advantageous to save custom data in a separate file, and saving it using the android xml suites is relativly easy using the luajava api.
+ */
+		
+						
+						pL.getGlobal("debug");
+						pL.getField(-1, "traceback");
+						pL.remove(-2);
+						
+						pL.getGlobal("OnPrepareXML");
+						if(pL.isFunction(-1)) {
+							pL.pushJavaObject(data);
+							int r2 = pL.pcall(1, 1, -3);
+							if(r2 != 0) {
+								p.displayLuaError("Error in OnPrepareXML: "+pL.getLuaObject(-1).getString());
+							} else {
+								pL.pop(2);
+							}
 						} else {
 							pL.pop(2);
 						}
-					} else {
-						pL.pop(2);
 					}
 				}
 			}
@@ -185,6 +201,15 @@ public class PluginParser extends BasePluginParser {
 
 			public void start(Attributes a) {
 				current_script_name = a.getValue("",BasePluginParser.ATTR_NAME);
+				if(a.getValue("","execute") != null) {
+					if(a.getValue("","execute").equals("true")) {
+						current_script_execute = true;
+					} else {
+						current_script_execute = false;
+					}
+				} else {
+					current_script_execute = false;
+				}
 			}
 
 			public void end(String body) {
@@ -198,7 +223,11 @@ public class PluginParser extends BasePluginParser {
 					
 				}
 				//current_script_body = body;
-				tmp.getScripts().put(current_script_name, body);
+				ScriptData d = new ScriptData();
+				d.setName(current_script_name);
+				d.setExecute(current_script_execute);
+				d.setData(body);
+				tmp.getScripts().put(current_script_name,d);
 			}
 			
 		});
@@ -311,6 +340,7 @@ public class PluginParser extends BasePluginParser {
 		Element encoO = options.getChild("encoding");
 		Element listO = options.getChild("list");
 		Element stringO = options.getChild("string");
+		Element callbackO = options.getChild("callback");
 		
 		//set up sub listeners for attributes that need them.
 		Element fileValue = fileO.getChild("value");
@@ -572,6 +602,33 @@ public class PluginParser extends BasePluginParser {
 			
 		});
 		
+		callbackO.setTextElementListener(new TextElementListener() {
+			CallbackOption o = null;
+			
+			@Override
+			public void start(Attributes a) {
+				o = new CallbackOption();
+				if(a.getValue("","key") != null) {
+					o.setKey(a.getValue("","key"));
+				}
+				
+				if(a.getValue("","title") != null) {
+					o.setTitle(a.getValue("","title"));
+				}
+				
+				if(a.getValue("","summary") != null) {
+					o.setDescription(a.getValue("","summary"));
+				}
+			}
+
+			@Override
+			public void end(String arg0) {
+				o.setValue(arg0);
+				tmp.getOptions().addOption(o);
+			}
+			
+		});
+		
 		encoO.setTextElementListener(new TextElementListener() {
 			EncodingOption o = null;
 			@Override
@@ -605,7 +662,7 @@ public class PluginParser extends BasePluginParser {
 		public void addAlias(String key,AliasData a);
 		public void addTrigger(String key,TriggerData t);
 		public void addTimer(String key,TimerData t);
-		public void addScript(String name,String body);
+		public void addScript(String name,String body,boolean execute);
 		public void addWindow(String name,WindowToken w);
 	}
 	
@@ -619,8 +676,12 @@ public class PluginParser extends BasePluginParser {
 			PluginParser.this.tmp.getTimers().put(key, t);
 		}
 
-		public void addScript(String name, String body) {
-			PluginParser.this.tmp.getScripts().put(name, body);
+		public void addScript(String name, String body, boolean execute) {
+			ScriptData d = new ScriptData();
+			d.setName(name);
+			d.setData(body);
+			d.setExecute(execute);
+			PluginParser.this.tmp.getScripts().put(name, d);
 		}
 
 		public void addAlias(String key, AliasData a) {
@@ -694,9 +755,15 @@ public class PluginParser extends BasePluginParser {
 		out.endTag("", "options");
 		
 		for(String scriptName : plugin.getSettings().getScripts().keySet()) {
+			ScriptData d = plugin.getSettings().getScripts().get(scriptName);
+			
 			out.startTag("", "script");
 			out.attribute("", "name", scriptName);
-			out.cdsect(plugin.getSettings().getScripts().get(scriptName));
+			if(d.isExecute()) {
+				out.attribute("", "execute", "true");
+			}
+
+			out.cdsect(d.getData());
 			out.endTag("", "script");
 		}
 		

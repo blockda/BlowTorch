@@ -123,7 +123,7 @@ import com.offsetnull.bt.trigger.BetterTriggerSelectionDialog;
 import com.offsetnull.bt.trigger.TriggerSelectionDialog;
 
 @TargetApi(11)
-public class MainWindow extends Activity {
+public class MainWindow extends Activity implements MainWindowCallback {
 	
 	public static String TEST_MODE = "blowTorchTestMode";
 	public static String NORMAL_MODE = "blowTorchNormalMode";
@@ -197,7 +197,7 @@ public class MainWindow extends Activity {
 	protected static final int MESSAGE_USECOMPATIBILITYMODE = 904;
 	protected static final int MESSAGE_DORESETSETTINGS = 905;
 	protected static final int MESSAGE_EXPORTSETTINGS = 906;
-
+	public static final int MESSAGE_CLOSEOPTIONSDIALOG = 907;
 	protected boolean settingsDialogRun = false;
 	boolean mHideIcons = true;
 	
@@ -214,6 +214,8 @@ public class MainWindow extends Activity {
 	private RelativeLayout mRootView = null;
 	String host;
 	int port;
+	
+	HashMap<String,com.offsetnull.bt.window.Window> windowMap = null;
 	
 	Handler myhandler = null;
 	//boolean servicestarted = false;
@@ -338,6 +340,7 @@ public class MainWindow extends Activity {
 		//Log.e("Window","start onCreate");
 		//Debug.startMethodTracing("window");
 		super.onCreate(icicle);
+		windowMap = new HashMap<String,com.offsetnull.bt.window.Window>(0);
 		if(supportsActionBar()) {
 			this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
 			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
@@ -556,6 +559,9 @@ public class MainWindow extends Activity {
 			public void handleMessage(Message msg) {
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_CLOSEOPTIONSDIALOG:
+					closeOptionsDialog();
+					break;
 				case MESSAGE_EXPORTSETTINGS:
 					MainWindow.this.doExportSettings((String)msg.obj);
 					break;
@@ -1344,7 +1350,7 @@ public class MainWindow extends Activity {
 		}
 	}
 	
-	protected void dispatchLuaText(String obj) {
+	public void dispatchLuaText(String obj) {
 		try {
 			service.dispatchLuaText(obj);
 		} catch (RemoteException e) {
@@ -1572,6 +1578,13 @@ public class MainWindow extends Activity {
 	}
 	
 	//RotatableDialog d = null;
+	OptionsDialog optdialog = null;
+	
+	private void closeOptionsDialog() {
+		if(optdialog != null) {
+			optdialog.dismiss();
+		}
+	}
 	
 	@SuppressWarnings("unchecked")
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -1676,7 +1689,7 @@ public class MainWindow extends Activity {
 			
 			//give up the list to the dialog.
 			int size = sg.getOptions().size();*/
-			OptionsDialog optdialog = new OptionsDialog(this,service,"main");
+			optdialog = new OptionsDialog(this,service,"main");
 			optdialog.show();
 			//OptionsDialogFragment odf = new OptionsDialogFragment(service,"main",getFragmentManager());
 			//odf.show(getFragmentManager(), "dialog");
@@ -1936,7 +1949,7 @@ public class MainWindow extends Activity {
 			RelativeLayout rl = (RelativeLayout)this.findViewById(R.id.window_container);
 			
 			com.offsetnull.bt.window.Window w = (com.offsetnull.bt.window.Window)rl.findViewWithTag(tmp.window);
-			w.callFunction(tmp.callback);
+			w.callFunction(tmp.callback,null);
 				
 			
 			return;
@@ -2995,6 +3008,8 @@ public class MainWindow extends Activity {
 			tmp.setId(w.getId());
 			rl.addView(tmp);
 			
+			windowMap.put(w.getName(), tmp);
+			
 			//RelativeLayout holder = new AnimatedRelativeLayout(mContext,tmp,this);
 			//RelativeLayout.LayoutParams holderParams = new RelativeLayout.LayoutParams(w.getX()+w.getWidth(),w.getY()+w.getHeight());
 			//holderParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -3053,7 +3068,7 @@ public class MainWindow extends Activity {
 					}
 					
 					((com.offsetnull.bt.window.Window)tmp).shutdown();
-					
+					windowMap.remove(w.getName());
 					rl.removeView(tmp);
 					tmp = null;
 					
@@ -3082,7 +3097,7 @@ public class MainWindow extends Activity {
 		
 		com.offsetnull.bt.window.Window lview = (com.offsetnull.bt.window.Window)rl.findViewWithTag(window);
 		if(lview != null) {
-			lview.callFunction(callback);
+			lview.callFunction(callback,null);
 		}
 	}
 	
@@ -3169,5 +3184,43 @@ public class MainWindow extends Activity {
 		}
 		
 		return null;
+	}
+
+	@Override
+	public Activity getActivity() {
+		// TODO Auto-generated method stub
+		return (Activity)this;
+	}
+
+	@Override
+	public boolean isPluginInstalled(String desired) throws RemoteException {
+		boolean ret = service.isPluginInstalled(desired);
+		return ret;
+	}
+
+	@Override
+	public boolean checkWindowSupports(String desired, String function) {
+		com.offsetnull.bt.window.Window window = windowMap.get(desired);
+		if(window != null) {
+			return window.checkSupports(function);
+		}
+		return false;
+	}
+
+	@Override
+	public void windowCall(String desired, String function, String data) {
+		com.offsetnull.bt.window.Window window = windowMap.get(desired);
+		if(window != null) {
+			window.callFunction(function,data);
+		}
+	}
+	
+	@Override
+	public void windowBroadcast(String function, String data) {
+		for(com.offsetnull.bt.window.Window window : windowMap.values()) {
+			if(window.checkSupports(function)) {
+				window.callFunction(function, data);
+			}
+		}
 	}
 }

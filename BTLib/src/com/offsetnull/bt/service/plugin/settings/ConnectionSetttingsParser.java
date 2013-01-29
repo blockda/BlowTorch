@@ -15,6 +15,7 @@ import org.xmlpull.v1.XmlSerializer;
 
 import com.offsetnull.bt.alias.AliasData;
 import com.offsetnull.bt.alias.AliasParser;
+import com.offsetnull.bt.script.ScriptData;
 import com.offsetnull.bt.service.Connection;
 import com.offsetnull.bt.service.WindowToken;
 import com.offsetnull.bt.service.WindowTokenParser;
@@ -108,6 +109,15 @@ public class ConnectionSetttingsParser extends PluginParser {
 
 			public void start(Attributes a) {
 				current_script_name = a.getValue("",BasePluginParser.ATTR_NAME);
+				if(a.getValue("","execute") != null) {
+					if(a.getValue("","execute").equals("true")) {
+						current_script_execute = true;
+					} else {
+						current_script_execute = false;
+					}
+				} else {
+					current_script_execute = false;
+				}
 			}
 
 			public void end(String body) {
@@ -122,7 +132,11 @@ public class ConnectionSetttingsParser extends PluginParser {
 					
 				}
 				//current_script_body = body;
-				settings.getSettings().getScripts().put(current_script_name, body);
+				ScriptData d = new ScriptData();
+				d.setName(current_script_name);
+				d.setData(body);
+				d.setExecute(current_script_execute);
+				settings.getSettings().getScripts().put(current_script_name, d);
 			}
 			
 		});
@@ -200,7 +214,7 @@ public class ConnectionSetttingsParser extends PluginParser {
 			settings.getSettings().getTimers().put(key, t.copy());
 		}
 
-		public void addScript(String name, String body) {
+		public void addScript(String name, String body, boolean b) {
 			// TODO Auto-generated method stub
 			
 		}
@@ -294,9 +308,14 @@ public class ConnectionSetttingsParser extends PluginParser {
 		out.endTag("", "directions");
 		
 		for(String key : p.getSettings().getScripts().keySet()) {
+			ScriptData d = p.getSettings().getScripts().get(key);
+			
 			out.startTag("", "script");
 			out.attribute("", "name", key);
-			out.cdsect(p.getSettings().getScripts().get(key));
+			if(d.isExecute()) {
+				out.attribute("", "execute", "true");
+			}
+			out.cdsect(d.getData());
 			out.endTag("", "script");
 		}
 		

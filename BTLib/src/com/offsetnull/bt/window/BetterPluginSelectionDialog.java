@@ -1,11 +1,14 @@
 package com.offsetnull.bt.window;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
@@ -75,6 +78,16 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 
 	@Override
 	public void onNewPressed(View v) {
+		String extDir = Environment.getExternalStorageDirectory().getAbsolutePath();
+		
+		String plugpath = extDir + "/BlowTorch/plugins";
+		
+		File plugfile = new File(plugpath);
+		
+		if(!plugfile.exists()) {
+			plugfile.mkdir();
+		}
+		
 		PluginSelectorDialog loader = new PluginSelectorDialog(v.getContext(),service,this);
 		loader.show();
 	}

@@ -72,6 +72,7 @@ static jmethodID luajava_check_field_method = NULL;
 static jmethodID luajava_class_index_method = NULL;
 static jmethodID luajava_create_proxy_method = NULL;
 static jmethodID java_lang_class_forname_method = NULL;
+static jmethodID luajava_new_array_method = NULL;
 
 
 /***************************************************************************
@@ -206,6 +207,23 @@ static jmethodID java_lang_class_forname_method = NULL;
 
    static int javaNew( lua_State * L );
 
+/***************************************************************************
+*
+* $FC Function javaArray
+* 
+* $ED Description
+*    Implementation of lua function luajava.array
+* 
+* $EP Function Parameters
+*    $P L - lua State
+*    $P Stack - Parameters will be received by the stack
+* 
+* $FV Returned Value
+*    int - Number of values to be returned by the function
+* 
+*$. **********************************************************************/
+
+   static int javaArray( lua_State * L );
 
 /***************************************************************************
 *
@@ -1053,6 +1071,118 @@ int javaNew( lua_State * L )
   return ret;
 }
 
+int javaArray( lua_State * L )
+{
+   int top;
+   jint ret;
+   jclass clazz;
+   jmethodID method;
+   jobject classInstance ;
+   jthrowable exp;
+   jobject * userData;
+   lua_Number stateIndex;
+   lua_Number size;
+   JNIEnv * javaEnv;
+
+   top = lua_gettop( L );
+
+   if ( top == 0 )
+   {
+      lua_pushstring( L , "Error. Invalid number of parameters." );
+      lua_error( L );
+   }
+
+   /* Gets the luaState index */
+   lua_pushstring( L , LUAJAVASTATEINDEX );
+   lua_rawget( L , LUA_REGISTRYINDEX );
+
+   if ( !lua_isnumber( L , -1 ) )
+   {
+      lua_pushstring( L , "Impossible to identify luaState id." );
+      lua_error( L );
+   }
+
+   stateIndex = lua_tonumber( L , -1 );
+   lua_pop( L , 1 );
+
+   /* Gets the java Class reference */
+   if ( !isJavaObject( L , 1 ) )
+   {
+      lua_pushstring( L , "Argument not a valid Java Class." );
+      lua_error( L );
+   }
+
+   /* Gets the JNI Environment */
+   javaEnv = getEnvFromState( L );
+   if ( javaEnv == NULL )
+   {
+      lua_pushstring( L , "Invalid JNI Environment." );
+      lua_error( L );
+   }
+
+   if(!lua_isnumber(L,2)) {
+		lua_pushstring(L,"Invalid size argument given.");
+		lua_error(L);
+   }
+
+	size = lua_tonumber(L,2);
+
+   //clazz = ( *javaEnv )->FindClass( javaEnv , "java/lang/Class" );
+
+   userData = ( jobject * ) lua_touserdata( L , 1 );
+
+   classInstance = ( jobject ) *userData;
+
+	//clazz = (*javaEnv)->GetObjectClass(javaEnv,classInstance);
+
+   //if ( ( *javaEnv )->IsInstanceOf( javaEnv , classInstance , java_lang_class ) == JNI_FALSE )
+  // {
+   //   lua_pushstring( L , "Argument not a valid Java Class." );
+  //    lua_error( L );
+   //}
+
+   //method = ( *javaEnv )->GetStaticMethodID( javaEnv , luajava_api_class , "javaNew" , 
+                                             //"(ILjava/lang/Class;)I" );
+
+  // if ( clazz == NULL || luajava_new_method == NULL )
+  // {
+  //    lua_pushstring( L , "Invalid method org.keplerproject.luajava.LuaJavaAPI.javaNew." );
+  //    lua_error( L );
+  // }
+
+   //ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , clazz , method , (jint)stateIndex , classInstance );
+	ret = ( *javaEnv )->CallStaticIntMethod( javaEnv , luajava_api_class , luajava_new_array_method , (jint)stateIndex , classInstance , (jint)size);
+
+   exp = ( *javaEnv )->ExceptionOccurred( javaEnv );
+
+   /* Handles exception */
+   if ( exp != NULL )
+   {
+      jobject jstr;
+      const char * str;
+      
+      ( *javaEnv )->ExceptionClear( javaEnv );
+      jstr = ( *javaEnv )->CallObjectMethod( javaEnv , exp , get_message_method );
+
+      if ( jstr == NULL )
+      {
+         jmethodID methodId;
+
+         methodId = ( *javaEnv )->GetMethodID( javaEnv , throwable_class , "toString" , "()Ljava/lang/String;" );
+         jstr = ( *javaEnv )->CallObjectMethod( javaEnv , exp , methodId );
+      }
+
+      str = ( *javaEnv )->GetStringUTFChars( javaEnv , jstr , NULL );
+
+      lua_pushstring( L , str );
+
+      ( *javaEnv )->ReleaseStringUTFChars( javaEnv , jstr, str );
+
+      lua_error( L );
+   }
+  return ret;
+}
+
 
 /***************************************************************************
 *
@@ -1572,6 +1702,10 @@ JNIEXPORT void JNICALL Java_org_keplerproject_luajava_LuaState_luajava_1open
   lua_pushcfunction( L , &javaNew );
   lua_settable( L , -3 );
 
+  lua_pushstring( L , "array" );
+  lua_pushcfunction( L , &javaArray );
+  lua_settable( L , -3 );
+
   lua_pushstring( L , "newInstance" );
   lua_pushcfunction( L , &javaNewInstance );
   lua_settable( L , -3 );
@@ -1604,6 +1738,8 @@ JNIEXPORT void JNICALL Java_org_keplerproject_luajava_LuaState_luajava_1open
 
 	luajava_new_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "javaNew" , 
                                              "(ILjava/lang/Class;)I" );
+	luajava_new_array_method = (*env)->GetStaticMethodID(env,luajava_api_class,"javaArray",
+											 "(ILjava/lang/Class;I)I");
     luajava_new_instance_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "javaNewInstance" , 
                                              "(ILjava/lang/String;)I" );	
 	luajava_check_field_method = ( *env )->GetStaticMethodID( env , luajava_api_class , "checkField" ,

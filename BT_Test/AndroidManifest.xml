@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.happygoatstudios.bttest"
-      android:versionCode="49"
+      android:versionCode="52"
       android:versionName="2.0">
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:process="com.offsetnull.bttest" android:debuggable="true" android:hardwareAccelerated="true">
-     	<meta-data android:value="2" android:name="BLOWTORCH_TEST_VERSION"/>
-     	<meta-data android:value="32" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
+     	<meta-data android:value="3" android:name="BLOWTORCH_TEST_VERSION"/>
+     	<meta-data android:value="36" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
      	<activity android:name="com.offsetnull.bttest.TestLauncher"
                   android:label="BlowTorch TEST">
             <intent-filter>

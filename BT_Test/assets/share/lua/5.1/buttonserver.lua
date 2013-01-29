@@ -603,3 +603,12 @@ options.roundness = 6
 options.auto_launch = true
 options.auto_create = true
 
+function testxcall(data)
+	Note("Button window recieving testxcall:"..data)
+	if(PluginSupports("chat_miniwindow","recvxcall")) then
+		CallPlugin("chat_miniwindow","recvxcall","daaaata")
+	else
+		Note("chat_miniwindow does not support recvxcall")
+	end
+end
+

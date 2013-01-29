@@ -24,6 +24,8 @@
 
 package org.keplerproject.luajava;
 
+import android.os.RemoteException;
+
 /**
  * JavaFunction is a class that can be used to implement a Lua function in Java.
  * JavaFunction is an abstract class, so in order to use it you must extend this 
@@ -45,8 +47,9 @@ public abstract class JavaFunction
 	 * always the first parameter received. Values passed back as results
 	 * of the function must be pushed onto the stack.
 	 * @return The number of values pushed onto the stack.
+	 * @throws RemoteException 
 	 */
-	public abstract int execute() throws LuaException;
+	public abstract int execute() throws LuaException, RemoteException;
 	
 	/**
 	 * Constructor that receives a LuaState.

@@ -497,12 +497,22 @@ public class Launcher extends Activity implements ReadyListener {
 		return false;
 	}
 	
+	boolean checkedUpdate = false;
+	
 	public void onStart() {
 		super.onStart();
 		//if(noConnections) {
 		//	Toast msg = Toast.makeText(this, "No connections specified, select NEW to create.", Toast.LENGTH_LONG);
 		//	msg.show();
 		//}
+		if(ConfigurationLoader.isTestMode(this)) {
+			if(!checkedUpdate) {
+				checkedUpdate = true;
+				BackgroundCheckUpdateThread t = new BackgroundCheckUpdateThread(updateHandler);
+				t.start();
+			}
+		}
+		
 		if(dowhatsnew) {
 			dowhatsnew = false;
 			try {
@@ -1414,7 +1424,7 @@ public class Launcher extends Activity implements ReadyListener {
 				}
 				
 				if(m.isConnected()) {
-					title.setTextColor(0xFFFF0000);
+					title.setTextColor(0xFF00FF00);
 				} else {
 					title.setTextColor(0xAA222222);
 				}
@@ -1438,11 +1448,36 @@ public class Launcher extends Activity implements ReadyListener {
 	private final int MESSAGE_UPTODATE = 10103;
 	private final int MESSAGE_NOSDCARD = 10104;
 	private final int MESSAGE_BYTESINCOMING = 10105;
+	private final int MESSAGE_NEEDSUPDATE = 10106;
 	ProgressDialog updateDialog = null;
 	UpdateThread update = null;
 	Handler updateHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
+			case MESSAGE_NEEDSUPDATE:
+				AlertDialog.Builder builder = new AlertDialog.Builder(Launcher.this);
+				builder.setTitle("Update Available");
+				builder.setMessage("An update is available for this package, would you like to update now?");
+				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						UpdateThread t = new UpdateThread(updateHandler);
+						t.start();
+						dialog.dismiss();
+					}
+				});
+				builder.setNegativeButton("No",new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+					
+				});
+				AlertDialog d = builder.create();
+				d.show();
+				break;
 			case MESSAGE_BYTESINCOMING:
 				updateDialog.setMessage("Downloading "+(Integer)msg.obj+"bytes.");
 				updateDialog.setMax((Integer)msg.obj);
@@ -1723,6 +1758,62 @@ public class Launcher extends Activity implements ReadyListener {
 				e.printStackTrace();
 				reportTo.sendEmptyMessage(MESSAGE_CANCELDOWNLOAD);
 				throw new RuntimeException(e);
+			}
+		}
+	}
+	
+	public class BackgroundCheckUpdateThread extends Thread {
+		
+		Handler reportTo = null;
+		public BackgroundCheckUpdateThread(Handler h) {
+			reportTo = h;
+		}
+		
+		public void run() {
+			//check if we need to download.
+			//reportTo.sendEmptyMessage(MESSAGE_STARTUPDATE);
+			
+			URL url2 = null;
+			try {
+				url2 = new URL("http://bt.happygoatstudios.com/test/version");
+			} catch (MalformedURLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				BufferedReader in = new BufferedReader(new InputStreamReader(url2.openStream()));
+				StringBuffer buf = new StringBuffer();
+				String tmp;
+				while((tmp = in.readLine()) != null) {
+					buf.append(tmp);
+				}
+				try {
+					Integer newVersion = Integer.parseInt(buf.toString());
+					//Log.e("BlowTorch","Web update version: " + newVersion);
+					ApplicationInfo testLauncher = Launcher.this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA);
+					int testversionName = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
+					int testversion = newVersion;
+					PackageManager pm = Launcher.this.getPackageManager();
+					testversion = pm.getPackageInfo(testLauncher.packageName, PackageManager.GET_CONFIGURATIONS).versionCode;
+					if(newVersion > testversion) {
+						//needsupdate = true;
+						reportTo.sendEmptyMessage(MESSAGE_NEEDSUPDATE);
+					} else {
+						//Toast t = Toast.makeText(Launcher.this, "BlowTorch Test Version "+testversionName+" is up to date.", Toast.LENGTH_SHORT);
+						//t.show();
+						//updateDialog.dismiss();
+						//updateDialog = null;
+						//reportTo.sendEmptyMessage(MESSAGE_UPTODATE);
+						
+						return;
+					}
+				} catch(NumberFormatException e) {
+				} catch (NameNotFoundException e) {
+					e.printStackTrace();
+				}
+				
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
