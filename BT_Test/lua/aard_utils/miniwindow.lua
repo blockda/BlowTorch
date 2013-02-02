@@ -4,16 +4,22 @@ LinearLayout = luajava.bindClass("android.widget.LinearLayout")
 LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams")
 RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
 RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
+View = luajava.bindClass("android.view.View")
+Color = luajava.bindClass("android.graphics.Color")
 
 local view_id = view:getId()
 
-local info_path = string.format("%s/view_%d_info"),install_dir,view_id)
-local props_path = string.format("%s/view_%d_props"),install_dir,view_id)
+context = view:getContext()
+density = context:getResources():getDisplayMetrics().density
 
 local install_dir = GetPluginInstallDirectory()
+local info_path = string.format("%s/view_%d_info",install_dir,view_id)
+local props_path = string.format("%s/view_%d_props",install_dir,view_id)
+
+
 local window_config = {}
 
-local 
+local container_config = nil
 
 function file_exists(file)
 	local file = io.open
@@ -80,6 +86,33 @@ function InitializeWindow()
 	newparent:addView(view)
 end
 
+function InstallWindow(config)
 
+	if(not config) then
+		--create default configuration
+		config = {}
+		math.randomseed(os.time())
+		config.id = math.round(math.random(8000,80000))
+		config.parent = "ScrollView1"
+		config.type = "linear"
+		config.width = "match"
+		config.height = "wrap"
+	else
+		
+	end
+	
+	--if(type(config) == "table") then
+	--	Note("MiniWindow Serializing Config")
+	--	config = serialize(config)
+	--end
+	
+	WindowCall("layout_manager","InstallWindow",serialize(config))
+end
+
+function MakeDivider(context)
+	local tmp = luajava.new(View,context)
+	tmp:setBackgroundColor(Color:argb(255,68,68,136))
+	return tmp
+end
 
 

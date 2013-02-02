@@ -26,31 +26,31 @@ body {
 		]]>
 		</description>
 		<triggers>
-			<trigger title="fail" pattern="^No\-one in this area by that name\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="fail" pattern="^No one in this area by that name\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="failed" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt1" pattern="^You are almost certain that .*? is (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt1" pattern="^You are almost certain that .*? is (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt2" pattern="^You are confident that (.*?) passed through here\, heading (.*?)\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt2" pattern="^You are confident that (.*?) passed through here\, heading (.*?)\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt3" pattern="^You couldn\'t find a path to (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt3" pattern="^You couldn\'t find a path to (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt4" pattern="^You have no idea what you\'re doing\, but maybe .*? left .*?\?$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt4" pattern="^You have no idea what you\'re doing\, but maybe .*? left .*?\?$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt5" pattern="^The trail of .*? is confusing\, but you\'re reasonably sure .*? headed .*?\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt5" pattern="^The trail of .*? is confusing\, but you\'re reasonably sure .*? headed .*?\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt6" pattern=".*? is here\!$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt6" pattern=".*? is here\!$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="hunt7" pattern="^You are certain that .*? is .*? from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="hunt7" pattern="^You are certain that .*? is .*? from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="advance" fireWhen="always"/>
 			</trigger>
-			<trigger title="success" pattern="^You seem unable to hunt that target for some reason\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
+			<trigger title="success" pattern="^You seem unable to hunt that target for some reason\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="hunttrick">
 				<script function="finish" fireWhen="always"/>
 			</trigger>
 		</triggers>
@@ -67,6 +67,7 @@ body {
 			function finish()
 				Note("\nAuto-hunt-trick completed.\n")
 				SendToServer(".hht "..attempt.."."..target)
+				SendToServer("where "..attempt.."."..target)
 				disableTriggers()
 				return true
 			end
@@ -78,10 +79,19 @@ body {
 			end
 
 			function start(mob)
-				Note("\nAuto-hunt-trick engaged.\n")
+				Note("\nAuto-hunt-trick engaged: "..mob.."\n")
 				enableTriggers()
-				target = mob
-				attempt = 1
+				start_pos = mob:find("%.")
+				if(not start_pos) then
+					target = mob
+					attempt = 1
+				else
+					Note("Start pos: "..start_pos)
+					target = mob:sub(start_pos+1)
+					attempt = mob:sub(0,start_pos-1)
+					Note("pulled out "..target.." pos:"..attempt)
+					
+				end
 				SendToServer("hunt "..attempt.."."..target)
 				return true
 			end
@@ -92,30 +102,37 @@ body {
 			end
 
 			function enableTriggers()
-				TriggerEnabled("success",true)
-				TriggerEnabled("fail",true)
-				TriggerEnabled("hunt1",true)
-				TriggerEnabled("hunt2",true)
-				TriggerEnabled("hunt3",true)
-				TriggerEnabled("hunt4",true)
-				TriggerEnabled("hunt5",true)
-				TriggerEnabled("hunt6",true)
-				TriggerEnabled("hunt7",true)
+				EnableTriggerGroup("hunttrick",true)
+				--TriggerEnabled("success",true)
+				--TriggerEnabled("fail",true)
+				--TriggerEnabled("hunt1",true)
+				--TriggerEnabled("hunt2",true)
+				--TriggerEnabled("hunt3",true)
+				--TriggerEnabled("hunt4",true)
+				--TriggerEnabled("hunt5",true)
+				--TriggerEnabled("hunt6",true)
+				--TriggerEnabled("hunt7",true)
 			end
 
 			function disableTriggers()
-				TriggerEnabled("success",false)
-				TriggerEnabled("fail",false)
-				TriggerEnabled("hunt1",false)
-				TriggerEnabled("hunt2",false)
-				TriggerEnabled("hunt3",false)
-				TriggerEnabled("hunt4",false)
-				TriggerEnabled("hunt5",false)
-				TriggerEnabled("hunt6",false)
-				TriggerEnabled("hunt7",false)
+				EnableTriggerGroup("hunttrick",false)
+				--TriggerEnabled("success",false)
+				--TriggerEnabled("fail",false)
+				--TriggerEnabled("hunt1",false)
+				--TriggerEnabled("hunt2",false)
+				--TriggerEnabled("hunt3",false)
+				--TriggerEnabled("hunt4",false)
+				--TriggerEnabled("hunt5",false)
+				--TriggerEnabled("hunt6",false)
+				--TriggerEnabled("hunt7",false)
 
 			end
 
+			function OnBackgroundStartup()
+				disableTriggers()
+			end
+	
+			
 			RegisterSpecialCommand("ht","start")
 
 			

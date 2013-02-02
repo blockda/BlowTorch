@@ -2052,6 +2052,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void addText(String str,boolean jumpToEnd) {
+		Log.e("LUA","ADDING STRING TO TREE ("+this.getName()+":"+this.mHeight+"): "+str);
 		try {
 			addBytesImpl(str.getBytes(the_tree.getEncoding()),jumpToEnd);
 		} catch (UnsupportedEncodingException e) {
@@ -2917,6 +2918,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				L.pushNil();
 			}*/
 			String path = parent.getPathForPlugin(mOwner);
+			Log.e("LUA","FETCHED PATH ("+path+") for plugin, "+mOwner);
 			File file = new File(path);
 			String dir = file.getParent();
 			//file.getPar
@@ -3282,14 +3284,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			} else {
 				L.pushNil();
 			}
-			int tmp = L.pcall(1, 1, -2);
+			int tmp = L.pcall(1, 1, -3);
 			if(tmp != 0) {
 				displayLuaError("Error calling window script function "+callback+": "+L.getLuaObject(-1).getString());
 			} else {
-				L.pop(2);
+				L.pop(1);
 			}
 		} else {
-			L.pop(2);
+			L.pop(1);
 		}
 	}
 	
