@@ -1,5 +1,8 @@
 
+package.path = package.path..";"..GetPluginInstallDirectory().."/?.lua"
 require("serialize")
+require("miniwindow")
+
 --make a button.
 --debugPrint("in the clock widgetui")
 
@@ -47,13 +50,30 @@ end
 
 
 --install ourselves in the scroll view
-root = view:getParent()
-root:removeView(view)
+--root = view:getParent()
+--root:removeView(view)
 
-scroller = root:findViewById(6010)
-holder = scroller:getChildAt(0)
+--scroller = root:findViewById(6010)
+--holder = scroller:getChildAt(0)
 
-holder:addView(view)
+--holder:addView(view)
+
+config = {}
+config.id = view:getId()
+config.width = MATCH_PARENT
+config.height = 70*density
+InstallWindow(config)
+
+divider_config = {}
+divider_config.id = config.id + 1
+divider_config.width = MATCH_PARENT
+divider_config.height = 3*density
+divider_config.type = "linear"
+
+local divider = MakeDivider(context)
+divider:setId(divider_config.id)
+view:getParent():addView(divider)
+InstallWindow(divider_config)
 
 Color = luajava.bindClass("android.graphics.Color")
 
@@ -62,27 +82,44 @@ timeordinal = 0
 stats = nil
 
 
+
+
+function OnSizeChanged(w,h,ow,oh)
+	Note(string.format("\nstat window ui changed, %s, %s, %s, %s\n",w,h,ow,oh))
+	view:invalidate()
+end
+
 function updateStats(data)
+	
 	stats = loadstring(data)()
+	
+	local dcyan = "\27[36m"
+	local bwhit = "\27[37;1m"
+	local nwhit = "\27[37m"
+	
+	view:addText(string.format("%sstr: %s[%4d]%s\n",dcyan,bwhit,stats.str,nwhit),true)
+	view:addText(string.format("%swis: %s[%4d]%s",dcyan,bwhit,stats.wis,nwhit),true)
 	view:invalidate();
 end
 
-function OnDraw(c)
+--function OnDraw(c)
 	
-	if(stats == nil) then PluginXCallS("loadStats","") return end
+--	if(stats == nil) then PluginXCallS("loadStats","") return end
 	
-	one = "str["..stats.str.."] int["..stats.int.."]  wis["..stats.wis.."]"
-	two = "dex["..stats.dex.."] con["..stats.con.."] luck["..stats.luck.."]"
+--	one = "str["..stats.str.."] int["..stats.int.."]  wis["..stats.wis.."]"
+--	two = "dex["..stats.dex.."] con["..stats.con.."] luck["..stats.luck.."]"
 	--debugPrint("statwindow drawing")
-	widthone = statPaint:measureText(one)
-	startone = view:getWidth()/2 - widthone/2
-	widthtwo = statPaint:measureText(two)
-	starttwo = view:getWidth()/2 - widthtwo/2
+--	widthone = statPaint:measureText(one)
+--	startone = view:getWidth()/2 - widthone/2
+--	widthtwo = statPaint:measureText(two)
+--	starttwo = view:getWidth()/2 - widthtwo/2
 	
-	c:drawText(one,startone,40,statPaint)
-	c:drawText(two,starttwo,70,statPaint)
+	--c:drawColor(Color:argb(255,0,0,50))
+	
+	--c:drawText(one,startone,40,statPaint)
+	--c:drawText(two,starttwo,70,statPaint)
 	--draw the labels.
-end
+--end
 
 labelPaint = luajava.new(Paint)
 labelPaint:setTextSize(25)

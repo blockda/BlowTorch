@@ -2960,8 +2960,11 @@ public class MainWindow extends Activity implements MainWindowCallback {
 					w = (WindowToken)x;
 				}
 				com.offsetnull.bt.window.Window v = (com.offsetnull.bt.window.Window)rl.findViewWithTag(w.getName());
-				v.runScriptOnCreate();
-				
+				if(v != null) {
+					v.runScriptOnCreate();
+				} else {
+					Log.e("WARNING","Could not load window: "+w.getName());
+				}
 			}
 			//mRootLayout.requestLayout();
 		//}
