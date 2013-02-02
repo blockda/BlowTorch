@@ -243,6 +243,9 @@ function doDemoZero()
 	chatwindow:requestLayout()
 end
 
+Note("\nattempting to load in the new layout manager\n")
+dofile(GetPluginInstallDirectory().."/layout_manager_ui.lua")
+
 
 
 
