@@ -96,7 +96,8 @@ public class PluginParser extends BasePluginParser {
 		//data.
 		//upon encountering.
 		//ok, so here is now where bootstrapping happens.
-		//TODO: change this to something like "bootstrap" or ""
+		
+		boolean hasXML = false;
 		for(Plugin p : plugins) {
 			//set up the stuff.
 			switch(type) {
@@ -153,6 +154,7 @@ public class PluginParser extends BasePluginParser {
 						
 						pL.getGlobal("OnPrepareXML");
 						if(pL.isFunction(-1)) {
+							hasXML = true;
 							pL.pushJavaObject(data);
 							int r2 = pL.pcall(1, 1, -3);
 							if(r2 != 0) {
@@ -168,8 +170,9 @@ public class PluginParser extends BasePluginParser {
 			}
 		}
 		
-		Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root2.getContentHandler());	
-		
+		if(hasXML) {
+			Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root2.getContentHandler());	
+		}
 		return plugins;
 	}
 	

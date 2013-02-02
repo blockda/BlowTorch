@@ -1,33 +1,52 @@
-package.path = package.path..";"..GetPluginInstallDirectory()
+package.path = package.path..";"..GetPluginInstallDirectory().."/?.lua"
 require("serialize")
 require("miniwindow")
 
 --bind necessary android classes
 ScrollView = luajava.bindClass("android.widget.ScrollView")
+FrameLayoutParams = luajava.bindClass("android.widget.FrameLayout$LayoutParams")
+Color = luajava.bindClass("android.graphics.Color")
 
+context = view:getContext()
 --pre load constants that will be used all over the place
 WRAP_CONTENT = LinearLayoutParams.WRAP_CONTENT
 MATCH_PARENT = LinearLayoutParams.FILL_PARENT
 
+install_dir = GetPluginInstallDirectory()
 --read the layout manager configuration from disk, right now this just consists of the layout mode
-layout_config = read_file(string.format("%s/layout_manager_props"),install_dir)
-if(not layout_mode) then layout_mode = {mode=0,scroll_width=300} else layout_mode = loadstring(layout_mode)() end
+layout_config = ReadFile(string.format("%s/layout_manager_props",install_dir))
+if(not layout_config) then 
+	layout_config = {mode=0,scroll_width=300,containers={}}
+	layout_config.containers.ScrollView1 = {}
+	layout_config.containers.ScrollView1.gravcount = 1
+	layout_config.configs = {}
+	layout_config.configs[layout_config.mode] = {}
+else 
+	layout_config = loadstring(layout_mode)()
+end
+
+local rootView = view:getParent()
+local mainDisplay = rootView:findViewById(6666) --main window id from the settings defaults
 
 --check if the chat window is installed
 chat_window_installed = PluginInstalled("chat_miniwindow")
+
+if(chat_window_installed) then Note("\nchat miniwindow installed\n") end
 
 --make the scroll window and linear layout target
 local scroll_view = luajava.new(ScrollView,context)
 local scroll_target = luajava.new(LinearLayout,context)
 
 local scroll_view_params = luajava.new(RelativeLayoutParams,tonumber(layout_config.scroll_width),MATCH_PARENT)
-scroll_view_params:addRule(RelativeLayout.ABOVE,6559) --horizontal divider between input bar and main window
+scroll_view_params:addRule(RelativeLayout.ABOVE,40) --horizontal divider between input bar and main window
 if(chat_window_installed) then
-	scroll_view_params:addRule(RelativeLayout.BELOW,6960) --horizontal divider between main window and chat_window
+	scroll_view_params:addRule(RelativeLayout.BELOW,5010) --use top of the pane because chat window is not installed.
 else
-	scroll_view_params:addRule(RelativeLayout.ALIGN_PARENT_TOP) --use top of the pane because chat window is not installed.
+	scroll_view_params:addRule(RelativeLayout.ALIGN_TOP,rootView:getId()) --use top of the pane because chat window is not installed.
 end
+scroll_view_params:addRule(RelativeLayout.LEFT_OF,6010)
 scroll_view:setLayoutParams(scroll_view_params)
+scroll_view:setBackgroundColor(Color:argb(255,255,0,0))
 
 local linear_layout_params = luajava.new(LinearLayoutParams,MATCH_PARENT,MATCH_PARENT)
 scroll_target:setOrientation(LinearLayout.VERTICAL)
@@ -38,8 +57,119 @@ scroll_target:setId(886794)
 scroll_view:setId(886795)
 scroll_view:addView(scroll_target)
 
-local rootView = view:getParent()
+--make the divider
+local divider = MakeDivider(context)
+divider:setId(886796)
+local density = context:getResources():getDisplayMetrics().density
+local dividerParams = luajava.new(RelativeLayoutParams,3*density,MATCH_PARENT)
+dividerParams:addRule(RelativeLayout.LEFT_OF,886795)
+dividerParams:addRule(RelativeLayout.ALIGN_TOP,886795)
+dividerParams:addRule(RelativeLayout.ALIGN_BOTTOM,886795)
+--dividerParams:addRule(RelativeLayout.RIGHT_OF,mainDisplay:getId())
+divider:setLayoutParams(dividerParams)
+
+--coopt the main windows layout rules to be to the left of the new scroll view
+local mainParams = mainDisplay:getLayoutParams()
+mainParams:addRule(RelativeLayout.LEFT_OF,886796)
+mainDisplay:setLayoutParams(mainParams)
+rootView:addView(divider)
+--local rootView = view:getParent()
 rootView:addView(scroll_view)
 
-local 
+--rootView:requestLayout()
 
+
+
+--rootView:invalidate()
+Containers = {}
+Containers.id = {}
+Containers.id.ScrollView1 = scroll_target:getId()
+Containers.id.root = rootView:getId()
+
+Containers.views = {}
+Containers.views.ScrollView1 = scroll_target
+Containers.views.root = rootView
+
+Layouts = {}
+
+function InstallWindow(config)
+	Note("\nInstalling window, raw data: "..config.."\n")
+	local config = loadstring(config)()
+	
+	Note(string.format("\nconfig.id = %s\n",config.id))
+	--vale = true
+	--if(vale) then return end
+	--return
+	--Note("Attempting to install window: "..config.id)
+	--dump(config)
+	
+	if(not layout_config.configs[layout_config.mode][config.id]) then
+		--never been added, add to default scroll window.
+		Note("\nDoing special no config mode insertion\n")
+		local props = {}
+		props.target = config.target or "ScrollView1"
+		--math.randseed(os.time())
+		--props.id = math.round(math.random(4000,40000))
+		props.id = config.id
+		props.width = config.width or MATCH_PARENT
+		props.height = config.height or 200
+		props.gravity = config.gravity or 0
+		props.weight = config.weight or 0
+		props.type = config.type or "linear"
+		
+		layout_config.configs[layout_config.mode][config.id] = props
+		
+		config = props
+	end
+	vis = true
+	if(not vis) then Note(string.format("\nsanity check for view: %s, %s\n",config.id,config.target)) return end
+	local target = Containers.views[config.target]
+	if(not target) then Note("No target specified for view: "..config.id) return end
+	
+	
+	local source = rootView:findViewById(tonumber(config.id))
+	
+	if(not source) then Note("Layout manager could not find source view: "..config.id) return end
+	vis = false
+	
+
+	--if(not vis) then Note(string.format("\nsanity remove view : %s\n",target:getId())) return end
+	if(not source) then
+		--did not find the root, the script host must not remove the view first
+		return
+	end
+	
+	if(not target) then
+		--target doesn't exist
+		return
+	else
+		local params = nil
+		--build the layout params
+		if(config.type == "linear") then
+			params = luajava.new(LinearLayoutParams,config.width,config.height,config.gravity)
+			--params:setGravity(config.gravity)
+			--params:setWeight(config.weight)
+		else
+		--relative
+		end
+		source:getParent():removeView(source)
+		--rootView:addView(source)
+		source:setLayoutParams(params)
+		target:addView(source)
+	end
+	
+end
+
+
+function dump(o)
+	if type(o) == 'table' then
+		local s = '{ '
+		for k,v in pairs(o) do
+			if type(k) ~= 'number' then k = '"'..k..'"' end
+			s = s .. '['..k..'] = ' .. dump(v) .. ','
+		end
+		return s .. '} '
+	else
+		return tostring(o)
+	end
+end
