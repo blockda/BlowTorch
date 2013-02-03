@@ -1,7 +1,7 @@
-
-
+package.path = package.path..";"..GetPluginInstallDirectory().."/?.lua"
 --make a button.
 --debugPrint("in the chat window")
+require("miniwindow")
 
 Array = luajava.bindClass("java.lang.reflect.Array")
 Rect = luajava.bindClass("android.graphics.Rect")
@@ -167,9 +167,9 @@ function OnDraw(canvas)
 	canvas:drawBitmap(topper,0,0,nil)
 	
 	if(vertical) then
-		canvas:drawCircle(alignPosFloat:floatValue(),alignIndicatorX,5,alignIndicatorPaint)
+		canvas:drawCircle(alignPosFloat:floatValue(),alignIndicatorX,height/20,alignIndicatorPaint)
 	else
-		canvas:drawCircle(alignIndicatorX,alignPosFloat:floatValue(),5,alignIndicatorPaint)
+		canvas:drawCircle(alignIndicatorX,alignPosFloat:floatValue(),height/20,alignIndicatorPaint)
 	end
 	--canvas
 end
@@ -475,11 +475,30 @@ rootView = view:getParentView()
 --inputbarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM,0) --set this rule to false
 --inputbarParams:addRule(RelativeLayout.ABOVE,view:getId())
 
-scroller = rootView:findViewById(6010)
-rootView:removeView(view)
+--scroller = rootView:findViewById(6010)
+--rootView:removeView(view)
 
-holder = scroller:getChildAt(0)
-holder:addView(view)
+--holder = scroller:getChildAt(0)
+--holder:addView(view)
+--view:setHasText(false)
+
+MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local density = view:getResources():getDisplayMetrics().density
+function OnMeasure(wspec,hspec)
+	--we are going to assume some things here, 1, that MeasureSpec:getMode(wspec) == MeasureSpec.EXACTLY, 2 MeasureSpec:getMode(hspec) == MeasureSpec.UNDEFINED
+	--we are just going to pull out the width value, and return a custom height
+	local width = MeasureSpec:getSize(wspec)
+	local height = 70*density
+	--Note(string.format("\nOnMeasure:%d,%d",width,height))
+	return width,height
+end
+
+config = {}
+config.id = view:getId()
+config.divider = true
+config.width = MATCH_PARENT
+config.height = WRAP_CONTENT
+InstallWindow(config)
 
 --inputbar:requestLayout()
 
