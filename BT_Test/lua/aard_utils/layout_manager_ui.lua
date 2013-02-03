@@ -116,6 +116,7 @@ function InstallWindow(config)
 		props.gravity = config.gravity or 0
 		props.weight = config.weight or 0
 		props.type = config.type or "linear"
+		props.divider = config.divider or nil
 		
 		layout_config.configs[layout_config.mode][config.id] = props
 		
@@ -144,11 +145,22 @@ function InstallWindow(config)
 		return
 	else
 		local params = nil
+		local divider = nil
+		local divider_params = nil
 		--build the layout params
 		if(config.type == "linear") then
 			params = luajava.new(LinearLayoutParams,config.width,config.height,config.gravity)
 			--params:setGravity(config.gravity)
 			--params:setWeight(config.weight)
+			if(config.divider) then
+				--Note("\nmaking divider\n")
+				divider = MakeDivider(context)
+				divider:setId(config.id+1)
+				divider_params = luajava.new(LinearLayoutParams,MATCH_PARENT,3*density)
+				divider:setLayoutParams(divider_params)
+				--view:getParent():addView(divider)
+				--InstallWindow(divider_config)
+			end
 		else
 		--relative
 		end
@@ -156,6 +168,12 @@ function InstallWindow(config)
 		--rootView:addView(source)
 		source:setLayoutParams(params)
 		target:addView(source)
+		
+		if(config.divider and divider) then
+			--Note("\nadding divider\n")
+			target:addView(divider)
+		end
+
 	end
 	
 end

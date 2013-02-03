@@ -7,6 +7,9 @@ RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutPa
 View = luajava.bindClass("android.view.View")
 Color = luajava.bindClass("android.graphics.Color")
 
+MATCH_PARENT = LinearLayoutParams.FILL_PARENT
+WRAP_CONTENT = LinearLayoutParams.WRAP_CONTENT
+
 local view_id = view:getId()
 
 context = view:getContext()
