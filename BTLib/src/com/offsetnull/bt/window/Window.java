@@ -123,10 +123,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private double fling_velocity;
 	
 	boolean increadedPriority = false;
-
+	boolean hasText = true;
+	private int fitChars = -1;
 	private boolean bufferText = false;
 	private View new_text_in_buffer_indicator = null;
-
+	
+	private boolean centerJustify = false;
+	private boolean hasScriptOnMeasure = false;
 	
 
 	private int debug_mode = 0;
@@ -234,6 +237,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	
 	public void onCreate(Bundle b) {
+		fitFontSize(-1);
 		//onSizeChanged(this.getWidth(),this.getHeight(),0,0);
 		//viewCreate();
 		
@@ -250,19 +254,71 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//Log.e("WINDOW","Detached from window.");
 		viewDestroy();
 	}
-//	protected void onMeasure(int widthSpec,int heightSpec) {
-//		mHeight = MeasureSpec.getSize(heightSpec);
-//		mWidth = MeasureSpec.getSize(widthSpec);
-//		
-//		
-//		setMeasuredDimension(mWidth,mHeight);
-//		
-//		//if(sizeChanged) {
-//		calculateCharacterFeatures(mWidth,mHeight);
-//			//sizeChanged = false;
-//		//}	
-//		//doDelayedDraw(0);
-//	}
+	
+	protected void onMeasure(int widthSpec,int heightSpec) {
+		int height = MeasureSpec.getSize(heightSpec);
+		int width = MeasureSpec.getSize(widthSpec);
+		
+		if(hasScriptOnMeasure && L != null) {
+			Log.e("MEASURE","USING THE SCRIPT ON MEASURE");
+			L.getGlobal("debug");
+			L.getField(-1, "traceback");
+			L.remove(-2);
+			
+			L.getGlobal("OnMeasure");
+			if(L.isFunction(-1)) {
+				L.pushNumber(widthSpec);
+				L.pushNumber(heightSpec);
+				int ret = L.pcall(2,2,-4);
+				if(ret !=0) {
+					displayLuaError("Error in OnMeasure:" + L.getLuaObject(-1).getString());
+					L.pop(1);
+				} else {
+					//get the return values.
+					int ret_height = (int) L.getLuaObject(-1).getNumber();
+					int ret_width = (int) L.getLuaObject(-2).getNumber();
+					L.pop(2);
+					Log.e("MEASURE","CUSTOM MEASURE CODE RETURNED:"+ret_width+"|"+ret_height);
+					setMeasuredDimension(ret_width,ret_height);
+					return;
+				}
+			} else {
+				L.pop(2);
+			}
+		}
+		//if(height == mHeight && width == mWidth) { setMeasuredDimension(width,height); return; }
+		
+		int hspec = MeasureSpec.getMode(heightSpec);
+		//int wspec = MeasureSpec.getMode(widthSpec);
+		//mWidth = width;
+		//mHeight = height;
+		if(width != mWidth) {
+			doFitFontSize(width);
+		}
+		//String str = "";
+		switch(hspec) {
+		case MeasureSpec.AT_MOST:
+			//str = "AT_MOST";
+			break;
+		case MeasureSpec.EXACTLY:
+			//str = "EXACTLY";
+			break;
+		case MeasureSpec.UNSPECIFIED:
+			//str = "UNSPECIFIED";
+			height = (the_tree.getBrokenLineCount()*PREF_LINESIZE) + PREF_LINEEXTRA;
+			break;
+		}
+		
+		//Log.e("MEASURE","MEASURING WINDOW ("+this.getName()+"): height spec:"+str + " using val: " + height + " tree has: " + the_tree.getBrokenLineCount());
+		
+		setMeasuredDimension(width,height);
+		
+		//if(sizeChanged) {
+		//calculateCharacterFeatures(mWidth,mHeight);
+			//sizeChanged = false;
+		//}	
+		//doDelayedDraw(0);
+	}
 	
 	private String dataDir = null;
 	
@@ -1198,13 +1254,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				//String tmpstr = TextTree.deColorLine(l).toString();
 				/*if(mName.equals("map_window")) {
 					Log.e("map","map window line: "+tmpstr+"|"+l.viswidth+" calc:"+CALCULATED_ROWSINWINDOW);
-				}
-				if(l.viswidth <= CALCULATED_ROWSINWINDOW) {
+				}*/
+				if(centerJustify) {
 					//center justify.
 
 					int amount = one_char_is_this_wide*l.charcount;
 					x = (float) ((mWidth/2.0)-(amount/2.0));
-				}*/
+				}
 				//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
 				//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
 				unitIterator = l.getIterator();
@@ -1876,6 +1932,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 
+	public void clearText() {
+		the_tree.dumpToBytes(false);
+		the_tree.prune();
+	}
+	
 	//Object synch = new Object();
 	public void flushBuffer() {
 		//synchronized(synch) {
@@ -2684,6 +2745,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		} else {
 			L.pop(2);
 		}
+		
+		L.getGlobal("OnMeasure");
+		if(L.isFunction(-1)) {
+			hasScriptOnMeasure = true;
+		} else {
+			hasScriptOnMeasure = false;
+		}
+		L.pop(1);
 	}
 	
 	/*! \page page1
@@ -4372,7 +4441,72 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		return false;
 	}
+
+	public boolean isCenterJustify() {
+		return centerJustify;
+	}
+
+	public void setCenterJustify(boolean centerJustify) {
+		this.centerJustify = centerJustify;
+	}
 	
+	public int getLineSize() {
+		return PREF_LINESIZE;
+	}
+	
+	public void fitFontSize(int chars) {
+		Log.e("LUA","SETTING FITCHARS:"+chars);
+		fitChars = chars;
+	}
+		
+	private void doFitFontSize(int width) {
+		if(fitChars < 0) return;
+		Log.e("LUA","DOING THE FIT ROUTINE: "+mWidth+" chars:"+fitChars);
+		int windowWidth = width;
+		//int windowWidth = service.getResources().getDisplayMetrics().widthPixels;
+		//if(service.getResources().getDisplayMetrics().heightPixels > windowWidth) {
+		//	windowWidth = service.getResources().getDisplayMetrics().heightPixels;
+		//}
+		float fontSize = 8.0f;
+		float delta = 1.0f;
+		Paint p = new Paint();
+		p.setTextSize(8.0f);
+		//p.setTypeface(Typeface.createFromFile(service.getFontName()));
+		p.setTypeface(Typeface.MONOSPACE);
+		boolean done = false;
+		
+		float charWidth = p.measureText("A");
+		float charsPerLine = windowWidth / charWidth;
+		
+		if(charsPerLine < fitChars) {
+			//for QVGA screens, this test will always fail on the first step.
+			done = true;
+		} else {
+			fontSize += delta;
+			p.setTextSize(fontSize);
+		}
+		
+		while(!done) {
+			charWidth = p.measureText("A");
+			charsPerLine = windowWidth / charWidth;
+			if(charsPerLine < fitChars) {
+				done = true;
+				fontSize -= delta; //return to the previous font size that produced > 80 characters.
+			} else {
+				fontSize += delta;
+				p.setTextSize(fontSize);
+			}
+		}
+		
+		PREF_FONTSIZE = (int) fontSize;
+		PREF_LINESIZE = PREF_FONTSIZE + PREF_LINEEXTRA;
+		calculateCharacterFeatures(mWidth,mHeight);
+		//return (int)fontSize;
+	}
+	
+	public void setHasText(boolean has) {
+		boolean hasText = has;
+	}
 //	private class ThreadUpdater extends Thread {
 //		public final static int MESSAGE_ADDTEXT = 1;
 //		public final static int MESSAGE_QUIT = 2;

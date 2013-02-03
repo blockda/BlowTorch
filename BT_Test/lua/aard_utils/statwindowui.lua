@@ -57,23 +57,33 @@ end
 --holder = scroller:getChildAt(0)
 
 --holder:addView(view)
+view:fitFontSize(36)
+function OnCreate()
+	
+	view:addText("\n\n\n",true)
+end
 
 config = {}
 config.id = view:getId()
+config.divider = true
 config.width = MATCH_PARENT
-config.height = 70*density
+config.height = WRAP_CONTENT
 InstallWindow(config)
 
-divider_config = {}
-divider_config.id = config.id + 1
-divider_config.width = MATCH_PARENT
-divider_config.height = 3*density
-divider_config.type = "linear"
+--divider_config = {}
+--divider_config.id = config.id + 1
+--divider_config.width = MATCH_PARENT
+--divider_config.height = 3*density
+--divider_config.type = "linear"
 
-local divider = MakeDivider(context)
-divider:setId(divider_config.id)
-view:getParent():addView(divider)
-InstallWindow(divider_config)
+
+
+--local divider = MakeDivider(context)
+--divider:setId(divider_config.id)
+--view:getParent():addView(divider)
+--InstallWindow(divider_config)
+
+view:setCenterJustify(true)
 
 Color = luajava.bindClass("android.graphics.Color")
 
@@ -83,23 +93,51 @@ stats = nil
 
 
 
-
 function OnSizeChanged(w,h,ow,oh)
 	Note(string.format("\nstat window ui changed, %s, %s, %s, %s\n",w,h,ow,oh))
-	view:invalidate()
+	--check out this trick, fit to 36 chars
+	--local p = luajava.new(Paint)
+	--local extra = view:getLineSpaceExtra()
+	--p.setTextSize()
+	view:requestLayout()
+	--view:invalidate()
 end
 
+System = luajava.bindClass("java.lang.System")
+
+local compact_format = 
+[[%sstr: %s[%4d]  %sdex: %s[%4d]  %scon: %s[%4d]%s
+%sint: %s[%4d]  %swis: %s[%4d] %sluck: %s[%4d]%s
+%s hr: %s[%4d]  %s dr: %s[%4d] %ssave: %s[%4d]%s]]
+
 function updateStats(data)
-	
+	--Note("\nstat data:"..data.."\n")
+
 	stats = loadstring(data)()
 	
-	local dcyan = "\27[36m"
+	local dcyan = "\27[0;36m"
 	local bwhit = "\27[37;1m"
-	local nwhit = "\27[37m"
+	local nwhit = "\27[0;37m"
 	
-	view:addText(string.format("%sstr: %s[%4d]%s\n",dcyan,bwhit,stats.str,nwhit),true)
-	view:addText(string.format("%swis: %s[%4d]%s",dcyan,bwhit,stats.wis,nwhit),true)
+	local start_time = System:currentTimeMillis()
+	
+	
+	view:clearText()
+	view:addText(string.format(compact_format,dcyan,bwhit,stats.str,dcyan,bwhit,stats.dex,dcyan,bwhit,stats.con,nwhit,dcyan,bwhit,stats.int,dcyan,bwhit,stats.wis,dcyan,bwhit,stats.luck,nwhit,dcyan,bwhit,stats.hr,dcyan,bwhit,stats.dr,dcyan,bwhit,stats.saves,nwhit),true)
+	--view:addText(string.format("%sstr: %s[%4d]  %sdex: %s[%4d]  %scon: %s[%4d]%s\n",dcyan,bwhit,stats.str,dcyan,bwhit,stats.dex,dcyan,bwhit,stats.con,nwhit),true)
+	--view:addText(string.format("%sint: %s[%4d]  %swis: %s[%4d] %sluck: %s[%4d]%s\n",dcyan,bwhit,stats.int,dcyan,bwhit,stats.wis,dcyan,bwhit,stats.luck,nwhit),true)
+	--view:addText(string.format("%s hr: %s[%4d]  %s dr: %s[%4d] %ssave: %s[%4d]%s\n",dcyan,bwhit,stats.hr,dcyan,bwhit,stats.dr,dcyan,bwhit,stats.saves,nwhit),true)
+	--view:addText("i can just keep adding lines to this\n",true)
+	--view:addText("yup, seems to be the case\n",true)
+	--view:addText("formatting long lines will blow\n",true)
+	--view:addText("but since this is all our control\n",true)
+	--view:addText("it won't matter\n",true)
+	--view:addText("MORE TEXT!!!!!!!!!",true)
 	view:invalidate();
+	
+	local end_time = System:currentTimeMillis()
+	local duration = end_time - start_time
+	Note(string.format("\nupdating stat window took: %d millis\n",duration))
 end
 
 --function OnDraw(c)
