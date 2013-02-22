@@ -2863,6 +2863,7 @@ public class Plugin implements SettingsChangedListener {
 				L.pop(2);
 			}
 		} else {
+			displayLuaError("No function named: "+function+" in plugin: "+this.getName());
 			L.pop(2);
 		}
 	}
@@ -2883,6 +2884,7 @@ public class Plugin implements SettingsChangedListener {
 				L.pop(2);
 			}
 		} else {
+			displayLuaError("No function named: "+function+" in plugin: "+this.getName());
 			L.pop(2);
 		}
 	}

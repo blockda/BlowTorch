@@ -689,7 +689,14 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	private void doCallPlugin(String plugin, String function,
 			String data) {
 		Plugin p = pluginMap.get(plugin);
-		p.callFunction(function,data);
+		if(p != null) {
+			p.callFunction(function,data);
+		} else {
+			this.dispatchLuaText("\n"+Colorizer.colorRed+"No plugin named: "+plugin+Colorizer.colorRed+"\n");
+		}
+		//Plugin p = pluginMap.get(plugin);
+		//p.callFunction(function,data);
+	
 	}
 
 	public void reloadSettings() {
@@ -3957,7 +3964,11 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 
 	public void callPluginFunction(String plugin, String function) {
 		Plugin p = pluginMap.get(plugin);
-		p.callFunction(function);
+		if(p != null) {
+			p.callFunction(function);
+		} else {
+			this.dispatchLuaText("\n"+Colorizer.colorRed+"No plugin named: "+plugin+Colorizer.colorRed+"\n");
+		}
 	}
 
 	@Override

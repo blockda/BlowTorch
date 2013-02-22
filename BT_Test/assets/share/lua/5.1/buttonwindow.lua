@@ -20,6 +20,16 @@ require("bit")
 local marshal = require("marshal")
 defaults = nil
 
+debugInfo = true
+
+local function debugString(string)
+	if(debugInfo) then
+		Note(string.format("\n%s\n",string))
+	end
+end
+
+debugString("Button Window Script Loading...")
+
 --set up the density value.
 --local ctmp = view:getContext()
 --local res = ctmp:getResources()
@@ -58,6 +68,7 @@ lastLoadedSet = nil
 Configuration = luajava.bindClass("android.content.res.Configuration");
 InputType = luajava.bindClass("android.text.InputType")
 TYPE_TEXT_FLAG_MULTI_LINE = InputType.TYPE_TEXT_FLAG_MULTI_LINE
+TYPE_CLASS_NUMBER = InputType.TYPE_CLASS_NUMBER
 ORIENTATION_LANDSCAPE = Configuration.ORIENTATION_LANDSCAPE
 ORIENTATION_PORTRAIT = Configuration.ORIENTATION_PORTRAIT
 
@@ -75,6 +86,8 @@ local bit3 = bit.tohex(bit2)
 
 function loadButtons(args)
 
+
+	debugString("Button Window loading buttons...")
 	--Note("WindowXCallS Succeeded!")
 	--for i,v in pairs(args) do
 	--	if(istable(v)) then
@@ -93,6 +106,8 @@ function loadButtons(args)
 	--Note("deserialized table: answer="..tmp.answer)
 	--printTable("defs",tmp.default)
 	lastLoadedSet = tmp.name
+	debugString("Button Window decompressed data, set name: "..lastLoadedSet)
+	
 	--set up metatables.
 	--if(args.defaults == nil) then
 	defaults = BUTTONSET_DATA:new(tmp.default)
@@ -119,6 +134,8 @@ function loadButtons(args)
 	drawButtons()
 	--invalidate()
 	view:invalidate()
+	
+	debugString(string.format("Button Window loaded button set, %s successfully",lastLoadedSet))
 	--else
 	--end
 	
@@ -781,6 +798,7 @@ bounds = nil
 
 function OnCreate()
 	--Note("in oncreate, loading "..#buttons.." buttons.")	
+	debugString("Button window in View.onCreate()")
 	for i,b in ipairs(buttons) do
 		updateRect(b)
 	end
@@ -1842,6 +1860,7 @@ if(statusHidden) then
 end
 Integer = luajava.bindClass("java.lang.Integer")
 function OnSizeChanged(w,h,oldw,oldh)
+	debugString("Button Window starting View.OnSizeChanged()")
 	if(w == 0 and h == 0) then
 		draw = false
 		return
@@ -1906,6 +1925,8 @@ function OnSizeChanged(w,h,oldw,oldh)
 	revertButtonData.x = w - revertButtonData.width*2
 	revertButtonData.y = h - revertButtonData.height*2
 	revertButton:updateRect(statusoffset)
+	
+	debugString("Button Window ending View.onSizeChanged()")
 end
 
 dragDashPaint = luajava.new(PaintClass)
@@ -1969,6 +1990,7 @@ end
 
 function OnDestroy()
 	--Note("destroying button window")
+	debugString("Button Window in View.OnDestroy()")
 	if(managerLayer ~= nil) then
 		managerLayer:recycle()
 		managerLayer = nil
@@ -3048,6 +3070,7 @@ function makeAdvancedPage()
 	numbereditorParams = fnew(LinearLayoutParams,120*density,WRAP_CONTENT)
 	if(labelSizeEdit == nil) then
 		labelSizeEdit = fnew(EditText,context)
+		labelSizeEdit:setInputType(TYPE_CLASS_NUMBER)
 		labelSizeEdit:setLayoutParams(numbereditorParams)
 		labelSizeEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
 		controlHolderA:addView(labelSizeEdit)
@@ -3068,6 +3091,7 @@ function makeAdvancedPage()
 	if(widthEdit == nil) then
 		widthEdit = fnew(EditText,context)
 		widthEdit:setLayoutParams(numbereditorParams)
+		widthEdit:setInputType(TYPE_CLASS_NUMBER)
 		widthEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
 		controlHolderB:addView(widthEdit)
 	end
@@ -3087,6 +3111,7 @@ function makeAdvancedPage()
 	if(heightEdit == nil) then
 		heightEdit = fnew(EditText,context)
 		heightEdit:setLayoutParams(numbereditorParams)
+		heightEdit:setInputType(TYPE_CLASS_NUMBER)
 		heightEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
 		controlHolderC:addView(heightEdit)
 	end
@@ -3147,6 +3172,7 @@ function makeAdvancedPage()
 	if(xcoordEdit == nil) then
 		xcoordEdit = fnew(EditText,context)
 		xcoordEdit:setLayoutParams(numbereditorParams)
+		xcoordEdit:setInputType(TYPE_CLASS_NUMBER)
 		xcoordEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
 		controlHolderD:addView(xcoordEdit)
 	end
@@ -3168,6 +3194,7 @@ function makeAdvancedPage()
 	if(ycoordEdit == nil) then
 		ycoordEdit = fnew(EditText,context)
 		ycoordEdit:setLayoutParams(numbereditorParams)
+		ycoordEdit:setInputType(TYPE_CLASS_NUMBER)
 		ycoordEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
 		controlHolderE:addView(ycoordEdit)
 	end
@@ -3872,4 +3899,18 @@ function onEditorBackPressed()
 end
 
 view:bringToFront()
+
+function setDebug(off)
+	if(off == "on") then
+		debugString("Button window entering debug mode...")
+		--WindowXCallS("button_window","setDebug","on")
+		debugInfo = true
+	else
+		debugString("Button window debug mode...")
+		--WindowXCallS("button_window","setDebug","off")
+		debugInfo = false
+	end
+end
+
 PluginXCallS("buttonLayerReady","")
+debugString("Button Window Script Loaded")
