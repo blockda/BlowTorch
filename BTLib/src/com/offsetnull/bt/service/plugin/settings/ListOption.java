@@ -7,6 +7,7 @@ import org.xmlpull.v1.XmlSerializer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 public class ListOption extends BaseOption implements Parcelable {
 
@@ -102,6 +103,8 @@ public class ListOption extends BaseOption implements Parcelable {
 
 	@Override
 	public void writeToParcel(Parcel p, int flags) {
+		Log.e("FKDSL","PARCELLING LIST OPTION: "+key);
+		
 		p.writeString(title);
 		p.writeString(description);
 		p.writeString(key);

@@ -54,6 +54,7 @@ import android.text.SpannableString;
 import android.text.format.Time;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
+import android.util.Log;
 import android.util.TimeFormatException;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -72,6 +73,8 @@ import android.widget.Toast;
 
 import com.offsetnull.bt.R;
 import com.offsetnull.bt.service.IConnectionBinder;
+import com.offsetnull.bt.service.IConnectionBinderCallback;
+import com.offsetnull.bt.service.ILauncherCallback;
 import com.offsetnull.bt.settings.ConfigurationLoader;
 
 import dalvik.system.PathClassLoader;
@@ -92,6 +95,8 @@ public class Launcher extends Activity implements ReadyListener {
 
 	protected static final int MESSAGE_DORECOVERY = 5;
 	
+	private IConnectionBinder service = null;
+	
 	private ArrayList<MudConnection> connections;
 	private Launcher.ConnectionAdapter apdapter;
 	
@@ -101,7 +106,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	LauncherSettings launcher_settings;
 	
-	IConnectionBinder service;
+	//IConnectionBinder service;
 	
 	/*public enum LAUNCH_MODE {
 		FREE,
@@ -128,6 +133,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+		fixClassLoaderIssue();
 		//Log.e("LAUNCHER","Launched from package: " + this.getPackageName());
 		//determine launch mode
 		//Intent intent = this.getIntent();
@@ -355,7 +361,7 @@ public class Launcher extends Activity implements ReadyListener {
 			LauncherSAXParser parser = new LauncherSAXParser("blowtorch_launcher_list.xml",this);
 			launcher_settings = parser.load();
 			
-			buildList();
+			//buildList();
 			//Log.e("LAUNCHER","LOADING XML LAUNCHER");
 		} catch (FileNotFoundException e) {
 			//attempt to read the connections from disk.
@@ -485,8 +491,17 @@ public class Launcher extends Activity implements ReadyListener {
 		Button donatebutton = (Button)findViewById(R.id.donate_button);
 		donatebutton.setOnClickListener(new helpClickedListener());
 
+		Log.e("LAUNCHER","STARTING SREVICE");
+		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+		startService(new Intent(action));
 		
 	}
+	
+	private static void fixClassLoaderIssue()
+	{
+		ClassLoader myClassLoader = Launcher.class.getClassLoader();
+		Thread.currentThread().setContextClassLoader(myClassLoader);
+	}  
 	
 	public static boolean isOutDated(Context c) {
 		
@@ -527,7 +542,27 @@ public class Launcher extends Activity implements ReadyListener {
 	@Override
 	public void onResume() {
 		super.onResume();
-		buildList();
+		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+		bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		//buildList();
+	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		if(serviceConnected) {
+			try {
+				service.unregisterLauncherCallback(the_callback);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		unbindService(connectionChecker);
+		serviceConnected = false;
+		//if(serviceConnected) {
+		//	unbindService(connectionChecker);
+		//}
 	}
 	
 	public void onDestroy() {
@@ -665,91 +700,109 @@ public class Launcher extends Activity implements ReadyListener {
 	}
 	private MudConnection launch;
 	
-	private ServiceConnection mConnection = new ServiceConnection() {
-
-		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
-			
-			if(arg1 == null) {
-				return;
-			}
-			
-			service = IConnectionBinder.Stub.asInterface(arg1); //turn the binder into something useful
-			
-			String test = "";
-			String against = launch.getHostName() +":"+ launch.getPortString();
-			try {
-				test = service.getConnectedTo();
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			
-			if(!test.equals(against)) {
-				//does not equal, show the warning.
-				AlertDialog.Builder builder = new AlertDialog.Builder(Launcher.this);
-				builder.setMessage("Service already connected to " + test + "\nDisconnect and launch " + launch.getDisplayName() + "?");
-				builder.setTitle("Currently Connected");
-				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						Launcher.this.unbindService(mConnection);
-						stopService(new Intent(com.offsetnull.bt.service.IConnectionBinder.class.getName()));
-						DoNewStartup();
-					}
-				});
-				
-				builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						Launcher.this.unbindService(mConnection);
-						dialog.dismiss();
-					}
-				});
-				AlertDialog connected = builder.create();
-				connected.show();
-			} else {
-				//are equal, proceed with normal startup.
-				Launcher.this.unbindService(mConnection);
-				DoFinalStartup();
-			}
-			
-		}
+//	private ServiceConnection mConnection = new ServiceConnection() {
+//
+//		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
+//			
+//			if(arg1 == null) {
+//				return;
+//			}
+//			
+//			service = IConnectionBinder.Stub.asInterface(arg1); //turn the binder into something useful
+//			
+//			String test = "";
+//			String against = launch.getHostName() +":"+ launch.getPortString();
+//			try {
+//				test = service.getConnectedTo();
+//			} catch (RemoteException e) {
+//				throw new RuntimeException(e);
+//			}
+//			
+//			if(!test.equals(against)) {
+//				//does not equal, show the warning.
+//				AlertDialog.Builder builder = new AlertDialog.Builder(Launcher.this);
+//				builder.setMessage("Service already connected to " + test + "\nDisconnect and launch " + launch.getDisplayName() + "?");
+//				builder.setTitle("Currently Connected");
+//				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//					
+//					public void onClick(DialogInterface dialog, int which) {
+//						Launcher.this.unbindService(connectionChecker);
+//						stopService(new Intent(com.offsetnull.bt.service.IConnectionBinder.class.getName()));
+//						DoNewStartup();
+//					}
+//				});
+//				
+//				builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+//					
+//					public void onClick(DialogInterface dialog, int which) {
+//						Launcher.this.unbindService(connectionChecker);
+//						dialog.dismiss();
+//					}
+//				});
+//				AlertDialog connected = builder.create();
+//				connected.show();
+//			} else {
+//				//are equal, proceed with normal startup.
+//				Launcher.this.unbindService(connectionChecker);
+//				DoFinalStartup();
+//			}
+//			
+//		}
 
 	
 
-		public void onServiceDisconnected(ComponentName arg0) {
-			
-		}
-		
-	};
-	
+//		public void onServiceDisconnected(ComponentName arg0) {
+//			
+//		}
+//		
+//	};
+	public boolean serviceConnected = false;
 	private ServiceConnection connectionChecker = new ServiceConnection() {
 
+		//private boolean connected = false;
+		
 		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
-			IConnectionBinder tmp = IConnectionBinder.Stub.asInterface(arg1);
+			Launcher.this.serviceConnected = true;
+			Log.e("LAUNCHER","SERVICE CONNECTED");
+			service = IConnectionBinder.Stub.asInterface(arg1);
 			try {
-				connectedList = (List<String>)tmp.getConnections();
+				service.registerLauncherCallback(the_callback);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			try {
-				Launcher.this.unbindService(connectionChecker);
-			} catch (IllegalArgumentException e) {
+			serviceConnected = true;
+			//try {
+				//connectedList = (List<String>)tmp.getConnections();
+			//} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			//try {
+				//Launcher.this.unbindService(this);
+			//} catch (IllegalArgumentException e) {
 				
-			}
-			//buildList();
-			if(connectedList != null) {
-				for(int i=0;i<apdapter.getCount();i++) {
-					apdapter.getItem(i).setConnected(connectedList.contains(apdapter.getItem(i).getDisplayName()));
-				}
-			}
+			//}
+			buildList();
 			
-			apdapter.notifyDataSetInvalidated();
+//			if(connectedList != null) {
+//				for(int i=0;i<apdapter.getCount();i++) {
+//					apdapter.getItem(i).setConnected(connectedList.contains(apdapter.getItem(i).getDisplayName()));
+//				}
+//			}
+//			
+//			apdapter.notifyDataSetInvalidated();
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
-			
+			Launcher.this.serviceConnected = false;
+			Log.e("LAUNCHER","SERVICE DISCONNECTED");
 		}
+		
+		//public boolean isConnected() {
+		//	return connected;
+		//}
+		
 		
 	};
 	
@@ -1190,6 +1243,8 @@ public class Launcher extends Activity implements ReadyListener {
     	edit.putString("SETTINGS_PATH", launch.getDisplayName());
     	edit.commit();
     	
+    	//this.unbindService(connectionChecker);
+    	
 		Launcher.this.startActivity(the_intent);
 	}
 	
@@ -1207,11 +1262,26 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		apdapter.sort(ccmp);
 		
-		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
-		this.startService(new Intent(action));
-		bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		try {
+			connectedList = (List<String>)service.getConnections();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(connectedList != null) {
+			for(int i=0;i<apdapter.getCount();i++) {
+				apdapter.getItem(i).setConnected(connectedList.contains(apdapter.getItem(i).getDisplayName()));
+			}	
+		}
 		
-		//apdapter.notifyDataSetChanged();
+		//String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+		//if(!serviceConnected) {
+			//this.startService(new Intent(action));
+			//fgds
+		//} else {
+			
+		//}
+		apdapter.notifyDataSetChanged();
 		//this.bindService(service, conn, flags)
 	}
 	
@@ -1817,5 +1887,23 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 		}
 	}
+	
+	ILauncherCallback the_callback = new ILauncherCallback.Stub() {
+
+		@Override
+		public void connectionDisconnected() throws RemoteException {
+			Launcher.this.runOnUiThread(new Runnable() {
+
+				@Override
+				public void run() {
+					Launcher.this.buildList();
+				}
+				
+			});
+		}
+
+
+		
+	};
 
 }

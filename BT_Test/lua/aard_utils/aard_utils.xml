@@ -61,7 +61,10 @@
 	</plugin>
 	<plugin author="Daniel Block" name="tick_clock" id="77">
 	<triggers>
-		<trigger title="ticker" pattern="^--&gt; TICK &lt;--.+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
+	    <trigger title="gmcp_tick" pattern="%comm.tick" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+	        <script function="ticked" fireWhen="always"/>
+	    </trigger>
+		<trigger title="ticker" pattern="^--&gt; TICK &lt;--.+$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
 			<script function="ticked" fireWhen="always"/>
 		</trigger>
 		<trigger title="timecatcher" pattern="^  \*  It is (\d*)(am|pm|Midnight|Noon).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="2">
@@ -101,94 +104,7 @@
 	</script>
 	<script execute="true" name="bootstrap">
 	<![CDATA[
-		require("serialize")
-		
-		function ticked()
-			--debugPrint("ticked")
-			timers.grey = timers.grey + 1
-			timers.white = timers.white + 1
-			timers.black = timers.black + 1
-			if(timers.grey == 32) then
-				timers.grey = 1
-			end
-			if(timers.black == 52) then
-				timers.black = 1
-			end
-			if(timers.white == 67) then
-				timers.white = 1
-			end
-			
-			WindowXCallS("clock_widget","tickIncoming",serialize(timers))
-		end
-		
-		function timeCatcher(name,line,map)
-
-			--debugPrint("TIMERTEST: "..map["2"])
-			str = ""
-			if(map["2"] ~= nil) then
-				num = 0
-				if(map["2"] == "Midnight") then
-					str = "00:00"
-					num = 0
-				elseif(map["2"] == "Noon") then
-					str = "12:00"
-					num = 12
-				elseif(map["2"] == "am") then
-					num = tonumber(map["1"])
-					str = map["1"]..":00"
-				elseif(map["2"] == "pm") then
-					num = tonumber(map["1"])
-					num = num+12
-					str = num..":00"
-				end
-				--debugPrint(str)
-				WindowXCallS("clock_widget","setTimeOrdinal",num)
-			end
-			
-		end
-		
-		function yearCatcher(name,line,map)
-			--debugPrint("in yearcatcher")
-		end
-		
-		function OnMoonRise(name,line,map)
-			moon = map["1"]
-			--debugPrint(moon.." rising.")
-			if(moon == "grey") then
-				timers.grey = 23
-				greyCatch = 1
-			elseif(moon == "black") then
-				timers.black = 38
-				blackCatch = 1
-			else
-				timers.white = 49
-				whiteCatch = 1
-			end
-		end
-		
-		function OnMoonSet(name,line,map)
-			moon = map["1"]
-			--debugPrint(moon.." setting.")
-			if(moon == "grey") then
-				timers.grey = 0
-				greyCatch = 1
-			elseif(moon == "black") then
-				timers.black = 0
-				blackCatch = 1
-			else
-				timers.white = 0
-				whiteCatch = 1
-			end
-		end
-		
-		timers = {}
-		timers.grey = -100
-		timers.white = -100
-		timers.black = -100
-		
-		greyCatch = 0
-		whiteCatch = 0
-		blackCatch = 0
+		dofile(GetPluginInstallDirectory().."/clockwindowserver.lua")
 	]]>
 	</script>
 	</plugin>
@@ -228,7 +144,7 @@
 		</windows>
 		<script name="bootstrap">
 		<![CDATA[
-			package.path = "/mnt/sdcard/BlowTorch/?.lua"
+			
 			require("serialize")
 			--vitalsWindow = NewWindow("vitals_window",880,577,400,100,"vitalsWindowScript")
 		
@@ -358,35 +274,7 @@
 		</windows>
 		<script name="mapUIStartup">
 			<![CDATA[
-			parent = view:getParent()
-			parent:removeView(view)
-			scroller = parent:findViewById(6010)
-			holder = scroller:getChildAt(0)
-			holder:addView(view)
-			view:setLinksEnabled(false)
-			view:setTextSelectionEnabled(false)
-			view:setScrollingEnabled(false)
-			view:setBold(true)
-			view:setCharacterSizes(21,1)
-			
-function updateHeaders(data)
-	local tmp = loadstring(data)()
-	title = tmp.title
-	
-	exits = tmp.exits
-	
-	titleLabel:setText(title)
-	exitsLabel:setText(exits)
-end
-
-function OnCreate()
-	--find the scroller and ask it for some specific children, i actually think we can just ask the root. lets try
-
-	titleLabel = parent:findViewById(6021)
-	exitsLabel = parent:findViewById(6022)
-end
-			
-			
+			dofile(GetPluginInstallDirectory().."/mapwindowui.lua")
 			]]>
 		</script>
 		<script execute="true" name="bootstrap">

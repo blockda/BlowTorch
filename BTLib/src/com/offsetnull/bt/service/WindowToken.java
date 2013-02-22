@@ -34,6 +34,7 @@ public class WindowToken implements Parcelable {
 	private boolean bufferText = false;
 	private int id;
 	private TextTree buffer;
+	private String displayHost;
 	//private String owner;
 	//SettingsChangedListener mSettingsChangedListener = null;
 	
@@ -60,7 +61,7 @@ public class WindowToken implements Parcelable {
 	
 	public WindowToken() {
 		name = "";
-
+		displayHost = "";
 		//type = TYPE.NORMAL;
 		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
 		initSettings();
@@ -82,9 +83,10 @@ public class WindowToken implements Parcelable {
 		layouts = new ArrayList<LayoutGroup>();
 	}*/
 	
-	public WindowToken(String name,String scriptName,String pluginName) {
+	public WindowToken(String name,String scriptName,String pluginName,String displayHost) {
 		//type = TYPE.SCRIPT;
 		this.name = name;
+		this.displayHost = displayHost;
 
 		this.scriptName = scriptName;
 		this.pluginName = pluginName;
@@ -199,7 +201,7 @@ public class WindowToken implements Parcelable {
 		//if(this.scriptName == null) {
 		//	w = new WindowToken(this.name,this.x,this.y,this.width,this.height);
 		//} else {
-		w = new WindowToken(this.name,this.scriptName,this.pluginName);
+		w = new WindowToken(this.name,this.scriptName,this.pluginName,this.displayHost);
 		//}
 		w.setSettings(this.getSettings());
 		this.setSettings(null);
@@ -262,10 +264,11 @@ public class WindowToken implements Parcelable {
 	public WindowToken(Parcel p) {
 		//owner = p.readString();
 		name = p.readString();
-		if(name.equals("chats")) {
-			long ssfd = System.currentTimeMillis();
-			ssfd = ssfd +10;
-		}
+		//if(name.equals("chats")) {
+		//	long ssfd = System.currentTimeMillis();
+		//	ssfd = ssfd +10;
+		//}
+		displayHost = p.readString();
 		id = p.readInt();
 		//Log.e("TOKEN","PARCEL: READING WINDOW WITH ID:" + id);
 		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>();
@@ -376,6 +379,14 @@ public class WindowToken implements Parcelable {
 	public String getName() {
 		return name;
 	}
+	
+	public String getDisplayHost() {
+		return displayHost;
+	}
+	
+	public void setDisplayHost(String str) {
+		displayHost = str;
+	}
 
 	public int describeContents() {
 		// TODO Auto-generated method stub
@@ -385,6 +396,7 @@ public class WindowToken implements Parcelable {
 	public void writeToParcel(Parcel p, int arg1) {
 		//p.writeString(owner);
 		p.writeString(name);
+		p.writeString(displayHost);
 		//Log.e("TOKEN","PARCEL: WRITING WINDOW WITH ID:" + id);
 		p.writeInt(id);
 		Set<LayoutGroup.LAYOUT_TYPE> keySet = layouts.keySet();

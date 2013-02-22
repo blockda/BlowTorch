@@ -43,10 +43,14 @@ public class LuaDialog extends Dialog {
 		//ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
 		//mView.setLayoutParams(params);
 		if(mView.getLayoutParams() != null) {
+			//LayoutParams tmp = (LayoutParams) mView.getLayoutParams();
+			//ViewGroup.LayoutParams p = new ViewGroup.LayoutParams(tmp.width, tmp.height);
 			this.setContentView(mView,mView.getLayoutParams());
 		} else {
 			this.setContentView(mView);
 		}
+		
+		//this.setCont
 	}
 	
 	

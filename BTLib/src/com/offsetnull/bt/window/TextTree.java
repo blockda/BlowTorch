@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import android.text.Selection;
 //import android.util.Log;
+//import android.util.Log;
 
 import com.offsetnull.bt.window.TextTree.Line;
 
@@ -90,6 +91,7 @@ public class TextTree {
 		ListIterator<Line> i = mLines.listIterator(mLines.size());
 		while(i.hasPrevious()) {
 			Line l = i.previous();
+			//Log.e("DUMP",TextTree.deColorLine(l).toString());
 			Iterator<Unit> iu = l.getData().iterator();
 			while(iu.hasNext()) {
 				Unit u = iu.next();
@@ -342,9 +344,10 @@ public class TextTree {
 		//}
 		//this actually shouldn't be too hard to do with just a for loop.
 		//STATE init = STATE.TEXT;
-		//int projected = totalbytes + data.length;
+		int projected = totalbytes + data.length;
 		//Log.e("TREE","ADDING: " + data.length + " bytes, buffer has " + totalbytes + " total bytes. " + projected + " projected.");
 		//LinkedList<Line> lines = new LinkedList<Line>();
+		
 		int startcount = this.getBrokenLineCount();
 		int linesadded = 0;
 		Line tmp = null;
@@ -773,7 +776,7 @@ public class TextTree {
 					if(wordWrap) whiteSpaceFound = true;
 				case TEXT:
 					charsinline += ((Text)u).charcount;
-					this.bytes += ((Text)u).charcount;
+					this.bytes += ((Text)u).bytecount;
 					this.charcount += u.charcount;
 					break;
 				case TAB:
@@ -1092,7 +1095,7 @@ public class TextTree {
 			this.charcount = data.length();
 			try {
 				bin = data.getBytes(encoding);
-				this.bytecount = data.getBytes(encoding).length;
+				this.bytecount = bin.length;
 			} catch (UnsupportedEncodingException e) {
 				
 				e.printStackTrace();
