@@ -1,6 +1,7 @@
 package com.offsetnull.bt.service;
 
 import com.offsetnull.bt.service.IConnectionBinderCallback;
+import com.offsetnull.bt.service.ILauncherCallback;
 import com.offsetnull.bt.service.IWindowCallback;
 import com.offsetnull.bt.button.SlickButtonData;
 import com.offsetnull.bt.settings.ColorSetSettings;
@@ -26,6 +27,8 @@ interface IConnectionBinder {
 	void switchTo(String display);
 	void registerCallback(IConnectionBinderCallback c,String host,int port,String display);
 	void unregisterCallback(IConnectionBinderCallback c);
+	void registerLauncherCallback(ILauncherCallback launcher);
+	void unregisterLauncherCallback(ILauncherCallback launcher);
 	void startNewConnection(String host,int port,String display);
 	int getPid();
 	void initXfer();
@@ -106,7 +109,7 @@ interface IConnectionBinder {
 	boolean isButtonSetLockedNewButtons(String key);
 	boolean isButtonSetLockedEditButtons(String key);
 	WindowToken[] getWindowTokens();
-	void registerWindowCallback(String name,IWindowCallback callback);
+	void registerWindowCallback(String displayName,String name,IWindowCallback callback);
 	void unregisterWindowCallback(String name,IWindowCallback callback);
 	String getScript(String plugin,String name);
 	void reloadSettings();

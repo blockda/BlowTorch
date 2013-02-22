@@ -27,8 +27,8 @@ public class StringOption extends BaseOption implements Parcelable {
 		
 	}
 	
-	public ListOption copy() {
-		ListOption tmp = new ListOption();
+	public StringOption copy() {
+		StringOption tmp = new StringOption();
 		tmp.key = this.key;
 		tmp.value = this.value;
 		tmp.title = this.title;

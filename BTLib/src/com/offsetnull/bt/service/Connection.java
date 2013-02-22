@@ -92,12 +92,16 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
 import android.util.Log;
+//import android.util.Log;
 import android.util.Xml;
+import android.view.Gravity;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
+import android.widget.Toast;
 
 public class Connection implements SettingsChangedListener,ConnectionPluginCallback {
 	//base "connection class"
@@ -137,6 +141,12 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	public static final int MESSAGE_RELOADSETTINGS = 33;
 	public static final int MESSAGE_SETTRIGGERSDIRTY = 34;
 	private static final int MESSAGE_CALLPLUGIN = 35;
+	private static final int MESSAGE_TIMERINFO = 36;
+	private static final int MESSAGE_TIMERSTART = 37;
+	private static final int MESSAGE_TIMERPAUSE = 38;
+	private static final int MESSAGE_TIMERRESET = 39;
+	private static final int MESSAGE_TIMERSTOP = 40;
+	public static final int MESSAGE_TERMINATED_BY_PEER = 41;
 	public Handler handler = null;
 	ArrayList<Plugin> plugins = null;
 	private HashMap<String,String> captureMap = new HashMap<String,String>();
@@ -151,6 +161,17 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	int port;
 	HashMap<String,IWindowCallback> windowCallbackMap = new HashMap<String,IWindowCallback>();
 	//String encoding = "ISO-8859-1";
+	
+	private enum TIMER_ACTION {
+		PLAY,
+		PAUSE,
+		RESET,
+		INFO,
+		STOP,
+		NONE
+	}
+	
+	//TIMER_ACTION current_timer_action = TIMER_ACTION.NONE;
 	
 	public StellarService service = null;
 	boolean isConnected = false;
@@ -180,7 +201,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		ColorDebugCommand colordebug = new ColorDebugCommand();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
-		//TimerCommand timercmd = new TimerCommand();
+		TimerCommand timercmd = new TimerCommand();
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
 		keyboardCommand = new KeyboardCommand();
@@ -194,7 +215,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//Lua2Command lua2cmd = new Lua2Command();
 		specialcommands.put(colordebug.commandName, colordebug);
 		specialcommands.put(dirtyexit.commandName, dirtyexit);
-		//specialcommands.put(timercmd.commandName, timercmd);
+		specialcommands.put(timercmd.commandName, timercmd);
 		specialcommands.put(bellcmd.commandName, bellcmd);
 		specialcommands.put(fscmd.commandName, fscmd);
 		specialcommands.put(keyboardCommand.commandName, keyboardCommand);
@@ -224,6 +245,30 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_TERMINATED_BY_PEER:
+					killNetThreads(true);
+					DoDisconnect(true);
+					isConnected = false;
+					break;
+				case MESSAGE_TIMERSTOP:
+					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.STOP);
+					break;
+				case MESSAGE_TIMERSTART:
+					//current_timer_action = TIMER_ACTION.PLAY;
+					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.PLAY);
+					break;
+				case MESSAGE_TIMERRESET:
+					//current_timer_action = TIMER_ACTION.PLAY;
+					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.RESET);
+					break;
+				case MESSAGE_TIMERINFO:
+					// = TIMER_ACTION.PLAY;
+					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.INFO);
+					break;
+				case MESSAGE_TIMERPAUSE:
+					//doTimerAction((String)msg.obj,msg.arg2);
+					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.PAUSE);
+					break;
 				case MESSAGE_CALLPLUGIN:
 					String ptmp = msg.getData().getString("PLUGIN");
 					String ftmp = msg.getData().getString("FUNCTION");
@@ -262,7 +307,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					break;
 				case MESSAGE_IMPORTFILE:
 					Connection.this.service.markWindowsDirty();
-					importSettings((String)msg.obj);
+					importSettings((String)msg.obj,true);
 					break;
 				case MESSAGE_SAVESETTINGS:
 					String changedplugin = (String)msg.obj;
@@ -360,7 +405,12 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				case MESSAGE_LINETOWINDOW:
 					Object line = msg.obj;
 					String target = msg.getData().getString("TARGET");
-					Connection.this.lineToWindow(target,line);
+					try {
+						Connection.this.lineToWindow(target,line);
+					} catch (RemoteException e3) {
+						// TODO Auto-generated catch block
+						e3.printStackTrace();
+					}
 					break;
 				case MESSAGE_SENDDATA_STRING:
 					try {
@@ -451,7 +501,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					break;
 				case MESSAGE_PROCESS:
 					try {
-						dispatch((byte[])msg.obj);
+						//synchronized(Connection.this) {
+							dispatch((byte[])msg.obj);
+						//}
 					} catch (UnsupportedEncodingException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -459,7 +511,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					break;
 				case MESSAGE_DISCONNECTED:
 					killNetThreads(true);
-					DoDisconnect(null);
+					DoDisconnect(false);
 					isConnected = false;
 					break;
 				default:
@@ -479,10 +531,12 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		working = new TextTree();
 		working.setLinkify(false);
 		working.setLineBreakAt(10000000);
+		working.setMaxLines(10000);
 		
 		finished = new TextTree();
 		finished.setLinkify(false);
 		finished.setLineBreakAt(10000000);
+		finished.setMaxLines(10000);
 		//TODO: set TextTree encoding options.
 		
 		//handler.sendEmptyMessage(MESSAGE_STARTUP);
@@ -593,8 +647,14 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			}
 		}
 		
-		callback.clearText();
-		callback.rawDataIncoming(w.getBuffer().dumpToBytes(true));
+		TextTree buffer = w.getBuffer();
+		if(buffer.getBrokenLineCount() == 0) {
+			//Log.e("BUFFERTEST","INVALIDATE WINDOW TEXT CALLED WITH NO DATA");
+		}
+		
+		//callback.clearText();
+		//callback.rawDataIncoming(buffer.dumpToBytes(true));
+		callback.resetWithRawDataIncoming(buffer.dumpToBytes(true));
 		
 		//mWindowCallbacks.finishBroadcast();
 		//}
@@ -789,6 +849,11 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			
 		the_settings = (ConnectionSettingsPlugin) tmpPlugs.get(0);
 		the_settings.sortTriggers();
+		the_settings.initTimers();
+		for(WindowToken tmpw : the_settings.getSettings().getWindows().values()) {
+			tmpw.setDisplayHost(display);
+		}
+		
 		mWindows.add(0,the_settings.getSettings().getWindows().get(MAIN_WINDOW));
 
 		tmpPlugs.remove(0);
@@ -800,6 +865,10 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		
 		for(Plugin p : plugins) {
+			for(WindowToken tmpw : p.getSettings().getWindows().values()) {
+				tmpw.setDisplayHost(display);
+			}
+			p.initTimers();
 			pluginMap.put(p.getName(), p);
 			p.sortTriggers();
 			if(p.getSettings().getWindows().size() > 0) {
@@ -845,6 +914,10 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 						} else {
 							ArrayList<String> vals = linkMap.get(link);
 							vals.add(p.getName());
+						}
+						
+						for(WindowToken tmpw : p.getSettings().getWindows().values()) {
+							tmpw.setDisplayHost(display);
 						}
 						
 						if(p.getSettings().getWindows().size() > 0) {
@@ -1043,7 +1116,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	}
 
 	
-	protected void lineToWindow(String target, Object line) {
+	protected void lineToWindow(String target, Object line) throws RemoteException {
 		//synchronized(callbackSync) {
 		
 		for(WindowToken w : mWindows) {
@@ -1073,13 +1146,11 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				//int N = mWindowCallbacks.beginBroadcast();
 				//for(int i = 0;i<N;i++) {
 					IWindowCallback c = windowCallbackMap.get(target);
-					try {
-						//if(target.equals(c.getName())) {
-							c.rawDataIncoming(lol);
-						//}
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						//e.printStackTrace();
+					if(c!=null) {
+					
+							//if(target.equals(c.getName())) {
+								c.rawDataIncoming(lol);
+							//}
 						
 					}
 				//}
@@ -1117,36 +1188,57 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//mCallbackCount++;
 	}
 	
-	public void unregisterWindowCallback(String name, IWindowCallback callback) {
+	public void unregisterWindowCallback(IWindowCallback callback) {
+		String name = "";
+		try {
+			name = callback.getName();
+		} catch (RemoteException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		//try {
+			//Log.e("SERVICE",display + ": attempting to remove " + name + " from the callback map.");
+		//} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+		//	e1.printStackTrace();
+		//}
 		
 		if(callbacksStarted) {
 			mWindowCallbacks.finishBroadcast();
+			callbacksStarted = false;
 		}
-		mWindowCallbacks.unregister(callback);
+		
+		if(!mWindowCallbacks.unregister(callback)) {
+			//Log.e("SERVICE",display+":attempted to remove "+name+ " from the callback list but failed.");
+		}
 		//int N = mWindowCallbacks.beginBroadcast();
 		//for(int i = 0;i<N;i++) {
 		//	IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
 		//	String tmp = c.getName();
+		windowCallbackMap.clear();
 		int N = mWindowCallbacks.beginBroadcast();
 		for(int i=0;i<N;i++) {
 			IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
 			try {
+				//Log.e("SERVICE",display + ":ADDING "+w.getName() + " to the callback map.");
 				windowCallbackMap.put(w.getName(), w);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}	
+		}
+		
+		if(!callbacksStarted) { callbacksStarted = true; }
 		//}
 	}
 	
 	private final String MAIN_WINDOW = "mainDisplay";
 	private String outputWindow = MAIN_WINDOW;
 	
-	protected void DoDisconnect(Object object) {
+	protected void DoDisconnect(boolean override) {
 		//TODO: if window showing, show disconnection.
 		if(handler == null) return;
-		if(mAutoReconnect) {
+		if(mAutoReconnect && !override) {
 			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
 				String message = "\n" + Colorizer.colorRed + "Network connection disconnected.\n" + "Attmempting reconnect in 3 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) + " tries remaining."+Colorizer.colorWhite+"\n";
@@ -1159,16 +1251,19 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		service.DoDisconnect(this);
 	}
+	
+	
 
 	protected void killNetThreads(boolean noreconnect) {
 		
 		if(pump == null) return;
 		//Log.e("TEST","Killing net threads");
 		if(pump != null) {
-			
-			pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+			if(pump.handler != null) {
+				pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+			}
 			pump.closeSocket();
-			pump.interrupt();
+			//pump.interrupt();
 			//pump = null;
 			try {
 				//Log.e("TEST","waiting for thread death.");
@@ -1184,7 +1279,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		//synchronized(this) {
 		if(noreconnect) {
-			handler.removeMessages(MESSAGE_RECONNECT);
+			if(handler != null) {
+				handler.removeMessages(MESSAGE_RECONNECT);
+			}
 		}
 		//}
 		
@@ -1244,16 +1341,32 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	HashMap<Integer,TriggerData> sortedTriggerMap = null;
 	HashMap<Integer,Plugin> triggerPluginMap = null;
 	HashMap<Integer,Integer> lineStartMap = new HashMap<Integer,Integer>();
+	private boolean processing = false;
+	private byte[] holddata = null;
 	private void dispatch(byte[] data) throws UnsupportedEncodingException {
 		//long start = System.currentTimeMillis();
 		
+		//String str = new String(data);
+		//Log.e("RAW","RAW DATA:\n"+str);
+//		if(processing) {
+//			Log.e("DISPATCHTEST","DISPATCH PROCESSING WHILE DATA IS STILL BEING PROCESSED");
+//			String newstr = new String(data);
+//			String oldstr = new String(holddata);
+//			Log.e("DISPATCHTEST","New data:\n"+newstr);
+//			Log.e("DISPATCHTEST","Old Data:\n"+oldstr);
+//		}
+		holddata = data;
+		processing = true;
+		//String ftmp = new String(data);
+		//Log.e("FIN","INCOMING RAW-----\n"+ftmp+"\nEND INCOMING RAW-----");
 		
 		byte[] raw = processor.RawProcess(data);
-		if(raw == null) return;
+		if(raw == null) { processing = false; return; }
 		
 		//long deltaraw = System.currentTimeMillis() - start;
 		//.e("PARSING","TIMEPROFILE trigger raw processing took " + deltaraw);
-		
+		//String rawproc = new String(raw);
+		//Log.e("RAW","PROCESSED RAW DATA:\n"+rawproc);
 		//long treestart = System.currentTimeMillis();
 		TextTree buffer = null;
 		for(WindowToken w : mWindows) {
@@ -1271,11 +1384,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 //			
 //		}
 //		
-//		for(int i=working.getLines().size()-1;i>=0;i--) {
-//			Line tmpl = working.getLines().get(i);
-//			Log.e("FIN","WORKING:" + TextTree.deColorLine(tmpl));
-//			
-//		}
+
 		//long bleedstart = System.currentTimeMillis();
 		TextTree.Color tmpcolor = buffer.getBleedColor();
 		working.setBleedColor(tmpcolor);
@@ -1284,6 +1393,15 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//Log.e("PARSING","TIMEPROFILE finding the bleed color took " + deltableed);
 		//long addstart = System.currentTimeMillis();
 		working.addBytesImpl(raw);
+		
+//		Log.e("FIN","---------START XMISSION BLOCK----------");
+//		for(int i=working.getLines().size()-1;i>=0;i--) {
+//			Line tmpl = working.getLines().get(i);
+//			Log.e("FIN","WORKING("+i+"):" + TextTree.deColorLine(tmpl));
+//			
+//		}
+//		Log.e("FIN","---------END XMISSION BLOCK----------");
+		//Log.e("FIN","END TRANSMISSION:-------------------------------");
 		//long deltadelta = System.currentTimeMillis() - addstart;
 		//Log.e("PARSING","TIMEPROFILE adding to the working buffer took " + deltadelta);
 		//long deltatmp2 = System.currentTimeMillis() - start;
@@ -1320,6 +1438,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		if(it.hasPrevious()) {
 			l = it.previous();
 		} else {
+			processing = false;
 			return;
 		}
 		
@@ -1682,7 +1801,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//Log.e("Connection","TIMEPROFILE trigger parsing took:" + Long.toString(now - start) + " millis.");
 		sendBytesToWindow(proc);
 		
-		
+		processing = false;
 	}
 	
 	protected void DispatchDialog(String str) {
@@ -1728,7 +1847,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				if(c!=null) {
 					c.rawDataIncoming(data);
 				} else {
-					mWindows.get(0).getBuffer().addBytesImplSimple(data);
+					//mWindows.get(0).getBuffer().addBytesImplSimple(data);
 				}
 		//		}
 		//	}
@@ -1782,7 +1901,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//show notification somehow.
 		isConnected = true;
 		
-		service.showNotification();
+		service.showConnectionNotification(display,host,port);
 	}
 	
 	/*private void loadConnectionData() {
@@ -1828,6 +1947,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 
 	StringBuffer dataToServer = new StringBuffer();
 	StringBuffer dataToWindow = new StringBuffer();
+	Matcher semiMatcher = semicolon.matcher("");
+	StringBuffer commandBuilder = new StringBuffer();
+	private String scriptBlock = "/";
 	private Data ProcessOutputData(String out) throws UnsupportedEncodingException {
 		dataToServer.setLength(0);
 		dataToWindow.setLength(0);
@@ -1843,16 +1965,29 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			enter.visString = null;
 			return enter;
 		}
+		
+		if(out.equals(";;")) {
+			Data enter = new Data();
+			enter.cmdString = ";"+crlf;
+			enter.visString = ";";
+			return enter;
+		}
 		//1 - chop up input up on semi's
-		String[] commands = null;
+		//String[] commands = null;
+		
+		List<String> list = null;
+		
 		if(the_settings.isSemiIsNewLine()) {
-			commands = semicolon.split(out);  
+			//commands = semicolon.split(out);
+			list = splitSemicolonSafe(out);
+			
 		} else {
-			commands = new String[] { out };
+			list = new ArrayList<String>();
+			list.add(out);
 		}
 		StringBuffer holdover = new StringBuffer();
 		//2 - for each unit		
-		ArrayList<String> list = new ArrayList<String>(Arrays.asList(commands));
+		//ArrayList<String> list = new ArrayList<String>(Arrays.asList(commands));
 		
 		
 		ListIterator<String> iterator = list.listIterator();
@@ -1866,8 +2001,16 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					cmd = holdover.toString() + cmd;
 					holdover.setLength(0);
 				}
+				//2.5 run command through the global lua state
+				Data d = null;
+				
+				if(cmd.startsWith(this.scriptBlock)) {
+					the_settings.runLuaString(cmd.substring(this.scriptBlock.length(), cmd.length()));
+				} else {
+					d = ProcessCommand(cmd);
+				}
 				//3 - do special command processing.
-				Data d = ProcessCommand(cmd);
+				
 				//4 - handle command processing output
 				
 				if(d != null) {
@@ -1897,17 +2040,18 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 								if(!d.cmdString.equals(tmpstr)) {
 									//alias replaced, needs to be processed
 									
-									String[] alias_cmds = null;
+									List<String> alias_cmds = null;
 									if(the_settings.isSemiIsNewLine()) {
-										alias_cmds = semicolon.split(tmpstr);
+										alias_cmds = splitSemicolonSafe(tmpstr);
 									} else {
-										alias_cmds = new String[] { tmpstr };
+										alias_cmds = new ArrayList<String>(1);  
+										alias_cmds.add(tmpstr);
 									}
 									for(String alias_cmd : alias_cmds) {
 										iterator.add(alias_cmd);
 									}
 									if(reprocess) {
-										for(int ax=0;ax<alias_cmds.length;ax++) {
+										for(int ax=0;ax<alias_cmds.size();ax++) {
 											iterator.previous();
 										}
 									}
@@ -1968,6 +2112,46 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		
 		return d;
+	}
+	
+	private List<String> splitSemicolonSafe(String out) {
+		List<String> list = new ArrayList<String>();
+		semiMatcher.reset(out);
+		boolean matched = false;
+		boolean append = false;
+		//int lastLength = -1;
+		while(semiMatcher.find()) {
+			matched = true;
+			commandBuilder.setLength(0);
+			semiMatcher.appendReplacement(commandBuilder,"");
+			if(commandBuilder.length() == 0) {
+				append = true;
+				list.add(list.remove(list.size()-1) + ";");
+			} else {
+				if(append) {
+					list.add(list.remove(list.size()-1) + commandBuilder.toString());
+					append = false;
+				} else {
+					list.add(commandBuilder.toString());
+				}
+				
+			}
+		} 
+		
+		if(!matched) {
+			list.add(out);
+		} else {
+			commandBuilder.setLength(0);
+			semiMatcher.appendTail(commandBuilder);
+			if(append) {
+				list.add(list.remove(list.size()-1) + commandBuilder.toString());
+			} else {
+				list.add(commandBuilder.toString());
+			}
+		}
+		
+		commandBuilder.setLength(0);
+		return list;
 	}
 	
 	public class Data {
@@ -2594,6 +2778,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	public void addTimer(TimerData newtimer) {
 		newtimer.setRemainingTime(newtimer.getSeconds());
 		the_settings.getSettings().getTimers().put(newtimer.getName(), newtimer);
+		the_settings.getSettings().setDirty(true);
 	}
 
 	public boolean isWindowShowing() {
@@ -2896,7 +3081,10 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//this.encoding = value;
 		the_settings.setEncoding(value);
 		this.working.setEncoding(value);
-		
+		this.finished.setEncoding(value);
+		if(processor != null) {
+			this.processor.setEncoding(value);
+		}
 		for(int i=0;i<mWindows.size();i++) {
 			WindowToken w = mWindows.get(i);
 			w.getBuffer().setEncoding(value);
@@ -2955,7 +3143,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	
 	private void sendToServer(byte[] bytes) {
 		//byte[] bytes = (byte[]) msg.obj;
-		
+		if(bytes == null || the_settings == null) {
+			return;
+		}
 		Data d = null;
 		try {
 			d = ProcessOutputData(new String(bytes,the_settings.getEncoding()));
@@ -2996,7 +3186,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				buf.rewind();
 				buf.get(tosend,0,count);
 				
-				if(pump.isConnected()) {
+				if(pump != null && pump.isConnected()) {
 					//output_writer.write(tosend);
 					//output_writer.flush();
 					pump.sendData(tosend);
@@ -3179,7 +3369,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 	
-	private void importSettings(String path) {
+	private void importSettings(String path,boolean save) {
 		shutdownPlugins();
 		
 		VersionProbeParser vpp = new VersionProbeParser(path,service.getApplicationContext());
@@ -3480,7 +3670,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 		
 		buildTriggerSystem();
-		this.saveMainSettings();
+		if(save) {
+			this.saveMainSettings();
+		}
 	}
 	
 	private void loadInternalSettings() {
@@ -3501,9 +3693,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		if(!oldp.exists()) {
 			//oldp.renameTo(new File(internal+convertPath));
-			importSettings(null);
+			importSettings(null,false);
 		} else {
-			importSettings(rootPath);
+			importSettings(rootPath,false);
 		}
 
 		Long end = System.currentTimeMillis();
@@ -3514,7 +3706,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	
 	private void buildSettingsPage() {
 		if(the_settings.getSettings().getWindows().size() < 1) {
-			WindowToken token = new WindowToken(MAIN_WINDOW,null,null);
+			WindowToken token = new WindowToken(MAIN_WINDOW,null,null,display);
 			//token.layouts.clear();
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
 			LayoutGroup g = new LayoutGroup();
@@ -3656,7 +3848,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//}
 		//loadSettings();
 		service.markWindowsDirty();
-		importSettings(null);
+		importSettings(null,true);
 	}
 
 	public void startLoadSettingsSequence(String path) {
@@ -3734,11 +3926,14 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	}
 
 	public void shutdown() {
+		this.saveMainSettings();
 		this.killNetThreads(true);
 		for(Plugin p : plugins) {
 			p.shutdown();
 			p = null;
 		}
+		
+		
 		
 		the_settings.shutdown();
 		the_settings = null;
@@ -3746,6 +3941,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		handler.removeMessages(MESSAGE_RECONNECT);
 		handler = null;
 		
+		service.removeConnectionNotification(display);
 		
 	}
 
@@ -3792,5 +3988,200 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		return pluginMap.containsKey(desired);
 	}
 	
+	private class TimerCommand extends SpecialCommand {
+	ArrayList<String> timer_actions = new ArrayList<String>();
+	public TimerCommand() {
+		this.commandName = "timer";
+		timer_actions.add("play");
+		timer_actions.add("pause");
+		timer_actions.add("info");
+		timer_actions.add("reset");
+		timer_actions.add("stop");
+	}
+	public Object execute(Object o,Connection c)  {
+		//example argument " info 0"
+		//regex = "^\s+(\S+)\s+(\d+)";
+		Pattern p = Pattern.compile("^\\s*(\\S+)\\s+(\\S+)\\s*(\\S*)");
+		
+		Matcher m = p.matcher((String)o);
+		
+		int pOrdinal = -1;
+		
+		if(m.matches()) {
+			//extract arguments
+			String action = m.group(1).toLowerCase();
+			String ordinal = m.group(2);
+			String silent = "";
+			if(m.groupCount() > 2) {
+				silent = m.group(3);
+			} else {
+				//do nothing
+			}
+			if(timer_actions.contains(action)) {
+				//we have a valid action.
+			} else {
+				//error with bad action.
+				//try {
+					dispatchNoProcess(getErrorMessage("Timer action arguemnt " + action + " is invalid.","Acceptable arguments are \"play\",\"pause\",\"reset\",\"stop\" and \"info\".").getBytes());
+				//} catch (RemoteException e) {
+				//	throw new RuntimeException(e);
+				//}
+				return null;
+			}
+			
+			//try {
+			//	pOrdinal = Integer.parseInt(ordinal);
+			//	pOrdinal = pOrdinal + 1;
+			//} catch (NumberFormatException e) {
+				//try {
+			//		dispatchNoProcess(getErrorMessage("Timer index argument " + ordinal + " is not a number.","Acceptable argument is an integer.").getBytes());
+			//		return null;
+				//} catch (RemoteException e1) {
+				//	throw new RuntimeException(e);
+				//}
+			//}
+			
+			//if(the_settings.getSettings().getTimers().containsKey(ordinal)) {
+				//valid timer.
+				int domsg = 50;
+				//Log.e("SERVICE","SILENT IS " + silent);
+				if(!silent.equals("")) {
+					domsg = 0;
+				}
+				
+				if(action.equals("info")) {
+					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERINFO, ordinal));
+					return null;
+				}
+				if(action.equals("reset")) {
+					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERRESET, 0, domsg, ordinal));
+					return null;
+				}
+				if(action.equals("play")) {
+					//play
+					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERSTART,0,domsg,ordinal));
+					return null;
+				}
+				if(action.equals("pause")) {
+					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERPAUSE, 0, domsg, ordinal));
+					return null;
+				}
+				if(action.equals("stop")) {
+					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERSTOP, 0, domsg, ordinal));
+					return null;
+				}
+				
+				
+			//} else {
+				//invalid timer
+				//try {
+					//dispatchNoProcess(getErrorMessage("Timer at index " + ordinal + " does not exist.","The timer index is the number displayed next to the timer the timer selection screen.").getBytes());
+				//} catch (RemoteException e) {
+				//	throw new RuntimeException(e);
+				//}
+			//}
+			
+			
+			
+		} else {
+			//try {
+				dispatchNoProcess(getErrorMessage("Timer command: \".timer " + (String)o + "\" is invalid.","Timer function format \".timer action index [silent]\"\nWhere action is \"play\",\"pause\",\"reset\" or \"info\".\nIndex is the timer index displayed in the timer selection list.").getBytes());
+			//} catch (RemoteException e) {
+			//	throw new RuntimeException(e);
+			//}
+		}
+		
+		return null;
+		
+	}
+	}
+	
+	private void doTimerAction(String obj, int arg2, TIMER_ACTION action) {
+		//check for valid ordinals.
+		boolean found = false;
+		Plugin host = null;
+		if(the_settings.getSettings().getTimers().containsKey(obj)) {
+			host = the_settings;
+			found = true;
+		} else {
+			//check plugins
+			for(Plugin p : plugins) {
+				if(p.getSettings().getTimers().containsKey(obj)) {
+					host = p;
+					found = true;
+				}
+			}
+		}
+		boolean silent = false;
+		if(arg2 == 0) {
+			silent = true;
+		}
+		
+		if(!found) {
+			//show error message.
+			dispatchNoProcess(SpecialCommand.getErrorMessage("Timer command error","No timer with name "+obj+" found.").getBytes());
+		} else {
+			switch(action) {
+			case PLAY:
+				host.startTimer(obj);
+				if(!silent) {
+					toast("Timer "+obj+" started.");
+				}
+				break;
+			case PAUSE:
+				host.pauseTimer(obj);
+				if(!silent) {
+					toast("Timer "+obj+" paused.");
+				}
+				break;
+			case RESET:
+				host.resetTimer(obj);
+				if(!silent) {
+					toast("Timer "+obj+" reset.");
+				}
+				break;
+			case STOP:
+				host.pauseTimer(obj);
+				host.resetTimer(obj);
+				if(!silent) {
+					toast("Timer "+obj+" stopped.");
+				}
+				break;
+			case INFO:
+				TimerData t = host.getSettings().getTimers().get(obj);
+				if(t.isPlaying()) {
+					long now = SystemClock.elapsedRealtime();
+					long dur = now - t.getStartTime();
+					int sec = t.getSeconds() - (int) (dur/1000);
+					//Log.e("TIMER","Timer "+obj+" is playing, "+sec+" remaining.");
+					toast(obj+": "+sec+"s");
+				} else {
+					if(t.getRemainingTime() != t.getSeconds()) {
+						int sec = t.getSeconds() - t.getRemainingTime();
+						//Log.e("TIMER","Timer "+obj+" is paused, " + sec + " remain.");
+						toast("Timer "+obj+" is paused, " + sec + " remain.");
+					} else {
+						//Log.e("TIMER","Timer "+obj+" is not playing.");
+						toast("Timer "+obj+" is not running.");
+					}
+				}
+				//long time = host.getSettings().getTimers().get(obj).getStartTime();
+				
+				//goooodie
+				break;
+			case NONE:
+				break;
+			}
+		}
+	}
+	
+	private void toast(String str) {
+		Context c = this.getContext();
+		//String translated = ToastResponder.this.translate(message, captureMap);
+		Toast t = Toast.makeText(c, str, 0);
+		float density = c.getResources().getDisplayMetrics().density;
+		t.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, (int) (50*density));
+		t.show();
+	}
 	
 }

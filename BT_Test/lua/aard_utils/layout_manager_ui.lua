@@ -44,7 +44,7 @@ if(chat_window_installed) then
 else
 	scroll_view_params:addRule(RelativeLayout.ALIGN_TOP,rootView:getId()) --use top of the pane because chat window is not installed.
 end
-scroll_view_params:addRule(RelativeLayout.LEFT_OF,6010)
+scroll_view_params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 scroll_view:setLayoutParams(scroll_view_params)
 scroll_view:setBackgroundColor(Color:argb(255,255,0,0))
 
@@ -92,6 +92,26 @@ Containers.views.root = rootView
 
 Layouts = {}
 
+Views = {}
+Views.mainDisplay = 6666
+Views.inputBar = 10
+Views.divider1 = 40
+
+vitalsconfig = {}
+vitalsconfig.id = 1010
+vitalsconfig.width = MATCH_PARENT
+vitalsconfig.height = WRAP_CONTENT
+vitalsconfig.type = "relative"
+vitalsconfig.target = "root"
+vitalsconfig.rules = {}
+vitalsconfig.rules[RelativeLayout.ALIGN_PARENT_BOTTOM] = 1
+vitalsconfig.affects = {}
+vitalsconfig.affects.inputBar = {}
+vitalsconfig.affects.inputBar[RelativeLayout.ALIGN_PARENT_BOTTOM] = 0
+vitalsconfig.affects.inputBar[RelativeLayout.ABOVE] = 1010
+
+layout_config.configs[0][vitalsconfig.id] = vitalsconfig
+
 function InstallWindow(config)
 	Note("\nInstalling window, raw data: "..config.."\n")
 	local config = loadstring(config)()
@@ -121,6 +141,10 @@ function InstallWindow(config)
 		layout_config.configs[layout_config.mode][config.id] = props
 		
 		config = props
+	else
+		Note("\nView already has configuration, no special mode needed.\n")
+		--return
+		config = layout_config.configs[layout_config.mode][config.id]
 	end
 	vis = true
 	if(not vis) then Note(string.format("\nsanity check for view: %s, %s\n",config.id,config.target)) return end
@@ -163,6 +187,28 @@ function InstallWindow(config)
 			end
 		else
 		--relative
+			params = luajava.new(RelativeLayoutParams,config.width,config.height)
+			for i,v in pairs(config.rules) do
+				Note(string.format("\nAdding relative rule: %d,%d\n",i,v))
+				params:addRule(i,v)
+			end
+			
+			--do affector rules
+			for i,v in pairs(config.affects) do
+				local viewid = Views[i]
+				local view = rootView:findViewById(viewid)
+				local vparams = view:getLayoutParams()
+				Note(string.format("\nAffecting view: %d\n",viewid))
+				for rule,value in pairs(v) do
+					Note(string.format("\nAffecting relative rule: %d,%d,%d\n",viewid,tonumber(rule),tonumber(value)))
+					--if(value < 0) then
+						--vparams:removeRule(tonumber(rule))
+					--else
+						vparams:addRule(rule,value)
+					--end
+				end
+			end
+		
 		end
 		source:getParent():removeView(source)
 		--rootView:addView(source)

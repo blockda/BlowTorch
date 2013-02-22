@@ -243,6 +243,9 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	boolean landscape = false;
 	ArrayList<ScriptOptionCallback> scriptCallbacks = new ArrayList<ScriptOptionCallback>();
 	private View mFoldoutBar = null;
+	private RelativeLayout.LayoutParams mOriginalInputBarLayoutParams = null;
+	private RelativeLayout.LayoutParams mOriginalDividerLayoutParams = null;
+	
 	private class ScriptOptionCallback {
 		private String window;
 		private String title;
@@ -421,7 +424,9 @@ public class MainWindow extends Activity implements MainWindowCallback {
         mInputBox.setId(30);
         
         View inputBar = findViewById(R.id.inputbar);
-        
+    	mOriginalInputBarLayoutParams = new RelativeLayout.LayoutParams(inputBar.getLayoutParams());
+    	mOriginalDividerLayoutParams =  new RelativeLayout.LayoutParams(divider.getLayoutParams());;
+        inputBar.setBackgroundColor(0xFF0A0A0A);
         inputBar.setId(10);
        // mInputBox.setSelectAllOnFocus(true);
         mInputBox.setFocusable(true);
@@ -1103,38 +1108,46 @@ public class MainWindow extends Activity implements MainWindowCallback {
 				int foldoutbuttonwidth = 0;
 				ImageButton dc = (ImageButton)mFoldoutBar.findViewById(R.id.down_btn_c);
 				
-				//foldoutbuttonwidth = dc.getDrawable().getIntrinsicWidth();
-				foldoutbuttonwidth = (int) (100*MainWindow.this.getResources().getDisplayMetrics().density);
+				foldoutbuttonwidth = dc.getDrawable().getIntrinsicWidth();
+				//foldoutbuttonwidth = (int) (40*MainWindow.this.getResources().getDisplayMetrics().density);
 				
 				float amount = foldoutbuttonwidth*3;
 
 				if(input_controls_expanded) {
-					TranslateAnimation outanim = new TranslateAnimation(0,-1*amount,0,0);
-					outanim.setDuration(320);
-					TranslateAnimation outanimB = new TranslateAnimation(0,-1*amount,0,0);
-					outanim.setDuration(320);
-					TranslateAnimation outanimC = new TranslateAnimation(0,-1*amount,0,0);
-					outanim.setDuration(320);
+					//TranslateAnimation outanim = new TranslateAnimation(0,-1*amount,0,0);
+					//outanim.setDuration(320);
+					//TranslateAnimation outanimB = new TranslateAnimation(0,-1*amount,0,0);
+					//outanim.setDuration(320);
+					//TranslateAnimation outanimC = new TranslateAnimation(0,-1*amount,0,0);
+					//outanim.setDuration(320);
 					
-					TranslateAnimation nullanim = new TranslateAnimation(0,0,0,0);
-					nullanim.setDuration(320);
-					//LayoutAnimationController bac = new LayoutAnimationController(outanim,0.0f);
+					//TranslateAnimation nullanim = new TranslateAnimation(0,0,0,0);
+					//nullanim.setDuration(320);
+					Animation a = new TranslateAnimation(0,-1*amount,0,0);
+
+					a.setDuration(320);
+
+					AnimationSet set = new AnimationSet(true);
+					set.addAnimation(a);
+
+					LayoutAnimationController lac = new LayoutAnimationController(set,0.0f);
+					
+					LinearLayout inputbar = (LinearLayout) MainWindow.this.findViewById(10);
+					inputbar.setLayoutAnimation(lac);
+					
+					
+					//inputbar.addView(mFoldoutBar, 0);
+					//input_controls_expanded = true;
 					
 					input_controls_expanded = false;
-					//LinearLayout inputbar = (LinearLayout) MainWindow.this.findViewById(10);
-					mInputBox.setListener(mInputBarAnimationListener);
-					((View)mFoldoutBar.getParent()).startAnimation(outanim);
-					mInputBox.startAnimation(nullanim);
-					//test_button.startAnimation(outanimC);
-					//mInputBox.startAnimation(outanimB);
-					
-					
-					//inputbar.setLayoutAnimation(bac);
 					//inputbar.removeView(mFoldoutBar);
-					//inputbar.startAnimation(outanim);
-					//test_button.startAnimation(outanim);
-					//mInputBox.startAnimation(outanim);
-					//inputbar.removeViewAt(0);
+					//lac.start();
+					inputbar.startLayoutAnimation();
+					//((LinearLayout)mFoldoutBar.getParent()).removeView(mFoldoutBar);
+					mInputBox.setListener(mInputBarAnimationListener);
+					//((View)mFoldoutBar.getParent()).startAnimation(outanim);
+					//mInputBox.startAnimation(nullanim);
+
 				} else {
 					Animation a = new TranslateAnimation(-1*amount,0,0,0);
 
@@ -1218,6 +1231,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			startAction.putExtra("HOST", "aardmud.org");
 			
 			this.startService(new Intent(serviceBindAction));
+			
 			//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			//servicestarted = true;
 		}
@@ -1243,10 +1257,11 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			
 			public void onAnimationEnd() {
 				//input_bar.
-				//Log.e("Ou","IN THE CUSTOM ANIMATION LISTENER CONTROLLRE");
+				
 				if(input_controls_expanded) {
 
 				} else {
+					//Log.e("Ou","IN THE CUSTOM ANIMATION LISTENER CONTROLLRE");
 					LinearLayout p = (LinearLayout) mInputBox.getParent();
 					p.removeViewAt(0);
 				}
@@ -1459,16 +1474,16 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			
 			public void onClick(DialogInterface dialog, int which) {
 				try {
-					if(service.getConnections().size() > 1) {
+					//if(service.getConnections().size() > 1) {
 						service.closeConnection(str);
 						//switch to the next one. service will do this for us.
 						
-					} else {
+					//} else {
 					
 						cleanExit();
 						dialog.dismiss();
 						MainWindow.this.finish();
-					}
+					//}
 				} catch (RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -1634,7 +1649,14 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			this.finish();
 			break;
 		case 800:
-			myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+			//myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
+			//service.
+			try {
+				service.endXfer();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			break;
 		case 700:
 			try {
@@ -1957,7 +1979,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		
 		//show dialog
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainWindow.this);
-		builder.setMessage("Keep service running in background?");
+		builder.setMessage("Keep connection running in background?");
 		builder.setCancelable(true);
 		builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 		           public void onClick(DialogInterface dialog, int id) {
@@ -2137,6 +2159,18 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		//we want to kill the service when we go.
 		cleanupWindows();
 		//shut down the service
+		
+		try {
+			String connected = service.getConnectedTo();
+			if(connected != null) {
+				service.closeConnection(connected);
+			}
+			
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		if(isBound) {
 			try {
 				if(service != null) {
@@ -2154,8 +2188,9 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			//Log.e("WINDOW","Unbound connection at cleanExit");
 		}
 		
-		String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
-		this.stopService(new Intent(serviceBindAction));
+
+		//String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
+		//this.stopService(new Intent(serviceBindAction));
 		/*if(mode == LAUNCH_MODE.FREE) {
 			this.stopService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
 		} else if(mode == LAUNCH_MODE.TEST) {
@@ -2339,7 +2374,8 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			
 			try {
 				if(!service.getConnectedTo().equals(display)) {
-					//Log.e("LOG","ATTEMPTING TO SWITCH TO: " + display);
+					Log.e("LOG","ATTEMPTING TO SWITCH TO: " + display);
+					//this.cleanupWindows();
 					service.switchTo(display);
 				}
 			} catch (RemoteException e) {
@@ -2892,9 +2928,11 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		//}
 		landscape = isLandscape();
 		windowsInitialized = true;
+		String displayname = "";
 		
 		try {
 			mWindows = service.getWindowTokens();
+			//displayname = service.getConnectedTo();
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -3033,7 +3071,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			}
 			tmp.setBufferText(w.isBufferText());
 			try {
-				service.registerWindowCallback(w.getName(),tmp.getCallback());
+				service.registerWindowCallback(w.getDisplayHost(),w.getName(),tmp.getCallback());
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -3065,7 +3103,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 				
 				if(tmp instanceof com.offsetnull.bt.window.Window) {
 					try {
-						service.unregisterWindowCallback(w.getName(), ((com.offsetnull.bt.window.Window)tmp).getCallback());
+						service.unregisterWindowCallback(w.getDisplayHost(), ((com.offsetnull.bt.window.Window)tmp).getCallback());
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
@@ -3091,6 +3129,13 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		View inputbar = rl.findViewById(10);
 		View divider = rl.findViewById(40);
 		rl.removeAllViews();
+		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT);
+		p.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		inputbar.setLayoutParams(p);
+		RelativeLayout.LayoutParams pl = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,(int) (3*this.getResources().getDisplayMetrics().density));
+		pl.addRule(RelativeLayout.ABOVE,10);
+		//p.addRule(RelativeLayout.BELOW,6666);
+		divider.setLayoutParams(pl);
 		rl.addView(inputbar);
 		rl.addView(divider);
 	}

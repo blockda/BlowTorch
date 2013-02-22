@@ -24,6 +24,8 @@
 
 package org.keplerproject.luajava;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -82,6 +84,11 @@ public class LuaInvocationHandler implements InvocationHandler
 		  	return ret;
 	  	} catch(LuaException e) {
 	  		e.printStackTrace();
+	  		//StringWriter sw = new StringWriter();
+	  		//PrintWriter pw = new PrintWriter(sw);
+	  		//e.printStackTrace(pw);
+	  		//obj.L.pushString(sw.toString()); // stack trace as a string
+	  		//obj.L.error();
 	  	}
 	  	return null;
 	  }

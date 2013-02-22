@@ -9,7 +9,7 @@ buffer:setLinkify(false)
 --buffer:setLineBreakAt(80)
 mapstarted = false
 function startMapCapture(name,line,map) 
-	--Note("STARTING MAP CAPTURE")
+	--Note("\nSTARTING MAP CAPTURE\n")
 	EnableTrigger("map_capture",true)
 	str = TextTree:deColorLine(line)
 	--debugPrint("processing line: "..str:toString())
@@ -30,7 +30,7 @@ currentline = 19
 titlefound = false
 function doMapCapture(name,line,map)
 	--local tmptmp = TextTree:deColorLine(line)
-	--Note("\n"..currentline..":"..tmptmp:toString().."|")
+	--Note(string.format("\n%2d:%s|",currentline,tmptmp:toString()))
 	if(mapstarted) then
 		local titletmp = TextTree:deColorLine(line)
 		if(titlefound) then
@@ -80,8 +80,11 @@ function doMapCapture(name,line,map)
 
 end
 
-function endMapCapture() 
-	--Note("ENDING MAP CAPTURE")
+function endMapCapture()
+	local count = buffer:getBrokenLineCount()
+	if(count < 5) then
+		Note("ENDING MAP CAPTURE:"..buffer:getBrokenLineCount())
+	end
 	EnableTrigger("map_capture",false)
 	
 	mapWindow:setBuffer(buffer)
