@@ -124,6 +124,7 @@ public class ScriptResponder extends TriggerResponder {
 			}*/
 			if(!L.isFunction(L.getTop())) {
 				Log.e("LUA",function + " is not a function.");
+				L.pop(2);
 				return false;
 			}
 			

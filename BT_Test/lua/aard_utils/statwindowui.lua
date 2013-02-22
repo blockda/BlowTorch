@@ -94,7 +94,7 @@ stats = nil
 
 
 function OnSizeChanged(w,h,ow,oh)
-	Note(string.format("\nstat window ui changed, %s, %s, %s, %s\n",w,h,ow,oh))
+	--Note(string.format("\nstat window ui changed, %s, %s, %s, %s\n",w,h,ow,oh))
 	--check out this trick, fit to 36 chars
 	--local p = luajava.new(Paint)
 	--local extra = view:getLineSpaceExtra()
@@ -119,7 +119,7 @@ function updateStats(data)
 	local bwhit = "\27[37;1m"
 	local nwhit = "\27[0;37m"
 	
-	local start_time = System:currentTimeMillis()
+	--local start_time = System:currentTimeMillis()
 	
 	
 	view:clearText()
@@ -135,9 +135,9 @@ function updateStats(data)
 	--view:addText("MORE TEXT!!!!!!!!!",true)
 	view:invalidate();
 	
-	local end_time = System:currentTimeMillis()
-	local duration = end_time - start_time
-	Note(string.format("\nupdating stat window took: %d millis\n",duration))
+	--local end_time = System:currentTimeMillis()
+	--local duration = end_time - start_time
+	--Note(string.format("\nupdating stat window took: %d millis\n",duration))
 end
 
 --function OnDraw(c)

@@ -315,15 +315,13 @@ function saveSetDefaults(data)
 	--wow, that was easy.
 end
 
-
-
 function OnXmlExport(out)
 	--local System = luajava.bindClass("java.lang.System")
 	--now = System:currentTimeMillis()
 	--Note("buttonset save routine GO!")
 	
 	if(out ~= nil) then
-		--Note("xmlserializer is not null")
+		--Note(string.format("xmlserializer is not null, %s",type(out)))
 	else
 		--Note("xmlserializer is null")
 	end
@@ -335,6 +333,7 @@ function OnXmlExport(out)
 	--local startTag = out.startTag
 	--local endTag = out.endTag
 	--local attribute = out.attribute
+
 	out:startTag("","buttonsets")
 	--for i,b in pairs(bsets) do
 	--	out:startTag("","buttonset")

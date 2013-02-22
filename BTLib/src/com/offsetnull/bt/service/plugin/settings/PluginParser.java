@@ -509,7 +509,8 @@ public class PluginParser extends BasePluginParser {
 			@Override
 			public void end(String body) {
 				// TODO Auto-generated method stub
-				
+				opt.setValue(new String(body));
+				tmp.getOptions().addOption(opt.copy());
 			}
 
 			

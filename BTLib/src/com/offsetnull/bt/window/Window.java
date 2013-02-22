@@ -57,7 +57,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.text.ClipboardManager;
 import android.util.AttributeSet;
-import android.util.Log;
+//import android.util.Log;
 
 import android.view.Gravity;
 import android.view.Menu;
@@ -192,6 +192,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected static final int MESSAGE_SCROLLLEFT = 12;
 	protected static final int MESSAGE_XCALLB = 13;
 	//public static final int MESSAGE_SENDDATA = 0;
+	protected static final int MESSAGE_RESETWITHDATA = 14;
 	
 	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
 	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
@@ -260,7 +261,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		int width = MeasureSpec.getSize(widthSpec);
 		
 		if(hasScriptOnMeasure && L != null) {
-			Log.e("MEASURE","USING THE SCRIPT ON MEASURE");
+			//Log.e("MEASURE","USING THE SCRIPT ON MEASURE");
 			L.getGlobal("debug");
 			L.getField(-1, "traceback");
 			L.remove(-2);
@@ -272,14 +273,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				int ret = L.pcall(2,2,-4);
 				if(ret !=0) {
 					displayLuaError("Error in OnMeasure:" + L.getLuaObject(-1).getString());
+					setMeasuredDimension(1,1);
+					
 					L.pop(1);
+					return;
 				} else {
 					//get the return values.
 					int ret_height = (int) L.getLuaObject(-1).getNumber();
 					int ret_width = (int) L.getLuaObject(-2).getNumber();
 					L.pop(2);
-					Log.e("MEASURE","CUSTOM MEASURE CODE RETURNED:"+ret_width+"|"+ret_height);
+					//Log.e("MEASURE","CUSTOM MEASURE CODE RETURNED:"+ret_width+"|"+ret_height);
 					setMeasuredDimension(ret_width,ret_height);
+					//if(width != mWidth) {
+					//	doFitFontSize(width);
+					//}
 					return;
 				}
 			} else {
@@ -367,6 +374,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
+				case MESSAGE_RESETWITHDATA:
+					Window.this.resetAndAddText((byte[])msg.obj);
+					break;
 				case MESSAGE_SCROLLLEFT:
 					//Log.e("window","handler scrollleft");
 					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
@@ -515,7 +525,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		PREF_FONTSIZE = (Integer)fontsize.getValue();
 		setCharacterSizes(PREF_FONTSIZE,PREF_LINEEXTRA);
 		
-		Log.e("WINDOW","WINDOW COLOR VALUE("+this.getName()+"): " + (Integer)colorOption.getValue());
+		//Log.e("WINDOW","WINDOW COLOR VALUE("+this.getName()+"): " + (Integer)colorOption.getValue());
 		switch((Integer)colorOption.getValue()) {
 		case 0:
 			this.setColorDebugMode(0);
@@ -536,7 +546,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		this.setLinksEnabled((Boolean)hlenabled.getValue());
 	}
 	
+	protected void resetAndAddText(byte[] obj) {
+		the_tree.empty();
+		buffer.empty();
+		addBytes(obj,true);
+	}
+
 	protected void xcallB(String string,byte[] bytes) throws LuaException {
+		//Log.e("WINDOW","xcallB on "+mName+" calling " + string + " id: "+this.toString());
+		if(L == null) { return;}
 		L.getGlobal("debug");
 		L.getField(-1, "traceback");
 		L.remove(-2);
@@ -1009,7 +1027,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private Double SCROLL_MIN = 24d;
 	private Double scrollback = SCROLL_MIN;
 	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
-	Iterator<Unit> unitIterator = null;
+	ListIterator<Unit> unitIterator = null;
 	private int mLinkBoxHeightMinimum = 20;
 	
 	boolean hasDrawRoutine = true;
@@ -1227,6 +1245,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 			}
 			
+			if(!bleeding) {
+				//Log.e("WINDOW","WINDOW " + this.getName() + " is not bleeding");
+				p.setColor(0xFF000000 | Colorizer.getColorValue(0,37,false));
+			}
 			//TODO: STEP 4
 			//advance the iterator back the number of units it took to find a bleed.
 			//second real expensive move. In the case of a no color text buffer, it would walk from scroll to end and back every time. USE COLOR 
@@ -1246,15 +1268,27 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			boolean doingLink = false;
 			StringBuffer currentLink = new StringBuffer();
 			linkBoxes.clear();
+			
+			int postmp = screenIt.previousIndex();
+//			if(mName.equals("mainDisplay")) {
+//				Log.e("WINDOW","starting drawing iterator at:"+postmp);
+//			}
 			//try {
 			while(!stop && screenIt.hasPrevious()) {
 				//int index = screenIt.previousIndex();
 				//boolean started = false;
+				int loc = screenIt.previousIndex();
 				Line l = screenIt.previous();
 				//String tmpstr = TextTree.deColorLine(l).toString();
 				/*if(mName.equals("map_window")) {
 					Log.e("map","map window line: "+tmpstr+"|"+l.viswidth+" calc:"+CALCULATED_ROWSINWINDOW);
 				}*/
+				
+//				if(mName.equals("mainDisplay")) {
+//					String str = TextTree.deColorLine(l).toString();
+//					Log.e("WINDOW",drawnlines+":"+loc+":"+y+":"+str);
+//				}
+				
 				if(centerJustify) {
 					//center justify.
 
@@ -1278,6 +1312,24 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					linemode = 4;
 					
 				}
+				
+//				if(mName.equals("mainDisplay")) {
+//					if(!unitIterator.hasNext()) {
+//						Log.e("WINDOW","HEY, THIS LINE HAS NO UNITS");
+//					} else {
+//						Log.e("WINDOW","Line has:"+l.getData().size() + " units.");
+//						while(unitIterator.hasNext()) {
+//							Unit u = unitIterator.next();
+//							Log.e("WINDOW","UNIT TYPE:"+u.getClass().toString());
+//						}
+//						
+//						while(unitIterator.hasPrevious()) {
+//							unitIterator.previous();
+//						}
+//						
+//					}
+//				}
+				boolean finishedWithNewLine = false;
 				
 				while(unitIterator.hasNext()) {
 					Unit u = unitIterator.next();
@@ -1628,6 +1680,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						}
 						break;
 					case NEWLINE:
+						//x = 0;
+						//break;
 					case BREAK:
 					//if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
 						if(u instanceof TextTree.NewLine) {
@@ -1659,22 +1713,46 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							}
 						}
 						
+						finishedWithNewLine = true;
+						
+						//TODO: make sure that where this is moved to works
 						y = y + PREF_LINESIZE;
+						
+						
+						//if(mName.equals("mainDisplay")) {
+							//Log.e("WINDOW","Calculating starting position, y="+y+ " offset="+offset+" extra="+extra+" delta="+delta);
+							//Log.e("WINDOW","Calculating starting position, y="+y);
+						//}
+						//Log.e("SCREENIT","GET SCREEN ITERATOR, EXTRA:"+extra);
 						x = 0;
 						//workingline = workingline - 1;
 						drawnlines++;
 						workingcol = 0;
 						if(drawnlines > CALCULATED_LINESINWINDOW + extraLines) {
+							//Log.e("WINDOW","STOPPING DRAWING BECAUSE WE DREW: " +drawnlines+" lines");
 							stop = true;
 						}
 						break;
+					default:
+						//Log.e("WINDOW","DEFAULT CASE FOR DRAW LOOP, FERRET OUT THAT BUG");
+						break;
 					}
 				}
+				if(!finishedWithNewLine) {
+					y = y + PREF_LINESIZE;
+					x = 0;
+					drawnlines++;
+					workingcol = 0;
+				}
+				//y = y + PREF_LINESIZE;
 				workingline = workingline - 1;
 				workingcol = 0;
 				l.resetIterator();
 			}
-			
+//			if(!drawingIterator.hasPrevious()) {
+//				Log.e("WINDOW","STOPPED DRAWING BECAUSE WE WERE OUT OF LINES AFTER:"+drawnlines);
+//				
+//			}
 			//}
 			showScroller(c);
 			c.restore();
@@ -1690,6 +1768,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				fling_velocity = 0;
 			}
 		
+		} else {
+			if(!hasDrawRoutine) {
+			//Log.e("BUFFERTEST","WINDOW ASKED TO DRAW BUT DID NOT BECAUSE NO DATA");
+			}
 		}
 		
 		//phew, do the lua stuff, and lets be done with this.
@@ -2113,7 +2195,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void addText(String str,boolean jumpToEnd) {
-		Log.e("LUA","ADDING STRING TO TREE ("+this.getName()+":"+this.mHeight+"): "+str);
+		//Log.e("LUA","ADDING STRING TO TREE ("+this.getName()+":"+this.mHeight+"): "+str);
 		try {
 			addBytesImpl(str.getBytes(the_tree.getEncoding()),jumpToEnd);
 		} catch (UnsupportedEncodingException e) {
@@ -2362,7 +2444,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			return new IteratorBundle(drawingIterator,under*pLineSize-(offset+(PREF_LINESIZE/3)),0,startline);
 		}
-		
+		int lines = 1;
 		//double target = Math.floor(pY/pLineSize);
 		
 		while(drawingIterator.hasNext()) {
@@ -2370,6 +2452,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			Line l = drawingIterator.next();
 			working_h += pLineSize * (1 + l.getBreaks());
 			current += 1 + l.getBreaks();
+			lines = lines + 1;
 			
 			if(working_h >= pY) {
 				int y = 0;
@@ -2378,9 +2461,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					y = ((PREF_LINESIZE) * CALCULATED_LINESINWINDOW) - this.getHeight();
 					//Log.e("STARTY","STARTY IS:"+y);
 				}
+				//if(mName.equals("mainDisplay")) {
+				//	Log.e("WINDOW","Calculating starting position, y="+y);
+				//}
 				double delta = working_h - pY;
 				double offset = delta - pLineSize;
 				int extra = (int) Math.ceil(delta/pLineSize);
+//				if(mName.equals("mainDisplay")) {
+//					//Log.e("WINDOW","Calculating starting position, y="+y+ " offset="+offset+" extra="+extra+" delta="+delta);
+//					Log.e("WINDOW","Calculating starting position, measured:"+lines);
+//				}
 				//Log.e("SCREENIT","GET SCREEN ITERATOR, EXTRA:"+extra);
 				if(drawingIterator.hasPrevious()) drawingIterator.previous();
 				if(l.breaks > 0) {
@@ -2469,6 +2559,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			m.getData().putString("FUNCTION", function);
 			mHandler.sendMessage(m);
 		}
+
+		@Override
+		public void resetWithRawDataIncoming(byte[] raw) throws RemoteException {
+			mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_RESETWITHDATA,raw));
+			
+		}
 		
 	};
 	
@@ -2502,9 +2598,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 
 	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
+		boolean dofit = false;
+		if(mWidth != w) {
+			dofit = true;
+		}
 		mWidth = w;
 		mHeight = h;
+		if(dofit) {
+			doFitFontSize(mWidth);
+		}
 		calculateCharacterFeatures(mWidth,mHeight);
+		
+
 		//int diff = oldh - h;
 		//scrollback -= diff;
 		if(scrollback == SCROLL_MIN) {
@@ -2676,6 +2781,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		//Log.e("WINDOW","LOADING LUA FOR "+mName);
 	}
 	
 	
@@ -2683,7 +2790,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public void loadScript(String body) {
 		
 		if(body == null || body.equals("")) {
-			//Log.e("Window","NO SCRIPT SPECIFIED, SHUTTING DOWN LUA");
+			//Log.e("Window","NO SCRIPT SPECIFIED, SHUTTING DOWN LUA:"+mName);
 			noScript = true;
 			if(L != null) {
 				L.close();
@@ -2720,7 +2827,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(ret != 0) {
 			displayLuaError("Error Loading Script: "+L.getLuaObject(L.getTop()).getString());
 		} else {
-			//Log.e("LUAWINDOW","Loaded script body for: " + mName);
+			//Log.e("LUAWINDOW","Loaded script body for: " + mName + " id:"+this.toString());
 			L.pop(2);
 		}
 
@@ -2739,7 +2846,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			if(tmp != 0) {
 				displayLuaError("Calling OnCreate: "+L.getLuaObject(-1).getString());
 			} else {
-				Log.e("LUAWINDOW","OnCreate Success for window ("+this.getName()+")!");
+				//Log.e("LUAWINDOW","OnCreate Success for window ("+this.getName()+")!");
 				L.pop(2);
 			}
 		} else {
@@ -2987,7 +3094,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				L.pushNil();
 			}*/
 			String path = parent.getPathForPlugin(mOwner);
-			Log.e("LUA","FETCHED PATH ("+path+") for plugin, "+mOwner);
+			//Log.e("LUA","FETCHED PATH ("+path+") for plugin, "+mOwner);
 			File file = new File(path);
 			String dir = file.getParent();
 			//file.getPar
@@ -3233,7 +3340,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			String function = this.getParam(2).getString();
 			
-			Log.e("PUSHMENUSTACK","FUNCTION NAME:"+function);
+			//Log.e("PUSHMENUSTACK","FUNCTION NAME:"+function);
 			
 			Message m = mainHandler.obtainMessage(MainWindow.MESSAGE_PUSHMENUSTACK,Window.this.mName);
 			m.getData().putString("CALLBACK", function);
@@ -4455,13 +4562,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void fitFontSize(int chars) {
-		Log.e("LUA","SETTING FITCHARS:"+chars);
+		//Log.e("LUA","SETTING FITCHARS:"+chars);
 		fitChars = chars;
 	}
 		
 	private void doFitFontSize(int width) {
 		if(fitChars < 0) return;
-		Log.e("LUA","DOING THE FIT ROUTINE: "+mWidth+" chars:"+fitChars);
+		//Log.e("LUA","DOING THE FIT ROUTINE: "+mWidth+" chars:"+fitChars + " for window: "+this.getName());
 		int windowWidth = width;
 		//int windowWidth = service.getResources().getDisplayMetrics().widthPixels;
 		//if(service.getResources().getDisplayMetrics().heightPixels > windowWidth) {

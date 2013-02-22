@@ -3,6 +3,7 @@ package com.offsetnull.bt.service;
 interface IWindowCallback {
 	boolean isWindowShowing();
 	void rawDataIncoming(in byte[] raw);
+	void resetWithRawDataIncoming(in byte[] raw);
 	void redraw();
 	String getName();
 	void shutdown();

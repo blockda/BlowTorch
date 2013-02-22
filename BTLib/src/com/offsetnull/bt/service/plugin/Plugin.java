@@ -95,6 +95,7 @@ public class Plugin implements SettingsChangedListener {
 	Pattern whiteSpace = Pattern.compile("\\s");
 	HashMap<String,CustomTimerTask> timerTasks = new HashMap<String,CustomTimerTask>();
 	private boolean enabled = true;
+	private String scriptBlock = "\\";
 	//private ArrayList<Integer> optionSkipSaveList = new ArrayList<Integer>();
 	
 	public static final int LUA_TNIL = 0;
@@ -156,7 +157,7 @@ public class Plugin implements SettingsChangedListener {
 		
 		
 		this.parent = parent;
-		initTimers();
+		//initTimers();
 		initLua();
 		
 	}
@@ -168,12 +169,14 @@ public class Plugin implements SettingsChangedListener {
 		mContext = parent.getContext();
 		this.parent = parent;
 		
-		initTimers();
+		//initTimers();
 		
 		initLua();
 	}
 	
-	private void initTimers() {
+	HashMap<String,Long> timerStartTimes;
+	
+	public void initTimers() {
 		innerHandler = new Handler() { 
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
@@ -183,18 +186,24 @@ public class Plugin implements SettingsChangedListener {
 				}
 			}
 		};
-		
+		timerStartTimes = new HashMap<String,Long>();
 		CONNECTION_TIMER = new Timer("blowtorch_"+this.getName()+"_timer",true);
 		
 		for(TimerData timer : settings.getTimers().values()) {
+			timer.setRemainingTime(timer.getSeconds());
 			if(timer.isPlaying()) {
-				CustomTimerTask task = new CustomTimerTask(timer.getName());
-				if(timer.isRepeat()) {
-					CONNECTION_TIMER.schedule(task, timer.getSeconds()*1000, timer.getSeconds()*1000);
-				} else {
-					CONNECTION_TIMER.schedule(task, timer.getSeconds()*1000);
-				}
 				
+				//l//ong startTime = SystemClock.elapsedRealtime();
+				//CustomTimerTask task = new CustomTimerTask(timer.getName());
+				//if(timer.isRepeat()) {
+				//	timer.setStartTime(startTime);
+				//	CONNECTION_TIMER.schedule(task, timer.getSeconds()*1000, timer.getSeconds()*1000);
+				//} else {
+				//	timer.setStartTime(startTime);
+				//	CONNECTION_TIMER.schedule(task, timer.getSeconds()*1000);
+				//}
+				timer.setPlaying(false);
+				startTimer(timer.getName());
 			}
 		}
 	}
@@ -1457,10 +1466,10 @@ public class Plugin implements SettingsChangedListener {
 			
 			WindowToken tok = null;
 			if(pScriptName.isNil()) {
-				tok = new WindowToken(name,null,null);
+				tok = new WindowToken(name,null,null,parent.getDisplayName());
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
 			} else {
-				tok = new WindowToken(name,scriptName,Plugin.this.getSettings().getName());
+				tok = new WindowToken(name,scriptName,Plugin.this.getSettings().getName(),parent.getDisplayName());
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_NEWWINDOW, tok));
 			}
 			
@@ -2174,24 +2183,31 @@ public class Plugin implements SettingsChangedListener {
 		settings.setDirty(true);
 	}
 	
+	HashMap<Integer,AliasData> aliasMap = null;
 	public void buildAliases() {
 		joined_alias.setLength(0);
 		
+		aliasMap = new HashMap<Integer,AliasData>();
 		//Object[] a = the_settings.getAliases().keySet().toArray();
 		Object[] a = getSettings().getAliases().values().toArray();
-		
+		int currentGroup = 1;
 		
 		String prefix = "\\b";
 		String suffix = "\\b";
 		//StringBuffer joined_alias = new StringBuffer();
+		
 		if(a.length > 0) {
 			int j=0;
 			for(int i=0;i<a.length;i++) {
 				if(((AliasData)a[i]).isEnabled()) {
 					if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
 					if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
-					joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
-					j=i;
+					String tmp = "("+prefix+((AliasData)a[i]).getPre()+suffix+")";
+					joined_alias.append(tmp);
+					Matcher m = Pattern.compile(tmp).matcher("");
+					aliasMap.put(currentGroup, (AliasData)a[i]);
+					currentGroup += m.groupCount();
+					j=i+1;
 					i=a.length;
 					
 				}
@@ -2200,8 +2216,15 @@ public class Plugin implements SettingsChangedListener {
 				if(((AliasData)a[i]).isEnabled()) {
 					if(((AliasData)a[i]).getPre().startsWith("^")) { prefix = ""; } else { prefix = "\\b"; }
 					if(((AliasData)a[i]).getPre().endsWith("$")) { suffix = ""; } else { suffix = "\\b"; }
+					String tmp = "("+prefix+((AliasData)a[i]).getPre()+suffix+")";
+					//joined_alias.append(tmp);
+					Matcher m = Pattern.compile(tmp).matcher("");
+					aliasMap.put(currentGroup, (AliasData)a[i]);
+					currentGroup += m.groupCount();
+					
 					joined_alias.append("|");
-					joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
+					joined_alias.append(tmp);
+					//joined_alias.append("("+prefix+((AliasData)a[i]).getPre()+suffix+")");
 				}
 			}
 			
@@ -2232,9 +2255,25 @@ public class Plugin implements SettingsChangedListener {
 			while(alias_replacer.find()) {
 				found = true;
 				
-				AliasData replace_with = getSettings().getAliases().get(alias_replacer.group(0));
+				
+				int index = -1;
+				for(int i=1;i<=alias_replacer.groupCount();i++) {
+					if(alias_replacer.group(i) != null) {
+						index = i;
+						i=alias_replacer.groupCount();
+					}
+				}
+				//String str = alias_replacer.group(0);
+				AliasData replace_with = aliasMap.get(index);
+				//AliasData replace_with = getSettings().getAliases().get(alias_replacer.group(0));
 				//do special replace if only ^ is matched.
-				if(replace_with.getPre().startsWith("^") && !replace_with.getPre().endsWith("$")) {
+				//do lua execute if ^ and $ is matched
+				
+				
+				boolean startAnchor = replace_with.getPre().startsWith("^");
+				boolean endAnchor = replace_with.getPre().endsWith("$");
+				
+				if(startAnchor && !endAnchor) {
 					doTail = false;
 					//do special replace.
 					String[] tParts = null;
@@ -2251,6 +2290,31 @@ public class Plugin implements SettingsChangedListener {
 					String finalString = r.translate(replace_with.getPost(), map);
 					
 					replaced.append(finalString);
+					
+				} else if(startAnchor && endAnchor) {
+					//ok, we have to run the matcher and generate the capture group
+
+					
+					Pattern aliasHarvest = Pattern.compile(replace_with.getPre());
+					Matcher aliasHarvestMatcher = aliasHarvest.matcher("");
+					captureMap.clear();
+					for(int i=index+1;i<=(aliasHarvestMatcher.groupCount()+index);i++) {
+						
+						captureMap.put(Integer.toString(i-index), alias_replacer.group(i));
+					}
+					
+					ToastResponder t = new ToastResponder();
+					String finalString = t.translate(replace_with.getPost(), captureMap);
+					
+					if(finalString.startsWith(scriptBlock)) {
+						//if it didn't compile then we send as normal, if it did it gets eaten, but in this case eaten means "return the same caller string
+						//so that the visual string sent back to the
+						this.runLuaString(finalString.substring(scriptBlock.length(),finalString.length()));
+					} else {
+						//alias_replacer.appendReplacement(replaced, new String(input));
+						alias_replacer.appendReplacement(replaced, replace_with.getPost());
+					}
+					doTail = false;
 					
 				} else {
 					alias_replacer.appendReplacement(replaced, replace_with.getPost());
@@ -2271,7 +2335,16 @@ public class Plugin implements SettingsChangedListener {
 					buffertemp.setLength(0);
 					while(alias_recursive.find()) {
 						recursivefound = true;
-						AliasData replace_with = getSettings().getAliases().get(alias_recursive.group(0));
+						int idx = -1;
+						for(int i=1;i<=alias_recursive.groupCount();i++) {
+							if(alias_recursive.group(i) != null) {
+								idx = i;
+								i=alias_recursive.groupCount();
+							}
+						}
+						//String str = alias_replacer.group(0);
+						AliasData replace_with = aliasMap.get(idx);
+						//AliasData replace_with = getSettings().getAliases().get(alias_recursive.group(0));
 						if(replace_with.getPre().startsWith("^") && ! replace_with.getPre().endsWith("$")) {
 							ToastResponder r = new ToastResponder();
 							String[] tParts = null;
@@ -2390,8 +2463,19 @@ public class Plugin implements SettingsChangedListener {
 				//service.
 				//responder.doResponse(parent.getContext(),null,null,null,null, parent.getDisplayName(), StellarService.getNotificationId(), parent.isWindowShowing(), mHandler, null,L,data.getName());
 			}
+			
+			if(data.isRepeat()) {
+				stopTimer(ordinal);
+				startTimer(ordinal);
+			} else {
+				stopTimer(ordinal);
+			}
 		//}
 	}
+	
+	//public void initTimers() {
+		
+	//}
 	
 	public void startTimer(String key) {
 		TimerData d = getSettings().getTimers().get(key);
@@ -2408,18 +2492,24 @@ public class Plugin implements SettingsChangedListener {
 		} else {
 			if(d.getRemainingTime() != d.getSeconds()) {
 				CustomTimerTask task = new CustomTimerTask(d.getName());
+				long startTime = SystemClock.elapsedRealtime() - ((d.getSeconds() - d.getRemainingTime())*1000);
 				if(d.isRepeat()) {
+					d.setStartTime(startTime);
 					CONNECTION_TIMER.schedule(task, d.getRemainingTime()*1000, d.getSeconds()*1000);
 				} else {
+					d.setStartTime(startTime);
 					CONNECTION_TIMER.schedule(task, d.getRemainingTime()*1000);
 				}
 				
 				timerTasks.put(d.getName(), task);
 			} else {
 				CustomTimerTask task = new CustomTimerTask(d.getName());
+				long startTime = SystemClock.elapsedRealtime();
 				if(d.isRepeat()) {
+					d.setStartTime(startTime);
 					CONNECTION_TIMER.schedule(task, d.getSeconds()*1000, d.getSeconds()*1000);
 				} else {
+					d.setStartTime(startTime);
 					CONNECTION_TIMER.schedule(task, d.getSeconds()*1000);
 				}
 				timerTasks.put(d.getName(), task);
@@ -2464,6 +2554,24 @@ public class Plugin implements SettingsChangedListener {
 			d.setPlaying(false);
 		}
 		
+	}
+	
+	public void resetTimer(String obj) {
+		CustomTimerTask task = timerTasks.get(obj);
+		boolean running = false;
+		if(task != null) {
+			//was running, need to restart
+			//task.cancel();
+			//timerTasks.remove(obj);
+			running = true;
+		}
+		
+		if(!running) {
+			stopTimer(obj);
+		} else {
+			stopTimer(obj);
+			startTimer(obj);
+		}
 	}
 	
 	public void updateTimerProgress() {
@@ -2793,6 +2901,42 @@ public class Plugin implements SettingsChangedListener {
 		
 		return false;
 	}
+	
+	public boolean runLuaString(String str) {
+		//boolean ret = false;
+		if(L != null) {
+			L.getGlobal("debug");
+			L.getField(-1, "traceback");
+			L.remove(-2);
+			
+			int ret = L.LloadString(str);
+			if(ret != 0) {
+				//invalid lua, no dice for you
+				displayLuaError(L.getLuaObject(-1).getString());
+				return false;
+			}
+			
+			ret = L.pcall(0, 1, -2);
+			if(ret != 0) {
+				displayLuaError(L.getLuaObject(-1).getString());
+				return true;
+			} else {
+				return true;
+			}
+			
+		}
+		return false;
+	}
+
+	public String getScriptBlock() {
+		return scriptBlock;
+	}
+
+	public void setScriptBlock(String scriptBlock) {
+		this.scriptBlock = scriptBlock;
+	}
+
+
 	
 	
 	

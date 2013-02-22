@@ -135,7 +135,7 @@ public class StellarService extends Service {
 	//TreeMap<String, String> aliases = new TreeMap<String, String>();
 	//RemoteCallbackList<IStellarServiceCallback_BAK> callbacks = new RemoteCallbackList<IStellarServiceCallback_BAK>();
 	//HyperSettings the_settings = new HyperSettings();
-	NotificationManager mNM;
+	//NotificationManager mNM;
 	//OutputStream output_writer = null;
 	//Processor the_processor = null;
 	//Object sendlock = new Object();
@@ -207,10 +207,10 @@ public class StellarService extends Service {
 	@Override
 	public int onStartCommand(Intent intent,int flags,int startId) {
 		//Debug.waitForDebugger();
-		
+		Log.e("SERVICE","SERVICE IN ONSTARTCOMMAND");
 		if(intent == null) {
 			//Log.e("SERVICE","onStartCommand passed null intent");
-			return Service.START_STICKY;
+			return Service.START_STICKY_COMPATIBILITY;
 		}
 		
 		
@@ -223,7 +223,7 @@ public class StellarService extends Service {
 		
 		//L.
 		
-		return Service.START_STICKY;
+		return Service.START_STICKY_COMPATIBILITY;
 	}
 	
 	//LuaState L = null;
@@ -239,11 +239,12 @@ public class StellarService extends Service {
 		//Debug.startMethodTracing("service");
 		connections = new HashMap<String,Connection>();
 		
-		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		mNotificationManager.cancelAll();
 		//mNM.cancel(5546);
 		//host = BAD_HOST;
 		//port = BAD_PORT;
-
+		Log.e("SERVICE","SERVICE IN ONCREATE");
 		
 		//Debug.waitForDebugger();
 		SharedPreferences prefs = this.getSharedPreferences("SERVICE_INFO", 0);
@@ -269,7 +270,7 @@ public class StellarService extends Service {
 			//SharedPreferences.Editor editor = prefs.edit();
 			//editor.putInt("CURRENT_LUA_LIBS_VERSION", packagever);
 			//editor.commit();
- catch (IOException e) {
+			catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -358,8 +359,25 @@ public class StellarService extends Service {
 		//buffer_tree.setEncoding(the_settings.getEncoding());
 		//buffer_tree.setMaxLines(the_settings.getMaxLines());
 		
-		//handler.sendEmptyMessageDelayed(MESSAGE_STOPANR, 2000);
-		
+		//handler.sendEmptyMessageDelayed(MESSAGE_STOPANR, 2000);\
+//		Notification note = new Notification();
+//		//notificationIntent.putExtra("DISPLAY", c.display);
+//		//notificationIntent.putExtra("HOST", c.host);
+//		//notificationIntent.putExtra("PORT", Integer.toString(c.port));
+//		//notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//	
+//		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+//		note.icon = resId;
+//		note.flags = Notification.FLAG_ONGOING_EVENT;
+//		this.startForeground(5545, note);
+//		this.startForeground(343434345, new Notification());
+//		debug = true;
+		//showNotification();
+		//if(debug) {
+		//	Log.e("SERVICE","HOLY SHIT, RETURNING THIS FUCKED UP GARBAGE");
+		//	return;
+		//}
 	}	
 	
 	
@@ -621,31 +639,39 @@ public class StellarService extends Service {
 	}
 
 	public void onDestroy() {
-		//Log.e("SERV","ON DESTROY CALLED!");
+		
+		Log.e("SERV","ON DESTROY CALLED!");
+		
 		//saveXmlSettings(settingslocation);
 		//TODO: save connection settings.
 		//saveAliases();
 		doShutdown();
+		super.onDestroy();
 	}
 	
 	public void DoDisconnect(Connection c) {
 		//attempt to display the disconnection dialog.
-		final int N = callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				
-				callbacks.getBroadcastItem(i).doDisconnectNotice(c.display);
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			//notify listeners that data can be read
-		}
-		callbacks.finishBroadcast();
+		if(c.display.equals(connectionClutch)) {
 		
-		if(N < 1) {
-			//no listeneres, just shutdown and put up a new notification.
+			final int N = callbacks.beginBroadcast();
+			for(int i = 0;i<N;i++) {
+				try {
+					
+					callbacks.getBroadcastItem(i).doDisconnectNotice(c.display);
+				} catch (RemoteException e) {
+					throw new RuntimeException(e);
+				}
+				//notify listeners that data can be read
+			}
+			callbacks.finishBroadcast();
+			
+			if(N < 1) {
+				//no listeneres, just shutdown and put up a new notification.
+				ShowDisconnectedNotification(c,c.display,c.host,c.port);
+				//doShutdown();
+			}
+		} else {
 			ShowDisconnectedNotification(c,c.display,c.host,c.port);
-			//doShutdown();
 		}
 		
 	}
@@ -780,7 +806,7 @@ public class StellarService extends Service {
 		//startForeground to avoid being killed off.
 		//this.startForeground(5545, note);
 		
-		mNM.notify(bellcount,note);
+		mNotificationManager.notify(bellcount,note);
 	}
 	
 	void doDisplayBell() {
@@ -1970,7 +1996,9 @@ public class StellarService extends Service {
 	}
 	
 	private void ShowDisconnectedNotification(Connection c,String display,String host,int port) {
-		
+		//if we are here it means that the server has explicitly closed the connection, and nobody was around to see it.
+		c.shutdown(); //call this to make sure all net threads are really dead, and to remove the ongoing notification and re-set the foreground notification if need be.
+		connections.remove(display);
 		
 		//mNM.cancel(5545);
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
@@ -2016,10 +2044,11 @@ public class StellarService extends Service {
 		notificationIntent.putExtra("HOST", host);
 		notificationIntent.putExtra("PORT", Integer.toString(port));
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-	
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		int id = getNotificationId();
+		PendingIntent contentIntent = PendingIntent.getActivity(this, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		note.icon = resId;
+		note.flags = note.flags | Notification.FLAG_AUTO_CANCEL | Notification.FLAG_ONLY_ALERT_ONCE;
 		Pattern invalidchars = Pattern.compile("\\W"); 
 		//Matcher replacebadchars = invalidchars.matcher(display);
 		//String prefsname = replacebadchars.replaceAll("") + ".PREFS";
@@ -2029,70 +2058,201 @@ public class StellarService extends Service {
 		//editor.putBoolean("FINISHSTART", true);
 		//editor.commit();
 		//editor.commit();
-		this.stopForeground(true);
-		mNM.notify(5546,note);
+		//this.stopForeground(true);
+		mNotificationManager.notify(id,note);
 		showdcmessage = true;
-		this.stopSelf();
+		
+		//now, if the launcher connection list has a listener, we should notify it that a connection has gone
+		int N = launcherCallbacks.beginBroadcast();
+		for(int i=0;i<N;i++) {
+			try {
+				launcherCallbacks.getBroadcastItem(i).connectionDisconnected();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		launcherCallbacks.finishBroadcast();
+		//this.stopSelf();
 	}
 	
-	public void showNotification() {
-		
-		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
-		
-		//Debug.waitForDebugger();
-		Notification note = new Notification(resId,"BlowTorch Connected",System.currentTimeMillis());
-		Context context = getApplicationContext();
-		
-		CharSequence contentTitle = null;
-		CharSequence contentText = null;
-		if(connections.size() > 1) {
-			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
-			contentText = connections.size() + " connections";
-		} else {
-			Connection c = connections.get(connectionClutch);
-			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
-			contentText = "Connected: ("+ c.host +":"+ c.port + ")";
-		}
-		
-		Intent notificationIntent = null;
-		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
-		notificationIntent = new Intent(windowAction);
-		
-		String apkName = null;
-		try {
-			apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
-		} catch (NameNotFoundException e1) {
-			e1.printStackTrace();
-		}
-		Class<?> w = null;
-    	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
-    	try {
-			w = Class.forName("com.offsetnull.bt.window.MainWindow",false,cl);
-		} catch (ClassNotFoundException e1) {
-			e1.printStackTrace();
-		}
+//	public void showNotification() {
+//		
+//		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
+//		
+//		//Debug.waitForDebugger();
+//		Notification note = new Notification(resId,"BlowTorch Connected",System.currentTimeMillis());
+//		Context context = getApplicationContext();
+//		
+//		CharSequence contentTitle = null;
+//		CharSequence contentText = null;
+//		if(connections.size() > 1) {
+//			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+//			contentText = connections.size() + " connections";
+//		} else if(connections.size() == 1){
+//			Connection c = connections.get(connectionClutch);
+//			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+//			contentText = "Connected: ("+ c.host +":"+ c.port + ")";
+//		} else {
+//			contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+//			contentText = "Not connected.";
+//		}
+//		
+//		Intent notificationIntent = null;
+//		String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+//		notificationIntent = new Intent(windowAction);
+//		
+//		String apkName = null;
+//		try {
+//			apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
+//		} catch (NameNotFoundException e1) {
+//			e1.printStackTrace();
+//		}
+//		Class<?> w = null;
+//    	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+//    	try {
+//			w = Class.forName("com.offsetnull.bt.window.MainWindow",false,cl);
+//		} catch (ClassNotFoundException e1) {
+//			e1.printStackTrace();
+//		}
+//	
+//		
+//		try {
+//			notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
+//		} catch (NameNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		if(connections.size() > 0) {
+//		Connection c = connections.get(connectionClutch);
+//		notificationIntent.putExtra("DISPLAY", c.display);
+//		notificationIntent.putExtra("HOST", c.host);
+//		notificationIntent.putExtra("PORT", Integer.toString(c.port));
+//		}
+//		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//	
+//		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+//		note.icon = resId;
+//		note.flags = Notification.FLAG_ONGOING_EVENT;
+//		this.startForeground(5545, note);
+//		
+//		
+//	}
 	
-		
-		try {
-			notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
-		} catch (NameNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		Connection c = connections.get(connectionClutch);
-		notificationIntent.putExtra("DISPLAY", c.display);
-		notificationIntent.putExtra("HOST", c.host);
-		notificationIntent.putExtra("PORT", Integer.toString(c.port));
-		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+boolean hasForegroundNotification = false;
+int foregroundNotificationId = -1;
+HashMap<String,Integer> mConnectionNotificationIdMap = new HashMap<String,Integer>();
+HashMap<String,Notification> mConnectionNotificationMap = new HashMap<String,Notification>();
+NotificationManager mNotificationManager = null;
+
+public void showConnectionNotification(String display,String host,int port) {
+	if(mConnectionNotificationMap.containsKey(display)) { return; }
+	int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 	
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		note.icon = resId;
-		note.flags = Notification.FLAG_ONGOING_EVENT;
-		this.startForeground(5545, note);
-		
-		
+	//Debug.waitForDebugger();
+	Notification note = new Notification(resId,"BlowTorch Connected",System.currentTimeMillis());
+	Context context = getApplicationContext();
+	
+	CharSequence contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+	CharSequence contentText = "Connected: ("+ host +":"+ port + ")";
+	
+//	if(connections.size() > 1) {
+//		contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+//		contentText = connections.size() + " connections";
+//	} else if(connections.size() == 1){
+//		Connection c = connections.get(connectionClutch);
+//		contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+//		contentText = "Connected: ("+ c.host +":"+ c.port + ")";
+//	} else {
+//		contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
+//		contentText = "Not connected.";
+//	}
+	
+	Intent notificationIntent = null;
+	String windowAction = ConfigurationLoader.getConfigurationValue("windowAction", this.getApplicationContext());
+	notificationIntent = new Intent(windowAction);
+	
+	String apkName = null;
+	try {
+		apkName = this.getPackageManager().getApplicationInfo(this.getPackageName(), 0).sourceDir;
+	} catch (NameNotFoundException e1) {
+		e1.printStackTrace();
 	}
+	Class<?> w = null;
+	PathClassLoader cl = new dalvik.system.PathClassLoader(apkName,ClassLoader.getSystemClassLoader());
+	try {
+		w = Class.forName("com.offsetnull.bt.window.MainWindow",false,cl);
+	} catch (ClassNotFoundException e1) {
+		e1.printStackTrace();
+	}
+
+	
+	try {
+		notificationIntent.setClass(this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE), w);
+	} catch (NameNotFoundException e) {
+		e.printStackTrace();
+	}
+	
+	//if(connections.size() > 0) {
+	//Connection c = connections.get(connectionClutch);
+	notificationIntent.putExtra("DISPLAY", display);
+	notificationIntent.putExtra("HOST", host);
+	notificationIntent.putExtra("PORT", Integer.toString(port));
+	//}
+	int notificationID = -1;
+	if(mConnectionNotificationIdMap.containsKey(display)) {
+		notificationID = mConnectionNotificationIdMap.get(display);
+	} else {
+		notificationID = getNotificationId();
+	}
+	
+	
+	notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+	PendingIntent contentIntent = PendingIntent.getActivity(this, notificationID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+	note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+	note.icon = resId;
+	note.flags = Notification.FLAG_ONGOING_EVENT;
+	
+	
+	
+	if(!hasForegroundNotification) {
+		foregroundNotificationId = notificationID;
+		this.startForeground(foregroundNotificationId, note);
+		hasForegroundNotification = true;
+	} else {
+		//int notificationId = notificationID;
+		mNotificationManager.notify(notificationID, note);
+	}
+	
+	mConnectionNotificationIdMap.put(display, notificationID);
+	mConnectionNotificationMap.put(display, note);
+}
+
+public void removeConnectionNotification(String display) {
+	if(!mConnectionNotificationIdMap.containsKey(display)) {return;}
+	int id = mConnectionNotificationIdMap.get(display);
+	mConnectionNotificationIdMap.remove(display);
+	mConnectionNotificationMap.remove(display);
+	if(id != foregroundNotificationId) {
+		//just kill off the notification
+		mNotificationManager.cancel(id);
+	} else {
+		this.stopForeground(true);
+		
+		//get the first connection and make it the new foreground notification
+		if(mConnectionNotificationMap.size() == 0) { connectionClutch = ""; return; }
+		String[] tmp = new String[mConnectionNotificationMap.size()];
+		tmp = mConnectionNotificationMap.values().toArray(tmp);
+		int tmp_id = mConnectionNotificationIdMap.get(tmp[0]);
+		connectionClutch = tmp[0];
+		Notification tmp_note = mConnectionNotificationMap.get(tmp[0]);
+		mNotificationManager.cancel(tmp_id);
+		this.startForeground(tmp_id, tmp_note);
+	}
+	
+}
 	
 	public void killNetThreads() {
 		//if(pump != null) {
@@ -2154,11 +2314,12 @@ public class StellarService extends Service {
 	String connectionClutch = "";
 	
 	public void onRebind(Intent i) {
-		//Log.e("LOG","REBIND CALLED");
+		Log.e("LOG","REBIND CALLED");
 		
 	}
 	
 	public boolean onUnbind(Intent i) {
+		Log.e("SERVICE","IN ONBIND");
 		super.onUnbind(i);
 		return true;
 	}
@@ -2185,6 +2346,7 @@ public class StellarService extends Service {
 //			return c.mBinder;
 //		}
 	}
+	
 	
 	/*IBinder startConnection(String display, String host, int port) {
 		Connection c = new Connection(display,host,port,this);
@@ -2263,6 +2425,7 @@ public class StellarService extends Service {
 			}
 		}
 		callbacks.finishBroadcast();
+		
 	}
 	
 	/*public void startNewConnection(String host, int port, String display) {
@@ -2295,6 +2458,7 @@ public class StellarService extends Service {
 	}
 	
 	public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
+	public RemoteCallbackList<ILauncherCallback> launcherCallbacks = new RemoteCallbackList<ILauncherCallback>();
 	IConnectionBinder.Stub mBinder = new IConnectionBinder.Stub() {
 
 		public void registerCallback(IConnectionBinderCallback c,String host,int port,String display)
@@ -2330,6 +2494,18 @@ public class StellarService extends Service {
 				callbacks.unregister(c);
 			}
 		}
+		
+		public void registerLauncherCallback(ILauncherCallback c) {
+			if(c!=null) {
+				launcherCallbacks.register(c);
+			}
+		}
+		
+		public void unregisterLauncherCallback(ILauncherCallback c) {
+			if(c!=null) {
+				launcherCallbacks.unregister(c);
+			}
+		}
 
 		public int getPid() throws RemoteException {
 			// TODO Auto-generated method stub
@@ -2344,6 +2520,10 @@ public class StellarService extends Service {
 
 		public void endXfer() throws RemoteException {
 			//doStartup();
+			Connection c = connections.get(connectionClutch);
+			c.sendDataToWindow("\n"+Colorizer.colorRed + "Connection terminated by user."+Colorizer.colorWhite+"\n\n");
+			c.killNetThreads(true);
+			connections.get(connectionClutch).DoDisconnect(true);
 		}
 
 		public boolean hasBuffer() throws RemoteException {
@@ -2657,16 +2837,23 @@ public class StellarService extends Service {
 			return connections.get(connectionClutch).getWindows();
 		}
 
-		public void registerWindowCallback(String name,IWindowCallback callback)
+		public void registerWindowCallback(String displayName,String name,IWindowCallback callback)
 				throws RemoteException {
-			//Log.e("SERVICE","ATTEMPTING TO SET WINDOW CALLBACK FOR:" + connectionClutch);
-			connections.get(connectionClutch).registerWindowCallback(name, callback);
+			Log.e("SERVICE","ATTEMPTING TO SET WINDOW CALLBACK FOR:" + displayName + " window:"+name);
+			Connection c = connections.get(displayName);
+			if(c != null) {
+				c.registerWindowCallback(name, callback);
+			} else {
+				Log.e("SERVICE","CONNECTION WAS NOT FOUND FOR: "+displayName);
+			}
 		}
 
 		public void unregisterWindowCallback(String name,
 				IWindowCallback callback) throws RemoteException {
-			connections.get(connectionClutch).unregisterWindowCallback(name,callback);
-			
+			Connection c = connections.get(name);
+			if(c != null) {
+				c.unregisterWindowCallback(callback);
+			}
 		}
 
 		public String getScript(String plugin, String name)
@@ -2888,11 +3075,14 @@ public class StellarService extends Service {
 		@Override
 		public void closeConnection(String display) {
 			Connection c = connections.get(display);
-			c.shutdown();
-			connections.remove(display);
+			if(c != null) {
+				c.shutdown();
+			
+				connections.remove(display);
+			}
 			//switch to the next active connection.
 			//connectionClutch = connections.
-			showNotification();
+			//showNotification();
 		}
 		
 		@Override
@@ -3311,4 +3501,6 @@ public class StellarService extends Service {
 			}
 			callbacks.finishBroadcast();
 		}
+
+
 }
