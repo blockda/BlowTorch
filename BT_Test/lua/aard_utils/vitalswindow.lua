@@ -21,6 +21,8 @@ Float = luajava.newInstance("java.lang.Float",0)
 FloatClass = Float:getClass()
 RawFloat = FloatClass.TYPE
 
+density = view:getContext():getResources():getDisplayMetrics().density
+
 function makeFloatArray(table)
 	newarray = Array:newInstance(RawFloat,#table)
 	for i,v in ipairs(table) do
@@ -119,7 +121,7 @@ topperGradientPaint:setStyle(Style.STROKE)
 
 topperBorderPaint:setStrokeWidth(6)
 topperDividerPaint:setStrokeWidth(3)
-topperGradientPaint:setStrokeWidth(25)
+topperGradientPaint:setStrokeWidth(30*density)
 topperGradientPaint:setShader(vertShader)
 
 topperBorderPaint:setARGB(255,200,200,200)
@@ -157,7 +159,7 @@ function OnDraw(canvas)
 	end
 	--debugPrint("vitals view onDraw")
 	
-	r = luajava.newInstance("java.lang.Float",7)
+	r = luajava.newInstance("java.lang.Float",3)
 	rf = r:floatValue()
 	canvas:drawRoundRect(hprect,rf,rf,hppaint)
 	canvas:drawRoundRect(manarect,rf,rf,manapaint)
@@ -221,6 +223,7 @@ function OnSizeChanged(neww,newh,oldw,oldh)
 	end
 	
 	heightOver5 = height/5
+	widthOver5 = width/5
 	
 	--rebuild vertical gradient
 	if(vertical) then
@@ -259,34 +262,34 @@ end
 function updateToppers()
 	rect = luajava.new(Rect)
 	if(vertical) then
-		rect:set(0,0,tonumber(width/5),tonumber(height))
+		rect:set(0,0,widthOver5,height)
 	else
-		rect:set(0,0,tonumber(width),tonumber(height/5))
+		rect:set(0,0,width,heightOver5)
 	end
-	
+	Note(string.format("\nIn update toppers: %f\n",heightOver5))
 	--topperCanvas:drawARGB(255,0,0,255)
 	topperCanvas:save()
 	topperCanvas:clipRect(rect)
 	if(vertical) then
-		topperCanvas:drawLine(tonumber(width/10),0,tonumber(width/10),tonumber(height),topperGradientPaint)
+		topperCanvas:drawLine(widthOver10,0,widthOver10,height,topperGradientPaint)
 	else
-		topperCanvas:drawLine(0,tonumber(height/10),tonumber(width),tonumber(height/10),topperGradientPaint)
+		topperCanvas:drawLine(0,heightOver10,width,heightOver10,topperGradientPaint)
 	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
 	
 
 	if(vertical) then
-		rect:offsetTo(tonumber(width/5),0)
+		rect:offsetTo(widthOver5,0)
 		topperCanvas:save()
 		topperCanvas:clipRect(rect)
-		topperCanvas:drawLine(tonumber((width/10)*3),0,tonumber((width/10)*3),tonumber(height),topperGradientPaint)
+		topperCanvas:drawLine(widthOver10*3,0,widthOver10*3,height,topperGradientPaint)
 	
 	else
-		rect:offsetTo(0,tonumber(height/5))
+		rect:offsetTo(0,heightOver5)
 		topperCanvas:save()
 		topperCanvas:clipRect(rect)
-		topperCanvas:drawLine(0,tonumber((height/10)*3),tonumber(width),tonumber((height/10)*3),topperGradientPaint)
+		topperCanvas:drawLine(0,heightOver10*3,width,heightOver10*3,topperGradientPaint)
 	
 	end
 	topperCanvas:restore()
@@ -294,15 +297,15 @@ function updateToppers()
 	--topperCanvas:save()
 	--topperCanvas:clipRect(rect)
 	if(vertical) then
-		rect:offsetTo(tonumber((width/5)*2),0)
-			topperCanvas:save()
-	topperCanvas:clipRect(rect)
-		topperCanvas:drawLine(tonumber((width/10)*5),0,tonumber((width/10)*5),tonumber(height),topperGradientPaint)
+		rect:offsetTo(widthOver5*2,0)
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(widthOver10*5,0,widthOver10*5,height,topperGradientPaint)
 	else
-		rect:offsetTo(0,tonumber((height/5)*2))
-			topperCanvas:save()
-	topperCanvas:clipRect(rect)
-		topperCanvas:drawLine(0,tonumber((height/10)*5),tonumber(width),tonumber((height/10)*5),topperGradientPaint)
+		rect:offsetTo(0,heightOver5*2)
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(0,heightOver10*5,width,heightOver10*5,topperGradientPaint)
 	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
@@ -310,15 +313,15 @@ function updateToppers()
 	--topperCanvas:save()
 	--topperCanvas:clipRect(rect)
 	if(vertical) then
-		rect:offsetTo(tonumber((width/5)*3),0)
-			topperCanvas:save()
-	topperCanvas:clipRect(rect)
-		topperCanvas:drawLine(tonumber((width/10)*7),0,tonumber((width/10)*7),tonumber(height),topperGradientPaint)
+		rect:offsetTo(widthOver5*3,0)
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(widthOver10*7,0,widthOver10*7,height,topperGradientPaint)
 	else
-		rect:offsetTo(0,tonumber((height/5)*3))
-			topperCanvas:save()
-	topperCanvas:clipRect(rect)
-		topperCanvas:drawLine(0,tonumber((height/10)*7),tonumber(width),tonumber((height/10)*7),topperGradientPaint)
+		rect:offsetTo(0,heightOver5*3)
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
+		topperCanvas:drawLine(0,heightOver10*7,width,heightOver10*7,topperGradientPaint)
 	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
@@ -326,18 +329,18 @@ function updateToppers()
 	--topperCanvas:save()
 	--topperCanvas:clipRect(rect)
 	if(vertical) then
-		rect:offsetTo(tonumber((width/5)*4),0)	
-			topperCanvas:save()
-	topperCanvas:clipRect(rect)
+		rect:offsetTo(widthOver5*4,0)	
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
 		topperCanvas:drawLine(alignPosFloat:floatValue(),0,alignPosFloat:floatValue(),tonumber(height),alignpaint)
-		topperCanvas:drawLine(tonumber((width/10)*9),0,tonumber((width/10)*9),tonumber(height),topperGradientPaint)
+		topperCanvas:drawLine(widthOver10*9,0,widthOver10*9,height,topperGradientPaint)
 	
 	else
-		rect:offsetTo(0,tonumber((height/5)*4))	
-			topperCanvas:save()
-	topperCanvas:clipRect(rect)
+		rect:offsetTo(0,heightOver5*4)	
+		topperCanvas:save()
+		topperCanvas:clipRect(rect)
 		topperCanvas:drawLine(zeroFloat:floatValue(),alignPosFloat:floatValue(),widthFloat:floatValue(),alignPosFloat:floatValue(),alignpaint)
-		topperCanvas:drawLine(0,tonumber((height/10)*9),tonumber(width),tonumber((height/10)*9),topperGradientPaint)
+		topperCanvas:drawLine(0,heightOver10*9,width,heightOver10*9,topperGradientPaint)
 	end
 	--topperCanvas:drawRect(rect,topperBorderPaint)
 	topperCanvas:restore()
@@ -393,8 +396,10 @@ end
 
 function updateBarRects()
 
-width = tonumber(width)
-		height = tonumber(height)
+--width = tonumber(width)
+		--height = tonumber(height)
+		if(height == nil or width == nil) then return end
+		if(heightOver5 == nil or widthOver5 == nil) then return end
 	hppct = vitals.hp / maxes.hp
 	manapct = vitals.mp / maxes.mp
 	
@@ -412,15 +417,16 @@ width = tonumber(width)
 	if(vertical) then
 		--debugPrint("doing vertical bars")
 		
-		widthOver5 = width / 5
+		--widthOver5 = math.floor(width / 5)
 		
 		hprect:set(0,height*(1-hppct),widthOver5,height)
 		manarect:set(widthOver5,height*(1-manapct),widthOver5*2,height)
 		enemyrect:set(widthOver5*2,height*(1-enemyval),widthOver5*3,height)	
 		tnlrect:set(widthOver5*3,height*(1-tnlpercent),widthOver5*4,height)
 	else
-		heightOver5 = height / 5
+		--heightOver5 = math.floor(height / 5)
 		hprect:set(0,0,width*hppct,heightOver5)
+		--Note(string.format("\nIn update rects: %f\n",heightOver5))
 		manarect:set(0,heightOver5,width*manapct,heightOver5*2)
 		enemyrect:set(0,heightOver5*2,width*enemyval,heightOver5*3)	
 		tnlrect:set(0,heightOver5*3,width*tnlpercent,heightOver5*4)
@@ -488,7 +494,16 @@ function OnMeasure(wspec,hspec)
 	--we are going to assume some things here, 1, that MeasureSpec:getMode(wspec) == MeasureSpec.EXACTLY, 2 MeasureSpec:getMode(hspec) == MeasureSpec.UNDEFINED
 	--we are just going to pull out the width value, and return a custom height
 	local width = MeasureSpec:getSize(wspec)
-	local height = 70*density
+	
+	local barheight = math.floor(10*density)
+	local height = 5*barheight
+	
+	--local mod = height % 1
+	--height = height - mod
+	--local mod = height % 10
+	--if(mod ~= 0) then
+	--	height = height - mod
+	--end
 	--Note(string.format("\nOnMeasure:%d,%d",width,height))
 	return width,height
 end

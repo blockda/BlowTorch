@@ -284,7 +284,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		notificationIntent.putExtra("PORT", Integer.toString(port));
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		
-		PendingIntent contentIntent = PendingIntent.getActivity(c, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent contentIntent = PendingIntent.getActivity(c, myTriggerId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		//note.setLatestEventInfo(c, title, message, contentIntent);
 		note.setLatestEventInfo(c, xformedtitle, xformedmessage, contentIntent);

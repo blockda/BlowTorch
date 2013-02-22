@@ -1,6 +1,7 @@
---debugPrint("package path:"..package.path)
+package.path = package.path..";"..GetPluginInstallDirectory().."/?.lua"
 
 require("serialize")
+require("miniwindow")
 --make a button.
 --debugPrint("in the clock widgetui")
 
@@ -22,6 +23,8 @@ RawInteger = IntegerClass.TYPE
 Float = luajava.newInstance("java.lang.Float",0)
 FloatClass = Float:getClass()
 RawFloat = FloatClass.TYPE
+
+density = view:getContext():getResources():getDisplayMetrics().density
 
 function makeFloatArray(table)
 	newarray = Array:newInstance(RawFloat,#table)
@@ -47,13 +50,13 @@ end
 
 
 --install ourselves in the scroll view
-root = view:getParent()
-root:removeView(view)
+--root = view:getParent()
+--root:removeView(view)
 
-scroller = root:findViewById(6010)
-holder = scroller:getChildAt(0)
+--scroller = root:findViewById(6010)
+--holder = scroller:getChildAt(0)
 
-holder:addView(view)
+--holder:addView(view)
 
 Color = luajava.bindClass("android.graphics.Color")
 
@@ -81,7 +84,7 @@ function tickIncoming(data)
 	--reset the timer.
 	CancelCallback(100)
 	subcount = 0
-	ScheduleCallback(100,"subCount",2490)
+	ScheduleCallback(100,"subCount",normalSubDelay)
 	view:invalidate()
 end
 
@@ -101,14 +104,14 @@ function OnDraw(c)
 		return
 	end
 	
-	c:drawLine(0,50,400,50,bgSkyPaint)
+	c:drawLine(0,(height/2),tonumber(width),height/2,bgSkyPaint)
 	
 	--for daylight, see if the timeordinal is between 8am and 8pm, calculate it as a value between 0-12
 	updateAlphas()
 	
-	c:drawRect(0,0,400,100,fgSkyPaint)
+	c:drawRect(0,0,tonumber(width),tonumber(height),fgSkyPaint)
 	
-	c:drawRect(0,0,400,100,fgNightPaint)
+	c:drawRect(0,0,tonumber(width),tonumber(height),fgNightPaint)
 	--updateAlphas()
 	if(dosun == true) then
 		subcountPercent = subcount / 12
@@ -124,36 +127,36 @@ function OnDraw(c)
 		tmp = timeordinal - 6
 		tmp = tmp - 6
 		tmp = (tmp / 12) + subcountPercent/12
-		tmp = tmp * 200
+		tmp = tmp * travel.sun
 		
-		tmp = tmp + 300 --shift to left side
+		tmp = tmp + axis.sun --shift to left side
 		--compute y param
-		y = 0.0111*(tmp-300)*(tmp-300)+10
-		c:drawCircle(tmp,y,20,sunPaint)
+		y = aval.sun*(tmp-axis.sun)*(tmp-axis.sun)+constant.sun
+		
+		c:drawCircle(tmp,y,radius.sun,sunPaint)
+		
+		--
 		--debugPrint("doing sun at:"..tmp..","..y)
 	end
 	
 	--do the moons
-	if(timers.black ~= nil and (timers.black >= 39 or timers.black == 1)) then
-		if(timers.black == 1) then
-			timers.black = 52
-		end
-		total = 52-38
+	if(timers.black ~= nil and (timers.black >= 38 and timers.black <= 50)) then
+
+		total = 13
 		
-		progress = total - (52-timers.black) + (subcount / 12) -0.5
+		progress = total - (51 - timers.black) + (subcount / 12)
 		
-		x = (progress/total)-0.5
+		x = (progress/total) - 0.5
 		x = (x * travel.black) --remember to add back the axis to the final x
 		y = aval.black * x * x + constant.black
 		c:drawCircle(x+axis.black,y,radius.black,blackPaint)
+		--Note(string.format("\black at: %d,%d, prog: %f,aval: %f, axis: %d,constant: %d\n",x+axis.black,y,progress,aval.black,axis.black,constant.black))
 	end
 	
-	if(timers.white ~= nil and (timers.white >= 50 or timers.white == 1)) then
-		if(timers.white == 1) then
-			timers.white = 67
-		end
-		progress = 67-timers.white + (1.0-(subcount / 12)) -0.5
-		total = 67-50
+	if(timers.white ~= nil and (timers.white >= 49 and timers.white <= 65)) then
+
+		progress = 17 - (66 -timers.white) + (subcount / 12) 
+		total = 17
 		x = (progress/total)-0.5
 		x = (x * travel.white) --remember to add back the axis to the final x
 		y = aval.white * x * x + constant.white
@@ -162,12 +165,10 @@ function OnDraw(c)
 		c:drawCircle(x+axis.white,y,radius.white,whitePaint)
 	end
 	
-	if(timers.grey ~= nil and (timers.grey >= 24 or timers.grey == 1)) then
-		if(timers.grey == 1) then
-			timers.grey = 32
-		end
-		total = 32-24
-		progress = total - (32-timers.grey)+ (subcount / 12) -0.5
+	if(timers.grey ~= nil and (timers.grey >= 23 and timers.grey <= 30)) then
+
+		total = 8
+		progress = total - (31-timers.grey)+ (subcount / 12)
 		
 		x = (progress/total)-0.5
 		x = (x * travel.grey) --remember to add back the axis to the final x
@@ -186,8 +187,8 @@ function OnDraw(c)
 	end
 	str = str..timeordinal..":"..subcountstr
 	
-	height = view:getHeight()
-	width = view:getWidth()
+	--height = view:getHeight()
+	--width = view:getWidth()
 	
 	textwidth = clockpaint:measureText(str)
 	
@@ -200,25 +201,41 @@ function OnDraw(c)
 	end
 	y = y + clocktextsize/2
 	
-	timerFrameRect:set(x-5,y-clocktextsize-5,x+textwidth+5,y+10)
+	timerFrameRect:set(x-(5*density),y-clocktextsize-(5*density),x+textwidth+(5*density),y+(10*density))
 	
-	c:drawRoundRect(timerFrameRect,6,6,timerFrameBg)
-	c:drawRoundRect(timerFrameRect,6,6,timerFramePaint)
+	c:drawRoundRect(timerFrameRect,6*density,6*density,timerFrameBg)
+	c:drawRoundRect(timerFrameRect,6*density,6*density,timerFramePaint)
 	
 	
 	c:drawText(str,x,y,clockpaint)
 	
+	--draw the moon tick counters timer values
+	local black_y = height/4
+	local grey_y = height/2
+	local white_y = black_y*3
+	
+	local tmp = {}
+	tmp.black = timers.black or "??"
+	tmp.grey = timers.grey or "??"
+	tmp.white = timers.white or "??"
+	
+	c:drawText(string.format("%s",tmp.black),5*density,black_y,blackPaint)
+	c:drawText(string.format("%s",tmp.grey),5*density,grey_y,greyPaint)
+	c:drawText(string.format("%s",tmp.white),5*density,white_y,whitePaint)
+	
+	if(timers.forecast ~= nil and timers.forecast > -1) then
+		c:drawText(string.format("Three moons in: %d ticks, for %d ticks",timers.forecast,timers.duration),10*density,height-(5*density),whitePaint)
+	end
+	
 end
 
-clocktextsize = 45
-clockpaint = luajava.newInstance("android.graphics.Paint")
-clockpaint:setTextSize(clocktextsize)
-clockfacecolor = Color:argb(255,0,0,255)
-clockpaint:setColor(clockfacecolor)
-clockpaint:setAntiAlias(true)
+
 
 
 subcount = 0
+
+normalSubDelay = 2490
+fastSubDelay = 500
 
 function subCount()
 	subcount = subcount + 1
@@ -234,13 +251,40 @@ function subCount()
 		view:invalidate()
 	end
 	if(docallback) then
-		ScheduleCallback(100,"subCount",2490)
+		ScheduleCallback(100,"subCount",normalSubDelay)
 		view:invalidate()
+	else
+		--if(not timertmp) then
+		--	timertmp = {}
+		--	timertmp.grey = 23
+		--	timertmp.black = 37
+		--	timertmp.white = 49
+		--else
+		--	timertmp.grey = timertmp.grey + 1
+		--	timertmp.black = timertmp.black + 1
+		--	Note(string.format("\nadding black moon, timer tick %d\n",timertmp.black))
+		--	timertmp.white = timertmp.white + 1
+		--	
+		--	if(timertmp.grey == 32) then
+		--		timertmp.grey = 1
+		--	end
+			
+		--	if(timertmp.black == 50) then
+		--	Note(string.format("\nresetting black moon, timer tick %d\n",timertmp.black))
+		--		timertmp.black = 1
+		--	end
+			
+		--	if(timertmp.white == 67) then
+		--		timertmp.white = 1
+		--	end
+		--end
+		
+		--tickIncoming(serialize(timertmp))
 	end
 end
 
 --start ticking.
-ScheduleCallback(100,"subCount",2490)
+ScheduleCallback(100,"subCount",normalSubDelay)
 
 
 --build up the gradient objects we need.
@@ -289,7 +333,11 @@ function updateAlphas()
 		alpha = tonumber(alpha)
 		fgSkyPaint:setAlpha(alpha)
 		
-		dosun = true
+		if(timeordinal == 18) then
+			dosun = false
+		else
+			dosun = true
+		end
 	else
 		fgSkyPaint:setAlpha(255)
 		dosun = false
@@ -355,6 +403,14 @@ width = 1
 function OnSizeChanged(neww,newh,oldw,oldh)
 	height = newh
 	width = neww
+	
+	clocktextsize = newh/2.2
+	clockpaint = luajava.newInstance("android.graphics.Paint")
+	clockpaint:setTextSize(clocktextsize)
+	clockfacecolor = Color:argb(255,0,0,255)
+	clockpaint:setColor(clockfacecolor)
+	clockpaint:setAntiAlias(true)
+	
 	rebuildConstants()
 end
 
@@ -375,28 +431,33 @@ greyPaint:setAntiAlias(true)
 greyPaint:setColor(Color:argb(255,127,127,127))
 
 travel={}
-travel.sun = 400/2
-travel.black = 400/6
-travel.white = 400/2
-travel.grey = 400/6
+travel.sun = width/2
+travel.black = width/6
+travel.white = width/2
+travel.grey = width/6
 
 radius={}
-radius.sun = 20
-radius.black = 10
-radius.grey = 14
-radius.white = 8
+--radius.sun = 20
+--radius.black = 10
+--radius.grey = 14
+--radius.white = 8
+radius.sun = height/5
+radius.black = height/10
+radius.grey = height/7
+radius.white = height/12.5
+
 
 constant = {}
 constant.sun = radius.sun
-constant.white = 100/2
-constant.black = (100/2)-2*radius.black
-constant.grey = (100/2)-radius.grey
+constant.white = height/2
+constant.black = (height/2)-2*radius.black
+constant.grey = (height/2)-radius.grey
 
 axis = {}
-axis.sun = 300
-axis.grey = 300-40
-axis.black = 300+10
-axis.white = 300-10
+axis.sun = width*0.75
+axis.grey = axis.sun-(height/10)
+axis.black = axis.sun+(height/40)
+axis.white = axis.sun-(height/40)
 
 tmpval = {}
 tmpval.sun = axis.sun - (travel.sun/2) - axis.sun
@@ -406,9 +467,22 @@ tmpval.black = axis.black -(travel.black/2) - axis.black
 
 
 aval = {}
-aval.sun = (100-constant.sun)/(tmpval.sun*tmpval.sun)
-aval.grey = (100-constant.grey)/(tmpval.grey*tmpval.grey)
-aval.black = (100-constant.black)/(tmpval.black*tmpval.black)
-aval.white = (100-constant.white)/(tmpval.white*tmpval.white)
+aval.sun = ((height+radius.sun)-constant.sun)/(tmpval.sun*tmpval.sun)
+aval.grey = ((height+radius.grey)-constant.grey)/(tmpval.grey*tmpval.grey)
+aval.black = ((height+radius.black)-constant.black)/(tmpval.black*tmpval.black)
+aval.white = ((height+radius.white)-constant.white)/(tmpval.white*tmpval.white)
 end
 
+MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+function OnMeasure(wspec,hspec)
+	local width = MeasureSpec:getSize(wspec)
+	local height = width/4
+	return width,height
+end
+
+config = {}
+config.divider = true
+config.height = WRAP_CONTENT
+config.width = MATCH_PARENT
+config.id = view:getId()
+InstallWindow(config)

@@ -55,6 +55,12 @@ Validator_Number_Not_Blank = bit.bor(Validator_Number,Validator_Not_Blank)
 Validator_Number_Or_Blank = Validator.VALIDATE_NUMBER_OR_BLANK
 lastLoadedSet = nil
 
+Configuration = luajava.bindClass("android.content.res.Configuration");
+InputType = luajava.bindClass("android.text.InputType")
+TYPE_TEXT_FLAG_MULTI_LINE = InputType.TYPE_TEXT_FLAG_MULTI_LINE
+ORIENTATION_LANDSCAPE = Configuration.ORIENTATION_LANDSCAPE
+ORIENTATION_PORTRAIT = Configuration.ORIENTATION_PORTRAIT
+
 DisplayMetrics = view:getContext():getResources():getDisplayMetrics()
 
 		--assert(marshal.encode(orig))
@@ -1267,7 +1273,11 @@ function showButtonList(data)
 	--Note(data)
 	setdata = loadstring(data)()
 
-	makeToolbar()
+	--makeToolbar()
+	lastSelectedIndex = -1
+	if(thetoolbar:getParent() ~= nil) then
+		thetoolbar:getParent():removeAllViews()
+	end
 	--sort the list.
 	--table.sort(setdata)
 	--Note("got "..#setdata.." sets.")
@@ -2171,6 +2181,48 @@ local function foo()
 end
 pcall(foo)
 
+function getDialogDimensions()
+	local context = view:getContext()
+	local wm = context:getSystemService(Context.WINDOW_SERVICE)
+	local display = wm:getDefaultDisplay()
+	local displayWidth = display:getWidth()
+	local displayHeight = display:getHeight()
+	local use = displayWidth
+	local orientation = context:getResources():getConfiguration().orientation
+	
+	if(displayHeight < displayWidth) then
+		use = displayHeight
+	end
+	
+	local dpi_bucket = use / density
+	
+	local height_param = LinearLayoutParams.WRAP_CONTENT
+	local width_param = 450*density
+	
+	if(orientation == ORIENTATION_LANDSCAPE) then
+		--landscape
+		if(dpi_bucket >= 600) then
+			height_param = 300*density
+		end
+		
+		if(width_param > displayWidth) then
+			width_param = displayHeight
+		end
+	else
+		--portrait
+				--landscape
+		if(dpi_bucket >= 600) then
+			height_param = 300*density
+		end
+		
+		if(width_param > displayWidth) then
+			width_param = displayWidth-(5*density)
+		end
+	end
+	
+	return width_param,height_param
+end
+
 function showEditorDialog()
 	--make the parent view.
 	--local button = nil
@@ -2183,6 +2235,8 @@ function showEditorDialog()
 		editorValues.flipLabel = button.data.flipLabel
 		editorValues.flipCommand = button.data.flipCommand
 		editorValues.name = button.data.name
+		--editorValues.name = "OMGANYTHING"
+		if(not editorValues.name) then editorValues.name = "" end
 		editorValues.primaryColor = button.data.primaryColor
 		editorValues.labelColor = button.data.labelColor
 		editorValues.selectedColor = button.data.selectedColor
@@ -2257,33 +2311,20 @@ function showEditorDialog()
 	end
 	
 	local context = view:getContext()
-	local wm = context:getSystemService(Context.WINDOW_SERVICE)
-	local display = wm:getDefaultDisplay()
-	local displayWidth = display:getWidth()
-	local displayHeight = display:getHeight()
-	local use = displayWidth
-	if(displayHeight < displayWidth) then
-		use = displayHeight
-	end
+
+	local width_param,height_param = getDialogDimensions()
 	
-	local dpi_bucket = use / density
-	
-	local height_param = LinearLayoutParams.WRAP_CONTENT
-	if(dpi_bucket >= 600) then
-		height_param = 300*density
-	end
-	
-	
-	top = luajava.new(RelativeLayout,context)
-	topparams = luajava.new(RelativeLayoutParams,450*density,height_param)
+	top = luajava.new(LinearLayout,context)
+	topparams = luajava.new(LinearLayoutParams,width_param,height_param)
 	
 
 	
 	top:setLayoutParams(topparams)
 	--top:setOrientation(LinearLayout.VERTICAL)
 	titletext = luajava.new(TextView,context)
-	titletextParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
-	titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	top:setOrientation(LinearLayout.VERTICAL)
+	titletextParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
 	
 	titletext:setLayoutParams(titletextParams)
 	titletext:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
@@ -2301,10 +2342,10 @@ function showEditorDialog()
 	--fillparams:setGravity(Gravity.FILL_HORIZONTAL)
 	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
 	
-	hostparams = luajava.new(RelativeLayoutParams,FILL_PARENT,WRAP_CONTENT)
+	hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,2)
 	host = luajava.new(TabHost,context)
-	hostparams:addRule(RelativeLayout.BELOW,1)
-	hostparams:addRule(RelativeLayout.ABOVE,2)
+	--hostparams:addRule(RelativeLayout.BELOW,1)
+	--hostparams:addRule(RelativeLayout.ABOVE,2)
 	host:setId(3)
 	host:setLayoutParams(hostparams)
 	
@@ -2312,8 +2353,8 @@ function showEditorDialog()
 	
 	--make the done and cancel buttons.
 	--have to stuff them in linearlayout.
-	finishHolderParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
-	finishHolderParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	finishHolderParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+	--finishHolderParams:addRule(RelativeLayout.BELOW,3)
 	finishHolder = luajava.new(LinearLayout,context)
 	finishHolder:setLayoutParams(finishHolderParams)
 	finishHolder:setId(2)
@@ -2330,8 +2371,9 @@ function showEditorDialog()
 	cancel:setOnClickListener(editorCancel_cb)
 	finishHolder:addView(done)
 	finishHolder:addView(cancel)
-	top:addView(finishHolder)
 	top:addView(host)
+	top:addView(finishHolder)
+	
 	
 	holder = luajava.new(LinearLayout,context)
 	holder:setOrientation(LinearLayout.VERTICAL)
@@ -2366,9 +2408,13 @@ function showEditorDialog()
 	--tmpview1:setText("first page")
 	--tmpview1:setId(1)
 	--tmpview1:setLayoutParams(fillparams);
+	clickPageScroller = luajava.new(ScrollView,context)
+	clickPageScroller:setLayoutParams(fillparams)
+	clickPageScroller:setId(1)
+	
 	clickPage = luajava.new(LinearLayout,context)
 	clickPage:setLayoutParams(fillparams)
-	clickPage:setId(1)
+	clickPage:setId(11)
 	clickPage:setOrientation(LinearLayout.VERTICAL)
 	
 	clickLabelRow = luajava.new(LinearLayout,context)
@@ -2411,8 +2457,10 @@ function showEditorDialog()
 	
 	clickCmdEdit = luajava.new(EditText,context)
 	clickCmdEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
-	clickCmdEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	clickCmdEdit:setLines(1)
+	clickCmdEditParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
+	clickCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
+	clickCmdEdit:setHorizontallyScrolling(false)
+	clickCmdEdit:setMaxLines(1000)
 	clickCmdEdit:setLayoutParams(clickLabelEditParams)
 	if(numediting > 1) then
 		clickCmdEdit:setEnabled(false)
@@ -2427,7 +2475,8 @@ function showEditorDialog()
 	clickPage:addView(clickLabelRow)
 	clickPage:addView(clickCmdRow)
 	
-	content:addView(clickPage)
+	clickPageScroller:addView(clickPage)
+	content:addView(clickPageScroller)
 	tab1:setIndicator(label1)
 	tab1:setContent(1)
 	
@@ -2440,9 +2489,13 @@ function showEditorDialog()
 	label2:setGravity(GRAVITY_CENTER)
 	
 	--second, flip page.
+	flipPageScroller = luajava.new(ScrollView,context)
+	flipPageScroller:setLayoutParams(fillparams)
+	flipPageScroller:setId(2)
+	
 	flipPage = luajava.new(LinearLayout,context)
 	flipPage:setLayoutParams(fillparams)
-	flipPage:setId(2)
+	flipPage:setId(22)
 	flipPage:setOrientation(LinearLayout.VERTICAL)
 	
 	flipLabelRow = luajava.new(LinearLayout,context)
@@ -2485,7 +2538,9 @@ function showEditorDialog()
 	flipCmdEdit = luajava.new(EditText,context)
 	flipCmdEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
 	flipCmdEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	flipCmdEdit:setLines(1)
+	flipCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
+	flipCmdEdit:setHorizontallyScrolling(false)
+	flipCmdEdit:setMaxLines(1000)
 	flipCmdEdit:setLayoutParams(flipLabelEditParams)
 	if(numediting > 1) then
 		flipCmdEdit:setEnabled(false)
@@ -2503,7 +2558,8 @@ function showEditorDialog()
 	--tmpview2:setText("second page")
 	----tmpview2:setId(2)
 	--tmpview2:setLayoutParams(fillparams);
-	content:addView(flipPage)
+	flipPageScroller:addView(flipPage)
+	content:addView(flipPageScroller)
 	tab2:setIndicator(label2)
 	tab2:setContent(2)
 	
@@ -2528,6 +2584,9 @@ function showEditorDialog()
 	--buttonNameRow:setVisibility(View.VISIBLE)
 	controlRowTwo:setVisibility(View.VISIBLE)
 	labelRowFour:setVisibility(View.VISIBLE)
+	
+	buttonNameRow:setVisibility(View.VISIBLE)
+	buttonTargetSetRow:setVisibility(View.VISIBLE)
 	
 	Validator:reset()
 	if(editorValues.width ~= "MULTI") then
@@ -2688,13 +2747,19 @@ function makeAdvancedPage()
 		buttonNameRow:addView(buttonNameEdit)
 	end
 	if(numediting > 1) then
+		--Note("\nEditing multiple, not setting name\n")
 		buttonNameEdit:setText("")
 		buttonNameEdit:setEnabled(false)
 	else
+		--Note("\nSetting editor value,"..editorValues.name)
 		if(editorValues.name ~= nil) then
+		--Note("\nEditing button, name is,"..editorValues.name.."\n")
 			buttonNameEdit:setEnabled(true)
 			buttonNameEdit:setText(editorValues.name)
+		else
+			--Note("\nEditorvalues.name is nil\n")
 		end
+		
 	end
 	
 	if(buttonTargetSetRow == nil) then
@@ -3207,6 +3272,7 @@ toolbarlength = 0
 
 function makeToolbar()
 	--thetoolbar = thetoolbar or {}
+	if(not thetoolbar) then
 	thetoolbar = layoutInflater:inflate(R_layout.editor_selection_list_row_toolbar,nil)
 	toolbarparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
 	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
@@ -3253,7 +3319,7 @@ function makeToolbar()
 	local tmpb = toolbarToggle:getDrawable()
 	
 	thetoolbarlength = tmpa:getIntrinsicWidth() + 3 * tmpb:getIntrinsicWidth()
-	
+	end
 	animateInController = nil
 	animateOut = nil
 	animateOutNoTransition = nil
@@ -3463,6 +3529,7 @@ function setSettingsButtonListener.onClick(v)
 		parent:removeView(page)
 	end
 	
+	buttonNameRow:setVisibility(View.GONE)
 	buttonTargetSetRow:setVisibility(View.GONE)
 	buttonNameRow:setVisibility(View.VISIBLE)
 	controlRowTwo:setVisibility(View.GONE)
@@ -3475,21 +3542,24 @@ function setSettingsButtonListener.onClick(v)
 	Validator:add(labelSizeEdit,Validator_Number_Not_Blank,"Label size")
 	
 
-	local top = luajava.new(RelativeLayout,context)
-	local topparams = luajava.new(RelativeLayoutParams,450*density,WRAP_CONTENT)
+	local width_param,height_param = getDialogDimensions()
+	local top = luajava.new(LinearLayout,context)
+	local topparams = luajava.new(LinearLayoutParams,width_param,height_param)
 	
 	top:setLayoutParams(topparams)
-	--top:setOrientation(LinearLayout.VERTICAL)
+	top:setOrientation(LinearLayout.VERTICAL)
 	local titletext = luajava.new(TextView,context)
-	local titletextParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
-	titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
+	local titletextParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
 	
 	titletext:setLayoutParams(titletextParams)
 	titletext:setTextSize(36)
-	titletext:setText("BUTTON EDITOR")
+	titletext:setText("DEFAULTS EDITOR")
 	titletext:setGravity(GRAVITY_CENTER)
 	titletext:setId(1)
 	top:addView(titletext)
+	
+	--buttonNameEdit:setText()
 
 	--make the new tabhost.	
 	local params = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
@@ -3499,22 +3569,23 @@ function setSettingsButtonListener.onClick(v)
 	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
 	--make the done and cancel buttons.
 	--have to stuff them in linearlayout.
-	local finishHolderParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.FILL_PARENT,RelativeLayoutParams.WRAP_CONTENT)
-	finishHolderParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+	local finishHolderParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+	--finishHolderParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 	local finishHolder = luajava.new(LinearLayout,context)
 	finishHolder:setLayoutParams(finishHolderParams)
 	finishHolder:setId(2)
 	
-	local holder = luajava.new(LinearLayout,context)
-	holder:addView(page,contentparams)
-	local holderparam = luajava.new(RelativeLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	holderparam:addRule(RelativeLayout.ABOVE,2)
-	holderparam:addRule(RelativeLayout.BELOW,1)
-	holderparam:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
-	holderparam:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
+	--local holder = luajava.new(LinearLayout,context)
+	--holder:addView(page,contentparams)
+	local holderparam = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,2)
+	--holderparam:addRule(RelativeLayout.ABOVE,2)
+	--holderparam:addRule(RelativeLayout.BELOW,1)
+	--holderparam:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+	--holderparam:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
 	
+	page:setVisibility(View.VISIBLE)
+	top:addView(page,holderparam)
 	
-	top:addView(holder,holderparam)
 	
 	--finishbuttonParams = luajava.new(RelativeLayoutParams,RLayoutParams.FILL_PARENT,WRAP_CONTENT)
 	local done = luajava.new(Button,context)

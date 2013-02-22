@@ -97,13 +97,14 @@ public class ConnectionSetttingsParser extends PluginParser {
 		//Element alias = aliases.getChild("alias");
 		Element script = root.getChild("script");
 		Element triggers = root.getChild("triggers");
+		Element timers = root.getChild("timers");
 		Element directions = root.getChild("directions");
 		Element dirEntries = directions.getChild("entry");
 		
 		//do our attatch listener dance.
 		TriggerParser.registerListeners(triggers, GLOBAL_HANDLER, new TriggerData(), current_trigger, current_timer);
 		AliasParser.registerListeners(root, GLOBAL_HANDLER, current_alias);
-		TimerParser.registerListeners(root, GLOBAL_HANDLER, new TimerData(), current_trigger, current_timer);
+		TimerParser.registerListeners(timers, GLOBAL_HANDLER, new TimerData(), current_trigger, current_timer);
 		WindowTokenParser.registerListeners(window, current_window, GLOBAL_HANDLER);
 		script.setTextElementListener(new TextElementListener() {
 
@@ -211,7 +212,8 @@ public class ConnectionSetttingsParser extends PluginParser {
 		}
 
 		public void addTimer(String key, TimerData t) {
-			settings.getSettings().getTimers().put(key, t.copy());
+			t.setRemainingTime(t.getSeconds());
+			settings.getSettings().getTimers().put(key,t);
 		}
 
 		public void addScript(String name, String body, boolean b) {

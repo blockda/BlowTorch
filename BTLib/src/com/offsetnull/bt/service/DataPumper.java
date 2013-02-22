@@ -113,7 +113,7 @@ public class DataPumper extends Thread {
 			this.setName("DataPumper");
 			//TODO: MAKE CONNECTION STARTUP CODE HERE.
 			InetAddress addr = null;
-			
+			closing = false;
 			
 			sendWarning(new String(Colorizer.colorCyanBright+"Attempting connection to: "+ Colorizer.colorYeollowBright + host + ":"+port+"\n"+Colorizer.colorCyanBright+"Timeout set to 14 seconds."+Colorizer.colorWhite+"\n"));
 			
@@ -304,6 +304,15 @@ public class DataPumper extends Thread {
 			return myhandler;
 		}*/
 		
+		public void interruptSocket() {
+			try {
+				the_socket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		private void useCompression(byte[] input) throws UnsupportedEncodingException {
 			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
 			compressed = true;
@@ -347,7 +356,9 @@ public class DataPumper extends Thread {
 					numtoread = reader.available();
 				} catch (IOException e) {
 					//throw new RuntimeException(e);
-					reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+					if(!closing) {
+						reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+					}
 					connected = false;
 					return;
 					
@@ -359,14 +370,19 @@ public class DataPumper extends Thread {
 					try {
 						if(reader.read() == -1) {
 							//Log.e("PUMP","END OF STREAM");
-							reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+							if(!closing) {
+								sendWarning("\n"+Colorizer.colorRed + "Connection terminated by peer."+Colorizer.colorWhite+"\n");
+								reportto.sendEmptyMessage(Connection.MESSAGE_TERMINATED_BY_PEER);
+							}
 							connected = false;
 						} else {
 							reader.reset();
 						}
 					} catch (IOException e) { 
 						e.printStackTrace();
-						reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+						if(!closing) {
+							reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+						}
 						connected = false;
 						return;
 					}
@@ -381,7 +397,9 @@ public class DataPumper extends Thread {
 					
 					} catch (IOException e) {
 						//throw new RuntimeException(e);
-						reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+						if(!closing) {
+							reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+						}
 						connected = false;
 					}
 					//Log.e("PUMP","READ (string): " + new String(data));
@@ -408,6 +426,14 @@ public class DataPumper extends Thread {
 						synchronized(reportto) {
 							reportto.sendMessage(msg); //report to mom and dad.
 						}
+						//synchronized(this) {
+						//	try {
+						//		this.wait(1500);
+						//	} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+						//		e.printStackTrace();
+						//	}
+						//}
 					} 
 
 					data = null; //free data to the garbage collector.
@@ -528,14 +554,21 @@ public class DataPumper extends Thread {
 		return connected ;
 	}
 
+	boolean closing = false;
 	public void closeSocket() {
 		try {
-			
+			closing = true;
 			//reader.close();
 			connected = false;
 			if(the_socket != null) {
+				the_socket.shutdownInput();
+				the_socket.shutdownOutput();
 				the_socket.close();
 			}
+			if(reader != null) {
+				reader.close();
+			}
+			the_socket = null;
 			this.interrupt();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
