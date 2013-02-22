@@ -9,6 +9,15 @@ local marshal = require("marshal")
 --this is the back end of the script, it will take care of reading/writing buttons to disk
 --and storing all the loaded buttons in memory.
 
+debugInfo = true
+local function debugString(string)
+	if(debugInfo) then
+		Note(string.format("\n%s\n",string))
+	end
+end
+
+debugString("Button Server Loading...")
+
 --communicates back and fourth with the window script to huck data.
 --Note("STARTING THE WHO BOOTSTRAP SEQUENCE!")
 buttonsets = {} --raw table, holds tables of buttons.
@@ -45,7 +54,7 @@ lob = {}
 function loadButtonSet(args)
 	
 	--Note("trying to load.."..args.." setcount:"..#buttonsets)
-	
+	debugString("Button Server sending button set, "..args)
 	--for i,b in pairs(buttonsets) do
 	--	printTable(i,b)
 	--end
@@ -610,4 +619,22 @@ function testxcall(data)
 		Note("chat_miniwindow does not support recvxcall")
 	end
 end
+
+function setDebug(off)
+	if(not off) then
+		debugString("Button server entering debug mode...")
+		WindowXCallS("button_window","setDebug","on")
+		debugInfo = true
+	else
+		debugString("Button leaving debug mode...")
+		WindowXCallS("button_window","setDebug","off")
+		debugInfo = false
+	end
+end
+
+function importButtons(data)
+	local data = loadstring(data)()
+end
+
+debugString("Button Server Loaded")
 
