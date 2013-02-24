@@ -400,13 +400,18 @@ function loadButtons(input)
 	counter = 1
 	lastbutton = nil
 	
-	for i,b in pairs(list) do
-		if(i ~= "main") then
-			newbutton = generateNewButton(i,counter)
+	a = {}
+    for i,n in pairs(list) do table.insert(a, i) end
+    table.sort(a)
+    --for i,n in ipairs(a) do print(n) end
+	
+	for i,n in ipairs(a) do
+		if(n ~= "main") then
+			newbutton = generateNewButton(n,counter)
 			params = newbutton:getLayoutParams()
 			params:setMargins(2,0,2,0)
 			counter = counter + 1
-			buttonMap[i] = newbutton
+			buttonMap[n] = newbutton
 			channelHolder:addView(newbutton)
 			lastbutton = newbutton
 		end
@@ -539,6 +544,7 @@ delParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
 delParams:addRule(RelativeLayout.RIGHT_OF,101)
 delButton:setImageDrawable(resLoader(respath,"delete.png"))
 delButton:setId(102)
+delButton:setVisibility(View.GONE)
 
 delButton:setLayoutParams(delParams)
 
@@ -576,7 +582,7 @@ mainButton:setOnClickListener(clicker_cb)
 longclicker = {}
 function longclicker.onLongClick(v)
 	label = v:getText()
-	sendToServer(".kb popup "..label)
+	SendToServer(".kb popup "..label)
 	return true
 end
 longclicker_cb = luajava.createProxy("android.view.View$OnLongClickListener",longclicker)
@@ -710,8 +716,10 @@ function OnCreate()
 	maxHeight = inputbar:getTop()
 	--EchoText("in create, max height is: "..maxHeight)
 	
-	PluginXCallS("EchoText",string.format("Chat Plugin v1.%d Loaded...\n\n",current_version))
+	--PluginXCallS("EchoText",string.format("Chat Plugin v1.%d Loaded...\n\n",current_version))
 end
+
+--function 
 
 runonce = true
 function setWindowSize(size)

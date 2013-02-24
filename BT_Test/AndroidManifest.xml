@@ -4,8 +4,8 @@
       android:versionCode="52"
       android:versionName="2.0">
     <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch TEST" android:process="com.offsetnull.bttest" android:debuggable="true" android:hardwareAccelerated="true">
-     	<meta-data android:value="3" android:name="BLOWTORCH_TEST_VERSION"/>
-     	<meta-data android:value="83" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
+     	<meta-data android:value="4" android:name="BLOWTORCH_TEST_VERSION"/>
+     	<meta-data android:value="87" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
      	<activity android:name="com.offsetnull.bttest.TestLauncher"
                   android:label="BlowTorch TEST">
             <intent-filter>
