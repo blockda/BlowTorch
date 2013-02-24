@@ -1819,7 +1819,15 @@ public class Plugin implements SettingsChangedListener {
 				}
 			}*/
 			//mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_X, obj))
-			Message msg = mHandler.obtainMessage(Connection.MESSAGE_WINDOWXCALLS,foo.getString());
+			Message msg = null;
+			
+			if(foo.isNil()) {
+				msg = mHandler.obtainMessage(Connection.MESSAGE_WINDOWXCALLS);
+			} else {
+				msg = mHandler.obtainMessage(Connection.MESSAGE_WINDOWXCALLS,foo.getString());
+			}
+			
+			
 			//String str = "";
 			//try {
 			//	str = parent.windowXCallS(token, function, foo.getString());

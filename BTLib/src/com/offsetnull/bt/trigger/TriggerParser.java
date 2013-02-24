@@ -57,9 +57,14 @@ public final class TriggerParser {
 			if(!trigger.isEnabled()) {
 				out.attribute("", BasePluginParser.ATTR_TRIGGERENEABLED, trigger.isEnabled() ? "true" : "false");
 			}
-			out.attribute("", BasePluginParser.ATTR_SEQUENCE, Integer.toString(trigger.getSequence()));
+			if(trigger.getSequence() != TriggerData.DEFAULT_SEQUENCE) {
+				out.attribute("", BasePluginParser.ATTR_SEQUENCE, Integer.toString(trigger.getSequence()));
+			}
 			if(!trigger.getGroup().equals(TriggerData.DEFAULT_GROUP)) out.attribute("", BasePluginParser.ATTR_GROUP, trigger.getGroup());
-			out.attribute("", BasePluginParser.ATTR_KEEPEVALUATING, trigger.isKeepEvaluating() ? "true" : "false");
+			
+			//if(trigger.isKeepEvaluating()) {
+				//out.attribute("", BasePluginParser.ATTR_KEEPEVALUATING, trigger.isKeepEvaluating() ? "true" : "false");
+			//}
 			
 			for(TriggerResponder r : trigger.getResponders()){
 				r.saveResponderToXML(out);

@@ -5,12 +5,13 @@ require("serialize")
 --make a button.
 --Note("in the chat server")
 
-NewTrigger("test","pattern",{enabled=true,once=true,regex=true},{type="gag",fire="always"},{type="replace",text="fsdfs",fire="never"})
-NewTrigger("test2","pattern2",{enabled=false,once=false,regex=false},{type="notification",title="foo",message="bar"},{type="toast",message="toasty",duration=1},{type="send",text="foo",fire="windowClosed"},{type="replace",text="haha",fire="windowOpen"},{type="gag",output=false,log=false,retarget="chats"},{type="color",foreground=212,background=40,fire="never"})
+--NewTrigger("test","pattern",{enabled=true,once=true,regex=true},{type="gag",fire="always"},{type="replace",text="fsdfs",fire="never"})
+--NewTrigger("test2","pattern2",{enabled=false,once=false,regex=false},{type="notification",title="foo",message="bar"},{type="toast",message="toasty",duration=1},{type="send",text="foo",fire="windowClosed"},{type="replace",text="haha",fire="windowOpen"},{type="gag",output=false,log=false,retarget="chats"},{type="color",foreground=212,background=40,fire="never"})
 
-DeleteTrigger("test")
-DeleteTrigger("test2")
+--DeleteTrigger("test")
+--DeleteTrigger("test2")
 
+local current_version = 12
 
 chatWindow = GetWindowTokenByName("chats")
 AppendWindowSettings("chats")
@@ -68,9 +69,16 @@ function updateUIButtons()
 	WindowXCallS(chatWindowName,"loadButtons",serialize(tmpmap))
 end
 
+firstLoad = true
+
 function initReady(arg)
 	--arg is meaningless here.
 	updateUIButtons()
+	if(firstLoad) then
+		firstLoad = false
+		EchoText(string.format("Chat Plugin v1.%d Loaded...\n\n",current_version))
+	end
+	
 end
 
 function processChat(name,line,replaceMap)
