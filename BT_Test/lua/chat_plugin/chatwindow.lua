@@ -108,7 +108,7 @@ local MATCH_PARENT = LinearLayoutParams.FILL_PARENT
 local dividerHeight = math.floor(3*density);
 local minHeight = chatOutputView:getLayoutParams().height + dividerHeight
 
-local foldoutHeight = 100
+local foldoutHeight = 0
 local expanded = false
 
 --
@@ -158,7 +158,7 @@ local drawableMap = {}
 -- the actual text window and blue divider.
 local expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
 local shrinkAnimation = luajava.new(TranslateAnimation,0,0,0,-foldoutHeight)
-local windowMoveUpAnimation = luajava.new(TranslateAnimation,0,0,uiButtonBarHeight,0)
+local windowMoveUpAnimation = luajava.new(TranslateAnimation,0,0,0,-uiButtonBarHeight)
 local windowMoveDownAnimation = luajava.new(TranslateAnimation,0,0,0,uiButtonBarHeight)
 local windowPinDownAnimation = luajava.new(TranslateAnimation,0,0,-uiButtonBarHeight,0)
 local nullAnimation = luajava.new(TranslateAnimation,0,0,0,0)
@@ -177,39 +177,48 @@ end
 windowPinDownAnimationListener_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",windowPinDownAnimationListner)
 windowPinDownAnimation:setAnimationListener(windowPinDownAnimationListener_cb)
 
+function resizeMaxWindowNoAnimation()
+	Note("\ndeploying resizer"..maxHeight.."\n")
+	replacementView:setDimensions(MATCH_PARENT,maxHeight)
+	local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight-uiButtonBarHeight-dividerHeight)
+	--local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight - uiButtonBarHeight - dividerHeight)
+	chatOutputView:setLayoutParams(p)
+	uiButtonBar:setVisibility(View.VISIBLE)
+	local q = luajava.new(RelativeLayoutParams,MATCH_PARENT,WRAP_CONTENT)
+	innerHolderView:setLayoutParams(q)
+	replacementView:requestLayout()
+	chatOutputView:requestLayout()
+	expanded = true
+end
+
 --
 --Hack callback chain method of getting the onAnimationEnd correctly for the AnimatedRelativeLayout top level parent view.
 --oh man this needs so much documentation.
 function onParentAnimationEnd()
-	if(expanded == false) then
+	Note("\nin parent animation end\n")
+	if(expanded == true) then
 		twidth = replacementView:getWidth()
 		theight = replacementView:getHeight()
 		
 		theight = theight - foldoutHeight
-		--debugPrint("parentAnimationEnd:"..twidth..":"..theight)
-		replacementView:setDimensions(twidth,theight)
 		
-		if(pinned == true) then
-			wheight = theight - uiButtonBarHeight - dividerHeight
-			local tmpparams = luajava.new(LinearLayoutParams,replacementViewParams.width,wheight)
-			--debugPrint("wheight:"..wheight)
-			chatOutputView:setLayoutParams(tmpparams)
-			chatOutputView:requestLayout()
-		else 
-			uiButtonBar:setVisibility(View.GONE)
-			wheight = chatOutputView:getHeight() + uiButtonBarHeight - foldoutHeight
-			local tmp = chatOutputView:getLayoutParams()
-			local p = luajava.new(LinearLayoutParams,tmp.width,wheight);
-			chatOutputView:setLayoutParams(p)
-		end
-		mainOutputView:setLayoutParams(mainOutputViewLayoutParams)
+		--replacementView:setDimensions(twidth,theight)
+	
+		local wheight = replacementView:getHeight() - uiButtonBarHeight - dividerHeight
+		Note("\nparentAnimationEnd:"..wheight..":"..theight)
+		local tmpparams = luajava.new(LinearLayoutParams,replacementViewParams.width,wheight)
+		chatOutputView:setLayoutParams(tmpparams)
+		replacementView:setLayoutParams(replacementViewParams)
 		replacementView:requestLayout()
 		chatOutputView:invalidate()
 		
 	else
-		mainOutputView:setLayoutParams(mainOutputViewLayoutParams)
+		
+		--mainOutputView:setLayoutParams(mainOutputViewLayoutParams)
 	end
 end
+
+--windowMoveUpAnimationListener_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",onParentAnimationEnd)
 
 --function onAnimationEnd() 
 --	if(expanded == false and pinned == true) then
@@ -220,18 +229,44 @@ end
 local hider = {}
 function hider.onClick(v)
 	if(expanded == true) then
-		mainOutputView:setLayoutParams(altMainOutputViewLayoutParams)
-		replacementView:startAnimation(shrinkAnimation)
-		if(pinned == false) then
-			innerHolderView:startAnimation(windowMoveDownAnimation)
-			chatOutputView:startAnimation(nullAnimation)
-		else
-			--resizeButton:setEnabled(false)
-		end
+	
+		local tmp = chatOutputView:getHeight()
+		local p = luajava.new(LinearLayoutParams,MATCH_PARENT,tmp+uiButtonBarHeight)
+		chatOutputView:setLayoutParams(p)
+		innerHolderView:startAnimation(windowPinDownAnimation)	
+		
+		expanded = false
+		
+		foldoutHeight = 0
+		
+		--if(1 == 1) then
+		--	return
+		--end
+		
+		--altMainOutputViewLayoutParams = luajava.new(RelativeLayoutParams,mainOutputViewLayoutParams.width,mainOutputView:getHeight()+uiButtonBarHeight)
+		--altMainOutputViewLayoutParams:addRule(RelativeLayout.ABOVE,40)
+		--mainOutputView:setLayoutParams(altMainOutputViewLayoutParams)
 		chatOutputView:setTextSelectionEnabled(false)
+		--innerHolderView:startAnimation(windowMoveDownAnimation)
+		--chatOutputView:startAnimation(nullAnimation)
 		if(previousOnTop ~= nil) then
 			previousOnTop:bringToFront()
 		end
+		if(1 == 1) then
+			return
+		end
+		expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
+		shrinkAnimation = luajava.new(TranslateAnimation,0,0,0,-foldoutHeight)
+		expandAnimation:setDuration(450)
+		shrinkAnimation:setDuration(450)
+	
+		
+		replacementView:startAnimation(shrinkAnimation)
+
+		
+
+		
+
 		expanded = false
 	else
 		doExpand()
@@ -296,51 +331,50 @@ function expandWindow()
 	end
 	
 	--Note("expanding window:")
-	
 	theight = replacementView:getHeight()
 	twidth = replacementView:getWidth()
 	theight = theight + foldoutHeight
 	--Note("expanding window:"..theight..":"..foldoutHeight)
 	
 	if(theight > maxHeight) then
+		local height = maxHeight - uiButtonBarHeight
 		theight = maxHeight
 		--foldoutHeight = 0
-		--Note("window height is greater than max")
+		
+		if(chatOutputView:getHeight() > (maxHeight - dividerHeight)) then
+		Note("window height is greater than max")
+		--ScheduleCallback(101,"resizeMaxWindowNoAnimation",300)
+		expanded = true
+		return
+	end
 	end
 	
+
 	--Note("expanding window:"..theight)
 	
-	replacementView:setDimensions(tonumber(twidth),tonumber(theight))
+	replacementView:setDimensions(MATCH_PARENT,tonumber(theight))
 	
 	altMainOutputViewLayoutParams = luajava.new(RelativeLayoutParams,mainOutputViewLayoutParams.width,mainOutputView:getHeight())
 	altMainOutputViewLayoutParams:addRule(RelativeLayout.ABOVE,40)
 	
-	mainOutputView:setLayoutParams(altMainOutputViewLayoutParams)
+	--mainOutputView:setLayoutParams(altMainOutputViewLayoutParams)
 	
 	--resizeButton:setEnabled(true)
 	
 	local numchildren = tonumber(rootView:getChildCount())
 	previousOnTop = rootView:getChildAt(numchildren-1)
 	rootView:bringChildToFront(replacementView)
-	replacementView:startAnimation(expandAnimation)
+	replacementView:startAnimation(nullAnimation)
 	expanded = true
-	if(pinned == false) then
-		wheight = chatOutputView:getHeight() + foldoutHeight - uiButtonBarHeight
-		tmp = chatOutputView:getLayoutParams();
-		--Note("expanding:"..wheight .." foldout:"..foldoutHeight.." uiBarHeight:"..uiButtonBarHeight.." view:"..view:getHeight())
-		local p = luajava.new(LinearLayoutParams,tmp.width,wheight);
-		chatOutputView:setLayoutParams(p)
-		innerHolderView:startAnimation(windowMoveUpAnimation)
+
+	innerHolderView:startAnimation(windowMoveUpAnimation)
+	--chatOutputView:startAnimation(windowMoveUpAnimation)
 		
-		uiButtonBar:setVisibility(View.VISIBLE)
-	else
-		wheight = theight - uiButtonBarHeight - dividerHeight
-		
-		local tmpparams = luajava.new(LinearLayoutParams,replacementViewParams.width,wheight)
-		chatOutputView:setLayoutParams(tmpparams)
-	end
+	uiButtonBar:setVisibility(View.VISIBLE)
+
 	chatOutputView:requestLayout()
 	replacementView:requestLayout()
+
 	return true;
 end
 
@@ -508,12 +542,14 @@ hideButton:setId(100)
 
 hideButton:setLayoutParams(hideParams)
 hideButton:setOnClickListener(hider_cb)
+--hideButton:setVisibility(View.Gone)
 
 pinButton = luajava.new(ImageButton,context)
 pinParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
 pinParams:addRule(RelativeLayout.LEFT_OF,100);
 pinButton:setImageDrawable(resLoader(respath,"unpinned.png"))
 pinButton:setId(99)
+pinButton:setVisibility(View.GONE)
 
 pinButton:setLayoutParams(pinParams)
 
@@ -589,25 +625,44 @@ longclicker_cb = luajava.createProxy("android.view.View$OnLongClickListener",lon
 
 pinner = {}
 function pinner.onClick(v)
-	if(pinned == true) then
-		pinned = false
-		pinButton:setImageDrawable(resLoader(respath,"unpinned.png"))
-	else
-		pinned = true
-		pinButton:setImageDrawable(resLoader(respath,"pinned.png"))
-	end
-	
-	if(expanded == true) then
 
-	else
-	--UNPIN UNEXPAND
 		local tmp = chatOutputView:getHeight()
 		local p = luajava.new(LinearLayoutParams,MATCH_PARENT,tmp+uiButtonBarHeight)
 		chatOutputView:setLayoutParams(p)
 		innerHolderView:startAnimation(windowPinDownAnimation)	
+		
+		expanded = false
+		
+		foldoutHeight = 0
+		
+		--altMainOutputViewLayoutParams = luajava.new(RelativeLayoutParams,mainOutputViewLayoutParams.width,mainOutputView:getHeight())
+		--altMainOutputViewLayoutParams:addRule(RelativeLayout.ABOVE,40)
+		expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
+		shrinkAnimation = luajava.new(TranslateAnimation,0,0,0,-foldoutHeight)
+		expandAnimation:setDuration(450)
+		shrinkAnimation:setDuration(450)
+		
 		--view:startAnimation(nullAnimation)
-	end
-	pinButton:invalidate()
+
+--	if(pinned == true) then
+--		pinned = false
+--		pinButton:setImageDrawable(resLoader(respath,"unpinned.png"))
+--	else
+--		pinned = true
+--		pinButton:setImageDrawable(resLoader(respath,"pinned.png"))
+--	end
+--	
+--	if(expanded == true) then
+
+--	else
+	--UNPIN UNEXPAND
+--		local tmp = chatOutputView:getHeight()
+--		local p = luajava.new(LinearLayoutParams,MATCH_PARENT,tmp+uiButtonBarHeight)
+--		chatOutputView:setLayoutParams(p)
+--		innerHolderView:startAnimation(windowPinDownAnimation)	
+		--view:startAnimation(nullAnimation)
+--	end
+--	pinButton:invalidate()
 end
 pinner_cb = luajava.createProxy("android.view.View$OnClickListener",pinner)
 pinButton:setOnClickListener(pinner_cb)
@@ -626,7 +681,7 @@ function resizer.onTouch(v,e)
 		local tmp = replacementView:getHeight();
 		local tmp2 = chatOutputView:getHeight();
 		--debugPrint("resizer starting: height:"..tmp2.." parentHeight:"..tmp)
-			
+		fingerdown = true
 		touchStartTime = System:currentTimeMillis()
 	end
 	
@@ -657,23 +712,26 @@ function resizer.onTouch(v,e)
 			end
 			
 			local min = minHeight
-			if(pinned == true) then
+			--if(pinned == true) then
 				min = min - uiButtonBarHeight - dividerHeight
-			end
+			--end
 			if(theight < min) then
 				theight = min
 				wheight = min+uiButtonBarHeight + dividerHeight
 			end
 			
-			replacementView:setDimensions(wwidth,wheight)
+			replacementView:setDimensions(MATCH_PARENT,wheight)
 			
-			if(pinned == false) then
-				foldoutHeight = foldoutHeight + delta
-			end
+			--if(pinned == false) then
+				--foldoutHeight = foldoutHeight + delta
+				--if(foldoutHeight < 0) then
+				--	foldoutHeight = 0
+				--end
+			--end
 			
 			
 			--debugPrint("resizer moving:"..delta.." calculated new height:"..theight.." parentHeight:"..wheight)
-			local tmpparams = luajava.new(LinearLayoutParams,twidth,theight);
+			local tmpparams = luajava.new(LinearLayoutParams,MATCH_PARENT,theight);
 			--view:setDimensions(tonumber(twidth),tonumber(theight))
 			chatOutputView:setLayoutParams(tmpparams)
 			chatOutputView:requestLayout()
@@ -685,12 +743,12 @@ function resizer.onTouch(v,e)
 	
 	if(action == MotionEvent.ACTION_UP) then
 		--debugPrint("resizer up, foldout height:"..foldoutHeight.." min height"..minHeight)
-		if(pinned == true and expanded == false) then
-			foldoutHeight = 100
+		if(expanded == false) then
+			--foldoutHeight = 100
 		else
-			foldoutHeight = replacementView:getHeight() - minHeight
+			--foldoutHeight = replacementView:getHeight() - minHeight
 		end
-		
+		fingerdown = false
 		expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
 		shrinkAnimation = luajava.new(TranslateAnimation,0,0,0,-foldoutHeight)
 		expandAnimation:setDuration(450)
@@ -701,9 +759,29 @@ end
 resizer_cb = luajava.createProxy("android.view.View$OnTouchListener",resizer)
 resizeButton:setOnTouchListener(resizer_cb)
 
+fingerdown = false
+
 maxHeight = 0
 function OnSizeChanged(neww,newh,oldw,oldh)
+	--local params = replacementView:getLayoutParameters()
 	
+	if(not fingerdown) then
+		
+		--update min height
+		maxHeight = inputbar:getTop()
+		if(replacementView:getHeight() > maxHeight) then
+			--adjust to new max height and expand.
+			Note("\non size changed,max now: "..maxHeight.."\n");
+			--local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight-uiButtonBarHeight-dividerHeight)
+			--c
+			
+			ScheduleCallback(101,"resizeMaxWindowNoAnimation",300)
+			--replacementView:setDimensions(MATCH_PARENT,maxHeight)
+			--expandWindow()
+			return
+		end
+		replacementView:requestLayout();
+	end
 end
 
 PluginXCallS("initReady","now")
@@ -726,9 +804,9 @@ function setWindowSize(size)
 	--if not runonce then
 	--debugPrint("in the window set window size:"..size)
 	size = tonumber(size)
-	chatOutputViewParams = luajava.new(LinearLayoutParams,replacementViewParams.width,size)
+	chatOutputViewParams = luajava.new(LinearLayoutParams,MATCH_PARENT,size)
 	minHeight = size + dividerHeight
-	parentParams = luajava.new(RelativeLayoutParams,replacementViewParams.width,size+dividerHeight+uiButtonBarHeight)
+	parentParams = luajava.new(RelativeLayoutParams,MATCH_PARENT,size+dividerHeight+uiButtonBarHeight)
 	replacementView:setLayoutParams(parentParams)
 	chatOutputView:setLayoutParams(chatOutputViewParams)
 	chatOutputView:requestLayout()
