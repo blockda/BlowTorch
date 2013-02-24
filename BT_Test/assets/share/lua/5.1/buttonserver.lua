@@ -9,7 +9,7 @@ local marshal = require("marshal")
 --this is the back end of the script, it will take care of reading/writing buttons to disk
 --and storing all the loaded buttons in memory.
 
-debugInfo = true
+debugInfo = false
 local function debugString(string)
 	if(debugInfo) then
 		Note(string.format("\n%s\n",string))

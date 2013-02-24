@@ -307,7 +307,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					break;
 				case MESSAGE_IMPORTFILE:
 					Connection.this.service.markWindowsDirty();
-					importSettings((String)msg.obj,true);
+					importSettings((String)msg.obj,true,false);
 					break;
 				case MESSAGE_SAVESETTINGS:
 					String changedplugin = (String)msg.obj;
@@ -332,6 +332,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				case MESSAGE_WINDOWXCALLS:
 					//Bundle b = msg.getData();
 					Object o = msg.obj;
+					if(o == null) {
+						o = "";
+					}
 					String token = msg.getData().getString("TOKEN");
 					String function = msg.getData().getString("FUNCTION");
 					try {
@@ -569,11 +572,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		SharedPreferences sprefs = this.getContext().getSharedPreferences("STATUS_BAR_HEIGHT", 0);
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getContext().getResources().getDisplayMetrics().density));
 		titleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
-		
-		
-		
-		
-		
+
 		loaded = true;
 		
 		//fish out the window.
@@ -629,6 +628,8 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//int N = mWindowCallbacks.beginBroadcast();
 		IWindowCallback callback = windowCallbackMap.get(name);
 		//for(int i=0;i<N;i++) {
+		
+		if(callback == null) return;
 		//	IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
 			//String tname = c.getName();
 			//if(c.getName().equals(name)) {
@@ -738,11 +739,13 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		plugins.clear();
 	}
 	
-	private void loadPlugins(ArrayList<Plugin> tmpPlugs) {
+	private void loadPlugins(ArrayList<Plugin> tmpPlugs,String summary) {
 		
 		HashMap<String,TextTree> bufferSaves = new HashMap<String,TextTree>();
 		
+		TextTree buffer = null;
 		if(mWindows.size() > 0) {
+			buffer = mWindows.get(0).getBuffer();
 			//must clear out old windows.
 			while(mWindows.size() > 0) {
 				WindowToken t = mWindows.remove(mWindows.size()-1);
@@ -862,7 +865,13 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 		
 		mWindows.add(0,the_settings.getSettings().getWindows().get(MAIN_WINDOW));
-
+		if(buffer == null) {
+			buffer = mWindows.get(0).getBuffer();
+		} else {
+			buffer.addString("\n\n");
+		}
+		
+		buffer.addString(summary);
 		tmpPlugs.remove(0);
 		
 		pluginMap.clear();
@@ -904,7 +913,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 			for(String link : the_settings.getLinks()) {
-				
+				buffer.addString(Colorizer.colorWhite+"Loading plugin file: "+link);
 				String filename = Environment.getExternalStorageDirectory() + "/BlowTorch/" + link;
 				//Log.e("XML","Attempting to load plugins from:" + filename);
 				ArrayList<Plugin> tmplist = new ArrayList<Plugin>();
@@ -936,24 +945,31 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					
 					plugins.addAll(group);
 					
+					buffer.addString(Colorizer.colorWhite+", success."+Colorizer.colorWhite+"\n");
+					
 					//tmpPlug.setSettings(parse.load());
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
+					buffer.addString(Colorizer.colorRed+" file not found."+Colorizer.colorWhite+"\n");
 					e.printStackTrace();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (SAXException e) {
-					try {
-						service.dispatchXMLError(e.getLocalizedMessage());
-					} catch (RemoteException e1) {
+					//try {
+						//this.dispatchLuaError(message)
+						
+						//service.dispatchXMLError(e.getLocalizedMessage());
+					//} catch (RemoteException e1) {
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-					e.printStackTrace();
+					//	e1.printStackTrace();
+					//}
+					buffer.addString(Colorizer.colorRed+ " XML Parse error.\n"+e.getLocalizedMessage()+Colorizer.colorWhite+"\n");
+					//e.printStackTrace();
 				}
 			}
 		}
+	
 		
 		//so now that we have all the plugins, we need to build up the processor's gmcpTriggerTables.
 		//loop through all the plugins, looking for literal triggers starting
@@ -993,6 +1009,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	public void buildTriggerSystem() {
 		//start with the global settings.
 		//long start = System.currentTimeMillis();
+		if(the_settings == null) return;
 		sortedTriggerMap = new HashMap<Integer,TriggerData>();
 		triggerPluginMap = new HashMap<Integer,Plugin>();
 		int currentgroup = 1;
@@ -1109,6 +1126,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//int N = mWindowCallbacks.beginBroadcast();
 		//for(int i=0;i<N;i++) {
 			IWindowCallback w = windowCallbackMap.get(win);
+			if(w == null) return;
 			try {
 				//if(w.getName().equals(win)) {
 					w.redraw();
@@ -3376,8 +3394,15 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 	
-	private void importSettings(String path,boolean save) {
+	private void importSettings(String path,boolean save,boolean loadmessage) {
 		shutdownPlugins();
+		
+		String verb = null;
+		if(loadmessage) {
+			verb = "Loading";
+		} else {
+			verb = "Importing";
+		}
 		
 		VersionProbeParser vpp = new VersionProbeParser(path,service.getApplicationContext());
 
@@ -3624,7 +3649,8 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				} else if(hfflip.equals("none")) {
 					buttonops.setOption("haptic_flip", Integer.toString(2));
 				}
-				loadPlugins(tmpplugs);
+				String summary = Colorizer.colorWhite + verb + " legacy settings file.\n";
+				loadPlugins(tmpplugs,summary);
 				the_settings.importV1Settings(s);
 				if(!s.isRoundButtons()) {
 					buttonops.setOption("button_roundness", Integer.toString(0));
@@ -3652,9 +3678,17 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 							L.pop(1);
 						}
 					}
-					loadPlugins(tmpplugs);
+					String summary = Colorizer.colorWhite + verb + " settings file.\n";
+					loadPlugins(tmpplugs,summary);
 				} else {
 					Log.e("XMLPARSE","ERROR IN LOADING V2 SETTINGS, DID NOT FIND PROPER XMLVERSION NUMBER");
+					try {
+						service.dispatchXMLError("Error "+verb.toLowerCase()+" settings, invalid or missing version attribute.\n");
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					return;
 				}
 				
 			}
@@ -3668,7 +3702,15 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			e.printStackTrace();
 		} catch (SAXException e) {
 			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
+			try {
+				service.dispatchXMLError(e.getLocalizedMessage());
+				return;
+			} catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 		
 		if(path == null) {
@@ -3700,9 +3742,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 		if(!oldp.exists()) {
 			//oldp.renameTo(new File(internal+convertPath));
-			importSettings(null,false);
+			importSettings(null,false,true);
 		} else {
-			importSettings(rootPath,false);
+			importSettings(rootPath,false,true);
 		}
 
 		Long end = System.currentTimeMillis();
@@ -3855,7 +3897,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//}
 		//loadSettings();
 		service.markWindowsDirty();
-		importSettings(null,true);
+		importSettings(null,true,true);
 	}
 
 	public void startLoadSettingsSequence(String path) {
