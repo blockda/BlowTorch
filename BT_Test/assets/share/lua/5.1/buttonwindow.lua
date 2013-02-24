@@ -20,7 +20,7 @@ require("bit")
 local marshal = require("marshal")
 defaults = nil
 
-debugInfo = true
+debugInfo = false
 
 local function debugString(string)
 	if(debugInfo) then
@@ -82,6 +82,8 @@ DisplayMetrics = view:getContext():getResources():getDisplayMetrics()
 local bit1 = bit.tobit(7)
 local bit2 = bit.bnot(bit1)
 local bit3 = bit.tohex(bit2)
+
+suppress_editor = false
 --Note("BitOp Test:"..bit3)		
 
 function loadButtons(args)
@@ -690,6 +692,8 @@ view:setOnTouchListener(normalTouch_cb)
 function doEdit()
 	--this is launched from the long press
 	--Note("EDITING")
+	if(suppress_editor) then return end
+	
 	manage = true
 	performHapticEdit()
 	enterManagerMode()
@@ -1919,12 +1923,15 @@ function OnSizeChanged(w,h,oldw,oldh)
 	selectedLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 	selectedCanvas = luajava.newInstance("android.graphics.Canvas",selectedLayer)
 	--managerLayer = Bitmap.create(w,h,BitmapConfig.ARGB_8888)
-	drawButtons()
-	draw = true
+	
+
 	
 	revertButtonData.x = w - revertButtonData.width*2
 	revertButtonData.y = h - revertButtonData.height*2
 	revertButton:updateRect(statusoffset)
+	
+	drawButtons()
+	draw = true
 	
 	debugString("Button Window ending View.onSizeChanged()")
 end
@@ -3259,6 +3266,9 @@ end
 toolbarModifyClicked = {}
 function toolbarModifyClicked.onClick(v)
 	
+	if(buttonsCleared) then
+		revertButtons()
+	end
 	--local adapter = mListView:getAdapter()
 	local entry = buttonSetList[lastSelectedIndex+1]
 	--Note("toolbarModifyClicked:"..entry.name)
@@ -3781,6 +3791,7 @@ function clearButtons()
 	revertset = buttons
 	buttons = revertButtonSet
 	drawButtons()
+	suppress_editor = true
 	view:invalidate()
 end
 
@@ -3788,6 +3799,7 @@ function revertButtons()
 	buttonsCleared = false
 	buttons = revertset
 	drawButtons()
+	suppress_editor = false
 	view:invalidate()
 end
 

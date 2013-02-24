@@ -46,7 +46,7 @@ else
 end
 scroll_view_params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 scroll_view:setLayoutParams(scroll_view_params)
-scroll_view:setBackgroundColor(Color:argb(255,255,0,0))
+scroll_view:setBackgroundColor(Color:argb(255,0,0,0))
 
 local linear_layout_params = luajava.new(LinearLayoutParams,MATCH_PARENT,MATCH_PARENT)
 scroll_target:setOrientation(LinearLayout.VERTICAL)
@@ -97,20 +97,20 @@ Views.mainDisplay = 6666
 Views.inputBar = 10
 Views.divider1 = 40
 
-vitalsconfig = {}
-vitalsconfig.id = 1010
-vitalsconfig.width = MATCH_PARENT
-vitalsconfig.height = WRAP_CONTENT
-vitalsconfig.type = "relative"
-vitalsconfig.target = "root"
-vitalsconfig.rules = {}
-vitalsconfig.rules[RelativeLayout.ALIGN_PARENT_BOTTOM] = 1
-vitalsconfig.affects = {}
-vitalsconfig.affects.inputBar = {}
-vitalsconfig.affects.inputBar[RelativeLayout.ALIGN_PARENT_BOTTOM] = 0
-vitalsconfig.affects.inputBar[RelativeLayout.ABOVE] = 1010
+--vitalsconfig = {}
+--vitalsconfig.id = 1010
+--vitalsconfig.width = MATCH_PARENT
+--vitalsconfig.height = WRAP_CONTENT
+--vitalsconfig.type = "relative"
+--vitalsconfig.target = "root"
+--vitalsconfig.rules = {}
+--vitalsconfig.rules[RelativeLayout.ALIGN_PARENT_BOTTOM] = 1
+--vitalsconfig.affects = {}
+--vitalsconfig.affects.inputBar = {}
+--vitalsconfig.affects.inputBar[RelativeLayout.ALIGN_PARENT_BOTTOM] = 0
+--vitalsconfig.affects.inputBar[RelativeLayout.ABOVE] = 1010
 
-layout_config.configs[0][vitalsconfig.id] = vitalsconfig
+--layout_config.configs[0][vitalsconfig.id] = vitalsconfig
 
 function InstallWindow(config)
 	Note("\nInstalling window, raw data: "..config.."\n")

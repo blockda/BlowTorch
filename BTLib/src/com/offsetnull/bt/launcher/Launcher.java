@@ -339,6 +339,8 @@ public class Launcher extends Activity implements ReadyListener {
 			//}
 		}
 		
+		
+		
 		launcher_settings = new LauncherSettings();
 		connections = new ArrayList<MudConnection>();
 		
@@ -494,6 +496,11 @@ public class Launcher extends Activity implements ReadyListener {
 		Log.e("LAUNCHER","STARTING SREVICE");
 		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
 		startService(new Intent(action));
+		buildList();
+		if(!serviceBound) {
+			//String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+			bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		}
 		
 	}
 	
@@ -537,13 +544,20 @@ public class Launcher extends Activity implements ReadyListener {
 				e.printStackTrace();
 			}
 		}
+		if(!serviceBound) {
+			String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+			bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		}
 	}
 	
+	boolean serviceBound = false;
 	@Override
 	public void onResume() {
 		super.onResume();
-		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
-		bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		if(!serviceBound) {
+			String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
+			bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+		}
 		//buildList();
 	}
 	
@@ -559,11 +573,13 @@ public class Launcher extends Activity implements ReadyListener {
 			}
 		}
 		unbindService(connectionChecker);
+		serviceBound = false;
 		serviceConnected = false;
 		//if(serviceConnected) {
 		//	unbindService(connectionChecker);
 		//}
 	}
+	
 	
 	public void onDestroy() {
 		//saveConnectionsToDisk();
@@ -771,6 +787,8 @@ public class Launcher extends Activity implements ReadyListener {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			serviceBound = true;
 			serviceConnected = true;
 			//try {
 				//connectedList = (List<String>)tmp.getConnections();
@@ -1262,16 +1280,18 @@ public class Launcher extends Activity implements ReadyListener {
 		
 		apdapter.sort(ccmp);
 		
-		try {
-			connectedList = (List<String>)service.getConnections();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if(connectedList != null) {
-			for(int i=0;i<apdapter.getCount();i++) {
-				apdapter.getItem(i).setConnected(connectedList.contains(apdapter.getItem(i).getDisplayName()));
-			}	
+		if(serviceBound) {
+			try {
+				connectedList = (List<String>)service.getConnections();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			}
+			if(connectedList != null) {
+				for(int i=0;i<apdapter.getCount();i++) {
+					apdapter.getItem(i).setConnected(connectedList.contains(apdapter.getItem(i).getDisplayName()));
+				}	
+			}
 		}
 		
 		//String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);

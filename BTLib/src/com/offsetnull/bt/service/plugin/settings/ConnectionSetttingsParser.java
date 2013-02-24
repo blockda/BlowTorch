@@ -317,7 +317,11 @@ public class ConnectionSetttingsParser extends PluginParser {
 			if(d.isExecute()) {
 				out.attribute("", "execute", "true");
 			}
-			out.cdsect(d.getData());
+			if(d.getData().endsWith("\n")) {
+				out.cdsect(d.getData().substring(0, d.getData().length()-1));
+			} else {
+				out.cdsect(d.getData());
+			}
 			out.endTag("", "script");
 		}
 		

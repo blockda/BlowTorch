@@ -26,12 +26,18 @@ public class TriggerElementListener implements ElementListener {
 	public void start(Attributes a) {
 		
 		if(a.getValue("", BasePluginParser.ATTR_TRIGGERLITERAL) == null) {
-			current_trigger.setInterpretAsRegex((a.getValue("","regexp") == null) ? false : ( a.getValue("","regexp").equals("true") ? true : false));
+			if(a.getValue("","regexp") != null) {
+				current_trigger.setInterpretAsRegex((a.getValue("","regexp") == null) ? false : ( a.getValue("","regexp").equals("true") ? true : false));
+			}
 		} else {
 			current_trigger.setInterpretAsRegex( (a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL) == null) ? false : a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL).equals("true") ? true : false);
 		}
 		
-		current_trigger.setName(a.getValue("",BasePluginParser.ATTR_TRIGGERTITLE));
+		if(a.getValue("",BasePluginParser.ATTR_TRIGGERTITLE) == null) {
+			
+		} else {
+			current_trigger.setName(a.getValue("",BasePluginParser.ATTR_TRIGGERTITLE));
+		}
 		current_trigger.setPattern(a.getValue("",BasePluginParser.ATTR_TRIGGERPATTERN));
 		 
 
@@ -41,6 +47,7 @@ public class TriggerElementListener implements ElementListener {
 		current_trigger.setSequence( (a.getValue("",BasePluginParser.ATTR_SEQUENCE) == null) ? 10 : Integer.parseInt(a.getValue("",BasePluginParser.ATTR_SEQUENCE)));
 		current_trigger.setGroup( (a.getValue("",BasePluginParser.ATTR_GROUP) == null) ? "" : a.getValue("",BasePluginParser.ATTR_GROUP));
 		current_trigger.setKeepEvaluating((a.getValue("",BasePluginParser.ATTR_KEEPEVALUATING) == null) ? true : ("true".equals(a.getValue("",BasePluginParser.ATTR_KEEPEVALUATING))) ? true : false);
+		
 		current_trigger.setResponders(new ArrayList<TriggerResponder>());
 		
 	
@@ -48,7 +55,11 @@ public class TriggerElementListener implements ElementListener {
 
 	public void end() {
 		//settings.getTriggers().put(current_trigger.getName(), current_trigger.copy());
-		callback.addTrigger(current_trigger.getName(), current_trigger.copy());
+		TriggerData t = current_trigger.copy();
+		if(current_trigger.getName().equals("")) {
+			current_trigger.setName(t.toString());
+		}
+		callback.addTrigger(current_trigger.getName(),t);
 	}
 
 }
