@@ -220,6 +220,14 @@ function EchoText(text)
 	AppendLineToWindow(chatWindowName,text)
 end
 
+function FakeChan(text)
+		newchannel = luajava.newInstance("com.offsetnull.bt.window.TextTree")
+		--attatch a copy of this line to the new buffer
+		--newchannel:appendLine(line)
+		--keep track of new buffer in buffer map, under the name of the matched channel.
+		buffers[text] = newchannel
+		updateUIButtons()
+end
 
 
 

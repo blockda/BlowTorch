@@ -58,6 +58,7 @@ import android.os.RemoteException;
 import android.text.ClipboardManager;
 import android.util.AttributeSet;
 //import android.util.Log;
+//import android.util.Log;
 
 import android.view.Gravity;
 import android.view.Menu;
@@ -720,6 +721,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	long target = 0;
 	boolean homeWidgetFingerDown = false;
 	int touchStartY;
+	int pointer = -1;
 	@Override
 	public boolean onTouchEvent(MotionEvent t) {
 		//if(fuckyou) {
@@ -731,7 +733,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			//return true;
 		//}
 		//long now = System.currentTimeMillis();
+		int action = t.getAction() & MotionEvent.ACTION_MASK;     
+		int pointerIndex = (t.getAction() & MotionEvent.ACTION_POINTER_ID_MASK) >> MotionEvent.ACTION_POINTER_ID_SHIFT;
+		int pointerId = t.getPointerId(pointerIndex);
 		//if(now < target) {
+		
+		if(pointer > 0 && pointerId != pointer) {
+			//but invalidate this anyway
+			this.invalidate();
+			return false;
+		}
 			//normal
 		if(!scrollingEnabled) {
 			return false;
@@ -745,7 +756,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//L.getGlobal("debug");
 		//L.getField(L.getTop(), "traceback");
 		//L.remove(-2);
-		
+		int index = t.findPointerIndex(pointerId);
+		start_x = new Float(t.getX(index));
+		start_x = start_x+1;
 		/*L.getGlobal("OnTouchEvent");
 		if(!L.isFunction(L.getTop())) {
 			//return false;
@@ -791,9 +804,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			synchronized(token) {
 			if(t.getAction() == MotionEvent.ACTION_DOWN) {
-				
-				start_x = new Float(t.getX(t.getPointerId(0)));
-				start_y = new Float(t.getY(t.getPointerId(0)));
+				pointer = pointerId;
+				start_x = new Float(t.getX(index));
+				start_y = new Float(t.getY(index));
 				pre_event = MotionEvent.obtainNoHistory(t);
 				fling_velocity = 0.0f;
 				finger_down = true;
@@ -807,8 +820,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 				
 				//calculate row/col
-				float x = t.getX();
-				float y = t.getY();
+				float x = t.getX(index);
+				float y = t.getY(index);
 				
 				//convert y to be at the bottom of the screen.
 				
@@ -831,6 +844,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						homeWidgetFingerDown = true;
 					}
 				}
+				
+				//Log.e("FLUF","IN ON DOWN: "+scrollback);
 			}
 			
 			if(!increadedPriority) {
@@ -841,7 +856,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 	
 				//Float now_x = new Float(t.getX(t.getPointerId(0)));
-				Float now_y = new Float(t.getY(t.getPointerId(0)));
+				Float now_y = new Float(t.getY(index));
 				
 				
 	
@@ -850,7 +865,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				float time = (nowtime - thentime) / 1000.0f; //convert to seconds
 				
-				float prev_y = pre_event.getY(t.getPointerId(0));
+				float prev_y = pre_event.getY(index);
 				float dist = now_y - prev_y;
 				diff_amount = (int)dist;
 				
@@ -880,14 +895,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					pre_event = MotionEvent.obtainNoHistory(t);
 				}
 				
+				//Log.e("FLUF","IN ON MOVE: "+scrollback);
 	
 			}
 			
 			int pointers = t.getPointerCount();
 			for(int i=0;i<pointers;i++) {
 				
-				Float y_val = new Float(t.getY(t.getPointerId(i)));
-				Float x_val = new Float(t.getX(t.getPointerId(i)));
+				Float y_val = new Float(t.getY(index));
+				Float x_val = new Float(t.getX(index));
 				bx = x_val.intValue();
 				by = y_val.intValue();
 				
@@ -904,7 +920,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		        //reset the priority
 		        increadedPriority = false;
 		        //_runner.dcbPriority(Process.THREAD_PRIORITY_DEFAULT);
-		        
+		        pointer = -1;
 	
 		        pre_event = null;
 		        finger_down=false;
@@ -915,12 +931,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			        touchInLink = -1;
 				}
 				
+				//Log.e("FLUF","IN ON UP: "+scrollback);
+				
 				//if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
 				//}
 					
 				if(homeWidgetShowing && homeWidgetFingerDown) {
-					if(homeWidgetRect.contains((int)t.getX(),(int)t.getY())) {
+					if(homeWidgetRect.contains((int)t.getX(index),(int)t.getY(index))) {
 						scrollback = SCROLL_MIN;
 						homeWidgetFingerDown = false;
 						this.invalidate();
@@ -931,6 +949,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			}
 			this.invalidate();
+			
 			return true; //consumes
 		}
 		
@@ -943,16 +962,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private void calculateScrollBack() {
 		//synchronized(the_tree) {
 			
+			
+		
 			if(prev_draw_time == 0) { //never drawn before
+				if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) { scrollback = SCROLL_MIN; return;}
 				if(finger_down) {
 					scrollback = (double)Math.floor(scrollback + diff_amount);
 					if(scrollback < SCROLL_MIN) {
 						scrollback = SCROLL_MIN;
+						//Log.e("FLUF","1: "+scrollback);
 					} else {
 						if(scrollback >= ((the_tree.getBrokenLineCount() * PREF_LINESIZE))) {
 							
 							scrollback = (double)((the_tree.getBrokenLineCount() * PREF_LINESIZE));
-							
+							//Log.e("FLUF","2: "+scrollback);
 						}
 					}
 					diff_amount = 0;
@@ -978,12 +1001,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					if(fling_velocity < 0) {
 						fling_velocity = fling_velocity + fling_accel*duration_since_last_frame;
 						scrollback =  (scrollback + fling_velocity*duration_since_last_frame);
-						
+						//Log.e("FLUF","3: "+scrollback);
 					} else if (fling_velocity > 0) {
 						
 						fling_velocity = fling_velocity - fling_accel*duration_since_last_frame;
 						scrollback =  (scrollback + fling_velocity*duration_since_last_frame);
-						
+						//Log.e("FLUF","4: "+scrollback);
 					}
 					
 					if(Math.abs(new Double(fling_velocity)) < 15) {
@@ -995,6 +1018,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						
 					if(scrollback <= SCROLL_MIN) {
 						scrollback = SCROLL_MIN;
+						//Log.e("FLUF","5: "+scrollback);
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
@@ -1006,6 +1030,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					if(scrollback >= ((the_tree.getBrokenLineCount() * PREF_LINESIZE))) {
 						//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
 						scrollback = (double)((the_tree.getBrokenLineCount() * PREF_LINESIZE));
+						//Log.e("FLUF","6: "+scrollback);
 						fling_velocity = 0;
 						prev_draw_time = 0;
 						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
@@ -1016,6 +1041,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 				
 			}
+			
 	}
 	
 	Paint p = new Paint();
@@ -1199,7 +1225,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			screenIt = bundle.getI();
 			y = bundle.getOffset();
-			//Log.e("STARTY","STARTY:"+y);
+
+			
 			int extraLines = bundle.getExtraLines();
 			if(screenIt == null) { return;}
 			
@@ -2441,8 +2468,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount()-1);
 			while(drawingIterator.hasNext()) {drawingIterator.next(); startline += 1;}
 			//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
+			float tmpy = (under*pLineSize-(offset+(PREF_LINESIZE/3)));
 			
-			return new IteratorBundle(drawingIterator,under*pLineSize-(offset+(PREF_LINESIZE/3)),0,startline);
+			//if(mName.equals("chats")) Log.e("MATH",tmpy+"="+under+"*"+pLineSize+"-("+offset+"("+PREF_LINESIZE+"/3)))");
+			return new IteratorBundle(drawingIterator,tmpy,0,startline);
 		}
 		int lines = 1;
 		//double target = Math.floor(pY/pLineSize);
@@ -2471,6 +2500,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 //					//Log.e("WINDOW","Calculating starting position, y="+y+ " offset="+offset+" extra="+extra+" delta="+delta);
 //					Log.e("WINDOW","Calculating starting position, measured:"+lines);
 //				}
+				
+				//if(mName.equals("chats")) Log.e("MATH","extra="+extra+" offset="+offset+" delta="+delta);
 				//Log.e("SCREENIT","GET SCREEN ITERATOR, EXTRA:"+extra);
 				if(drawingIterator.hasPrevious()) drawingIterator.previous();
 				if(l.breaks > 0) {
@@ -2622,6 +2653,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			scrollback -= oldmin - SCROLL_MIN;
 		}
 		
+		//if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
+		//	scrollback = 0.0;
+		//}
+
+		
 		homeWidgetRect.set(mWidth-homeWidgetDrawable.getWidth(),mHeight-homeWidgetDrawable.getHeight(),mWidth,mHeight);
 		
 		Float foo = new Float(0);
@@ -2648,6 +2684,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			hasOnSizeChanged = false;
 			L.pop(2);
 		}
+		this.invalidate();
 	}
 	boolean hasOnSizeChanged = true;
 	
