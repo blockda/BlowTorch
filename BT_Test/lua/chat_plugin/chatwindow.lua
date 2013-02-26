@@ -2,82 +2,83 @@
 --
 -- Top level utility constants
 respath = GetPluginInstallDirectory().."/icons"
-context = view:getContext()
-density = GetDisplayDensity()
+local context = view:getContext()
+local density = GetDisplayDensity()
 local chatOutputView = view
 
 local current_version = 12
 
+local luajava = luajava
 --
 -- Classes needed by the script to do android-esque ui things.
-System = luajava.bindClass("java.lang.System")
-View = luajava.bindClass("android.view.View")
-Context = luajava.bindClass("android.content.Context")
-HorizontalScrollView = luajava.bindClass("android.widget.HorizontalScrollView")
-Drawable = luajava.bindClass("android.graphics.drawable.Drawable")
-RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
-RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
-LinearLayout = luajava.bindClass("android.widget.LinearLayout")
-LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams")
-MotionEvent = luajava.bindClass("android.view.MotionEvent")
-Array = luajava.bindClass("java.lang.reflect.Array")
-Color = luajava.bindClass("android.graphics.Color")
-File = luajava.bindClass("java.io.File")
-BitmapDrawable = luajava.bindClass("android.graphics.drawable.BitmapDrawable")
-ImageButton = luajava.bindClass("android.widget.ImageButton")
-Button = luajava.bindClass("android.widget.Button")
-TranslateAnimation = luajava.bindClass("android.view.animation.TranslateAnimation")
-AnimatedRelativeLayout = luajava.bindClass("com.offsetnull.bt.window.AnimatedRelativeLayout")
-RectF = luajava.bindClass("android.graphics.RectF")
-RoundRectShape = luajava.bindClass("android.graphics.drawable.shapes.RoundRectShape")
-ShapeDrawable = luajava.bindClass("android.graphics.drawable.ShapeDrawable")
-LayerDrawable = luajava.bindClass("android.graphics.drawable.LayerDrawable")
-StateListDrawable = luajava.bindClass("android.graphics.drawable.StateListDrawable")
-R_attr = luajava.bindClass("android.R$attr")
-Class = luajava.bindClass("java.lang.Class")
-Gravity = luajava.bindClass("android.view.Gravity")
+local System = luajava.bindClass("java.lang.System")
+local View = luajava.bindClass("android.view.View")
+local Context = luajava.bindClass("android.content.Context")
+local HorizontalScrollView = luajava.bindClass("android.widget.HorizontalScrollView")
+local Drawable = luajava.bindClass("android.graphics.drawable.Drawable")
+local RelativeLayoutParams = luajava.bindClass("android.widget.RelativeLayout$LayoutParams")
+local RelativeLayout = luajava.bindClass("android.widget.RelativeLayout")
+local LinearLayout = luajava.bindClass("android.widget.LinearLayout")
+local LinearLayoutParams = luajava.bindClass("android.widget.LinearLayout$LayoutParams")
+local MotionEvent = luajava.bindClass("android.view.MotionEvent")
+local Array = luajava.bindClass("java.lang.reflect.Array")
+local Color = luajava.bindClass("android.graphics.Color")
+local File = luajava.bindClass("java.io.File")
+local BitmapDrawable = luajava.bindClass("android.graphics.drawable.BitmapDrawable")
+local ImageButton = luajava.bindClass("android.widget.ImageButton")
+local Button = luajava.bindClass("android.widget.Button")
+local TranslateAnimation = luajava.bindClass("android.view.animation.TranslateAnimation")
+local AnimatedRelativeLayout = luajava.bindClass("com.offsetnull.bt.window.AnimatedRelativeLayout")
+local RectF = luajava.bindClass("android.graphics.RectF")
+local RoundRectShape = luajava.bindClass("android.graphics.drawable.shapes.RoundRectShape")
+local ShapeDrawable = luajava.bindClass("android.graphics.drawable.ShapeDrawable")
+local LayerDrawable = luajava.bindClass("android.graphics.drawable.LayerDrawable")
+local StateListDrawable = luajava.bindClass("android.graphics.drawable.StateListDrawable")
+local R_attr = luajava.bindClass("android.R$attr")
+local Class = luajava.bindClass("java.lang.Class")
+local Gravity = luajava.bindClass("android.view.Gravity")
 --
 -- Utility 'java primitive array' creation code
-Integer = luajava.bindClass("java.lang.Integer")
-Float = luajava.bindClass("java.lang.Float")
-Byte = luajava.bindClass("java.lang.Byte")
+local Integer = luajava.bindClass("java.lang.Integer")
+local Float = luajava.bindClass("java.lang.Float")
+local Byte = luajava.bindClass("java.lang.Byte")
 
-IntegerInstance = luajava.new(Integer,0)
-IntegerClass = IntegerInstance:getClass()
-RawInteger = IntegerClass.TYPE
+local IntegerInstance = luajava.new(Integer,0)
+local IntegerClass = IntegerInstance:getClass()
+local RawInteger = IntegerClass.TYPE
 
-FloatInstance = luajava.new(Float,0)
-FloatClass = FloatInstance:getClass()
-RawFloat = FloatClass.TYPE
+local FloatInstance = luajava.new(Float,0)
+local FloatClass = FloatInstance:getClass()
+local RawFloat = FloatClass.TYPE
 
-ByteInstance = luajava.new(Byte,0)
-ByteClass = ByteInstance:getClass()
-RawByte = ByteClass.TYPE
+local ByteInstance = luajava.new(Byte,0)
+local ByteClass = ByteInstance:getClass()
+local RawByte = ByteClass.TYPE
 
-function makeFloatArray(table)
-	newarray = Array:newInstance(RawFloat,#table)
+local function makeFloatArray(table)
+	local newarray = Array:newInstance(RawFloat,#table)
 	for i,v in ipairs(table) do
-		index = i-1
-		floatval = luajava.new(Float,v)
+		local index = i-1
+		local floatval = luajava.new(Float,v)
 		Array:setFloat(newarray,index,floatval:floatValue())
 	end
 	
 	return newarray
 end
 
-function makeIntArray(table)
-	newarray = Array:newInstance(RawInteger,#table)
+local function makeIntArray(table)
+	local newarray = Array:newInstance(RawInteger,#table)
 	for i,v in ipairs(table) do
-		index = i-1
-		intval = luajava.new(Integer,v)
+		local index = i-1
+		local intval = luajava.new(Integer,v)
 		Array:setInt(newarray,index,intval:intValue())
 	end
 	
 	return newarray
 end
 
-function makeEmptyIntArray()
-	newarray = Array:newInstance(RawInteger,0)
+local function makeEmptyIntArray()
+	local newarray = Array:newInstance(RawInteger,0)
 	return newarray
 end
 
@@ -133,6 +134,7 @@ end
 
 local uiButtonBar = luajava.new(RelativeLayout,context)
 local uiButtonBarParams = luajava.new(RelativeLayoutParams,MATCH_PARENT,WRAP_CONTENT)
+--uiButtonBarParams:addRule(RelativeLayout.ABOVE,595701)
 uiButtonBarParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 uiButtonBar:setLayoutParams(uiButtonBarParams)
 uiButtonBar:setBackgroundColor(Color:argb(255,0,0,0))
@@ -142,7 +144,17 @@ local scrollHolder = luajava.new(HorizontalScrollView,context)
 local scrollHolderParams = luajava.new(RelativeLayoutParams,MATCH_PARENT,WRAP_CONTENT)
 scrollHolderParams:addRule(RelativeLayout.LEFT_OF,98)
 scrollHolderParams:addRule(RelativeLayout.RIGHT_OF,102)
+scrollHolderParams:addRule(RelativeLayout.ABOVE,105)
 scrollHolder:setLayoutParams(scrollHolderParams)
+
+secondDividerView = luajava.new(View,chatOutputView:getContext())
+secondDividerparams = luajava.new(RelativeLayoutParams,MATCH_PARENT,dividerHeight)
+secondDividerparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+secondDividerView:setId(105)
+secondDividerView:setLayoutParams(secondDividerparams)
+secondDividerView:setBackgroundColor(Color:argb(255,68,68,136))
+
+
 
 channelHolder = luajava.new(LinearLayout,context)
 channelHolderParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
@@ -178,7 +190,7 @@ windowPinDownAnimationListener_cb = luajava.createProxy("android.view.animation.
 windowPinDownAnimation:setAnimationListener(windowPinDownAnimationListener_cb)
 
 function resizeMaxWindowNoAnimation()
-	Note("\ndeploying resizer"..maxHeight.."\n")
+	--Note("\ndeploying resizer"..maxHeight.."\n")
 	replacementView:setDimensions(MATCH_PARENT,maxHeight)
 	local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight-uiButtonBarHeight-dividerHeight)
 	--local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight - uiButtonBarHeight - dividerHeight)
@@ -195,7 +207,7 @@ end
 --Hack callback chain method of getting the onAnimationEnd correctly for the AnimatedRelativeLayout top level parent view.
 --oh man this needs so much documentation.
 function onParentAnimationEnd()
-	Note("\nin parent animation end\n")
+	--Note("\nin parent animation end\n")
 	if(expanded == true) then
 		twidth = replacementView:getWidth()
 		theight = replacementView:getHeight()
@@ -205,7 +217,7 @@ function onParentAnimationEnd()
 		--replacementView:setDimensions(twidth,theight)
 	
 		local wheight = replacementView:getHeight() - uiButtonBarHeight - dividerHeight
-		Note("\nparentAnimationEnd:"..wheight..":"..theight)
+		--Note("\nparentAnimationEnd:"..wheight..":"..theight)
 		local tmpparams = luajava.new(LinearLayoutParams,replacementViewParams.width,wheight)
 		chatOutputView:setLayoutParams(tmpparams)
 		replacementView:setLayoutParams(replacementViewParams)
@@ -300,6 +312,21 @@ dividerView:setId(59596)
 dividerView:setLayoutParams(dividerparams)
 dividerView:setBackgroundColor(Color:argb(255,68,68,136))
 
+--linearholder = luajava.new(LinearLayout,chatOutputView:getContext())
+--linearholderparams = luajava.new(RelativeLayoutParams,MATCH_PARENT,dividerHeight)
+--linearholderparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+--linearholder:setLayoutParams(linearholderparams)
+--linearholder:setId(5995)
+
+--secondDividerView = luajava.new(View,chatOutputView:getContext())
+--secondDividerparams = luajava.new(LinearLayoutParams,MATCH_PARENT,dividerHeight)
+--secondDividerparams:addRule(RelativeLayout.BELOW,uiButtonBar:getId())
+--secondDividerView:setId(595701)
+--secondDividerView:setLayoutParams(secondDividerparams)
+--secondDividerView:setBackgroundColor(Color:argb(255,68,68,136))
+
+--linearholder:addView(secondDividerView)
+
 innerHolderView = luajava.new(LinearLayout,chatOutputView:getContext())
 innerHolderViewLayoutParams = luajava.new(RelativeLayoutParams,replacementViewParams.width,WRAP_CONTENT)
 innerHolderView:setOrientation(LinearLayout.VERTICAL)
@@ -309,8 +336,12 @@ innerHolderView:setId(59597)
 innerHolderView:addView(chatOutputView)
 innerHolderView:addView(dividerView)
 
+
+
 replacementView:addView(uiButtonBar)
+
 replacementView:addView(innerHolderView);
+--replacementView:addView(linearholder)
 rootView:addView(replacementView)
 
 mainOutputView = rootView:findViewById(6666)
@@ -342,7 +373,7 @@ function expandWindow()
 		--foldoutHeight = 0
 		
 		if(chatOutputView:getHeight() > (maxHeight - dividerHeight)) then
-		Note("window height is greater than max")
+		--Note("window height is greater than max")
 		--ScheduleCallback(101,"resizeMaxWindowNoAnimation",300)
 		expanded = true
 		return
@@ -390,6 +421,7 @@ function longPressListener.onTouch(v,e)
 		moveLast = e:getY()
 		moveTotal = 0
 		v:onTouchEvent(e)
+		return true
 	elseif( action == MotionEvent.ACTION_MOVE) then
 		moveDelta = e:getY() - moveLast
 		moveLast = e:getY()
@@ -398,12 +430,14 @@ function longPressListener.onTouch(v,e)
 			CancelCallback(100)
 		end
 		v:onTouchEvent(e)
+		return true
 	elseif(action == MotionEvent.ACTION_UP) then
 		v:onTouchEvent(e) 
 		moveTotal = 0
 		CancelCallback(100)
+		return true
 	end
-	return true
+	return false
 end
 longPressListener_cb = luajava.createProxy("android.view.View$OnTouchListener",longPressListener)
 chatOutputView:setOnTouchListener(longPressListener_cb)
@@ -429,20 +463,22 @@ function loadButtons(input)
 	uiButtonBar:addView(resizeButton)
 	uiButtonBar:addView(delButton)
 	
-	--reconstruct the channel list table
-	list = loadstring(input)()
-	counter = 1
-	lastbutton = nil
+	uiButtonBar:addView(secondDividerView)
 	
-	a = {}
+	--reconstruct the channel list table
+	local list = loadstring(input)()
+	local counter = 1
+	local lastbutton = nil
+	
+	local a = {}
     for i,n in pairs(list) do table.insert(a, i) end
     table.sort(a)
     --for i,n in ipairs(a) do print(n) end
 	
 	for i,n in ipairs(a) do
 		if(n ~= "main") then
-			newbutton = generateNewButton(n,counter)
-			params = newbutton:getLayoutParams()
+			local newbutton = generateNewButton(n,counter)
+			local params = newbutton:getLayoutParams()
 			params:setMargins(2,0,2,0)
 			counter = counter + 1
 			buttonMap[n] = newbutton
@@ -452,28 +488,13 @@ function loadButtons(input)
 	end
 	
 	if(lastbutton ~= nil) then
-		lparams = lastbutton:getLayoutParams()
+		local lparams = lastbutton:getLayoutParams()
 		lparams:setMargins(0,0,2,0)
 		uiButtonBar:requestLayout()
 	end
 end
 
-function generateNewButton(name,grav)
-	button = luajava.new(Button,context)
-	params = luajava.new(LinearLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
-	button:setId(grav)
-	button:setText(name)
-	button:setTextSize(12*density)
-	button:setLayoutParams(params)
-	button:setOnClickListener(clicker_cb)
-	button:setOnLongClickListener(longclicker_cb)
-	button:setTextColor(Color:argb(255,150,150,150))
-	shape = makeStateDrawable(name)
-	
-	button:setBackgroundDrawable(shape)
-	
-	return button
-end
+
 
 local cornerRadii = {}
 table.insert(cornerRadii,0)
@@ -490,7 +511,7 @@ local radii = makeFloatArray(cornerRadii)
 local inset = luajava.new(RectF)
 inset:set(5,0,5,5)
 	
-function makeTabDrawable(label,a,r,g,b)
+local function makeTabDrawable(label,a,r,g,b)
 	local rectShape = luajava.new(RoundRectShape,radii,nil,nil)
 	
 	local shapeDrawable = luajava.new(ShapeDrawable,rectShape)
@@ -517,7 +538,7 @@ function makeTabDrawable(label,a,r,g,b)
 
 end
 
-function makeStateDrawable(label)
+local function makeStateDrawable(label)
 	local stater = luajava.new(StateListDrawable)
 	local pre = makeTabDrawable(label,255,100,0,0)
 
@@ -534,9 +555,26 @@ function makeStateDrawable(label)
 	return stater
 end
 
+function generateNewButton(name,grav)
+	local button = luajava.new(Button,context)
+	params = luajava.new(LinearLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
+	button:setId(grav)
+	button:setText(name)
+	button:setTextSize(12*density)
+	button:setLayoutParams(params)
+	button:setOnClickListener(clicker_cb)
+	button:setOnLongClickListener(longclicker_cb)
+	button:setTextColor(Color:argb(255,150,150,150))
+	local shape = makeStateDrawable(name)
+	
+	button:setBackgroundDrawable(shape)
+	
+	return button
+end
 hideButton = luajava.new(ImageButton,context)
 hideParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
 hideParams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+hideParams:addRule(RelativeLayout.ABOVE,105)
 hideButton:setImageDrawable(resLoader(respath,"hide.png"))
 hideButton:setId(100)
 
@@ -556,6 +594,7 @@ pinButton:setLayoutParams(pinParams)
 mainButton = luajava.new(Button,context)
 mainParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
 mainParams:addRule(RelativeLayout.LEFT_OF,99);
+mainParams:addRule(RelativeLayout.ABOVE,105)
 mainParams:setMargins(2,0,0,0)
 mainButton:setId(98)
 mainButton:setText("main")
@@ -570,6 +609,7 @@ buttonMap["main"] = mainButton
 resizeButton = luajava.new(ImageButton,context)
 resizeParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
 resizeParams:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
+resizeParams:addRule(RelativeLayout.ABOVE,105)
 resizeButton:setImageDrawable(resLoader(respath,"resize.png"))
 resizeButton:setId(101)
 
@@ -597,7 +637,7 @@ function clicker.onClick(v)
 	drawable = drawableMap[label]
 	
 	dpaint = drawable:getPaint()
-	dpaint:setARGB(225,200,200,200)
+	dpaint:setARGB(255,50,50,200)
 
 	for i,b in pairs(drawableMap) do
 		if(i ~= label) then
@@ -618,7 +658,7 @@ mainButton:setOnClickListener(clicker_cb)
 longclicker = {}
 function longclicker.onLongClick(v)
 	label = v:getText()
-	SendToServer(".kb popup "..label)
+	SendToServer(".kb popup "..label.." ")
 	return true
 end
 longclicker_cb = luajava.createProxy("android.view.View$OnLongClickListener",longclicker)
@@ -672,17 +712,26 @@ pinned = false
 touchStartY = 0
 touchStartTime = 0
 resizer = {}
+touchFinger = nil
 function resizer.onTouch(v,e)
 	
-	action = e:getAction()
+	
+	action = e:getActionMasked()
+	--if(action == MotionEvent.ACTION_POINTER_DOWN) then return true end
 	if(action == MotionEvent.ACTION_DOWN) then
-		--debugPrint("resizer down")
+		--debugPrint("resizer down"
+		--if(touchFinger == nil) then touchFinger = e:getPointerId(0) end
+		--if(e:getPointerId(0) ~= touchFinger) then return false end
+		
 		touchStartY = e:getY()
 		local tmp = replacementView:getHeight();
 		local tmp2 = chatOutputView:getHeight();
 		--debugPrint("resizer starting: height:"..tmp2.." parentHeight:"..tmp)
 		fingerdown = true
+		--touchFinger = e:getId()
 		touchStartTime = System:currentTimeMillis()
+		chatOutputView:invalidate()
+		return true
 	end
 	
 	if(action == MotionEvent.ACTION_MOVE) then
@@ -730,15 +779,18 @@ function resizer.onTouch(v,e)
 			--end
 			
 			
-			--debugPrint("resizer moving:"..delta.." calculated new height:"..theight.." parentHeight:"..wheight)
+			--Note("resizer moving:"..delta.." calculated new height:"..min.." parentHeight:"..chatOutputView:getTop().."\n")
 			local tmpparams = luajava.new(LinearLayoutParams,MATCH_PARENT,theight);
 			--view:setDimensions(tonumber(twidth),tonumber(theight))
+			--chatOutputView:invalidate()
 			chatOutputView:setLayoutParams(tmpparams)
 			chatOutputView:requestLayout()
 			replacementView:requestLayout()
 			
 		end
 		toucheStartY = e:getY()
+		chatOutputView:invalidate()
+		return true
 	end
 	
 	if(action == MotionEvent.ACTION_UP) then
@@ -749,10 +801,13 @@ function resizer.onTouch(v,e)
 			--foldoutHeight = replacementView:getHeight() - minHeight
 		end
 		fingerdown = false
+		touchFinger = nil
 		expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
 		shrinkAnimation = luajava.new(TranslateAnimation,0,0,0,-foldoutHeight)
 		expandAnimation:setDuration(450)
 		shrinkAnimation:setDuration(450)
+		chatOutputView:invalidate()
+		return true
 	end
 	return true
 end
@@ -771,7 +826,7 @@ function OnSizeChanged(neww,newh,oldw,oldh)
 		maxHeight = inputbar:getTop()
 		if(replacementView:getHeight() > maxHeight) then
 			--adjust to new max height and expand.
-			Note("\non size changed,max now: "..maxHeight.."\n");
+			--Note("\non size changed,max now: "..maxHeight.."\n");
 			--local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight-uiButtonBarHeight-dividerHeight)
 			--c
 			
@@ -780,8 +835,12 @@ function OnSizeChanged(neww,newh,oldw,oldh)
 			--expandWindow()
 			return
 		end
-		replacementView:requestLayout();
+		chatOutputView:invalidate()
+	else
+		chatOutputView:invalidate()
 	end
+	
+	
 end
 
 PluginXCallS("initReady","now")
