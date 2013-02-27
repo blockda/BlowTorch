@@ -2551,7 +2551,9 @@ public void removeConnectionNotification(String display) {
 		}
 
 		public void saveSettings() throws RemoteException {
-			connections.get(connectionClutch).saveMainSettings();
+			Connection c = connections.get(connectionClutch);
+			if(c == null) return;
+			c.saveMainSettings();
 		}
 
 		public void setNotificationText(CharSequence seq)

@@ -69,7 +69,7 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 		
 		try {
 			service.deletePlugin(plugin);
-			service.saveSettings();
+			//service.saveSettings();
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

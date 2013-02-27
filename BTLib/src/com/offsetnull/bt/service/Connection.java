@@ -1516,8 +1516,11 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 						boolean gagged = false;
 						if(lineNumber > tmpline) {
 							int amount = (lineNumber - tmpline);
+							
 							for(int i=0;i<amount;i++) {
+								if(it.hasPrevious()) {
 								l = it.previous();
+								}
 							}
 							working.setModCount(0);
 							lineNumber = tmpline;
@@ -3916,14 +3919,19 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 
 	private void doDeletePlugin(String plugin) {
 		Plugin p = pluginMap.remove(plugin);
+		String remove = null;
 		if(p.getStorageType().equals("EXTERNAL")) {
 			for(String path : the_settings.getLinks()) {
 				if(p.getFullPath().contains(path)) {
-					the_settings.getLinks().remove(path);
-					linkMap.remove(path);
+					//the_settings.getLinks().remove(path);
+					//linkMap.remove(path);
+					remove = path;
 				}
 			}
 		}
+		if(remove == null) { return; } //no plugin of that name path exists
+		the_settings.getLinks().remove(remove);
+		linkMap.remove(remove);
 		plugins.remove(p);
 		//the_settings.get
 		saveMainSettings();

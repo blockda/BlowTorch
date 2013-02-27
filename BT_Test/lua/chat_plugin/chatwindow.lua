@@ -143,7 +143,7 @@ uiButtonBar:setVisibility(View.GONE)
 local scrollHolder = luajava.new(HorizontalScrollView,context)
 local scrollHolderParams = luajava.new(RelativeLayoutParams,MATCH_PARENT,WRAP_CONTENT)
 scrollHolderParams:addRule(RelativeLayout.LEFT_OF,98)
-scrollHolderParams:addRule(RelativeLayout.RIGHT_OF,102)
+scrollHolderParams:addRule(RelativeLayout.RIGHT_OF,101)
 scrollHolderParams:addRule(RelativeLayout.ABOVE,105)
 scrollHolder:setLayoutParams(scrollHolderParams)
 
@@ -455,20 +455,23 @@ function loadButtons(input)
 	
 	--add the default buttons.
 	uiButtonBar:addView(hideButton)
-	uiButtonBar:addView(pinButton)
 	uiButtonBar:addView(mainButton)
 	
 	uiButtonBar:addView(scrollHolder)
 	
 	uiButtonBar:addView(resizeButton)
-	uiButtonBar:addView(delButton)
+	--uiButtonBar:addView(delButton)
 	
 	uiButtonBar:addView(secondDividerView)
 	
 	--reconstruct the channel list table
-	local list = loadstring(input)()
+	local data = loadstring(input)()
+	selected = data.selected
+	local list = data.list
 	local counter = 1
 	local lastbutton = nil
+	
+	--
 	
 	local a = {}
     for i,n in pairs(list) do table.insert(a, i) end
@@ -478,12 +481,16 @@ function loadButtons(input)
 	for i,n in ipairs(a) do
 		if(n ~= "main") then
 			local newbutton = generateNewButton(n,counter)
+
 			local params = newbutton:getLayoutParams()
 			params:setMargins(2,0,2,0)
 			counter = counter + 1
 			buttonMap[n] = newbutton
+			
 			channelHolder:addView(newbutton)
 			lastbutton = newbutton
+		else
+
 		end
 	end
 	
@@ -492,6 +499,11 @@ function loadButtons(input)
 		lparams:setMargins(0,0,2,0)
 		uiButtonBar:requestLayout()
 	end
+	
+	local drawable = drawableMap[selected]
+	
+	local dpaint = drawable:getPaint()
+	dpaint:setARGB(255,50,50,200)
 end
 
 
@@ -538,6 +550,8 @@ local function makeTabDrawable(label,a,r,g,b)
 
 end
 
+
+
 local function makeStateDrawable(label)
 	local stater = luajava.new(StateListDrawable)
 	local pre = makeTabDrawable(label,255,100,0,0)
@@ -580,20 +594,10 @@ hideButton:setId(100)
 
 hideButton:setLayoutParams(hideParams)
 hideButton:setOnClickListener(hider_cb)
---hideButton:setVisibility(View.Gone)
-
-pinButton = luajava.new(ImageButton,context)
-pinParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
-pinParams:addRule(RelativeLayout.LEFT_OF,100);
-pinButton:setImageDrawable(resLoader(respath,"unpinned.png"))
-pinButton:setId(99)
-pinButton:setVisibility(View.GONE)
-
-pinButton:setLayoutParams(pinParams)
 
 mainButton = luajava.new(Button,context)
 mainParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
-mainParams:addRule(RelativeLayout.LEFT_OF,99);
+mainParams:addRule(RelativeLayout.LEFT_OF,100);
 mainParams:addRule(RelativeLayout.ABOVE,105)
 mainParams:setMargins(2,0,0,0)
 mainButton:setId(98)
@@ -615,15 +619,6 @@ resizeButton:setId(101)
 
 resizeButton:setLayoutParams(resizeParams)
 
-delButton = luajava.new(ImageButton,context)
-delParams = luajava.new(RelativeLayoutParams,WRAP_CONTENT,uiButtonBarHeight)
-delParams:addRule(RelativeLayout.RIGHT_OF,101)
-delButton:setImageDrawable(resLoader(respath,"delete.png"))
-delButton:setId(102)
-delButton:setVisibility(View.GONE)
-
-delButton:setLayoutParams(delParams)
-
 selectedStatetmp = {}
 table.insert(selectedStatetmp,R_attr.state_focused)
 selectedState = makeIntArray(selectedStatetmp)
@@ -632,20 +627,20 @@ normalState = makeEmptyIntArray()
 
 clicker = {}
 function clicker.onClick(v)
-	label = v:getText()
+	local label = v:getText()
 
-	drawable = drawableMap[label]
+
+	local drawable = drawableMap[label]
 	
-	dpaint = drawable:getPaint()
+	local dpaint = drawable:getPaint()
 	dpaint:setARGB(255,50,50,200)
 
 	for i,b in pairs(drawableMap) do
 		if(i ~= label) then
-
-			tmp = drawableMap[i]
-			tmppaint = tmp:getPaint()
+			local tmp = drawableMap[i]
+			local tmppaint = tmp:getPaint()
 			tmppaint:setARGB(225,0,0,100)
-			tview = buttonMap[i]
+			local tview = buttonMap[i]
 			tview:invalidate()
 		end
 	end
@@ -662,51 +657,6 @@ function longclicker.onLongClick(v)
 	return true
 end
 longclicker_cb = luajava.createProxy("android.view.View$OnLongClickListener",longclicker)
-
-pinner = {}
-function pinner.onClick(v)
-
-		local tmp = chatOutputView:getHeight()
-		local p = luajava.new(LinearLayoutParams,MATCH_PARENT,tmp+uiButtonBarHeight)
-		chatOutputView:setLayoutParams(p)
-		innerHolderView:startAnimation(windowPinDownAnimation)	
-		
-		expanded = false
-		
-		foldoutHeight = 0
-		
-		--altMainOutputViewLayoutParams = luajava.new(RelativeLayoutParams,mainOutputViewLayoutParams.width,mainOutputView:getHeight())
-		--altMainOutputViewLayoutParams:addRule(RelativeLayout.ABOVE,40)
-		expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
-		shrinkAnimation = luajava.new(TranslateAnimation,0,0,0,-foldoutHeight)
-		expandAnimation:setDuration(450)
-		shrinkAnimation:setDuration(450)
-		
-		--view:startAnimation(nullAnimation)
-
---	if(pinned == true) then
---		pinned = false
---		pinButton:setImageDrawable(resLoader(respath,"unpinned.png"))
---	else
---		pinned = true
---		pinButton:setImageDrawable(resLoader(respath,"pinned.png"))
---	end
---	
---	if(expanded == true) then
-
---	else
-	--UNPIN UNEXPAND
---		local tmp = chatOutputView:getHeight()
---		local p = luajava.new(LinearLayoutParams,MATCH_PARENT,tmp+uiButtonBarHeight)
---		chatOutputView:setLayoutParams(p)
---		innerHolderView:startAnimation(windowPinDownAnimation)	
-		--view:startAnimation(nullAnimation)
---	end
---	pinButton:invalidate()
-end
-pinner_cb = luajava.createProxy("android.view.View$OnClickListener",pinner)
-pinButton:setOnClickListener(pinner_cb)
-pinned = false
 
 --set up the resizer button.
 touchStartY = 0
@@ -794,12 +744,6 @@ function resizer.onTouch(v,e)
 	end
 	
 	if(action == MotionEvent.ACTION_UP) then
-		--debugPrint("resizer up, foldout height:"..foldoutHeight.." min height"..minHeight)
-		if(expanded == false) then
-			--foldoutHeight = 100
-		else
-			--foldoutHeight = replacementView:getHeight() - minHeight
-		end
 		fingerdown = false
 		touchFinger = nil
 		expandAnimation = luajava.new(TranslateAnimation,0,0,-foldoutHeight,0)
@@ -818,21 +762,12 @@ fingerdown = false
 
 maxHeight = 0
 function OnSizeChanged(neww,newh,oldw,oldh)
-	--local params = replacementView:getLayoutParameters()
-	
+
 	if(not fingerdown) then
-		
 		--update min height
 		maxHeight = inputbar:getTop()
-		if(replacementView:getHeight() > maxHeight) then
-			--adjust to new max height and expand.
-			--Note("\non size changed,max now: "..maxHeight.."\n");
-			--local p = luajava.new(LinearLayoutParams,MATCH_PARENT,maxHeight-uiButtonBarHeight-dividerHeight)
-			--c
-			
+		if(replacementView:getHeight() > maxHeight) then			
 			ScheduleCallback(101,"resizeMaxWindowNoAnimation",300)
-			--replacementView:setDimensions(MATCH_PARENT,maxHeight)
-			--expandWindow()
 			return
 		end
 		chatOutputView:invalidate()
@@ -858,10 +793,10 @@ end
 
 --function 
 
-runonce = true
+
 function setWindowSize(size)
-	--if not runonce then
-	--debugPrint("in the window set window size:"..size)
+	
+
 	size = tonumber(size)
 	chatOutputViewParams = luajava.new(LinearLayoutParams,MATCH_PARENT,size)
 	minHeight = size + dividerHeight
@@ -871,9 +806,6 @@ function setWindowSize(size)
 	chatOutputView:requestLayout()
 	replacementView:requestLayout()
 	
-	--else
-	--	runonce = false
-	--end
 end
 
 function makeRunner()
@@ -910,9 +842,6 @@ function makeRunner()
 		
 		if(current_version < server_version) then
 			--need to download and unpack
-			--runOnUIThread(function()
-			--	updateTextView:setText("Downloading Update...")
-			--end)
 				
 			local foo = function()
 				local url = luajava.newInstance("java.net.URL","http://bt.happygoatstudios.com/test/chat_plugin_package.zip");
@@ -928,22 +857,10 @@ function makeRunner()
 			
 				local size = c:getContentLength()
 			
-			
-			
 				local b = luajava.array(RawByte,1024)
-			
-				--local sizeb = Array:getLength(b)
-				--Note("\nArray Size:"..sizeb.."\n\n")
-				--for i=0,1023 do
-				--	Array:setByte(b,i,ByteInstance:byteValue())
-				--end
-			
-				--Note("\n"..b.."\n\n")
-			
-				local istream = c:getInputStream()
-		
-				local outputFile = luajava.newInstance("java.io.File",string.format("%s/update.zip",GetPluginInstallDirectory()))
 
+				local istream = c:getInputStream()
+				local outputFile = luajava.newInstance("java.io.File",string.format("%s/update.zip",GetPluginInstallDirectory()))
 				local ostream = luajava.newInstance("java.io.FileOutputStream",outputFile)
 			
 				EchoText("\nOutput file location:"..outputFile:getPath().."\n\n")
@@ -956,17 +873,11 @@ function makeRunner()
 				end
 			
 				ostream:close()
-			
 				c:disconnect()
 			
 				local fis = luajava.newInstance("java.io.FileInputStream",outputFile)
-			
 				local bis = luajava.newInstance("java.io.BufferedInputStream",fis)
-			
 				local zis = luajava.newInstance("java.util.zip.ZipInputStream",bis)
-			
-				--local zipEntry = luajava.newInstance("java.util.zip.ZipEntry")
-			
 				local entry = zis:getNextEntry()
 			
 				while(entry ~= nil) do
@@ -999,9 +910,7 @@ function makeRunner()
 						end
 				
 						realfile:close()
-						
-				
-						
+
 					end
 					zis:closeEntry()
 					entry = zis:getNextEntry()
@@ -1023,8 +932,6 @@ function makeRunner()
 				
 				CloseOptionsDialog()
 				runOnUIThread(function() showUpdateDoneDialog() end)
-				
-				--PluginXCallS("finishUpdate")
 			else
 				--rename old files back to original
 				EchoText("Error Decompressing:\n"..err)
@@ -1063,7 +970,6 @@ function cleanDirectory(path,objective)
 			local tmpfile = file:getAbsolutePath()
 			
 			if(tmpfile:match("%.old$")) then
-				--Note("\nmatched file:"..tmpfile.."\n")
 				ret = true
 			end
 			
@@ -1074,9 +980,7 @@ function cleanDirectory(path,objective)
 		end
 		
 		local filter = luajava.createProxy("java.io.FileFilter",tmp)
-		
 		local list = f:listFiles(filter)
-		
 		local count = Array:getLength(list)
 		
 		for i=0,count-1 do
@@ -1094,11 +998,8 @@ function cleanDirectory(path,objective)
 end
 
 function runDatRunner()
-	--showCheckingUpdateDialog()
 	makeRunner()
-	--Note("\nStarting background thread\n\n")
 	runner_thread:start()
-	--Note("\nBackground thread started\n\n")
 end
 
 function runOnUIThread(f)
@@ -1114,7 +1015,7 @@ end
 function showUpdateDoneDialog()
 	--PluginXCallS("EchoText","\nBuilding foreground UI\n\n")
 	local builder = luajava.newInstance("android.app.AlertDialog$Builder",context)
-	builder:setTitle("Update Successfull")
+	builder:setTitle("Update Successful")
 	builder:setMessage("The chat plugin has been successfully updated. Settings must be reloaded for changes to take effect.")
 	
 	local done = {}
@@ -1124,11 +1025,8 @@ function showUpdateDoneDialog()
 	end
 
 	local done_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",done)
-	
 	builder:setPositiveButton("Reload Settings",done_cb)
-	
 	progress_dialog = builder:create()
-	
 	progress_dialog:show()		
 end
 
@@ -1143,11 +1041,8 @@ function showNoUpdateDialog()
 	end
 
 	local done_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",done)
-	
 	builder:setPositiveButton("Done",done_cb)
-	
 	progress_dialog = builder:create()
-	
 	progress_dialog:show()	
 end
 

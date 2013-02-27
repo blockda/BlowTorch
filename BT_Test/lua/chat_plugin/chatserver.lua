@@ -57,16 +57,22 @@ function updateSelection(newChannel)
 
 end
 
-tmpmap = {}
+--local tmpmap = {}
 function updateUIButtons()
-	tmpmap = {}
+	local tmpmap = {}
 	for i,b in pairs(buffers) do
 		tmpmap[i] = "foo"
 		--table.insert(tmp,i)
 		
 	end
-
-	WindowXCallS(chatWindowName,"loadButtons",serialize(tmpmap))
+	
+	--local selected = currentChannel
+	
+	local a = {}
+	a.list = tmpmap
+	a.selected = currentChannel
+	
+	WindowXCallS(chatWindowName,"loadButtons",serialize(a))
 end
 
 firstLoad = true
@@ -81,6 +87,8 @@ function initReady(arg)
 	
 end
 
+
+
 function processChat(name,line,replaceMap)
 	
 	--get chat channel from replacementMap
@@ -88,9 +96,11 @@ function processChat(name,line,replaceMap)
 	
 	if(currentChannel == "main") then
 		AppendLineToWindow(chatWindowName,line)
+		if option_add_extra then AppendLineToWindow(chatWindowName,"\n") end
 	else
 		mainBuffer = buffers["main"]
 		mainBuffer:appendLine(line)
+		if option_add_extra then mainBuffer:addString("\n") end
 	end
 
 	--if appropriate channel already has a sub buffer.
@@ -99,6 +109,7 @@ function processChat(name,line,replaceMap)
 		
 		if(currentChannel == channel) then
 			AppendLineToWindow(chatWindowName,line)
+			if option_add_extra then AppendLineToWindow(chatWindowName,"\n") end
 		else
 			channelBuffer = buffers[channel]
 			if(channelBuffer == nil) then
@@ -108,20 +119,30 @@ function processChat(name,line,replaceMap)
 				updateUIButtons()
 			end
 			channelBuffer:appendLine(line)
+			if option_add_extra then channelBuffer:addString("\n") end
 		end
 	else
 		--create a new buffer
 		newchannel = luajava.newInstance("com.offsetnull.bt.window.TextTree")
 		--attatch a copy of this line to the new buffer
 		newchannel:appendLine(line)
+		if option_add_extra then newchannel:addString("\n") end
 		--keep track of new buffer in buffer map, under the name of the matched channel.
 		buffers[channel] = newchannel
 		updateUIButtons()
+	end
+	
+	if option_gag_extra then
+		EnableTrigger("grabber",true)
 	end
 
 	--append this line to the main buffer, this always happens.
 	--mainBuffer = buffers["main"]
 	
+end
+
+function processGrab()
+	EnableTrigger("grabber",false)
 end
 
 function OnOptionChanged(key,value)
@@ -202,8 +223,26 @@ function setWindowSize(size)
 	end
 end
 
+function setExtraGag(val)
+	if(val == "true") then
+		option_gag_extra = true
+	else
+		option_gag_extra = false
+	end
+end
+
+function setExtraAdd(val)
+	if(val == "true") then
+		option_add_extra = true
+	else
+		option_add_extra = false
+	end
+end
+
 optionsTable = {}
 optionsTable.height = setWindowSize
+optionsTable.gag_extra = setExtraGag
+optionsTable.add_extra = setExtraAdd
 
 RegisterSpecialCommand("http","testHttp")
 
