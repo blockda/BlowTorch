@@ -42,12 +42,10 @@ body {
 				<script function="processChat" fireWhen="always"/>
 				<gag fireWhen="always"/>
 			</trigger>
-			<!-- <trigger title="testmeo" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="5">
-				<replace fireWhen="always" retarget="chats">pleasent young fellow</replace>
+			<trigger title="grabber" pattern="^.*$" regex = "true" fireOnce="false" enabled="false">
+				<script function="processGrab" fireWhen="always"/>
+				<gag fireWhen="always"/>
 			</trigger>
-			<trigger title="colorize" pattern="^.*(adventurer).*$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="3">
-				<color>45</color>
-			</trigger> -->
 		</triggers>
 		<windows>
 			<window name="chats" id="5010" script="chatwindow">
@@ -62,7 +60,9 @@ body {
 			</window>
 		</windows>
 		<options title="Chat Window" summary="Sizing and window options.">
-  	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>	
+  	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>
+  	 		<boolean title="Gag extra newline" key="gag_extra" summary="Will grab an additional line of output after the chat line.">false</boolean>
+  	 		<boolean title="Add extra newline" key="add_extra" summary="Add a new line after each line of gagged output.">false</boolean>
   	 		<callback title="Check Update" key="update" summary="Check the web for updates for this script.">startUpdate</callback>
   	 	</options>
 		
