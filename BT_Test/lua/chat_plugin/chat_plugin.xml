@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <blowtorch xmlversion="2">
-<plugins>
-	<plugin name="chat_miniwindow" id="50">
-		<author>Daniel Block</author>
-		<description>
-		<![CDATA[
+  <plugins>
+    <plugin name="chat_miniwindow" id="50">
+      <author>Daniel Block</author>
+      <description><![CDATA[
+		
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -34,48 +34,59 @@ body {
 </ul>
 </body>
 </html>
-		]]>
-		</description>
-		<triggers>
-			<trigger title="chats" pattern="^\{chan ch=(\w*)\}" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
-				<replace fireWhen="always"/>
-				<script function="processChat" fireWhen="always"/>
-				<gag fireWhen="always"/>
-			</trigger>
-			<trigger title="grabber" pattern="^.*$" regex = "true" fireOnce="false" enabled="false">
-				<script function="processGrab" fireWhen="always"/>
-				<gag fireWhen="always"/>
-			</trigger>
-		</triggers>
-		<windows>
-			<window name="chats" id="5010" script="chatwindow">
-				<layoutGroup target="xlarge">
-					<layout orientation="landscape" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
-					<layout orientation="portrait" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
-				</layoutGroup>
-				<layoutGroup target="large">
-					<layout orientation="landscape" width="fill_parent" height="77" alignParentTop="true" alignParentRight="true"/>
-					<layout orientation="portrait" width="fill_parent" height="177" alignParentTop="true" alignParentRight="true"/>
-				</layoutGroup>
-			</window>
-		</windows>
-		<options title="Chat Window" summary="Sizing and window options.">
-  	 		<integer title="Window Height" key="height" summary="How tall the unexpanded window is in pixels.">77</integer>
-  	 		<boolean title="Gag extra newline" key="gag_extra" summary="Will grab an additional line of output after the chat line.">false</boolean>
-  	 		<boolean title="Add extra newline" key="add_extra" summary="Add a new line after each line of gagged output.">false</boolean>
-  	 		<callback title="Check Update" key="update" summary="Check the web for updates for this script.">startUpdate</callback>
-  	 	</options>
 		
-		<script name="bootstrap">
-			<![CDATA[
-			dofile(GetPluginInstallDirectory().."/chatserver.lua")
-			]]>
-		</script>
-		<script name="chatwindow">
-			<![CDATA[
+		
+      ]]>
+      </description>
+      <windows>
+        <window name="chats" id="5010" script="chatwindow">
+          <layoutGroup target="large">
+            <layout orientation="landscape" alignParentTop="true" alignParentRight="true" width="fill_parent" height="77" />
+            <layout orientation="portrait" alignParentTop="true" alignParentRight="true" width="fill_parent" height="77" />
+          </layoutGroup>
+          <layoutGroup target="xlarge">
+            <layout orientation="landscape" alignParentTop="true" alignParentRight="true" width="fill_parent" height="77" />
+            <layout orientation="portrait" alignParentTop="true" alignParentRight="true" width="fill_parent" height="77" />
+          </layoutGroup>
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases />
+      <triggers>
+        <trigger title="chats" pattern="^\{chan ch=(\w*)\}" regexp="true" sequence="1">
+          <replace fireWhen="always"></replace>
+          <script function="processChat" fireWhen="always" />
+          <gag />
+        </trigger>
+        <trigger title="grabber" pattern="^.*$" regexp="true">
+          <script function="processGrab" fireWhen="always" />
+          <gag />
+        </trigger>
+      </triggers>
+      <timers />
+      <options title="Chat Window" summary="Sizing and window options.">
+        <integer key="height" title="Window Height" summary="How tall the unexpanded window is in pixels.">77</integer>
+        <boolean key="gag_extra" title="Gag extra newline" summary="Will grab an additional line of output after the chat line.">false</boolean>
+        <boolean key="add_extra" title="Add extra newline" summary="Add a new line after each line of gagged output.">false</boolean>
+        <callback key="update" title="Check Update" summary="Check the web for updates for this script.">startUpdate</callback>
+      </options>
+      <script name="chatwindow"><![CDATA[
+			
 			dofile(GetPluginInstallDirectory().."/chatwindow.lua")
-			]]>
-		</script>
-	</plugin>
-</plugins>
+			
+		
+      ]]>
+      </script>
+      <script name="bootstrap"><![CDATA[
+			
+			dofile(GetPluginInstallDirectory().."/chatserver.lua")
+			
+		
+      ]]>
+      </script>
+    </plugin>
+  </plugins>
 </blowtorch>

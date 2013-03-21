@@ -4,33 +4,35 @@ require("serialize")
 require("miniwindow")
 --make a button.
 --debugPrint("in the clock widgetui")
+local luajava = luajava
+local view = view
 
+local Paint = luajava.bindClass("android.graphics.Paint")
+local Array = luajava.bindClass("java.lang.reflect.Array")
+local Color = luajava.bindClass("android.graphics.Color")
+local LinearGradient = luajava.bindClass("android.graphics.LinearGradient")
+local PorterDuffXfermode = luajava.bindClass("android.graphics.PorterDuffXfermode")
+local PorterDuffMode = luajava.bindClass("android.graphics.PorterDuff$Mode")
+local TileMode = luajava.bindClass("android.graphics.Shader$TileMode")
 Paint = luajava.bindClass("android.graphics.Paint")
-Array = luajava.bindClass("java.lang.reflect.Array")
-Color = luajava.bindClass("android.graphics.Color")
-LinearGradient = luajava.bindClass("android.graphics.LinearGradient")
-PorterDuffXfermode = luajava.bindClass("android.graphics.PorterDuffXfermode")
-PorterDuffMode = luajava.bindClass("android.graphics.PorterDuff$Mode")
-TileMode = luajava.bindClass("android.graphics.Shader$TileMode")
-Paint = luajava.bindClass("android.graphics.Paint")
-Style = luajava.bindClass("android.graphics.Paint$Style")
-RectF = luajava.bindClass("android.graphics.RectF")
+local Style = luajava.bindClass("android.graphics.Paint$Style")
+local RectF = luajava.bindClass("android.graphics.RectF")
 
-Integer = luajava.newInstance("java.lang.Integer",0)
-IntegerClass = Integer:getClass()
-RawInteger = IntegerClass.TYPE
+local Integer = luajava.newInstance("java.lang.Integer",0)
+local IntegerClass = Integer:getClass()
+local RawInteger = IntegerClass.TYPE
 
-Float = luajava.newInstance("java.lang.Float",0)
-FloatClass = Float:getClass()
-RawFloat = FloatClass.TYPE
+local Float = luajava.newInstance("java.lang.Float",0)
+local FloatClass = Float:getClass()
+local RawFloat = FloatClass.TYPE
 
-density = view:getContext():getResources():getDisplayMetrics().density
+local density = view:getContext():getResources():getDisplayMetrics().density
 
-function makeFloatArray(table)
-	newarray = Array:newInstance(RawFloat,#table)
+local function makeFloatArray(table)
+	local newarray = Array:newInstance(RawFloat,#table)
 	for i,v in ipairs(table) do
-		index = i-1
-		floatval = luajava.newInstance("java.lang.Float",v)
+		local index = i-1
+		local floatval = luajava.newInstance("java.lang.Float",v)
 		Array:setFloat(newarray,index,floatval:floatValue())
 	end
 	
@@ -38,10 +40,10 @@ function makeFloatArray(table)
 end
 
 function makeIntArray(table)
-	newarray = Array:newInstance(RawInteger,#table)
+	local newarray = Array:newInstance(RawInteger,#table)
 	for i,v in ipairs(table) do
-		index = i-1
-		intval = luajava.newInstance("java.lang.Integer",v)
+		local index = i-1
+		local intval = luajava.newInstance("java.lang.Integer",v)
 		Array:setInt(newarray,index,intval:intValue())
 	end
 	
@@ -473,15 +475,50 @@ aval.black = ((height+radius.black)-constant.black)/(tmpval.black*tmpval.black)
 aval.white = ((height+radius.white)-constant.white)/(tmpval.white*tmpval.white)
 end
 
-MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local measurespec_height = -1
+local measurespec_width = -1
+local measured_height = -1
+local measured_width = -1
 function OnMeasure(wspec,hspec)
-	local width = MeasureSpec:getSize(wspec)
-	local height = width/4
-	return width,height
+	if(wspec == measurespec_width and hspec == measurespec_height) then return measured_width,measured_height end
+	
+	measurespec_width = wspec
+	measurespec_height = hspec
+	function test()
+		local orientation = view:getParent():getOrientation() 
+	end
+	local ret,err = pcall(test,debug.traceback)
+	if(not ret) then
+		--Note(string.format("clock widget mesaure test failed,%d,%s\n",ret))
+		measured_width = MeasureSpec:getSize(wspec)
+		measured_height = measured_width/4
+	
+		return measured_width,measured_height
+	end
+
+	local orientation = view:getParent():getOrientation()
+	if(orientation == LinearLayout.VERTICAL) then
+		measured_width = MeasureSpec:getSize(wspec)
+		measured_height = measured_width/4
+		--Note("clock widget is vertical, height:"..measured_height.."\n")
+		return measured_width,measured_height
+	else
+		
+		measured_height = MeasureSpec:getSize(hspec)
+		--Note("clock widget is horizontal, height:"..measured_height.."\n")
+		measured_width = measured_height*4
+		return measured_width,measured_height
+	end
+	
+	
+
+
 end
 
 config = {}
 config.divider = true
+--config.indexmod = 2
 config.height = WRAP_CONTENT
 config.width = MATCH_PARENT
 config.id = view:getId()

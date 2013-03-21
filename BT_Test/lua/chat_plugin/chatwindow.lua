@@ -6,7 +6,7 @@ local context = view:getContext()
 local density = GetDisplayDensity()
 local chatOutputView = view
 
-local current_version = 12
+local current_version = 14
 
 local luajava = luajava
 --
