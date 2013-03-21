@@ -255,6 +255,7 @@ public class Plugin implements SettingsChangedListener {
 		CallPluginFunction cpf = new CallPluginFunction(L);
 		PluginSupportsFunction psf = new PluginSupportsFunction(L);
 		EnableTriggerGroupFunction etgf = new EnableTriggerGroupFunction(L);
+		SimulateInputFunction sif = new SimulateInputFunction(L);
 		//common functions
 		
 		gabhf.register("GetActionBarHeight");
@@ -285,13 +286,16 @@ public class Plugin implements SettingsChangedListener {
 		cpf.register("CallPlugin");
 		psf.register("PluginSupports");
 		etgf.register("EnableTriggerGroup");
-		
+		sif.register("Simulate");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
 		if(ret != 0) {
 			Log.e("LUA","TRIED TO CALL NOTE BUT FAILED: "+L.getLuaObject(L.getTop()).getString());
 		}*/
+		
+		
+		
 		
 		/*L.pushNil();
 		while(L.next(LuaState.LUA_GLOBALSINDEX) != 0) {
@@ -1618,6 +1622,25 @@ public class Plugin implements SettingsChangedListener {
 		@Override
 		public int execute() throws LuaException {
 			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_SAVESETTINGS,Plugin.this.getName()));
+			return 0;
+		}
+	}
+	
+	private class SimulateInputFunction extends JavaFunction {
+
+		public SimulateInputFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+		//public Si
+
+		@Override
+		public int execute() throws LuaException, RemoteException, UnsupportedEncodingException {
+			// TODO Auto-generated method stub
+			String str = this.L.LcheckString(2);
+			
+			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PROCESS,str.getBytes(mEncoding)));
+			
 			return 0;
 		}
 	}
