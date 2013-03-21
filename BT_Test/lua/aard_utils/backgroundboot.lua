@@ -44,6 +44,9 @@ function OnBackgroundStartup()
 	layouts:put(newlayoutgroup:getType(),newlayoutgroup)
 end
 
+function LoadLayout(layout)
+	WindowXCallS("layout_manager","LoadLayout",layout)
+end
 --NewWindow("lua_window",880,577,400,100,"windowscript")
 
 

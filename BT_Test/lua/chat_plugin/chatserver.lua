@@ -11,7 +11,7 @@ require("serialize")
 --DeleteTrigger("test")
 --DeleteTrigger("test2")
 
-local current_version = 12
+local current_version = 14
 
 chatWindow = GetWindowTokenByName("chats")
 AppendWindowSettings("chats")
@@ -176,12 +176,12 @@ end
 
 function OnBackgroundStartup()
 	--Note("\nbackground startup started\n")
-	if(PluginSupports("button_window","testxcall")) then
+	--if(PluginSupports("button_window","testxcall")) then
 	
-		CallPlugin("button_window","testxcall","datataa")
-	else
-		Note("Button window plugin does not support testxcall")
-	end
+	--	CallPlugin("button_window","testxcall","datataa")
+	--else
+	--	Note("Button window plugin does not support testxcall")
+	--end
 	
 	local psettings = GetPluginSettings()
 	

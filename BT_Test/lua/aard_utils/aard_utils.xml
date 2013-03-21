@@ -1,287 +1,307 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <blowtorch xmlversion="2">
-    <plugins>
-    <plugin author="Daniel Block" name="layout_manager" id="494">
-        <windows>
-            <window name="layout_manager" id="100123" script="foreground"/>
-        </windows>
-        <script name="background" execute="true">
-            dofile(GetPluginInstallDirectory().."/backgroundboot.lua")
-        </script>
-        <script name="foreground">
+  <plugins>
+    <plugin name="layout_manager" id="494">
+      <author></author>
+      <windows>
+        <window name="layout_manager" id="100123" script="foreground">
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases>
+        <alias pre="^layout (\d+)$" post="/LoadLayout($1)" enabled="true" />
+      </aliases>
+      <triggers />
+      <timers />
+      <options />
+      <script name="foreground"><![CDATA[
             dofile(GetPluginInstallDirectory().."/foregroundboot.lua")
-        </script>
+        ]]>
+      </script>
+      <script name="background" execute="true"><![CDATA[
+            dofile(GetPluginInstallDirectory().."/backgroundboot.lua")
+        ]]>
+      </script>
     </plugin>
-    <plugin author="Daniel Block" name="stat_mon" id="88">
-	<triggers>
-		<trigger title="statmon" pattern="%char.stats" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
-			<script function="updateStat" fireWhen="always"/>
-		</trigger>
-	</triggers>
-	<windows>
-		<window name="stat_window" id="9020" script="statWindowUI">
-			<layoutGroup target="xlarge">
-				<layout orientation="landscape"
-				height="100"
-				width="400"
-				below="1010"
-					/>
-			</layoutGroup>
-			<layoutGroup target="large">
-				<layout orientation="landscape"
-				height="50"
-				width="200"
-				below="1010"
-				/>
-			</layoutGroup>
-		</window>
-	</windows>
-	<script execute="true" name="bootstrap">
-	<![CDATA[
+    <plugin name="Campaign Tracker" id="204">
+      <author></author>
+      <windows>
+        <window name="campaign_target_window" id="4709" script="campaign_foreground">
+          <layoutGroup target="large">
+            <layout orientation="landscape" below="1010" width="200" height="50" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <layoutGroup target="xlarge">
+            <layout orientation="landscape" below="1010" width="400" height="100" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases>
+        <alias pre="^cp check$" post="/resetTracker()" enabled="true" />
+      </aliases>
+      <triggers>
+        <trigger title="mob_2" pattern="thi Ace of diamonds" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_1" pattern="A Sunrise guard" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="grabber" pattern="^You still have to kill \* (.+?) \((.+?)\)$" regexp="true" enabled="false">
+          <script function="processTarget" fireWhen="always" />
+        </trigger>
+        <trigger title="mob_4" pattern="A Computer Geek" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_3" pattern="A snarling dog" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_6" pattern="The Sergeant of the Guard" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_5" pattern="A spearman" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_8" pattern="Asmodeus" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_7" pattern="A Stone giant boy" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_10" pattern="The god Mac da Tho" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="mob_9" pattern="A high guard of Nox" group="mobs">
+          <color text="247" background="18" />
+        </trigger>
+        <trigger title="end" pattern="^(You may take a campaign at this level.|You will have to level before you can go on another campaign.)$" regexp="true" enabled="false">
+          <script function="endCapture" fireWhen="always" />
+        </trigger>
+      </triggers>
+      <timers />
+      <options />
+      <script name="campaign_background" execute="true"><![CDATA[
+            
+            	dofile(GetPluginInstallDirectory().."/campaign_tracker.lua")
+            
+        ]]>
+      </script>
+      <script name="campaign_foreground"><![CDATA[
+            
+            	dofile(GetPluginInstallDirectory().."/campaign_foreground.lua")
+            
+        ]]>
+      </script>
+    </plugin>
+    <plugin name="stat_mon" id="88">
+      <author></author>
+      <windows>
+        <window name="stat_window" id="9020" script="statWindowUI">
+          <layoutGroup target="large">
+            <layout orientation="landscape" below="1010" width="200" height="50" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <layoutGroup target="xlarge">
+            <layout orientation="landscape" below="1010" width="400" height="100" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases />
+      <triggers>
+        <trigger title="statmon" pattern="%char.stats" sequence="1">
+          <script function="updateStat" fireWhen="always" />
+        </trigger>
+      </triggers>
+      <timers />
+      <options />
+      <script name="statWindowUI"><![CDATA[
+	
+		dofile(GetPluginInstallDirectory().."/statwindowui.lua")
+	
+	]]>
+      </script>
+      <script name="bootstrap" execute="true"><![CDATA[
+	
 		require("serialize")
 		
 		currentStats = {}
 		
 		function updateStat(stats)
+			--Note("\nstats recieved\n")
 			currentStats = stats;
-			--debugPrint("stats recieved")
+			--Note("\nstats recieved\n")
 			WindowXCallS("stat_window","updateStats",serialize(stats))
 		end
 		
 		function loadStats(data)
+			--Note("\nloading stats...\n")
 			WindowXCallS("stat_window","updateStats",serialize(currentStats))
 		end
+	
 	]]>
-	</script>
-	<script name="statWindowUI">
-	<![CDATA[
-		dofile(GetPluginInstallDirectory().."/statwindowui.lua")
-	]]>
-	</script>
-	</plugin>
-	<plugin author="Daniel Block" name="tick_clock" id="77">
-	<triggers>
-	    <trigger title="gmcp_tick" pattern="%comm.tick" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
-	        <script function="ticked" fireWhen="always"/>
-	    </trigger>
-		<trigger title="ticker" pattern="^--&gt; TICK &lt;--.+$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1">
-			<script function="ticked" fireWhen="always"/>
-		</trigger>
-		<trigger title="timecatcher" pattern="^  \*  It is (\d*)(am|pm|Midnight|Noon).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="2">
-			<script function="timeCatcher" fireWhen="always"/>
-		</trigger>
-		<trigger title="yearcatcher" pattern="^  \*  It is the year of the (.*).+$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
-			<script function="yearCatcher" fireWhen="always"/>
-		</trigger>
-		<trigger title="moonSet" pattern="^You notice the (\w+) moon falling to the (west|east)\.$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
-			<script function="OnMoonSet" fireWhen="always"/>
-		</trigger>
-		<trigger title="moonRise" pattern="^You see the (\w+) moon rising in the (west|east)\.$" interpretLiteral="true" fireOnce="false" enabled="true" sequence="1">
-			<script function="OnMoonRise" fireWhen="always"/>
-		</trigger>
-
-	</triggers>
-	<windows>
-		<window name="clock_widget" id="9010" script="clockWidgetUI">
-			<layoutGroup target="xlarge">
-				<layout orientation="landscape"
-				height="100"
-				width="400"
-				alignParentTop="true"/>
-			</layoutGroup>
-			<layoutGroup target="large">
-				<layout orientation="landscape"
-				height="50"
-				width="200"
-				alignParentTop="true"/>
-			</layoutGroup>
-		</window>
-	</windows>
-	<script name="clockWidgetUI">
-	<![CDATA[
+      </script>
+    </plugin>
+    <plugin name="tick_clock" id="77">
+      <author></author>
+      <windows>
+        <window name="clock_widget" id="9010" script="clockWidgetUI">
+          <layoutGroup target="large">
+            <layout orientation="landscape" alignParentTop="true" width="200" height="50" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <layoutGroup target="xlarge">
+            <layout orientation="landscape" alignParentTop="true" width="400" height="100" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases />
+      <triggers>
+        <trigger title="moonRise" pattern="^You see the (\w+) moon rising in the (west|east)\.$" regexp="true" sequence="1">
+          <script function="OnMoonRise" fireWhen="always" />
+        </trigger>
+        <trigger title="ticker" pattern="^--&gt; TICK &lt;--.+$" regexp="true" enabled="false" sequence="1">
+          <script function="ticked" fireWhen="always" />
+        </trigger>
+        <trigger title="timecatcher" pattern="^  \*  It is (\d*)(am|pm|Midnight|Noon).+$" regexp="true" sequence="2">
+          <script function="timeCatcher" fireWhen="always" />
+        </trigger>
+        <trigger title="moonSet" pattern="^You notice the (\w+) moon falling to the (west|east)\.$" regexp="true" sequence="1">
+          <script function="OnMoonSet" fireWhen="always" />
+        </trigger>
+        <trigger title="gmcp_tick" pattern="%comm.tick" sequence="1">
+          <script function="ticked" fireWhen="always" />
+        </trigger>
+        <trigger title="yearcatcher" pattern="^  \*  It is the year of the (.*).+$" regexp="true" sequence="1">
+          <script function="yearCatcher" fireWhen="always" />
+        </trigger>
+      </triggers>
+      <timers />
+      <options />
+      <script name="clockWidgetUI"><![CDATA[
+	
 		dofile(GetPluginInstallDirectory().."/clockwidgetui.lua")
+	
 	]]>
-	</script>
-	<script execute="true" name="bootstrap">
-	<![CDATA[
+      </script>
+      <script name="bootstrap" execute="true"><![CDATA[
+	
 		dofile(GetPluginInstallDirectory().."/clockwindowserver.lua")
+	
 	]]>
-	</script>
-	</plugin>
-	<plugin author="Daniel Block" name="vitals_server" id="66">
-		<triggers>
-			<trigger title="vitals" pattern="%char.vitals" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
-				<script function="updateVitals" fireWhen="always"/>
-			</trigger>
-			
-			<trigger title="maxstats" pattern="%char.maxstats" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
-				<script function="updateMaxes" fireWhen="always"/>
-			</trigger>
-			
-			<trigger title="status" pattern="%char.status" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
-				<script function="updateStatus" fireWhen="always"/>
-			</trigger>
-			
-			<trigger title="base" pattern="%char.base" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
-				<script function="updateBase" fireWhen="always"/>
-			</trigger>
-		</triggers>
-		<windows>
-			<window name="vitals_window" id="1010" script="vitalsWindowScript">
-				<layoutGroup target="xlarge">
-					<layout orientation="landscape"
-							height="100"
-							width="400"
-							below="6022"/>
-				</layoutGroup>
-				<layoutGroup target="large">
-					<layout orientation="landscape"
-							height="50"
-							width="200"
-							below="6022"/>
-				</layoutGroup>
-			</window>
-		</windows>
-		<script name="bootstrap">
-		<![CDATA[
-			
-			require("serialize")
-			--vitalsWindow = NewWindow("vitals_window",880,577,400,100,"vitalsWindowScript")
+      </script>
+    </plugin>
+    <plugin name="vitals_server" id="66">
+      <author></author>
+      <windows>
+        <window name="vitals_window" id="1010" script="vitalsWindowScript">
+          <layoutGroup target="large">
+            <layout orientation="landscape" below="6022" width="200" height="50" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <layoutGroup target="xlarge">
+            <layout orientation="landscape" below="6022" width="400" height="100" />
+            <layout orientation="portrait" width="fill_parent" height="fill_parent" />
+          </layoutGroup>
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases />
+      <triggers>
+        <trigger title="base" pattern="%char.base" sequence="1">
+          <script function="updateBase" fireWhen="always" />
+        </trigger>
+        <trigger title="vitals" pattern="%char.vitals" sequence="1">
+          <script function="updateVitals" fireWhen="always" />
+        </trigger>
+        <trigger title="status" pattern="%char.status" sequence="1">
+          <script function="updateStatus" fireWhen="always" />
+        </trigger>
+        <trigger title="maxstats" pattern="%char.maxstats" sequence="1">
+          <script function="updateMaxes" fireWhen="always" />
+        </trigger>
+      </triggers>
+      <timers />
+      <options />
+      <script name="vitalsWindowScript"><![CDATA[
 		
-			vitals = {}
-			vitals.hp = 100
-			vitals.mana = 100
-			vitals.enemypct = 0
-			
-			maxes = {}
-			maxes.hp = 100
-			maxes.mana = 100
-			
-			enemyPct = 100
-			
-			align = 0
-			maxAlign = 2500
-			minAlign = -2500
-			
-			tnl = 0
-			toLevel = 0
-			
-			fighting = false
-			
-			function updateVitals(newVitals)
-				vitals.hp = newVitals.hp
-				vitals.mana = newVitals.mana
-				if(fighting) then
-					vitals.enemypct = enemyPct
-				else
-					vitals.enemypct = 0
-				end
-				WindowXCallS("vitals_window","updateVitals",serialize(vitals))
-			end
-			
-			function updateMaxes(newMaxes)
-				maxes.hp = newMaxes.maxhp
-				maxes.mana = newMaxes.maxmana
-				WindowXCallS("vitals_window","updateMaxes",serialize(maxes))
-			end
-			
-			function updateStatus(newStatus)
-				--debugPrint("player status updated!!!!")
-				if(newStatus.enemypct == nil) then
-					if(fighting) then
-						--debugPrint("combat over")
-						fighting = false
-					else
-						--debugPrint("combat not started")
-					end
-					WindowXCallS("vitals_window","updateEnemyPercent",0)
-				else
-					if(not fighting) then
-						fighting = true
-					end
-					enemyPct = newStatus.enemypct
-					--debugPrint("enemyPct: "..newStatus.enemypct)
-					WindowXCallS("vitals_window","updateEnemyPercent",enemyPct)
-				end
-				
-				if(newStatus.align ~= align) then
-					align = newStatus.align
-					WindowXCallS("vitals_window","updateAlign",align)
-				end
-				
-				if(newStatus.tnl ~= tnl) then
-					tnl = newStatus.tnl
-					WindowXCallS("vitals_window","updateTNL",tnl)
-				end
-			end
-			
-			function updateBase(newBase)
-				if(newBase.perlevel ~= toLevel) then
-					toLevel = newBase.perlevel
-					WindowXCallS("vitals_window","updateMaxPerLevel",toLevel)
-				end
-			end
-			
-			function initReady(str)
-				info = {}
-				info.hp = vitals.hp
-				info.mp = vitals.mana
-				info.maxhp = maxes.hp
-				info.maxmp = maxes.mana
-				info.enemypct = enemyPct
-				info.tnl = tnl
-				info.tolevel = toLevel
-				info.align = align
-				WindowXCallS("vitals_window","updateAll",serialize(info))
-			end
-			
-			Send_GMCP_Packet("request char")
-		]]>
-		</script>
-		<script name="vitalsWindowScript">
-		<![CDATA[
 			dofile(GetPluginInstallDirectory().."/vitalswindow.lua")
+		
 		]]>
-		</script>
-	</plugin>
-	<plugin author="Daniel Block" name="map_miniwindow" id="30">
-		<triggers>
-			<trigger title="map_capture" pattern="^.*$" enabled="false" interpretLiteral="true" fireOnce="false">
-				<script function="doMapCapture" fireWhen="always"/>
-				<gag/>
-			</trigger>
-			<trigger title="map_capture_start" pattern="^&lt;MAPSTART&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
-				<script function="startMapCapture" fireWhen="always"/>
-				<gag/>
-			</trigger>
-			<trigger title="map_capture_end" pattern="^&lt;MAPEND&gt;$" interpretLiteral="true" fireOnce="false" enabled="true">
-				<script function="endMapCapture" fireWhen="always"/>
-				<gag/>
-			</trigger>
-		</triggers>
-		<windows>
-			<window name="map_window" id="6020" script="mapUIStartup">
-				<layoutGroup target="xlarge">
-					<layout orientation="landscape" alignParentRight="true" height="370" width="400" below="6021"/>
-					<layout orientation="portrait" alignParentRight="true" height="370" width="400" below="6021"/>
-				</layoutGroup>
-				<layoutGroup target="large">
-					<layout orientation="landscape" alignParentRight="true" height="200" width="200" below="6021"/>
-					<layout orientation="portrait" alignParentRight="true" height="200" width="200" below="6021"/>
-				</layoutGroup>
-			</window>
+      </script>
+      <script name="bootstrap"><![CDATA[
+		
+			dofile(GetPluginInstallDirectory().."/vitalsserver.lua")
+		
+		]]>
+      </script>
+    </plugin>
+    <plugin name="map_miniwindow" id="30">
+      <author></author>
+      <windows>
+        <window name="map_window" id="6020" script="mapUIStartup">
+          <layoutGroup target="large">
+            <layout orientation="landscape" below="6021" alignParentRight="true" width="200" height="200" />
+            <layout orientation="portrait" below="6021" alignParentRight="true" width="200" height="200" />
+          </layoutGroup>
+          <layoutGroup target="xlarge">
+            <layout orientation="landscape" below="6021" alignParentRight="true" width="400" height="370" />
+            <layout orientation="portrait" below="6021" alignParentRight="true" width="400" height="370" />
+          </layoutGroup>
+          <options>
+            <option key="font_size">13</option>
+            <option key="line_extra">2</option>
+          </options>
+        </window>
+      </windows>
+      <aliases />
+      <triggers>
+        <trigger title="map_capture_end" pattern="^&lt;MAPEND&gt;$" regexp="true">
+          <script function="endMapCapture" fireWhen="always" />
+          <gag />
+        </trigger>
+        <trigger title="map_capture_start" pattern="^&lt;MAPSTART&gt;$" regexp="true">
+          <script function="startMapCapture" fireWhen="always" />
+          <gag />
+        </trigger>
+        <trigger title="map_capture" pattern="^[^&lt;].*$" regexp="true" enabled="false">
+          <script function="doMapCapture" fireWhen="always" />
+          <gag />
+        </trigger>
+      </triggers>
+      <timers />
+      <options />
+      <script name="mapUIStartup"><![CDATA[
 			
-		</windows>
-		<script name="mapUIStartup">
-			<![CDATA[
 			dofile(GetPluginInstallDirectory().."/mapwindowui.lua")
-			]]>
-		</script>
-		<script execute="true" name="bootstrap">
-		<![CDATA[
-			dofile(GetPluginInstallDirectory().."/mapwindowserver.lua")
+			
 		]]>
-		</script>
-	</plugin>
-	</plugins>
+      </script>
+      <script name="bootstrap" execute="true"><![CDATA[
+		
+			dofile(GetPluginInstallDirectory().."/mapwindowserver.lua")
+		
+		]]>
+      </script>
+    </plugin>
+  </plugins>
 </blowtorch>

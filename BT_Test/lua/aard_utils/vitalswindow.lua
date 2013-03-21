@@ -488,16 +488,39 @@ rootView = view:getParentView()
 --holder:addView(view)
 --view:setHasText(false)
 
-MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local AT_MOST = MeasureSpec.AT_MOST
+local EXACTLY = MeasureSpec.EXACTLY
+local UNSPECIFIED = MeasureSpec.UNSPECIFIED
+--local MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local measurespec_height = -1
+local measurespec_width = -1
+local measured_height = -1
+local measured_width = -1
 local density = view:getResources():getDisplayMetrics().density
 function OnMeasure(wspec,hspec)
+	if(wspec == measurespec_width and hspec == measurespec_height) then return measured_width,measured_height end
+	--measurespec_width = wspec
+	--measurespec_height = hspec
 	--we are going to assume some things here, 1, that MeasureSpec:getMode(wspec) == MeasureSpec.EXACTLY, 2 MeasureSpec:getMode(hspec) == MeasureSpec.UNDEFINED
 	--we are just going to pull out the width value, and return a custom height
-	local width = MeasureSpec:getSize(wspec)
+	measured_width = MeasureSpec:getSize(wspec)
+	local wmode = MeasureSpec:getMode(wspec)
+	--if(wmode == AT_MOST) then
+	--	width = 
+	--end
 	
-	local barheight = math.floor(10*density)
-	local height = 5*barheight
-	
+	local hmode = MeasureSpec:getMode(hspec)
+	local barheight
+	local height
+	if(hmode == UNSPECIFIED) then
+		barheight = math.floor(10*density)
+		height = 5*barheight
+	else
+		height = MeasureSpec:getSize(hspec)
+	end
+	measured_height = height
+
 	--local mod = height % 1
 	--height = height - mod
 	--local mod = height % 10
@@ -505,12 +528,13 @@ function OnMeasure(wspec,hspec)
 	--	height = height - mod
 	--end
 	--Note(string.format("\nOnMeasure:%d,%d",width,height))
-	return width,height
+	return measured_width,measured_height
 end
 
 config = {}
 config.id = view:getId()
 config.divider = true
+config.indexmod = 2
 config.width = MATCH_PARENT
 config.height = WRAP_CONTENT
 InstallWindow(config)

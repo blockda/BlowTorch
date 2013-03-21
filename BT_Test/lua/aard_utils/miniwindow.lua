@@ -96,7 +96,7 @@ function InstallWindow(config)
 		config = {}
 		math.randomseed(os.time())
 		config.id = math.round(math.random(8000,80000))
-		config.parent = "ScrollView1"
+		config.parent = "ScrollTarget1"
 		config.type = "linear"
 		config.width = "match"
 		config.height = "wrap"
@@ -109,7 +109,7 @@ function InstallWindow(config)
 	--	config = serialize(config)
 	--end
 	
-	WindowCall("layout_manager","InstallWindow",serialize(config))
+	WindowCall("layout_manager","AddWindow",serialize(config))
 end
 
 function MakeDivider(context)
