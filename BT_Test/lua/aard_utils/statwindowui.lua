@@ -6,42 +6,46 @@ require("miniwindow")
 --make a button.
 --debugPrint("in the clock widgetui")
 
-Paint = luajava.bindClass("android.graphics.Paint")
-Array = luajava.bindClass("java.lang.reflect.Array")
-Color = luajava.bindClass("android.graphics.Color")
-LinearGradient = luajava.bindClass("android.graphics.LinearGradient")
-PorterDuffXfermode = luajava.bindClass("android.graphics.PorterDuffXfermode")
-PorterDuffMode = luajava.bindClass("android.graphics.PorterDuff$Mode")
-TileMode = luajava.bindClass("android.graphics.Shader$TileMode")
-Paint = luajava.bindClass("android.graphics.Paint")
-Style = luajava.bindClass("android.graphics.Paint$Style")
-RectF = luajava.bindClass("android.graphics.RectF")
-Typeface = luajava.bindClass("android.graphics.Typeface")
+local luajava = luajava
+local view = view
 
-Integer = luajava.newInstance("java.lang.Integer",0)
-IntegerClass = Integer:getClass()
-RawInteger = IntegerClass.TYPE
+local Paint = luajava.bindClass("android.graphics.Paint")
+local Array = luajava.bindClass("java.lang.reflect.Array")
+local Color = luajava.bindClass("android.graphics.Color")
+local LinearGradient = luajava.bindClass("android.graphics.LinearGradient")
+local PorterDuffXfermode = luajava.bindClass("android.graphics.PorterDuffXfermode")
+local PorterDuffMode = luajava.bindClass("android.graphics.PorterDuff$Mode")
+local TileMode = luajava.bindClass("android.graphics.Shader$TileMode")
+local Paint = luajava.bindClass("android.graphics.Paint")
+local Style = luajava.bindClass("android.graphics.Paint$Style")
+local RectF = luajava.bindClass("android.graphics.RectF")
+local Typeface = luajava.bindClass("android.graphics.Typeface")
+local LinearLayout = luajava.bindClass("android.widget.LinearLayout")
 
-Float = luajava.newInstance("java.lang.Float",0)
-FloatClass = Float:getClass()
-RawFloat = FloatClass.TYPE
+local Integer = luajava.newInstance("java.lang.Integer",0)
+local IntegerClass = Integer:getClass()
+local RawInteger = IntegerClass.TYPE
 
-function makeFloatArray(table)
-	newarray = Array:newInstance(RawFloat,#table)
+local Float = luajava.newInstance("java.lang.Float",0)
+local FloatClass = Float:getClass()
+local RawFloat = FloatClass.TYPE
+
+local function makeFloatArray(table)
+	local newarray = Array:newInstance(RawFloat,#table)
 	for i,v in ipairs(table) do
-		index = i-1
-		floatval = luajava.newInstance("java.lang.Float",v)
+		local index = i-1
+		local floatval = luajava.newInstance("java.lang.Float",v)
 		Array:setFloat(newarray,index,floatval:floatValue())
 	end
 	
 	return newarray
 end
 
-function makeIntArray(table)
-	newarray = Array:newInstance(RawInteger,#table)
+local function makeIntArray(table)
+	local newarray = Array:newInstance(RawInteger,#table)
 	for i,v in ipairs(table) do
-		index = i-1
-		intval = luajava.newInstance("java.lang.Integer",v)
+		local index = i-1
+		local intval = luajava.newInstance("java.lang.Integer",v)
 		Array:setInt(newarray,index,intval:intValue())
 	end
 	
@@ -66,6 +70,7 @@ end
 config = {}
 config.id = view:getId()
 config.divider = true
+--config.indexmod = 2
 config.width = MATCH_PARENT
 config.height = WRAP_CONTENT
 InstallWindow(config)
@@ -90,8 +95,59 @@ Color = luajava.bindClass("android.graphics.Color")
 timeordinal = 0
 
 stats = nil
+local MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local AT_MOST = MeasureSpec.AT_MOST
+local EXACTLY = MeasureSpec.EXACTLY
+local UNSPECIFIED = MeasureSpec.UNSPECIFIED
+local MeasureSpec = luajava.bindClass("android.view.View$MeasureSpec")
+local measurespec_height = -1
+local measurespec_width = -1
+local measured_height = -1
+local measured_width = -1
+local density = view:getResources():getDisplayMetrics().density
+function OnMeasure(wspec,hspec)	
+	if(wspec == measurespec_width and hspec == measurespec_height) then return measured_width,measured_height end
+	--Note(string.format("measurespecs: %d, %d\n",wspec,hspec))
+	measurespec_width = wspec
+	measurespec_height = hspec
+	measured_width = MeasureSpec:getSize(wspec)
+	--local wmode = MeasureSpec:getMode(wspec)
+	
+	measured_height = MeasureSpec:getSize(hspec)
+	--local hmode = MeasureSpec:getMode(hspec)
+	
+	function test()
+		local orientation = view:getParent():getOrientation()
+	end
+	local ret,err = pcall(test,debug.traceback)
+	if(not ret) then
+		--there was a problem, but do we care
+		--Note("stat widget is relative, width:"..measured_width.." height:"..measured_height.."\n")
+		return measured_width,measured_height
+	end
+	
+	
+	local orientation = view:getParent():getOrientation()
+	if(orientation == LinearLayout.VERTICAL) then
+		view:fitFontSize(36)
+		view:doFitFontSize(measured_width)
+		measured_height = view:getLineSize()*view:getBuffer():getBrokenLineCount()
+		
+		--Note("stat widget is vertical, width:"..measured_width.." height:"..measured_height.."\n")
+		return measured_width,measured_height
+	else
+		view:setCharacterSizes((measured_height-6)/3,2)
+		measured_width = 37*view:measure("a")
+		view:fitFontSize(-1)
+		measured_height = view:getLineSize()*view:getBuffer():getBrokenLineCount()
+		--Note("stat widget is horizontal, width:"..measured_width.." height:"..measured_height.."\n")
+		return measured_width,measured_height
+	end
+	--end
+	
+	
 
-
+end
 
 function OnSizeChanged(w,h,ow,oh)
 	--Note(string.format("\nstat window ui changed, %s, %s, %s, %s\n",w,h,ow,oh))
@@ -120,7 +176,7 @@ function updateStats(data)
 	local nwhit = "\27[0;37m"
 	
 	--local start_time = System:currentTimeMillis()
-	
+	if(not stats.str) then return end
 	
 	view:clearText()
 	view:addText(string.format(compact_format,dcyan,bwhit,stats.str,dcyan,bwhit,stats.dex,dcyan,bwhit,stats.con,nwhit,dcyan,bwhit,stats.int,dcyan,bwhit,stats.wis,dcyan,bwhit,stats.luck,nwhit,dcyan,bwhit,stats.hr,dcyan,bwhit,stats.dr,dcyan,bwhit,stats.saves,nwhit),true)

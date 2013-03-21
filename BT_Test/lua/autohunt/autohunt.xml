@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <blowtorch xmlversion="2">
-<plugins>
-	<plugin name="autohunt" id="75">
-		<author>Daniel Block</author>
-		<description>
-		<![CDATA[
+  <plugins>
+    <plugin name="autohunt" id="75">
+      <author>Daniel Block</author>
+      <description><![CDATA[
+		
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -23,58 +23,62 @@ body {
 <p>Simple automation for aardwolf hunting. Will attempt to open doors in the process, will abort if obstructions such as locked doors or quicksand are encountered.</p>
 </body>
 </html>
-		]]>
-		</description>
-		<triggers>
-			<trigger title="fail1" pattern="^No\-one in this area by that name\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail2" pattern="^You seem unable to hunt that target for some reason\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail3" pattern="^You have no idea what you\'re doing\, but maybe .*? left .*?\?$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail4" pattern="^You couldn\'t find a path to (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1" group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail5" pattern="^You need to use a boat\, fly\, or swim underwater to go there\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail6" pattern="^You are trapped in quicksand\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail7" pattern="^The .*? is locked and you do not have a key\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="fail8" pattern="^Not while you are fighting\!$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="failed" fireWhen="always"/>
-			</trigger>
-			<trigger title="hunt1" pattern="^You are almost certain that .*? is (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="advance" fireWhen="always"/>
-			</trigger>
-			<trigger title="hunt2" pattern="^\s*You are confident that .*? passed through here\, heading (.*?)\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="advance" fireWhen="always"/>
-			</trigger>
-			<trigger title="hunt3" pattern="^The trail of .*? is confusing\, but you\'re reasonably sure .*? headed (.*?)\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="advance" fireWhen="always"/>
-			</trigger>
-			<trigger title="hunt4" pattern="^You are certain that .*? is (.*?) from here\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="advance" fireWhen="always"/>
-			</trigger>
-			<trigger title="success" pattern=".*? is here\!$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="finish" fireWhen="always"/>
-			</trigger>
-			<trigger title="door1" pattern="^Magical wards around the .*? bounce you back\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="openDoor" fireWhen="always"/>
-			</trigger>
-			<trigger title="door2" pattern="^The .*? is closed\.$" interpretLiteral="true" fireOnce="false" enabled="false" sequence="1"  group="autohunt">
-				<script function="openDoor" fireWhen="always"/>
-			</trigger>
-		</triggers>
 		
-		<script execute="true" name="main">
-			<![CDATA[
+		]]>
+      </description>
+      <windows />
+      <aliases />
+      <triggers>
+        <trigger title="door1" pattern="^Magical wards around the .*? bounce you back\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="openDoor" fireWhen="always" />
+        </trigger>
+        <trigger title="door2" pattern="^The .*? is closed\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="openDoor" fireWhen="always" />
+        </trigger>
+        <trigger title="hunt3" pattern="^The trail of .*? is confusing\, but you\'re reasonably sure .*? headed (.*?)\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="advance" fireWhen="always" />
+        </trigger>
+        <trigger title="hunt4" pattern="^\s{0,1}You are certain that .*? is (.*?) from here\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="advance" fireWhen="always" />
+        </trigger>
+        <trigger title="hunt1" pattern="^You are almost certain that .*? is (.*?) from here\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="advance" fireWhen="always" />
+        </trigger>
+        <trigger title="hunt2" pattern="^\s*You are confident that .*? passed through here\, heading (.*?)\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="advance" fireWhen="always" />
+        </trigger>
+        <trigger title="fail8" pattern="^Not while you are fighting\!$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail7" pattern="^The .*? is locked and you do not have a key\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail6" pattern="^You are trapped in quicksand\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail5" pattern="^You need to use a boat\, fly\, or swim underwater to go there\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail4" pattern="^You couldn\'t find a path to (.*?) from here\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail3" pattern="^You have no idea what you\'re doing\, but maybe .*? left .*?\?$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail2" pattern="^You seem unable to hunt that target for some reason\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="fail1" pattern="^No\-one in this area by that name\.$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="failed" fireWhen="always" />
+        </trigger>
+        <trigger title="success" pattern=".*? is here\!$" regexp="true" sequence="1" group="autohunt" keepEvaluating="true">
+          <script function="finish" fireWhen="always" />
+        </trigger>
+      </triggers>
+      <timers />
+      <options />
+      <script name="main" execute="true"><![CDATA[
+			
 			
 
 			dir = ""
@@ -156,8 +160,9 @@ body {
 			RegisterSpecialCommand("ah","start")
 
 			Note("Aut Hunt Plugin installed")
-			]]>
-		</script>
-	</plugin>
-</plugins>
+			
+		]]>
+      </script>
+    </plugin>
+  </plugins>
 </blowtorch>
