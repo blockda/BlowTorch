@@ -24,6 +24,8 @@
 
 package org.keplerproject.luajava;
 
+import java.io.UnsupportedEncodingException;
+
 import android.os.RemoteException;
 
 /**
@@ -48,8 +50,9 @@ public abstract class JavaFunction
 	 * of the function must be pushed onto the stack.
 	 * @return The number of values pushed onto the stack.
 	 * @throws RemoteException 
+	 * @throws UnsupportedEncodingException 
 	 */
-	public abstract int execute() throws LuaException, RemoteException;
+	public abstract int execute() throws LuaException, RemoteException, UnsupportedEncodingException;
 	
 	/**
 	 * Constructor that receives a LuaState.
