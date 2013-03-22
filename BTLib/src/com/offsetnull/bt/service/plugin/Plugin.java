@@ -95,7 +95,7 @@ public class Plugin implements SettingsChangedListener {
 	Pattern whiteSpace = Pattern.compile("\\s");
 	HashMap<String,CustomTimerTask> timerTasks = new HashMap<String,CustomTimerTask>();
 	private boolean enabled = true;
-	private String scriptBlock = "\\";
+	private String scriptBlock = "/";
 	//private ArrayList<Integer> optionSkipSaveList = new ArrayList<Integer>();
 	
 	public static final int LUA_TNIL = 0;
@@ -2329,9 +2329,11 @@ public class Plugin implements SettingsChangedListener {
 					Pattern aliasHarvest = Pattern.compile(replace_with.getPre());
 					Matcher aliasHarvestMatcher = aliasHarvest.matcher("");
 					captureMap.clear();
-					for(int i=index+1;i<=(aliasHarvestMatcher.groupCount()+index);i++) {
-						
-						captureMap.put(Integer.toString(i-index), alias_replacer.group(i));
+					int tmp = 0;
+					for(int i=index;i<=(aliasHarvestMatcher.groupCount()+index);i++) {
+						String match = alias_replacer.group(i);
+						captureMap.put(Integer.toString(tmp), match);
+						tmp++;
 					}
 					
 					ToastResponder t = new ToastResponder();
