@@ -28,6 +28,8 @@ public class TriggerElementListener implements ElementListener {
 		if(a.getValue("", BasePluginParser.ATTR_TRIGGERLITERAL) == null) {
 			if(a.getValue("","regexp") != null) {
 				current_trigger.setInterpretAsRegex((a.getValue("","regexp") == null) ? false : ( a.getValue("","regexp").equals("true") ? true : false));
+			} else {
+				current_trigger.setInterpretAsRegex(false);
 			}
 		} else {
 			current_trigger.setInterpretAsRegex( (a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL) == null) ? false : a.getValue("",BasePluginParser.ATTR_TRIGGERLITERAL).equals("true") ? true : false);
