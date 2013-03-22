@@ -4603,7 +4603,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		fitChars = chars;
 	}
 		
-	private void doFitFontSize(int width) {
+	public void doFitFontSize(int width) {
 		if(fitChars < 0) return;
 		//Log.e("LUA","DOING THE FIT ROUTINE: "+mWidth+" chars:"+fitChars + " for window: "+this.getName());
 		int windowWidth = width;
@@ -4700,5 +4700,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	//private ThreadUpdater updateHandler = null;
 	//private Object updateSynch = new Object();
+	public TextTree getBuffer() {
+		return the_tree;
+	}
+	
+	public double measure(String str) {
+		return featurePaint.measureText(str);
+	}
 }
 

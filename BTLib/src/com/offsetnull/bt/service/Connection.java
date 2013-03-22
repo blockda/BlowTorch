@@ -1955,6 +1955,10 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			Plugin p = plugins.get(i);
 			HashMap<String,TriggerData> triggers = p.getSettings().getTriggers();
 			for(TriggerData t : triggers.values()) {
+				boolean x_regex = t.isInterpretAsRegex();
+				String x_name = t.getName();
+				String x_pattern = t.getPattern();
+				int j = x_name.length();
 				if(!t.isInterpretAsRegex()) { //this actually means literal
 					if(t.getPattern().startsWith(gmcpChar)) {
 						//add it to the watch list, if it has a script responder
