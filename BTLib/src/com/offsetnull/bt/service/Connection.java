@@ -1476,6 +1476,9 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				boolean rebuildTriggers = false;
 				int linedelta = 0;
 				//attempt the trigger matching.
+				
+				boolean replace_gagged = false;
+				int gagloc = -1;
 				massiveMatcher.reset(stripped);
 				while(keepEvaluating && massiveMatcher.find()) {
 					int s = massiveMatcher.start();
@@ -1487,7 +1490,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					int tmpline = tmp.first().getLine();
 					int tmpstart = s - tmp.first().getStart();
 					int tmpend = (e-1) - tmp.first().getStart();
-	
+					gagloc = tmp.first().getEnd();
 					
 					int index = -1;
 					for(int i=1;i<=massiveMatcher.groupCount();i++) {
@@ -1550,8 +1553,13 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 								captureMap.put(Integer.toString(i-index), massiveMatcher.group(i));
 							}
 							for(TriggerResponder responder : t.getResponders()) {
+								if(responder instanceof GagAction) {
+									replace_gagged = true;
+									//gagloc = lineend;
+								}
 								try {
 									boolean ret = responder.doResponse(service.getApplicationContext(), working, lineNumber, it, l, tmpstart,tmpend,matched, t, display,host,port, StellarService.getNotificationId(), service.isWindowConnected(), handler, captureMap, p.getLuaState(), t.getName(), the_settings.getEncoding());
+									
 									if(ret == true) {
 										//keepEvaluating = false;
 										//rebuildTriggers = true;
@@ -1617,7 +1625,12 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					//make the stripped text be a substring of what is currently matched.
 					if(e == stripped.length()) {
 					} else {
-						stripped = stripped.substring(e+1,stripped.length());
+						if(replace_gagged) {
+							stripped = stripped.substring(gagloc+1,stripped.length());
+						} else {
+							stripped = stripped.substring(e+1,stripped.length());
+						}
+						
 					}
 					
 					if(lineNumber <= working.getLines().size()-1) {

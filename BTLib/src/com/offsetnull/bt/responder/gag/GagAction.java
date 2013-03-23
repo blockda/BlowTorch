@@ -63,6 +63,7 @@ public class GagAction extends TriggerResponder implements Parcelable {
 			}
 		
 			int prevloc = -1;
+			if(lineNumber > tree.getLines().size() || lineNumber < 0) { return false;}
 			ListIterator<TextTree.Line> lineit = tree.getLines().listIterator(lineNumber);
 			if(lineit.hasPrevious()) {
 				//Log.e("GAG","PREVIOUS INDEX:" + iterator.previousIndex());
