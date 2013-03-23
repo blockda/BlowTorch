@@ -315,8 +315,11 @@ divider0Config_0.affects = {}
 divider0Config_0.affects.mainDisplay = {}
 divider0Config_0.affects.mainDisplay[RelativeLayout.ALIGN_PARENT_RIGHT] = 0
 divider0Config_0.affects.mainDisplay[RelativeLayout.LEFT_OF] = 886796
+divider0Config_0.affects.inputBar = {}
+divider0Config_0.affects.inputBar[RelativeLayout.ALIGN_PARENT_RIGHT] = 1
 if(chat_window_installed) then
 	divider0Config_0.affects.chat_window = {}
+	divider0Config_0.affects.chat_window[RelativeLayout.LEFT_OF] = 0
 	divider0Config_0.affects.chat_window[RelativeLayout.ALIGN_PARENT_RIGHT] = 1
 end
 
