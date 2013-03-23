@@ -256,6 +256,7 @@ public class Plugin implements SettingsChangedListener {
 		PluginSupportsFunction psf = new PluginSupportsFunction(L);
 		EnableTriggerGroupFunction etgf = new EnableTriggerGroupFunction(L);
 		SimulateInputFunction sif = new SimulateInputFunction(L);
+		DeleteTriggerGroupFunction dtgf = new DeleteTriggerGroupFunction(L);
 		//common functions
 		
 		gabhf.register("GetActionBarHeight");
@@ -287,6 +288,7 @@ public class Plugin implements SettingsChangedListener {
 		psf.register("PluginSupports");
 		etgf.register("EnableTriggerGroup");
 		sif.register("Simulate");
+		dtgf.register("DeleteTriggerGroup");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -1243,6 +1245,36 @@ public class Plugin implements SettingsChangedListener {
 		}
 	}
 
+	
+	private class DeleteTriggerGroupFunction extends JavaFunction {
+		public DeleteTriggerGroupFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException, RemoteException,
+				UnsupportedEncodingException {
+			String group = this.L.LcheckString(2);
+			
+			if(group == null) return 0;
+			
+			ArrayList<String> tmp = new ArrayList<String>();
+			for(TriggerData t : Plugin.this.settings.getTriggers().values()) {
+				if(t.getGroup().equals(group)) {
+					tmp.add(t.getName());
+				}
+				//tmp.add(t.getName());
+			}
+			
+			for(String name : tmp) {
+				Plugin.this.settings.getTriggers().remove(name);
+			}
+			
+			parent.setTriggersDirty();
+			
+			return 0;
+		}
+	}
 	/*! \page page1
 		* \subsection ExecuteScript ExecuteScript
 		* Executes a script that has been loaded during the plugin parsing phase.
