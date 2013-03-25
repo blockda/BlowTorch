@@ -10,7 +10,7 @@ public class SwitchWindowCommand extends SpecialCommand {
 	public Object execute(Object o,Connection c) {
 		String connection = (String)o;
 		
-		c.service.setClutch(connection);
+		c.getService().setClutch(connection);
 		c.switchTo(connection);
 		
 		return null;

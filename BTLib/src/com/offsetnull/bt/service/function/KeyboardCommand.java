@@ -121,7 +121,7 @@ public class KeyboardCommand extends SpecialCommand {
 			e.printStackTrace();
 		}
 		
-		c.service.doShowKeyboard(text,dopopup,doadd,doflush,doclear,doclose);
+		c.getService().doShowKeyboard(text,dopopup,doadd,doflush,doclear,doclose);
 //		return null;
 		return null;
 	}
