@@ -10,7 +10,7 @@ public class ClearButtonCommand extends SpecialCommand {
 	}
 	
 	public Object execute(Object o,Connection c) {
-		c.service.doClearAllButtons();
+		c.getService().doClearAllButtons();
 		return null;
 	}
 	

@@ -8,7 +8,7 @@ public class BellCommand extends SpecialCommand {
 	}
 	public Object execute(Object o,Connection c) {
 		
-		c.handler.sendEmptyMessage(Connection.MESSAGE_BELLINC);
+		c.getHandler().sendEmptyMessage(Connection.MESSAGE_BELLINC);
 		
 		return null;
 		

@@ -5,25 +5,31 @@ import java.nio.ByteBuffer;
 
 import android.util.Log;
 
+/** Helper class to the Processor. This object keeps track of the negotiation responses. */
 public class OptionNegotiator {
-	
-	private int columns = 80;
-	private int rows = 21;
-	
-	//private Handler dispatcher;
-	
-	boolean isNAWS=false;
-	//boolean hasNAWSed = false;
-
-	private String[] termtypes = null;// = {"BlowTorch","ansi","BlowTorch-256color","UNKNOWN"};
-	private int attempt = 0;
-	
-	String termType = null;
-	public OptionNegotiator(String ttype) {
-		//not really much to initialize, this class just returns a response to an option
-		//dispatcher = idispatcher;
-		termType = ttype;
-		termtypes = new String[] {termType,"ansi","BlowTorch-256color","UNKNOWN"};
+	/** The default number of columns for NAWS. */
+	private static final int DEFAULT_COLS = 80;
+	/** The default number of rows for NAWS. */
+	private static final int DEFAULT_ROWS = 21;
+	/** Tracker for the configured number of columns for NAWS. */
+	private int mColumns = DEFAULT_COLS;
+	/** Tracker for the configured number of rows for NAWS. */
+	private int mRows = DEFAULT_ROWS;
+	/** Tracker for if naws has been negotiatated. */
+	private boolean mIsNAWS = false;
+	/** The termtype array of strings that will be iterated through for TTYPE negotiation. */
+	private String[] mTermTypes = null;
+	/** The termtype negotiation attempt number. */
+	private int mTermTypeAttempt = 0;
+	/** Selected termtype. */
+	private String mTermType = null;
+	/** Constructor.
+	 * 
+	 * @param ttype The package level configurable termtype option.
+	 */
+	public OptionNegotiator(final String ttype) {
+		mTermType = ttype;
+		mTermTypes = new String[] {mTermType, "ansi", "BlowTorch-256color", "UNKNOWN"};
 		
 	}
 	byte IAC_WILL = (byte)0xFB; //251
@@ -84,7 +90,7 @@ public class OptionNegotiator {
 	    			break;
 	    		case NAWS_TYPE:
 	    			response = IAC_WILL;
-	    			isNAWS=true;
+	    			mIsNAWS=true;
 	    			donenaws = false;
 	    			break; 
 	    		case TC.TERM:
@@ -140,7 +146,7 @@ public class OptionNegotiator {
     		//String termtype = "UNKNOWN";
     		
     		
-    		String termtype = termtypes[attempt];
+    		String termtype = mTermTypes[mTermTypeAttempt];
     		//Log.e("PROCESSOR","Sending terminal type: " + termtype);
     		try {
 				responsedata = termtype.getBytes("ISO-8859-1");
@@ -153,8 +159,8 @@ public class OptionNegotiator {
     		buf.put(responsedata,0,responsedata.length);
     		buf.put(sequence,sequence.length-2,2);
     		
-    		if(attempt < 3) {
-    			attempt++;
+    		if(mTermTypeAttempt < 3) {
+    			mTermTypeAttempt++;
     		} //else return UNKNOWN every time
     		return buf.array();
     		
@@ -231,32 +237,32 @@ public class OptionNegotiator {
 	private Boolean mUseGMCP = false;
 	public void setColumns(int columns) {
 		if(columns < 1) { return; }
-		if(this.columns != columns) {
+		if(this.mColumns != columns) {
 			donenaws = false;
 		}
-		this.columns = columns;
+		this.mColumns = columns;
 		
 	}
 
 	public int getColumns() {
-		return columns;
+		return mColumns;
 	}
 
 	public void setRows(int rows) {
 		if(rows < 1) { return; }
-		if(this.rows != rows) {
+		if(this.mRows != rows) {
 			donenaws = false;
 		}
-		this.rows = rows;
+		this.mRows = rows;
 		
 	}
 
 	public int getRows() {
-		return rows;
+		return mRows;
 	}
 	
 	public byte[] getNawsString() {
-		if(!isNAWS) { return null;}
+		if(!mIsNAWS) { return null;}
 		if(donenaws) { return null;}
 		//Log.e("OPT","WHO LET THE NAWS OUT");
 		ByteBuffer buf = ByteBuffer.allocate(9);
@@ -265,13 +271,13 @@ public class OptionNegotiator {
 		buf.put((byte)0x1F); //NAWS
 		//buf.put((byte)0x00); //IS
 		//extract high byte from column
-		byte highCol = (byte)((0x0000FF00&columns)>>2);
-		byte lowCol = (byte)((0x000000FF&columns));
+		byte highCol = (byte)((0x0000FF00&mColumns)>>2);
+		byte lowCol = (byte)((0x000000FF&mColumns));
 		buf.put(highCol); //columns, high byte
 		buf.put(lowCol); //columns, low byte
 		
-		byte highRow = (byte)((0x0000FF00&rows)>>2);
-		byte lowRow = (byte)((0x000000FF&rows));
+		byte highRow = (byte)((0x0000FF00&mRows)>>2);
+		byte lowRow = (byte)((0x000000FF&mRows));
 		buf.put(highRow); //lines, high byte
 		buf.put(lowRow); //lines, low byte
 		
@@ -288,7 +294,7 @@ public class OptionNegotiator {
 
 
 	public void reset() {
-		attempt = 0;		
+		mTermTypeAttempt = 0;		
 	}
 
 
