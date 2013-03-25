@@ -49,7 +49,7 @@ public class ColorDebugCommand extends SpecialCommand {
 			return null;
 		}
 		//if we are here we are good to go.
-		c.service.doExecuteColorDebug(iarg);
+		c.getService().doExecuteColorDebug(iarg);
 		//so with the color debug mode set, we should probably dispatch a message to them.
 		String success = "\n" + Colorizer.colorRed + "Color Debug Mode " + iarg + " activated. ";
 		if(iarg == 0) {

@@ -1,22 +1,22 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -24,7 +24,6 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaState;
 import org.xml.sax.SAXException;
 import org.xmlpull.v1.XmlSerializer;
@@ -33,9 +32,7 @@ import com.offsetnull.bt.responder.IteratorModifiedException;
 import com.offsetnull.bt.responder.TriggerResponder;
 import com.offsetnull.bt.responder.gag.GagAction;
 import com.offsetnull.bt.responder.script.ScriptResponder;
-import com.offsetnull.bt.responder.toast.ToastResponder;
 import com.offsetnull.bt.script.ScriptData;
-import com.offsetnull.bt.service.IWindowCallback;
 import com.offsetnull.bt.service.function.BellCommand;
 import com.offsetnull.bt.service.function.ClearButtonCommand;
 import com.offsetnull.bt.service.function.ColorDebugCommand;
@@ -53,18 +50,11 @@ import com.offsetnull.bt.service.plugin.ConnectionSettingsPlugin;
 import com.offsetnull.bt.service.plugin.Plugin;
 import com.offsetnull.bt.service.plugin.settings.BaseOption;
 import com.offsetnull.bt.service.plugin.settings.BooleanOption;
-import com.offsetnull.bt.service.plugin.settings.ColorOption;
 import com.offsetnull.bt.service.plugin.settings.ConnectionSetttingsParser;
-import com.offsetnull.bt.service.plugin.settings.EncodingOption;
-import com.offsetnull.bt.service.plugin.settings.FileOption;
-import com.offsetnull.bt.service.plugin.settings.IntegerOption;
-import com.offsetnull.bt.service.plugin.settings.ListOption;
-import com.offsetnull.bt.service.plugin.settings.StringOption;
 import com.offsetnull.bt.service.plugin.settings.Option;
 import com.offsetnull.bt.service.plugin.settings.PluginParser;
 import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
 import com.offsetnull.bt.service.plugin.settings.VersionProbeParser;
-import com.offsetnull.bt.service.plugin.settings.PluginSettings.PLUGIN_LOCATION;
 import com.offsetnull.bt.settings.ColorSetSettings;
 import com.offsetnull.bt.settings.ConfigurationLoader;
 import com.offsetnull.bt.settings.HyperSAXParser;
@@ -74,206 +64,438 @@ import com.offsetnull.bt.timer.TimerData;
 import com.offsetnull.bt.trigger.TriggerData;
 import com.offsetnull.bt.window.TextTree;
 import com.offsetnull.bt.window.TextTree.Line;
-import com.offsetnull.bt.window.Window;
-
 import com.offsetnull.bt.alias.AliasData;
 import com.offsetnull.bt.button.SlickButtonData;
 
-import android.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.DeadObjectException;
-import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.preference.PreferenceManager;
 
 import android.util.Log;
+import android.util.SparseArray;
 //import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 import android.widget.Toast;
 
-public class Connection implements SettingsChangedListener,ConnectionPluginCallback {
-	//base "connection class"
-	public final static int MESSAGE_STARTUP = 1;
-	public final static int MESSAGE_STARTCOMPRESS = 2;
-	public final static int MESSAGE_PROCESSORWARNING = 3;
-	public final static int MESSAGE_SENDOPTIONDATA = 4;
-	public final static int MESSAGE_BELLINC = 5;
-	public final static int MESSAGE_DODIALOG = 6;
-	public final static int MESSAGE_PROCESS = 7;
-	public final static int MESSAGE_DISCONNECTED = 8;
-	public static final int MESSAGE_MCCPFATALERROR = 9;
-	public final static int MESSAGE_SENDDATA_BYTES = 9;
-	public static final int MESSAGE_LINETOWINDOW = 10;
-	public static final int MESSAGE_LUANOTE = 11;
-	public static final int MESSAGE_DRAWINDOW = 12;
-	public static final int MESSAGE_NEWWINDOW = 13;
-	//public static final int MESSAGE_MODMAINWINDOW = 14;
-	public static final int MESSAGE_WINDOWBUFFER = 15;
-	public static final int MESSAGE_ADDFUNCTIONCALLBACK = 16;
-	public static final int MESSAGE_WINDOWXCALLS = 17;
-	public static final int MESSAGE_INVALIDATEWINDOWTEXT = 18;
-	public static final int MESSAGE_GMCPTRIGGERED = 19;
-	public static final int MESSAGE_SENDDATA_STRING = 20;
-	public static final int MESSAGE_SAVESETTINGS = 21;
-	public static final int MESSAGE_EXPORTFILE = 22;
-	public static final int MESSAGE_IMPORTFILE = 23;
-	public static final int MESSAGE_SENDGMCPDATA = 24;
-	public static final int MESSAGE_WINDOWXCALLB = 25;
-	public static final int MESSAGE_PLUGINLUAERROR = 26;
-	private static final int MESSAGE_DORESETSETTINGS = 27;
-	protected static final int MESSAGE_ADDLINK = 28;
-	private static final int MESSAGE_DELETEPLUGIN = 29;
-	static final int MESSAGE_CONNECTED = 30;
-	private static final int MESSAGE_RECONNECT = 31;
-	public static final int MESSAGE_TRIGGER_LUA_ERROR = 32;
-	public static final int MESSAGE_RELOADSETTINGS = 33;
-	public static final int MESSAGE_SETTRIGGERSDIRTY = 34;
-	private static final int MESSAGE_CALLPLUGIN = 35;
-	private static final int MESSAGE_TIMERINFO = 36;
-	private static final int MESSAGE_TIMERSTART = 37;
-	private static final int MESSAGE_TIMERPAUSE = 38;
-	private static final int MESSAGE_TIMERRESET = 39;
-	private static final int MESSAGE_TIMERSTOP = 40;
-	public static final int MESSAGE_TERMINATED_BY_PEER = 41;
-	public Handler handler = null;
-	ArrayList<Plugin> plugins = null;
-	private HashMap<String,String> captureMap = new HashMap<String,String>();
-	DataPumper pump = null;
-	Processor processor = null;
-	//TextTree buffer = null;
-	TextTree working = null;
-	TextTree finished = null;
-	boolean loaded = false;
-	String display;
-	String host;
-	int port;
-	HashMap<String,IWindowCallback> windowCallbackMap = new HashMap<String,IWindowCallback>();
-	//String encoding = "ISO-8859-1";
+/** Connection class implementation. */
+public class Connection implements SettingsChangedListener, ConnectionPluginCallback {
 	
+	/** Initiates the connection with the server. */
+	public static final int MESSAGE_STARTUP = 1;
+	
+	/** Bridge between Processor and DataPumper to initiate MCCP compression. */
+	public static final int MESSAGE_STARTCOMPRESS = 2;
+	
+	/** Sent by various objects to throw text to the window bypassing the trigger parse routine. */
+	public static final int MESSAGE_PROCESSORWARNING = 3;
+	
+	/** Sent from the Processor to send data to the DataPumper's output thread. */
+	public static final int MESSAGE_SENDOPTIONDATA = 4;
+	
+	/** Sent from the Processor indicating the bell character has been recieved. */
+	public static final int MESSAGE_BELLINC = 5;
+	
+	/** Not sure where this is sent from, I think the Xml parser or the datapumper. 
+	 ** Used to put up an alert dialog with some text to the foreground window if connected. */
+	public static final int MESSAGE_DODIALOG = 6;
+	
+	/** Sent from Processor, contains the non-telnet related data in the incoming transmission. */
+	public static final int MESSAGE_PROCESS = 7;
+	
+	/** Sent from the DataPumper when the connection has been lost. */
+	public static final int MESSAGE_DISCONNECTED = 8;
+	
+	/** Sent from the DataPumper indicating a fatal mccp error. */
+	public static final int MESSAGE_MCCPFATALERROR = 9;
+	
+	/** Sent from the foreground window with data to be sent to the server. */
+	public static final int MESSAGE_SENDDATA_BYTES = 9;
+	
+	/** Sent from Plugin.LineToWindowFunction contains a 
+	 ** TextTree.Line object to send to a specific window. */
+	public static final int MESSAGE_LINETOWINDOW = 10;
+	
+	/** Sent from Plugin.NoteFunction with text to send to the output window. */
+	public static final int MESSAGE_LUANOTE = 11;
+	
+	/** Sent from Plugin.DrawWindowFunction, I think this is no longer used and deprecated. */
+	public static final int MESSAGE_DRAWINDOW = 12;
+	
+	/** Sent from Plugin.NewWindowFucntion used to create a new 
+	 * miniwindow with then given configuration. */
+	public static final int MESSAGE_NEWWINDOW = 13;
+	
+	/** Sent from Plugin.WindowBufferFunction and sets the buffering 
+	 * option of a window. I think this is deprecated. */
+	public static final int MESSAGE_WINDOWBUFFER = 15;
+	
+	/** Sent from Plugin.RegisterSpecialCommandFunction and registers a .command callback. */
+	public static final int MESSAGE_ADDFUNCTIONCALLBACK = 16;
+	
+	/** Sent from Plugin.WindowXCallSFunction, calls an anonymous global function
+	 *  in the target window with data. */
+	public static final int MESSAGE_WINDOWXCALLS = 17;
+	
+	/** Sent from plugin functions, used to redraw a target window. */
+	public static final int MESSAGE_INVALIDATEWINDOWTEXT = 18;
+	
+	/** Sent from Processor indicating that gmcp has triggered. */
+	public static final int MESSAGE_GMCPTRIGGERED = 19;
+	
+	/** Sent from various sources, containing a string to be sent to 
+	 * the server in the selected encoding. */
+	public static final int MESSAGE_SENDDATA_STRING = 20;
+	
+	/** Sent from various sources, initates the settings loader routine. */
+	public static final int MESSAGE_SAVESETTINGS = 21;
+	
+	/** Sent from either the foreground window or the save settings routine, 
+	 * exports settings to a given path. */
+	public static final int MESSAGE_EXPORTFILE = 22;
+	
+	/** Sent from either the foreground window or the settings loader routing, 
+	 * imports settings from a given location into this active connection. */
+	public static final int MESSAGE_IMPORTFILE = 23;
+	
+	/** Sent from Plugin.SendGMCPDataFunction, sends the given data to the server using gmcp. */
+	public static final int MESSAGE_SENDGMCPDATA = 24;
+	
+	/** Sent from Plugin.WindowXCallB, same as WindowXCallS only great care is taken
+	 *  to preserve the "bytes". */
+	public static final int MESSAGE_WINDOWXCALLB = 25;
+	
+	/** Sent from Plugin, indicating an error condition from a script entry point. */
+	public static final int MESSAGE_PLUGINLUAERROR = 26;
+
+	/** Sent from DataPumper indicating that the tcp connection to the server has started. */
+	public static final int MESSAGE_CONNECTED = 30;
+	
+	/** Sent from AckWithResponder when a trigger executes script code that results in error. */
+	public static final int MESSAGE_TRIGGER_LUA_ERROR = 32;
+	
+	/** Sent from the foreground window, initiates the settings reloading process. */
+	public static final int MESSAGE_RELOADSETTINGS = 33;
+	
+	/** Sent from various sources, indicates that triggers need to be rebuilt, 
+	 * I believe this is deprecated. */
+	public static final int MESSAGE_SETTRIGGERSDIRTY = 34;
+	
+	/** Sent from the DataPumper indicating the orderly shutdown of the tcp connection. */
+	public static final int MESSAGE_TERMINATED_BY_PEER = 41;
+	
+	/** Sent from the foreground window indicating that the DataPumper
+	 *  should re-establish the tcp connection to the server. */
+	private static final int MESSAGE_RECONNECT = 31;
+	
+	/** Sent from the foreground window, initates a settings reset. */
+	private static final int MESSAGE_DORESETSETTINGS = 27;
+	
+	/** Sent from the foreground window, adds an external plugin at the given path. */
+	private static final int MESSAGE_ADDLINK = 28;
+	
+	/** Sent from the foreground window, deletes and removes a plugin. */
+	private static final int MESSAGE_DELETEPLUGIN = 29;
+
+	/** Sent from Plugin.CallPlugin calls an anonymous global function in the target
+	 *  plugin with arguments. */
+	private static final int MESSAGE_CALLPLUGIN = 35;
+	
+	/** Sent from the timer command. */
+	private static final int MESSAGE_TIMERINFO = 36;
+	
+	/** Sent from the timer command. */
+	private static final int MESSAGE_TIMERSTART = 37;
+	
+	/** Sent from the timer command. */
+	private static final int MESSAGE_TIMERPAUSE = 38;
+	
+	/** Sent from the timer command. */
+	private static final int MESSAGE_TIMERRESET = 39;
+	
+	/** Sent from the timer command. */
+	private static final int MESSAGE_TIMERSTOP = 40;
+	
+	/** GMCP payload minimum size. */
+	private static final int GMCP_PAYLOAD_SIZE = 5;
+	
+	/** The value of 4. */
+	private static final int FOUR = 4;
+	
+	/** 500 ms timeout, generic timeout or other. */
+	private static final int FIVE_HUNDRED_MILLIS = 500;
+	
+	/** 1000 mm. */
+	private static final double ONE_THOUSAND_MILLIS = 1000.0;
+	
+	/** Toast message offset from the top of the screen. */
+	private static final double TOAST_MESSAGE_TOP_OFFSET = 50.0;
+	/** Very large value. */
+	private static final int TEN_MILLION = 10000000;
+	
+	/** Medium large value. */
+	private static final int TEN_THOUSAND = 10000;
+	
+	/** 3 seconds. */
+	private static final int THREE_THOUSAND_MILLIS = 3000;
+	
+	/** 20 seconds. */
+	private static final int TWENTY_THOUSAND_MILLIS = 20000;
+	
+	/** Minimum starting font size for the fit routine. */
+	private static final float MIN_FONT_SIZE = 8.0f;
+	
+	/** Target char width for fit routine. */
+	private static final float TARGET_FIT_WIDTH = 80.0f;
+	
+	/** Status bar height holder. */
+	private static final int STATUS_BAR_DEFAULT_SIZE = 25;
+	
+	/** Value of -3. */
+	private static final int NEGATIVE_THREE = -3;
+	
+	/** Value of -2. */
+	private static final int NEGATIVE_TWO = -2;
+	
+	/** ANSI Color code pattern. */
+	private static final Pattern COLOR_PATTERN = Pattern.compile("\\x1B\\x5B.+?m");
+	
+	/** ANSI Color code matcher. */
+	private static final Matcher COLOR_MATCHER = COLOR_PATTERN.matcher("");
+	
+	/** Generic "match a line" pattern. */
+	private static final Pattern LINE_PATTERN = Pattern.compile("^.*$", Pattern.MULTILINE);
+	
+	/** Line matching matcher. */
+	private static final Matcher LINE_MATCHER = LINE_PATTERN.matcher("");
+	
+
+	/** This variable is used in conjunction with mWindowCallbackMap to track IWindowCallback aidl connections
+	 * window names.
+	 */
+	private static boolean mCallbacksStarted = false;
+	
+	/** The configurable character denoting that the input to follow should be executed as a script. */
+	private static String mScriptBlock = "/";
+	
+	/** String name of the default output window. */
+	private static final String MAIN_WINDOW = "mainDisplay";
+	
+	/** Constant indicating that one or more triggers is invalid and the trigger system should be rebuilt
+	 * on the next pass of dispatch().
+	 */
+	private static boolean triggersDirty = false;
+	
+	/** String builder used by the alias parsing routine. */
+	private final StringBuffer mDataToServer = new StringBuffer();
+	/** String builder used by the alias parsing routine. */
+	private final StringBuffer mDataToWindow = new StringBuffer();
+	/** Semicolon matching pattern. */
+	private final Pattern mSemicolon = Pattern.compile(";");
+	/** Semicolon matcher. */
+	private final Matcher mSemiMatcher = mSemicolon.matcher("");
+	/** String builder used by the alias parsing routine. */
+	private final StringBuffer mCommandBuilder = new StringBuffer();
+	/** Used by the trigger processor to map line start/end to line number. */
+	private final TreeSet<Range> mLineMap = new TreeSet<Range>(new RangeComparator());
+	/** Used by the trigger building routine to build the new string with great speed. */
+	private final StringBuilder mTriggerBuilder = new StringBuilder();
+
+	/** A utiltiy object to keep track of the order of triggers. */
+	private final SparseArray<TriggerData> mSortedTriggerMap = new SparseArray<TriggerData>(0);
+	/** A utiltity object to keep track of the sorted order of plugins. */
+	private final SparseArray<Plugin> mTriggerPluginMap = new SparseArray<Plugin>(0);
+	/** Remote window callback map. Reduces overhead for needing to communicate with windows. */
+	private final RemoteCallbackList<IWindowCallback> mWindowCallbacks = new RemoteCallbackList<IWindowCallback>();
+	/** The list of window tokens in loaded order. */
+	private ArrayList<WindowToken> mWindows;
+	/** The auto reconnect limit helper varialbe. */
+	private Integer mAutoReconnectLimit;
+	/** The current auto reconnect attempt. */
+	private Integer mAutoReconnectAttempt = 0;
+	/** Weather or not we should auto reconnect on connection failure. */
+	private Boolean mAutoReconnect;
+	/** The amalgamated trigger string. Very long in most cases. */
+	private String mMassiveTriggerString = null;
+	/** The amalgamated trigger string pattern object. */
+	private Pattern mMassivePattern = null;
+	/** The amalgamated trigger string matcher object. */
+	private Matcher mMassiveMatcher = null;
+	/** The main looper handler for this "foreground" thread, although I'm not sure
+	 *  if service processes get "foreground threads". */
+	private Handler mHandler = null;
+	
+	/** Pattern for matching .xml extensions not case sensitive. */
+	private final Pattern mXMLExtensionPattern = Pattern.compile("^.+\\.[xX][mM][lL]$");
+	/** Matcher for matching .xml extensions not case sensitive. */
+	private final Matcher mXMLExtensionMatcher = mXMLExtensionPattern.matcher("");
+	
+	/** Main tracker for plugins, generic ordered list of plugins in the order they were loaded. */
+	private ArrayList<Plugin> mPlugins = null;
+	
+	/** Global map for handling the capture transformation for triggers and aliases. */
+	private HashMap<String, String> mCaptureMap = new HashMap<String, String>();
+	
+	/** The DataPumper instance for this connection. */
+	private DataPumper mPump = null;
+	
+	/** The Processor instance for this connection. */
+	private Processor mProcessor = null;
+	//TextTree buffer = null;
+	
+	/** TextTree instance used for trigger parsing input text. */
+	private TextTree mWorking = null;
+	
+	/** TextTree instance used for trigger parsing input text. */
+	private TextTree mFinished = null;
+	
+	/** Mapping of link paths to plugin names. */
+	private HashMap<String, ArrayList<String>> mLinkMap = new HashMap<String, ArrayList<String>>();
+	
+	/** Mapping of plugin names to plugin objects. */
+	private HashMap<String, Plugin> mPluginMap = new HashMap<String, Plugin>(0);
+	
+	/** Not really sure what this is. */
+	private boolean mLoaded = false;
+	
+	/** Launcher display name for this Connection. */
+	private String mDisplay;
+	
+	/** Host name for this connection. */
+	private String mHost;
+	
+	/** Port indication for this connection. */
+	private int mPort;
+	
+	/** Mapping of window names to IWindowCallback aidl bridge connections. */
+	private HashMap<String, IWindowCallback> mWindowCallbackMap = 
+			new HashMap<String, IWindowCallback>();
+
+	
+	/** Enum used for the Timer command action ordinals. */
 	private enum TIMER_ACTION {
+		/** Play action.*/
 		PLAY,
+		/** Pause action. */
 		PAUSE,
+		/** Reset action.*/
 		RESET,
+		/** Info action.*/
 		INFO,
+		/** Stop action. */
 		STOP,
+		/** No action. */
 		NONE
 	}
 	
-	//TIMER_ACTION current_timer_action = TIMER_ACTION.NONE;
+	/** Instance of our parent service. This is bad. */
+	private StellarService mService = null;
 	
-	public StellarService service = null;
-	boolean isConnected = false;
-	public ConnectionSettingsPlugin the_settings = null;
-	KeyboardCommand keyboardCommand;
-	Character cr = new Character((char)13);
-	Character lf = new Character((char)10);
-	String crlf = cr.toString() + lf.toString();
-	Pattern newline = Pattern.compile("\n");
-	Pattern semicolon = Pattern.compile(";");
-	Pattern commandPattern = Pattern.compile("^.(\\w+)\\s*(.*)$");
-	Matcher commandMatcher = commandPattern.matcher("");
-	private boolean localEcho = true;
-	private HashMap<String,SpecialCommand> specialcommands = new HashMap<String,SpecialCommand>();
-	//StringBuffer joined_alias = new StringBuffer();
-	//Pattern alias_replace = Pattern.compile(joined_alias.toString());
-	//Matcher alias_replacer = alias_replace.matcher("");
-	//Matcher alias_recursive = alias_replace.matcher("");
-	//Pattern whiteSpace = Pattern.compile("\\s");
+	/** A simple holder for if we are connected or not. */
+	private boolean mIsConnected = false;
 	
-	public Object callbackSync = new Object();
-	private int statusBarHeight;
-	private int titleBarHeight;
+	/** The main settings wad/plugin. */
+	private ConnectionSettingsPlugin mSettings = null;
 	
+	/** The keyboard command instance, not sure why this is here. */
+	private KeyboardCommand mKeyboardCommand;
 	
-	public Connection(String display,String host,int port,StellarService service) {
+	/** Value of CRLF. */
+	private String mCRLF = "\r\n";
+
+	/** The pattern for the .command. */
+	private Pattern mCommandPattern = Pattern.compile("^.(\\w+)\\s*(.*)$");
+	
+	/** The matcher for the .command. */
+	private Matcher mCommandMatcher = mCommandPattern.matcher("");
+	
+	/** The map of special commands. */
+	private HashMap<String, SpecialCommand> mSpecialCommands = new HashMap<String, SpecialCommand>();
+
+	/** Constant for the status bar height, useful for plugins, hard to get. */
+	private int mStatusBarHeight;
+	
+	/** Constant for the title bar height, useful for plugins, hard to get. */
+	private int mTitleBarHeight;
+	
+	/** Public constructor for the Connection.
+	* @param display The display name.
+	* @param host The host name.
+	* @param port The port number.
+	* @param service Parent that initated this connection.
+	*/
+	public Connection(final String display, final String host, final int port, final StellarService service) {
 		
 		ColorDebugCommand colordebug = new ColorDebugCommand();
 		DirtyExitCommand dirtyexit = new DirtyExitCommand();
 		TimerCommand timercmd = new TimerCommand();
 		BellCommand bellcmd = new BellCommand();
 		FullScreenCommand fscmd = new FullScreenCommand();
-		keyboardCommand = new KeyboardCommand();
+		mKeyboardCommand = new KeyboardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
 		SpeedwalkCommand swcmd = new SpeedwalkCommand();
 		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
 		ClearButtonCommand cbcmd = new ClearButtonCommand();
-		//DumpGMCPCommand dmpcmd = new DumpGMCPCommand();
-		//LuaCommand luacmd = new LuaCommand();
-		//Lua2Command lua2cmd = new Lua2Command();
-		specialcommands.put(colordebug.commandName, colordebug);
-		specialcommands.put(dirtyexit.commandName, dirtyexit);
-		specialcommands.put(timercmd.commandName, timercmd);
-		specialcommands.put(bellcmd.commandName, bellcmd);
-		specialcommands.put(fscmd.commandName, fscmd);
-		specialcommands.put(keyboardCommand.commandName, keyboardCommand);
-		specialcommands.put("kb", keyboardCommand);
-		specialcommands.put(dccmd.commandName, dccmd);
-		specialcommands.put(rccmd.commandName, rccmd);
-		specialcommands.put(swcmd.commandName, swcmd);
-		specialcommands.put(lbcmd.commandName, lbcmd);
-		specialcommands.put(cbcmd.commandName, cbcmd);
-		ExportFunction expcmd = new ExportFunction();
-		specialcommands.put(expcmd.commandName, expcmd);
-		ImportFunction impcmd = new ImportFunction();
-		specialcommands.put(impcmd.commandName, impcmd);
-		//specialcommands.put(dmpcmd.commandName,dmpcmd);
-		//specialcommands.put(luacmd.commandName, luacmd);
-		
-		//specialcommands.put(lua2cmd.commandName,lua2cmd);
+		mSpecialCommands.put(colordebug.commandName, colordebug);
+		mSpecialCommands.put(dirtyexit.commandName, dirtyexit);
+		mSpecialCommands.put(timercmd.commandName, timercmd);
+		mSpecialCommands.put(bellcmd.commandName, bellcmd);
+		mSpecialCommands.put(fscmd.commandName, fscmd);
+		mSpecialCommands.put(mKeyboardCommand.commandName, mKeyboardCommand);
+		mSpecialCommands.put("kb", mKeyboardCommand);
+		mSpecialCommands.put(dccmd.commandName, dccmd);
+		mSpecialCommands.put(rccmd.commandName, rccmd);
+		mSpecialCommands.put(swcmd.commandName, swcmd);
+		mSpecialCommands.put(lbcmd.commandName, lbcmd);
+		mSpecialCommands.put(cbcmd.commandName, cbcmd);
 		SwitchWindowCommand swdcmd = new SwitchWindowCommand();
-		specialcommands.put(swdcmd.commandName, swdcmd);
+		mSpecialCommands.put(swdcmd.commandName, swdcmd);
 		
-		this.display = display;
-		this.host = host;
-		this.port = port;
-		this.service = service;
+		this.mDisplay = display;
+		this.mHost = host;
+		this.mPort = port;
+		this.mService = service;
 		
-		plugins = new ArrayList<Plugin>();
-		handler = new Handler() {
-			public void handleMessage(Message msg) {
+		mPlugins = new ArrayList<Plugin>();
+		mHandler = new Handler() {
+			@SuppressWarnings("unchecked")
+			public void handleMessage(final Message msg) {
 				switch(msg.what) {
 				case MESSAGE_TERMINATED_BY_PEER:
 					killNetThreads(true);
-					DoDisconnect(true);
-					isConnected = false;
+					doDisconnect(true);
+					mIsConnected = false;
 					break;
 				case MESSAGE_TIMERSTOP:
-					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.STOP);
+					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.STOP);
 					break;
 				case MESSAGE_TIMERSTART:
-					//current_timer_action = TIMER_ACTION.PLAY;
-					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.PLAY);
+					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.PLAY);
 					break;
 				case MESSAGE_TIMERRESET:
-					//current_timer_action = TIMER_ACTION.PLAY;
-					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.RESET);
+					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.RESET);
 					break;
 				case MESSAGE_TIMERINFO:
-					// = TIMER_ACTION.PLAY;
-					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.INFO);
+					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.INFO);
 					break;
 				case MESSAGE_TIMERPAUSE:
-					//doTimerAction((String)msg.obj,msg.arg2);
-					doTimerAction((String)msg.obj,msg.arg2,TIMER_ACTION.PAUSE);
+					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.PAUSE);
 					break;
 				case MESSAGE_CALLPLUGIN:
 					String ptmp = msg.getData().getString("PLUGIN");
 					String ftmp = msg.getData().getString("FUNCTION");
 					String dtmp = msg.getData().getString("DATA");
-					doCallPlugin(ptmp,ftmp,dtmp);
+					doCallPlugin(ptmp, ftmp, dtmp);
 					break;
 				case MESSAGE_SETTRIGGERSDIRTY:
 					setTriggersDirty();
@@ -282,7 +504,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					reloadSettings();
 					break;
 				case MESSAGE_TRIGGER_LUA_ERROR:
-					dispatchLuaError((String)msg.obj);
+					dispatchLuaError((String) msg.obj);
 					break;
 				case MESSAGE_RECONNECT:
 					doReconnect();
@@ -291,57 +513,54 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					mAutoReconnectAttempt = 0;
 					break;
 				case MESSAGE_DELETEPLUGIN:
-					doDeletePlugin((String)msg.obj);
+					doDeletePlugin((String) msg.obj);
 					break;
 				case MESSAGE_ADDLINK:
-					doAddLink((String)msg.obj);
+					doAddLink((String) msg.obj);
 					break;
 				case MESSAGE_DORESETSETTINGS:
 					doResetSettings();
 					break;
 				case MESSAGE_PLUGINLUAERROR:
-					dispatchLuaError((String)msg.obj);
+					dispatchLuaError((String) msg.obj);
 					break;
 				case MESSAGE_EXPORTFILE:
-					exportSettings((String)msg.obj);
+					exportSettings((String) msg.obj);
 					break;
 				case MESSAGE_IMPORTFILE:
-					Connection.this.service.markWindowsDirty();
-					importSettings((String)msg.obj,true,false);
+					Connection.this.mService.markWindowsDirty();
+					importSettings((String) msg.obj, true, false);
 					break;
 				case MESSAGE_SAVESETTINGS:
-					String changedplugin = (String)msg.obj;
+					String changedplugin = (String) msg.obj;
 					Connection.this.saveDirtyPlugin(changedplugin);
 					break;
 				case MESSAGE_GMCPTRIGGERED:
 					String plugin = msg.getData().getString("TARGET");
 					String gcallback = msg.getData().getString("CALLBACK");
-					HashMap<String,Object> gdata = (HashMap<String,Object>)msg.obj;
-					Plugin gp = pluginMap.get(plugin);
-					gp.handleGMCPCallback(gcallback,gdata);
+					HashMap<String, Object> gdata = (HashMap<String, Object>) msg.obj;
+					Plugin gp = mPluginMap.get(plugin);
+					gp.handleGMCPCallback(gcallback, gdata);
 					break;
 				case MESSAGE_INVALIDATEWINDOWTEXT:
-					String wname = (String)msg.obj;
+					String wname = (String) msg.obj;
 					try {
 						doInvalidateWindowText(wname);
 					} catch (RemoteException e4) {
-						// TODO Auto-generated catch block
 						e4.printStackTrace();
 					}
 					break;
 				case MESSAGE_WINDOWXCALLS:
-					//Bundle b = msg.getData();
 					Object o = msg.obj;
-					if(o == null) {
+					if (o == null) {
 						o = "";
 					}
 					String token = msg.getData().getString("TOKEN");
 					String function = msg.getData().getString("FUNCTION");
 					try {
-						Connection.this.windowXCallS(token,function,o);
+						Connection.this.windowXCallS(token, function, o);
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						//e3.printStackTrace();
+						e3.printStackTrace();
 					}
 					break;
 				case MESSAGE_WINDOWXCALLB:
@@ -351,8 +570,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					try {
 						Connection.this.windowXCallB(tokens, functions, bytesa);
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
-						//e3.printStackTrace();
+						e3.printStackTrace();
 					}
 					break;
 				case MESSAGE_ADDFUNCTIONCALLBACK:
@@ -361,47 +579,40 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					String command = data.getString("COMMAND");
 					String callback = data.getString("CALLBACK");
 					int pid = -1;
-					//Plugin pTarget = null;
-					for(int i=0;i<plugins.size();i++) {//p : plugins) {
-						Plugin p = plugins.get(i);
-						if(p.getName().equals(id)) {
+					for (int i = 0; i < mPlugins.size(); i++) {
+						Plugin p = mPlugins.get(i);
+						if (p.getName().equals(id)) {
 							pid = i;
 						}
 					}
-					if(pid != -1) {
-						FunctionCallbackCommand fcc = new FunctionCallbackCommand(pid,command,callback);
-						specialcommands.put(fcc.commandName, fcc);
-					} else {
-						//error.
+					if (pid != -1) {
+						FunctionCallbackCommand fcc = new FunctionCallbackCommand(pid, command, callback);
+						mSpecialCommands.put(fcc.commandName, fcc);
 					}
 					break;
 				case MESSAGE_WINDOWBUFFER:
 					boolean set = (msg.arg1 == 0) ? false : true;
-					//Debug.waitForDebugger();
 					
-					String name = (String)msg.obj;
-					//Log.e("PLUGIN","TRING ACTUALLY MODDING WINDOW("+name+") Buffer:"+set);
+					String name = (String) msg.obj;
 					
-					for(WindowToken tok : mWindows) {
-						if(tok.getName().equals(name)) {
-							//Log.e("PLUGIN","ACTUALLY MODDING WINDOW("+name+") Buffer:"+set);
+					for (WindowToken tok : mWindows) {
+						if (tok.getName().equals(name)) {
 							tok.setBufferText(set);
 						}
 					}
 					break;
 				case MESSAGE_NEWWINDOW:
-					WindowToken tok = (WindowToken)msg.obj;
+					WindowToken tok = (WindowToken) msg.obj;
 					mWindows.add(tok);
 					break;
 				case MESSAGE_DRAWINDOW:
-					Connection.this.redrawWindow((String)msg.obj);
+					Connection.this.redrawWindow((String) msg.obj);
 					break;
 				case MESSAGE_LUANOTE:
-					String str = (String)msg.obj;
+					String str = (String) msg.obj;
 					try {
-						dispatchNoProcess(str.getBytes(the_settings.getEncoding()));
+						dispatchNoProcess(str.getBytes(mSettings.getEncoding()));
 					} catch (UnsupportedEncodingException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 					break;
@@ -409,113 +620,91 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					Object line = msg.obj;
 					String target = msg.getData().getString("TARGET");
 					try {
-						Connection.this.lineToWindow(target,line);
+						Connection.this.lineToWindow(target, line);
 					} catch (RemoteException e3) {
-						// TODO Auto-generated catch block
 						e3.printStackTrace();
 					}
 					break;
 				case MESSAGE_SENDDATA_STRING:
 					try {
-						byte[] bytes = ((String)msg.obj).getBytes(the_settings.getEncoding());
+						byte[] bytes = ((String) msg.obj).getBytes(mSettings.getEncoding());
 						sendToServer(bytes);
 					} catch (UnsupportedEncodingException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 					break;
 				case MESSAGE_SENDDATA_BYTES:
-					sendToServer((byte[])msg.obj);
+					sendToServer((byte[]) msg.obj);
 					break;
 				case MESSAGE_SENDGMCPDATA:
-					
-					//construct the gmcp packet.
-					byte IAC = (byte) 0xFF;
-					byte SB = (byte) 0xFA;
-					byte SE = (byte) 0xF0;
-					byte DO = (byte) 0xFD;
-					byte GMCP = TC.GMCP;
-					int size = ((String)msg.obj).length() + 5;
+					byte bIAC = TC.IAC;
+					byte bSB = TC.SB;
+					byte bSE = TC.SE;
+					byte bGMCP = TC.GMCP;
+					int size = ((String) msg.obj).length() + GMCP_PAYLOAD_SIZE;
 					ByteBuffer fub = ByteBuffer.allocate(size);
-					fub.put(IAC).put(SB).put(GMCP);
+					fub.put(bIAC).put(bSB).put(bGMCP);
 					try {
-						fub.put(((String)msg.obj).getBytes("ISO-8859-1"));
+						fub.put(((String) msg.obj).getBytes("ISO-8859-1"));
 					} catch (UnsupportedEncodingException e2) {
-						// TODO Auto-generated catch block
 						e2.printStackTrace();
 					}
-					fub.put(IAC).put(SE);
+					fub.put(bIAC).put(bSE);
 					byte[] fubtmp = new byte[size];
-					//String pkt = IAC + SB+GMCP + ((String)msg.obj) + IAC + SE;
 					fub.rewind();
 					fub.get(fubtmp);
-					if(pump != null && pump.isConnected()) {
-						//try {
-							//Log.e("COnn","CONNECTION SENDING GMCP:"+new String(fubtmp,"ISO-8859-1"));
-							pump.sendData(fubtmp);
-						//} catch (UnsupportedEncodingException e1) {
-							// TODO Auto-generated catch block
-						//	e1.printStackTrace();
-						//}
+					if (mPump != null && mPump.isConnected()) {
+						mPump.sendData(fubtmp);
 					} else {
-						this.sendMessageDelayed(this.obtainMessage(MESSAGE_SENDGMCPDATA,msg.obj), 500);
+						this.sendMessageDelayed(this.obtainMessage(MESSAGE_SENDGMCPDATA, msg.obj), FIVE_HUNDRED_MILLIS);
 					}
 					break;
 				case MESSAGE_STARTUP:
 					doStartup();
 					break;
 				case MESSAGE_STARTCOMPRESS:
-					pump.handler.sendMessage(pump.handler.obtainMessage(DataPumper.MESSAGE_COMPRESS,msg.obj));
+					mPump.getHandler().sendMessage(mPump.getHandler().obtainMessage(DataPumper.MESSAGE_COMPRESS, msg.obj));
 					break;
 				case MESSAGE_SENDOPTIONDATA:
 					Bundle b = msg.getData();
 					byte[] obytes = b.getByteArray("THE_DATA");
 					String message = b.getString("DEBUG_MESSAGE");
-					if(message != null) {
+					if (message != null) {
 						sendDataToWindow(message);
 					}
-					
-					//try {
-						if(pump != null) {
-							pump.sendData(obytes);
-							//output_writer.flush();
-						}
-					//} catch (IOException e2) {
-					//	throw new RuntimeException(e2);
-					//}
+
+					if (mPump != null) {
+						mPump.sendData(obytes);
+					}
 					break;
 				case MESSAGE_PROCESSORWARNING:
-					sendDataToWindow((String)msg.obj);
+					sendDataToWindow((String) msg.obj);
 					break;
 				case MESSAGE_BELLINC:
-					//TODO: use settings;
-					if(the_settings.isVibrateOnBell()) {
-						Connection.this.service.doVibrateBell();
+					if (mSettings.isVibrateOnBell()) {
+						Connection.this.mService.doVibrateBell();
 					}
-					if(the_settings.isNotifyOnBell()) {
-						Connection.this.service.doNotifyBell(Connection.this.display,Connection.this.host,Connection.this.port);
+					if (mSettings.isNotifyOnBell()) {
+						Connection.this.mService.doNotifyBell(Connection.this.mDisplay, Connection.this.mHost, Connection.this.mPort);
 					}
-					if(the_settings.isDisplayOnBell()) {
-						Connection.this.service.doDisplayBell();
+					if (mSettings.isDisplayOnBell()) {
+						Connection.this.mService.doDisplayBell();
 					}
 					break;
 				case MESSAGE_DODIALOG:
-					DispatchDialog((String)msg.obj);
+					dispatchDialog((String) msg.obj);
 					break;
 				case MESSAGE_PROCESS:
 					try {
-						//synchronized(Connection.this) {
-							dispatch((byte[])msg.obj);
-						//}
+						dispatch((byte[]) msg.obj);
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					break;
 				case MESSAGE_DISCONNECTED:
 					killNetThreads(true);
-					DoDisconnect(false);
-					isConnected = false;
+					doDisconnect(false);
+					mIsConnected = false;
 					break;
 				default:
 					break;
@@ -525,347 +714,188 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 
 		};
 
-		//}
-		//load plugins.
+		mWorking = new TextTree();
+		mWorking.setLinkify(false);
+		mWorking.setLineBreakAt(TEN_MILLION);
+		mWorking.setMaxLines(TEN_THOUSAND);
 		
-		//TODO: load plugins.
-		
-		//buffer = new TextTree();
-		working = new TextTree();
-		working.setLinkify(false);
-		working.setLineBreakAt(10000000);
-		working.setMaxLines(10000);
-		
-		finished = new TextTree();
-		finished.setLinkify(false);
-		finished.setLineBreakAt(10000000);
-		finished.setMaxLines(10000);
-		//TODO: set TextTree encoding options.
-		
-		//handler.sendEmptyMessage(MESSAGE_STARTUP);
-		//TODO: initializie main window.
+		mFinished = new TextTree();
+		mFinished.setLinkify(false);
+		mFinished.setLineBreakAt(TEN_MILLION);
+		mFinished.setMaxLines(TEN_THOUSAND);
+
 		mWindows = new ArrayList<WindowToken>();
 		
-		//WindowToken token = new WindowToken(MAIN_WINDOW,0,177,880,500);
-		//if(the_settings.)
-
-		
-		/*WindowToken add = new WindowToken("chats",0,0,1280,177);
-		try {
-			add.getBuffer().addBytesImpl("Omfg\nWe\nHAVE\nMINIWINDOW CHATTING OMFG OMGONGONGONGONGNGNG GN YEA YEAYEA\nAttempting to get lots of text for scrolling. This is a sentence\nOMG MOAR TEXT\nNEW NEW NEW\nMORE MORE MORE\nNOW NOW NOW".getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		
-		mWindows.add(add);
-		
-		WindowToken mapwin = new WindowToken("map_window",880,177,400,400);
-		mapwin.setBufferText(true);
-		mWindows.add(mapwin);
-		
-		WindowToken luawin = new WindowToken("lua_window",880,577,400,100,"windowscript","plugin");
-		
-		mWindows.add(luawin);
-		
-		WindowToken bwin = new WindowToken("button_window",0,0,0,0,"buttonwindow","plugin");
-		mWindows.add(bwin);*/
 		SharedPreferences sprefs = this.getContext().getSharedPreferences("STATUS_BAR_HEIGHT", 0);
-		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getContext().getResources().getDisplayMetrics().density));
-		titleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
+		mStatusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int) (STATUS_BAR_DEFAULT_SIZE * this.getContext().getResources().getDisplayMetrics().density));
+		mTitleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
 
-		loaded = true;
+		mLoaded = true;
 		
 		//fish out the window.
 
 	}
-	
-	//protected void doDisplayBell() {
-	//	// TODO Auto-generated method stub
-		
-	//}
 
-	//protected void doNotifyBell() {
-		/*final int N = callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				callbacks.getBroadcastItem(i).doVisualBell();
-			} catch (RemoteException e) {
-				throw new RuntimeException(e);
-			}
-			//notify listeners that data can be read
-		}
-		callbacks.finishBroadcast();*/
-//		IWindowCallback main = windowCallbackMap.get("mainDisplay");
-//		if(main!=null) {
-//			main.
-//		}
-	//}
-
-	protected void dispatchLuaError(String message) {
+	/** Quick frontend for dispatchNoProcess(...) for sending a lua error message.
+	 * 
+	 * @param message The message to show.
+	 */
+	protected final void dispatchLuaError(final String message) {
 		try {
-			dispatchNoProcess(message.getBytes(the_settings.getEncoding()));
+			dispatchNoProcess(message.getBytes(mSettings.getEncoding()));
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	protected void saveDirtyPlugin(String changedplugin) {
-		if(changedplugin.equals("")) {
+	/** Saves dirty plugins or the main settings wad.
+	 * 
+	 * @param changedplugin The name of the plugin, "" will save the main settings.
+	 * @note This doesn't work as far as I know.
+	 */
+	protected final void saveDirtyPlugin(final String changedplugin) {
+		if (changedplugin.equals("")) {
 			saveMainSettings();
 		} else {
-			Plugin p = pluginMap.get(changedplugin);
-			if(p != null) {
-				if(p.getStorageType().equals("INTERNAL")) {
+			Plugin p = mPluginMap.get(changedplugin);
+			if (p != null) {
+				if (p.getStorageType().equals("INTERNAL")) {
 					saveMainSettings();
 				}
 			}
 		}
 	}
 
-	protected void doInvalidateWindowText(String name) throws RemoteException {
-		//synchronized(callbackSync) {
-		//int N = mWindowCallbacks.beginBroadcast();
-		IWindowCallback callback = windowCallbackMap.get(name);
-		//for(int i=0;i<N;i++) {
-		
-		if(callback == null) return;
-		//	IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
-			//String tname = c.getName();
-			//if(c.getName().equals(name)) {
-				//WindowToken tok = 
-				//c.invalidateWindowText();
-				//c.rawDataIncoming(raw)
-			//	callback = c;
-			//}
-		//}
+	/** Work horse method for plugins to invalidate a target window's text.
+	 * 
+	 * @param name Name of the window that should invalidate it's text.
+	 * @throws RemoteException Thrown when there is a problem with the aidl bridge.
+	 */
+	protected final void doInvalidateWindowText(final String name) throws RemoteException {
+
+		IWindowCallback callback = mWindowCallbackMap.get(name);
+	
+		if (callback == null) {
+			return;
+		}
 		
 		WindowToken w = null;
-		for(int i=0;i<mWindows.size();i++) {
+		for (int i = 0; i < mWindows.size(); i++) {
 			WindowToken tmp = mWindows.get(i);
-			if(tmp.getName().equals(name)) {
+			if (tmp.getName().equals(name)) {
 				w = tmp;
 			}
 		}
 		
 		TextTree buffer = w.getBuffer();
-		if(buffer.getBrokenLineCount() == 0) {
-			//Log.e("BUFFERTEST","INVALIDATE WINDOW TEXT CALLED WITH NO DATA");
-		}
-		
-		//callback.clearText();
-		//callback.rawDataIncoming(buffer.dumpToBytes(true));
+
 		callback.resetWithRawDataIncoming(buffer.dumpToBytes(true));
-		
-		//mWindowCallbacks.finishBroadcast();
-		//}
 	}
 
-	public void windowXCallS(String token, String function, Object o) throws RemoteException {
-		//synchronized(callbackSync) {
-		//int N = mWindowCallbacks.beginBroadcast();
-		//for(int i=0;i<N;i++) {
-			IWindowCallback c = windowCallbackMap.get(token);
-		//	String name = c.getName();
-		//	if(c.getName().equals(token)) {
-			if(c != null) {
-				c.xcallS(function,(String)o);
-			}
-			//return ret;
-		//		i=N;
-		//	}
-		//}
-		
-		//mWindowCallbacks.finishBroadcast();
-		//}
+	/** Work horse method for WindowXCallS Lua function.
+	 * 
+	 * @param name Name of the target window.
+	 * @param function Name of the anonymous global function to call
+	 * @param o String argument to provide to @param function
+	 * @throws RemoteException Thrown when there is a problem with the aidl bridge.
+	 */
+	public final void windowXCallS(final String name, final String function, final Object o) throws RemoteException {
+
+		IWindowCallback c = mWindowCallbackMap.get(name);
+
+		if (c != null) {
+			c.xcallS(function, (String) o);
+		}
+
 	}
 
-	protected void windowXCallB(String tokens, String functions, byte[] bytes) throws RemoteException {
-		IWindowCallback c = windowCallbackMap.get(tokens);
-		if(c != null) {
+	/** Work horse method for WindowXCallB Lua function.
+	 * 
+	 * @param name Name of the target window.
+	 * @param functions Name of the anonymous global function to call.
+	 * @param bytes Bytes to provide as an argument to @param function
+	 * @throws RemoteException Thrown when there is a problem with the aidl bridge.
+	 */
+	protected final void windowXCallB(final String name, final String functions, final byte[] bytes) throws RemoteException {
+		IWindowCallback c = mWindowCallbackMap.get(name);
+		if (c != null) {
 			c.xcallB(functions, bytes);
 		}
 	}
 	
-	private void doCallPlugin(String plugin, String function,
-			String data) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			p.callFunction(function,data);
+	/** Work horse method for the CallPlugin Lua function.
+	 * 
+	 * @param plugin Name of the plugin to call.
+	 * @param function Name of the anonymous global function to call.
+	 * @param data String argument to provide to @param function.
+	 */
+	private void doCallPlugin(final String plugin, final String function, final String data) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
+			p.callFunction(function, data);
 		} else {
-			this.dispatchLuaText("\n"+Colorizer.colorRed+"No plugin named: "+plugin+Colorizer.colorRed+"\n");
+			this.dispatchLuaText("\n" + Colorizer.colorRed + "No plugin named: " + plugin + Colorizer.colorRed + "\n");
 		}
-		//Plugin p = pluginMap.get(plugin);
-		//p.callFunction(function,data);
-	
 	}
 
-	public void reloadSettings() {
-		//unhook all windows.
-		//while(mWindowCallbacks.)
-		//synchronized(callbackSync) {
-		//int N = mWindowCallbacks.beginBroadcast();
-		
-		for(IWindowCallback c : windowCallbackMap.values()) {
-			//IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
-			
+	/** Calling this method will reload the connection settings and all plugins. */
+	public final void reloadSettings() {
+
+		for (IWindowCallback c : mWindowCallbackMap.values()) {
 			try {
-				///if(!c.getName().equals(MAIN_WINDOW)) {
-					c.shutdown();
-				//}
+				c.shutdown();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 		
-		
-		windowCallbackMap.clear();
-		//mWindowCallbacks.finishBroadcast();
-		
-		//}
-		//loadSettings();
-		
-		service.markWindowsDirty();
+		mWindowCallbackMap.clear();
+		mService.markWindowsDirty();
 		loadInternalSettings();
 		
 	}
 	
+	/** Shuts down all running plugins and clears associated structures.*/
 	private void shutdownPlugins() {
-		for(Plugin p : plugins) {
+		for (Plugin p : mPlugins) {
 			p.shutdown();
 			p = null;
 		}
-		plugins.clear();
+		mPlugins.clear();
 	}
 	
-	private void loadPlugins(ArrayList<Plugin> tmpPlugs,String summary) {
+	/** Loads plugins and sets up internal data structures.
+	 * 
+	 * @param tmpPlugs The array of already loaded plugins.
+	 * @param summary A holder string fo what happened during the internal loading process.
+	 */
+	private void loadPlugins(final ArrayList<Plugin> tmpPlugs, final String summary) {
 		
-		HashMap<String,TextTree> bufferSaves = new HashMap<String,TextTree>();
+		HashMap<String, TextTree> bufferSaves = new HashMap<String, TextTree>();
 		
 		TextTree buffer = null;
-		if(mWindows.size() > 0) {
+		if (mWindows.size() > 0) {
 			buffer = mWindows.get(0).getBuffer();
-			//must clear out old windows.
-			while(mWindows.size() > 0) {
-				WindowToken t = mWindows.remove(mWindows.size()-1);
+			while (mWindows.size() > 0) {
+				WindowToken t = mWindows.remove(mWindows.size() - 1);
 				bufferSaves.put(t.getName(), t.getBuffer());
 			}
-		} //else {
-		/*if(mWindows.size() > 0) {
-			WindowToken token = mWindows.get(0);
-			
-			token.layouts.clear();
-			RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-			LayoutGroup g = new LayoutGroup();
-			g.type = LayoutGroup.LAYOUT_TYPE.normal;
-			g.setLandscapeParams(params);
-			g.setPortraitParams(params);
-		}*/
-		//}
-
-		//handle root settings
-		//try {
-		if(the_settings!=null) {
-			the_settings.shutdown();
+		} 
+		if (mSettings != null) {
+			mSettings.shutdown();
 			
 		}
-			the_settings = null;
-			//the_settings = new ConnectionSettingsPlugin(handler);
-		//} catch (LuaException e1) {
-			// TODO Auto-generated catch block
-		//	e1.printStackTrace();
-		//}
+		mSettings = null;
 			
-//		ArrayList<Plugin> tmpPlugs = new ArrayList<Plugin>();
-//		Pattern invalidchars = Pattern.compile("\\W");
-//		Matcher replacebadchars = invalidchars.matcher(this.display);
-//		String prefsname = replacebadchars.replaceAll("");
-//		prefsname = prefsname.replaceAll("/", "");
-//		//String settingslocation = 
-//		//loadXmlSettings(prefsname +".xml");
-//		String rootPath = prefsname + ".xml";
-//		String convertPath = prefsname + ".v1.xml";
-//		String newPath = prefsname + ".v2.xml";
-//		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/files/";
-//		File oldp = new File(internal+rootPath);
-//		HyperSettings oldSettings = null;
-//		if(oldp.exists()) {
-//			HyperSAXParser old_parser = new HyperSAXParser(rootPath,service.getApplicationContext());
-//			try {
-//				oldSettings = old_parser.load();
-//			} catch (FileNotFoundException e) {
-//				e.printStackTrace();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			} catch (SAXException e) {
-//				e.printStackTrace();
-//			}
-//			
-//			oldp.renameTo(new File(internal+convertPath));
-//		}
-//		
-//		File newSettings = new File(internal+newPath);
-//		if(!newSettings.exists()) { //if they have niether and old version or a new one.
-//			
-//			try {
-//				newSettings.createNewFile();
-//				int resid = Connection.getResId("default_settings", service.getApplicationContext(), com.happygoatstudios.bt.R.raw.class);
-//				InputStream defaultSettings = service.getResources().openRawResource(resid);
-//				
-//				OutputStream newSettingsFile = new FileOutputStream(newSettings);
-//			
-//				int read = 0;
-//				byte[] bytes = new byte[1024];
-//			 
-//				while ((read = defaultSettings.read(bytes)) != -1) {
-//					newSettingsFile.write(bytes, 0, read);
-//				}
-//				
-//				defaultSettings.close();
-//				newSettingsFile.flush();
-//				newSettingsFile.close();
-//			} catch (FileNotFoundException e) {
-//				e.printStackTrace();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//		} 
-//		
-//		
-//		ConnectionSetttingsParser csp = new ConnectionSetttingsParser(newPath,service.getApplicationContext(),tmpPlugs,handler,this);
-//		
-//		tmpPlugs = csp.load(this);
-
-//		
-//		if(oldSettings != null) {
-//			the_settings.importV1Settings(oldSettings);
-//			
-//			WindowToken main = mWindows.get(0);
-//
-//			oldSettings.isDisableColor();
-//			oldSettings.isHyperLinkEnabled();
-//			oldSettings.isWordWrap();
-//			oldSettings.getFontName();
-//			oldSettings.getBreakAmount();
-//			oldSettings.getFontPath();
-//			oldSettings.getMaxLines();
-//			oldSettings.getWrapMode();
-//			oldSettings.getLineSpaceExtra();
-//			oldSettings.getLineSize();
-//			
-//			
-//		}
-			
-		the_settings = (ConnectionSettingsPlugin) tmpPlugs.get(0);
-		the_settings.sortTriggers();
-		the_settings.initTimers();
-		for(WindowToken tmpw : the_settings.getSettings().getWindows().values()) {
-			tmpw.setDisplayHost(display);
+		mSettings = (ConnectionSettingsPlugin) tmpPlugs.get(0);
+		mSettings.sortTriggers();
+		mSettings.initTimers();
+		for (WindowToken tmpw : mSettings.getSettings().getWindows().values()) {
+			tmpw.setDisplayHost(mDisplay);
 		}
 		
-		mWindows.add(0,the_settings.getSettings().getWindows().get(MAIN_WINDOW));
-		if(buffer == null) {
+		mWindows.add(0, mSettings.getSettings().getWindows().get(MAIN_WINDOW));
+		if (buffer == null) {
 			buffer = mWindows.get(0).getBuffer();
 		} else {
 			buffer.addString("\n\n");
@@ -874,98 +904,80 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		buffer.addString(summary);
 		tmpPlugs.remove(0);
 		
-		pluginMap.clear();
-		linkMap.clear();
+		mPluginMap.clear();
+		mLinkMap.clear();
 		
-		plugins.addAll(tmpPlugs);
+		mPlugins.addAll(tmpPlugs);
 		
 		
-		for(Plugin p : plugins) {
-			for(WindowToken tmpw : p.getSettings().getWindows().values()) {
-				tmpw.setDisplayHost(display);
+		for (Plugin p : mPlugins) {
+			for (WindowToken tmpw : p.getSettings().getWindows().values()) {
+				tmpw.setDisplayHost(mDisplay);
 			}
 			p.initTimers();
-			pluginMap.put(p.getName(), p);
+			mPluginMap.put(p.getName(), p);
 			p.sortTriggers();
-			if(p.getSettings().getWindows().size() > 0) {
+			if (p.getSettings().getWindows().size() > 0) {
 				mWindows.addAll(p.getSettings().getWindows().values());
 			}
 			
 			p.pushOptionsToLua();
 		}
 		
-
-		
-		
-		//private void loadDefaultDirections() {
-		if(the_settings.getDirections().size() == 0) {
-			HashMap<String,DirectionData> tmp = new HashMap<String,DirectionData>();
-			tmp.put("n", new DirectionData("n","n"));
-			tmp.put("e", new DirectionData("e","e"));
-			tmp.put("s", new DirectionData("s","s"));
-			tmp.put("w", new DirectionData("w","w"));
-			tmp.put("h", new DirectionData("h","nw"));
-			tmp.put("j", new DirectionData("j","ne"));
-			tmp.put("k", new DirectionData("k","sw"));
-			tmp.put("l", new DirectionData("l","se"));
-			the_settings.setDirections(tmp);
+		if (mSettings.getDirections().size() == 0) {
+			HashMap<String, DirectionData> tmp = new HashMap<String, DirectionData>();
+			tmp.put("n", new DirectionData("n", "n"));
+			tmp.put("e", new DirectionData("e", "e"));
+			tmp.put("s", new DirectionData("s", "s"));
+			tmp.put("w", new DirectionData("w", "w"));
+			tmp.put("h", new DirectionData("h", "nw"));
+			tmp.put("j", new DirectionData("j", "ne"));
+			tmp.put("k", new DirectionData("k", "sw"));
+			tmp.put("l", new DirectionData("l", "se"));
+			mSettings.setDirections(tmp);
 		}
 		
-		if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-			for(String link : the_settings.getLinks()) {
-				buffer.addString(Colorizer.colorWhite+"Loading plugin file: "+link);
+		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+			for (String link : mSettings.getLinks()) {
+				buffer.addString(Colorizer.colorWhite + "Loading plugin file: " + link);
 				String filename = Environment.getExternalStorageDirectory() + "/BlowTorch/" + link;
-				//Log.e("XML","Attempting to load plugins from:" + filename);
 				ArrayList<Plugin> tmplist = new ArrayList<Plugin>();
-				PluginParser parse = new PluginParser(filename,link,service.getApplicationContext(),tmplist,handler,this);
+				PluginParser parse = new PluginParser(filename, link, mService.getApplicationContext(), tmplist, mHandler, this);
 				
 				try {
 					ArrayList<Plugin> group = parse.load();
-					for(Plugin p : group) {
-						pluginMap.put(p.getName(), p);
-						if(linkMap.get(link) == null) {
+					for (Plugin p : group) {
+						mPluginMap.put(p.getName(), p);
+						if (mLinkMap.get(link) == null) {
 							ArrayList<String> vals = new ArrayList<String>();
 							vals.add(p.getName());
-							linkMap.put(link, vals);
+							mLinkMap.put(link, vals);
 						} else {
-							ArrayList<String> vals = linkMap.get(link);
+							ArrayList<String> vals = mLinkMap.get(link);
 							vals.add(p.getName());
 						}
 						
-						for(WindowToken tmpw : p.getSettings().getWindows().values()) {
-							tmpw.setDisplayHost(display);
+						for (WindowToken tmpw : p.getSettings().getWindows().values()) {
+							tmpw.setDisplayHost(mDisplay);
 						}
 						
-						if(p.getSettings().getWindows().size() > 0) {
+						if (p.getSettings().getWindows().size() > 0) {
 							mWindows.addAll(p.getSettings().getWindows().values());
 						}
 						
 						p.pushOptionsToLua();
 					}
 					
-					plugins.addAll(group);
+					mPlugins.addAll(group);
 					
-					buffer.addString(Colorizer.colorWhite+", success."+Colorizer.colorWhite+"\n");
-					
-					//tmpPlug.setSettings(parse.load());
+					buffer.addString(Colorizer.colorWhite + ", success." + Colorizer.colorWhite + "\n");
 				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					buffer.addString(Colorizer.colorRed+" file not found."+Colorizer.colorWhite+"\n");
+					buffer.addString(Colorizer.colorRed + " file not found." + Colorizer.colorWhite + "\n");
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (SAXException e) {
-					//try {
-						//this.dispatchLuaError(message)
-						
-						//service.dispatchXMLError(e.getLocalizedMessage());
-					//} catch (RemoteException e1) {
-						// TODO Auto-generated catch block
-					//	e1.printStackTrace();
-					//}
-					buffer.addString(Colorizer.colorRed+ " XML Parse error.\n"+e.getLocalizedMessage()+Colorizer.colorWhite+"\n");
-					//e.printStackTrace();
+					buffer.addString(Colorizer.colorRed + " XML Parse error.\n" + e.getLocalizedMessage() + Colorizer.colorWhite + "\n");
 				}
 			}
 		}
@@ -975,186 +987,160 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//loop through all the plugins, looking for literal triggers starting
 		//with the gmcpTriggerChar.
 		
-		
-		//plugins.
-		//tmpPlug.initScripts(mWindows);
-		//tmpPlug.initScripts();
-		
-		if(bufferSaves != null) {
-			for(WindowToken w : mWindows) {
-				if(w != null) {
+		if (bufferSaves != null) {
+			for (WindowToken w : mWindows) {
+				if (w != null) {
 					
-					if(bufferSaves.get(w.getName()) != null) {
+					if (bufferSaves.get(w.getName()) != null) {
 						w.setBuffer(bufferSaves.get(w.getName()));
 					}
 				}
 			}
 		}
 		
-		//plugins.add(tmpPlug);
 		buildSettingsPage();
-		
-		//build and sort the new trigger array.
-		//the_settings.buildTriggerSystem();
-		//for(Plugin p : plugins) {
-		//	p.buildTriggerSystem();
-		//}
-		//buildTriggerSystem();
-		service.reloadWindows();
+		mService.reloadWindows();
 		
 	}
 	
-
-	
-	public void buildTriggerSystem() {
-		//start with the global settings.
-		//long start = System.currentTimeMillis();
-		if(the_settings == null) return;
-		sortedTriggerMap = new HashMap<Integer,TriggerData>();
-		triggerPluginMap = new HashMap<Integer,Plugin>();
-		int currentgroup = 1;
-		triggerBuilder.setLength(0);
-		boolean addseparator = false;
-		ArrayList<TriggerData> tmp = the_settings.getSortedTriggers();
-		if(tmp == null) {
-			the_settings.sortTriggers();
-			tmp = the_settings.getSortedTriggers();
-			//if(tmp == null || tmp.size() == 0) return;
+	/** Work horse function to rebuild the trigger system.
+	 * 
+	 * I think this is called from a number of placed, but it should really be called from dispatch()
+	 * when triggers are dirty.
+	 */
+	public final void buildTriggerSystem() {
+		if (mSettings == null) { 
+			return; 
 		}
-		if(tmp != null && tmp.size() > 0) {
-			for(int i=0;i<tmp.size();i++) {
+		mSortedTriggerMap.clear();
+		mTriggerPluginMap.clear();
+		int currentgroup = 1;
+		mTriggerBuilder.setLength(0);
+		boolean addseparator = false;
+		ArrayList<TriggerData> tmp = mSettings.getSortedTriggers();
+		if (tmp == null) {
+			mSettings.sortTriggers();
+			tmp = mSettings.getSortedTriggers();
+		}
+		if (tmp != null && tmp.size() > 0) {
+			for (int i = 0; i < tmp.size(); i++) {
 				TriggerData t = tmp.get(i);
-				if(!t.isInterpretAsRegex() && t.getPattern().startsWith("%")) {
-					
-				} else {
-					if(t.isEnabled()) {
-						if(!addseparator) {
-							triggerBuilder.append("(");
-							if(!t.isInterpretAsRegex()) {
-								triggerBuilder.append("\\Q");
+				if (!(!t.isInterpretAsRegex() && t.getPattern().startsWith("%"))) {
+					if (t.isEnabled()) {
+						if (!addseparator) {
+							mTriggerBuilder.append("(");
+							if (!t.isInterpretAsRegex()) {
+								mTriggerBuilder.append("\\Q");
 							}
-							triggerBuilder.append(t.getPattern());
-							if(!t.isInterpretAsRegex()) {
-								triggerBuilder.append("\\E");
+							mTriggerBuilder.append(t.getPattern());
+							if (!t.isInterpretAsRegex()) {
+								mTriggerBuilder.append("\\E");
 							}
-							triggerBuilder.append(")");
+							mTriggerBuilder.append(")");
 							addseparator = true;
 						} else {
-							triggerBuilder.append("|(");
-							if(!t.isInterpretAsRegex()) {
-								triggerBuilder.append("\\Q");
+							mTriggerBuilder.append("|(");
+							if (!t.isInterpretAsRegex()) {
+								mTriggerBuilder.append("\\Q");
 							}
-							triggerBuilder.append(t.getPattern());
-							if(!t.isInterpretAsRegex()) {
-								triggerBuilder.append("\\E");
+							mTriggerBuilder.append(t.getPattern());
+							if (!t.isInterpretAsRegex()) {
+								mTriggerBuilder.append("\\E");
 							}
-							triggerBuilder.append(")");
+							mTriggerBuilder.append(")");
 						}
-						sortedTriggerMap.put(currentgroup, t);
-						triggerPluginMap.put(currentgroup, the_settings);
-						currentgroup += t.getMatcher().groupCount()+1;
+						mSortedTriggerMap.put(currentgroup, t);
+						mTriggerPluginMap.put(currentgroup, mSettings);
+						currentgroup += t.getMatcher().groupCount() + 1;
 					}
 				}
 			}
 		}
 		
-		for(Plugin p : plugins) {
-			//boolean addseparator = false;
+		for (Plugin p : mPlugins) {
 			tmp = p.getSortedTriggers();
-			if(tmp == null) {
+			if (tmp == null) {
 				p.sortTriggers();
 				tmp = p.getSortedTriggers();
-				//if(tmp == null || tmp.size() == 0) return;
 			}
-			if(tmp != null && tmp.size() > 0) {
-				for(int i=0;i<tmp.size();i++) {
+			if (tmp != null && tmp.size() > 0) {
+				for (int i = 0; i < tmp.size(); i++) {
 					TriggerData t = tmp.get(i);
-					if(!t.isInterpretAsRegex() && t.getPattern().startsWith("%")) {
-						
-					} else {
-						if(t.isEnabled()) {
-							if(i == 0 && addseparator == false) {
-								triggerBuilder.append("(");
-								if(!t.isInterpretAsRegex()) {
-									triggerBuilder.append("\\Q");
+					if (!(!t.isInterpretAsRegex() && t.getPattern().startsWith("%"))) {
+						if (t.isEnabled()) {
+							if (i == 0 && !addseparator) {
+								mTriggerBuilder.append("(");
+								if (!t.isInterpretAsRegex()) {
+									mTriggerBuilder.append("\\Q");
 								}
-								triggerBuilder.append(t.getPattern());
-								if(!t.isInterpretAsRegex()) {
-									triggerBuilder.append("\\E");
+								mTriggerBuilder.append(t.getPattern());
+								if (!t.isInterpretAsRegex()) {
+									mTriggerBuilder.append("\\E");
 								}
-								triggerBuilder.append(")");
+								mTriggerBuilder.append(")");
 								addseparator = true;
 							} else {
-								triggerBuilder.append("|(");
-								if(!t.isInterpretAsRegex()) {
-									triggerBuilder.append("\\Q");
+								mTriggerBuilder.append("|(");
+								if (!t.isInterpretAsRegex()) {
+									mTriggerBuilder.append("\\Q");
 								}
-								triggerBuilder.append(t.getPattern());
-								if(!t.isInterpretAsRegex()) {
-									triggerBuilder.append("\\E");
+								mTriggerBuilder.append(t.getPattern());
+								if (!t.isInterpretAsRegex()) {
+									mTriggerBuilder.append("\\E");
 								}
-								triggerBuilder.append(")");
+								mTriggerBuilder.append(")");
 							}
-							sortedTriggerMap.put(currentgroup, t);
-							triggerPluginMap.put(currentgroup, p);
-							currentgroup += t.getMatcher().groupCount()+1;
+							mSortedTriggerMap.put(currentgroup, t);
+							mTriggerPluginMap.put(currentgroup, p);
+							currentgroup += t.getMatcher().groupCount() + 1;
 						}
 					}
 				}
 			}
 		
 		}
-		massiveTriggerString = triggerBuilder.toString();
-		String trgstr = triggerBuilder.toString();
-		trgstr = trgstr.replace("|", "\n");
-		//Log.e("MASSIVE",trgstr);
-		massivePattern = Pattern.compile(massiveTriggerString,Pattern.MULTILINE);
-		
-		massiveMatcher = massivePattern.matcher("");
-		
-		//long delta = System.currentTimeMillis() - start;
-		//Log.e("TRIGGERS","TIMEPROFILE trigger system took " + delta + " millis to build.");
+		mMassiveTriggerString = mTriggerBuilder.toString();
+		mMassivePattern = Pattern.compile(mMassiveTriggerString, Pattern.MULTILINE);
+		mMassiveMatcher = mMassivePattern.matcher("");
 		triggersDirty = false;
 	}
 	
-	private HashMap<String,ArrayList<String>> linkMap = new HashMap<String,ArrayList<String>>();
-	private HashMap<String,Plugin> pluginMap = new HashMap<String,Plugin>(0);
-	
-	protected void redrawWindow(String win) {
-		//Log.e("WINDOW","SERVICE ATTEMPTING TO REDRAW WINDOW:" + win);
-		//synchronized(callbackSync) {
-		//int N = mWindowCallbacks.beginBroadcast();
-		//for(int i=0;i<N;i++) {
-			IWindowCallback w = windowCallbackMap.get(win);
-			if(w == null) return;
+	/** end of the line of the DrawWindow function. I don't think this is used.
+	 * 
+	 * @param win Name of the window to redraw.
+	 */
+	protected final void redrawWindow(final String win) {
+
+			IWindowCallback w = mWindowCallbackMap.get(win);
+			if (w == null) {
+				return;
+			}
 			try {
-				//if(w.getName().equals(win)) {
 					w.redraw();
-				//}
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		//}
-		//mWindowCallbacks.finishBroadcast();
-		//}
+
 	}
 
-	
-	protected void lineToWindow(String target, Object line) throws RemoteException {
-		//synchronized(callbackSync) {
+	/** Actual working method for the LineToWindow Lua function.
+	 * 
+	 * @param target Name of the window to recieve the line.
+	 * @param line The TextTree.Line to send to @param target
+	 * @throws RemoteException Thrown when there is a problem with the aidl bridge.
+	 */
+	protected final void lineToWindow(final String target, final Object line) throws RemoteException {
 		
-		for(WindowToken w : mWindows) {
-			if(w.getName().equals(target)) {
+		for (WindowToken w : mWindows) {
+			if (w.getName().equals(target)) {
 				TextTree tmp = new TextTree();
-				tmp.setEncoding(the_settings.getEncoding());
-				if(line instanceof TextTree.Line) {
-					tmp.appendLine((TextTree.Line)line);
+				tmp.setEncoding(mSettings.getEncoding());
+				if (line instanceof TextTree.Line) {
+					tmp.appendLine((TextTree.Line) line);
 				} else if (line instanceof String) {
 					try {
-						tmp.addBytesImpl(((String)line).getBytes(the_settings.getEncoding()));
+						tmp.addBytesImpl(((String) line).getBytes(mSettings.getEncoding()));
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -1164,187 +1150,180 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				try {
 					w.getBuffer().addBytesImpl(lol);
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
-				
-				//int N = mWindowCallbacks.beginBroadcast();
-				//for(int i = 0;i<N;i++) {
-					IWindowCallback c = windowCallbackMap.get(target);
-					if(c!=null) {
-					
-							//if(target.equals(c.getName())) {
-								c.rawDataIncoming(lol);
-							//}
-						
+
+					IWindowCallback c = mWindowCallbackMap.get(target);
+					if (c != null) {
+						c.rawDataIncoming(lol);		
 					}
-				//}
-				//mWindowCallbacks.finishBroadcast();
 			}
 		}
-		//}
 	}
-
-	private int mCallbackCount = 0;
-	boolean callbacksStarted = false;
-	public void registerWindowCallback(String name,IWindowCallback callback) {
-		if(callbacksStarted) {
+	
+	/** Called from the aidl bridge housing in StellarService when the foreground window has started a new
+	 * window and needs to let the Connection know that a new window is open for it.
+	 * 
+	 * @param name The name of the new window.
+	 * @param callback The IWindowCallback aidl conenction object associated with the window.
+	 */
+	public final void registerWindowCallback(final String name, final IWindowCallback callback) {
+		if (mCallbacksStarted) {
 			mWindowCallbacks.finishBroadcast();
 		}
 		
 		mWindowCallbacks.register(callback);
 		
-		int N = mWindowCallbacks.beginBroadcast();
-		for(int i=0;i<N;i++) {
+		int n = mWindowCallbacks.beginBroadcast();
+		for (int i = 0; i < n; i++) {
 			IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
 			try {
-				windowCallbackMap.put(w.getName(), w);
+				mWindowCallbackMap.put(w.getName(), w);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		callbacksStarted = true;
-		//so now the callback list is open, and we have the map of all the callbacks associated by name.
-		
-		//int i = mWindowCallbacks.beginBroadcast();
-		//mWindowCallbacks.finishBroadcast();
-		//mWindowCallbackMap.put(name, i);
-		//mCallbackCount++;
+		mCallbacksStarted = true;
 	}
 	
-	public void unregisterWindowCallback(IWindowCallback callback) {
-		String name = "";
-		try {
-			name = callback.getName();
-		} catch (RemoteException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-		//try {
-			//Log.e("SERVICE",display + ": attempting to remove " + name + " from the callback map.");
-		//} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
-		//	e1.printStackTrace();
-		//}
+	/** Called from the aidl bridge housing in StellarService when the foreground window has stopped and destroyed a
+	 * window and needs to let the Connection know that the IWindowCallback is invalid.
+	 * 
+	 * @param callback The IWindowCallback aidl connection object of the destroyed window.
+	 */
+	public final void unregisterWindowCallback(final IWindowCallback callback) {
 		
-		if(callbacksStarted) {
+		if (mCallbacksStarted) {
 			mWindowCallbacks.finishBroadcast();
-			callbacksStarted = false;
+			mCallbacksStarted = false;
 		}
-		
-		if(!mWindowCallbacks.unregister(callback)) {
-			//Log.e("SERVICE",display+":attempted to remove "+name+ " from the callback list but failed.");
-		}
-		//int N = mWindowCallbacks.beginBroadcast();
-		//for(int i = 0;i<N;i++) {
-		//	IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
-		//	String tmp = c.getName();
-		windowCallbackMap.clear();
-		int N = mWindowCallbacks.beginBroadcast();
-		for(int i=0;i<N;i++) {
+
+		mWindowCallbackMap.clear();
+		int n = mWindowCallbacks.beginBroadcast();
+		for (int i = 0; i < n; i++) {
 			IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
 			try {
-				//Log.e("SERVICE",display + ":ADDING "+w.getName() + " to the callback map.");
-				windowCallbackMap.put(w.getName(), w);
+				mWindowCallbackMap.put(w.getName(), w);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 		
-		if(!callbacksStarted) { callbacksStarted = true; }
-		//}
+		if (!mCallbacksStarted) { mCallbacksStarted = true; }
 	}
 	
-	private final String MAIN_WINDOW = "mainDisplay";
-	private String outputWindow = MAIN_WINDOW;
-	
-	protected void DoDisconnect(boolean override) {
-		//TODO: if window showing, show disconnection.
-		if(handler == null) return;
-		if(mAutoReconnect && !override) {
-			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
+	/** Called from the DataPumper when the net threads have been shut down.
+	 * 
+	 * @param override Indicates weather the auto reconnect should be overridden.
+	 */
+	protected final void doDisconnect(final boolean override) {
+		if (mHandler == null) {
+			return;
+		}
+		if (mAutoReconnect && !override) {
+			if (mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
-				String message = "\n" + Colorizer.colorRed + "Network connection disconnected.\n" + "Attmempting reconnect in 3 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) + " tries remaining."+Colorizer.colorWhite+"\n";
-				handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(message)));
-				handler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, 3000);
+				String message = "\n" + Colorizer.colorRed + "Network connection disconnected.\n"
+								 + "Attmempting reconnect in 3 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) + " tries remaining." + Colorizer.colorWhite + "\n";
+				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message));
+				mHandler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, THREE_THOUSAND_MILLIS);
 				return;
 			}
 		}
 		
 		
-		service.DoDisconnect(this);
+		mService.DoDisconnect(this);
 	}
 	
-	
-
-	protected void killNetThreads(boolean noreconnect) {
+	/** Called from various sources to kill the DataPumper and all of its threads.
+	 * 
+	 * @param noreconnect true if there should be no reconnect attempt made.
+	 */
+	protected final void killNetThreads(final boolean noreconnect) {
 		
-		if(pump == null) return;
-		//Log.e("TEST","Killing net threads");
-		if(pump != null) {
-			if(pump.handler != null) {
-				pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+		if (mPump == null) {
+			return;
+		}
+		if (mPump != null) {
+			if (mPump.getHandler() != null) {
+				mPump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
 			}
-			pump.closeSocket();
-			//pump.interrupt();
-			//pump = null;
+			mPump.closeSocket();
 			try {
-				//Log.e("TEST","waiting for thread death.");
-				pump.join();
-				//Log.e("TEST","thread death completed.");
+				mPump.join();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 		
-		processor = null;
+		mProcessor = null;
 		
-		//synchronized(this) {
-		if(noreconnect) {
-			if(handler != null) {
-				handler.removeMessages(MESSAGE_RECONNECT);
+		if (noreconnect) {
+			if (mHandler != null) {
+				mHandler.removeMessages(MESSAGE_RECONNECT);
 			}
 		}
-		//}
 		
-		pump = null;
+		mPump = null;
 	}
 	
-	private void dispatchNoProcess(byte[] data) {
+	/** Sends a byte array to the default output window. Does not invoke trigger processing.
+	 * 
+	 * @param data The data to send.
+	 */
+	private void dispatchNoProcess(final byte[] data) {
 		mWindows.get(0).getBuffer().addBytesImplSimple(data);
 		sendBytesToWindow(data);
 	}
-
-	Pattern colordata = Pattern.compile("\\x1B\\x5B.+?m");
-	Matcher colorStripper = colordata.matcher("");
 	
-	Pattern linedata = Pattern.compile("^.*$",Pattern.MULTILINE);
-	Matcher lineMatcher = linedata.matcher("");
-	
+	/** Utility class used for trigger processing. Maps a start and end value to a line number.	 */
 	private class Range {
-		private int start;
-		private int end;
-		private int line;
-		public Range(int start,int end,int line) { this.start = start; this.end = end; this.line = line;}
-		public int getLine() { return line;}
-		public int getStart() { return start;}
-		public int getEnd() { return end; }
+		/** Start of the line. */
+		private int mStart;
+		/** End of the line. */
+		private int mEnd;
+		/** Line number. */
+		private int mLine;
+		/** Generic assignment constructor.
+		 * 
+		 * @param start Start of line.
+		 * @param end End of line.
+		 * @param line Line number.
+		 */
+		public Range(final int start, final int end, final int line) { 
+			this.mStart = start; 
+			this.mEnd = end; 
+			this.mLine = line;
+		}
+		/** Line number getter.
+		 * 
+		 * @return The line number.
+		 */
+		public int getLine() { return mLine; }
+		/** Range start getter.
+		 * 
+		 * @return index position of the start of the line.
+		 */
+		public int getStart() { return mStart; }
+		/** Range end getter.
+		 * 
+		 * @return index position of the end of the line.
+		 */
+		public int getEnd() { return mEnd; }
 		
 	}
 	
+	/** Range class comparator.	 */
 	private class RangeComparator implements Comparator<Range> {
 
 		@Override
-		public int compare(Range a, Range b) {
-			// TODO Auto-generated method stub
-			if(b.start > a.end && b.end > a.end) {
+		public int compare(final Range a, final Range b) {
+			if (b.mStart > a.mEnd && b.mEnd > a.mEnd) {
 				return -1;
 			}
 
-			if(b.start < a.start && b.end < a.end) {
+			if (b.mStart < a.mStart && b.mEnd < a.mEnd) {
 				return 1;
 			}
 
@@ -1353,351 +1332,216 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 
 	}
 	
-	private boolean triggersDirty = false;
-	public void setTriggersDirty() {
+
+	
+	/** Setter for triggersDirty. */
+	public final void setTriggersDirty() {
 		triggersDirty = true;
 	}
-	
-	TreeSet<Range> lineMap = new TreeSet<Range>(new RangeComparator());
-	StringBuilder triggerBuilder = new StringBuilder();
-	String massiveTriggerString = null;
-	Pattern massivePattern = null;
-	Matcher massiveMatcher = null;
-	HashMap<Integer,TriggerData> sortedTriggerMap = null;
-	HashMap<Integer,Plugin> triggerPluginMap = null;
-	HashMap<Integer,Integer> lineStartMap = new HashMap<Integer,Integer>();
-	private boolean processing = false;
-	private byte[] holddata = null;
-	private void dispatch(byte[] data) throws UnsupportedEncodingException {
-		//long start = System.currentTimeMillis();
+
+	/** THE INCOMING DATA DISPATCH ROUTINE! Unicorns and puppies and all kinds of good things live here.
+	 * 
+	 * @param data The data to process.
+	 * @throws UnsupportedEncodingException Thrown when a string<==>byte[] conversion has a bad encoding provided.
+	 */
+	private void dispatch(final byte[] data) throws UnsupportedEncodingException {
+
+		byte[] raw = mProcessor.rawProcess(data);
+		if (raw == null) { 
+			return; 
+		}
 		
-		//String str = new String(data);
-		//Log.e("RAW","RAW DATA:\n"+str);
-//		if(processing) {
-//			Log.e("DISPATCHTEST","DISPATCH PROCESSING WHILE DATA IS STILL BEING PROCESSED");
-//			String newstr = new String(data);
-//			String oldstr = new String(holddata);
-//			Log.e("DISPATCHTEST","New data:\n"+newstr);
-//			Log.e("DISPATCHTEST","Old Data:\n"+oldstr);
-//		}
-		holddata = data;
-		processing = true;
-		//String ftmp = new String(data);
-		//Log.e("FIN","INCOMING RAW-----\n"+ftmp+"\nEND INCOMING RAW-----");
-		
-		byte[] raw = processor.RawProcess(data);
-		if(raw == null) { processing = false; return; }
-		
-		//long deltaraw = System.currentTimeMillis() - start;
-		//.e("PARSING","TIMEPROFILE trigger raw processing took " + deltaraw);
-		//String rawproc = new String(raw);
-		//Log.e("RAW","PROCESSED RAW DATA:\n"+rawproc);
-		//long treestart = System.currentTimeMillis();
 		TextTree buffer = null;
-		for(WindowToken w : mWindows) {
-			if(w.getName().equals(outputWindow)) {
+		for (WindowToken w : mWindows) {
+			if (w.getName().equals(MAIN_WINDOW)) {
 				buffer = w.getBuffer();
 			}
 		}
-		//long deltatree = System.currentTimeMillis() - treestart;
-		//Log.e("PARSING","TIMEPROFILE finding the right window took " + deltatree);
-		
-		
-//		for(int i=finished.getLines().size()-1;i>=0;i--) {
-//			Line tmpl = finished.getLines().get(i);
-//			Log.e("FIN","FINISHED:" + TextTree.deColorLine(tmpl));
-//			
-//		}
-//		
 
-		//long bleedstart = System.currentTimeMillis();
 		TextTree.Color tmpcolor = buffer.getBleedColor();
-		working.setBleedColor(tmpcolor);
-		finished.setBleedColor(tmpcolor);
-		//long deltableed = System.currentTimeMillis() - bleedstart;
-		//Log.e("PARSING","TIMEPROFILE finding the bleed color took " + deltableed);
-		//long addstart = System.currentTimeMillis();
-		working.addBytesImpl(raw);
+		mWorking.setBleedColor(tmpcolor);
+		mFinished.setBleedColor(tmpcolor);
+
+		mWorking.addBytesImpl(raw);
+	
+		mWorking.setModCount(0);
 		
-//		Log.e("FIN","---------START XMISSION BLOCK----------");
-//		for(int i=working.getLines().size()-1;i>=0;i--) {
-//			Line tmpl = working.getLines().get(i);
-//			Log.e("FIN","WORKING("+i+"):" + TextTree.deColorLine(tmpl));
-//			
-//		}
-//		Log.e("FIN","---------END XMISSION BLOCK----------");
-		//Log.e("FIN","END TRANSMISSION:-------------------------------");
-		//long deltadelta = System.currentTimeMillis() - addstart;
-		//Log.e("PARSING","TIMEPROFILE adding to the working buffer took " + deltadelta);
-		//long deltatmp2 = System.currentTimeMillis() - start;
-		//Log.e("PARSING","TIMEPROFILE triggers did " + deltatmp2 + " of necessary prep.");
-		
-		//long firstpart = System.currentTimeMillis();
-		working.setModCount(0);
 		//strip the color out.
-		colorStripper.reset(new String(raw,the_settings.getEncoding()));
-		String stripped = colorStripper.replaceAll("");
+		COLOR_MATCHER.reset(new String(raw, mSettings.getEncoding()));
+		String stripped = COLOR_MATCHER.replaceAll("");
 		
-		//Log.e("LOG","TRIGGER TESTING:\n"+stripped);
-		//build up the newline map.
-		if(triggersDirty) {
+		if (triggersDirty) {
 			buildTriggerSystem();
 		}
 
-		
-		ListIterator<TextTree.Line> it = working.getLines().listIterator(working.getLines().size());
-		lineMap.clear();
-		lineMatcher.reset(stripped);
+		ListIterator<TextTree.Line> it = mWorking.getLines().listIterator(mWorking.getLines().size());
+		mLineMap.clear();
+		LINE_MATCHER.reset(stripped);
 		boolean found = false;
-		int lineNumber = working.getLines().size()-1;
-		while(lineMatcher.find()) {
+		int lineNumber = mWorking.getLines().size() - 1;
+		while (LINE_MATCHER.find()) {
 			found = true;
-			
-			//Log.e("LINE MAP","MAPPING POSITIONS: {" + lineMatcher.start() + ":" + lineMatcher.end() + "} to line:" + lineNumber + " + data:" + lineMatcher.group());
-			lineMap.add(new Range(lineMatcher.start(),lineMatcher.end(),lineNumber));
-			lineNumber = lineNumber -1;
+			mLineMap.add(new Range(LINE_MATCHER.start(), LINE_MATCHER.end(), lineNumber));
+			lineNumber = lineNumber - 1;
 		}
 		boolean keepEvaluating = true;
-		lineNumber = working.getLines().size()-1;
+		lineNumber = mWorking.getLines().size() - 1;
 		Line l = null;
-		if(it.hasPrevious()) {
+		if (it.hasPrevious()) {
 			l = it.previous();
 		} else {
-			processing = false;
 			return;
 		}
-		
-		//long deltatmp = System.currentTimeMillis() - firstpart;
-		//Log.e("DELTA","TIMEPROFILE trigger prep work took " + deltatmp + " millis.");
-		if(found) {
+		if (found) {
 			boolean done = false;
-			while(!done) {
+			while (!done) {
 				done = true;
 				boolean rebuildTriggers = false;
-				int linedelta = 0;
-				//attempt the trigger matching.
-				
-				boolean replace_gagged = false;
+				boolean replaceGagged = false;
 				int gagloc = -1;
-				massiveMatcher.reset(stripped);
-				while(keepEvaluating && massiveMatcher.find()) {
-					int s = massiveMatcher.start();
-					int e = massiveMatcher.end()-1;
-					String matched = massiveMatcher.group();
-					Range r = new Range(s,e,0);
-					SortedSet<Range> tmp = lineMap.tailSet(r);
+				mMassiveMatcher.reset(stripped);
+				while (keepEvaluating && mMassiveMatcher.find()) {
+					int s = mMassiveMatcher.start();
+					int e = mMassiveMatcher.end() - 1;
+					String matched = mMassiveMatcher.group();
+					Range r = new Range(s, e, 0);
+					SortedSet<Range> tmp = mLineMap.tailSet(r);
 	
 					int tmpline = tmp.first().getLine();
 					int tmpstart = s - tmp.first().getStart();
-					int tmpend = (e-1) - tmp.first().getStart();
+					int tmpend = (e - 1) - tmp.first().getStart();
 					gagloc = tmp.first().getEnd();
 					
 					int index = -1;
-					for(int i=1;i<=massiveMatcher.groupCount();i++) {
-						if(massiveMatcher.group(i) != null) {
+					for (int i = 1; i <= mMassiveMatcher.groupCount(); i++) {
+						if (mMassiveMatcher.group(i) != null) {
 							index = i;
-							i=massiveMatcher.groupCount();
+							i = mMassiveMatcher.groupCount();
 						}
 					}
 					
-					if(index > 0) {
+					if (index > 0) {
+						//we have found a trigger. advance the line number to
 						
+						TriggerData t = mSortedTriggerMap.get(index);
+						Plugin p = mTriggerPluginMap.get(index);
 
-						//we have found a trigger.
-						//advance the line number to
-						int linesize = working.getLines().size();
-						
-						TriggerData t = sortedTriggerMap.get(index);
-						Plugin p = triggerPluginMap.get(index);
-						//Log.e("TRIGGER","TRIGGER "+t.getName()+" FIRED ON LINE:"+tmpline);
-						
-//						if(t.getName().equals("map_capture_end") || t.getName().equals("map_capture")) {
-//							Log.e("Parse","Debug Me");
-//						}
-						//Log.e("TRIGGER","trigger matched:" + t.getName() + " :"+massiveMatcher.group());
-						//String matched3 = massiveMatcher.group();
 						boolean gagged = false;
-						if(lineNumber > tmpline) {
-							int amount = (lineNumber - tmpline);
+						if (lineNumber > tmpline) {
+							int amount = lineNumber - tmpline;
 							
-							for(int i=0;i<amount;i++) {
-								if(it.hasPrevious()) {
+							for (int i = 0; i < amount; i++) {
+								if (it.hasPrevious()) {
 								l = it.previous();
 								}
 							}
-							working.setModCount(0);
+							mWorking.setModCount(0);
 							lineNumber = tmpline;
-							//Log.e("TRIGGER","Line Data:" + TextTree.deColorLine(l));
-							if(it.hasNext()) {
-								//Line tmpl = it.next();
-								//it.previous();
-								lineNumber = tmpline;
-								
-							} else {
-							//	Log.e("TRIGGER","DEBUG ME");
-								//lineNumber = working.getLines().size()-1;
-								
+							if (it.hasNext()) {
+								lineNumber = tmpline;	
 							}
-							//Log.e("TRIGGER","TRIGGER FOUND AND PROCESSING ON LINE:"+lineNumber);
-							
-						} else if(tmpline > lineNumber) {
+						} else if (tmpline > lineNumber) {
 							gagged = true;
-						} else {
-							//l = it.next();
 						}
-						//Log.e("MATCHED","MATCHED TRIGGER:" + matched3 + " : " + t.getName());
-						if(t != null && t.isEnabled() && gagged == false) {
-							captureMap.clear();
-							for(int i=index;i<=(t.getMatcher().groupCount()+index);i++) {
+						if (t != null && t.isEnabled() && !gagged) {
+							mCaptureMap.clear();
+							for (int i = index; i <= (t.getMatcher().groupCount() + index); i++) {
 								
-								captureMap.put(Integer.toString(i-index), massiveMatcher.group(i));
+								mCaptureMap.put(Integer.toString(i - index), mMassiveMatcher.group(i));
 							}
-							for(TriggerResponder responder : t.getResponders()) {
-								if(responder instanceof GagAction) {
-									replace_gagged = true;
-									//gagloc = lineend;
+							for (TriggerResponder responder : t.getResponders()) {
+								if (responder instanceof GagAction) {
+									replaceGagged = true;
 								}
 								try {
-									boolean ret = responder.doResponse(service.getApplicationContext(), working, lineNumber, it, l, tmpstart,tmpend,matched, t, display,host,port, StellarService.getNotificationId(), service.isWindowConnected(), handler, captureMap, p.getLuaState(), t.getName(), the_settings.getEncoding());
+									responder.doResponse(mService.getApplicationContext(), 
+																	   mWorking, 
+																	   lineNumber, 
+																	   it, 
+																	   l, 
+																	   tmpstart,
+																	   tmpend,
+																	   matched, 
+																	   t, 
+																	   mDisplay,
+																	   mHost,
+																	   mPort, 
+																	   StellarService.getNotificationId(), 
+																	   mService.isWindowConnected(), 
+																	   mHandler, 
+																	   mCaptureMap, 
+																	   p.getLuaState(), 
+																	   t.getName(), 
+																	   mSettings.getEncoding());
 									
-									if(ret == true) {
-										//keepEvaluating = false;
-										//rebuildTriggers = true;
-										//this signals to rebuild the trigger system.
-										
-									}
-									
-									if(triggersDirty) {
+									if (triggersDirty) {
 										keepEvaluating = false;
 										rebuildTriggers = true;
-										//Log.e("dirty","triggers marked dirty, rebuilding.");
 									}
-									//TriggerResponder r = new GagAction();
-
-								} catch(IteratorModifiedException e1) {
+								} catch (IteratorModifiedException e1) {
 									it = e1.getIterator();
-									int now = working.getLines().size();
-									working.setModCount(0);
+									mWorking.setModCount(0);
 									lineNumber = it.previousIndex();
-									linedelta = now - linesize;
-									if(it.hasPrevious()) {
+									if (it.hasPrevious()) {
 										l = it.previous();
 									} else {
 										keepEvaluating = false;
 									}
-									//it.next();
-									//int linesize = 
-									//if(responder instanceof GagAction) {
-										//gagged, working tree now contains.
-//									for(int i=working.getLines().size()-1;i>=0;i--) {
-//										
-//										String lff = TextTree.deColorLine(working.getLines().get(i)).toString();
-//										Log.e("GAG","GAG("+i+"):"+lff);
-//										//lf = lf-1;
-//									}
 									
-									
-									//}
 								}
-								if(working.getLines().size() == 0) {
+								if (mWorking.getLines().size() == 0) {
 									keepEvaluating = false;
 								}
 							}
 						}
 					}
-					if(rebuildTriggers) {
+					if (rebuildTriggers) {
 						break;
 					}
 				}
-				if(rebuildTriggers) {
-					working.setModCount(0);
+				if (rebuildTriggers) {
+					mWorking.setModCount(0);
 					done = false;
 					keepEvaluating = true;
-					//get the triggering sequence start and end.
-					int s = massiveMatcher.start();
-					int e = massiveMatcher.end();
-					
-//					if(e > stripped.length()-1) {
-//						Log.e("debug","dededededebug.");
-//						Log.e("debug","massive:" + massiveMatcher.group());
-//						Log.e("debug","stripped:" + stripped.length() + " matchstart:" + s + "matchend:" + e + "\n" + stripped);
-//					}
-					//make the stripped text be a substring of what is currently matched.
-					if(e == stripped.length()) {
-					} else {
-						if(replace_gagged) {
-							stripped = stripped.substring(gagloc+1,stripped.length());
+					int e = mMassiveMatcher.end();
+
+					if (e != stripped.length()) {
+						if (replaceGagged) {
+							stripped = stripped.substring(gagloc + 1, stripped.length());
 						} else {
-							stripped = stripped.substring(e+1,stripped.length());
+							stripped = stripped.substring(e + 1, stripped.length());
+						}	
+					}
+					
+					if (lineNumber <= mWorking.getLines().size() - 1) {
+						while (mWorking.getLines().size() - 1 > lineNumber) {
+
+							Line tmp = mWorking.getLines().get(mWorking.getLines().size() - 1);
+							mWorking.getLines().remove(mWorking.getLines().size() - 1);
+							mFinished.appendLine(tmp);
 						}
 						
 					}
-					
-					if(lineNumber <= working.getLines().size()-1) {
-						//while(working.getLines().size()-1 >= lineNumber) { // DCB 1/22/13 - this was to make the map window work.
-						while(working.getLines().size()-1 > lineNumber) {
-//							Log.e("GAG","-------------------------------------------");
-//							//while(sf.hasPrevious()) {
-//							for(int i=working.getLines().size()-1;i>=0;i--) {
-//								
-//								String lff = TextTree.deColorLine(working.getLines().get(i)).toString();
-//								Log.e("GAG","PRUNEPRE("+i+"):"+lff);
-//								//lf = lf-1;
-//							}
-							Line tmp = working.getLines().get(working.getLines().size()-1);
-							working.getLines().remove(working.getLines().size()-1);
-							String tmpstr = TextTree.deColorLine(tmp).toString();
-							//Log.e("PARSE","removed from working tree:" + tmpstr);
-							finished.appendLine(tmp);
-							
-							//ListIterator<TextTree.Line> sf = buffer.getLines().listIterator(buffer.getLines().size());
-							//int lf = working.getLines().size()-1;
-//							Log.e("GAG","-------------------------------------------");
-//							//while(sf.hasPrevious()) {
-//							for(int i=finished.getLines().size()-1;i>=0;i--) {
-//								
-//								String lff = TextTree.deColorLine(finished.getLines().get(i)).toString();
-//								Log.e("GAG","PRUNEPOST("+i+"):"+lff);
-//								//lf = lf-1;
-//							}
-						}
-						
-					}
-					
-//					for(int i=working.getLines().size()-1;i>=0;i--) {
-//					
-//					String lff = TextTree.deColorLine(working.getLines().get(i)).toString();
-//					Log.e("GAG","PRUNEPRE("+i+"):"+lff);
-//					//lf = lf-1;
-//					}
 					
 					buildTriggerSystem();
 					
-					lineMap.clear();
-					lineMatcher.reset(stripped);
+					mLineMap.clear();
+					LINE_MATCHER.reset(stripped);
 					found = false;
-//					lineNumber = working.getLines().size()-1;
-//					ListIterator<TextTree.Line> tmpit = working.getLines().listIterator(lineNumber+1);
-//					while(tmpit.hasPrevious()) {
-//						String str = TextTree.deColorLine(tmpit.previous()).toString();
-//						Log.e("WORKING","WORKING TREE("+lineNumber+"):"+str);
-//						lineNumber = lineNumber -1;
-//					}
-					lineNumber = working.getLines().size()-1;
-					while(lineMatcher.find()) {
+
+					lineNumber = mWorking.getLines().size() - 1;
+					while (LINE_MATCHER.find()) {
 						found = true;
-						
-						//Log.e("LINE MAP","MAPPING POSITIONS: {" + lineMatcher.start() + ":" + lineMatcher.end() + "} to line:" + lineNumber + " + data:" + lineMatcher.group());
-						lineMap.add(new Range(lineMatcher.start(),lineMatcher.end(),lineNumber));
-						lineNumber = lineNumber -1;
+						mLineMap.add(new Range(LINE_MATCHER.start(), LINE_MATCHER.end(), lineNumber));
+						lineNumber = lineNumber - 1;
 					}
 					
-					lineNumber = working.getLines().size()-1;
-					if(lineNumber == -1) {
+					lineNumber = mWorking.getLines().size() - 1;
+					if (lineNumber == -1) {
 						keepEvaluating = false;
 						done = true;
 					} else {
-						it = working.getLines().listIterator(lineNumber+1);
+						it = mWorking.getLines().listIterator(lineNumber + 1);
 						l = it.previous();
 					}
 					
@@ -1706,282 +1550,109 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				
 			}
 		}
-		
-		
-//OLD OLD OLD OLD OLD
-//		the_settings.process(working, service, true, handler, display);
-//		if(working.getLines().size() == 0) {
-//			return;
-//		}
-//		working.updateMetrics();
-//		
-//		for(Plugin p : plugins) {
-//			p.process(working, service, true, handler, display);
-//			if(working.getLines().size() == 0) {
-//				return;
-//			}
-//			working.updateMetrics();
-//		}
 
-//		ListIterator<TextTree.Line> it = working.getLines().listIterator(working.getLines().size());
-//		boolean keepEvaluating = true;
-//		int lineNum = working.getLines().size()-1;
-//		while(it.hasPrevious()) {
-//			Line l = it.previous();
-//			String stripped = TextTree.deColorLine(l).toString();
-//			try {
-//				the_settings.process2(l,stripped,lineNum, working, service, true, handler, display);
-//			} catch (IteratorModifiedException e) {
-//				it = e.getIterator();
-//			}
-//			if(working.getLines().size() == 0) {
-//				return;
-//			}
-//			working.updateMetrics();
-//			
-//			for(Plugin p : plugins) {
-//				try {
-//					p.process2(l,stripped,lineNum,working, service, true, handler, display);
-//				} catch (IteratorModifiedException e) {
-//					it = e.getIterator();
-//				}
-//				if(working.getLines().size() == 0) {
-//					return;
-//				}
-//				working.updateMetrics();
-//			}
-//			lineNum = lineNum -1;
-//		}
-
-		
-//NEW BUT BAD NEW BUT BAD
-//		ListIterator<TextTree.Line> it = working.getLines().listIterator(working.getLines().size());
-//		boolean keepEvaluating = true;
-//		int lineNum = working.getLines().size();
-//		while(it.hasPrevious() && keepEvaluating) {
-//			
-//			TextTree.Line l = it.previous();
-//			
-//			lineNum = lineNum -1;
-//			
-//			String str = TextTree.deColorLine(l).toString();
-//			
-//			massiveMatcher.reset(str);
-//			
-//			while(massiveMatcher.find() && keepEvaluating) {
-//				//determine which group fired.
-//				//boolean done = false;
-//				int index = -1;
-//				for(int i=1;i<=massiveMatcher.groupCount();i++) {
-//					if(massiveMatcher.group(i) != null) {
-//						index = i;
-//						i=massiveMatcher.groupCount();
-//					}
-//				}
-//				
-//				if(index > 0) {
-//					//we have found a trigger.
-//					TriggerData t = sortedTriggerMap.get(index);
-//					Plugin p = triggerPluginMap.get(index);
-//					
-//					if(t.isEnabled()) {
-//						captureMap.clear();
-//						for(int i=index;i<(t.getMatcher().groupCount()+index);i++) {
-//							captureMap.put(Integer.toString(i-index), massiveMatcher.group(i));
-//						}
-//						for(TriggerResponder responder : t.getResponders()) {
-//							try {
-//								responder.doResponse(service.getApplicationContext(), working, lineNum, it, l, t.getMatcher(), t, display, StellarService.getNotificationId(), true, handler, captureMap, p.getLuaState(), t.getName(), the_settings.getEncoding());
-//								
-//							} catch(IteratorModifiedException e) {
-//								it = e.getIterator();
-//							}
-//							if(working.getLines().size() == 0) {
-//								keepEvaluating = false;
-//							}
-//						}
-//					}
-//				}
-//			}
-//			
-//		}
-		ListIterator<TextTree.Line> finisher = working.getLines().listIterator(working.getLines().size());
-		while(finisher.hasPrevious()) {
-			finished.appendLine(finisher.previous());
+		ListIterator<TextTree.Line> finisher = mWorking.getLines().listIterator(mWorking.getLines().size());
+		while (finisher.hasPrevious()) {
+			mFinished.appendLine(finisher.previous());
 		}
 		
-		working.empty();
-		finished.updateMetrics();
+		mWorking.empty();
+		mFinished.updateMetrics();
 		
-		//ListIterator<TextTree.Line> finalt = finished.getLines().listIterator(finished.getLines().size());
-		//while(finalt.hasPrevious()) {
-		//	buffer.appendLine(finalt.previous());
-		//}
+		byte[] proc = mFinished.dumpToBytes(false);
 		
-		byte[] proc = finished.dumpToBytes(false);
-		
-		
-//		for(int i=finished.getLines().size()-1;i>=0;i--) {
-//			Line tmpl = finished.getLines().get(i);
-//			Log.e("FIN","FINISHED:" + TextTree.deColorLine(tmpl));
-//			
-//		}
-//		
-//		for(int i=working.getLines().size()-1;i>=0;i--) {
-//			Line tmpl = working.getLines().get(i);
-//			Log.e("FIN","WORKING:" + TextTree.deColorLine(tmpl));
-//			
-//		}
-		
-		//synchronized(buffer) {
 		buffer.addBytesImplSimple(proc);
-		//}
-		
-		
-		//long now = System.currentTimeMillis();
-		//Log.e("Connection","TIMEPROFILE trigger parsing took:" + Long.toString(now - start) + " millis.");
 		sendBytesToWindow(proc);
 		
-		processing = false;
 	}
 	
-	protected void DispatchDialog(String str) {
-		if(mAutoReconnect) {
-			if(mAutoReconnectAttempt < mAutoReconnectLimit) {
+	/** Called from a few places I think. Triggers the network disconnected dialog in the foreground window.
+	 * Unless the auto reconnect is set.
+	 * 
+	 * @param str The message fro the dialog.
+	 */
+	protected final void dispatchDialog(final String str) {
+		if (mAutoReconnect) {
+			if (mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
 				killNetThreads(true);
-				String message = "\n" + Colorizer.colorRed + "Network Error: "+str+"\n" + "Attmempting reconnect in 20 seconds. " + (mAutoReconnectLimit -mAutoReconnectAttempt) + " tries remaining."+Colorizer.colorWhite+"\n";
-				handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(message)));
-				handler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, 20000);
+				String message = "\n" + Colorizer.colorRed + "Network Error: " + str + "\n" + "Attmempting reconnect in 20 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) 
+						+ " tries remaining." + Colorizer.colorWhite + "\n";
+				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message));
+				mHandler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, TWENTY_THOUSAND_MILLIS);
 				return;
 			}
 		}
-		service.DispatchDialog(str);
+		mService.DispatchDialog(str);
 	}
 
-	public void sendDataToWindow(String message) {
+	/** Sends a string to the main output window.
+	 * 
+	 * @param message The string to send.
+	 */
+	public final void sendDataToWindow(final String message) {
 		
 		try {
-			sendBytesToWindow(message.getBytes(the_settings.getEncoding()));
+			sendBytesToWindow(message.getBytes(mSettings.getEncoding()));
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	public void sendBytesToWindow(byte[] data) {
-		//service.sendRawDataToWindow(data);
-		/*if(activated) {
-			service.sendRawDataToWindow(data);
-		}*/
-		
-		//long start = System.currentTimeMillis();
-		//synchronized(callbackSync) {
-		//int N = mWindowCallbacks.beginBroadcast();
-		
-		try {
-			//Integer i = mWindowCallbackMap.get(outputWindow);
-			//if(i != null) {
-			//for(int i=0;i<N;i++) {
-				IWindowCallback c = windowCallbackMap.get(outputWindow);
-		//		if(c.getName().equals(outputWindow)) {
-				if(c!=null) {
-					c.rawDataIncoming(data);
-				} else {
-					//mWindows.get(0).getBuffer().addBytesImplSimple(data);
-				}
-		//		}
-		//	}
-			//}
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-		//	e.printStackTrace();
-		}
-		
-		//mWindowCallbacks.finishBroadcast();
-		//}
-		
-		//long now = System.currentTimeMillis();
-		//Log.e("Connection","TIMEPROFILE sendBytesToWindow:" + Long.toString(now -start) + " millis.");
-		
-	}
-	
+	/** Sends bytes to the main output window.
+	 * 
+	 * @param data The bytes to send.
+	 */
+	public final void sendBytesToWindow(final byte[] data) {
 
-	private void doStartup() {
-		//if(pump != null) {
-		killNetThreads(true);
-			
-			//pump = new DataPumper(host,port,handler);
-			//processor = null;
-			//processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext());
-			//pump.start();
-			//return; //already started up.
-		//}
-		//int tmpPort = 0;
-		//String host = "";
-		//String display = "";
-		//loadConnectionData();
-		
-		pump = new DataPumper(host,port,handler);
-		
-		
-		/*if(processor != null) {
-			processor.reset();
-			processor = null;
-		}*/
-		processor = new Processor(handler,the_settings.getEncoding(),service.getApplicationContext());
-		//processor.setDebugTelnet(the_settings.isDebugTelnet());
-		//boolean use = (Boolean)((BooleanOption)the_settings.getSettings().getOptions().findOptionByKey("use_gmcp")).getValue();
-		//String support = (String)((StringOption)the_settings.getSettings().getOptions().findOptionByKey("gmcp_supports")).getValue();
-		//processor.setUseGMCP(use);
-		//processor.setGMCPSupports(support);
-		
-		initSettings();
-		pump.start();
-		loadGMCPTriggers();
-		//show notification somehow.
-		isConnected = true;
-		
-		service.showConnectionNotification(display,host,port);
+		try {
+
+			IWindowCallback c = mWindowCallbackMap.get(MAIN_WINDOW);
+			if (c != null) {
+				c.rawDataIncoming(data);
+			}
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	/*private void loadConnectionData() {
-		int N = callbacks.beginBroadcast();
-		for(int i = 0;i<N;i++) {
-			try {
-				port = callbacks.getBroadcastItem(i).getPort();
-				host = callbacks.getBroadcastItem(i).getHost();
-				display = callbacks.getBroadcastItem(i).getDisplay();
-				
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//host = callbacks.getBroadcastItem(i))
-		}
-		callbacks.finishBroadcast();
-	}*/
+	/** Meat of the startup sequence. Starts the net threads after the settings have been loaded. */
+	private void doStartup() {
 	
+		killNetThreads(true);
+		
+		mPump = new DataPumper(mHost, mPort, mHandler);
+		
+		mProcessor = new Processor(mHandler, mSettings.getEncoding(), mService.getApplicationContext());
+
+		initSettings();
+		mPump.start();
+		loadGMCPTriggers();
+		mIsConnected = true;
+		
+		mService.showConnectionNotification(mDisplay, mHost, mPort);
+	}
+	
+	/** The gmcp trigger loading routine. This is pretty self explanatory, but it seeks out
+	 * non-regex triggers that start witht he gmcp trigger char (default %) and tracks them 
+	 * accordingly.
+	 */
 	private void loadGMCPTriggers() {
-		String gmcpChar = the_settings.getGMCPTriggerChar();
-		for(int i=0;i<plugins.size();i++) {
-			Plugin p = plugins.get(i);
-			HashMap<String,TriggerData> triggers = p.getSettings().getTriggers();
-			for(TriggerData t : triggers.values()) {
-				boolean x_regex = t.isInterpretAsRegex();
-				String x_name = t.getName();
-				String x_pattern = t.getPattern();
-				int j = x_name.length();
-				if(!t.isInterpretAsRegex()) { //this actually means literal
-					if(t.getPattern().startsWith(gmcpChar)) {
+		String gmcpChar = mSettings.getGMCPTriggerChar();
+		for (int i = 0; i < mPlugins.size(); i++) {
+			Plugin p = mPlugins.get(i);
+			HashMap<String, TriggerData> triggers = p.getSettings().getTriggers();
+			for (TriggerData t : triggers.values()) {
+				if (!t.isInterpretAsRegex()) { //this actually means literal
+					if (t.getPattern().startsWith(gmcpChar)) {
 						//add it to the watch list, if it has a script responder
-						for(TriggerResponder r : t.getResponders()) {
-							if(r instanceof ScriptResponder) {
-								ScriptResponder s = (ScriptResponder)r;
+						for (TriggerResponder r : t.getResponders()) {
+							if (r instanceof ScriptResponder) {
+								ScriptResponder s = (ScriptResponder) r;
 								String callback = s.getFunction();
-								String module = t.getPattern().substring(1,t.getPattern().length());
+								String module = t.getPattern().substring(1, t.getPattern().length());
 								String name = p.getName();
-								processor.addWatcher(module, name, callback);
+								mProcessor.addWatcher(module, name, callback);
 							}
 						}
 					}
@@ -1990,39 +1661,38 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 
-	StringBuffer dataToServer = new StringBuffer();
-	StringBuffer dataToWindow = new StringBuffer();
-	Matcher semiMatcher = semicolon.matcher("");
-	StringBuffer commandBuilder = new StringBuffer();
-	private String scriptBlock = "/";
-	private Data ProcessOutputData(String out) throws UnsupportedEncodingException {
-		dataToServer.setLength(0);
-		dataToWindow.setLength(0);
-		//Log.e("BT","PROCESSING: " + out);
-		//steps that need to happen.
-		if(out.endsWith("\n")) {
-			out = out.substring(0, out.length()-2);
+
+	
+	/** Alias parsing and special command handling routine.
+	 * 
+	 * @param data The data on its way to the server in need of processing.
+	 * @return A Data object containing the string for the server and the string to the window.
+	 * @throws UnsupportedEncodingException Problem with the String<==>byte[] conversion indicating a bad encoding option.
+	 */
+	private Data processOutputData(final String data) throws UnsupportedEncodingException {
+		mDataToServer.setLength(0);
+		mDataToWindow.setLength(0);
+		String out = data;
+		if (out.endsWith("\n")) {
+			out = out.substring(0, out.length() - 2);
 		}
 		
-		if(out.equals("")) {
+		if (out.equals("")) {
 			Data enter = new Data();
-			enter.cmdString = "";
-			enter.visString = null;
+			enter.mCmdString = "";
+			enter.mVisString = null;
 			return enter;
 		}
 		
-		if(out.equals(";;")) {
+		if (out.equals(";;")) {
 			Data enter = new Data();
-			enter.cmdString = ";"+crlf;
-			enter.visString = ";";
+			enter.mCmdString = ";" + mCRLF;
+			enter.mVisString = ";";
 			return enter;
 		}
-		//1 - chop up input up on semi's
-		//String[] commands = null;
-		
 		List<String> list = null;
 		
-		if(the_settings.isSemiIsNewLine()) {
+		if (mSettings.isSemiIsNewLine()) {
 			//commands = semicolon.split(out);
 			list = splitSemicolonSafe(out);
 			
@@ -2031,108 +1701,99 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			list.add(out);
 		}
 		StringBuffer holdover = new StringBuffer();
-		//2 - for each unit		
-		//ArrayList<String> list = new ArrayList<String>(Arrays.asList(commands));
-		
 		
 		ListIterator<String> iterator = list.listIterator();
-		while(iterator.hasNext()) {
+		while (iterator.hasNext()) {
 			String cmd = iterator.next();
 			
-			if(cmd.endsWith("~")) {
-				holdover.append(cmd.substring(0,cmd.length()-1) + ";");
+			if (cmd.endsWith("~")) {
+				holdover.append(cmd.substring(0, cmd.length() - 1) + ";");
 			} else {
-				if(holdover.length() > 0) {
+				if (holdover.length() > 0) {
 					cmd = holdover.toString() + cmd;
 					holdover.setLength(0);
 				}
 				//2.5 run command through the global lua state
 				Data d = null;
 				
-				if(cmd.startsWith(this.scriptBlock)) {
-					the_settings.runLuaString(cmd.substring(this.scriptBlock.length(), cmd.length()));
+				if (cmd.startsWith(mScriptBlock)) {
+					mSettings.runLuaString(cmd.substring(mScriptBlock.length(), cmd.length()));
 				} else {
-					d = ProcessCommand(cmd);
+					d = processCommand(cmd);
 				}
 				//3 - do special command processing.
 				
 				//4 - handle command processing output
 				
-				if(d != null) {
+				if (d != null) {
 					boolean m = false;
-					if(d.cmdString != null && d.visString != null) {
-						if(d.cmdString.equals(d.visString)) {
+					if (d.mCmdString != null && d.mVisString != null) {
+						if (d.mCmdString.equals(d.mVisString)) {
 							m = true; //aliases & regular commands will always have the same cmdString and visString
 						}
 					}
 					
 					//5 - alias replacement				
-					if(d.cmdString != null && !d.cmdString.equals("")) {
+					if (d.mCmdString != null && !d.mCmdString.equals("")) {
 						boolean didReplace = false;
 						byte[] tmp = null;
-						for(int i=0;i<plugins.size()+1;i++) {
+						for (int i = 0; i < mPlugins.size() + 1; i++) {
 							Plugin p = null;
-							if(i ==0) {
-								p = the_settings;
+							if (i == 0) {
+								p = mSettings;
 							} else {
-								p = plugins.get(i-1);
+								p = mPlugins.get(i - 1);
 							}
-							if(p.getSettings().getAliases().size() > 0) {
+							if (p.getSettings().getAliases().size() > 0) {
 								Boolean reprocess = true;
-								tmp = p.doAliasReplacement(d.cmdString.getBytes(the_settings.getEncoding()),reprocess);
-								String tmpstr = new String(tmp,the_settings.getEncoding());
-								//if(tmpstr)
-								if(!d.cmdString.equals(tmpstr)) {
+								tmp = p.doAliasReplacement(d.mCmdString.getBytes(mSettings.getEncoding()), reprocess);
+								String tmpstr = new String(tmp, mSettings.getEncoding());
+								if (!d.mCmdString.equals(tmpstr)) {
 									//alias replaced, needs to be processed
 									
-									List<String> alias_cmds = null;
-									if(the_settings.isSemiIsNewLine()) {
-										alias_cmds = splitSemicolonSafe(tmpstr);
+									List<String> aliasCommands = null;
+									if (mSettings.isSemiIsNewLine()) {
+										aliasCommands = splitSemicolonSafe(tmpstr);
 									} else {
-										alias_cmds = new ArrayList<String>(1);  
-										alias_cmds.add(tmpstr);
+										aliasCommands = new ArrayList<String>(1);  
+										aliasCommands.add(tmpstr);
 									}
-									for(String alias_cmd : alias_cmds) {
-										iterator.add(alias_cmd);
+									for (String acmd : aliasCommands) {
+										iterator.add(acmd);
 									}
-									if(reprocess) {
-										for(int ax=0;ax<alias_cmds.size();ax++) {
+									if (reprocess) {
+										for (int ax = 0; ax < aliasCommands.size(); ax++) {
 											iterator.previous();
 										}
 									}
 									didReplace = true;
-									i=plugins.size();
+									i = mPlugins.size();
 								}
 							}
 						}
 							
-						if(didReplace) {
-
-						} else {
-							if(tmp != null) {
-								if(m) {
-									String srv = new String(tmp,the_settings.getEncoding()) + crlf;
-									//srv = srv.replace(";", crlf);
-									dataToServer.append(new String(srv));
-									
-									dataToWindow.append(new String(tmp,the_settings.getEncoding()) + ";");
+						if (!didReplace) {
+							if (tmp != null) {
+								if (m) {
+									String srv = new String(tmp, mSettings.getEncoding()) + mCRLF;
+									mDataToServer.append(new String(srv));
+									mDataToWindow.append(new String(tmp, mSettings.getEncoding()) + ";");
 								} else {
-									String srv = new String(tmp,the_settings.getEncoding()) + crlf;
-									//srv = srv.replace(";", crlf);
-									dataToServer.append(new String(srv));
+									String srv = new String(tmp, mSettings.getEncoding()) + mCRLF;
+									mDataToServer.append(new String(srv));
 								}
 							} else {
-								dataToServer.append(d.cmdString + crlf);
-								dataToWindow.append(d.cmdString);
+								mDataToServer.append(d.mCmdString + mCRLF);
+								mDataToWindow.append(d.mCmdString);
 							}
 						}
 							
 					}
 					
 						//dataToServer.append(d.cmdString + crlf);
-					if(d.visString != null && !d.visString.equals("")) {
-						if(!m) {
-							dataToWindow.append(d.visString + ";");
+					if (d.mVisString != null && !d.mVisString.equals("")) {
+						if (!m) {
+							mDataToWindow.append(d.mVisString + ";");
 						}
 					}
 				}
@@ -2142,80 +1803,115 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 		//7 - return Data packet with commands to send to server, and data to send to window.
 		Data d = new Data();
-		d.cmdString = dataToServer.toString();
-		d.visString = dataToWindow.toString();
-		//if(the_settings.isSemiIsNewLine()) {
-			if(d.visString.endsWith(";")) {
-				d.visString = d.visString.substring(0,d.visString.length()-1);
-			}
-			if(!d.visString.endsWith(crlf)) {
-				d.visString = d.visString + crlf;
-			}
-		//}
-		//Log.e("BT","TO SERVER:" + d.cmdString);
-		//Log.e("BT","TO WINDOW:" + d.visString);
+		d.mCmdString = mDataToServer.toString();
+		d.mVisString = mDataToWindow.toString();
 		
-		
+		if (d.mVisString.endsWith(";")) {
+			d.mVisString = d.mVisString.substring(0, d.mVisString.length() - 1);
+		}
+		if (!d.mVisString.endsWith(mCRLF)) {
+			d.mVisString = d.mVisString + mCRLF;
+		}
 		return d;
 	}
 	
-	private List<String> splitSemicolonSafe(String out) {
+	/** Semicolon splitting routine that looks for ;; smartly.
+	 * 
+	 * @param string The string to process.
+	 * @return The resulting list of strings.
+	 */
+	private List<String> splitSemicolonSafe(final String string) {
 		List<String> list = new ArrayList<String>();
-		semiMatcher.reset(out);
+		mSemiMatcher.reset(string);
 		boolean matched = false;
 		boolean append = false;
 		//int lastLength = -1;
-		while(semiMatcher.find()) {
+		while (mSemiMatcher.find()) {
 			matched = true;
-			commandBuilder.setLength(0);
-			semiMatcher.appendReplacement(commandBuilder,"");
-			if(commandBuilder.length() == 0) {
+			mCommandBuilder.setLength(0);
+			mSemiMatcher.appendReplacement(mCommandBuilder, "");
+			if (mCommandBuilder.length() == 0) {
 				append = true;
-				list.add(list.remove(list.size()-1) + ";");
+				list.add(list.remove(list.size() - 1) + ";");
 			} else {
-				if(append) {
-					list.add(list.remove(list.size()-1) + commandBuilder.toString());
+				if (append) {
+					list.add(list.remove(list.size() - 1) + mCommandBuilder.toString());
 					append = false;
 				} else {
-					list.add(commandBuilder.toString());
+					list.add(mCommandBuilder.toString());
 				}
 				
 			}
 		} 
 		
-		if(!matched) {
-			list.add(out);
+		if (!matched) {
+			list.add(string);
 		} else {
-			commandBuilder.setLength(0);
-			semiMatcher.appendTail(commandBuilder);
-			if(append) {
-				list.add(list.remove(list.size()-1) + commandBuilder.toString());
+			mCommandBuilder.setLength(0);
+			mSemiMatcher.appendTail(mCommandBuilder);
+			if (append) {
+				list.add(list.remove(list.size() - 1) + mCommandBuilder.toString());
 			} else {
-				list.add(commandBuilder.toString());
+				list.add(mCommandBuilder.toString());
 			}
 		}
 		
-		commandBuilder.setLength(0);
+		mCommandBuilder.setLength(0);
 		return list;
 	}
 	
+	/** Utility class for alias replacement and special command parsing routine. */
 	public class Data {
-		public String cmdString;
-		public String visString;
+		/** The string to send to the server. */
+		private String mCmdString;
+		/** The string to echo back to the input window. */
+		private String mVisString;
+		/** Generic constructor. */
 		public Data() {
-			cmdString = "";
-			visString = "";
+			mCmdString = "";
+			mVisString = "";
+		}
+		/** Cmd string getter. 
+		 * 
+		 * @return The string.
+		 */
+		public final String getCmdString() {
+			return mCmdString;
+		}
+		/** Vis string getter.
+		 * 
+		 * @return The string.
+		 */
+		public final String getVisString() {
+			return mVisString;
+		}
+		/** Vis string setter. 
+		 * 
+		 * @param vis Desired string.
+		 */
+		public final void setVisString(final String vis) {
+			this.mVisString = vis;
+		}
+		/** Cmd string setter. 
+		 * 
+		 * @param cmd Desired string.
+		 */
+		public final void setCmdString(final String cmd) {
+			this.mCmdString = cmd;
 		}
 	}
 	
-	public Data ProcessCommand(String cmd) {
-		//Log.e("SERVICE","IN CMD: "+cmd);
+	/** Generic command processor. This looks for "." commands.
+	 * 
+	 * @param cmd The input string to parse.
+	 * @return The Data object containing the string to return to the server and the string to return to the window.
+	 */
+	public final Data processCommand(final String cmd) {
 		Data data = new Data();
-		if(cmd.equals(".." + "\n") || cmd.equals("..")) {
-			//Log.e("SERVICE","CMD==\"..\"");
-			synchronized(the_settings) {
+		if (cmd.equals(".." + "\n") || cmd.equals("..")) {
+			synchronized (mSettings) {
 				String outputmsg = "\n" + Colorizer.colorRed + "Dot command processing ";
-				if(the_settings.isProcessPeriod()) {
+				if (mSettings.isProcessPeriod()) {
 					//the_settings.setProcessPeriod(false);
 					overrideProcessPeriods(false);
 					outputmsg = outputmsg.concat("disabled.");
@@ -2226,7 +1922,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				}
 				outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
 				try {
-					sendBytesToWindow(outputmsg.getBytes(the_settings.getEncoding()));
+					sendBytesToWindow(outputmsg.getBytes(mSettings.getEncoding()));
 				} catch (UnsupportedEncodingException e) {
 					throw new RuntimeException(e);
 				}
@@ -2236,163 +1932,106 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 		
 		
-		if(cmd.startsWith(".") && the_settings.isProcessPeriod()) {
+		if (cmd.startsWith(".") && mSettings.isProcessPeriod()) {
 			
-			if(cmd.startsWith("..")) {
-				data.cmdString = cmd.replace("..", ".");
-				data.visString = cmd.replace("..", ".");
+			if (cmd.startsWith("..")) {
+				data.mCmdString = cmd.replace("..", ".");
+				data.mVisString = cmd.replace("..", ".");
 				return data;
 			}
 			
 			
-			commandMatcher.reset(cmd);
-			if(commandMatcher.find()) {
-				synchronized(the_settings) {
+			mCommandMatcher.reset(cmd);
+			if (mCommandMatcher.find()) {
+				synchronized (mSettings) {
 					
 					//string should be of the form .aliasname |settarget can have whitespace|
 
-						String alias = commandMatcher.group(1);
-						String argument = commandMatcher.group(2);
+						String alias = mCommandMatcher.group(1);
+						String argument = mCommandMatcher.group(2);
 						
 						
-						if(the_settings.getSettings().getAliases().containsKey(alias)) {
+						if (mSettings.getSettings().getAliases().containsKey(alias)) {
 							//real argument
-							if(!argument.equals("")) {
-								AliasData mod = the_settings.getSettings().getAliases().remove(alias);
+							if (!argument.equals("")) {
+								AliasData mod = mSettings.getSettings().getAliases().remove(alias);
 								mod.setPost(argument);
-								the_settings.getSettings().getAliases().put(alias, mod);
-								data.cmdString = "";
-								if(the_settings.isEchoAliasUpdates()) {
-									data.visString = "["+alias+"=>"+argument+"]";
+								mSettings.getSettings().getAliases().put(alias, mod);
+								data.mCmdString = "";
+								if (mSettings.isEchoAliasUpdates()) {
+									data.mVisString = "[" + alias + "=>" + argument + "]";
 								} else {
-									data.visString = "";
+									data.mVisString = "";
 								}
 								return data;
 							} else {
 								//display error message
-								String noarg_message = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"." + alias + " replacetext\"" + Colorizer.colorWhite +"\n";
+								String noargMessage = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"."
+													+ alias + " replacetext\"" + Colorizer.colorWhite + "\n";
 								try {
-									sendBytesToWindow(noarg_message.getBytes(the_settings.getEncoding()));
+									sendBytesToWindow(noargMessage.getBytes(mSettings.getEncoding()));
 								} catch (UnsupportedEncodingException e) {
 									throw new RuntimeException(e);
 								}
 								return null;
 							}
-						} else if(specialcommands.containsKey(alias)){
+						} else if (mSpecialCommands.containsKey(alias)) {
 							//Log.e("SERVICE","SERVICE FOUND SPECIAL COMMAND: " + alias);
-							SpecialCommand command = specialcommands.get(alias);
-							data = (Data) command.execute(argument,this);
+							SpecialCommand command = mSpecialCommands.get(alias);
+							data = (Data) command.execute(argument, this);
 							return data;
 						} else {
 							//format error message.
 							
 							String error = Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
-							error += "  \""+alias+"\" is not a recognized alias or command.\n";
+							error += "  \"" + alias + "\" is not a recognized alias or command.\n";
 							error += "   No data has been sent to the server. If you intended\n";
-							error += "   this to be done, please type \".."+alias+"\"\n";
+							error += "   this to be done, please type \".." + alias + "\"\n";
 							error += "   To toggle command processing, input \"..\" with no arguments\n";
-							error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]"+Colorizer.colorWhite+"\n";  
+							error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]" + Colorizer.colorWhite + "\n";  
 							
 							try {
-								sendBytesToWindow(error.getBytes(the_settings.getEncoding()));
+								sendBytesToWindow(error.getBytes(mSettings.getEncoding()));
 							} catch (UnsupportedEncodingException e) {
 								throw new RuntimeException(e);
 							}
 							return null;
 						}
 					}
-			} else {
-				//Log.e("SERVICE",cmd + " not valid.");
 			}
-			
 			return data;
 		} else {
-			data.cmdString = cmd;
-			data.visString = cmd;
+			data.mCmdString = cmd;
+			data.mVisString = cmd;
 			return data;
 		}
 		
-		
-		//return null;
 	}
 	
-	private void overrideProcessPeriods(boolean value) {
-		synchronized(the_settings) {
-			the_settings.setProcessPeriod(value);
-			//this can be called from somewhere esle, so to make sure
-			//the settings activity doesn't reset a wrong value, we will write
-			//the shared preferences key here
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(service);
-			//boolean setvalue = prefs.getBoolean("PROCESS_PERIOD", true);
-			SharedPreferences.Editor editor = prefs.edit();
-			editor.putBoolean("PROCESS_PERIOD", the_settings.isProcessPeriod());
-			editor.commit();
-			
-			//Log.e("SERVICE","SET PROCESS PERIOD FROM:" + setvalue + " to " + value);
-			
+	/** Overrides the process special commands setting and sets a new value.
+	 * 
+	 * @param value The new value for the process periods command.
+	 */
+	private void overrideProcessPeriods(final boolean value) {
+		synchronized (mSettings) { //not sure why this is here.
+			mSettings.setProcessPeriod(value);
 		}
 	}
 	
-	//public RemoteCallbackList<IConnectionBinderCallback> callbacks = new RemoteCallbackList<IConnectionBinderCallback>();
-	private RemoteCallbackList<IWindowCallback> mWindowCallbacks = new RemoteCallbackList<IWindowCallback>();
-	//private HashMap<String,Integer> mWindowCallbackMap = new HashMap<String,Integer>();
-	
-	public void switchTo(String connection) {
-		//
-		service.switchTo(connection);
-//		if(isWindowConnected()) {
-//			int N = callbacks.beginBroadcast();
-//			for(int i =0;i<N;i++) {
-//				try {
-//					callbacks.getBroadcastItem(i).switchTo(connection);
-//				} catch (RemoteException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-//			callbacks.finishBroadcast();
-//		}
-	}
-
-	private boolean isWindowConnected() {
-		return service.isWindowConnected();
-	}
-//		boolean showing = false;
-//		int N = callbacks.beginBroadcast();
-//		for(int i =0;i<N;i++) {
-//			try {
-//				showing = callbacks.getBroadcastItem(i).isWindowShowing();
-//			} catch (RemoteException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			if(showing) {
-//				break;
-//			}
-//		}
-//		callbacks.finishBroadcast();
-//		return showing;
-//	}
-
-	public void deactivate() {
-		// TODO Auto-generated method stub
-		activated = false;
-	}
-
-	public void activate() {
-		// TODO Auto-generated method stub
-		activated = true;
+	/** Switches to another open connection.
+	 * 
+	 * @param connection Name of the connection to switch to.
+	 */
+	public final void switchTo(final String connection) {
+		mService.switchTo(connection);
 	}
 	
-	boolean activated = false;
-	
-	ArrayList<WindowToken> mWindows;
-	private Integer mAutoReconnectLimit;
-	private Integer mAutoReconnectAttempt = 0;
-	private Boolean mAutoReconnect;
-	
-	public WindowToken[] getWindows() {
-		if(loaded) {
+	/** Gets the current window token list in loaded order as an array.
+	 * 
+	 * @return The array of window tokens in loaded order.
+	 */
+	public final WindowToken[] getWindows() {
+		if (mLoaded) {
 			WindowToken[] tmp = new WindowToken[mWindows.size()];
 			tmp = mWindows.toArray(tmp);
 			return tmp;
@@ -2401,10 +2040,16 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 
-	public String getScript(String plugin, String name) {
-		for(Plugin p : plugins) {
-			if(p.getSettings().getName().equals(plugin)) {
-				if(p.getSettings().getScripts().containsKey(name)) {
+	/** Called from the foreground window. This method fetches a named script body from a plugin.
+	 * 
+	 * @param plugin The plugin to look in.
+	 * @param name The name of the script to fetch.
+	 * @return The script body.
+	 */
+	public final String getScript(final String plugin, final String name) {
+		for (Plugin p : mPlugins) {
+			if (p.getSettings().getName().equals(plugin)) {
+				if (p.getSettings().getScripts().containsKey(name)) {
 					ScriptData d = p.getSettings().getScripts().get(name);
 					return d.getData();
 				} else {
@@ -2413,118 +2058,47 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			}
 		}
 		
-		//if we are here, then it means the main window callback has attempted to load a script.
-		//if(the_settings.getSettings().getName().equals(plugin)) {
-			if(the_settings.getSettings().getScripts().containsKey(name)) {
-				ScriptData d = the_settings.getSettings().getScripts().get(name);
-				return d.getData();
-			} else {
-				return "";
-			}
-			
-		//}
-		//return "";
+		if (mSettings.getSettings().getScripts().containsKey(name)) {
+			ScriptData d = mSettings.getSettings().getScripts().get(name);
+			return d.getData();
+		} else {
+			return "";
+		}
 	}
 
-	public void executeFunctionCallback(int id, String callback, String args) {
-		Plugin p = plugins.get(id);
-		p.execute(callback,args);
-		//Plugin p = 
+	/** Calls an anonymous global function in the target plugin with arguments.
+	 * 
+	 * @param id The ID of the plugin to target.
+	 * @param callback The name of the desired function to execute.
+	 * @param args The data to supply to @param callback.
+	 */
+	public final void executeFunctionCallback(final int id, final String callback, final String args) {
+		Plugin p = mPlugins.get(id);
+		p.execute(callback, args);
 	}
 
-	public void pluginXcallS(String plugin, String function, String str) {
-		for(Plugin p : plugins) {
-			if(p.getName().equals(plugin)) {
-				p.xcallS(function,str);
+	/** The reciever of the foreground window PluginXCallS Lua function.
+	 * 
+	 * @param plugin The name of the plugin to look in.
+	 * @param function The name of the anonymous global function to call.
+	 * @param str The argument to pass to <b>function</b>.
+	 */
+	public final void pluginXcallS(final String plugin, final String function, final String str) {
+		for (Plugin p : mPlugins) {
+			if (p.getName().equals(plugin)) {
+				p.xcallS(function, str);
 			}
 		}
 	}
-	
-	/*public void saveSettings(String filename)  {
-		try {
-			FileOutputStream fos = service.openFileOutput(filename,Context.MODE_PRIVATE);
-			
-			XmlSerializer out = Xml.newSerializer();
-			
-			StringWriter writer = new StringWriter();
-			
-			out.setOutput(writer);
-			
-			out.startDocument("UTF-8", true);
-			out.startTag("", "root");
-			
-			//fill in from plugins.
-			the_settings.outputXMLInternal(out);
-			
-			out.startTag("", "plugins");
-			for(Plugin p : plugins) {
-				//if(p.getSettings()Connection.)
-				if(p.getSettings().getLocationType() == PLUGIN_LOCATION.INTERNAL) {
-					p.outputXMLInternal(out);
-				//} else {
-				//	p.outputXMLExternal(service);
-				}
-				
-			}
-			
-			out.endTag("", "plugins");
-			out.endTag("","root");
-			out.endDocument();
-			
-			fos.write(writer.toString().getBytes());
-			
-			fos.close();
-			
-			
-			//output links.
-			ArrayList<String> links = the_settings.getLinks();
-			for(String link : links) {
-				//start the dump:
-				FileOutputStream linkOS = service.openFileOutput(link, Context.MODE_PRIVATE);
-				
-				XmlSerializer linkOut = Xml.newSerializer();
-				
-				StringWriter linkWriter = new StringWriter();
-				
-				linkOut.setOutput(linkWriter);
-				
-				linkOut.startDocument("UTF-8", true);
-				
-				linkOut.startTag("", "root");
-				linkOut.startTag("", "plugins");
 
-				//dumpPluginCommonData(out);
-				ArrayList<String> vals = linkMap.get(link);
-				for(String pKey : vals) {
-					Plugin p = pluginMap.get(pKey);
-					p.outputXMLExternal(service,linkOut);
-				}
-				
-				linkOut.endTag("", "plugins");
-				linkOut.endTag("","root");
-				//linkOut.endTag("", "plugin");
-				linkOut.endDocument();
-				
-				linkOS.write(writer.toString().getBytes());
-				
-				linkOS.close();
-				
-				
-				
-				
-			}
-			
-			
-
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		
-	}*/
-
-	public static int getResId(String variableName, Context context, Class<?> c) {
+	/** Helper method for reverse mapping R.java constants from name to id.
+	 * 
+	 * @param variableName The desired field name e.g. "alias_dialog".
+	 * @param context THe current application context to use.
+	 * @param c The class to search, this is usually R.layout or R.drawable.
+	 * @return The integer id of <b>variableName</b> or -1 if the class does not have a field named <b>variableName</b>.
+	 */
+	public static int getResId(final String variableName, final Context context, final Class<?> c) {
 
 	    try {
 	        Field idField = c.getDeclaredField(variableName);
@@ -2535,74 +2109,122 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 	    } 
 	}
 
-	public WindowToken getWindowByName(String desired) {
-		for(int i=0;i<mWindows.size();i++) {
+	/** Helper function to get a window by name.
+	 * 
+	 * @param desired The name of the window to look up.
+	 * @return The WindowToken for the corresponding window name.
+	 */
+	public final WindowToken getWindowByName(final String desired) {
+		for (int i = 0; i < mWindows.size(); i++) {
 			WindowToken t = mWindows.get(i);
-			if(t.getName().equals(desired)) {
+			if (t.getName().equals(desired)) {
 				return t;
 			}
 		}
 		return null;
 	}
 
-	public HashMap<String, TriggerData> getTriggers() {
-		// TODO Auto-generated method stub
-		return the_settings.getSettings().getTriggers();
+	/** Helper function to get the triggers for the main conenction settings.
+	 * 
+	 * @return the triggers for the main connection settings.
+	 */
+	public final HashMap<String, TriggerData> getTriggers() {
+		return mSettings.getSettings().getTriggers();
 	}
 
-	public Map getPluginTriggers(String id) {
-		// TODO Auto-generated method stub
-		Plugin p = pluginMap.get(id);
-		if(p != null) {
+	/** Helper function to get the triggers for a given plugin.
+	 * 
+	 * @param name The name of the plugin to interrogate.
+	 * @return The triggers of the given plugin, null if <b>name</b> does not correspond to a loaded plugin.
+	 */
+	public final HashMap<String, TriggerData> getPluginTriggers(final String name) {
+		Plugin p = mPluginMap.get(name);
+		if (p != null) {
 			return p.getSettings().getTriggers();
 		} else {
 			return null;
 		}
 	}
 
-	public void addTrigger(TriggerData data) {
-		the_settings.addTrigger(data);
+	/** Adds a trigger into the main settings plugin.
+	 * 
+	 * @param data The trigger to add.
+	 */
+	public final void addTrigger(final TriggerData data) {
+		mSettings.addTrigger(data);
 	}
 
-	public void updateTrigger(TriggerData from, TriggerData to) {
-		the_settings.updateTrigger(from,to);
+	/** Updates a trigger in the main settings plugin.
+	 * 
+	 * @param from Old trigger.
+	 * @param to New trigger.
+	 */
+	public final void updateTrigger(final TriggerData from, final TriggerData to) {
+		mSettings.updateTrigger(from, to);
 	}
 
-	public void updatePluginTrigger(String selectedPlugin, TriggerData from,
-			TriggerData to) {
-		Plugin p = pluginMap.get(selectedPlugin);
-		if(p != null) {
-			p.updateTrigger(from,to);
+	/** Updates a trigger in the target plugin.
+	 * 
+	 * @param selectedPlugin Name of the plugin to work in.
+	 * @param from Old plugin.
+	 * @param to New plugin.
+	 */
+	public final void updatePluginTrigger(final String selectedPlugin, final TriggerData from,
+			final TriggerData to) {
+		Plugin p = mPluginMap.get(selectedPlugin);
+		if (p != null) {
+			p.updateTrigger(from, to);
 		}
 	}
 
-	public void newPluginTrigger(String selectedPlugin, TriggerData data) {
-		Plugin p = pluginMap.get(selectedPlugin);
-		if(p != null) {
+	/** Adds a new trigger in the target plugin.
+	 * 
+	 * @param selectedPlugin Target plugin for the new trigger.
+	 * @param data The new trigger.
+	 */
+	public final void newPluginTrigger(final String selectedPlugin, final TriggerData data) {
+		Plugin p = mPluginMap.get(selectedPlugin);
+		if (p != null) {
 			p.addTrigger(data);
 		}
 	}
 
-	public TriggerData getPluginTrigger(String selectedPlugin, String pattern) {
-		Plugin p = pluginMap.get(selectedPlugin);
-		if(p != null) {
+	/** Gets a trigger in the target plugin.
+	 * 
+	 * @param selectedPlugin Name of the plugin to look in.
+	 * @param pattern Name of the desired trigger.
+	 * @return The trigger, <b>null</b> if it does not exist.
+	 */
+	public final TriggerData getPluginTrigger(final String selectedPlugin, final String pattern) {
+		Plugin p = mPluginMap.get(selectedPlugin);
+		if (p != null) {
 			return p.getSettings().getTriggers().get(pattern);
 		} else {
 			return null;
 		}
 	}
 
-	public TriggerData getTrigger(String pattern) {
-		// TODO Auto-generated method stub
-		return the_settings.getSettings().getTriggers().get(pattern);
+	/** Gets a trigger from the main settings plugin.
+	 * 
+	 * @param pattern Name of the trigger to get.
+	 * @return The trigger, <b>null</b> if it does not exist.
+	 */
+	public final TriggerData getTrigger(final String pattern) {
+		return mSettings.getSettings().getTriggers().get(pattern);
 	}
 
-	public void setPluginTriggerEnabled(String selectedPlugin, boolean enabled,
-			String key) {
-		Plugin p = pluginMap.get(selectedPlugin);
-		if(p != null) {
+	/** Sets the enabled state of a trigger in the target plugin.
+	 * 
+	 * @param selectedPlugin Name of the target plugin to affect.
+	 * @param enabled Desired state of the trigger.
+	 * @param key The name of the trigger to affect.
+	 */
+	public final void setPluginTriggerEnabled(final String selectedPlugin, final boolean enabled,
+			final String key) {
+		Plugin p = mPluginMap.get(selectedPlugin);
+		if (p != null) {
 			TriggerData data = p.getSettings().getTriggers().get(key);
-			if(data != null) {
+			if (data != null) {
 				data.setEnabled(enabled);
 				p.getSettings().setDirty(true);
 				buildTriggerSystem();
@@ -2610,17 +2232,27 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 	
-	public void setTriggerEnabled(boolean enabled,String key) {
-		TriggerData data = the_settings.getSettings().getTriggers().get(key);
-		if(data != null) {
+	/** Sets the enabled state of a trigger in the main settings plugin.
+	 * 
+	 * @param enabled Desired state of the target trigger.
+	 * @param key Name of the trigger to affect.
+	 */
+	public final void setTriggerEnabled(final boolean enabled, final String key) {
+		TriggerData data = mSettings.getSettings().getTriggers().get(key);
+		if (data != null) {
 			data.setEnabled(enabled);
 			buildTriggerSystem();
 		}
 	}
 
-	public void deletePluginTrigger(String selectedPlugin, String which) {
-		Plugin p = pluginMap.get(selectedPlugin);
-		if(p != null) {
+	/** Removes a trigger from the target plugin.
+	 * 
+	 * @param selectedPlugin Name of the plugin to search in.
+	 * @param which Name of the trigger to remove.
+	 */
+	public final void deletePluginTrigger(final String selectedPlugin, final String which) {
+		Plugin p = mPluginMap.get(selectedPlugin);
+		if (p != null) {
 			p.getSettings().getTriggers().remove(which);
 			p.getSettings().setDirty(true);
 			p.sortTriggers();
@@ -2628,76 +2260,128 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		buildTriggerSystem();
 	}
 
-	public void deleteTrigger(String which) {
-		the_settings.getSettings().getTriggers().remove(which);
-		the_settings.sortTriggers();
+	/** Removes a trigger from the main settings plugin.
+	 * 
+	 * @param which Name of the trigger to remove.
+	 */
+	public final void deleteTrigger(final String which) {
+		mSettings.getSettings().getTriggers().remove(which);
+		mSettings.sortTriggers();
 		buildTriggerSystem();
 	}
 
-	public void setAliases(Map map) {
-		the_settings.getSettings().setAliases((HashMap<String,AliasData>)map);
-		the_settings.buildAliases();
+	/** Sets the aliases for the main settings plugin. This comes from the foreground window in one glob.
+	 * 
+	 * @param map The new alias map (HashMap<String, AliasData>).
+	 */
+	public final void setAliases(final HashMap<String, AliasData> map) {
+		mSettings.getSettings().setAliases(map);
+		mSettings.buildAliases();
 	}
 	
-	public void setPluginAliases(String plugin,Map map) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			p.getSettings().setAliases((HashMap<String,AliasData>)map);
+	/** Sets the aliases for a given plugin. This comes from the foreground window in one glob.
+	 * 
+	 * @param plugin Name of the target plugin to affect.
+	 * @param map The new alias map (HashMap<String, AliasData>)
+	 */
+	public final void setPluginAliases(final String plugin, final HashMap<String, AliasData> map) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
+			p.getSettings().setAliases(map);
 			p.getSettings().setDirty(true);
 			p.buildAliases();
 		}
 	}
 	
-	public AliasData getPluginAlias(String plugin,String key) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Gets an alias for a target plugin.
+	 * 
+	 * @param plugin Name of the plugin to search.
+	 * @param key The pre part of the alias.
+	 * @return The AliasData associated with <b>key</b>.
+	 */
+	public final AliasData getPluginAlias(final String plugin, final String key) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			return p.getSettings().getAliases().get(key);
 		}
 		return null;
 	}
 	
-	public AliasData getAlias(String key) {
-		return the_settings.getSettings().getAliases().get(key);
+	/** Gets an alias from the main settings plugin.
+	 * 
+	 * @param key The pre part of the alias.
+	 * @return The AliasData associated with <b>key</b>
+	 */
+	public final AliasData getAlias(final String key) {
+		return mSettings.getSettings().getAliases().get(key);
 	}
 	
-	public void deleteAlias(String key) {
-		the_settings.getSettings().getAliases().remove(key);
+	/** Removes an alias form the main settings plugin.
+	 * 
+	 * @param key The pre part of the alias to delete.
+	 */
+	public final void deleteAlias(final String key) {
+		mSettings.getSettings().getAliases().remove(key);
 	}
 	
-	public void deletePluginAlias(String plugin,String key) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Removes an alias from the target plugin.
+	 * 
+	 * @param plugin The name of the plugin to affect.
+	 * @param key The pre part of the alias to remove.
+	 */
+	public final void deletePluginAlias(final String plugin, final String key) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.getSettings().getAliases().remove(key);
 		}
 	}
 	
-	public Map getAliases() {
-		return the_settings.getSettings().getAliases();
+	/** Gets the alias map for the main settings plugin.
+	 * 
+	 * @return The alais map for the main settings plugin.
+	 */
+	public final HashMap<String, AliasData> getAliases() {
+		return mSettings.getSettings().getAliases();
 	}
 	
-	public Map getPluginAliases(String plugin) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Gets the alias map for a target plugin.
+	 * 
+	 * @param plugin The desired plugin to interrogate.
+	 * @return The alias map for <b>plugin</b>.
+	 */
+	public final HashMap<String, AliasData> getPluginAliases(final String plugin) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			return p.getSettings().getAliases();
 		} else {
 			return null;
 		}
 	}
 	
-	public List getSystemCommands() {
-		List<String> list = new ArrayList<String>();
-		Set<String> keys = specialcommands.keySet();
-		for(String key : keys) {
+	/** Gets the list of all the installed system commands.
+	 * 
+	 * @return The system command list.
+	 */
+	public final ArrayList<String> getSystemCommands() {
+		ArrayList<String> list = new ArrayList<String>();
+		Set<String> keys = mSpecialCommands.keySet();
+		for (String key : keys) {
 			list.add(key);
 		}
 		return list;
 	}
 
-	public void setPluginAliasEnabled(String plugin, boolean enabled, String key) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Sets the enabled state of an alias in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param enabled Desired state of the alias.
+	 * @param key The pre part of the alias to affect.
+	 */
+	public final void setPluginAliasEnabled(final String plugin, final boolean enabled, final String key) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			AliasData data = p.getSettings().getAliases().get(key);
-			if(data != null) {
+			if (data != null) {
 				data.setEnabled(enabled);
 				p.getSettings().setDirty(true);
 				p.buildAliases();
@@ -2705,31 +2389,41 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 
-	public void setAliasEnabled(boolean enabled, String key) {
-		AliasData data = the_settings.getSettings().getAliases().get(key);
-		if(data != null) {
+	/** Sets the enabled state of an alias in the main settings plugin.
+	 * 
+	 * @param enabled Desired state of the alias.
+	 * @param key The pre part of the alias to affect.
+	 */
+	public final void setAliasEnabled(final boolean enabled, final String key) {
+		AliasData data = mSettings.getSettings().getAliases().get(key);
+		if (data != null) {
 			data.setEnabled(enabled);
-			the_settings.buildAliases();
+			mSettings.buildAliases();
 		}
 	}
 
-	public byte[] doKeyboardAliasReplace(byte[] bytes, Boolean reprocess) {
-		int count = plugins.size();
-		byte res[] = null;
-		for(int i = 0;i<count;i++) {
-			Plugin p = plugins.get(i);
-			byte tmp[] = p.doAliasReplacement(bytes, reprocess);
-			if(tmp.length != bytes.length) {
+	/** Helper function for the keyboard command. Does an alias replacment in a special kind of way.
+	 * 
+	 * @param bytes Bytes to process.
+	 * @param reprocess Weather to do recursive alias replacement.
+	 * @return The processed command bytes.
+	 */
+	public final byte[] doKeyboardAliasReplace(final byte[] bytes, final Boolean reprocess) {
+		int count = mPlugins.size();
+		for (int i = 0; i < count; i++) {
+			Plugin p = mPlugins.get(i);
+			byte[] tmp = p.doAliasReplacement(bytes, reprocess);
+			if (tmp.length != bytes.length) {
 				return tmp;
 			} else {
 				boolean same = true;
-				for(int j=0;j<tmp.length;j++) {
-					if(tmp[j] != bytes[j]) {
+				for (int j = 0; j < tmp.length; j++) {
+					if (tmp[j] != bytes[j]) {
 						same = false;
-						j=tmp.length;
+						j = tmp.length;
 					}
 				}
-				if(!same) {
+				if (!same) {
 					return tmp;
 				}
 			}
@@ -2738,60 +2432,91 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		return bytes;
 	}
 
-	public void startReconnect() {
-		handler.sendEmptyMessage(MESSAGE_RECONNECT);
+	/** Helper method that kicks off the reconnection sequence. */
+	public final void startReconnect() {
+		mHandler.sendEmptyMessage(MESSAGE_RECONNECT);
 	}
 	
-	public void doReconnect() {
-		if(pump != null) {
-			if(pump.handler != null) {
-				pump.handler.sendEmptyMessage(DataPumper.MESSAGE_END);
+	/** Helper method to initiate a reconnect right now. */
+	public final void doReconnect() {
+		if (mPump != null) {
+			if (mPump.getHandler() != null) {
+				mPump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
 			}
-			pump = null;
+			mPump = null;
 		}
 		
 		doStartup();
 	}
 
-	public void deletePluginTimer(String plugin, String name) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Removes a timer from the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param name Name of the timer to remove.
+	 */
+	public final void deletePluginTimer(final String plugin, final String name) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.getSettings().getTimers().remove(name);
 		}
 	}
 
-	public TimerData getTimer(String name) {
-		// TODO Auto-generated method stub
-		return the_settings.getSettings().getTimers().get(name);
+	/** Gets a timer from the main settings plugin.
+	 * 
+	 * @param name Name of the timer to get.
+	 * @return The timer associated with <b>name</b>.
+	 */
+	public final TimerData getTimer(final String name) {
+		return mSettings.getSettings().getTimers().get(name);
 	}
 
-	public void deleteTimer(String name) {
-		the_settings.getSettings().getTimers().remove(name);
+	/** Removes a timer from the main settings plugin.
+	 * 
+	 * @param name Name of the trigger to remove.
+	 */
+	public final void deleteTimer(final String name) {
+		mSettings.getSettings().getTimers().remove(name);
 	}
 
-	public TimerData getPluginTimer(String plugin, String name) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			
+	/** Gets a timer from the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param name Name of the trigger to get.
+	 * @return The trigger associated with <b>name</b>.
+	 */
+	public final TimerData getPluginTimer(final String plugin, final String name) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			return p.getSettings().getTimers().get(name);
 		} else {
 			return null;
 		}
 	}
 
-	public void addPluginTimer(String plugin, TimerData newtimer) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Adds a timer to the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param newtimer New timer data.
+	 */
+	public final void addPluginTimer(final String plugin, final TimerData newtimer) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			newtimer.setRemainingTime(newtimer.getSeconds());
 			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
 			p.getSettings().setDirty(true);
 		}
 	}
 
-	public void updatePluginTimer(String plugin, TimerData old,
-		TimerData newtimer) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Updates a timer in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param old Old timer data.
+	 * @param newtimer New timer data.
+	 */
+	public final void updatePluginTimer(final String plugin, final TimerData old,
+		final TimerData newtimer) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.getSettings().getTimers().remove(old.getName());				
 			p.getSettings().getTimers().put(newtimer.getName(), newtimer);
 			p.getSettings().setDirty(true);
@@ -2799,20 +2524,33 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		
 	}
 
-	public void updateTimer(TimerData old, TimerData newtimer) {
-		the_settings.getSettings().getTimers().remove(old.getName());
-		the_settings.getSettings().getTimers().put(newtimer.getName(),newtimer);
+	/** Updates a timer in the main settings plugin.
+	 * 
+	 * @param old Old timer data.
+	 * @param newtimer New timer data.
+	 */
+	public final void updateTimer(final TimerData old, final TimerData newtimer) {
+		mSettings.getSettings().getTimers().remove(old.getName());
+		mSettings.getSettings().getTimers().put(newtimer.getName(), newtimer);
 	}
 
-	public Map getTimers() {
-		// TODO Auto-generated method stub
-		the_settings.updateTimerProgress();
-		return the_settings.getSettings().getTimers();
+	/** Gets the timer map for the main settings plugin.
+	 * 
+	 * @return The timer map.
+	 */
+	public final HashMap<String, TimerData> getTimers() {
+		mSettings.updateTimerProgress();
+		return mSettings.getSettings().getTimers();
 	}
 
-	public Map getPluginTimers(String plugin) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Gets the timer map for a target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @return The tier map.
+	 */
+	public final HashMap<String, TimerData> getPluginTimers(final String plugin) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.updateTimerProgress();
 			return p.getSettings().getTimers();
 		} else {
@@ -2820,344 +2558,493 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		}
 	}
 
-	public void addTimer(TimerData newtimer) {
+	/** Adds a new timer into the main settings plugin.
+	 * 
+	 * @param newtimer New timer to add.
+	 */
+	public final void addTimer(final TimerData newtimer) {
 		newtimer.setRemainingTime(newtimer.getSeconds());
-		the_settings.getSettings().getTimers().put(newtimer.getName(), newtimer);
-		the_settings.getSettings().setDirty(true);
+		mSettings.getSettings().getTimers().put(newtimer.getName(), newtimer);
+		mSettings.getSettings().setDirty(true);
 	}
 
-	public boolean isWindowShowing() {
-		// TODO Auto-generated method stub
-		return service.isWindowConnected();
+	/** Helper method to see if the window is currently being shown.
+	 * 
+	 * @return visibility state of the foreground window.
+	 */
+	public final boolean isWindowShowing() {
+		return mService.isWindowConnected();
 	}
 	
-	public String getDisplayName() {
-		return display;
+	/** Getter method for mDisplay.
+	 * 
+	 * @return the display name for this connection.
+	 */
+	public final String getDisplayName() {
+		return mDisplay;
 	}
 	
-	public Context getContext() {
-		return service.getApplicationContext();
+	/** Helper method for getting the application context out here in the desert of the Service.
+	 * 
+	 * @return The application context.
+	 */
+	public final Context getContext() {
+		return mService.getApplicationContext();
 	}
 	
-	public void playTimer(String key) {
-		the_settings.startTimer(key);
+	/** Starts a timer in the main settings plugin with the target name.
+	 * 
+	 * @param key Name of the timer to start.
+	 */
+	public final void playTimer(final String key) {
+		mSettings.startTimer(key);
 	}
 	
-	public void playPluginTimer(String plugin,String timer) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Starts a timer in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param timer Name of the timer to start.
+	 */
+	public final void playPluginTimer(final String plugin, final String timer) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.startTimer(timer);
 		}
 	}
 	
-	public void pauseTimer(String key) {
-		the_settings.pauseTimer(key);
+	/** Pauses a timer in the main settings plugin.
+	 * 
+	 * @param key Name of the plugin to pause.
+	 */
+	public final void pauseTimer(final String key) {
+		mSettings.pauseTimer(key);
 	}
 	
-	public void pausePluginTimer(String plugin,String timer) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Pauses a timer in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param timer Name of the timer to pause.
+	 */
+	public final void pausePluginTimer(final String plugin, final String timer) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.pauseTimer(timer);
 		}
 	}
 	
-	public void stopTimer(String key) {
-		the_settings.stopTimer(key);
+	/** Stops a timer in the main settings plugin.
+	 * 
+	 * @param key Name of the timer to stop.
+	 */
+	public final void stopTimer(final String key) {
+		mSettings.stopTimer(key);
 	}
 	
-	public void stopPluginTimer(String plugin,String key) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Stops a timer in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param key Name of the timer to stop.
+	 */
+	public final void stopPluginTimer(final String plugin, final String key) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.stopTimer(key);
 		}
 	}
 
-	public SettingsGroup getSettings() {
-		// TODO Auto-generated method stub
-		if(the_settings == null) return new SettingsGroup();
-		return the_settings.getSettings().getOptions();
+	/** Gets the settings object for the main settings plugin.
+	 * 
+	 * @return The settings for the main settings plugin.
+	 */
+	public final SettingsGroup getSettings() {
+		if (mSettings == null) {
+			return new SettingsGroup();
+		}
+		return mSettings.getSettings().getOptions();
 	}
 	
-	public SettingsGroup getPluginSettings(String plugin) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Gets the settings object for a target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @return The settings for the target plugin. Returns null if <b>name</b> is not a loaded plugin.
+	 */
+	public final SettingsGroup getPluginSettings(final String plugin) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			return p.getSettings().getOptions();
 		} else {
 			return null;
 		}
 	}
 
-	public void updateBooleanSetting(String key, boolean value) {
-		the_settings.updateBooleanSetting(key,value);
+	/** Updates a boolean setting in the main settings plugin.
+	 * 
+	 * @param key id of the setting to affect.
+	 * @param value new value for setting <b>key</b>
+	 */
+	public final void updateBooleanSetting(final String key, final boolean value) {
+		mSettings.updateBooleanSetting(key, value);
 	}
 	
-	public void updatePluginBooleanSetting(String plugin,String key,boolean value) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			p.updateBooleanSetting(key,value);
+	/** Updates a boolean setting in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param key key id of the setting to affect.
+	 * @param value the value to use.
+	 */
+	public final void updatePluginBooleanSetting(final String plugin, final String key, final boolean value) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
+			p.updateBooleanSetting(key, value);
 		}
 	}
 	
-	public void updateStringSetting(String key,String value) {
-		the_settings.updateStringSetting(key,value);
+	/** Updates a string setting in the main settings plugin.
+	 * 
+	 * @param key key id of the setting to affect.
+	 * @param value the value to use.
+	 */
+	public final void updateStringSetting(final String key, final String value) {
+		mSettings.updateStringSetting(key, value);
 	}
 	
-	public void updatePluginStringSetting(String plugin,String key,String value) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			p.updateStringSetting(key,value);
-		}
-		
-	}
-	
-	public void updateIntegerSetting(String key,int value) {
-		the_settings.updateIntegerSetting(key,value);
-	}
-	
-	public void updatePluginIntegerSetting(String plugin,String key,int value) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			p.updateIntegerSetting(key,value);
-		}
-	}
-	
-	public void updateFloatSetting(String key,float value) {
-		the_settings.updateFloatSetting(key,value);
-	}
-	
-	public void updatePluginFloatSetting(String plugin,String key,float value) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
-			p.updateFloatSetting(key,value);
+	/** Updates a string setting in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param key key id of the setting to affect.
+	 * @param value the value to use.
+	 */
+	public final void updatePluginStringSetting(final String plugin, final String key, final String value) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
+			p.updateStringSetting(key, value);
 		}
 	}
 	
+	/** Udpates an integer setting in the main settings plugin.
+	 * 
+	 * @param key key id of the setting to affect.
+	 * @param value the value to use.
+	 */
+	public final void updateIntegerSetting(final String key, final int value) {
+		mSettings.updateIntegerSetting(key, value);
+	}
+	
+	/** Updates an integer setting in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param key key id of the setting to affect.
+	 * @param value the value to use.
+	 */
+	public final void updatePluginIntegerSetting(final String plugin, final String key, final int value) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
+			p.updateIntegerSetting(key, value);
+		}
+	}
+	
+	/** Updates a float setting in the main settings plugin.
+	 * 
+	 * @param key key id of the setting to update.
+	 * @param value the value to use.
+	 */
+	public final void updateFloatSetting(final String key, final float value) {
+		mSettings.updateFloatSetting(key, value);
+	}
+	
+	/** Updates a float setting in the target plugin.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param key key id of the setting to affect.
+	 * @param value the value to use.
+	 */
+	public final void updatePluginFloatSetting(final String plugin, final String key, final float value) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
+			p.updateFloatSetting(key, value);
+		}
+	}
+	
+	/** Utility class for tracking changes ot the main window settings. */
 	private class WindowSettingsChangedListener implements SettingsChangedListener {
-
-		private String window;
+		/** Name of the window that this listener is watching. */
+		private String mWindow;
 		
-		public WindowSettingsChangedListener(String window) {
-			this.window = window;
+		/** Constructor.
+		 * 
+		 * @param window Name of the window to watch.
+		 */
+		public WindowSettingsChangedListener(final String window) {
+			this.mWindow = window;
 		}
 		
 		@Override
-		public void updateSetting(String key, String value) {
-			Connection.this.handleWindowSettingsChanged(window,key,value);
+		public void updateSetting(final String key, final String value) {
+			Connection.this.handleWindowSettingsChanged(mWindow, key, value);
 		}
 		
 	}
 	
+	/** Work horse of the main window settings change listener.
+	 * 
+	 * @param window Name of the window that was affected.
+	 * @param key Name of the key that changed.
+	 * @param value The value that it was changed to.
+	 */
+	public final void handleWindowSettingsChanged(final String window, final String key, final String value) {
 
-	
-	public void handleWindowSettingsChanged(String window,String key,String value) {
-		//synchronized(callbackSync) {
-		//int N = mWindowCallbacks.beginBroadcast();
-			//for(WindowToken w : mWindows) {
-			//	if(w.getName().equals(window)) {
-			//		w.getSettings().setOption(key, value);
-			//	}
-			//}
-		//for(int i=0;i<N;i++) {
-			IWindowCallback callback = windowCallbackMap.get(window);
-			if(callback == null) return;
-			try{
-				//if(callback.getName().equals(window)) {
-					callback.updateSetting(key,value);
-				//}
-			} catch (RemoteException e) {
-				
+			IWindowCallback callback = mWindowCallbackMap.get(window);
+			if (callback == null) {
+				return;
 			}
-		//}
-		
-		//mWindowCallbacks.finishBroadcast();
-		//}
-		
+			try {
+				callback.updateSetting(key, value);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 	}
 
 	@Override
-	public void updateSetting(String key, String value) {
-		if(the_settings == null) return; //this is for when the settings are first being loaded.
-		BaseOption o = (BaseOption)the_settings.getSettings().getOptions().findOptionByKey(key);
+	public final void updateSetting(final String key, final String value) {
+		if (mSettings == null) {
+			return; //this is for when the settings are first being loaded.
+		}
+		BaseOption o = (BaseOption) mSettings.getSettings().getOptions().findOptionByKey(key);
 		try {
 			KEYS tmp = KEYS.valueOf(key);
-			switch(tmp) {
+			switch (tmp) {
 			case process_semicolon:
-				the_settings.setSemiIsNewLine((Boolean)o.getValue());
+				mSettings.setSemiIsNewLine((Boolean) o.getValue());
 				break;
 			case debug_telnet:
-				processor.setDebugTelnet((Boolean)o.getValue());
+				mProcessor.setDebugTelnet((Boolean) o.getValue());
 				break;
 			case encoding:
-				this.doUpdateEncoding((String)o.getValue());
+				this.doUpdateEncoding((String) o.getValue());
 				break;
 			case orientation:
-				service.doExecuteSetOrientation((Integer)o.getValue());
+				mService.doExecuteSetOrientation((Integer) o.getValue());
 				break;
 			case screen_on:
-				service.doExecuteKeepScreenOn((Boolean)o.getValue());
+				mService.doExecuteKeepScreenOn((Boolean) o.getValue());
 				break;
 			case fullscreen:
-				service.doExecuteFullscreen((Boolean)o.getValue());
+				mService.doExecuteFullscreen((Boolean) o.getValue());
 				break;
 			case fullscreen_editor:
-				service.doExecuteFullscreenEditor((Boolean)o.getValue());
+				mService.doExecuteFullscreenEditor((Boolean) o.getValue());
 				break;
 			case use_suggestions:
-				service.doExecuteUseSuggestions((Boolean)o.getValue());
+				mService.doExecuteUseSuggestions((Boolean) o.getValue());
 				break;
 			case keep_last:
-				this.doSetKeepLast((Boolean)o.getValue());
+				this.doSetKeepLast((Boolean) o.getValue());
 				break;
 			case compatibility_mode:
-				service.doExecuteCompatibilityMode((Boolean)o.getValue());
+				mService.doExecuteCompatibilityMode((Boolean) o.getValue());
 				break;
 			case local_echo:
-				this.doSetLocalEcho((Boolean)o.getValue());
+				this.doSetLocalEcho((Boolean) o.getValue());
 				break;
 			case process_system_commands:
-				this.doSetProcessSystemCommands((Boolean)o.getValue());
+				this.doSetProcessSystemCommands((Boolean) o.getValue());
 				break;
 			case echo_alias_updates:
-				this.doSetAliasUpdates((Boolean)o.getValue());
+				this.doSetAliasUpdates((Boolean) o.getValue());
 				break;
 			case keep_wifi_alive:
-				this.doSetKeepWifiAlive((Boolean)o.getValue());
+				this.doSetKeepWifiAlive((Boolean) o.getValue());
 				break;
 			case auto_reconnect:
-				this.setAutoReconnect((Boolean)o.getValue());
+				this.setAutoReconnect((Boolean) o.getValue());
 				break;
 			case auto_reconnect_limit:
-				this.setAutoReconnectLimit((Integer)o.getValue());
+				this.setAutoReconnectLimit((Integer) o.getValue());
 				break;
 			case cull_extraneous_color:
-				this.doSetCullExtraneousColor((Boolean)o.getValue());
+				this.doSetCullExtraneousColor((Boolean) o.getValue());
 				break;
 			case debug_telent:
-				this.doSetDebugTelnet((Boolean)o.getValue());
+				this.doSetDebugTelnet((Boolean) o.getValue());
 				break;
 			case bell_vibrate:
-				this.doSetBellVibrate((Boolean)o.getValue());
+				this.doSetBellVibrate((Boolean) o.getValue());
 				break;
 			case bell_notification:
-				this.doSetBellNotify((Boolean)o.getValue());
+				this.doSetBellNotify((Boolean) o.getValue());
 				break;
 			case bell_display:
-				this.doSeBellDisplay((Boolean)o.getValue());
+				this.doSeBellDisplay((Boolean) o.getValue());
 				break;
 			case use_gmcp:
-				this.doSetUseGMCP((Boolean)o.getValue());
+				this.doSetUseGMCP((Boolean) o.getValue());
 				break;
 			case gmcp_supports:
-				this.doSetGMCPSupports((String)o.getValue());
+				this.doSetGMCPSupports((String) o.getValue());
+				break;
+			default:
 				break;
 			}
-		} catch(IllegalArgumentException e) {
-			
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
 		}
 	}
 	
-	private void doSetGMCPSupports(String value) {
-		processor.setGMCPSupports(value);
+	/** Implementation of the gmcp supports string setting handler.
+	 * 
+	 * @param value New value for setting.
+	 */
+	private void doSetGMCPSupports(final String value) {
+		mProcessor.setGMCPSupports(value);
 	}
 
-	private void doSetUseGMCP(Boolean value) {
-		processor.setUseGMCP(value);
+	/** Implementation of the use gmcp settings handler.
+	 * 
+	 * @param value New value for setting.
+	 */
+	private void doSetUseGMCP(final Boolean value) {
+		mProcessor.setUseGMCP(value);
 	}
 
-	private void setAutoReconnectLimit(Integer value) {
+	/** Implementation of the auto reconnect attempt limit settings handler.
+	 * 
+	 * @param value New value for setting.
+	 */
+	private void setAutoReconnectLimit(final Integer value) {
 		mAutoReconnectLimit = value;
 	}
 
-	private void setAutoReconnect(Boolean value) {
+	/** Impelementation of the use auto reconnect settings handler.
+	 * 
+	 * @param value New value for setting.
+	 */
+	private void setAutoReconnect(final Boolean value) {
 		mAutoReconnect = value;
 	}
 
-	private void doSetBellVibrate(Boolean value) {
-		the_settings.setVibrateOnBell(value);		
+	/** Impelemntation of the bell vibrate settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetBellVibrate(final Boolean value) {
+		mSettings.setVibrateOnBell(value);		
 	}
 	
-	private void doSetBellNotify(Boolean value) {
-		the_settings.setNotifyOnBell(value);
+	/** Impelemntation of the bell notify settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetBellNotify(final Boolean value) {
+		mSettings.setNotifyOnBell(value);
 	}
 	
-	private void doSeBellDisplay(Boolean value) {
-		the_settings.setDisplayOnBell(value);
+	/** Impelemntation of the bell toast settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSeBellDisplay(final Boolean value) {
+		mSettings.setDisplayOnBell(value);
 	}
 
-	private void doSetDebugTelnet(Boolean value) {
-		the_settings.setDebugTelnet(value);
-		if( processor != null) {
-			processor.setDebugTelnet(value);
+	/** Impelemntation of the set debug telnet settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetDebugTelnet(final Boolean value) {
+		mSettings.setDebugTelnet(value);
+		if (mProcessor != null) {
+			mProcessor.setDebugTelnet(value);
 		}
 	}
 
-	private void doSetCullExtraneousColor(Boolean value) {
-		the_settings.setRemoveExtraColor(value);
+	/** Impelemntation of the cull extraneous colors settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetCullExtraneousColor(final Boolean value) {
+		mSettings.setRemoveExtraColor(value);
 		mWindows.get(0).getBuffer().setCullExtraneous(value);
 	}
 
-	private void doSetKeepWifiAlive(Boolean value) {
-		the_settings.setKeepWifiActive(value);
-		if(value) {
-			service.EnableWifiKeepAlive();
+	/** Impelemntation of the keep wifi alive settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetKeepWifiAlive(final Boolean value) {
+		mSettings.setKeepWifiActive(value);
+		if (value) {
+			mService.EnableWifiKeepAlive();
 		} else {
-			service.DisableWifiKeepAlive();
+			mService.DisableWifiKeepAlive();
 		}
 	}
 
-	private void doSetAliasUpdates(Boolean value) {
-		the_settings.setEchoAliasUpdates(value);
+	/** Impelemntation of the echo alias update settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetAliasUpdates(final Boolean value) {
+		mSettings.setEchoAliasUpdates(value);
 	}
 
-	private void doSetProcessSystemCommands(Boolean value) {
-		the_settings.setProcessPeriod(value);
+	/** Impelemntation of the process system commands settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetProcessSystemCommands(final Boolean value) {
+		mSettings.setProcessPeriod(value);
 	}
 
-	private void doSetLocalEcho(Boolean value) {
-		the_settings.setLocalEcho(value);
+	/** Impelemntation of the local echo settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetLocalEcho(final Boolean value) {
+		mSettings.setLocalEcho(value);
 	}
 
-	private void doSetKeepLast(Boolean value) {
-		service.dispatchKeepLast(value);
+	/** Impelemntation of the keep last settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetKeepLast(final Boolean value) {
+		mService.dispatchKeepLast(value);
 	}
 
-	private void doUpdateEncoding(String value) {
-		processor.setEncoding(value);
+	/** Impelemntation of the system encoding settings handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doUpdateEncoding(final String value) {
+		mProcessor.setEncoding(value);
 		//this.encoding = value;
-		the_settings.setEncoding(value);
-		this.working.setEncoding(value);
-		this.finished.setEncoding(value);
-		if(processor != null) {
-			this.processor.setEncoding(value);
+		mSettings.setEncoding(value);
+		this.mWorking.setEncoding(value);
+		this.mFinished.setEncoding(value);
+		if (mProcessor != null) {
+			this.mProcessor.setEncoding(value);
 		}
-		for(int i=0;i<mWindows.size();i++) {
+		for (int i = 0; i < mWindows.size(); i++) {
 			WindowToken w = mWindows.get(i);
 			w.getBuffer().setEncoding(value);
 		}
 		
-		//synchronized(callbackSync) {
-			//int N = mWindowCallbacks.beginBroadcast();
-			
-			for(IWindowCallback w : windowCallbackMap.values()) {
-				//IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
-				try {
-					w.setEncoding(value);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		for (IWindowCallback w : mWindowCallbackMap.values()) {
+			//IWindowCallback w = mWindowCallbacks.getBroadcastItem(i);
+			try {
+				w.setEncoding(value);
+			} catch (RemoteException e) {
+				e.printStackTrace();
 			}
-			
-			//mWindowCallbacks.finishBroadcast();
-		//}
+		}
 		
-		for(int i=0;i<plugins.size();i++) {
-			Plugin p = plugins.get(i);
+		for (int i = 0; i < mPlugins.size(); i++) {
+			Plugin p = mPlugins.get(i);
 			p.setEncoding(value);
 		}
 		
 		//handle the keyboard command callback.
-		keyboardCommand.setEncoding(value); 
+		mKeyboardCommand.setEncoding(value); 
 		
 		//may want to go through and activate the settings changed handler for plugins.
 		//the chat window would want to re-construct it's buffers. But for proper operation
@@ -3165,61 +3052,91 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		//everything that doesn't use TextTree's directly to make multi-buffers, will work fine.		
 	}
 
+	/** Helper enum to map the main settings plugin's settings keys to strings. */
 	private enum KEYS {
+		/** Semicolon processing. */
 		process_semicolon,
+		/** Debug telnet. */
 		debug_telnet,
+		/** System encoding. */
 		encoding, 
+		/** Window orientation. */
 		orientation, 
+		/** Keep screen on. */
 		screen_on, 
+		/** Hide notification bar. */
 		fullscreen, 
+		/** Use fullscreen editor. */
 		fullscreen_editor,
+		/** Make editor use suggestions. */
 		use_suggestions,
-		keep_last, compatibility_mode,
+		/** Keep last entered. */
+		keep_last, 
+		/** Input compatibility mode. */
+		compatibility_mode,
+		/** Local echo. */
 		local_echo,
+		/** Process period commands. */
 		process_system_commands,
+		/** Echo alias updates. */
 		echo_alias_updates,
+		/** Keep wifi alive. */
 		keep_wifi_alive,
+		/** Cull extraneous color codes. */
 		cull_extraneous_color,
+		/** Debug telnet data. */
 		debug_telent,
+		/** Bell vibrates. */
 		bell_vibrate,
+		/** Bell notifies. */
 		bell_notification,
-		bell_display, auto_reconnect, auto_reconnect_limit, use_gmcp, gmcp_supports
+		/** Bell toasts. */
+		bell_display, 
+		/** Auto reconnect. */
+		auto_reconnect, 
+		/** Auto reconnect limit. */
+		auto_reconnect_limit, 
+		/** Use GMCP. */
+		use_gmcp, 
+		/** GMCP Supports string. */
+		gmcp_supports
 	}
 	
-	private void sendToServer(byte[] bytes) {
-		//byte[] bytes = (byte[]) msg.obj;
-		if(bytes == null || the_settings == null) {
+	/** Work horse function of sending data to the server, this initiates all levels of processing.
+	 * 
+	 * @param bytes Input to process.
+	 */
+	private void sendToServer(final byte[] bytes) {
+		if (bytes == null || mSettings == null) {
 			return;
 		}
 		Data d = null;
 		try {
-			d = ProcessOutputData(new String(bytes,the_settings.getEncoding()));
+			d = processOutputData(new String(bytes, mSettings.getEncoding()));
 		} catch (UnsupportedEncodingException e2) {
 			e2.printStackTrace();
 		}
 		
-		if(d == null) {
+		if (d == null) {
 			return;
 		}
 		
-		if(d.cmdString.equals("") && (d.visString != null && d.visString.replaceAll("\\s", "").equals(""))) {
+		if (d.mCmdString.equals("") && (d.mVisString != null && d.mVisString.replaceAll("\\s", "").equals(""))) {
 			return;
 		}
 		
 		String nosemidata = null;
 		try {
 			
-			if(d.cmdString != null && !d.cmdString.equals("")) {
-				nosemidata = d.cmdString;
-				byte[] sendtest = nosemidata.getBytes(the_settings.getEncoding());
-				ByteBuffer buf = ByteBuffer.allocate(sendtest.length*2); //just in case EVERY byte is the IAC
-				//int found = 0;
+			if (d.mCmdString != null && !d.mCmdString.equals("")) {
+				nosemidata = d.mCmdString;
+				byte[] sendtest = nosemidata.getBytes(mSettings.getEncoding());
+				ByteBuffer buf = ByteBuffer.allocate(sendtest.length * 2); //just in case EVERY byte is the IAC
 				int count = 0;
-				for(int i=0;i<sendtest.length;i++) {
-					if(sendtest[i] == (byte)0xFF) {
-						//buf = ByteBuffer.wrap(buf.array());
-						buf.put((byte)0xFF);
-						buf.put((byte)0xFF);
+				for (int i = 0; i < sendtest.length; i++) {
+					if (sendtest[i] == TC.IAC) {
+						buf.put(TC.IAC);
+						buf.put(TC.IAC);
 						count += 2;
 					} else {
 						buf.put(sendtest[i]);
@@ -3229,83 +3146,76 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				
 				byte[] tosend = new byte[count];
 				buf.rewind();
-				buf.get(tosend,0,count);
+				buf.get(tosend, 0, count);
 				
-				if(pump != null && pump.isConnected()) {
-					//output_writer.write(tosend);
-					//output_writer.flush();
-					pump.sendData(tosend);
-					//pump.handler.sendMessage(datasend);
+				if (mPump != null && mPump.isConnected()) {
+					mPump.sendData(tosend);
 				} else {
 					sendBytesToWindow(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
 				}
 			} else {
-				if(d.cmdString.equals("") && d.visString == null) {
-					pump.sendData(crlf.getBytes(the_settings.getEncoding()));
-					//pump.handler.sendMessage(datasend);
-					//output_writer.flush();
-					d.visString = "\n";
+				if (d.mCmdString.equals("") && d.mVisString == null) {
+					mPump.sendData(mCRLF.getBytes(mSettings.getEncoding()));
+					d.mVisString = "\n";
 				}
 			}
-			//send the transformed data back to the window
-			if(d.visString != null && !d.visString.equals("")) {
-				if(the_settings.isLocalEcho()) {
-					//preserve.
-					//buffer_tree.addBytesImplSimple(data)
-					mWindows.get(0).getBuffer().addBytesImplSimple(d.visString.getBytes(the_settings.getEncoding()));
-					sendBytesToWindow(d.visString.getBytes(the_settings.getEncoding()));
+			if (d.mVisString != null && !d.mVisString.equals("")) {
+				if (mSettings.isLocalEcho()) {
+					mWindows.get(0).getBuffer().addBytesImplSimple(d.mVisString.getBytes(mSettings.getEncoding()));
+					sendBytesToWindow(d.mVisString.getBytes(mSettings.getEncoding()));
 				}
 			}
 		} catch (IOException e) {
-			//throw new RuntimeException(e);
-			handler.sendEmptyMessage(MESSAGE_DISCONNECTED);
+			mHandler.sendEmptyMessage(MESSAGE_DISCONNECTED);
 		}
 	}
 
-	public void updateWindowBufferMaxValue(String plugin, String window,
-			int amount) {
-		for(WindowToken w : mWindows) {
-			if(w.getName().equals(window)) {
+	/** Possibly Deprecated. Sets the buffer size for a target window in a target plugin.
+	 * 
+	 * @param plugin The target plugin.
+	 * @param window The target window.
+	 * @param amount The new buffer size value.
+	 */
+	public final void updateWindowBufferMaxValue(final String plugin, final String window, final int amount) {
+		for (WindowToken w : mWindows) {
+			if (w.getName().equals(window)) {
 				//WindowToken w = mWindows.get(0);
 				w.setBufferSize(amount);
 			}
 		} 
 	}
 	
-	public void saveMainSettings() {
-		//save the connection settings.
-		ArrayList<Plugin> tmpPlugs = new ArrayList<Plugin>();
+	/** The main starting point for the save settings routine. This is called for a few different locations. */
+	public final void saveMainSettings() {
 		Pattern invalidchars = Pattern.compile("\\W");
-		Matcher replacebadchars = invalidchars.matcher(this.display);
+		Matcher replacebadchars = invalidchars.matcher(this.mDisplay);
 		String prefsname = replacebadchars.replaceAll("");
 		prefsname = prefsname.replaceAll("/", "");
-		//String settingslocation = 
-		//loadXmlSettings(prefsname +".xml");
 		String rootPath = prefsname + ".xml";
-		String convertPath = prefsname + ".v1.xml";
-		String newPath = prefsname + ".v2.xml";
+		
 		//rootPath is the v1 settings file name.
-		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/files/";
+		String internal = mService.getApplicationContext().getApplicationInfo().dataDir + "/files/";
 		String oldpath = internal + rootPath;
 		exportSettings(oldpath);
 	}
 	
-	Pattern xmlext = Pattern.compile("^.+\\.[xX][mM][lL]$");
-	Matcher xmlmatch = xmlext.matcher("");
-	public void exportSettings(String filename) {
+	/** Export settings routine. Called from either the main settings save routine or the export settings dialog.
+	 * 
+	 * @param path File name to save to. Must be absolute from the OS root directory.
+	 */
+	public final void exportSettings(final String path) {
 		boolean domessage = false;
 		boolean addextra = false;
-		if(filename.startsWith("/")) {
-			//dont mod
-		} else {
+		String filename = path;
+		if (!filename.startsWith("/")) {
 			//mod
 			domessage = true;
 			File ext = Environment.getExternalStorageDirectory();
-			String dir = ConfigurationLoader.getConfigurationValue("exportDirectory", service.getApplicationContext());
+			String dir = ConfigurationLoader.getConfigurationValue("exportDirectory", mService.getApplicationContext());
 			
-			filename = ext.getAbsolutePath() + "/" + dir + "/"+filename;
-			xmlmatch.reset(filename);
-			if(!xmlmatch.matches()) {
+			filename = ext.getAbsolutePath() + "/" + dir + "/" + filename;
+			mXMLExtensionMatcher.reset(filename);
+			if (!mXMLExtensionMatcher.matches()) {
 				filename = filename + ".xml";
 				addextra = true;
 			}
@@ -3313,23 +3223,23 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		try {
 			File file = new File(filename);
 			FileOutputStream fos = new FileOutputStream(file);
-			String foo = ConnectionSetttingsParser.outputXML(the_settings,plugins);
+			String foo = ConnectionSetttingsParser.outputXML(mSettings, mPlugins);
 			fos.write(foo.getBytes());
 			fos.close();
 			
-			for(String link : linkMap.keySet()) {
-				ArrayList<String> plugins  = linkMap.get(link);
+			for (String link : mLinkMap.keySet()) {
+				ArrayList<String> plugins  = mLinkMap.get(link);
 				boolean doExport = false;
 				String fullpath = "";
-				for(String plugin : plugins) {
-					Plugin p = pluginMap.get(plugin);
-					if(p.getSettings().isDirty()) {
+				for (String plugin : plugins) {
+					Plugin p = mPluginMap.get(plugin);
+					if (p.getSettings().isDirty()) {
 						doExport = true;
 						fullpath = p.getFullPath();
 					}
 				}
 				
-				if(doExport) {
+				if (doExport) {
 					XmlSerializer out = Xml.newSerializer();
 					StringWriter writer = new StringWriter();
 					
@@ -3339,8 +3249,8 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 					out.startTag("", "blowtorch");
 					out.attribute("", "xmlversion", "2");
 					out.startTag("", "plugins");
-					for(String plugin :plugins) {
-						Plugin p = pluginMap.get(plugin);
+					for (String plugin :plugins) {
+						Plugin p = mPluginMap.get(plugin);
 						PluginParser.saveToXml(out, p);
 						p.getSettings().setDirty(false);
 					}
@@ -3357,280 +3267,249 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				
 			}
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		if(domessage) {
+		if (domessage) {
 			String message = "Settings Exported to " + filename;
-			if(addextra) {
+			if (addextra) {
 				message = message + "\n.xml extension added.";
 			}
-			service.DispatchToast(message, true);
+			mService.DispatchToast(message, true);
 		}
 	}
 	
-	public void startExportSequence(String path) {
-		handler.sendMessage(handler.obtainMessage(MESSAGE_EXPORTFILE, path));
+	/** Access point for the foreground window to initate a custom export action with the provided path.
+	 * 
+	 * @param path Path to save settings to, this must be absolute from the root directory (?)
+	 */
+	public final void startExportSequence(final String path) {
+		mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_EXPORTFILE, path));
 	}
 	
-	private class ExportFunction extends SpecialCommand {
-		public ExportFunction() {
-			this.commandName = "export";
-		}
-		
-		public Object execute(Object o,Connection c) {
-			
-			String path = "/mnt/sdcard/BlowTorch/" + ((String)o);
-			
-			handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_EXPORTFILE,path));
-			//exportSettings(path);
-			return null;
-		}
-	}
-	
-	private class ImportFunction extends SpecialCommand {
-		public ImportFunction() {
-			this.commandName = "import";
-		}
-		
-		public Object execute(Object o,Connection c) {
-			
-			String path = "/mnt/sdcard/BlowTorch/" + ((String)o);
-			
-			handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_IMPORTFILE, path));
-			//importSettings(path);
-			
-			return null;
-		}
-	}
-	
-	private void importSettings(String path,boolean save,boolean loadmessage) {
+	/** The real workhorse method for importing settings.
+	 * 
+	 * @param path The path of the settings to load.
+	 * @param save flag to save the settings after loading.
+	 * @param loadmessage verb for loading(true) or importing(false)
+	 */
+	private void importSettings(final String path, final boolean save, final boolean loadmessage) {
 		shutdownPlugins();
 		
 		String verb = null;
-		if(loadmessage) {
+		if (loadmessage) {
 			verb = "Loading";
 		} else {
 			verb = "Importing";
 		}
 		
-		VersionProbeParser vpp = new VersionProbeParser(path,service.getApplicationContext());
+		VersionProbeParser vpp = new VersionProbeParser(path, mService.getApplicationContext());
 
 		
 		try {
 			boolean isLegacy = vpp.isLegacy();
-			if(isLegacy) {
-				Log.e("XMLPARSE","LOADING V1 SETTINGS FROM PATH: "+path);
-				HyperSAXParser p = new HyperSAXParser(path,service.getApplicationContext());
+			if (isLegacy) {
+				Log.e("XMLPARSE", "LOADING V1 SETTINGS FROM PATH: " + path);
+				HyperSAXParser p = new HyperSAXParser(path, mService.getApplicationContext());
 				HyperSettings s = p.load();
 				
 				//load up the default settings and then merge the old settings into the new settings.
 				ArrayList<Plugin> tmpplugs = new ArrayList<Plugin>();
-				ConnectionSetttingsParser newsettings = new ConnectionSetttingsParser(null,service.getApplicationContext(),tmpplugs,handler,this);
+				ConnectionSetttingsParser newsettings = new ConnectionSetttingsParser(null, mService.getApplicationContext(), tmpplugs, mHandler, this);
 				tmpplugs = newsettings.load(this);
-				//the_settings = (ConnectionSettingsPlugin) tmpplugs.get(0);
-				
-				ConnectionSettingsPlugin global = (ConnectionSettingsPlugin)tmpplugs.get(0);
-				
-				//global.importV1Settings(s);
 				
 				Plugin buttonwindow = tmpplugs.get(1);
 				
-				if(path != null) { //import old buttons
+				if (path != null) { //import old buttons
 				
 				//slag out the old settings and RAM them into the new ones.
-				LuaState L = buttonwindow.getLuaState();
+				LuaState pL = buttonwindow.getLuaState();
 				
-				L.newTable();
-				for(String key : s.getButtonSets().keySet()) {
-					String name = key;
+				pL.newTable();
+				for (String key : s.getButtonSets().keySet()) {
 					ColorSetSettings defaults = s.getSetSettings().get(key);
 					//Vector<SlickButtonData> data = s.getButtonSets().get(key);
-					L.newTable();
+					pL.newTable();
 					
-					if(defaults.getPrimaryColor() != SlickButtonData.DEFAULT_COLOR) {
-						L.pushString("primaryColor");
-						L.pushNumber(defaults.getPrimaryColor());
-						L.setTable(-3);
+					if (defaults.getPrimaryColor() != SlickButtonData.DEFAULT_COLOR) {
+						pL.pushString("primaryColor");
+						pL.pushNumber(defaults.getPrimaryColor());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getSelectedColor() != SlickButtonData.DEFAULT_SELECTED_COLOR) {
-						L.pushString("selectedColor");
-						L.pushNumber(defaults.getSelectedColor());
-						L.setTable(-3);
+					if (defaults.getSelectedColor() != SlickButtonData.DEFAULT_SELECTED_COLOR) {
+						pL.pushString("selectedColor");
+						pL.pushNumber(defaults.getSelectedColor());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getFlipColor() != SlickButtonData.DEFAULT_FLIP_COLOR) {
-						L.pushString("flipColor");
-						L.pushNumber(defaults.getFlipColor());
-						L.setTable(-3);
+					if (defaults.getFlipColor() != SlickButtonData.DEFAULT_FLIP_COLOR) {
+						pL.pushString("flipColor");
+						pL.pushNumber(defaults.getFlipColor());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getLabelColor() != SlickButtonData.DEFAULT_LABEL_COLOR) {
-						L.pushString("labelColor");
-						L.pushNumber(defaults.getLabelColor());
-						L.setTable(-3);
+					if (defaults.getLabelColor() != SlickButtonData.DEFAULT_LABEL_COLOR) {
+						pL.pushString("labelColor");
+						pL.pushNumber(defaults.getLabelColor());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getFlipLabelColor() != SlickButtonData.DEFAULT_FLIPLABEL_COLOR) {
-						L.pushString("flipLabelColor");
-						L.pushNumber(defaults.getFlipLabelColor());
-						L.setTable(-3);
+					if (defaults.getFlipLabelColor() != SlickButtonData.DEFAULT_FLIPLABEL_COLOR) {
+						pL.pushString("flipLabelColor");
+						pL.pushNumber(defaults.getFlipLabelColor());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) {
-						L.pushString("width");
-						L.pushNumber(defaults.getButtonWidth());
-						L.setTable(-3);
+					if (defaults.getButtonWidth() != SlickButtonData.DEFAULT_BUTTON_WDITH) {
+						pL.pushString("width");
+						pL.pushNumber(defaults.getButtonWidth());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getButtonHeight() != SlickButtonData.DEFAULT_BUTTON_HEIGHT) {
-						L.pushString("height");
-						L.pushNumber(defaults.getButtonHeight());
-						L.setTable(-3);
+					if (defaults.getButtonHeight() != SlickButtonData.DEFAULT_BUTTON_HEIGHT) {
+						pL.pushString("height");
+						pL.pushNumber(defaults.getButtonHeight());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					if(defaults.getLabelSize() != SlickButtonData.DEFAULT_LABEL_SIZE) {
-						L.pushString("labelSize");
-						L.pushNumber(defaults.getLabelSize());
-						L.setTable(-3);
+					if (defaults.getLabelSize() != SlickButtonData.DEFAULT_LABEL_SIZE) {
+						pL.pushString("labelSize");
+						pL.pushNumber(defaults.getLabelSize());
+						pL.setTable(NEGATIVE_THREE);
 					}
 					
-					L.setField(-2, key);
+					pL.setField(NEGATIVE_TWO, key);
 				}
 				
-				L.setGlobal("buttonset_defaults");
+				pL.setGlobal("buttonset_defaults");
 				
-				L.newTable();
+				pL.newTable();
 				
-				for(String name : s.getButtonSets().keySet()) {
+				for (String name : s.getButtonSets().keySet()) {
 					//String name = key;
 					ColorSetSettings defaults = s.getSetSettings().get(name);
 					Vector<SlickButtonData> data = s.getButtonSets().get(name);
-					L.newTable();
+					pL.newTable();
 					int counter = 1;
-					for(SlickButtonData button : data) {
-						L.newTable();
-						if(defaults.getPrimaryColor() != button.getPrimaryColor()) {
-							L.pushString("primaryColor");
-							L.pushNumber(button.getPrimaryColor());
-							L.setTable(-3);
+					for (SlickButtonData button : data) {
+						pL.newTable();
+						if (defaults.getPrimaryColor() != button.getPrimaryColor()) {
+							pL.pushString("primaryColor");
+							pL.pushNumber(button.getPrimaryColor());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getSelectedColor() != button.getSelectedColor()) {
-							L.pushString("selectedColor");
-							L.pushNumber(button.getSelectedColor());
-							L.setTable(-3);
+						if (defaults.getSelectedColor() != button.getSelectedColor()) {
+							pL.pushString("selectedColor");
+							pL.pushNumber(button.getSelectedColor());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getFlipColor() != button.getFlipColor()) {
-							L.pushString("flipColor");
-							L.pushNumber(button.getFlipColor());
-							L.setTable(-3);
+						if (defaults.getFlipColor() != button.getFlipColor()) {
+							pL.pushString("flipColor");
+							pL.pushNumber(button.getFlipColor());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getLabelColor() != button.getLabelColor()) {
-							L.pushString("labelColor");
-							L.pushNumber(button.getLabelColor());
-							L.setTable(-3);
+						if (defaults.getLabelColor() != button.getLabelColor()) {
+							pL.pushString("labelColor");
+							pL.pushNumber(button.getLabelColor());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getFlipLabelColor() != button.getFlipLabelColor()) {
-							L.pushString("flipLabelColor");
-							L.pushNumber(button.getFlipLabelColor());
-							L.setTable(-3);
+						if (defaults.getFlipLabelColor() != button.getFlipLabelColor()) {
+							pL.pushString("flipLabelColor");
+							pL.pushNumber(button.getFlipLabelColor());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getButtonWidth() != button.getWidth()) {
-							L.pushString("width");
-							L.pushNumber(button.getWidth());
-							L.setTable(-3);
+						if (defaults.getButtonWidth() != button.getWidth()) {
+							pL.pushString("width");
+							pL.pushNumber(button.getWidth());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getButtonHeight() != button.getHeight()) {
-							L.pushString("height");
-							L.pushNumber(button.getHeight());
-							L.setTable(-3);
+						if (defaults.getButtonHeight() != button.getHeight()) {
+							pL.pushString("height");
+							pL.pushNumber(button.getHeight());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(defaults.getLabelSize() != button.getLabelSize()) {
-							L.pushString("labelSize");
-							L.pushNumber(button.getLabelSize());
-							L.setTable(-3);
+						if (defaults.getLabelSize() != button.getLabelSize()) {
+							pL.pushString("labelSize");
+							pL.pushNumber(button.getLabelSize());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						if(button.getTargetSet() != null && !button.getTargetSet().equals("")) {
-							L.pushString("switchTo");
-							L.pushString(button.getTargetSet());
-							L.setTable(-3);
+						if (button.getTargetSet() != null && !button.getTargetSet().equals("")) {
+							pL.pushString("switchTo");
+							pL.pushString(button.getTargetSet());
+							pL.setTable(NEGATIVE_THREE);
 						}
 						
-						L.pushString("x");
-						L.pushNumber(button.getX());
-						L.setTable(-3);
+						pL.pushString("x");
+						pL.pushNumber(button.getX());
+						pL.setTable(NEGATIVE_THREE);
 						
-						L.pushString("y");
-						L.pushNumber(button.getY());
-						L.setTable(-3);
+						pL.pushString("y");
+						pL.pushNumber(button.getY());
+						pL.setTable(NEGATIVE_THREE);
 						
-						L.pushString("label");
-						L.pushString(button.getLabel());
-						L.setTable(-3);
+						pL.pushString("label");
+						pL.pushString(button.getLabel());
+						pL.setTable(NEGATIVE_THREE);
 						
-						L.pushString("command");
-						L.pushString(button.getText());
-						L.setTable(-3);
+						pL.pushString("command");
+						pL.pushString(button.getText());
+						pL.setTable(NEGATIVE_THREE);
 						
-						L.pushString("flipLabel");
-						L.pushString(button.getFlipLabel());
-						L.setTable(-3);
+						pL.pushString("flipLabel");
+						pL.pushString(button.getFlipLabel());
+						pL.setTable(NEGATIVE_THREE);
 						
-						L.pushString("flipCommand");
-						L.pushString(button.getFlipCommand());
-						L.setTable(-3);
+						pL.pushString("flipCommand");
+						pL.pushString(button.getFlipCommand());
+						pL.setTable(NEGATIVE_THREE);
 						
 						
 						
-						L.rawSetI(-2, counter);
+						pL.rawSetI(NEGATIVE_TWO, counter);
 						counter++;
 					}
 					
-					L.setField(-2, name);
+					pL.setField(NEGATIVE_TWO, name);
 				}
 				
-				L.setGlobal("buttonsets");
+				pL.setGlobal("buttonsets");
 				
-				L.pushString(s.getLastSelected());
-				L.setGlobal("current_set");
+				pL.pushString(s.getLastSelected());
+				pL.setGlobal("current_set");
 				
-				L.getGlobal("legacyButtonsImported");
-				if(L.getLuaObject(-1).isFunction()) {
-					L.call(0, 0);
+				pL.getGlobal("legacyButtonsImported");
+				if (pL.getLuaObject(-1).isFunction()) {
+					pL.call(0, 0);
 				}
 				
 				} else {
 					//run the adjustment for the new buttons
-					LuaState L = buttonwindow.getLuaState();
-					L.getGlobal("debug");
-					L.getField(-1, "traceback");
-					L.getGlobal("alignDefaultButtons");
-					if(L.isFunction(-1)) {
-						int ret = L.pcall(0, 1, -2);
-						if(ret != 0) {
-							this.dispatchLuaError(L.getLuaObject(-1).getString());
+					LuaState pL = buttonwindow.getLuaState();
+					pL.getGlobal("debug");
+					pL.getField(-1, "traceback");
+					pL.getGlobal("alignDefaultButtons");
+					if (pL.isFunction(-1)) {
+						int ret = pL.pcall(0, 1, NEGATIVE_TWO);
+						if (ret != 0) {
+							this.dispatchLuaError(pL.getLuaObject(-1).getString());
 						}
 					} else {
-						L.pop(1);
+						pL.pop(1);
 					}
 				}
 				//s.getSetSettings();
@@ -3638,74 +3517,73 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				
 				
 				
-				WindowToken tmp = the_settings.getSettings().getWindows().get("mainDisplay");
+				WindowToken tmp = mSettings.getSettings().getWindows().get("mainDisplay");
 				tmp.importV1Settings(s);
 				
 				//handle button settings.
 				SettingsGroup buttonops = buttonwindow.getSettings().getOptions();
 				String hfedit = s.getHapticFeedbackMode();
-				if(hfedit.equals("auto")) {
+				if (hfedit.equals("auto")) {
 					buttonops.setOption("haptic_edit", Integer.toString(0));
-				} else if(hfedit.equals("always")) {
+				} else if (hfedit.equals("always")) {
 					buttonops.setOption("haptic_edit", Integer.toString(1));
-				} else if(hfedit.equals("none")) {
+				} else if (hfedit.equals("none")) {
 					buttonops.setOption("haptic_edit", Integer.toString(2));
 				}
 				
 				String hfpress = s.getHapticFeedbackOnPress();
-				if(hfpress.equals("auto")) {
+				if (hfpress.equals("auto")) {
 					buttonops.setOption("haptic_press", Integer.toString(0));
-				} else if(hfpress.equals("always")) {
+				} else if (hfpress.equals("always")) {
 					buttonops.setOption("haptic_press", Integer.toString(1));
-				} else if(hfpress.equals("none")) {
+				} else if (hfpress.equals("none")) {
 					buttonops.setOption("haptic_press", Integer.toString(2));
 				}
 				
 				String hfflip = s.getHapticFeedbackOnFlip();
-				if(hfflip.equals("auto")) {
+				if (hfflip.equals("auto")) {
 					buttonops.setOption("haptic_flip", Integer.toString(0));
-				} else if(hfflip.equals("always")) {
+				} else if (hfflip.equals("always")) {
 					buttonops.setOption("haptic_flip", Integer.toString(1));
-				} else if(hfflip.equals("none")) {
+				} else if (hfflip.equals("none")) {
 					buttonops.setOption("haptic_flip", Integer.toString(2));
 				}
 				String summary = Colorizer.colorWhite + verb + " legacy settings file.\n";
-				loadPlugins(tmpplugs,summary);
-				the_settings.importV1Settings(s);
-				if(!s.isRoundButtons()) {
+				loadPlugins(tmpplugs, summary);
+				mSettings.importV1Settings(s);
+				if (!s.isRoundButtons()) {
 					buttonops.setOption("button_roundness", Integer.toString(0));
 				} 
 			} else {
 				int version = vpp.getVersionNumber();
-				if(version == 2) {
-					Log.e("XMLPARSE","LOADING V2 SETTINGS FROM PATH: "+path);
+				if (version == 2) {
+					Log.e("XMLPARSE", "LOADING V2 SETTINGS FROM PATH: " + path);
 					ArrayList<Plugin> tmpplugs = new ArrayList<Plugin>();
-					ConnectionSetttingsParser csp = new ConnectionSetttingsParser(path,service.getApplicationContext(),tmpplugs,handler,this);
+					ConnectionSetttingsParser csp = new ConnectionSetttingsParser(path, mService.getApplicationContext(), tmpplugs, mHandler, this);
 					tmpplugs = csp.load(this);
-					if(path == null) {
+					if (path == null) {
 						Plugin buttonwindow = tmpplugs.get(1);
 						//LuaState L = buttonwindow.getLuaState();
-						LuaState L = buttonwindow.getLuaState();
-						L.getGlobal("debug");
-						L.getField(-1, "traceback");
-						L.getGlobal("alignDefaultButtons");
-						if(L.isFunction(-1)) {
-							int ret = L.pcall(0, 1, -2);
-							if(ret != 0) {
-								Connection.this.dispatchLuaError("ERROR IN DEFAULT BUTTONS:"+(L.getLuaObject(-1).getString()));
+						LuaState pL = buttonwindow.getLuaState();
+						pL.getGlobal("debug");
+						pL.getField(-1, "traceback");
+						pL.getGlobal("alignDefaultButtons");
+						if (pL.isFunction(-1)) {
+							int ret = pL.pcall(0, 1, NEGATIVE_TWO);
+							if (ret != 0) {
+								Connection.this.dispatchLuaError("ERROR IN DEFAULT BUTTONS:" + (pL.getLuaObject(-1).getString()));
 							}
 						} else {
-							L.pop(1);
+							pL.pop(1);
 						}
 					}
 					String summary = Colorizer.colorWhite + verb + " settings file.\n";
-					loadPlugins(tmpplugs,summary);
+					loadPlugins(tmpplugs, summary);
 				} else {
-					Log.e("XMLPARSE","ERROR IN LOADING V2 SETTINGS, DID NOT FIND PROPER XMLVERSION NUMBER");
+					Log.e("XMLPARSE", "ERROR IN LOADING V2 SETTINGS, DID NOT FIND PROPER XMLVERSION NUMBER");
 					try {
-						service.dispatchXMLError("Error "+verb.toLowerCase()+" settings, invalid or missing version attribute.\n");
+						mService.dispatchXMLError("Error " + verb.toLowerCase(Locale.US) + " settings, invalid or missing version attribute.\n");
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					return;
@@ -3715,141 +3593,132 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			
 			
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			
 			e.printStackTrace();
 			try {
-				service.dispatchXMLError(e.getLocalizedMessage());
+				mService.dispatchXMLError(e.getLocalizedMessage());
 				return;
 			} catch (RemoteException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		}
 		
-		if(path == null) {
-			the_settings.getSettings().getOptions().setOption("font_size", Integer.toString(calculate80CharFontSize()));
+		if (path == null) {
+			mSettings.getSettings().getOptions().setOption("font_size", Integer.toString(calculate80CharFontSize()));
 		
 		}
 		
 		buildTriggerSystem();
-		if(save) {
+		if (save) {
 			this.saveMainSettings();
 		}
 	}
 	
+	/** Entry point to load the internal settings. */
 	private void loadInternalSettings() {
-		Long start = System.currentTimeMillis();
-		
 		Pattern invalidchars = Pattern.compile("\\W");
-		Matcher replacebadchars = invalidchars.matcher(this.display);
+		Matcher replacebadchars = invalidchars.matcher(this.mDisplay);
 		String prefsname = replacebadchars.replaceAll("");
 		prefsname = prefsname.replaceAll("/", "");
-		//String settingslocation = 
-		//loadXmlSettings(prefsname +".xml");
 		String rootPath = prefsname + ".xml";
-		//String convertPath = prefsname + ".v1.xml";
-		//String newPath = prefsname + ".v2.xml";
-		String internal = service.getApplicationContext().getApplicationInfo().dataDir + "/files/";
-		File oldp = new File(internal+rootPath);
-		//HyperSettings oldSettings = null;
-		
-		if(!oldp.exists()) {
-			//oldp.renameTo(new File(internal+convertPath));
-			importSettings(null,false,true);
+		String internal = mService.getApplicationContext().getApplicationInfo().dataDir + "/files/";
+		File oldp = new File(internal + rootPath);
+		if (!oldp.exists()) {
+			importSettings(null, false, true);
 		} else {
-			importSettings(rootPath,false,true);
+			importSettings(rootPath, false, true);
 		}
-
-		Long end = System.currentTimeMillis();
-		int dur = (int) (end - start);
-		//Log.e("Connection","Took" + dur + " to load settings.");
 	}
 	
-	
+	/** Build settings page routine. This is used by the settings loading routine. 
+	 * The reason why the magic number 4 is used is that is the position of the window settings in the
+	 * settings list is similar to the position of the menu item in the v1 client.
+	 */
+	@SuppressWarnings("deprecation")
 	private void buildSettingsPage() {
-		if(the_settings.getSettings().getWindows().size() < 1) {
-			WindowToken token = new WindowToken(MAIN_WINDOW,null,null,display);
-			//token.layouts.clear();
-			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
+		if (mSettings.getSettings().getWindows().size() < 1) {
+			WindowToken token = new WindowToken(MAIN_WINDOW, null, null, mDisplay);
+			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
 			LayoutGroup g = new LayoutGroup();
 			g.type = LayoutGroup.LAYOUT_TYPE.normal;
 			g.setLandscapeParams(p);
 			g.setPortraitParams(p);
-			mWindows.add(0,token);
+			mWindows.add(0, token);
 		} else {
-			//mWindows.add
-			mWindows.add(0,the_settings.getSettings().getWindows().get(MAIN_WINDOW));
+			mWindows.add(0, mSettings.getSettings().getWindows().get(MAIN_WINDOW));
 		}
 		
-		the_settings.doBackgroundStartup();
-		for(Plugin pl : plugins) {
+		mSettings.doBackgroundStartup();
+		for (Plugin pl : mPlugins) {
 			pl.doBackgroundStartup();
 		}
 		
-		the_settings.buildAliases();
-		for(Plugin pl : plugins) {
+		mSettings.buildAliases();
+		for (Plugin pl : mPlugins) {
 			pl.buildAliases();
 		}
 		
 		buildTriggerSystem();
 		mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
-		the_settings.getSettings().getOptions().addOptionAt(mWindows.get(0).getSettings(),4);
-		
-		
-		//go through all the plugins and add thier options if they have them.
-		/*for(Plugin p : plugins) {
-			if(p.getSettings().getWindows().size() > 0) {
-				for(String token : p.getSettings().getWindows().keySet()) {
-					WindowToken w = p.getSettings().getWindows().get(token);
-					p.getSettings().getOptions().addOption(w.getSettings());
-				}
-			}
-			
-			if(p.getSettings().getOptions().getOptions().size() > 0) {
-				the_settings.getSettings().getOptions().addOption(p.getSettings().getOptions());
-			}
-		}*/
-		
-		//the_settings.getSettings().setOptions(sg);
+		mSettings.getSettings().getOptions().addOptionAt(mWindows.get(0).getSettings(), FOUR);
 	}
 	
-	public void attatchWindowSettingsChangedListener(WindowToken w) {
+	/** Attatches a WindowSettingsChangedListener to the given WindowToken.
+	 * 
+	 * @param w The window to attatch a new settings changed listener to.
+	 */
+	public final void attatchWindowSettingsChangedListener(final WindowToken w) {
 		w.getSettings().setListener(new WindowSettingsChangedListener(w.getName()));
 	}
 
-	public boolean isKeepLast() {
-		return (Boolean)((BooleanOption)the_settings.getSettings().getOptions().findOptionByKey("keep_last")).getValue();
+	/** Target for the foreground window to check if the keep last setting is set.
+	 * 
+	 * @return value of the keep list settings.
+	 */
+	public final boolean isKeepLast() {
+		return (Boolean) ((BooleanOption) mSettings.getSettings().getOptions().findOptionByKey("keep_last")).getValue();
 	}
 
-	public boolean isFullScren() {
-		return (Boolean)((BooleanOption)the_settings.getSettings().getOptions().findOptionByKey("fullscreen")).getValue();
+	/** Target for the foreground window to check if the full screen settings is set.
+	 * 
+	 * @return the value of the full screen option.
+	 */
+	public final boolean isFullScren() {
+		return (Boolean) ((BooleanOption) mSettings.getSettings().getOptions().findOptionByKey("fullscreen")).getValue();
 	}
 
-	public String getHostName() {
-		// TODO Auto-generated method stub
-		return host;
+	/** Getter for mHost.
+	 * 
+	 * @return mHost;
+	 */
+	public final String getHostName() {
+		return mHost;
 	}
 	
-	public int getPort() {
-		return port;
+	/** Getter for this connection's port value.
+	 * 
+	 * @return the port number this connection is using.
+	 */
+	public final int getPort() {
+		return mPort;
 	}
 	
+	/** Utility method that generates the font size necessary to fit 80 chars to the window width.
+	 * 
+	 * @return the font size that will produce nearest to 80 chars as possible.
+	 */
 	private int calculate80CharFontSize() {
-		int windowWidth = service.getResources().getDisplayMetrics().widthPixels;
-		if(service.getResources().getDisplayMetrics().heightPixels > windowWidth) {
-			windowWidth = service.getResources().getDisplayMetrics().heightPixels;
+		int windowWidth = mService.getResources().getDisplayMetrics().widthPixels;
+		if (mService.getResources().getDisplayMetrics().heightPixels > windowWidth) {
+			windowWidth = mService.getResources().getDisplayMetrics().heightPixels;
 		}
-		float fontSize = 8.0f;
+		float fontSize = MIN_FONT_SIZE;
 		float delta = 1.0f;
 		Paint p = new Paint();
-		p.setTextSize(8.0f);
+		p.setTextSize(MIN_FONT_SIZE);
 		//p.setTypeface(Typeface.createFromFile(service.getFontName()));
 		p.setTypeface(Typeface.MONOSPACE);
 		boolean done = false;
@@ -3857,7 +3726,7 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 		float charWidth = p.measureText("A");
 		float charsPerLine = windowWidth / charWidth;
 		
-		if(charsPerLine < 80.0f) {
+		if (charsPerLine < TARGET_FIT_WIDTH) {
 			//for QVGA screens, this test will always fail on the first step.
 			done = true;
 		} else {
@@ -3865,10 +3734,10 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 			p.setTextSize(fontSize);
 		}
 		
-		while(!done) {
+		while (!done) {
 			charWidth = p.measureText("A");
 			charsPerLine = windowWidth / charWidth;
-			if(charsPerLine < 80.0f) {
+			if (charsPerLine < TARGET_FIT_WIDTH) {
 				done = true;
 				fontSize -= delta; //return to the previous font size that produced > 80 characters.
 			} else {
@@ -3876,390 +3745,477 @@ public class Connection implements SettingsChangedListener,ConnectionPluginCallb
 				p.setTextSize(fontSize);
 			}
 		}
-		return (int)fontSize;
+		return (int) fontSize;
 	}
 	
+	/** Starts the recursive settings initialization routine to set all the settings loaded from the serialized settings file. */
 	private void initSettings() {
-		initSetting(the_settings.getSettings().getOptions());
+		initSetting(mSettings.getSettings().getOptions());
 	}
 	
-	private void initSetting(SettingsGroup s) {
-		for(Option o : s.getOptions()) {
-			if(o instanceof SettingsGroup) {
-				initSetting((SettingsGroup)o);
+	/** Recursive settings initializations routine. 
+	 * 
+	 * @param s the SettingsGroup to dump.
+	 */
+	private void initSetting(final SettingsGroup s) {
+		for (Option o : s.getOptions()) {
+			if (o instanceof SettingsGroup) {
+				initSetting((SettingsGroup) o);
 			} else {
-				BaseOption tmp = (BaseOption)o;
+				BaseOption tmp = (BaseOption) o;
 				this.updateSetting(o.getKey(), tmp.getValue().toString());
 			}
 		}
 	}
 
-	public void resetSettings() {
-		this.handler.sendEmptyMessage(MESSAGE_DORESETSETTINGS);
+	/** Entry point for the foreground window to reset the settings for this connection. */
+	public final void resetSettings() {
+		this.mHandler.sendEmptyMessage(MESSAGE_DORESETSETTINGS);
 	}
 	
-	public void doResetSettings() {
-		for(IWindowCallback c : windowCallbackMap.values()) {
-			//IWindowCallback c = mWindowCallbacks.getBroadcastItem(i);
-			
+	/** Work horse routine that actually resets the settings. */
+	public final void doResetSettings() {
+		for (IWindowCallback c : mWindowCallbackMap.values()) {
 			try {
-				///if(!c.getName().equals(MAIN_WINDOW)) {
-					c.shutdown();
-				//}
+				c.shutdown();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		
-		//mWindowCallbacks.finishBroadcast();
-		
-		//}
-		//loadSettings();
-		service.markWindowsDirty();
-		importSettings(null,true,true);
+		mService.markWindowsDirty();
+		importSettings(null, true, true);
 	}
 
-	public void startLoadSettingsSequence(String path) {
-		handler.sendMessage(handler.obtainMessage(MESSAGE_IMPORTFILE,path));
+	/** Entry point for the foreground window to import a custom settings file at the given location.
+	 * 
+	 * @param path Path of the settings to load.
+	 */
+	public final void startLoadSettingsSequence(final String path) {
+		mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_IMPORTFILE, path));
 	}
 	
-	public void doAddLink(String path) {
-		the_settings.getLinks().add(path);
+	/** Work horse for the foreground window to add an external plugin and reload the settings.
+	 * 
+	 * @param path The location of the external settings file.
+	 */
+	public final void doAddLink(final String path) {
+		mSettings.getLinks().add(path);
 		saveMainSettings();
 		reloadSettings();
 	}
 	
-	public void addLink(String path) {
-		handler.sendMessage(handler.obtainMessage(MESSAGE_ADDLINK,path));
+	/** Entry point for the foreground window to add an external plugin and reload the settings.
+	 * 
+	 * @param path The location of the external settings file.
+	 */
+	public final void addLink(final String path) {
+		mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_ADDLINK, path));
 	}
 
-	private void doDeletePlugin(String plugin) {
-		Plugin p = pluginMap.remove(plugin);
+	/** Work horse routine for removing a plugin. 
+	 * 
+	 * @param plugin The name of the plugin to remove.
+	 */
+	private void doDeletePlugin(final String plugin) {
+		Plugin p = mPluginMap.remove(plugin);
 		String remove = null;
-		if(p.getStorageType().equals("EXTERNAL")) {
-			for(String path : the_settings.getLinks()) {
-				if(p.getFullPath().contains(path)) {
-					//the_settings.getLinks().remove(path);
-					//linkMap.remove(path);
+		if (p.getStorageType().equals("EXTERNAL")) {
+			for (String path : mSettings.getLinks()) {
+				if (p.getFullPath().contains(path)) {
 					remove = path;
 				}
 			}
 		}
-		if(remove == null) { return; } //no plugin of that name path exists
-		the_settings.getLinks().remove(remove);
-		linkMap.remove(remove);
-		plugins.remove(p);
-		//the_settings.get
+		if (remove == null) { return; }
+		mSettings.getLinks().remove(remove);
+		mLinkMap.remove(remove);
+		mPlugins.remove(p);
 		saveMainSettings();
 		reloadSettings();
 	}
-	public void deletePlugin(String plugin) {
-		handler.sendMessage(handler.obtainMessage(MESSAGE_DELETEPLUGIN,plugin));
+	
+	/** Entry poit routine for removing a plugin.
+	 * 
+	 * @param plugin The name of the plugin to remove.
+	 */
+	public final void deletePlugin(final String plugin) {
+		mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_DELETEPLUGIN, plugin));
 	}
 
-	public void setPluginEnabled(String plugin, boolean enabled) {
-		Plugin p = pluginMap.get(plugin);
+	/** Sets a plugin enabled.
+	 * 
+	 * @param plugin Name of the plugin to affect.
+	 * @param enabled Desired state of the plugin.
+	 */
+	public final void setPluginEnabled(final String plugin, final boolean enabled) {
+		Plugin p = mPluginMap.get(plugin);
 		p.setEnabled(enabled);
 		saveMainSettings();
 		reloadSettings();
 	}
 
-	public Map getDirectionData() {
-		// TODO Auto-generated method stub
-		return the_settings.getDirections();
+	/** Gets the direction data from the main settings plugin.
+	 * 
+	 * @return The direction map.
+	 */
+	public final HashMap<String, DirectionData> getDirectionData() {
+		return mSettings.getDirections();
 	}
 
-	public void setDirectionData(Map data) {
-		the_settings.setDirections((HashMap<String, DirectionData>) data);
+	/** Sets the directio data for the main settings plugin. This is supplied from the foreground window.
+	 * 
+	 * @param data Diretion data wad from to use for the main settings wad.
+	 */
+	public final void setDirectionData(final HashMap<String, DirectionData> data) {
+		mSettings.setDirections(data);
 	}
 
-	public int getTitleBarHeight() {
-		// TODO Auto-generated method stub
-		return titleBarHeight;
+	/** Getter for the title bar height. 
+	 * 
+	 * @return the title bar height.
+	 */
+	public final int getTitleBarHeight() {
+		return mTitleBarHeight;
 	}
 
-	public int getStatusBarHeight() {
-		// TODO Auto-generated method stub
-		return statusBarHeight;
+	/** Getter for the status bar height. 
+	 * 
+	 * @return the status bar height.
+	 */
+	public final int getStatusBarHeight() {
+		return mStatusBarHeight;
 	}
 
-	public boolean isLinkLoaded(String link) {
-		// TODO Auto-generated method stub
+	/** Utility method to test to see if a link has been loaded.
+	 * 
+	 * @param link The path of the link to test. Relative to the BlowTorch sd card root.
+	 * @return The state of the target plugin. true = loaded, false = unloaded.
+	 */
+	public final boolean isLinkLoaded(final String link) {
 		String foo = Environment.getExternalStorageDirectory() + "/BlowTorch/";
 		String bar = link.replace(foo, "");
 		
-		boolean ret = linkMap.containsKey(bar);
-		//Plugin p = pluginMap.get()
+		boolean ret = mLinkMap.containsKey(bar);
 		return ret;
 	}
 
-	public void initWindows() {
-		// TODO Auto-generated method stub
+	/** Kicks off the loadInternalSettings() routine. */
+	public final void initWindows() {
 		loadInternalSettings();
 	}
 
-	public void shutdown() {
+	/** Immediatly shuts down this connection and all associated data structures. */
+	public final void shutdown() {
 		this.saveMainSettings();
 		this.killNetThreads(true);
-		for(Plugin p : plugins) {
+		for (Plugin p : mPlugins) {
 			p.shutdown();
 			p = null;
 		}
-		
-		
-		
-		the_settings.shutdown();
-		the_settings = null;
-		
-		handler.removeMessages(MESSAGE_RECONNECT);
-		handler = null;
-		
-		service.removeConnectionNotification(display);
-		
+		mSettings.shutdown();
+		mSettings = null;
+		mHandler.removeMessages(MESSAGE_RECONNECT);
+		mHandler = null;
+		mService.removeConnectionNotification(mDisplay);
 	}
 
-	public String getPluginPath(String plugin) {
-		Plugin p = pluginMap.get(plugin);
+	/** Gets the path for a plugin.
+	 * 
+	 * @param plugin Name of the plugin to interrogate.
+	 * @return The full path of the plugin.
+	 */
+	public final String getPluginPath(final String plugin) {
+		Plugin p = mPluginMap.get(plugin);
 		return p.getFullPath();
 	}
 
-	public void dispatchLuaText(String str) {
-		handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_LUANOTE,str));
-		//Log.e("lua text","lua text: " + str);
+	/** Entry point for Plugins to send data to the foreground window without trigger parsing.
+	 * 
+	 * @param str The string to send.
+	 */
+	public final void dispatchLuaText(final String str) {
+		mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_LUANOTE, str));
 	}
 
-	public void callPluginFunction(String plugin, String function) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	/** Calls an anonymous global function in the target plugin. Does not provide an arugment.
+	 * 
+	 * @param plugin Name of the target plugin.
+	 * @param function Name of the function to call.
+	 */
+	public final void callPluginFunction(final String plugin, final String function) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			p.callFunction(function);
 		} else {
-			this.dispatchLuaText("\n"+Colorizer.colorRed+"No plugin named: "+plugin+Colorizer.colorRed+"\n");
+			this.dispatchLuaText("\n" + Colorizer.colorRed + "No plugin named: " + plugin + Colorizer.colorRed + "\n");
 		}
 	}
 
 	@Override
-	public SettingsChangedListener getSettingsListener() {
-		// TODO Auto-generated method stub
-		return (SettingsChangedListener)this;
+	public final SettingsChangedListener getSettingsListener() {
+		return (SettingsChangedListener) this;
 	}
 
 	@Override
-	public void callPlugin(String plugin, String function, String data) {
-		Message m = handler.obtainMessage(MESSAGE_CALLPLUGIN);
-		m.getData().putString("PLUGIN",plugin);
+	public final void callPlugin(final String plugin, final String function, final String data) {
+		Message m = mHandler.obtainMessage(MESSAGE_CALLPLUGIN);
+		m.getData().putString("PLUGIN", plugin);
 		m.getData().putString("FUNCTION", function);
 		m.getData().putString("DATA", data);
-		handler.sendMessage(m);
+		mHandler.sendMessage(m);
 	}
 
 	@Override
-	public boolean pluginSupports(String plugin,String function) {
-		Plugin p = pluginMap.get(plugin);
-		if(p != null) {
+	public final boolean pluginSupports(final String plugin, final String function) {
+		Plugin p = mPluginMap.get(plugin);
+		if (p != null) {
 			return p.checkPluginSupports(function);
 		}
 		return false;
 	}
 
-	public boolean isPluginInstalled(String desired) {
-		return pluginMap.containsKey(desired);
+	/** Test to see of a plugin is installed. 
+	 * 
+	 * @param desired Name of the desired plugin.
+	 * @return is it loaded or not.
+	 */
+	public final boolean isPluginInstalled(final String desired) {
+		return mPluginMap.containsKey(desired);
 	}
 	
+	/** Utility class providing the .timer command. */
 	private class TimerCommand extends SpecialCommand {
-	ArrayList<String> timer_actions = new ArrayList<String>();
-	public TimerCommand() {
-		this.commandName = "timer";
-		timer_actions.add("play");
-		timer_actions.add("pause");
-		timer_actions.add("info");
-		timer_actions.add("reset");
-		timer_actions.add("stop");
-	}
-	public Object execute(Object o,Connection c)  {
-		//example argument " info 0"
-		//regex = "^\s+(\S+)\s+(\d+)";
-		Pattern p = Pattern.compile("^\\s*(\\S+)\\s+(\\S+)\\s*(\\S*)");
-		
-		Matcher m = p.matcher((String)o);
-		
-		int pOrdinal = -1;
-		
-		if(m.matches()) {
-			//extract arguments
-			String action = m.group(1).toLowerCase();
-			String ordinal = m.group(2);
-			String silent = "";
-			if(m.groupCount() > 2) {
-				silent = m.group(3);
-			} else {
-				//do nothing
-			}
-			if(timer_actions.contains(action)) {
-				//we have a valid action.
-			} else {
-				//error with bad action.
-				//try {
-					dispatchNoProcess(getErrorMessage("Timer action arguemnt " + action + " is invalid.","Acceptable arguments are \"play\",\"pause\",\"reset\",\"stop\" and \"info\".").getBytes());
-				//} catch (RemoteException e) {
-				//	throw new RuntimeException(e);
-				//}
-				return null;
-			}
+		/** Acceptable timer action strings. */
+		private ArrayList<String> mTimerActions = new ArrayList<String>();
+		/** Ordinal capture group. */
+		private final int mOrdinalGroupIndex = 3;
+		/** Silent marker. */
+		private final int mSilent = 50;
+		/** Generic constructor. */
+		public TimerCommand() {
+			this.commandName = "timer";
+			mTimerActions.add("play");
+			mTimerActions.add("pause");
+			mTimerActions.add("info");
+			mTimerActions.add("reset");
+			mTimerActions.add("stop");
+		}
+		/** Execute method for this command.
+		 * 
+		 * @param o parameter object.
+		 * @param c connection that called this function
+		 * @return whatever this function returns.
+		 */
+		public Object execute(final Object o, final Connection c)  {
+			//example argument " info 0"
+			//regex = "^\s+(\S+)\s+(\d+)";
+			Pattern p = Pattern.compile("^\\s*(\\S+)\\s+(\\S+)\\s*(\\S*)");
 			
-			//try {
-			//	pOrdinal = Integer.parseInt(ordinal);
-			//	pOrdinal = pOrdinal + 1;
-			//} catch (NumberFormatException e) {
-				//try {
-			//		dispatchNoProcess(getErrorMessage("Timer index argument " + ordinal + " is not a number.","Acceptable argument is an integer.").getBytes());
-			//		return null;
-				//} catch (RemoteException e1) {
-				//	throw new RuntimeException(e);
-				//}
-			//}
+			Matcher m = p.matcher((String) o);
 			
-			//if(the_settings.getSettings().getTimers().containsKey(ordinal)) {
-				//valid timer.
-				int domsg = 50;
-				//Log.e("SERVICE","SILENT IS " + silent);
-				if(!silent.equals("")) {
+			if (m.matches()) {
+				//extract arguments
+				String action = m.group(1).toLowerCase(Locale.US);
+				String ordinal = m.group(2);
+				String silent = "";
+				if (m.groupCount() > 2) {
+					silent = m.group(mOrdinalGroupIndex);
+				}
+				if (!mTimerActions.contains(action)) {
+					//error with bad action.
+					dispatchNoProcess(getErrorMessage("Timer action arguemnt " + action + " is invalid.", "Acceptable arguments are \"play\",\"pause\",\"reset\",\"stop\" and \"info\".").getBytes());
+					return null;
+				}
+				int domsg = mSilent;
+				if (!silent.equals("")) {
 					domsg = 0;
 				}
 				
-				if(action.equals("info")) {
-					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERINFO, ordinal));
+				if (action.equals("info")) {
+					mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_TIMERINFO, ordinal));
 					return null;
 				}
-				if(action.equals("reset")) {
-					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERRESET, 0, domsg, ordinal));
+				if (action.equals("reset")) {
+					mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_TIMERRESET, 0, domsg, ordinal));
 					return null;
 				}
-				if(action.equals("play")) {
+				if (action.equals("play")) {
 					//play
-					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERSTART,0,domsg,ordinal));
+					mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_TIMERSTART, 0, domsg, ordinal));
 					return null;
 				}
-				if(action.equals("pause")) {
-					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERPAUSE, 0, domsg, ordinal));
+				if (action.equals("pause")) {
+					mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_TIMERPAUSE, 0, domsg, ordinal));
 					return null;
 				}
-				if(action.equals("stop")) {
-					handler.sendMessage(handler.obtainMessage(MESSAGE_TIMERSTOP, 0, domsg, ordinal));
+				if (action.equals("stop")) {
+					mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_TIMERSTOP, 0, domsg, ordinal));
 					return null;
 				}
-				
-				
-			//} else {
-				//invalid timer
-				//try {
-					//dispatchNoProcess(getErrorMessage("Timer at index " + ordinal + " does not exist.","The timer index is the number displayed next to the timer the timer selection screen.").getBytes());
-				//} catch (RemoteException e) {
-				//	throw new RuntimeException(e);
-				//}
-			//}
+			} else {
+				dispatchNoProcess(getErrorMessage("Timer command: \".timer " + (String) o + "\" is invalid.", "Timer function format \".timer action index [silent]\"\n"
+							+ "Where action is \"play\",\"pause\",\"reset\" or \"info\".\nIndex is the timer index displayed in the timer selection list.").getBytes());
+			}
 			
+			return null;
 			
-			
-		} else {
-			//try {
-				dispatchNoProcess(getErrorMessage("Timer command: \".timer " + (String)o + "\" is invalid.","Timer function format \".timer action index [silent]\"\nWhere action is \"play\",\"pause\",\"reset\" or \"info\".\nIndex is the timer index displayed in the timer selection list.").getBytes());
-			//} catch (RemoteException e) {
-			//	throw new RuntimeException(e);
-			//}
 		}
-		
-		return null;
-		
-	}
 	}
 	
-	private void doTimerAction(String obj, int arg2, TIMER_ACTION action) {
+	/** Work horse method for the timer command.
+	 * 
+	 * @param obj The name of the timer.
+	 * @param arg2 The silent flag (0 = silent, anything else = not silent).
+	 * @param action The action that was harvested from the entry point.
+	 */
+	private void doTimerAction(final String obj, final int arg2, final TIMER_ACTION action) {
 		//check for valid ordinals.
 		boolean found = false;
 		Plugin host = null;
-		if(the_settings.getSettings().getTimers().containsKey(obj)) {
-			host = the_settings;
+		if (mSettings.getSettings().getTimers().containsKey(obj)) {
+			host = mSettings;
 			found = true;
 		} else {
 			//check plugins
-			for(Plugin p : plugins) {
-				if(p.getSettings().getTimers().containsKey(obj)) {
+			for (Plugin p : mPlugins) {
+				if (p.getSettings().getTimers().containsKey(obj)) {
 					host = p;
 					found = true;
 				}
 			}
 		}
 		boolean silent = false;
-		if(arg2 == 0) {
+		if (arg2 == 0) {
 			silent = true;
 		}
 		
-		if(!found) {
+		if (!found) {
 			//show error message.
-			dispatchNoProcess(SpecialCommand.getErrorMessage("Timer command error","No timer with name "+obj+" found.").getBytes());
+			dispatchNoProcess(SpecialCommand.getErrorMessage("Timer command error", "No timer with name " + obj + " found.").getBytes());
 		} else {
-			switch(action) {
+			switch (action) {
 			case PLAY:
 				host.startTimer(obj);
-				if(!silent) {
-					toast("Timer "+obj+" started.");
+				if (!silent) {
+					toast("Timer " + obj + " started.");
 				}
 				break;
 			case PAUSE:
 				host.pauseTimer(obj);
-				if(!silent) {
-					toast("Timer "+obj+" paused.");
+				if (!silent) {
+					toast("Timer " + obj + " paused.");
 				}
 				break;
 			case RESET:
 				host.resetTimer(obj);
-				if(!silent) {
-					toast("Timer "+obj+" reset.");
+				if (!silent) {
+					toast("Timer " + obj + " reset.");
 				}
 				break;
 			case STOP:
 				host.pauseTimer(obj);
 				host.resetTimer(obj);
-				if(!silent) {
-					toast("Timer "+obj+" stopped.");
+				if (!silent) {
+					toast("Timer " + obj + " stopped.");
 				}
 				break;
 			case INFO:
 				TimerData t = host.getSettings().getTimers().get(obj);
-				if(t.isPlaying()) {
+				if (t.isPlaying()) {
 					long now = SystemClock.elapsedRealtime();
 					long dur = now - t.getStartTime();
-					int sec = t.getSeconds() - (int) (dur/1000);
-					//Log.e("TIMER","Timer "+obj+" is playing, "+sec+" remaining.");
-					toast(obj+": "+sec+"s");
+					int sec = t.getSeconds() - (int) (dur / ONE_THOUSAND_MILLIS);
+					toast(obj + ": " + sec + "s");
 				} else {
-					if(t.getRemainingTime() != t.getSeconds()) {
+					if (t.getRemainingTime() != t.getSeconds()) {
 						int sec = t.getSeconds() - t.getRemainingTime();
-						//Log.e("TIMER","Timer "+obj+" is paused, " + sec + " remain.");
-						toast("Timer "+obj+" is paused, " + sec + " remain.");
+						toast("Timer " + obj + " is paused, " + sec + " remain.");
 					} else {
-						//Log.e("TIMER","Timer "+obj+" is not playing.");
-						toast("Timer "+obj+" is not running.");
+						toast("Timer " + obj + " is not running.");
 					}
 				}
-				//long time = host.getSettings().getTimers().get(obj).getStartTime();
-				
-				//goooodie
 				break;
 			case NONE:
+				break;
+			default:
 				break;
 			}
 		}
 	}
 	
-	private void toast(String str) {
+	/** Utility method for putting up a generic toast message.
+	 * 
+	 * @param str The string to use for the toast message.
+	 */
+	private void toast(final String str) {
 		Context c = this.getContext();
-		//String translated = ToastResponder.this.translate(message, captureMap);
-		Toast t = Toast.makeText(c, str, 0);
+		Toast t = Toast.makeText(c, str, Toast.LENGTH_SHORT);
 		float density = c.getResources().getDisplayMetrics().density;
-		t.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, (int) (50*density));
+		t.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, (int) (TOAST_MESSAGE_TOP_OFFSET * density));
 		t.show();
 	}
 	
+	/** Getter for mHandler.
+	 * 
+	 * @return The handler associated with this connection.
+	 */
+	public final Handler getHandler() {
+		return mHandler;
+	}
+	
+	/** Getter for the plugin list.
+	 * 
+	 * @return The plugin list in loaded order.
+	 */
+	public final ArrayList<Plugin> getPlugins() {
+		return mPlugins;
+	}
+	
+	/** Getter for mPump.
+	 * 
+	 * @return the data pump for this connection.
+	 */
+	public final DataPumper getPump() {
+		return mPump;
+	}
+	
+	/** Getter for mProcessor.
+	 * 
+	 * @return the processor associated with this connection.
+	 */
+	public final Processor getProcessor() {
+		return mProcessor;
+	}
+	
+	/** Getter for the display name.
+	 * 
+	 * @return the launcher display name for this connection.
+	 */
+	public final String getDisplay() {
+		return mDisplay;
+	}
+	
+	/** Getter for the host name.
+	 * 
+	 * @return the host name this connection uses.
+	 */
+	public final String getHost() {
+		return mHost;
+	}
+	
+	/** getter for mIsConnected.
+	 * 
+	 * @return the connected state of this connection.
+	 */
+	public final boolean isConnected() {
+		return mIsConnected;
+	}
+	
+	/** Getter for mService. This is really ugly and should be fixed immediatly.
+	 * 
+	 * @return the service that initated this connection.
+	 */
+	public final StellarService getService() {
+		return mService;
+	}
 }

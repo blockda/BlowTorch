@@ -4,11 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.keplerproject.luajava.LuaState;
 
 import com.offsetnull.bt.settings.ConfigurationLoader;
 
@@ -18,94 +16,115 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-
+/** Class implementation for the telnet state machine. */
 public class Processor {
-
-	Handler reportto = null;
-	Colorizer colormebad = new Colorizer();
-	OptionNegotiator opthandler;
-
-	private String encoding = null;
+	/** Skippable bytes in the state machine for case 1. */
+	private static final int SKIP_BYTES = 3;
+	/** Telnet SUB payload byte count. */
+	private static final int PAYLOAD_BYTES = 5;
+	/** Handler object to dispatch results to. */
+	private Handler mReportTo = null;	
+	/** Negotiation sublayer object. */
+	private OptionNegotiator mOptionHandler;
+	/** Selected encoding to use. */
+	private String mEncoding = null;
+	/** Application context. */
 	private Context mContext = null;
-	public Processor(Handler useme,
-			String pEncoding,Context pContext) {
-		reportto = useme;
+	/** Weather or not to display telnet debugging messages. */
+	private boolean mDebugTelnet = false;
+	/** Holdover sequence buffer. Used when a telnet negotation spans a transmission boundary. */
+	private byte[] mHoldover = null;
+	/** GMCP Data holder object. */
+	private GMCPData mGMCP = null;
+	/** List of GMCP Triggers. */
+	private HashMap<String, ArrayList<GMCPWatcher>> mGMCPTriggers = new HashMap<String, ArrayList<GMCPWatcher>>();
+	/** GMCP Hello string. */
+	private String mGMCPHello = "core.hello {\"client\": \"BlowTorch\",\"version\": \"1.4\"}";
+	/** Tracker for weather or not the use GMCP. */
+	private Boolean mUseGMCP = false;
+	/** GMCP Supports string. */
+	private String mGMCPSupports = "core.supports.set [\"char 1\"]";
+	/** Constructor.
+	 * 
+	 * @param useme reporting handler target.
+	 * @param pEncoding selected encoding to use.
+	 * @param pContext application content.
+	 */
+	public Processor(final Handler useme, final String pEncoding, final Context pContext) {
+		mReportTo = useme;
 
 		mContext = pContext;
 		String ttype = ConfigurationLoader.getConfigurationValue("terminalTypeString", mContext);
-		opthandler = new OptionNegotiator(ttype);
-		gmcp = new GMCPData(useme);
+		mOptionHandler = new OptionNegotiator(ttype);
+		mGMCP = new GMCPData(useme);
 		setEncoding(pEncoding);
 	}
 
-	private boolean debugTelnet = false;
-
-	public boolean isDebugTelnet() {
-		return debugTelnet;
+	/** Getter for mDebugTelnet.
+	 * 
+	 * @return mDebugTelnet
+	 */
+	public final boolean isDebugTelnet() {
+		return mDebugTelnet;
 	}
 
-	public void setDebugTelnet(boolean debugTelnet) {
-		this.debugTelnet = debugTelnet;
-		//Log.e("PROC","SETTING DEBUG TELNET TO " + debugTelnet);
+	/** Setter for mDebugTelnet.
+	 * 
+	 * @param debugTelnet value for mDebugTelnet
+	 */
+	public final void setDebugTelnet(final boolean debugTelnet) {
+		mDebugTelnet = debugTelnet;
 	}
-
-	private final byte IAC = (byte) 0xFF;
-	private final byte SB = (byte) 0xFA;
-	private final byte SE = (byte) 0xF0;
-	private final byte WILL = (byte) 0xFB;
-	private final byte DONT = (byte) 0xFE;
-	private final byte BREAK = (byte) 243; // NVT character BRK.
-	// private final byte Interrupt Process 244 //The function IP.
-	private final byte AO = (byte) 245; // The function AO.
-	private final byte AYT = (byte) 246; // The function AYT.
-	private final byte EC = (byte) 247; // The function EC.
-	private final byte EL = (byte) 248; // The function EL.
-	private final byte CARRIAGE = (byte)0x0D;
-	private final byte GOAHEAD = (byte) 0xF9;
-	private final byte IP = (byte) 0xF4;
-	// private final byte TAB = (byte)0x09;
-	private final byte BELL = (byte) 0x07;
-	byte[] holdover = null;
-
-	public byte[] RawProcess(byte[] data) {
+	
+	/** The main processing routine.
+	 * 
+	 * @param data The data to process.
+	 * @return The processed data minus telnet data.
+	 */
+	public final byte[] rawProcess(final byte[] data) {
 		if (data == null) {
 			return null;
 		}
 		
-		if(data.length == 1) {
-			if(data[0] == IAC) {
+		if (data.length == 1) {
+			if (data[0] == TC.IAC) {
 				return null; //nothing to do here.
 			}
 		}
 
 		ByteBuffer buff = null;
-		if(holdover == null) {buff = ByteBuffer.allocate(data.length); }
-		else { buff = ByteBuffer.allocate(data.length + holdover.length); buff.put(holdover); holdover = null; }
-		ByteBuffer opbuf = ByteBuffer.allocate(data.length*2);
+		if (mHoldover == null) { 
+			buff = ByteBuffer.allocate(data.length); 
+		} else { 
+			buff = ByteBuffer.allocate(data.length + mHoldover.length); 
+			buff.put(mHoldover); 
+			mHoldover = null; 
+		}
+		ByteBuffer opbuf = ByteBuffer.allocate(data.length * 2);
 
 		int count = 0; // count of the number of bytes in the buffer;
 		for (int i = 0; i < data.length; i++) {
 			switch (data[i]) {
-			case IAC:
+			case TC.IAC:
 				// if the next byte is
-				if(i > data.length-1) {
-					holdover = new byte[] { (byte)0xFF };
+				if (i > data.length - 1) {
+					mHoldover = new byte[] {TC.IAC};
 					return null;
 				}
-				if ((data[i + 1] >= WILL && data[i + 1] <= DONT)
-						|| data[i + 1] == SB) {
+				if ((data[i + 1] >= TC.WILL && data[i + 1] <= TC.DONT)
+						|| data[i + 1] == TC.SB) {
 					//Log.e("SERVICE", "DO IAC");
 					// switch(data[i+1])
-					if (data[i + 1] == SB) {
+					if (data[i + 1] == TC.SB) {
 						// subnegotiation
 						// now we have an optional number of bytes between the
 						// indicated subnegotiation and the IAC SE end of
 						// sequence.
 						boolean done = false;
-						int j = i + 3;
+						int j = i + SKIP_BYTES;
 						while (!done) {
-							if (data[j] == IAC) {
-								if (data[j + 1] == SE) {
+							if (data[j] == TC.IAC) {
+								if (data[j + 1] == TC.SE) {
 									done = true;
 								}
 							} else {
@@ -115,54 +134,42 @@ public class Processor {
 						}
 						// so if we are here, than j - (i+3) is the number of
 						// optional bytes.
-						opbuf = ByteBuffer.allocate(j - (i + 3) + 5);
-						opbuf.put(IAC);
+						opbuf = ByteBuffer.allocate(j - (i + SKIP_BYTES) + PAYLOAD_BYTES);
+						opbuf.put(TC.IAC);
 						opbuf.put(data[i + 1]);
 						opbuf.put(data[i + 2]);
-						if (j - (i + 3) > 0) {
-							for (int q = i + 3; q < j; q++) {
+						if (j - (i + SKIP_BYTES) > 0) {
+							for (int q = i + SKIP_BYTES; q < j; q++) {
 								opbuf.put(data[q]);
 							}
 						}
-						opbuf.put(IAC);
-						opbuf.put(SE);
+						opbuf.put(TC.IAC);
+						opbuf.put(TC.SE);
 
 						opbuf.rewind();
 						boolean compress = dispatchSUB(opbuf.array());
 						if (compress) {
-							ByteBuffer b = ByteBuffer.allocate(data.length - 5
-									- i);
-							// if(in[0] == IAC && in[1] == SB && in[2] ==
-							// compressresp[0] && in[3] == IAC && in[4] == SE) {
-							//Log.e("PROCESSOR",
-									//"ENCOUNTERED START OF COMPRESSION EVENT");
-							// get rest
-
-							for (int z = i + 5; z < data.length; z++) {
+							ByteBuffer b = ByteBuffer.allocate(data.length - PAYLOAD_BYTES - i);
+							for (int z = i + PAYLOAD_BYTES; z < data.length; z++) {
 								b.put(data[z]);
 							}
 
 							b.rewind();
-							reportto.sendMessageAtFrontOfQueue(reportto
+							mReportTo.sendMessageAtFrontOfQueue(mReportTo
 									.obtainMessage(
 											Connection.MESSAGE_STARTCOMPRESS,
 											b.array()));
-							if(debugTelnet) {
-								String message = "\n"+Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.telOptColorEnd+"\n";
-								reportto.sendMessageDelayed(reportto.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,message), 1);
+							if (mDebugTelnet) {
+								String message = "\n" + Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.telOptColorEnd + "\n";
+								mReportTo.sendMessageDelayed(mReportTo.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message), 1);
 							}
 							byte[] trunc = new byte[count];
 							buff.rewind();
 							buff.get(trunc, 0, count);
 							return trunc;
-							//try {
-							//	return new String(trunc, encoding);
-							//} catch (UnsupportedEncodingException e) {
-							//	throw new RuntimeException(e);
-							//}
 
 						} else {
-							i = i + 2 + (j - (i + 3)) + 2; // (original pos,
+							i = i + 2 + (j - (i + SKIP_BYTES)) + 2; // (original pos,
 															// plus the 2
 															// mandatory bytes,
 															// plus the optional
@@ -171,31 +178,32 @@ public class Processor {
 															// the end (one is
 															// included in the
 															// loop).
+															// Thus the extra 2 + 2, and not the PAYLOAD_BYTES constant.
 						}
 					} else {
 						dispatchIAC(data[i + 1], data[i + 2]);
 						i = i + 2;
 					}
-				} else {// if(data[i+1] == GOAHEAD) {
+				} else {
 
 					switch (data[i + 1]) {
-					case IAC:
+					case TC.IAC:
 						buff.put(data[i]); // and one IAC and consume the extra.
 						count++;
 						break;
-					case GOAHEAD:
-					case IP:
+					case TC.GOAHEAD:
+					case TC.IP:
 						// TODO: REAL IP HANDLING HERE, I THINK THIS INVOLVES
 						// SETTING THE CURSOR BACK TO A PLACE OR SOMETHING
-					case BREAK:
-					case AO:
+					case TC.BREAK:
+					case TC.AO:
 						// i think this one is more for us to send to the
 						// server.
-					case EC:
+					case TC.EC:
 						// TODO: REAL ERASE CHARACTER
-					case EL:
+					case TC.EL:
 						// TODO: REAL ERASE LINE
-					case AYT:
+					case TC.AYT:
 						i++; // consume the byte.
 						break;
 					default:
@@ -204,10 +212,10 @@ public class Processor {
 					}
 				}
 				break;
-			case BELL:
-				reportto.sendEmptyMessage(Connection.MESSAGE_BELLINC);
+			case TC.BELL:
+				mReportTo.sendEmptyMessage(Connection.MESSAGE_BELLINC);
 				break;
-			case CARRIAGE:
+			case TC.CARRIAGE:
 				//strip carriage returns
 				break;
 			default:
@@ -225,141 +233,97 @@ public class Processor {
 		
 	}
 
-	public void dispatchIAC(byte action,byte option) {
+	/** Telnet negotiation sequence.
+	 * 
+	 * @param action The action byte (WILL, WONT, DO, DONT)
+	 * @param option The numeric indicator of the telnet negotiation type (TTYPE, GMCP, ECHO ...)
+	 */
+	public final void dispatchIAC(final byte action, final byte option) {
 		
-		//Log.e("PROCESSOR","GOT COMMAND:" + "IAC|" + TC.decodeInt(new String(new byte[]{action},encoding),encoding) + "|"+ TC.decodeInt(new String(new byte[]{option},encoding), encoding));
-		byte[] resp = opthandler.processCommand(IAC, action, option);
-		Message sb = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA,resp);
-		if(resp.length > 2) {
-			if(resp[2] == TC.NAWS) {
+		byte[] resp = mOptionHandler.processCommand(TC.IAC, action, option);
+		Message sb = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA, resp);
+		if (resp.length > 2) {
+			if (resp[2] == TC.NAWS) {
 				//naws has started.
 				disaptchNawsString();
 			}
 			
 		}
-		
-		//Log.e("PROCESSOR","SENDING RESPONSE:" + TC.decodeInt(new String(resp,encoding), encoding));
-		//message format: IN:[WILL ECHO] OUT:[DONT ECHO] //background.
 		Bundle b = sb.getData();
 		b.putByteArray("THE_DATA", resp);
 		String message = null;
-		if(debugTelnet) {
-			message = Colorizer.telOptColorBegin + "IN:[" +TC.decodeIAC(new byte[]{IAC,action,option}) + "]" + " ";
-			message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeIAC(resp) + "]"+ Colorizer.telOptColorEnd + "\n";
-			//reportto.sendMessageDelayed(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message),5);
+		if (mDebugTelnet) {
+			message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeIAC(new byte[]{TC.IAC, action, option}) + "]" + " ";
+			message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeIAC(resp) + "]" + Colorizer.telOptColorEnd + "\n";
 		}
 		b.putString("DEBUG_MESSAGE", message);
 		sb.setData(b);
-		reportto.sendMessage(sb);
+		mReportTo.sendMessage(sb);
 		
-		if(action == TC.WILL && option == TC.GMCP) {
+		if (action == TC.WILL && option == TC.GMCP) {
 			//so we are responding accordingly, but we want to "initialize" the gmcp
-			if(useGMCP) {
+			if (mUseGMCP) {
 				initGMCP();
 			}
 		}
 		
 	}
 	
+	/** Telnet subnegotiation handler. 
+	 * 
+	 * @param negotiation the subnegotiation sequence.
+	 * @return I think the return value here means start compression. But that would be bad.
+	 */
+	public final boolean dispatchSUB(final byte[] negotiation) {
+		byte[] sub = mOptionHandler.getSubnegotiationResponse(negotiation);
 
-	public boolean dispatchSUB(byte[] negotiation) {
-		// byte[] stmp = negotiation.getBytes("ISO-8859-1");
-		// Log.e("PROCESSOR","GOT SUBNEGOTIATION:" + TC.decodeInt(new
-		// String(negotiation,encoding), encoding));
-
-		byte[] sub_r = opthandler.getSubnegotiationResponse(negotiation);
-		// String sub_resp = new
-		// String(opthandler.getSubnegotiationResponse(stmp));
-
-		if (sub_r == null) {
-			// Log.e("PROCESSOR","SUBNEGOTIATION RESPONSE NULL");
+		if (sub == null) {
 			return false;
-		} else {
-
-		}
-
-		
+		} 
 		
 		// special handling for the compression marker.
 		byte[] compressresp = new byte[1];
 		compressresp[0] = TC.COMPRESS2;
 
-		if (sub_r[0] == compressresp[0]) {
+		if (sub[0] == compressresp[0]) {
 			return true;
-		} else if(sub_r[0] == TC.GMCP) {
-			//TODO: GMCP SUBNEGOTIATION RESPONSE CAUGHT HERE!!!!!!!!
-			//String message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
-			//Log.e("GMCP","RECIEVED GMCP: " + message);
-			if(debugTelnet) {
-				String message = "\n"+Colorizer.telOptColorBegin + "IN:["+TC.decodeSUB(negotiation)+"]" + Colorizer.telOptColorEnd+"\n";
-				reportto.sendMessageDelayed(reportto.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,message), 1);
-				
-				
-				
+		} else if (sub[0] == TC.GMCP) {
+			if (mDebugTelnet) {
+				String message = "\n" + Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + Colorizer.telOptColorEnd + "\n";
+				mReportTo.sendMessageDelayed(mReportTo.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message), 1);
 			}
-			byte[] foo = new byte[negotiation.length-5];
+			byte[] foo = new byte[negotiation.length - PAYLOAD_BYTES];
 			ByteBuffer wrap = ByteBuffer.wrap(negotiation);
 			wrap.rewind();
-			wrap.position(3);
-			wrap.get(foo, 0, negotiation.length-5);
+			wrap.position(SKIP_BYTES);
+			wrap.get(foo, 0, negotiation.length - PAYLOAD_BYTES);
 			try {
-				String whole = new String(foo,"UTF-8");
+				String whole = new String(foo, "UTF-8");
 				int split = whole.indexOf(" ");
 				String module = whole.substring(0, split);
-				String data = whole.substring(split+1, whole.length());
+				String data = whole.substring(split + 1, whole.length());
 				try {
 					JSONObject jo = new JSONObject(data);
-					gmcp.absorb(module, jo);
+					mGMCP.absorb(module, jo);
 				} catch (JSONException e) {
-					Log.e("GMCP","GMCP PARSING FOR: " + data);
-					Log.e("GMCP","REASON: " + e.getMessage());
+					Log.e("GMCP", "GMCP PARSING FOR: " + data);
+					Log.e("GMCP", "REASON: " + e.getMessage());
 					e.printStackTrace();
-					//Log.e("GMCP","STACK: " + e.);
 				}
 				
-				//Log.e("GMCP","MODULE NAME: " + module);
-				//String output = "";
-				//Iterator<String> it = jo.keys();
-				//while(it.hasNext()) {
-				//	String tmp = it.next();
-				//	String dat = jo.getString(tmp);
-				//	output += " ["+tmp+"=>"+dat+"] ";
-				//}
-				//Log.e("GMCP","DATA: " + output);
 				//TODO: THIS IS WHERE THE ACTUAL WORK IS DONE TO SEND MUD DATA.
-				ArrayList<GMCPWatcher> list = gmcpTriggers.get(module);
-				if(list != null) {
-					for(int i=0;i<list.size();i++) {
+				ArrayList<GMCPWatcher> list = mGMCPTriggers.get(module);
+				if (list != null) {
+					for (int i = 0; i < list.size(); i++) {
 						GMCPWatcher tmp = list.get(i);
-						HashMap<String,Object> tmpdata = gmcp.getTable(module);
-						Message gmsg = reportto.obtainMessage(Connection.MESSAGE_GMCPTRIGGERED,tmpdata);
-						gmsg.getData().putString("TARGET", tmp.plugin);
-						gmsg.getData().putString("CALLBACK", tmp.callback);
-						reportto.sendMessage(gmsg);
+						HashMap<String, Object> tmpdata = mGMCP.getTable(module);
+						Message gmsg = mReportTo.obtainMessage(Connection.MESSAGE_GMCPTRIGGERED, tmpdata);
+						gmsg.getData().putString("TARGET", tmp.mPlugin);
+						gmsg.getData().putString("CALLBACK", tmp.mCallback);
+						mReportTo.sendMessage(gmsg);
 					}
-				}
-				
-				/*if(module.equals("char.vitals")) {
-					int hp = jo.getInt("hp");
-					int mp = jo.getInt("mana");
-					reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_VITALS, hp, mp));
-				} else if(module.equals("char.maxstats")) {
-					int hp = jo.getInt("maxhp");
-					int mp = jo.getInt("maxmana");
-					reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_MAXVITALS, hp, mp));
-				} else if(module.equals("char.status")) {
-					int value = -1;
-					if(!jo.getString("enemy").equals("")) {
-						//Log.e("LOG","SENDING ENEMY STATE");
-						value = jo.getInt("enemypct");
-						
-					}
-					reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_ENEMYHP, value, 0));
-				}*/
-				//jo.
-				
+				}				
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -367,127 +331,152 @@ public class Processor {
 			return false;
 		} else {
 			String message = null;
-			if(debugTelnet) {
+			if (mDebugTelnet) {
 				message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + " ";
-				message += Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(sub_r) + "]" + Colorizer.telOptColorEnd + "\n";
-				//reportto.sendMessage(reportto.obtainMessage(StellarService.MESSAGE_PROCESSORWARNING, message));
+				message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(sub) + "]" + Colorizer.telOptColorEnd + "\n";
 			}
-			Message sbm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
+			Message sbm = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle b = sbm.getData();
-			b.putByteArray("THE_DATA",sub_r);
+			b.putByteArray("THE_DATA", sub);
 			b.putString("DEBUG_MESSAGE", message);
 			sbm.setData(b);
-			reportto.sendMessage(sbm);
+			mReportTo.sendMessage(sbm);
 			return false;
 		}
 		
 		
 	}
 
-	public void setEncoding(String encoding) {
-		this.encoding = encoding;
+	/** Setter for mEncoding.
+	 * 
+	 * @param encoding Selected encoding.
+	 */
+	public final void setEncoding(final String encoding) {
+		this.mEncoding = encoding;
 	}
 
-	public String getEncoding() {
-		return encoding;
+	/** Getter for mEncoding.
+	 * 
+	 * @return The currently selected encoding.
+	 */
+	public final String getEncoding() {
+		return mEncoding;
 	}
 
-	public void setDisplayDimensions(int rows, int cols) {
-		opthandler.setColumns(cols);
-		opthandler.setRows(rows);
+	/** Helper method for NAWS.
+	 * 
+	 * @param rows Rows in display.
+	 * @param cols Columns in display.
+	 */
+	public final void setDisplayDimensions(final int rows, final int cols) {
+		mOptionHandler.setColumns(cols);
+		mOptionHandler.setRows(rows);
 	}
 
-	public void disaptchNawsString() {
-		byte[] nawsout = opthandler.getNawsString();
-		if(nawsout == null) {
-			//Log.e("PROCESSOR","NAWS NOT CURRENTLY NEGOTIABLE");
+	/** Helper method for naws. This may happen because the foreground window changed shape. */
+	public final void disaptchNawsString() {
+		byte[] nawsout = mOptionHandler.getNawsString();
+		if (nawsout == null) {
 			return;
 		}
-		//Log.e("PROCESSOR","DISPATCHING NAWS");
-		Message sbm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
+		Message sbm = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 		Bundle b = sbm.getData();
 		b.putByteArray("THE_DATA", nawsout);
 		
 		String message = null;
-		if(debugTelnet) {
+		if (mDebugTelnet) {
 			message = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(nawsout) + "]" + Colorizer.telOptColorEnd + "\n";
 		}
 		b.putString("DEBUG_MESSAGE", message);
 		sbm.setData(b);
-		reportto.sendMessageDelayed(sbm,2);
+		mReportTo.sendMessageDelayed(sbm, 2);
 		return;
 	}
 
-	public void reset() {
-		opthandler.reset();
+	/** Reset method, this is called when the settings have been foreably reloaded. */
+	public final void reset() {
+		mOptionHandler.reset();
 	}
 	
-	public Object getGMCPValue(String str) {
-		return gmcp.get(str);
+	/** Helper method to get a GMCP module quickly.
+	 * 
+	 * @param str The module to get?
+	 * @return The table of data?
+	 */
+	public final Object getGMCPValue(final String str) {
+		return mGMCP.get(str);
 	}
 	
-	public HashMap<String,Object> getGMCPTable(String path) {
-		
-		//String parts[] = path.split(".");
-		
-		return gmcp.getTable(path);
+	/** Helper method to get a GMCP table for a given path.
+	 * 
+	 * @param path The module path, e.g. char.vitals.hp
+	 * @return The mapping of objects representing the gmcp table at the desired path.
+	 */
+	public final HashMap<String, Object> getGMCPTable(final String path) {
+		return mGMCP.getTable(path);
 	}
 	
-	public void initGMCP() {
+	/** Utility method to initialize GMCP. */
+	public final void initGMCP() {
 		
 		try {
 			byte[] hellob = getGMCPResponse(mGMCPHello);
 			byte[] supportb = getGMCPResponse(mGMCPSupports);
 			
-			String out_hello = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(hellob) + "]" + Colorizer.telOptColorEnd + "\n";
-			String out_support = Colorizer.telOptColorBegin + "OUT:[" +TC.decodeSUB(supportb) + "]" + Colorizer.telOptColorEnd + "\n";
+			String hello = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(hellob) + "]" + Colorizer.telOptColorEnd + "\n";
+			String supports = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(supportb) + "]" + Colorizer.telOptColorEnd + "\n";
 			
-			Message hm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
+			Message hm = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle bh = hm.getData();
-			bh.putByteArray("THE_DATA",hellob);
-			if(debugTelnet) {
-				bh.putString("DEBUG_MESSAGE", out_hello);
+			bh.putByteArray("THE_DATA", hellob);
+			if (mDebugTelnet) {
+				bh.putString("DEBUG_MESSAGE", hello);
 			}
 			hm.setData(bh);
-			reportto.sendMessage(hm);
+			mReportTo.sendMessage(hm);
 			
-			Message sm = reportto.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
+			Message sm = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle bs = sm.getData();
-			bs.putByteArray("THE_DATA",supportb);
-			if(debugTelnet) {
-				bs.putString("DEBUG_MESSAGE", out_support);
+			bs.putByteArray("THE_DATA", supportb);
+			if (mDebugTelnet) {
+				bs.putString("DEBUG_MESSAGE", supports);
 			}
 			sm.setData(bs);
-			reportto.sendMessage(sm);
+			mReportTo.sendMessage(sm);
 		
 		} catch (UnsupportedEncodingException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-}
+			e.printStackTrace();
+		}
 	}
 	
-	public byte[] getGMCPResponse(String str) throws UnsupportedEncodingException {
+	/** Helper method to respond to the GMCP negotiation sequence.
+	 * 
+	 * @param str The subnegotiation string.
+	 * @return The response.
+	 * @throws UnsupportedEncodingException Thrown if the selected encoding isn't supported.
+	 */
+	public final byte[] getGMCPResponse(final String str) throws UnsupportedEncodingException {
 		//check for IAC in the string.
 		int iaccount = 0;
 		byte[] tmp = str.getBytes("ISO-8859-1");
-		for(int i=0;i<tmp.length;i++) {
-			if(tmp[i] == TC.IAC) {
+		for (int i = 0; i < tmp.length; i++) {
+			if (tmp[i] == TC.IAC) {
 				iaccount++;
 			}
 		}
 		
 		
-		byte[] resp = new byte[str.getBytes("ISO-8859-1").length + 5 + iaccount];
+		byte[] resp = new byte[str.getBytes("ISO-8859-1").length + PAYLOAD_BYTES + iaccount];
 		resp[0] = TC.IAC;
 		resp[1] = TC.SB;
 		resp[2] = TC.GMCP;
-		resp[resp.length-1] = TC.SE;
-		resp[resp.length-2] = TC.IAC;
-		int j=3;
-		for(int i=0;i<(tmp.length);i++) {
+		resp[resp.length - 1] = TC.SE;
+		resp[resp.length - 2] = TC.IAC;
+		int j = SKIP_BYTES;
+		for (int i = 0; i < tmp.length; i++) {
 			resp[j] = tmp[i];
-			if(tmp[i] == TC.IAC) {
-				resp[j+1] = TC.IAC;
+			if (tmp[i] == TC.IAC) {
+				resp[j + 1] = TC.IAC;
 				j++;
 			}
 			j++;
@@ -497,50 +486,78 @@ public class Processor {
 		return resp;
 	}
 
-	public void dumpGMCP() {
-		// TODO Auto-generated method stub
-		gmcp.dumpCache();
+	/** Utility method to dump the current gmcp data to the log. */
+	public final void dumpGMCP() {
+		mGMCP.dumpCache();
 	}
 
-	GMCPData gmcp = null;
-
+	/** Utility class representing a plugin wanting to execute a callback when a gmcp module changes. */
 	public class GMCPWatcher {
-		String plugin;
-		String callback;
+		/** The plugin name. */
+		private String mPlugin;
+		/** The callback to execute. */
+		private String mCallback;
+		/** Constructor. 
+		 * 
+		 * @param plugin The plugin name.
+		 * @param callback The callback name.
+		 */
+		public GMCPWatcher(final String plugin, final String callback) {
+			this.mPlugin = plugin;
+			this.mCallback = callback;
+		}
 		
-		public GMCPWatcher(String plugin,String callback) {
-			this.plugin = plugin;
-			this.callback = callback;
+		/** Getter for mPlugin. 
+		 * 
+		 * @return the value of mPlugin
+		 */
+		public final String getPlugin() {
+			return mPlugin;
+		}
+		
+		/** Getter for mCallback. 
+		 * 
+		 * @return value of mCallback
+		 */
+		public final String getCallback() {
+			return mCallback;
 		}
 	}
 	
-	public HashMap<String,ArrayList<GMCPWatcher>> gmcpTriggers = new HashMap<String,ArrayList<GMCPWatcher>>();
-	String mGMCPHello = "core.hello {\"client\": \"BlowTorch\",\"version\": \"1.4\"}";
-	//		;
-	//String support = "core.supports.set [\"char 1\",\"room 1\",\"comm 1\"]";
-	private Boolean useGMCP = false;
-	private String mGMCPSupports = "core.supports.set [\"char 1\"]";
-	
-	public void addWatcher(String module,String plugin,String callback) {
-		GMCPWatcher tmp = new GMCPWatcher(plugin,callback);
+	/** Adds a new gmcp watcher for a given module path.
+	 * 
+	 * @param module Module path, e.g. char.vitals.hp.
+	 * @param plugin The target plugin that is watching.
+	 * @param callback The callback function to execute when module has changed.
+	 */
+	public final void addWatcher(final String module, final String plugin, final String callback) {
+		GMCPWatcher tmp = new GMCPWatcher(plugin, callback);
 		
-		ArrayList<GMCPWatcher> list = gmcpTriggers.get(module);
-		if(list == null) {
+		ArrayList<GMCPWatcher> list = mGMCPTriggers.get(module);
+		if (list == null) {
 			ArrayList<GMCPWatcher> foo = new ArrayList<GMCPWatcher>();
 			foo.add(tmp);
-			gmcpTriggers.put(module, foo);
+			mGMCPTriggers.put(module, foo);
 		} else {
 			list.add(tmp);
 		}
 		
 	}
 
-	public void setUseGMCP(Boolean value) {
-		useGMCP = value;
-		opthandler.setUseGMCP(useGMCP);
+	/** Setter method for mUseGMCP. 
+	 * 
+	 * @param value the new value for mUseGMCP.
+	 */
+	public final void setUseGMCP(final Boolean value) {
+		mUseGMCP = value;
+		mOptionHandler.setUseGMCP(mUseGMCP);
 	}
 
-	public void setGMCPSupports(String value) {
+	/** Setter method for mGMCPSupports.
+	 * 
+	 * @param value The new value for mGMCPSupports.
+	 */
+	public final void setGMCPSupports(final String value) {
 		mGMCPSupports = "core.supports.set [" + value + "]";
 	}
 }

@@ -10,7 +10,7 @@ public class DirtyExitCommand extends SpecialCommand {
 	}
 	public Object execute(Object o,Connection c) {
 		
-		c.service.doDirtyExit();
+		c.getService().doDirtyExit();
 		return null;
 	}
 }

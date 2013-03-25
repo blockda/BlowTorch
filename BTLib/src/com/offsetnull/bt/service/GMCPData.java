@@ -21,12 +21,10 @@ public class GMCPData {
 
 	HashMap<String,Object> data = null;
 	Handler reporter = null;
-	StatusBarWatchList list = null;
 	//LuaState L = null;
 	public GMCPData(Handler reporter) {
 		data = new HashMap<String,Object>();
 		//watchList = new HashMap<String,Boolean>();
-		list = new StatusBarWatchList();
 		/*watchList.put("char.vitals",falseVal);
 		watchList.put("char.maxstats",falseVal);
 		watchList.put("char.status",falseVal);*/

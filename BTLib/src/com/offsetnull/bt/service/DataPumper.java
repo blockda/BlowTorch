@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -19,569 +18,517 @@ import java.nio.ByteBuffer;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-
-import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-
-
+/** Data pumper thread implementation. This object manages itself as a thread, as well as a child
+ * thread process to write output data to. */
 public class DataPumper extends Thread {
-
-		private InputStream reader = null;
-		//private OutputStream writer = null;
-		private Handler reportto = null;
-		private boolean compressed = false;
-		public Handler handler = null;
-		
-		
-		//private InflaterInputStream decomp_stream = null;
-		
-		private Inflater decompress = null;
-		//private ZStream decomp  = null;
-		
-		final static public int MESSAGE_RETRIEVE = 100;
-		//final static public int MESSAGE_SEND = 101;
-		final static public int MESSAGE_END = 102;
-		final static public int MESSAGE_INITXFER = 103;
-		final static public int MESSAGE_ENDXFER = 104;
-		final static public int MESSAGE_COMPRESS = 105;
-		final static public int MESSAGE_NOCOMPRESS = 106;
-		public static final int MESSAGE_THROTTLE = 108;
-		public static final int MESSAGE_NOTHROTTLE = 109;
-		//protected static final int MESSAGE_WRITETOSERVER = 110;
+	/** Constant indicating the socket polling loop. */
+	public static final int MESSAGE_RETRIEVE = 100;
+	/** Constant indicating orderly shutdown via user. */
+	public static final int MESSAGE_END = 102;
+	/** Constant indicating that data transfer should begin. */
+	public static final int MESSAGE_INITXFER = 103;
+	/** Constant indicating the end of the data transfer. */
+	public static final int MESSAGE_ENDXFER = 104;
+	/** Contant indicating that compression should start. */
+	public static final int MESSAGE_COMPRESS = 105;
+	/** Constant indicating that compression should end. */
+	public static final int MESSAGE_NOCOMPRESS = 106;
+	/** Constant indicating that throttling should begin. */
+	public static final int MESSAGE_THROTTLE = 108;
+	/** Constant indicating that throttling should end. */
+	public static final int MESSAGE_NOTHROTTLE = 109;
+	/** Timeout value in millis. */
+	private static final int SOCKET_TIMEOUT = 14000;
+	/** Socket buffer size. */
+	private static final int SOCKET_BUFFER_SIZE = 1024;
+	/** No throttling delay. */
+	private static final int NO_THROTTLE_DELAY = 100;
+	/** Throttling delay. */
+	private static final int THROTTLE_DELAY = 1500;
+	/** Working buffer size for the decompression routine. */
+	private static final int DECOMPRESSION_BUFFER_SIZE = 256;
+	/** The handler for this thread. */
+	private Handler mHandler = null;
+	/** The input stream from the socket. */
+	private InputStream mReader = null;
+	/** The handler to communicate progress and data with. */
+	private Handler mReportTo = null;
+	/** The compression state. */
+	private boolean mCompressed = false;
+	/** Zlib inflater object. */
+	private Inflater mDecompressor = null;
+	/** Indicates the throttling state. */
+	private boolean mThrottle = false;
+	/** Holder for the output writer thread. */
+	private OutputWriterThread mWriterThread = null;
+	/** Holder for the host name for the connection. */
+	private String mHost = "";
+	/** Holder for the port number for the connection. */
+	private int mPort;
+	/** Holder for the actual socket used to communicate with. */
+	private Socket mSocket = null;
+	/** Tracker for MCCP Corruption. */
+	private boolean mCorrupted = false;
+	/** Tracker for the intention of corrupting the mccp stream. */
+	private boolean mDoCorrupt = false;
+	/** Tracker for if we are connected or not. */
+	private boolean mConnected = false;
+	/** Tracker for the intention of closing the socket. */
+	private boolean mClosing = false;
 	
-		private boolean throttle = false;
-		
-		public void sendData(byte[] data) {
-			Message msg = writerThread.outhandler.obtainMessage(OutputWriterThread.MESSAGE_SEND,data);
-			writerThread.outhandler.sendMessage(msg);
-		}
-		
-		class OutputWriterThread extends Thread {
-			protected static final int MESSAGE_END = 101;
-			protected static final int MESSAGE_SEND = 102;
-			BufferedOutputStream writer = null;
-			public Handler outhandler = null;
-			public OutputWriterThread(BufferedOutputStream stream) {
-				writer = stream;
-			}
-			public void run() {
-				Looper.prepare();
-				outhandler = new Handler() {
-					public void handleMessage(Message msg) {
-						switch(msg.what) {
-						case MESSAGE_SEND:
-							//this will always be the same thing.
-							byte[] data = (byte[])msg.obj;
-							
-							try {
-								writer.write(data);
-								writer.flush();
-							} catch (IOException e1) {
-								DispatchDialog(e1.getMessage());
-								connected = false;
-							}
-							break;
-						case MESSAGE_END:
-							Log.e("TEST","OUTPUT WRITER THREAD SHUTTING DOWN");
-							
-							this.getLooper().quit();
-							break;
-						}
-					}
-				};
-				Looper.loop();
-			}
-		}
-		private OutputWriterThread writerThread = null;
-		private String host = "";
-		private int port = 23;
-		
-		public DataPumper(String host,int port,Handler useme) {
-			this.host = host;
-			this.port = port;
-			
-			reportto = useme;
-		}
-		
-		private Socket the_socket = null;
-		public void init()  {
-			//Debug.waitForDebugger();
-			this.setName("DataPumper");
-			//TODO: MAKE CONNECTION STARTUP CODE HERE.
-			InetAddress addr = null;
-			closing = false;
-			
-			sendWarning(new String(Colorizer.colorCyanBright+"Attempting connection to: "+ Colorizer.colorYeollowBright + host + ":"+port+"\n"+Colorizer.colorCyanBright+"Timeout set to 14 seconds."+Colorizer.colorWhite+"\n"));
-			
-			try {
-				addr = InetAddress.getByName(host);
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				DispatchDialog("Unknown Host: " + e.getMessage());
-				return;
-				//e.printStackTrace();
-			}
-			
-			String ip = addr.getHostAddress();
-			
-			if(ip.equals(host)) {
-				//it was an ip, don't display it.
-			} else {
-				//handler.handle
-				sendWarning(Colorizer.colorCyanBright+"Looked up: "+Colorizer.colorYeollowBright + ip +Colorizer.colorCyanBright+ " for "+Colorizer.colorYeollowBright+host+Colorizer.colorWhite+"\n");
-			}
-			
-			the_socket = new Socket();
-			//SocketAddress adr = new InetSocketAddress(addr,port);
-			
-			try {
-				
-				the_socket = new Socket();
-				SocketAddress adr = new InetSocketAddress(addr,port);
-				the_socket.setKeepAlive(true);
-				the_socket.setSoTimeout(0);
-				the_socket.connect(adr,14000);
-				sendWarning(Colorizer.colorCyanBright+"Connected to: "+Colorizer.colorYeollowBright+host+Colorizer.colorCyanBright+"!"+Colorizer.colorWhite+"\n");
-				
-				the_socket.setSendBufferSize(1024);
-				writerThread = new OutputWriterThread(new BufferedOutputStream(the_socket.getOutputStream()));
-				writerThread.start();
-				
-				connected = true;
-				reader = new BufferedInputStream(the_socket.getInputStream());
-				decompress = new Inflater(false);
-				
-				reportto.sendEmptyMessage(Connection.MESSAGE_CONNECTED);
-			} catch (SocketException e) {
-				DispatchDialog("Socket Exception: " + e.getMessage());
-				//Log.e("SERVICE","NET FAILURE:" + e.getMessage());
-			} catch (SocketTimeoutException e) {
-				DispatchDialog("Operation timed out.");
-			} catch (ProtocolException e) {
-				DispatchDialog("Protocol Exception: " + e.getMessage());
-			} catch(IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		
-		private void DispatchDialog(String str) {
-			reportto.sendMessage(reportto.obtainMessage(Connection.MESSAGE_DODIALOG,str));
-		}
-		/*public DataPumper(InputStream istream,OutputStream ostream,Handler useme) {
-			reader = new BufferedInputStream(istream);
-			//writer = new BufferedOutputStream(ostream);
-			//writer = ostream;
-			reportto = useme;
-			decompress = new Inflater(false);
-			//decomp = new ZStream();
-			writer=ostream;
-			this.setName("DataPumper");
-		}*/
-		
-		public void sendWarning(String str) {
-			reportto.sendMessage(reportto.obtainMessage(Connection.MESSAGE_PROCESSORWARNING,(str)));
-			
-		}
+	/** Generic constructor.
+	 * 
+	 * @param host Host name for the connection.
+	 * @param port Port number to use.
+	 * @param useme Handler to report to when interesting things happen.
+	 */
+	public DataPumper(final String host, final int port, final Handler useme) {
+		this.mHost = host;
+		this.mPort = port;
+		mReportTo = useme;
+	}
 	
+	/** Sends data to the socket asynchronously.
+	 * 
+	 * @param data the bytes to send to the server.
+	 */
+	public final void sendData(final byte[] data) {
+		Message msg = mWriterThread.mOutputHandler.obtainMessage(OutputWriterThread.MESSAGE_SEND, data);
+		mWriterThread.mOutputHandler.sendMessage(msg);
+	}
+	
+	/** Utility class for housing the output writer thread. */
+	class OutputWriterThread extends Thread {
+		/** Constant indicating orderly shutdown of this thread. */
+		protected static final int MESSAGE_END = 101;
+		/** Constant indicating that there is data to send. */
+		protected static final int MESSAGE_SEND = 102;
+		/** Abstraction from the raw stream. */
+		private BufferedOutputStream mWriter = null;
+		/** Handler for this thread. */
+		private Handler mOutputHandler = null;
+		/** Generic constructor. 
+		 * 
+		 * @param stream The stream from the socket to use when writing data.
+		 */
+		public OutputWriterThread(final BufferedOutputStream stream) {
+			mWriter = stream;
+		}
+		@Override
 		public void run() {
 			Looper.prepare();
-			init();
-			handler = new Handler() {
-				public void handleMessage(Message msg) {
-					//boolean doRestart = true;
-					switch(msg.what) {
-					
-					/*case MESSAGE_WRITETOSERVER:
-						//Log.e("DAN0","DEPERATLY TRYING TO WRITE TO THE SERVER");
-						byte[] data = (byte[])msg.obj;
+			mOutputHandler = new Handler() {
+				public void handleMessage(final Message msg) {
+					switch (msg.what) {
+					case MESSAGE_SEND:
+						//this will always be the same thing.
+						byte[] data = (byte[]) msg.obj;
 						
 						try {
-							writer.write(data);
-							writer.flush();
+							mWriter.write(data);
+							mWriter.flush();
 						} catch (IOException e1) {
-							DispatchDialog(e1.getMessage());
-							connected = false;
+							dispatchDialog(e1.getMessage());
+							mConnected = false;
 						}
-						//doRestart = false;
-						break;*/
-					case MESSAGE_THROTTLE:
-						//Log.e("PUMPER","DATA PUMP THROTTLING");
-						throttle = true;
 						break;
-					case MESSAGE_NOTHROTTLE:
-						//Log.e("PUMPER","DATA PUMP RESUMING NORMAL OPERATION");
-						this.removeMessages(MESSAGE_RETRIEVE);
-						throttle = false;
-						this.sendEmptyMessage(MESSAGE_RETRIEVE);
-						
-						break;
-					case MESSAGE_RETRIEVE:
-						//Log.e("PUMP","PUMP CHECKING FOR NEW DATA!");
-						try {
-							getData();
-						}  catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-						//keep the pump flowing.
-						break;
-					//case MESSAGE_SEND:
-						//sendData(msg.getData().getByteArray("THEDATA"));
-						//break;
 					case MESSAGE_END:
-						//Log.e("PUMP","PUMP QUITTING!");
-						handler.removeMessages(MESSAGE_RETRIEVE);
-						Log.e("TEST","DATA PUMPER STARTING END SEQUENCE");
-						try {
-							if(writerThread != null) {
-								writerThread.outhandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
-								try {
-									Log.e("TEST","KILLING WRITER THREAD");
-									writerThread.join();
-									Log.e("TEST","WRITER THREAD DEAD");
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}
-							//writer.close();
-							if(reader != null) {
-								reader.close();
-							}
-							if(the_socket != null) {
-								the_socket.close();
-							}
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-						Log.e("TEST","Net reader thread stopping self.");
-					
+						Log.e("TEST", "OUTPUT WRITER THREAD SHUTTING DOWN");
+						
 						this.getLooper().quit();
 						break;
-					case MESSAGE_INITXFER:
-						//Message tmp = myhandler.obtainMessage(MESSAGE_RETRIEVE);
-						//myhandler.sendMessageDelayed(tmp, 50);
+					default:
 						break;
-					case MESSAGE_ENDXFER:
-						handler.removeMessages(MESSAGE_RETRIEVE);
-						break;
-					case MESSAGE_COMPRESS:
-						try {
-							useCompression((byte[])msg.obj);
-						} catch (UnsupportedEncodingException e) {
-							throw new RuntimeException(e);
-						}
-						break;
-					case MESSAGE_NOCOMPRESS:
-						stopCompression();
-						//Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\n" + "BEING TOLD TO STOP BY THE SERVICE (processor encountered the IAC SB");
-						break;
-					}
-					
-					//if(!restart)
-					//keep the pump flowing.
-					if(!handler.hasMessages(MESSAGE_RETRIEVE) && connected) {
-						//only send if there are no messages already in queue.
-						if(!throttle) {
-							handler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 100);
-						} else {
-							handler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, 1500);
-						}
 					}
 				}
 			};
-			if(reader!=null) {
-				handler.sendEmptyMessage(MESSAGE_RETRIEVE);
-			}
 			Looper.loop();
 		}
-		
-		/*public Handler getHandler() {
-			return myhandler;
-		}*/
-		
-		public void interruptSocket() {
-			try {
-				the_socket.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		private void useCompression(byte[] input) throws UnsupportedEncodingException {
-			//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
-			compressed = true;
-			corrupted = false;
-			if(input == null) return;
-			if(input.length > 0) {
-				//try {
-				//	Log.e("PUMP","STARTING COMPRESSION WITH:" +new String(input,"ISO-8859-1"));
-				//} catch (UnsupportedEncodingException e) {
-				//	throw new RuntimeException(e);
-				//}
-				byte[] data = DoDecompress(input);
-				if(data == null) return;
-				Message msg = reportto.obtainMessage(Connection.MESSAGE_PROCESS,data); //get a send data message.
-				//either we woke up or the processor was ready.
-				synchronized(reportto) {
-					reportto.sendMessage(msg); //report to mom and dad.
-				}
-				//try {
-				//	Log.e("PROCESSOR","STARTING COMPRESSION, INITIALLY DECOMPRESSED:" + new String(data,"ISO-8859-1"));
-				//} catch (UnsupportedEncodingException e) {
-				//	
-				//	e.printStackTrace();
-				//}
-			}
-		}
-		
-		private void stopCompression() {
-			compressed = false;
-		}
-		
-		public static String toHex(byte[] bytes) {
-		    BigInteger bi = new BigInteger(1, bytes);
-		    return String.format("%0" + (bytes.length << 1) + "X", bi);
-		}
-
-		private void getData() throws IOException {
-				//MAIN LOOP
-				int numtoread = 0;
-				try {
-					numtoread = reader.available();
-				} catch (IOException e) {
-					//throw new RuntimeException(e);
-					if(!closing) {
-						reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
-					}
-					connected = false;
-					return;
-					
-				}
-				if(numtoread < 1) {
-					//no data to read
-					//Log.e("PUMP","NO DATA TO READ");
-					reader.mark(1);
-					try {
-						if(reader.read() == -1) {
-							//Log.e("PUMP","END OF STREAM");
-							if(!closing) {
-								sendWarning("\n"+Colorizer.colorRed + "Connection terminated by peer."+Colorizer.colorWhite+"\n");
-								reportto.sendEmptyMessage(Connection.MESSAGE_TERMINATED_BY_PEER);
-							}
-							connected = false;
-						} else {
-							reader.reset();
-						}
-					} catch (IOException e) { 
-						e.printStackTrace();
-						if(!closing) {
-							reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
-						}
-						connected = false;
-						return;
-					}
-					
-				} else {
-					//data to read, do it
-					//try {
-					byte[] data = new byte[numtoread];
-					int retval = -2;
-					try {
-						retval = reader.read(data,0,numtoread);
-					
-					} catch (IOException e) {
-						//throw new RuntimeException(e);
-						if(!closing) {
-							reportto.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
-						}
-						connected = false;
-					}
-					//Log.e("PUMP","READ (string): " + new String(data));
-					//Log.e("PUMP","READ (hex): " + toHex(data));
-					if(retval != numtoread) {
-						//we have a problem, if we get here we overran the buffer.
-					}
-					
-					if(retval == -1) {
-						//end of stream has been reached. need to abort the who dealio.
-						//Log.e("PUMP","END OF INPUT FROM SERVER");
-					}
-					
-					if(compressed) {
-
-						data = DoDecompress(data);
-						if(data == null) return;
-					} 
-					
-
-					if(reportto != null) {
-						Message msg = reportto.obtainMessage(Connection.MESSAGE_PROCESS,data); //get a send data message.
-						//either we woke up or the processor was ready.
-						synchronized(reportto) {
-							reportto.sendMessage(msg); //report to mom and dad.
-						}
-						//synchronized(this) {
-						//	try {
-						//		this.wait(1500);
-						//	} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-						//		e.printStackTrace();
-						//	}
-						//}
-					} 
-
-					data = null; //free data to the garbage collector.
-					//} catch (SocketException e) {
-						
-					//}
-				}
-		}
-		
-		//Pattern newline = Pattern.compile("\\w*");
-		
-		/*private void sendData(byte[] data) {
-			try {
-				writer.write(data);
-				writer.flush();
-			} catch (IOException e1) {
-				throw new RuntimeException(e1);
-			}
-			
-			
-		}*/
-		
-		private boolean corrupted = false;
-		private byte[] DoDecompress(byte[] data) throws UnsupportedEncodingException {
-			int count = 0;
-			
-			byte[] decompressed_data = null;
-			
-			if(doCorrupt) {
-				doCorrupt = false;
-				if(data.length > 1) {
-					decompress.setInput(data,1,data.length-1);
-				}
-			} else {
-				decompress.setInput(data,0,data.length);
-			}
-			
-			
-			
-			byte[] tmp = new byte[256];
-			
-			while(!decompress.needsInput()) {
-				try {
-					count = decompress.inflate(tmp,0,tmp.length);
-					//int remain = decompress.getRemaining();
-				} catch (DataFormatException e) {
-					//Log.e("BTSERVICE","Encountered data format exception and must quit.");
-					//myhandler.sendEmptyMessage(MESSAGE_END);
-					if(reportto != null) {
-						//Message msg = reportto.obtainMessage(StellarService.MESSAGE_PROCESS,tmp); //get a send data message.
-						//either we woke up or the processor was ready.
-						decompress = new Inflater(false);
-						//synchronized(reportto) {
-							//reportto.sendMessage(msg); //report to mom and dad.
-						}
-					//} 
-					//Log.e("BTPUMP","ATTEMPTING MCCP RENEGOTIATION DUE TO:\n" + e.getMessage());
-					//compressed = false;
-					reportto.sendEmptyMessage(Connection.MESSAGE_MCCPFATALERROR);
-					//return;
-					compressed = false;
-					corrupted = true;
-					return null;
-				}
-				if(decompress.finished()) {
-					//Log.e("PUMP","ENDING COMPRESSION:" + count + " byes uncompressed." + decompress.getRemaining() + " remaining bytes. As string: " + new String(data,"ISO-8859-1"));
-					//decompress.
-					//get any remaining datas.
-					int pos = data.length - decompress.getRemaining();
-					int length = decompress.getRemaining();
-					ByteBuffer b = ByteBuffer.allocate(length);
-					b.put(data, pos, length);
-					b.rewind();
-					//String remains = new String(b.array(),"ISO-8859-1");
-					
-					if(reportto != null) {
-						Message msg = reportto.obtainMessage(Connection.MESSAGE_PROCESS,b.array()); //get a send data message.
-						//either we woke up or the processor was ready.
-						synchronized(reportto) {
-							reportto.sendMessage(msg); //report to mom and dad.
-						}
-					} 
-					//Log.e("BTPUMP","COMPRESSION TURNED OFF DUE TO:\nCompression End Event Processed.");
-					compressed = false;
-					decompress = new Inflater(false);
-					corrupted = false;
-					return null;
-				}
-				if(decompressed_data == null && count > 0) {
-					ByteBuffer dc_start = ByteBuffer.allocate(count);
-					dc_start.put(tmp,0,count);
-					decompressed_data = dc_start.array();
-				} else { //already have data, append tmp to us
-					if(count > 0) { //only perform this step if the inflation yielded results.
-					ByteBuffer tmpbuf = ByteBuffer.allocate(decompressed_data.length + count);
-					tmpbuf.put(decompressed_data,0,decompressed_data.length);
-					tmpbuf.put(tmp,0,count);
-					tmpbuf.rewind();
-					decompressed_data = tmpbuf.array();
-					}
-				}
-			} //end while
-			if(corrupted) {
-				return null;
-			} else {
-				return decompressed_data;
-			}
-		}
-
-	private boolean doCorrupt = false;
-	private boolean connected = false;;
-	public void corruptMe() {
-		doCorrupt = true;
 	}
-
-	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return connected ;
-	}
-
-	boolean closing = false;
-	public void closeSocket() {
+	
+	/** Startup and initialization routine. */
+	public final void init()  {
+		this.setName("DataPumper");
+		InetAddress addr = null;
+		mClosing = false;
+		
+		sendWarning(new String(Colorizer.colorCyanBright + "Attempting connection to: " + Colorizer.colorYeollowBright + mHost + ":" + mPort + "\n"
+		+ Colorizer.colorCyanBright + "Timeout set to 14 seconds." + Colorizer.colorWhite + "\n"));
+		
 		try {
-			closing = true;
-			//reader.close();
-			connected = false;
-			if(the_socket != null) {
-				the_socket.shutdownInput();
-				the_socket.shutdownOutput();
-				the_socket.close();
+			addr = InetAddress.getByName(mHost);
+		} catch (UnknownHostException e) {
+			dispatchDialog("Unknown Host: " + e.getMessage());
+			return;
+		}
+		
+		String ip = addr.getHostAddress();
+		
+		if (!ip.equals(mHost)) {
+			sendWarning(Colorizer.colorCyanBright + "Looked up: " + Colorizer.colorYeollowBright + ip + Colorizer.colorCyanBright + " for "
+			+ Colorizer.colorYeollowBright + mHost + Colorizer.colorWhite + "\n");
+		}
+		
+		mSocket = new Socket();
+		try {
+			
+			mSocket = new Socket();
+			SocketAddress adr = new InetSocketAddress(addr, mPort);
+			mSocket.setKeepAlive(true);
+			mSocket.setSoTimeout(0);
+			mSocket.connect(adr, SOCKET_TIMEOUT);
+			sendWarning(Colorizer.colorCyanBright + "Connected to: " + Colorizer.colorYeollowBright + mHost + Colorizer.colorCyanBright + "!" + Colorizer.colorWhite + "\n");
+			
+			mSocket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+			mWriterThread = new OutputWriterThread(new BufferedOutputStream(mSocket.getOutputStream()));
+			mWriterThread.start();
+			
+			mConnected = true;
+			mReader = new BufferedInputStream(mSocket.getInputStream());
+			mDecompressor = new Inflater(false);
+			
+			mReportTo.sendEmptyMessage(Connection.MESSAGE_CONNECTED);
+		} catch (SocketException e) {
+			dispatchDialog("Socket Exception: " + e.getMessage());
+		} catch (SocketTimeoutException e) {
+			dispatchDialog("Operation timed out.");
+		} catch (ProtocolException e) {
+			dispatchDialog("Protocol Exception: " + e.getMessage());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/** Quick little helper method to send off the error dialog.
+	 * 
+	 * @param str The message to put in the dialog.
+	 */
+	private void dispatchDialog(final String str) {
+		mReportTo.sendMessage(mReportTo.obtainMessage(Connection.MESSAGE_DODIALOG, str));
+	}
+	
+	/** Quick little helper method to send off a processor warning.
+	 * 
+	 * @param str The processor warning to send.
+	 */
+	public final void sendWarning(final String str) {
+		mReportTo.sendMessage(mReportTo.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, str));
+		
+	}
+	
+	@Override
+	public final void run() {
+		Looper.prepare();
+		init();
+		mHandler = new Handler() {
+			public void handleMessage(final Message msg) {
+				//boolean doRestart = true;
+				switch (msg.what) {
+				case MESSAGE_THROTTLE:
+					mThrottle = true;
+					break;
+				case MESSAGE_NOTHROTTLE:
+					this.removeMessages(MESSAGE_RETRIEVE);
+					mThrottle = false;
+					this.sendEmptyMessage(MESSAGE_RETRIEVE);
+					
+					break;
+				case MESSAGE_RETRIEVE:
+					try {
+						getData();
+					}  catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+					break;
+				case MESSAGE_END:
+					mHandler.removeMessages(MESSAGE_RETRIEVE);
+					Log.e("TEST", "DATA PUMPER STARTING END SEQUENCE");
+					try {
+						if (mWriterThread != null) {
+							mWriterThread.mOutputHandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+							try {
+								Log.e("TEST", "KILLING WRITER THREAD");
+								mWriterThread.join();
+								Log.e("TEST", "WRITER THREAD DEAD");
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+						if (mReader != null) {
+							mReader.close();
+						}
+						if (mSocket != null) {
+							mSocket.close();
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					Log.e("TEST", "Net reader thread stopping self.");
+				
+					this.getLooper().quit();
+					break;
+				case MESSAGE_INITXFER:
+					break;
+				case MESSAGE_ENDXFER:
+					mHandler.removeMessages(MESSAGE_RETRIEVE);
+					break;
+				case MESSAGE_COMPRESS:
+					try {
+						useCompression((byte[]) msg.obj);
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+					break;
+				case MESSAGE_NOCOMPRESS:
+					stopCompression();
+					break;
+				default:
+					break;
+				}
+				if (!mHandler.hasMessages(MESSAGE_RETRIEVE) && mConnected) {
+					//only send if there are no messages already in queue.
+					if (!mThrottle) {
+						mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, NO_THROTTLE_DELAY);
+					} else {
+						mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, THROTTLE_DELAY);
+					}
+				}
 			}
-			if(reader != null) {
-				reader.close();
+		};
+		if (mReader != null) {
+			mHandler.sendEmptyMessage(MESSAGE_RETRIEVE);
+		}
+		Looper.loop();
+	}
+		
+	/** Utility method to interrpt a blocked socket. */
+	public final void interruptSocket() {
+		try {
+			mSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/** Called when compression should be initated.
+	 * 
+	 * @param input The data to start the compression with. This is whatever followed IAC SB MCCP2 IAC SE
+	 * @throws UnsupportedEncodingException Thrown when a String<==>byte[] conversion is given a bad encoding option.
+	 */
+	private void useCompression(final byte[] input) throws UnsupportedEncodingException {
+		//Log.e("PUMP","COMPRESSION BEGINNING NOW!");
+		mCompressed = true;
+		mCorrupted = false;
+		if (input == null) {
+			return;
+		}
+		if (input.length > 0) {
+			byte[] data = doDecompress(input);
+			if (data == null) { return; }
+			Message msg = mReportTo.obtainMessage(Connection.MESSAGE_PROCESS, data); //get a send data message.
+			synchronized (mReportTo) {
+				mReportTo.sendMessage(msg); //report to mom and dad.
 			}
-			the_socket = null;
+		}
+	}
+	
+	/** Utility method to set the compression use flag. */
+	private void stopCompression() {
+		mCompressed = false;
+	}
+		
+	/** Utility method to convert byte[] to a hex string.
+	 * 
+	 * @param bytes The byte array to convert.
+	 * @return The hex string representation.
+	 */
+	public static String toHex(final byte[] bytes) {
+	    BigInteger bi = new BigInteger(1, bytes);
+	    return String.format("%0" + (bytes.length << 1) + "X", bi);
+	}
+
+	/** The main data fetching routine. This takes care of reading data, managing disconnection and decompression.
+	 * 
+	 * @throws IOException Thrown when there is a problem with the socket.
+	 */
+	private void getData() throws IOException {
+		int numtoread = 0;
+		try {
+			numtoread = mReader.available();
+		} catch (IOException e) {
+			if (!mClosing) {
+				mReportTo.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+			}
+			mConnected = false;
+			return;
+			
+		}
+		if (numtoread < 1) {
+			mReader.mark(1);
+			try {
+				if (mReader.read() == -1) {
+					if (!mClosing) {
+						sendWarning("\n" + Colorizer.colorRed + "Connection terminated by peer." + Colorizer.colorWhite + "\n");
+						mReportTo.sendEmptyMessage(Connection.MESSAGE_TERMINATED_BY_PEER);
+					}
+					mConnected = false;
+				} else {
+					mReader.reset();
+				}
+			} catch (IOException e) { 
+				e.printStackTrace();
+				if (!mClosing) {
+					mReportTo.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+				}
+				mConnected = false;
+				return;
+			}
+			
+		} else {
+			byte[] data = new byte[numtoread];
+			try {
+				mReader.read(data, 0, numtoread);
+			
+			} catch (IOException e) {
+				if (!mClosing) {
+					mReportTo.sendEmptyMessage(Connection.MESSAGE_DISCONNECTED);
+				}
+				mConnected = false;
+			}
+			
+			if (mCompressed) {
+				data = doDecompress(data);
+				if (data == null) { return; }
+			} 
+			
+			if (mReportTo != null) {
+				Message msg = mReportTo.obtainMessage(Connection.MESSAGE_PROCESS, data); //get a send data message.
+				synchronized (mReportTo) {
+					mReportTo.sendMessage(msg); //report to mom and dad.
+				}
+			} 
+
+			data = null; //free data to the garbage collector.
+		}
+	}
+		
+	/** The workhorse decompression rotine.
+	 * 
+	 * @param data Bytes in.
+	 * @return Bytes out.
+	 * @throws UnsupportedEncodingException Thown when there is a a problem with string encoding.
+	 */
+	private byte[] doDecompress(final byte[] data) throws UnsupportedEncodingException {
+		int count = 0;
+		
+		byte[] decompressedData = null;
+		
+		if (mDoCorrupt) {
+			mDoCorrupt = false;
+			if (data.length > 1) {
+				mDecompressor.setInput(data, 1, data.length - 1);
+			}
+		} else {
+			mDecompressor.setInput(data, 0, data.length);
+		}
+		
+		byte[] tmp = new byte[DECOMPRESSION_BUFFER_SIZE];
+		
+		while (!mDecompressor.needsInput()) {
+			try {
+				count = mDecompressor.inflate(tmp, 0, tmp.length);
+			} catch (DataFormatException e) {
+				if (mReportTo != null) {
+					mDecompressor = new Inflater(false);
+				}
+				mReportTo.sendEmptyMessage(Connection.MESSAGE_MCCPFATALERROR);
+				mCompressed = false;
+				mCorrupted = true;
+				return null;
+			}
+			if (mDecompressor.finished()) {
+				int pos = data.length - mDecompressor.getRemaining();
+				int length = mDecompressor.getRemaining();
+				ByteBuffer b = ByteBuffer.allocate(length);
+				b.put(data, pos, length);
+				b.rewind();
+				if (mReportTo != null) {
+					Message msg = mReportTo.obtainMessage(Connection.MESSAGE_PROCESS, b.array()); //get a send data message.
+					synchronized (mReportTo) {
+						mReportTo.sendMessage(msg); //report to mom and dad.
+					}
+				} 
+				mCompressed = false;
+				mDecompressor = new Inflater(false);
+				mCorrupted = false;
+				return null;
+			}
+			if (decompressedData == null && count > 0) {
+				ByteBuffer dcStart = ByteBuffer.allocate(count);
+				dcStart.put(tmp, 0, count);
+				decompressedData = dcStart.array();
+			} else { //already have data, append tmp to us
+				if (count > 0) { //only perform this step if the inflation yielded results.
+				ByteBuffer tmpbuf = ByteBuffer.allocate(decompressedData.length + count);
+				tmpbuf.put(decompressedData, 0, decompressedData.length);
+				tmpbuf.put(tmp, 0, count);
+				tmpbuf.rewind();
+				decompressedData = tmpbuf.array();
+				}
+			}
+		} //end while
+		if (mCorrupted) {
+			return null;
+		} else {
+			return decompressedData;
+		}
+	}
+
+	/** Utility function to corrup the MCCP stream. */
+	public final void corruptMe() {
+		mDoCorrupt = true;
+	}
+
+	/** Utility method to get if the socket is connected. 
+	 * 
+	 * @return Weather or not the socket is connected.
+	 */
+	public final boolean isConnected() {
+		return mConnected;
+	}
+
+	/** Utility method to close the socket, including the reader and writer threads. */
+	public final void closeSocket() {
+		try {
+			mClosing = true;
+			mConnected = false;
+			if (mSocket != null) {
+				mSocket.shutdownInput();
+				mSocket.shutdownOutput();
+				mSocket.close();
+			}
+			if (mReader != null) {
+				mReader.close();
+			}
+			mSocket = null;
 			this.interrupt();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 	}
-
-	//public void sendGMCPData(String obj) {
-		//construct a gmcp packet.
-		//this is just a helper.
-	//	Message msg = writerThread.outhandler.obtainMessage(OutputWriterThread.MESSAGE_SEND,data);
-	//	writerThread.outhandler.sendMessage(msg);
-	//}
+	
+	/** Getter for mHandler.
+	 * 
+	 * @return The mHandler handler for the reader thread.
+	 */
+	public final Handler getHandler() {
+		return mHandler;
+	}
 		
 }
