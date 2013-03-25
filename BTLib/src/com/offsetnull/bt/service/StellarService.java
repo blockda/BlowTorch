@@ -297,8 +297,8 @@ public class StellarService extends Service {
 					reloadWindows();
 					break;
 				case MESSAGE_STARTUP:
-					if(connections.get(connectionClutch).pump == null) {
-						connections.get(connectionClutch).handler.sendEmptyMessage(Connection.MESSAGE_STARTUP);
+					if(connections.get(connectionClutch).getPump() == null) {
+						connections.get(connectionClutch).getHandler().sendEmptyMessage(Connection.MESSAGE_STARTUP);
 					}
 					/*callbacks.beginBroadcast();
 					try {
@@ -317,28 +317,13 @@ public class StellarService extends Service {
 					int port = b.getInt("PORT");
 					
 					Connection c = connections.get(display);
-					if(c != null) {
-						//c.host = host;
-						//c.port = port;
-						//c.display = display;
-						for(Connection tmp : connections.values()) {
-							tmp.deactivate();
-						}
-						c.activate();
-						//the_settings = c.the_settings;
-					} else {
+					if(c == null) {
 						//make new conneciton.
 						connectionClutch = display;
 						c = new Connection(display,host,port,StellarService.this);
 						connections.put(connectionClutch, c);
 						//the_settings = c.the_settings;
 						c.initWindows();
-						
-						for(Connection tmp : connections.values()) {
-							//Connection off = connections.ge
-							tmp.deactivate();
-						}
-						c.activate();
 						
 					}
 					break;
@@ -651,13 +636,13 @@ public class StellarService extends Service {
 	
 	public void DoDisconnect(Connection c) {
 		//attempt to display the disconnection dialog.
-		if(c.display.equals(connectionClutch)) {
+		if(c.getDisplay().equals(connectionClutch)) {
 		
 			final int N = callbacks.beginBroadcast();
 			for(int i = 0;i<N;i++) {
 				try {
 					
-					callbacks.getBroadcastItem(i).doDisconnectNotice(c.display);
+					callbacks.getBroadcastItem(i).doDisconnectNotice(c.getDisplay());
 				} catch (RemoteException e) {
 					throw new RuntimeException(e);
 				}
@@ -667,11 +652,11 @@ public class StellarService extends Service {
 			
 			if(N < 1) {
 				//no listeneres, just shutdown and put up a new notification.
-				ShowDisconnectedNotification(c,c.display,c.host,c.port);
+				ShowDisconnectedNotification(c,c.getDisplay(),c.getHost(),c.getPort());
 				//doShutdown();
 			}
 		} else {
-			ShowDisconnectedNotification(c,c.display,c.host,c.port);
+			ShowDisconnectedNotification(c,c.getDisplay(),c.getHost(),c.getPort());
 		}
 		
 	}
@@ -2394,19 +2379,7 @@ public void removeConnectionNotification(String display) {
 	}
 
 	public void setClutch(String connection) {
-		// TODO Auto-generated method stub
 		connectionClutch = connection;
-		for(Connection c : connections.values()) {
-			c.deactivate();
-		}
-		Connection tmp = connections.get(connection);
-		if(tmp == null) {
-			//dispatch error.
-		} else {
-			//the_settings = tmp.the_settings;
-			tmp.activate();
-		}
-		
 	}
 
 	//ConnectionSettingsPlugin the_settings = null;
@@ -2523,7 +2496,7 @@ public void removeConnectionNotification(String display) {
 			Connection c = connections.get(connectionClutch);
 			c.sendDataToWindow("\n"+Colorizer.colorRed + "Connection terminated by user."+Colorizer.colorWhite+"\n\n");
 			c.killNetThreads(true);
-			connections.get(connectionClutch).DoDisconnect(true);
+			connections.get(connectionClutch).doDisconnect(true);
 		}
 
 		public boolean hasBuffer() throws RemoteException {
@@ -2542,11 +2515,11 @@ public void removeConnectionNotification(String display) {
 			if(connections.size() < 1) {
 				return false;
 			}
-			return connections.get(connectionClutch).isConnected;
+			return connections.get(connectionClutch).isConnected();
 		}
 
 		public void sendData(byte[] seq) throws RemoteException {
-			Handler handler = connections.get(connectionClutch).handler;
+			Handler handler = connections.get(connectionClutch).getHandler();
 			handler.sendMessage(handler.obtainMessage(Connection.MESSAGE_SENDDATA_BYTES, seq));
 		}
 
@@ -2619,8 +2592,9 @@ public void removeConnectionNotification(String display) {
 			return connections.get(connectionClutch).getAliases();
 		}
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void setAliases(Map map) throws RemoteException {
-			connections.get(connectionClutch).setAliases(map);
+			connections.get(connectionClutch).setAliases((HashMap<String, AliasData>) map);
 		}
 
 		public void LoadSettingsFromPath(String path) throws RemoteException {
@@ -2652,8 +2626,9 @@ public void removeConnectionNotification(String display) {
 			return connections.get(connectionClutch).getDirectionData();
 		}
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void setDirectionData(Map data) throws RemoteException {
-			connections.get(connectionClutch).setDirectionData(data);
+			connections.get(connectionClutch).setDirectionData((HashMap<String, DirectionData>) data);
 		}
 
 		public void newTrigger(TriggerData data) throws RemoteException {
@@ -2689,7 +2664,7 @@ public void removeConnectionNotification(String display) {
 				//dispatch error.
 			}
 			
-			c.processor.setDisplayDimensions(rows, cols);
+			c.getProcessor().setDisplayDimensions(rows, cols);
 		}
 
 		public void reconnect(String str) throws RemoteException {
@@ -2879,7 +2854,7 @@ public void removeConnectionNotification(String display) {
 			Connection c = connections.get(connectionClutch);
 			HashMap<String,String> list = new HashMap<String,String>();
 			
-			for(Plugin p : c.plugins) {
+			for(Plugin p : c.getPlugins()) {
 				String info = "";
 				info += p.getTriggerCount() + " T, ";
 				info += p.getAliasCount() + " A, ";
@@ -2895,7 +2870,7 @@ public void removeConnectionNotification(String display) {
 		public List getPluginsWithTriggers() {
 			ArrayList<String> list = new ArrayList<String>();
 			Connection c = connections.get(connectionClutch);
-			for(Plugin p : c.plugins) {
+			for(Plugin p : c.getPlugins()) {
 				if(p.getSettings().getTriggers().size() > 0) {
 					list.add(p.getName());
 				}
@@ -2949,9 +2924,10 @@ public void removeConnectionNotification(String display) {
 			return connections.get(connectionClutch).getPluginAliases(currentPlugin);
 		}
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void setPluginAliases(String plugin, Map map)
 				throws RemoteException {
-			connections.get(connectionClutch).setPluginAliases(plugin,map);
+			connections.get(connectionClutch).setPluginAliases(plugin,(HashMap<String, AliasData>) map);
 		}
 
 		public void deleteAlias(String key) throws RemoteException {
@@ -3118,7 +3094,7 @@ public void removeConnectionNotification(String display) {
 		public List getPluginsWithAliases() {
 			ArrayList<String> list = new ArrayList<String>();
 			Connection c = connections.get(connectionClutch);
-			for(Plugin p : c.plugins) {
+			for(Plugin p : c.getPlugins()) {
 				if(p.getSettings().getAliases().size() > 0) {
 					list.add(p.getName());
 				}
@@ -3130,7 +3106,7 @@ public void removeConnectionNotification(String display) {
 		public List getPluginsWithTimers() throws RemoteException {
 			ArrayList<String> list = new ArrayList<String>();
 			Connection c = connections.get(connectionClutch);
-			for(Plugin p : c.plugins) {
+			for(Plugin p : c.getPlugins()) {
 				if(p.getSettings().getTimers().size() > 0) {
 					list.add(p.getName());
 				}
