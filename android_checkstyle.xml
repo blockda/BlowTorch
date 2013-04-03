@@ -5,9 +5,8 @@
     This configuration file was written by the eclipse-cs plugin configuration editor
 -->
 <!--
-    Checkstyle-Configuration: Android Checks
-    Description: 
-Android configuration!
+    Checkstyle-Configuration: android_checks
+    Description: none
 -->
 <module name="Checker">
   <property name="severity" value="warning"/>
@@ -114,7 +113,9 @@ Android configuration!
     <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
   </module>
   <module name="Translation"/>
-  <module name="FileLength"/>
+  <module name="FileLength">
+    <property name="max" value="4500"/>
+  </module>
   <module name="FileTabCharacter">
     <property name="severity" value="ignore"/>
     <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
