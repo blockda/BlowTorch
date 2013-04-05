@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import java.io.BufferedInputStream;
@@ -112,6 +115,7 @@ public class DataPumper extends Thread {
 		private BufferedOutputStream mWriter = null;
 		/** Handler for this thread. */
 		private Handler mOutputHandler = null;
+		
 		/** Generic constructor. 
 		 * 
 		 * @param stream The stream from the socket to use when writing data.
@@ -122,33 +126,40 @@ public class DataPumper extends Thread {
 		@Override
 		public void run() {
 			Looper.prepare();
-			mOutputHandler = new Handler() {
-				public void handleMessage(final Message msg) {
-					switch (msg.what) {
-					case MESSAGE_SEND:
-						//this will always be the same thing.
-						byte[] data = (byte[]) msg.obj;
-						
-						try {
-							mWriter.write(data);
-							mWriter.flush();
-						} catch (IOException e1) {
-							dispatchDialog(e1.getMessage());
-							mConnected = false;
-						}
-						break;
-					case MESSAGE_END:
-						Log.e("TEST", "OUTPUT WRITER THREAD SHUTTING DOWN");
-						
-						this.getLooper().quit();
-						break;
-					default:
-						break;
-					}
-				}
-			};
+			mOutputHandler = new Handler(new WriteHandler());
 			Looper.loop();
 		}
+	}
+	
+	/** The write queue is contained in this handler callback. */
+	private class WriteHandler implements Handler.Callback {
+
+		@Override
+		public boolean handleMessage(final Message msg) {
+			switch (msg.what) {
+			case OutputWriterThread.MESSAGE_SEND:
+				//this will always be the same thing.
+				byte[] data = (byte[]) msg.obj;
+				
+				try {
+					mWriterThread.mWriter.write(data);
+					mWriterThread.mWriter.flush();
+				} catch (IOException e1) {
+					dispatchDialog(e1.getMessage());
+					mConnected = false;
+				}
+				break;
+			case OutputWriterThread.MESSAGE_END:
+				Log.e("TEST", "OUTPUT WRITER THREAD SHUTTING DOWN");
+				
+				mWriterThread.mOutputHandler.getLooper().quit();
+				break;
+			default:
+				break;
+			}
+			return true;
+		}
+		
 	}
 	
 	/** Startup and initialization routine. */
@@ -225,85 +236,90 @@ public class DataPumper extends Thread {
 	public final void run() {
 		Looper.prepare();
 		init();
-		mHandler = new Handler() {
-			public void handleMessage(final Message msg) {
-				//boolean doRestart = true;
-				switch (msg.what) {
-				case MESSAGE_THROTTLE:
-					mThrottle = true;
-					break;
-				case MESSAGE_NOTHROTTLE:
-					this.removeMessages(MESSAGE_RETRIEVE);
-					mThrottle = false;
-					this.sendEmptyMessage(MESSAGE_RETRIEVE);
-					
-					break;
-				case MESSAGE_RETRIEVE:
-					try {
-						getData();
-					}  catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-					break;
-				case MESSAGE_END:
-					mHandler.removeMessages(MESSAGE_RETRIEVE);
-					Log.e("TEST", "DATA PUMPER STARTING END SEQUENCE");
-					try {
-						if (mWriterThread != null) {
-							mWriterThread.mOutputHandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
-							try {
-								Log.e("TEST", "KILLING WRITER THREAD");
-								mWriterThread.join();
-								Log.e("TEST", "WRITER THREAD DEAD");
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						if (mReader != null) {
-							mReader.close();
-						}
-						if (mSocket != null) {
-							mSocket.close();
-						}
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					Log.e("TEST", "Net reader thread stopping self.");
-				
-					this.getLooper().quit();
-					break;
-				case MESSAGE_INITXFER:
-					break;
-				case MESSAGE_ENDXFER:
-					mHandler.removeMessages(MESSAGE_RETRIEVE);
-					break;
-				case MESSAGE_COMPRESS:
-					try {
-						useCompression((byte[]) msg.obj);
-					} catch (UnsupportedEncodingException e) {
-						throw new RuntimeException(e);
-					}
-					break;
-				case MESSAGE_NOCOMPRESS:
-					stopCompression();
-					break;
-				default:
-					break;
-				}
-				if (!mHandler.hasMessages(MESSAGE_RETRIEVE) && mConnected) {
-					//only send if there are no messages already in queue.
-					if (!mThrottle) {
-						mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, NO_THROTTLE_DELAY);
-					} else {
-						mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, THROTTLE_DELAY);
-					}
-				}
-			}
-		};
+		mHandler = new Handler(new ReadHandler());
 		if (mReader != null) {
 			mHandler.sendEmptyMessage(MESSAGE_RETRIEVE);
 		}
 		Looper.loop();
+	}
+	
+	/** The reader thread is managed by this handler callback. */
+	private class ReadHandler implements Handler.Callback {
+		@Override
+		public boolean handleMessage(final Message msg) {
+			//boolean doRestart = true;
+			switch (msg.what) {
+			case MESSAGE_THROTTLE:
+				mThrottle = true;
+				break;
+			case MESSAGE_NOTHROTTLE:
+				mHandler.removeMessages(MESSAGE_RETRIEVE);
+				mThrottle = false;
+				mHandler.sendEmptyMessage(MESSAGE_RETRIEVE);
+				
+				break;
+			case MESSAGE_RETRIEVE:
+				try {
+					getData();
+				}  catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				break;
+			case MESSAGE_END:
+				mHandler.removeMessages(MESSAGE_RETRIEVE);
+				Log.e("TEST", "DATA PUMPER STARTING END SEQUENCE");
+				try {
+					if (mWriterThread != null) {
+						mWriterThread.mOutputHandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+						try {
+							Log.e("TEST", "KILLING WRITER THREAD");
+							mWriterThread.join();
+							Log.e("TEST", "WRITER THREAD DEAD");
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					if (mReader != null) {
+						mReader.close();
+					}
+					if (mSocket != null) {
+						mSocket.close();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				Log.e("TEST", "Net reader thread stopping self.");
+			
+				mHandler.getLooper().quit();
+				break;
+			case MESSAGE_INITXFER:
+				break;
+			case MESSAGE_ENDXFER:
+				mHandler.removeMessages(MESSAGE_RETRIEVE);
+				break;
+			case MESSAGE_COMPRESS:
+				try {
+					useCompression((byte[]) msg.obj);
+				} catch (UnsupportedEncodingException e) {
+					throw new RuntimeException(e);
+				}
+				break;
+			case MESSAGE_NOCOMPRESS:
+				stopCompression();
+				break;
+			default:
+				break;
+			}
+			if (!mHandler.hasMessages(MESSAGE_RETRIEVE) && mConnected) {
+				//only send if there are no messages already in queue.
+				if (!mThrottle) {
+					mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, NO_THROTTLE_DELAY);
+				} else {
+					mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, THROTTLE_DELAY);
+				}
+			}
+			return true;
+		}
 	}
 		
 	/** Utility method to interrpt a blocked socket. */
