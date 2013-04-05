@@ -8,6 +8,8 @@ import android.text.style.ForegroundColorSpan;
 
 public class Colorizer {
 	
+	private final static int BYTE_MAX = 255;
+	
 	public static Character escape = new Character((char) 0x1B);
 	public static String colorRed = escape+"[1;31m";
 	public static String colorWhite = escape+"[0;37m";
@@ -624,9 +626,14 @@ public class Colorizer {
 		}
 	};
 	
+	/** This maps a string value to a corresponding integer value. */
 	public static HashMap<CharSequence,Integer> colormap = new HashMap<CharSequence, Integer>();
 	static
 	{
+		for (int i = 0; i < BYTE_MAX; i++) {
+			colormap.put(Integer.toString(i), i);
+		}
+		/*
 		colormap.put("0", 0);
 		colormap.put("1", 1);
 		colormap.put("2", 2);
@@ -918,6 +925,7 @@ public class Colorizer {
 		colormap.put("253", 253);
 		colormap.put("254", 254);
 		colormap.put("255", 255);
+		*/
 		
 	}
 
