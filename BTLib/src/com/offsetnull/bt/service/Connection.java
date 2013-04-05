@@ -1233,7 +1233,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		}
 		
 		
-		mService.DoDisconnect(this);
+		mService.doDisconnect(this);
 	}
 	
 	/** Called from various sources to kill the DataPumper and all of its threads.
@@ -1583,7 +1583,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				return;
 			}
 		}
-		mService.DispatchDialog(str);
+		mService.dispatchDialog(str);
 	}
 
 	/** Sends a string to the main output window.
@@ -2973,9 +2973,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	private void doSetKeepWifiAlive(final Boolean value) {
 		mSettings.setKeepWifiActive(value);
 		if (value) {
-			mService.EnableWifiKeepAlive();
+			mService.enableWifiKeepAlive();
 		} else {
-			mService.DisableWifiKeepAlive();
+			mService.disableWifiKeepAlive();
 		}
 	}
 
@@ -3281,7 +3281,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			if (addextra) {
 				message = message + "\n.xml extension added.";
 			}
-			mService.DispatchToast(message, true);
+			mService.dispatchToast(message, true);
 		}
 	}
 	

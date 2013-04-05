@@ -56,7 +56,7 @@ public class Processor {
 		mContext = pContext;
 		String ttype = ConfigurationLoader.getConfigurationValue("terminalTypeString", mContext);
 		mOptionHandler = new OptionNegotiator(ttype);
-		mGMCP = new GMCPData(useme);
+		mGMCP = new GMCPData();
 		setEncoding(pEncoding);
 	}
 
