@@ -178,6 +178,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	protected static final int MESSAGE_TESTLUA = 100004;
 	protected static final int MESSAGE_TRIGGERSTR = 100005;
 	protected static final int MESSAGE_SWITCH = 888;
+	/** below is deprecated, remove. */
 	protected static final int MESSAGE_RELOADBUFFER = 889;
 	protected static final int MESSAGE_INITIALIZEWINDOWS = 890;
 	public static final int MESSAGE_ADDOPTIONCALLBACK = 891;
@@ -666,15 +667,6 @@ public class MainWindow extends Activity implements MainWindowCallback {
 						e5.printStackTrace();
 					}
 					break;
-				case MESSAGE_RELOADBUFFER:
-					//screen2.clearAllText();
-					try {
-						service.requestBuffer();
-					} catch (RemoteException e8) {
-						
-						e8.printStackTrace();
-					}
-					break;
 				case MESSAGE_SWITCH:
 					//mConnection.
 					MainWindow.this.unbindService(mConnection);
@@ -687,12 +679,6 @@ public class MainWindow extends Activity implements MainWindowCallback {
 					MainWindow.this.bindService(new Intent(serviceBindAction),mConnection, 0);
 					//MainWindow.this.bindService(n, conn, flags)
 					
-					
-					try {
-						service.requestBuffer();
-					} catch (RemoteException e7) {
-						e7.printStackTrace();
-					}
 					break;
 				case MESSAGE_TRIGGERSTR:
 					
@@ -1311,7 +1297,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	
 	protected void doExportSettings(String path) {
 		try {
-			service.ExportSettingsToPath(path);
+			service.exportSettingsToPath(path);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1851,7 +1837,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			try {
-				service.LoadSettingsFromPath(items[which]);
+				service.loadSettingsFromPath(items[which]);
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1956,7 +1942,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			String filename = (String)msg.obj;
 			try {
 				//Log.e("WINDOW","TRYING TO GET SERVICE TO WRITE A FILE FOR ME!");
-				service.ExportSettingsToPath(filename);
+				service.exportSettingsToPath(filename);
 			} catch (RemoteException e) {
 				throw new RuntimeException(e);
 			}

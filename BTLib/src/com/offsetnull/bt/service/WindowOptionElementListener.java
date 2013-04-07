@@ -1,31 +1,45 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import org.xml.sax.Attributes;
 
-import android.sax.ElementListener;
 import android.sax.TextElementListener;
-import android.util.Log;
 
+/** Custom TextElementListener object used by the settings inflating routine to inflate window option settings from the SAX parser. */
 public class WindowOptionElementListener implements TextElementListener {
 
-	WindowToken current_window = null;
-	public WindowOptionElementListener(WindowToken w) {
-		current_window = w;
+	/** The current working window to put inflated settings into. */
+	private WindowToken mCurrentWindow = null;
+	/** The current option key found by the SAX parser. */
+	private String mCurrentKey = "";
+	
+	/** Generic constructor.
+	 * 
+	 * @param w The window token object to put settings into.
+	 */
+	public WindowOptionElementListener(final WindowToken w) {
+		mCurrentWindow = w;
 	}
 	
-	String current_key = "";
-	
-	@Override
-	public void start(Attributes a) {
-		if(a.getValue("","key") != null) {
-			current_key = a.getValue("","key");
+	/** Implementation of the TextElementListener.Start routine.
+	 * 
+	 * @param a The attributes associated with this tag.
+	 */
+	public final void start(final Attributes a) {
+		if (a.getValue("", "key") != null) {
+			mCurrentKey = a.getValue("", "key");
 		}
 	}
 
-	@Override
-	public void end(String body) {
-		Log.e("WINDOWPARSE","PARSING OPTION:" + current_key + ":" + body);
-		current_window.getSettings().setOption(current_key, body);
+	/** Impelmentation of the TextElementListener.end(...) routine.
+	 * 
+	 * @param body The text between the tag start and tag end.
+	 */
+	public final void end(final String body) {
+		//Log.e("WINDOWPARSE", "PARSING OPTION:" + mCurrentKey + ":" + body);
+		mCurrentWindow.getSettings().setOption(mCurrentKey, body);
 	}
 
 }

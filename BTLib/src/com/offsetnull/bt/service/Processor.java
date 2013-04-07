@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import java.io.UnsupportedEncodingException;
@@ -160,7 +163,7 @@ public class Processor {
 											Connection.MESSAGE_STARTCOMPRESS,
 											b.array()));
 							if (mDebugTelnet) {
-								String message = "\n" + Colorizer.telOptColorBegin + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.telOptColorEnd + "\n";
+								String message = "\n" + Colorizer.getTeloptStartColor() + "IN:[IAC SB COMPRESS2 IAC SE] -BEGIN COMPRESSION-" + Colorizer.getResetColor() + "\n";
 								mReportTo.sendMessageDelayed(mReportTo.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message), 1);
 							}
 							byte[] trunc = new byte[count];
@@ -253,8 +256,8 @@ public class Processor {
 		b.putByteArray("THE_DATA", resp);
 		String message = null;
 		if (mDebugTelnet) {
-			message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeIAC(new byte[]{TC.IAC, action, option}) + "]" + " ";
-			message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeIAC(resp) + "]" + Colorizer.telOptColorEnd + "\n";
+			message = Colorizer.getTeloptStartColor() + "IN:[" + TC.decodeIAC(new byte[]{TC.IAC, action, option}) + "]" + " ";
+			message += Colorizer.getTeloptStartColor() + "OUT:[" + TC.decodeIAC(resp) + "]" + Colorizer.getResetColor() + "\n";
 		}
 		b.putString("DEBUG_MESSAGE", message);
 		sb.setData(b);
@@ -289,7 +292,7 @@ public class Processor {
 			return true;
 		} else if (sub[0] == TC.GMCP) {
 			if (mDebugTelnet) {
-				String message = "\n" + Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + Colorizer.telOptColorEnd + "\n";
+				String message = "\n" + Colorizer.getTeloptStartColor() + "IN:[" + TC.decodeSUB(negotiation) + "]" + Colorizer.getResetColor() + "\n";
 				mReportTo.sendMessageDelayed(mReportTo.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message), 1);
 			}
 			byte[] foo = new byte[negotiation.length - PAYLOAD_BYTES];
@@ -332,8 +335,8 @@ public class Processor {
 		} else {
 			String message = null;
 			if (mDebugTelnet) {
-				message = Colorizer.telOptColorBegin + "IN:[" + TC.decodeSUB(negotiation) + "]" + " ";
-				message += Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(sub) + "]" + Colorizer.telOptColorEnd + "\n";
+				message = Colorizer.getTeloptStartColor() + "IN:[" + TC.decodeSUB(negotiation) + "]" + " ";
+				message += Colorizer.getTeloptStartColor() + "OUT:[" + TC.decodeSUB(sub) + "]" + Colorizer.getResetColor() + "\n";
 			}
 			Message sbm = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle b = sbm.getData();
@@ -385,7 +388,7 @@ public class Processor {
 		
 		String message = null;
 		if (mDebugTelnet) {
-			message = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(nawsout) + "]" + Colorizer.telOptColorEnd + "\n";
+			message = Colorizer.getTeloptStartColor() + "OUT:[" + TC.decodeSUB(nawsout) + "]" + Colorizer.getResetColor() + "\n";
 		}
 		b.putString("DEBUG_MESSAGE", message);
 		sbm.setData(b);
@@ -423,8 +426,8 @@ public class Processor {
 			byte[] hellob = getGMCPResponse(mGMCPHello);
 			byte[] supportb = getGMCPResponse(mGMCPSupports);
 			
-			String hello = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(hellob) + "]" + Colorizer.telOptColorEnd + "\n";
-			String supports = Colorizer.telOptColorBegin + "OUT:[" + TC.decodeSUB(supportb) + "]" + Colorizer.telOptColorEnd + "\n";
+			String hello = Colorizer.getTeloptStartColor() + "OUT:[" + TC.decodeSUB(hellob) + "]" + Colorizer.getResetColor() + "\n";
+			String supports = Colorizer.getTeloptStartColor() + "OUT:[" + TC.decodeSUB(supportb) + "]" + Colorizer.getResetColor() + "\n";
 			
 			Message hm = mReportTo.obtainMessage(Connection.MESSAGE_SENDOPTIONDATA);
 			Bundle bh = hm.getData();

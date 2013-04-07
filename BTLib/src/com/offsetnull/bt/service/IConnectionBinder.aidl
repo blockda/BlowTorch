@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import com.offsetnull.bt.service.IConnectionBinderCallback;
@@ -30,21 +33,13 @@ interface IConnectionBinder {
 	void registerLauncherCallback(ILauncherCallback launcher);
 	void unregisterLauncherCallback(ILauncherCallback launcher);
 	void startNewConnection(String host,int port,String display);
-	int getPid();
 	void initXfer();
 	void endXfer();
-	boolean hasBuffer();
 	boolean isConnected();
 	boolean isConnectedTo(String display);
 	void sendData(in byte[] seq);
 	void saveSettings();
-	void setNotificationText(CharSequence seq);
 	void setConnectionData(String host,int port,String display);
-	void beginCompression();
-	void stopCompression();
-	void requestBuffer();
-	void saveBuffer(inout byte[] buffer);
-	void addAlias(in AliasData a);
 	List getSystemCommands();
 	AliasData getAlias(String key);
 	AliasData getPluginAlias(String plugin,String key);
@@ -56,8 +51,8 @@ interface IConnectionBinder {
 	void deletePluginAlias(String plugin,String key);
 	void setAliasEnabled(boolean enabled,String key);
 	void setPluginAliasEnabled(String plugin,boolean enabled,String key);
-	void LoadSettingsFromPath(String path);
-	void ExportSettingsToPath(String path);
+	void loadSettingsFromPath(String path);
+	void exportSettingsToPath(String path);
 	void resetSettings();
 	Map getTriggerData();
 	Map getDirectionData();

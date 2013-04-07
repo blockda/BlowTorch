@@ -16,7 +16,7 @@ public class DisconnectCommand extends SpecialCommand {
 		
 		
 		//myhandler.sendEmptyMessage(MESSAGE_DODISCONNECT);
-		String msg = "\n" + Colorizer.colorRed + "Disconnected." + Colorizer.colorWhite + "\n";
+		String msg = "\n" + Colorizer.getRedColor() + "Disconnected." + Colorizer.getWhiteColor() + "\n";
 		c.sendDataToWindow(msg);
 		return null;
 	}

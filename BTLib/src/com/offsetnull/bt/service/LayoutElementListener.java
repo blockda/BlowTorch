@@ -79,7 +79,7 @@ public class LayoutElementListener implements StartElementListener {
 	@SuppressWarnings("deprecation")
 	public final void start(final Attributes a) {
 		RelativeLayout.LayoutParams params = null;
-		LayoutGroup g = mCurrentWindow.layouts.get(mCurrentType);
+		LayoutGroup g = mCurrentWindow.getLayouts().get(mCurrentType);
 		if (a.getValue("", "orientation") != null) {
 			if (a.getValue("", "orientation").equals("landscape")) {
 				params = g.getLandscapeParams();
