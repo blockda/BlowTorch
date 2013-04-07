@@ -1927,7 +1927,7 @@ public class Plugin implements SettingsChangedListener {
 	}
 	
 	public void displayLuaError(String message) {
-		mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.colorRed + message + Colorizer.colorWhite + "\n"));
+		mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.getRedColor() + message + Colorizer.getWhiteColor() + "\n"));
 	}
 
 	public void execute(String callback,String args) {

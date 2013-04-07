@@ -141,7 +141,7 @@ public class ScriptResponder extends TriggerResponder {
 			//L.call(2, 0);
 			if(L.pcall(3,1,-5) != 0) {
 				String str = "Error in trigger callback("+function+"): " + L.getLuaObject(-1).getString();
-				dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.colorRed + str + Colorizer.colorWhite + "\n"));
+				dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.getRedColor() + str + Colorizer.getWhiteColor() + "\n"));
 				//dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_TRIGGER_LUA_ERROR, str));
 			} else {
 				if(L.getLuaObject(-1).getBoolean() == true) {
