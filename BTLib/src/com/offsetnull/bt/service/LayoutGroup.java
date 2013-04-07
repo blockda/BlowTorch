@@ -1,54 +1,100 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import android.widget.RelativeLayout;
 
+/** Represents a group of layouts for small, normal, large and xlarge screen sizes. */
 public class LayoutGroup {
 	
+	/** The types of layouts that can be part of this group. */
 	public enum LAYOUT_TYPE {
+		/** Small screens. */
 		small,
+		/** Normal screens. */
 		normal,
+		/** Large screens. */
 		large,
+		/** Extra large screens. */
 		xlarge
 	}
 	
-	LAYOUT_TYPE type;
-	private RelativeLayout.LayoutParams portraitParams = null;
-	private RelativeLayout.LayoutParams landscapeParams = null;
+	/** The type of this layout group. */
+	private LAYOUT_TYPE mType;
+	/** The portrait layout params for this layout group. */
+	private RelativeLayout.LayoutParams mPortraitParams = null;
+	/** The landscape layout params for this layout group. */
+	private RelativeLayout.LayoutParams mLandscapeParams = null;
 	
+	/** Generic constructor. */
+	@SuppressWarnings("deprecation")
 	public LayoutGroup() {
-		setPortraitParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT));
-		setLandscapeParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT));
+		setPortraitParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT));
+		setLandscapeParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT));
 	}
 
-	public void setPortraitParams(RelativeLayout.LayoutParams portraitParams) {
-		this.portraitParams = portraitParams;
+	/** mPortraitParams setter.
+	 * 
+	 * @param portraitParams new layout parameters.
+	 */
+	public final void setPortraitParams(final RelativeLayout.LayoutParams portraitParams) {
+		this.mPortraitParams = portraitParams;
 	}
 
-	public RelativeLayout.LayoutParams getPortraitParams() {
-		return portraitParams;
+	/** mPortraitParams getter.
+	 * 
+	 * @return the layout parameter object.
+	 */
+	public final RelativeLayout.LayoutParams getPortraitParams() {
+		return mPortraitParams;
 	}
 
-	public void setLandscapeParams(RelativeLayout.LayoutParams landscapeParams) {
-		this.landscapeParams = landscapeParams;
+	/** mLandscapeParams setter.
+	 * 
+	 * @param landscapeParams the new layout params.
+	 */
+	public final void setLandscapeParams(final RelativeLayout.LayoutParams landscapeParams) {
+		this.mLandscapeParams = landscapeParams;
 	}
 
-	public RelativeLayout.LayoutParams getLandscapeParams() {
-		return landscapeParams;
+	/** Getter for mLandscapeParams. 
+	 * 
+	 * @return the layout parameter object.
+	 */
+	public final RelativeLayout.LayoutParams getLandscapeParams() {
+		return mLandscapeParams;
 	}
 	
-	public void setType(LayoutGroup.LAYOUT_TYPE input) {
-		this.type = input;
+	/** Setter for mType.
+	 * 
+	 * @param input The new layout group type to use.
+	 */
+	public final void setType(final LayoutGroup.LAYOUT_TYPE input) {
+		this.mType = input;
 	}
 	
-	public LayoutGroup.LAYOUT_TYPE getType() {
-		return this.type;
+	/** Getter for mType.
+	 * 
+	 * @return The layout group type for this object.
+	 */
+	public final LayoutGroup.LAYOUT_TYPE getType() {
+		return this.mType;
 	}
 	
-	public void setPortraitHeight(int size) {
-		this.portraitParams.height = size;
+	/** Utility method to quickly set the portrait height of this group.
+	 * 
+	 * @param size The new size in pixels (or LayoutParamter rule) to use.
+	 */
+	public final void setPortraitHeight(final int size) {
+		this.mPortraitParams.height = size;
 	}
 	
-	public void setLandscapeHeight(int size) {
-		this.landscapeParams.height = size;
+	/** Utility method to quickly set the landscape height of this group.
+	 * 
+	 * @param size The new size in pixels (or LayoutParamter rule) to use.
+	 */
+	public final void setLandscapeHeight(final int size) {
+		this.mLandscapeParams.height = size;
 	}
 }

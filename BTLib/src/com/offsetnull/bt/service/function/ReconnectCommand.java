@@ -15,7 +15,7 @@ public class ReconnectCommand extends SpecialCommand {
 		
 		
 		//myhandler.sendEmptyMessage(MESSAGE_RECONNECT);
-		String msg = "\n" + Colorizer.colorRed + "Reconnecting . . ." + Colorizer.colorWhite + "\n";
+		String msg = "\n" + Colorizer.getRedColor() + "Reconnecting . . ." + Colorizer.getWhiteColor() + "\n";
 		c.sendDataToWindow(msg);
 		return null;
 	}

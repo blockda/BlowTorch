@@ -227,7 +227,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	Rect selectionIndicatorRect = new Rect();
 	
 	public void displayLuaError(String message) {
-		mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.colorRed + message + Colorizer.colorWhite + "\n"));
+		mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.getRedColor() + message + Colorizer.getWhiteColor() + "\n"));
 	}
 	
 	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings,MainWindowCallback activity) {

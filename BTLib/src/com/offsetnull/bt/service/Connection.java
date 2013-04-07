@@ -467,252 +467,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		this.mService = service;
 		
 		mPlugins = new ArrayList<Plugin>();
-		mHandler = new Handler() {
-			@SuppressWarnings("unchecked")
-			public void handleMessage(final Message msg) {
-				switch(msg.what) {
-				case MESSAGE_TERMINATED_BY_PEER:
-					killNetThreads(true);
-					doDisconnect(true);
-					mIsConnected = false;
-					break;
-				case MESSAGE_TIMERSTOP:
-					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.STOP);
-					break;
-				case MESSAGE_TIMERSTART:
-					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.PLAY);
-					break;
-				case MESSAGE_TIMERRESET:
-					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.RESET);
-					break;
-				case MESSAGE_TIMERINFO:
-					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.INFO);
-					break;
-				case MESSAGE_TIMERPAUSE:
-					doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.PAUSE);
-					break;
-				case MESSAGE_CALLPLUGIN:
-					String ptmp = msg.getData().getString("PLUGIN");
-					String ftmp = msg.getData().getString("FUNCTION");
-					String dtmp = msg.getData().getString("DATA");
-					doCallPlugin(ptmp, ftmp, dtmp);
-					break;
-				case MESSAGE_SETTRIGGERSDIRTY:
-					setTriggersDirty();
-					break;
-				case MESSAGE_RELOADSETTINGS:
-					reloadSettings();
-					break;
-				case MESSAGE_TRIGGER_LUA_ERROR:
-					dispatchLuaError((String) msg.obj);
-					break;
-				case MESSAGE_RECONNECT:
-					doReconnect();
-					break;
-				case MESSAGE_CONNECTED:
-					mAutoReconnectAttempt = 0;
-					break;
-				case MESSAGE_DELETEPLUGIN:
-					doDeletePlugin((String) msg.obj);
-					break;
-				case MESSAGE_ADDLINK:
-					doAddLink((String) msg.obj);
-					break;
-				case MESSAGE_DORESETSETTINGS:
-					doResetSettings();
-					break;
-				case MESSAGE_PLUGINLUAERROR:
-					dispatchLuaError((String) msg.obj);
-					break;
-				case MESSAGE_EXPORTFILE:
-					exportSettings((String) msg.obj);
-					break;
-				case MESSAGE_IMPORTFILE:
-					Connection.this.mService.markWindowsDirty();
-					importSettings((String) msg.obj, true, false);
-					break;
-				case MESSAGE_SAVESETTINGS:
-					String changedplugin = (String) msg.obj;
-					Connection.this.saveDirtyPlugin(changedplugin);
-					break;
-				case MESSAGE_GMCPTRIGGERED:
-					String plugin = msg.getData().getString("TARGET");
-					String gcallback = msg.getData().getString("CALLBACK");
-					HashMap<String, Object> gdata = (HashMap<String, Object>) msg.obj;
-					Plugin gp = mPluginMap.get(plugin);
-					gp.handleGMCPCallback(gcallback, gdata);
-					break;
-				case MESSAGE_INVALIDATEWINDOWTEXT:
-					String wname = (String) msg.obj;
-					try {
-						doInvalidateWindowText(wname);
-					} catch (RemoteException e4) {
-						e4.printStackTrace();
-					}
-					break;
-				case MESSAGE_WINDOWXCALLS:
-					Object o = msg.obj;
-					if (o == null) {
-						o = "";
-					}
-					String token = msg.getData().getString("TOKEN");
-					String function = msg.getData().getString("FUNCTION");
-					try {
-						Connection.this.windowXCallS(token, function, o);
-					} catch (RemoteException e3) {
-						e3.printStackTrace();
-					}
-					break;
-				case MESSAGE_WINDOWXCALLB:
-					byte[] bytesa = (byte[]) msg.obj;
-					String tokens = msg.getData().getString("TOKEN");
-					String functions = msg.getData().getString("FUNCTION");
-					try {
-						Connection.this.windowXCallB(tokens, functions, bytesa);
-					} catch (RemoteException e3) {
-						e3.printStackTrace();
-					}
-					break;
-				case MESSAGE_ADDFUNCTIONCALLBACK:
-					Bundle data = msg.getData();
-					String id = data.getString("ID");
-					String command = data.getString("COMMAND");
-					String callback = data.getString("CALLBACK");
-					int pid = -1;
-					for (int i = 0; i < mPlugins.size(); i++) {
-						Plugin p = mPlugins.get(i);
-						if (p.getName().equals(id)) {
-							pid = i;
-						}
-					}
-					if (pid != -1) {
-						FunctionCallbackCommand fcc = new FunctionCallbackCommand(pid, command, callback);
-						mSpecialCommands.put(fcc.commandName, fcc);
-					}
-					break;
-				case MESSAGE_WINDOWBUFFER:
-					boolean set = (msg.arg1 == 0) ? false : true;
-					
-					String name = (String) msg.obj;
-					
-					for (WindowToken tok : mWindows) {
-						if (tok.getName().equals(name)) {
-							tok.setBufferText(set);
-						}
-					}
-					break;
-				case MESSAGE_NEWWINDOW:
-					WindowToken tok = (WindowToken) msg.obj;
-					mWindows.add(tok);
-					break;
-				case MESSAGE_DRAWINDOW:
-					Connection.this.redrawWindow((String) msg.obj);
-					break;
-				case MESSAGE_LUANOTE:
-					String str = (String) msg.obj;
-					try {
-						dispatchNoProcess(str.getBytes(mSettings.getEncoding()));
-					} catch (UnsupportedEncodingException e1) {
-						e1.printStackTrace();
-					}
-					break;
-				case MESSAGE_LINETOWINDOW:
-					Object line = msg.obj;
-					String target = msg.getData().getString("TARGET");
-					try {
-						Connection.this.lineToWindow(target, line);
-					} catch (RemoteException e3) {
-						e3.printStackTrace();
-					}
-					break;
-				case MESSAGE_SENDDATA_STRING:
-					try {
-						byte[] bytes = ((String) msg.obj).getBytes(mSettings.getEncoding());
-						sendToServer(bytes);
-					} catch (UnsupportedEncodingException e1) {
-						e1.printStackTrace();
-					}
-					break;
-				case MESSAGE_SENDDATA_BYTES:
-					sendToServer((byte[]) msg.obj);
-					break;
-				case MESSAGE_SENDGMCPDATA:
-					byte bIAC = TC.IAC;
-					byte bSB = TC.SB;
-					byte bSE = TC.SE;
-					byte bGMCP = TC.GMCP;
-					int size = ((String) msg.obj).length() + GMCP_PAYLOAD_SIZE;
-					ByteBuffer fub = ByteBuffer.allocate(size);
-					fub.put(bIAC).put(bSB).put(bGMCP);
-					try {
-						fub.put(((String) msg.obj).getBytes("ISO-8859-1"));
-					} catch (UnsupportedEncodingException e2) {
-						e2.printStackTrace();
-					}
-					fub.put(bIAC).put(bSE);
-					byte[] fubtmp = new byte[size];
-					fub.rewind();
-					fub.get(fubtmp);
-					if (mPump != null && mPump.isConnected()) {
-						mPump.sendData(fubtmp);
-					} else {
-						this.sendMessageDelayed(this.obtainMessage(MESSAGE_SENDGMCPDATA, msg.obj), FIVE_HUNDRED_MILLIS);
-					}
-					break;
-				case MESSAGE_STARTUP:
-					doStartup();
-					break;
-				case MESSAGE_STARTCOMPRESS:
-					mPump.getHandler().sendMessage(mPump.getHandler().obtainMessage(DataPumper.MESSAGE_COMPRESS, msg.obj));
-					break;
-				case MESSAGE_SENDOPTIONDATA:
-					Bundle b = msg.getData();
-					byte[] obytes = b.getByteArray("THE_DATA");
-					String message = b.getString("DEBUG_MESSAGE");
-					if (message != null) {
-						sendDataToWindow(message);
-					}
-
-					if (mPump != null) {
-						mPump.sendData(obytes);
-					}
-					break;
-				case MESSAGE_PROCESSORWARNING:
-					sendDataToWindow((String) msg.obj);
-					break;
-				case MESSAGE_BELLINC:
-					if (mSettings.isVibrateOnBell()) {
-						Connection.this.mService.doVibrateBell();
-					}
-					if (mSettings.isNotifyOnBell()) {
-						Connection.this.mService.doNotifyBell(Connection.this.mDisplay, Connection.this.mHost, Connection.this.mPort);
-					}
-					if (mSettings.isDisplayOnBell()) {
-						Connection.this.mService.doDisplayBell();
-					}
-					break;
-				case MESSAGE_DODIALOG:
-					dispatchDialog((String) msg.obj);
-					break;
-				case MESSAGE_PROCESS:
-					try {
-						dispatch((byte[]) msg.obj);
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
-					}
-					break;
-				case MESSAGE_DISCONNECTED:
-					killNetThreads(true);
-					doDisconnect(false);
-					mIsConnected = false;
-					break;
-				default:
-					break;
-				}
-			}
-
-
-		};
+		mHandler = new Handler(new ConnectionHandler());
 
 		mWorking = new TextTree();
 		mWorking.setLinkify(false);
@@ -734,6 +489,256 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		
 		//fish out the window.
 
+	}
+	
+	/** The connection handler message queue. Coordinates multithreaded efforts from the DataPumper and foreground window via the Service. */
+	private class ConnectionHandler implements Handler.Callback {
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public boolean handleMessage(final Message msg) {
+			switch(msg.what) {
+			case MESSAGE_TERMINATED_BY_PEER:
+				killNetThreads(true);
+				doDisconnect(true);
+				mIsConnected = false;
+				break;
+			case MESSAGE_TIMERSTOP:
+				doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.STOP);
+				break;
+			case MESSAGE_TIMERSTART:
+				doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.PLAY);
+				break;
+			case MESSAGE_TIMERRESET:
+				doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.RESET);
+				break;
+			case MESSAGE_TIMERINFO:
+				doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.INFO);
+				break;
+			case MESSAGE_TIMERPAUSE:
+				doTimerAction((String) msg.obj, msg.arg2, TIMER_ACTION.PAUSE);
+				break;
+			case MESSAGE_CALLPLUGIN:
+				String ptmp = msg.getData().getString("PLUGIN");
+				String ftmp = msg.getData().getString("FUNCTION");
+				String dtmp = msg.getData().getString("DATA");
+				doCallPlugin(ptmp, ftmp, dtmp);
+				break;
+			case MESSAGE_SETTRIGGERSDIRTY:
+				setTriggersDirty();
+				break;
+			case MESSAGE_RELOADSETTINGS:
+				reloadSettings();
+				break;
+			case MESSAGE_TRIGGER_LUA_ERROR:
+				dispatchLuaError((String) msg.obj);
+				break;
+			case MESSAGE_RECONNECT:
+				doReconnect();
+				break;
+			case MESSAGE_CONNECTED:
+				mAutoReconnectAttempt = 0;
+				break;
+			case MESSAGE_DELETEPLUGIN:
+				doDeletePlugin((String) msg.obj);
+				break;
+			case MESSAGE_ADDLINK:
+				doAddLink((String) msg.obj);
+				break;
+			case MESSAGE_DORESETSETTINGS:
+				doResetSettings();
+				break;
+			case MESSAGE_PLUGINLUAERROR:
+				dispatchLuaError((String) msg.obj);
+				break;
+			case MESSAGE_EXPORTFILE:
+				exportSettings((String) msg.obj);
+				break;
+			case MESSAGE_IMPORTFILE:
+				Connection.this.mService.markWindowsDirty();
+				importSettings((String) msg.obj, true, false);
+				break;
+			case MESSAGE_SAVESETTINGS:
+				String changedplugin = (String) msg.obj;
+				Connection.this.saveDirtyPlugin(changedplugin);
+				break;
+			case MESSAGE_GMCPTRIGGERED:
+				String plugin = msg.getData().getString("TARGET");
+				String gcallback = msg.getData().getString("CALLBACK");
+				HashMap<String, Object> gdata = (HashMap<String, Object>) msg.obj;
+				Plugin gp = mPluginMap.get(plugin);
+				gp.handleGMCPCallback(gcallback, gdata);
+				break;
+			case MESSAGE_INVALIDATEWINDOWTEXT:
+				String wname = (String) msg.obj;
+				try {
+					doInvalidateWindowText(wname);
+				} catch (RemoteException e4) {
+					e4.printStackTrace();
+				}
+				break;
+			case MESSAGE_WINDOWXCALLS:
+				Object o = msg.obj;
+				if (o == null) {
+					o = "";
+				}
+				String token = msg.getData().getString("TOKEN");
+				String function = msg.getData().getString("FUNCTION");
+				try {
+					Connection.this.windowXCallS(token, function, o);
+				} catch (RemoteException e3) {
+					e3.printStackTrace();
+				}
+				break;
+			case MESSAGE_WINDOWXCALLB:
+				byte[] bytesa = (byte[]) msg.obj;
+				String tokens = msg.getData().getString("TOKEN");
+				String functions = msg.getData().getString("FUNCTION");
+				try {
+					Connection.this.windowXCallB(tokens, functions, bytesa);
+				} catch (RemoteException e3) {
+					e3.printStackTrace();
+				}
+				break;
+			case MESSAGE_ADDFUNCTIONCALLBACK:
+				Bundle data = msg.getData();
+				String id = data.getString("ID");
+				String command = data.getString("COMMAND");
+				String callback = data.getString("CALLBACK");
+				int pid = -1;
+				for (int i = 0; i < mPlugins.size(); i++) {
+					Plugin p = mPlugins.get(i);
+					if (p.getName().equals(id)) {
+						pid = i;
+					}
+				}
+				if (pid != -1) {
+					FunctionCallbackCommand fcc = new FunctionCallbackCommand(pid, command, callback);
+					mSpecialCommands.put(fcc.commandName, fcc);
+				}
+				break;
+			case MESSAGE_WINDOWBUFFER:
+				boolean set = (msg.arg1 == 0) ? false : true;
+				
+				String name = (String) msg.obj;
+				
+				for (WindowToken tok : mWindows) {
+					if (tok.getName().equals(name)) {
+						tok.setBufferText(set);
+					}
+				}
+				break;
+			case MESSAGE_NEWWINDOW:
+				WindowToken tok = (WindowToken) msg.obj;
+				mWindows.add(tok);
+				break;
+			case MESSAGE_DRAWINDOW:
+				Connection.this.redrawWindow((String) msg.obj);
+				break;
+			case MESSAGE_LUANOTE:
+				String str = (String) msg.obj;
+				try {
+					dispatchNoProcess(str.getBytes(mSettings.getEncoding()));
+				} catch (UnsupportedEncodingException e1) {
+					e1.printStackTrace();
+				}
+				break;
+			case MESSAGE_LINETOWINDOW:
+				Object line = msg.obj;
+				String target = msg.getData().getString("TARGET");
+				try {
+					Connection.this.lineToWindow(target, line);
+				} catch (RemoteException e3) {
+					e3.printStackTrace();
+				}
+				break;
+			case MESSAGE_SENDDATA_STRING:
+				try {
+					byte[] bytes = ((String) msg.obj).getBytes(mSettings.getEncoding());
+					sendToServer(bytes);
+				} catch (UnsupportedEncodingException e1) {
+					e1.printStackTrace();
+				}
+				break;
+			case MESSAGE_SENDDATA_BYTES:
+				sendToServer((byte[]) msg.obj);
+				break;
+			case MESSAGE_SENDGMCPDATA:
+				byte bIAC = TC.IAC;
+				byte bSB = TC.SB;
+				byte bSE = TC.SE;
+				byte bGMCP = TC.GMCP;
+				int size = ((String) msg.obj).length() + GMCP_PAYLOAD_SIZE;
+				ByteBuffer fub = ByteBuffer.allocate(size);
+				fub.put(bIAC).put(bSB).put(bGMCP);
+				try {
+					fub.put(((String) msg.obj).getBytes("ISO-8859-1"));
+				} catch (UnsupportedEncodingException e2) {
+					e2.printStackTrace();
+				}
+				fub.put(bIAC).put(bSE);
+				byte[] fubtmp = new byte[size];
+				fub.rewind();
+				fub.get(fubtmp);
+				if (mPump != null && mPump.isConnected()) {
+					mPump.sendData(fubtmp);
+				} else {
+					mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_SENDGMCPDATA, msg.obj), FIVE_HUNDRED_MILLIS);
+				}
+				break;
+			case MESSAGE_STARTUP:
+				doStartup();
+				break;
+			case MESSAGE_STARTCOMPRESS:
+				mPump.getHandler().sendMessage(mPump.getHandler().obtainMessage(DataPumper.MESSAGE_COMPRESS, msg.obj));
+				break;
+			case MESSAGE_SENDOPTIONDATA:
+				Bundle b = msg.getData();
+				byte[] obytes = b.getByteArray("THE_DATA");
+				String message = b.getString("DEBUG_MESSAGE");
+				if (message != null) {
+					sendDataToWindow(message);
+				}
+
+				if (mPump != null) {
+					mPump.sendData(obytes);
+				}
+				break;
+			case MESSAGE_PROCESSORWARNING:
+				sendDataToWindow((String) msg.obj);
+				break;
+			case MESSAGE_BELLINC:
+				if (mSettings.isVibrateOnBell()) {
+					Connection.this.mService.doVibrateBell();
+				}
+				if (mSettings.isNotifyOnBell()) {
+					Connection.this.mService.doNotifyBell(Connection.this.mDisplay, Connection.this.mHost, Connection.this.mPort);
+				}
+				if (mSettings.isDisplayOnBell()) {
+					Connection.this.mService.doDisplayBell();
+				}
+				break;
+			case MESSAGE_DODIALOG:
+				dispatchDialog((String) msg.obj);
+				break;
+			case MESSAGE_PROCESS:
+				try {
+					dispatch((byte[]) msg.obj);
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+				break;
+			case MESSAGE_DISCONNECTED:
+				killNetThreads(true);
+				doDisconnect(false);
+				mIsConnected = false;
+				break;
+			default:
+				break;
+			}
+			return true;
+		}
+		
 	}
 
 	/** Quick frontend for dispatchNoProcess(...) for sending a lua error message.
@@ -834,7 +839,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		if (p != null) {
 			p.callFunction(function, data);
 		} else {
-			this.dispatchLuaText("\n" + Colorizer.colorRed + "No plugin named: " + plugin + Colorizer.colorRed + "\n");
+			this.dispatchLuaText("\n" + Colorizer.getRedColor() + "No plugin named: " + plugin + Colorizer.getRedColor() + "\n");
 		}
 	}
 
@@ -939,7 +944,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 			for (String link : mSettings.getLinks()) {
-				buffer.addString(Colorizer.colorWhite + "Loading plugin file: " + link);
+				buffer.addString(Colorizer.getWhiteColor() + "Loading plugin file: " + link);
 				String filename = Environment.getExternalStorageDirectory() + "/BlowTorch/" + link;
 				ArrayList<Plugin> tmplist = new ArrayList<Plugin>();
 				PluginParser parse = new PluginParser(filename, link, mService.getApplicationContext(), tmplist, mHandler, this);
@@ -970,14 +975,14 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 					
 					mPlugins.addAll(group);
 					
-					buffer.addString(Colorizer.colorWhite + ", success." + Colorizer.colorWhite + "\n");
+					buffer.addString(Colorizer.getWhiteColor() + ", success." + Colorizer.getWhiteColor() + "\n");
 				} catch (FileNotFoundException e) {
-					buffer.addString(Colorizer.colorRed + " file not found." + Colorizer.colorWhite + "\n");
+					buffer.addString(Colorizer.getRedColor() + " file not found." + Colorizer.getWhiteColor() + "\n");
 					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (SAXException e) {
-					buffer.addString(Colorizer.colorRed + " XML Parse error.\n" + e.getLocalizedMessage() + Colorizer.colorWhite + "\n");
+					buffer.addString(Colorizer.getRedColor() + " XML Parse error.\n" + e.getLocalizedMessage() + Colorizer.getWhiteColor() + "\n");
 				}
 			}
 		}
@@ -1224,8 +1229,8 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		if (mAutoReconnect && !override) {
 			if (mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
-				String message = "\n" + Colorizer.colorRed + "Network connection disconnected.\n"
-								 + "Attmempting reconnect in 3 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) + " tries remaining." + Colorizer.colorWhite + "\n";
+				String message = "\n" + Colorizer.getRedColor() + "Network connection disconnected.\n"
+								 + "Attmempting reconnect in 3 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) + " tries remaining." + Colorizer.getWhiteColor() + "\n";
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message));
 				mHandler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, THREE_THOUSAND_MILLIS);
 				return;
@@ -1576,8 +1581,8 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			if (mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
 				killNetThreads(true);
-				String message = "\n" + Colorizer.colorRed + "Network Error: " + str + "\n" + "Attmempting reconnect in 20 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) 
-						+ " tries remaining." + Colorizer.colorWhite + "\n";
+				String message = "\n" + Colorizer.getRedColor() + "Network Error: " + str + "\n" + "Attmempting reconnect in 20 seconds. " + (mAutoReconnectLimit - mAutoReconnectAttempt) 
+						+ " tries remaining." + Colorizer.getWhiteColor() + "\n";
 				mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_PROCESSORWARNING, message));
 				mHandler.sendEmptyMessageDelayed(MESSAGE_RECONNECT, TWENTY_THOUSAND_MILLIS);
 				return;
@@ -1910,7 +1915,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		Data data = new Data();
 		if (cmd.equals(".." + "\n") || cmd.equals("..")) {
 			synchronized (mSettings) {
-				String outputmsg = "\n" + Colorizer.colorRed + "Dot command processing ";
+				String outputmsg = "\n" + Colorizer.getRedColor() + "Dot command processing ";
 				if (mSettings.isProcessPeriod()) {
 					//the_settings.setProcessPeriod(false);
 					overrideProcessPeriods(false);
@@ -1920,7 +1925,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 					overrideProcessPeriods(true);
 					outputmsg = outputmsg.concat("enabled.");
 				}
-				outputmsg = outputmsg.concat(Colorizer.colorWhite + "\n");
+				outputmsg = outputmsg.concat(Colorizer.getWhiteColor() + "\n");
 				try {
 					sendBytesToWindow(outputmsg.getBytes(mSettings.getEncoding()));
 				} catch (UnsupportedEncodingException e) {
@@ -1966,8 +1971,8 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 								return data;
 							} else {
 								//display error message
-								String noargMessage = "\n" + Colorizer.colorRed + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"."
-													+ alias + " replacetext\"" + Colorizer.colorWhite + "\n";
+								String noargMessage = "\n" + Colorizer.getRedColor() + " Alias \"" + alias + "\" can not be set to nothing. Acceptable format is \"."
+													+ alias + " replacetext\"" + Colorizer.getWhiteColor() + "\n";
 								try {
 									sendBytesToWindow(noargMessage.getBytes(mSettings.getEncoding()));
 								} catch (UnsupportedEncodingException e) {
@@ -1983,12 +1988,12 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 						} else {
 							//format error message.
 							
-							String error = Colorizer.colorRed + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
+							String error = Colorizer.getRedColor() + "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n";
 							error += "  \"" + alias + "\" is not a recognized alias or command.\n";
 							error += "   No data has been sent to the server. If you intended\n";
 							error += "   this to be done, please type \".." + alias + "\"\n";
 							error += "   To toggle command processing, input \"..\" with no arguments\n";
-							error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]" + Colorizer.colorWhite + "\n";  
+							error += "[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]" + Colorizer.getWhiteColor() + "\n";  
 							
 							try {
 								sendBytesToWindow(error.getBytes(mSettings.getEncoding()));
@@ -3151,7 +3156,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				if (mPump != null && mPump.isConnected()) {
 					mPump.sendData(tosend);
 				} else {
-					sendBytesToWindow(new String(Colorizer.colorRed + "\nDisconnected.\n" + Colorizer.colorWhite).getBytes("UTF-8"));
+					sendBytesToWindow(new String(Colorizer.getRedColor() + "\nDisconnected.\n" + Colorizer.getWhiteColor()).getBytes("UTF-8"));
 				}
 			} else {
 				if (d.mCmdString.equals("") && d.mVisString == null) {
@@ -3548,7 +3553,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				} else if (hfflip.equals("none")) {
 					buttonops.setOption("haptic_flip", Integer.toString(2));
 				}
-				String summary = Colorizer.colorWhite + verb + " legacy settings file.\n";
+				String summary = Colorizer.getWhiteColor() + verb + " legacy settings file.\n";
 				loadPlugins(tmpplugs, summary);
 				mSettings.importV1Settings(s);
 				if (!s.isRoundButtons()) {
@@ -3577,7 +3582,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 							pL.pop(1);
 						}
 					}
-					String summary = Colorizer.colorWhite + verb + " settings file.\n";
+					String summary = Colorizer.getWhiteColor() + verb + " settings file.\n";
 					loadPlugins(tmpplugs, summary);
 				} else {
 					Log.e("XMLPARSE", "ERROR IN LOADING V2 SETTINGS, DID NOT FIND PROPER XMLVERSION NUMBER");
@@ -3643,7 +3648,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			WindowToken token = new WindowToken(MAIN_WINDOW, null, null, mDisplay);
 			RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
 			LayoutGroup g = new LayoutGroup();
-			g.type = LayoutGroup.LAYOUT_TYPE.normal;
+			g.setType(LayoutGroup.LAYOUT_TYPE.normal);
 			g.setLandscapeParams(p);
 			g.setPortraitParams(p);
 			mWindows.add(0, token);
@@ -3947,7 +3952,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		if (p != null) {
 			p.callFunction(function);
 		} else {
-			this.dispatchLuaText("\n" + Colorizer.colorRed + "No plugin named: " + plugin + Colorizer.colorRed + "\n");
+			this.dispatchLuaText("\n" + Colorizer.getRedColor() + "No plugin named: " + plugin + Colorizer.getRedColor() + "\n");
 		}
 	}
 

@@ -168,8 +168,8 @@ public class DataPumper extends Thread {
 		InetAddress addr = null;
 		mClosing = false;
 		
-		sendWarning(new String(Colorizer.colorCyanBright + "Attempting connection to: " + Colorizer.colorYeollowBright + mHost + ":" + mPort + "\n"
-		+ Colorizer.colorCyanBright + "Timeout set to 14 seconds." + Colorizer.colorWhite + "\n"));
+		sendWarning(new String(Colorizer.getBrightCyanColor() + "Attempting connection to: " + Colorizer.getBrightYellowColor() + mHost + ":" + mPort + "\n"
+		+ Colorizer.getBrightCyanColor() + "Timeout set to 14 seconds." + Colorizer.getWhiteColor() + "\n"));
 		
 		try {
 			addr = InetAddress.getByName(mHost);
@@ -181,8 +181,8 @@ public class DataPumper extends Thread {
 		String ip = addr.getHostAddress();
 		
 		if (!ip.equals(mHost)) {
-			sendWarning(Colorizer.colorCyanBright + "Looked up: " + Colorizer.colorYeollowBright + ip + Colorizer.colorCyanBright + " for "
-			+ Colorizer.colorYeollowBright + mHost + Colorizer.colorWhite + "\n");
+			sendWarning(Colorizer.getBrightCyanColor() + "Looked up: " + Colorizer.getBrightYellowColor() + ip + Colorizer.getBrightCyanColor() + " for "
+			+ Colorizer.getBrightYellowColor() + mHost + Colorizer.getWhiteColor() + "\n");
 		}
 		
 		mSocket = new Socket();
@@ -193,7 +193,7 @@ public class DataPumper extends Thread {
 			mSocket.setKeepAlive(true);
 			mSocket.setSoTimeout(0);
 			mSocket.connect(adr, SOCKET_TIMEOUT);
-			sendWarning(Colorizer.colorCyanBright + "Connected to: " + Colorizer.colorYeollowBright + mHost + Colorizer.colorCyanBright + "!" + Colorizer.colorWhite + "\n");
+			sendWarning(Colorizer.getBrightCyanColor() + "Connected to: " + Colorizer.getBrightYellowColor() + mHost + Colorizer.getBrightCyanColor() + "!" + Colorizer.getWhiteColor() + "\n");
 			
 			mSocket.setSendBufferSize(SOCKET_BUFFER_SIZE);
 			mWriterThread = new OutputWriterThread(new BufferedOutputStream(mSocket.getOutputStream()));
@@ -389,7 +389,7 @@ public class DataPumper extends Thread {
 			try {
 				if (mReader.read() == -1) {
 					if (!mClosing) {
-						sendWarning("\n" + Colorizer.colorRed + "Connection terminated by peer." + Colorizer.colorWhite + "\n");
+						sendWarning("\n" + Colorizer.getRedColor() + "Connection terminated by peer." + Colorizer.getWhiteColor() + "\n");
 						mReportTo.sendEmptyMessage(Connection.MESSAGE_TERMINATED_BY_PEER);
 					}
 					mConnected = false;
