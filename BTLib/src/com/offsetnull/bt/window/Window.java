@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.window;
 
 
@@ -6,11 +9,7 @@ import java.io.UnsupportedEncodingException;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.ListIterator;
-import java.util.Map;
-
 import org.keplerproject.luajava.JavaFunction;
 import org.keplerproject.luajava.LuaException;
 import org.keplerproject.luajava.LuaObject;
@@ -27,13 +26,8 @@ import com.offsetnull.bt.service.plugin.settings.ListOption;
 import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
 
 
-import android.R;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.app.Service;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -42,42 +36,28 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.os.RemoteException;
 import android.text.ClipboardManager;
 import android.util.AttributeSet;
-//import android.util.Log;
-//import android.util.Log;
 
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
-import android.view.View.MeasureSpec;
-import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.CycleInterpolator;
-import android.view.animation.Interpolator;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
 import com.offsetnull.bt.service.Colorizer;
 import com.offsetnull.bt.service.SettingsChangedListener;
+import com.offsetnull.bt.service.WindowToken;
 import com.offsetnull.bt.settings.HyperSettings;
 import com.offsetnull.bt.settings.HyperSettings.LINK_MODE;
 import com.offsetnull.bt.window.TextTree.Line;
@@ -86,95 +66,98 @@ import com.offsetnull.bt.window.TextTree.SelectionCursor;
 import com.offsetnull.bt.window.TextTree.Unit;
 
 
-/*! \brief Window
+/** \brief Window
  *
  *  The Window.java class is the programmable mini-window that also houses the ansi drawing routine.
  */
 
-public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener,SettingsChangedListener {
+@SuppressWarnings("deprecation")
+public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener, SettingsChangedListener {
 
-	/*! \brief test
+	/** \brief test
 	 * 
 	 *  Seriously how does this work.
 	 */
-	private MainWindowCallback parent = null; /*!< for calling back into the Activity.*/
-	private Bitmap homeWidgetDrawable = null;
-	private Bitmap textSelectionCancelBitmap = null;
-	private Bitmap textSelectionCopyBitmap = null;
-	private Bitmap textSelectionSwapBitmap = null;
-	private Rect homeWidgetRect = new Rect();
-	private TextTree the_tree = null;
-	private TextTree buffer = null;
+	/** The activity that owns this window. */
+	private MainWindowCallback mParent = null;
+	/** The bitmap that holds the "return to the bottom of the buffer" button graphic. */
+	private Bitmap mHomeWidgetDrawable = null;
+	/** The bitmap that holds the selection widget cancel button. */
+	private Bitmap mTextSelectionCancelBitmap = null;
+	/** The bitmap that holds the selection widget copy button. */
+	private Bitmap mTextSelectionCopyBitmap = null;
+	/** The bitmap that holds the selection widget cursor swap button. */
+	private Bitmap mTextSelectionSwapBitmap = null;
+	/** Rectangle that represents the hot-zone (clickable region) for the home button. */
+	private Rect mHomeWidgetRect = new Rect();
+	/** The buffer object that this window uses to store and draw ansi text. */
+	private TextTree mBuffer = null;
+	/** The buffer that is used to buffer text when BufferText() is set. */
+	private TextTree mHoldBuffer = null;
+	/** The maximum height for this window. I don't think this is used. */
 	private int mMaxHeight;
-	private int mMaxWidth;
-	private int PREF_FONTSIZE = 18;
+	/** The preference for fontsize. */
+	private int mPrefFontSize = WindowToken.DEFAULT_FONT_SIZE;
+	/** The height of this window. */
 	private int mHeight = 1;
+	/** The width of this window. */
 	private int mWidth = 1;
-	int one_char_is_this_wide = 1; /*!< gah! how does this work*/
-	private float density;
-	LuaState L = null;
-	String mOwner;
-	Paint clearme = new Paint();
-	public int CALCULATED_LINESINWINDOW;
-	private int PREF_LINEEXTRA = 2;
-	private int PREF_LINESIZE = (int)PREF_FONTSIZE + PREF_LINEEXTRA;
-	private Typeface PREF_FONT = Typeface.MONOSPACE;
-	public int CALCULATED_ROWSINWINDOW;
-	private boolean textSelectionEnabled = true;
-	private double fling_velocity;
-	
-	boolean increadedPriority = false;
-	boolean hasText = true;
-	private int fitChars = -1;
-	private boolean bufferText = false;
-	private View new_text_in_buffer_indicator = null;
-	
-	private boolean centerJustify = false;
-	private boolean hasScriptOnMeasure = false;
-	
-
-	private int debug_mode = 0;
-
-	//private String encoding = "ISO-8859-1";
-	boolean constrictWindow = false;
-	//int constrictedHeight = 300;
-	//int constrictedWidth = 600;
-	int mAnchorLeft = 0;
-	int mAnchorTop = 0;
-	
-	boolean edgeTop = true;
-	boolean edgeLeft = true;
-	boolean edgeRight = true;
-	boolean edgeBottom = true;
-	
-	private Paint borderPaint = new Paint();
-	
-	private LINK_MODE linkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
-	private int linkHighlightColor = HyperSettings.DEFAULT_HYPERLINK_COLOR;
-	
-	Integer selectedColor = new Integer(37);
-	Integer selectedBright = new Integer(0);
-	Integer selectedBackground = new Integer(60);
-	boolean xterm256FGStart = false;
-	boolean xterm256BGStart = false;
-	boolean xterm256Color = false;
+	/** The measured width of one character using the preference font size. */
+	private int mOneCharWidth = 1;
+	/** The display density of the device's display panel. */
+	private float mDensity;
+	/** The LuaState associated with this window. */
+	private LuaState mL = null;
+	/** The string name of the plugin that launched this window. */
+	private String mOwner;
+	/** Variable to store the calculated number of lines that can be drawn at the current font size. */
+	private int mCalculatedLinesInWindow;
+	/** The preference value for the extra line space to add to each line. */
+	private int mPrefLineExtra = 2;
+	/** The preference value for the total linesize, the sum of the font + extra. */
+	private int mPrefLineSize = (int) mPrefFontSize + mPrefLineExtra;
+	/** The preferred font to use to draw text. */
+	private Typeface mPrefFont = Typeface.MONOSPACE;
+	/** The calclualated number of rows in the window for the preferred line size. */
+	private int mCalculatedRowsInWindow;
+	/** Tracker value for weather or not text selection should be available for this window. */
+	private boolean mTextSelectionEnabled = true;
+	/** The current fling velocity. */
+	private double mFlingVelocity;
+	/** The number of chars to fit to the width of the window, -1 to disable. */
+	private int mFitChars = -1;
+	/** Tracker value for weather or not to buffer incoming text (used while text selecting). */
+	private boolean mBufferText = false;
+	/** Tracker value for weather or not to center justify text being drawn. */
+	private boolean mCenterJustify = false;
+	/** Tracker value for weather or not the window has a script OnMeasure function implemented. */
+	private boolean mHasScriptOnMeasure = false;
+	/** Tracker value for what the current color debug mode is. */
+	private int mColorDebugMode = 0;
+	/** Tracker value for the current link mode. */
+	private LINK_MODE mLinkMode = LINK_MODE.HIGHLIGHT_COLOR_ONLY_BLAND;
+	/** Tracker value for the current link decoration color. */
+	private int mLinkHighlightColor = HyperSettings.DEFAULT_HYPERLINK_COLOR;
+	/** ANSI Drawing routine current color register. */
+	private Integer mSelectedColor = Integer.valueOf(37);
+	/** ANSI Drawing routine current brightness register. */
+	private Integer mSelectedBright = Integer.valueOf(0);
+	/** ANSI Drawing routine current background color. */
+	private Integer mSelectedBackground = Integer.valueOf(60);
+	/** Utility variable that is used by the ANSI drawing routine to properly handle xterm 256 colors. */
+	private boolean mXterm256FGStart = false;
+	/** Utility variable that is used by the ANSI drawing routine to properly handle xterm 256 colors. */
+	private boolean mXterm256BGStart = false;
+	/** Utility variable that is used by the ANSI drawing routine to properly handle xterm 256 colors. */
+	private boolean mXterm256Color = false;
+	/** The handler message queue for this window. */
 	private Handler mHandler = null;
-	//private Handler realbuttonhandler = null;
-	Handler mainHandler = null;
-	//Rect mBounds = null;
-	protected static final int MSG_UPPRIORITY = 200;
-	protected static final int MSG_NORMALPRIORITY = 201;
+	/** The handler message queue for the main window that holds this window. */
+	private Handler mMainWindowHandler = null;
 	private Paint textSelectionIndicatorPaint = new Paint();
 	private Paint textSelectionIndicatorBackgroundPaint = new Paint();
 	private Paint textSelectionIndicatorCirclePaint = new Paint();
 	
-	//final static public int MSG_BUTTONDROPSTART = 100;
-	//final static public int MSG_CLEAR_NEW_TEXT_INDICATOR = 105;
-	//final static public int MSG_SET_NEW_TEXT_INDICATOR = 106;
-	//final static public int MSG_SET_NEW_TEXT_INDICATOR_ANIMATED = 107;
-	//final static public int MSG_DELETEBUTTON = 1040;
-	//final static public int MSG_REALLYDELETEBUTTON = 1041;
-		
 	public static final int MESSAGE_ADDTEXT = 0;
 
 	private static final int MESSAGE_DRAW = 117;
@@ -182,7 +165,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected static final int MESSAGE_FLUSHBUFFER = 118;
 	protected static final int MESSAGE_SHUTDOWN = 119;
 	public static final int MESSAGE_PROCESSXCALLS = 4;
-	//private boolean disableEditing = false;
 	protected static final int MESSAGE_CLEARTEXT = 5;
 	protected static final int MESSAGE_SETTINGSCHANGED = 6;
 	protected static final int MESSAGE_ENCODINGCHANGED = 7;
@@ -192,12 +174,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected static final int MESSAGE_SCROLLRIGHT = 11;
 	protected static final int MESSAGE_SCROLLLEFT = 12;
 	protected static final int MESSAGE_XCALLB = 13;
-	//public static final int MESSAGE_SENDDATA = 0;
 	protected static final int MESSAGE_RESETWITHDATA = 14;
-	
-	//Animation indicator_on = new AlphaAnimation(1.0f,0.0f);
-	//Animation indicator_off = new AlphaAnimation(0.0f,0.0f);
-	//Animation indicator_on_no_cycle = new AlphaAnimation(1.0f,1.0f);
 	
 	Handler dataDispatch = null;
 	EditText input = null;
@@ -226,34 +203,67 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	Rect selectionIndicatorRect = new Rect();
 	
-	public void displayLuaError(String message) {
-		mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.getRedColor() + message + Colorizer.getWhiteColor() + "\n"));
-	}
+	private int scrollRepeatRateStep = 1;
+	private int scrollRepeatRateInitial = 300;
+	private int scrollRepeatRate = scrollRepeatRateInitial;
+	private int scrollRepeatRateMin = 60;
+	
+	public int gravity = Gravity.LEFT;
+	
+	boolean finger_down = false;
+	int diff_amount = 0;
+	public Boolean is_in_touch = false;
+	Float start_x = null;
+	Float start_y = null;
+	MotionEvent pre_event  = null;
+	boolean finger_down_to_up = false;
+	long prev_draw_time = 0;
+	Float prev_y = 0f;
+	int bx = 0;
+	int by = 0;
+	public int touchInLink = -1;
+	long target = 0;
+	boolean homeWidgetFingerDown = false;
+	int touchStartY;
+	int pointer = -1;
+	float fling_accel = 200.0f; //(units per sec);
+	
+	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
+	
+	private Paint scroller_paint = new Paint();
+	private boolean homeWidgetShowing = false;
+	Rect scrollerRect = new Rect();
+	Paint featurePaint = new Paint();
+
+	boolean indicated = false;
 	
 	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings,MainWindowCallback activity) {
 		super(context);
-		this.parent = activity;
+		this.mParent = activity;
 		init(dataDir,name,owner,mainWindowHandler,settings);
 	}
 	
+	public Window(Context c) {
+		super(c);
+	}
 	
+	public Window(Context c, AttributeSet a) {
+		super(c,a);
+	}
+	
+	public void displayLuaError(String message) {
+		mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.getRedColor() + message + Colorizer.getWhiteColor() + "\n"));
+	}
 	
 	public void onCreate(Bundle b) {
 		fitFontSize(-1);
-		//onSizeChanged(this.getWidth(),this.getHeight(),0,0);
-		//viewCreate();
-		
-		//updateHandler = new ThreadUpdater(the_tree,mHandler,updateSynch);
-		//updateHandler.start();
 	}
 	
 	protected void onAttachedToWindow() {
-		//Log.e("WINDOW","Attatched to window.");
 		viewCreate();
 	}
 	
 	protected void onDetachedFromWindow() {
-		//Log.e("WINDOW","Detached from window.");
 		viewDestroy();
 	}
 	
@@ -261,92 +271,71 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		int height = MeasureSpec.getSize(heightSpec);
 		int width = MeasureSpec.getSize(widthSpec);
 		
-		if(hasScriptOnMeasure && L != null) {
-			//Log.e("MEASURE","USING THE SCRIPT ON MEASURE");
-			L.getGlobal("debug");
-			L.getField(-1, "traceback");
-			L.remove(-2);
+		if(mHasScriptOnMeasure && mL != null) {
+			mL.getGlobal("debug");
+			mL.getField(-1, "traceback");
+			mL.remove(-2);
 			
-			L.getGlobal("OnMeasure");
-			if(L.isFunction(-1)) {
-				L.pushNumber(widthSpec);
-				L.pushNumber(heightSpec);
-				int ret = L.pcall(2,2,-4);
+			mL.getGlobal("OnMeasure");
+			if(mL.isFunction(-1)) {
+				mL.pushNumber(widthSpec);
+				mL.pushNumber(heightSpec);
+				int ret = mL.pcall(2,2,-4);
 				if(ret !=0) {
-					displayLuaError("Error in OnMeasure:" + L.getLuaObject(-1).getString());
+					displayLuaError("Error in OnMeasure:" + mL.getLuaObject(-1).getString());
 					setMeasuredDimension(1,1);
 					
-					L.pop(1);
+					mL.pop(1);
 					return;
 				} else {
 					//get the return values.
-					int ret_height = (int) L.getLuaObject(-1).getNumber();
-					int ret_width = (int) L.getLuaObject(-2).getNumber();
-					L.pop(2);
-					//Log.e("MEASURE","CUSTOM MEASURE CODE RETURNED:"+ret_width+"|"+ret_height);
+					int ret_height = (int) mL.getLuaObject(-1).getNumber();
+					int ret_width = (int) mL.getLuaObject(-2).getNumber();
+					mL.pop(2);
 					setMeasuredDimension(ret_width,ret_height);
-					//if(width != mWidth) {
-					//	doFitFontSize(width);
-					//}
 					return;
 				}
 			} else {
-				L.pop(2);
+				mL.pop(2);
 			}
 		}
-		//if(height == mHeight && width == mWidth) { setMeasuredDimension(width,height); return; }
-		
 		int hspec = MeasureSpec.getMode(heightSpec);
-		//int wspec = MeasureSpec.getMode(widthSpec);
-		//mWidth = width;
-		//mHeight = height;
 		if(width != mWidth) {
 			doFitFontSize(width);
 		}
-		//String str = "";
 		switch(hspec) {
 		case MeasureSpec.AT_MOST:
-			//str = "AT_MOST";
 			break;
 		case MeasureSpec.EXACTLY:
-			//str = "EXACTLY";
 			break;
 		case MeasureSpec.UNSPECIFIED:
-			//str = "UNSPECIFIED";
-			height = (the_tree.getBrokenLineCount()*PREF_LINESIZE) + PREF_LINEEXTRA;
+			height = (mBuffer.getBrokenLineCount()*mPrefLineSize) + mPrefLineExtra;
 			break;
 		}
 		
-		//Log.e("MEASURE","MEASURING WINDOW ("+this.getName()+"): height spec:"+str + " using val: " + height + " tree has: " + the_tree.getBrokenLineCount());
-		
 		setMeasuredDimension(width,height);
 		
-		//if(sizeChanged) {
-		//calculateCharacterFeatures(mWidth,mHeight);
-			//sizeChanged = false;
-		//}	
-		//doDelayedDraw(0);
 	}
 	
 	private String dataDir = null;
 	
 	private void init(String dataDir,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
 		this.dataDir = dataDir;
-		this.density = this.getContext().getResources().getDisplayMetrics().density;
+		this.mDensity = this.getContext().getResources().getDisplayMetrics().density;
 		if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
-			selectionIndicatorHalfDimension = (int) (90*density);
+			selectionIndicatorHalfDimension = (int) (90*mDensity);
 		} else {
-			selectionIndicatorHalfDimension = (int) (60*density);
+			selectionIndicatorHalfDimension = (int) (60*mDensity);
 		}
 		
 		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
-		homeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.offsetnull.bt.R.drawable.homewidget);
-		textSelectionCancelBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.cancel_tiny);
-		textSelectionCopyBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.copy_tiny);
-		textSelectionSwapBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.swap);
+		mHomeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.offsetnull.bt.R.drawable.homewidget);
+		mTextSelectionCancelBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.cancel_tiny);
+		mTextSelectionCopyBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.copy_tiny);
+		mTextSelectionSwapBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.swap);
 		
 		textSelectionIndicatorPaint.setStyle(Paint.Style.STROKE);
-		textSelectionIndicatorPaint.setStrokeWidth(1*density);
+		textSelectionIndicatorPaint.setStrokeWidth(1*mDensity);
 		textSelectionIndicatorPaint.setColor(0xFFFF0000);
 		textSelectionIndicatorPaint.setAntiAlias(true);
 		
@@ -360,18 +349,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		textSelectionIndicatorCirclePaint.setPathEffect(dpe);
 		textSelectionIndicatorCirclePaint.setAntiAlias(true);
-		//homeWidgetDrawable.setBounds(homeWidgetRect);
 		this.settings = settings;
 		this.settings.setListener(this);
-		borderPaint.setStrokeWidth(5);
-		borderPaint.setColor(0xFF444488);
-		new_text_in_buffer_indicator = new View(this.getContext());
-		the_tree = new TextTree();
+		mBuffer = new TextTree();
 		if(name.equals("mainDisplay")) {
-			the_tree.debugLineAdd = true;
+			mBuffer.debugLineAdd = true;
 		}
-		buffer = new TextTree();
-		//this.setOnTouchListener(textSelectionTouchHandler);
+		mHoldBuffer = new TextTree();
 		mHandler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch(msg.what) {
@@ -379,22 +363,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					Window.this.resetAndAddText((byte[])msg.obj);
 					break;
 				case MESSAGE_SCROLLLEFT:
-					//Log.e("window","handler scrollleft");
 					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
 					Window.this.doScrollLeft(true);
 					break;
 				case MESSAGE_SCROLLRIGHT:
-					//Log.e("window","handler scrollright");
 					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
 					Window.this.doScrollRight(true);
 					break;
 				case MESSAGE_SCROLLDOWN:
-					//Log.e("window","handler scrolldown");
 					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
 					Window.this.doScrollDown(true);
 					break;
 				case MESSAGE_SCROLLUP:
-					//Log.e("window","handler scrollup");
 					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
 					Window.this.doScrollUp(true);
 					break;
@@ -406,13 +386,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					break;
 				case MESSAGE_SETTINGSCHANGED:
 					Window.this.doUpdateSetting(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
-					//settings.setOption(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
 					break;
 				case MESSAGE_CLEARTEXT:
-					//Log.e("clear","clearing buffer");
-					the_tree.empty();
-					buffer.empty();
-					//buffer.
+					mBuffer.empty();
+					mHoldBuffer.empty();
 					break;
 				case MESSAGE_SHUTDOWN:
 					Window.this.shutdown();
@@ -425,15 +402,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					break;
 					
 				case MESSAGE_ADDTEXT:
-					//String str = new String((byte[])msg.obj);
-					//Log.e("window","adding text:\n"+str);
 					Window.this.addBytes((byte[])msg.obj, false);
-					break;
-				case MSG_UPPRIORITY:
-					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
-					break;
-				case MSG_NORMALPRIORITY:
-					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 					break;
 				case MESSAGE_PROCESSXCALLS:
 					Window.this.xcallS(msg.getData().getString("FUNCTION"),(String)msg.obj);
@@ -444,13 +413,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					try {
 						Window.this.xcallB(msg.getData().getString("FUNCTION"),(byte[])msg.obj);
 					} catch (LuaException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					//} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-					//	e.printStackTrace();
-					//}
 					break;
 				}
 			}
@@ -459,36 +423,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		//lua startup.
 		mOwner = owner;
-		//mManager = manager;
-		//mContext = context;
 		
-		this.mainHandler = mainWindowHandler;
-		
-		
-		/*if(x == 0 && y ==0 && width==0 && height == 0) {
-			constrictWindow = false;
-		} else {
-			constrictWindow = true;
-			mAnchorTop = y;
-			mAnchorLeft = x;
-			mWidth = width;
-			mHeight = height;
-			//this.he
-			
-		}*/
-		clearme.setColor(0x00000000);
-		clearme.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-		
-		//mBounds = new Rect(mAnchorLeft,mAnchorTop,mAnchorLeft+width,mAnchorTop+height);
+		this.mMainWindowHandler = mainWindowHandler;
 		
 		mName = name;
-		//initLua();
-		
-		
-		
-		mAnchorTop = 0;
-		mAnchorLeft = 0;
-		//calculateCharacterFeatures(width,height);
 		
 		mSelectionIndicatorBitmap = Bitmap.createBitmap(2*selectionIndicatorHalfDimension, 2*selectionIndicatorHalfDimension, Bitmap.Config.ARGB_8888);
 		mSelectionIndicatorCanvas = new Canvas(mSelectionIndicatorBitmap);
@@ -517,16 +455,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		ListOption hlmode = (ListOption)settings.findOptionByKey("hyperlink_mode");
 		
-		PREF_FONT = loadFontFromName((String)fontpath.getValue());
-		p.setTypeface(PREF_FONT);
+		mPrefFont = loadFontFromName((String)fontpath.getValue());
+		p.setTypeface(mPrefFont);
 		
-		the_tree.setMaxLines((Integer)buffersize.getValue());
+		mBuffer.setMaxLines((Integer)buffersize.getValue());
 		
-		PREF_LINEEXTRA = (Integer)lineextra.getValue();
-		PREF_FONTSIZE = (Integer)fontsize.getValue();
-		setCharacterSizes(PREF_FONTSIZE,PREF_LINEEXTRA);
+		mPrefLineExtra = (Integer)lineextra.getValue();
+		mPrefFontSize = (Integer)fontsize.getValue();
+		setCharacterSizes(mPrefFontSize,mPrefLineExtra);
 		
-		//Log.e("WINDOW","WINDOW COLOR VALUE("+this.getName()+"): " + (Integer)colorOption.getValue());
 		switch((Integer)colorOption.getValue()) {
 		case 0:
 			this.setColorDebugMode(0);
@@ -548,37 +485,34 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	protected void resetAndAddText(byte[] obj) {
-		the_tree.empty();
-		buffer.empty();
+		mBuffer.empty();
+		mHoldBuffer.empty();
 		addBytes(obj,true);
 	}
 
 	protected void xcallB(String string,byte[] bytes) throws LuaException {
-		//Log.e("WINDOW","xcallB on "+mName+" calling " + string + " id: "+this.toString());
-		if(L == null) { return;}
-		L.getGlobal("debug");
-		L.getField(-1, "traceback");
-		L.remove(-2);
+		if(mL == null) { return;}
+		mL.getGlobal("debug");
+		mL.getField(-1, "traceback");
+		mL.remove(-2);
 		
-		L.getGlobal(string);
-		if(L.getLuaObject(-1).isFunction()) {
-			L.pushObjectValue(bytes);
-			int ret = L.pcall(1, 1, -3);
+		mL.getGlobal(string);
+		if(mL.getLuaObject(-1).isFunction()) {
+			mL.pushObjectValue(bytes);
+			int ret = mL.pcall(1, 1, -3);
 			if(ret != 0) {
-				displayLuaError("WindowXCallB calling: " + string + " error:"+L.getLuaObject(-1).getString());
+				displayLuaError("WindowXCallB calling: " + string + " error:"+mL.getLuaObject(-1).getString());
 			} else {
-				L.pop(2);
+				mL.pop(2);
 			}
 		} else {
-			L.pop(2);
+			mL.pop(2);
 		}
 	}
 
-
-
 	private void startSelection(int line,int column) {
 		
-		theSelection = the_tree.getSelectionForPoint(line,column);
+		theSelection = mBuffer.getSelectionForPoint(line,column);
 		if(theSelection == null) {
 			firstPress = true;
 		} else {
@@ -592,15 +526,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 	}
-
-
-
-	/*protected void shutdown() {
-		mManager.shutdown(this);
-	}*/
-
+	
 	protected void updateEncoding(String value) {
-		the_tree.setEncoding(value);
+		mBuffer.setEncoding(value);
 	}
 
 
@@ -608,8 +536,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	protected void doUpdateSetting(String key, String value) {
 		settings.setOption(key, value);
 	}
-
-
 
 	public void setTWidth(int height) {
 		mWidth=height;
@@ -624,57 +550,35 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private boolean featuresChanged = true;
 	public void calculateCharacterFeatures(int width,int height) {
 		
-		//Log.e("WINDOW","WINDOW:" + mName + " character features for w/h:" + width+ " : "+height);
 		if(height == 0 && width == 0) {
 			return;
 		}
-		//int newlines =  (int) (height / PREF_LINESIZE);
-		//if(newlines != CALCULATED_LINESINWINDOW) {
-			CALCULATED_LINESINWINDOW = (int) (height / PREF_LINESIZE);
-		//	featuresChanged = true;
-		//}
+		mCalculatedLinesInWindow = (int) (height / mPrefLineSize);
 		
-		featurePaint.setTypeface(PREF_FONT);
-		featurePaint.setTextSize(PREF_FONTSIZE);
-		one_char_is_this_wide = (int)Math.ceil(featurePaint.measureText("a")); //measure a single character
-		//int newrows = (width / one_char_is_this_wide);
-		//if(newrows != CALCULATED_ROWSINWINDOW) {
-			CALCULATED_ROWSINWINDOW = (width / one_char_is_this_wide);
-		//	featuresChanged = true;
-		//}
-		
-		//if(!featuresChanged) {
-		//	return;
-		//}
-		//featuresChanged = false;
-		//Log.e("WINDOW","WINDOW("+mName+"):" + CALCULATED_LINESINWINDOW + " drawable lines. RE: " + (CALCULATED_LINESINWINDOW*PREF_LINESIZE) + " target:" + height);
-		//leftOver = height - CALCULATED_LINESINWINDOW*PREF_LINESIZE;
-		
-
-		
+		featurePaint.setTypeface(mPrefFont);
+		featurePaint.setTextSize(mPrefFontSize);
+		mOneCharWidth = (int)Math.ceil(featurePaint.measureText("a")); //measure a single character
+		mCalculatedRowsInWindow = (width / mOneCharWidth);
 		
 		selectionIndicatorPaint.setTextSize(SELECTIONINDICATOR_FONTSIZE);
-		selectionIndicatorPaint.setTypeface(PREF_FONT);
+		selectionIndicatorPaint.setTypeface(mPrefFont);
 		selectionIndicatorPaint.setAntiAlias(true);
 		one_selection_char_is_this_wide = (int) Math.ceil(selectionIndicatorPaint.measureText("a"));
-		selectionIndicatorVectorX = one_char_is_this_wide + selectionIndicatorHalfDimension;
+		selectionIndicatorVectorX = mOneCharWidth + selectionIndicatorHalfDimension;
 		if(automaticBreaks) {
 			this.setLineBreaks(0);
 		}
 		
-		if(the_tree.getBrokenLineCount() == 0) {
+		if(mBuffer.getBrokenLineCount() == 0) {
 			jumpToZero();
 		}
 		
 	}
 
-	Paint featurePaint = new Paint();
+
 	
 	public void viewCreate() {
-		
 		windowShowing = true;
-		
-		
 	}
 
 	private String mName = null;
@@ -688,55 +592,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void viewDestroy() {
-		boolean retry = true;
 		windowShowing = false;
-		
-		//Log.e("BYTEVIEW","surfaceViewDestroyed");
-//		while(retry) {
-//			try{
-//				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_SHUTDOWN);
-//				//Log.e("WINDOW","SHUTTING DOWN DRAW THREAD");
-//				_runner.join();
-//				//Log.e("WINDOW","SUCCESSFULY SHUT DOWN DRAW THREAD");
-//				retry = false;
-//			} catch (InterruptedException e) { }
-//		}
-		
-		//the_tree.empty();
 	}
 	
-	boolean finger_down = false;
-	int diff_amount = 0;
-	public Boolean is_in_touch = false;
-	Float start_x = null;
-	Float start_y = null;
-	MotionEvent pre_event  = null;
-	boolean finger_down_to_up = false;
-	long prev_draw_time = 0;
-	Float prev_y = 0f;
-	int bx = 0;
-	int by = 0;
-	public int touchInLink = -1;
-	//boolean fuckyou = false;
-	long target = 0;
-	boolean homeWidgetFingerDown = false;
-	int touchStartY;
-	int pointer = -1;
+
 	@Override
 	public boolean onTouchEvent(MotionEvent t) {
-		//if(fuckyou) {
-		//switch(t.getActionMasked()) {
-		
-		//}
-		//super.onTouchEvent(t);	
-		
-			//return true;
-		//}
-		//long now = System.currentTimeMillis();
 		int action = t.getAction() & MotionEvent.ACTION_MASK;     
 		int pointerIndex = (t.getAction() & MotionEvent.ACTION_POINTER_ID_MASK) >> MotionEvent.ACTION_POINTER_ID_SHIFT;
 		int pointerId = t.getPointerId(pointerIndex);
-		//if(now < target) {
 		
 		if(pointer > 0 && pointerId != pointer) {
 			//but invalidate this anyway
@@ -747,51 +611,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(!scrollingEnabled) {
 			return false;
 		}
-		//	return true;
-		//}
-		//target = now + 1000;
-		//Log.e("WINDOW",mName + "onTouchEvent");
 		boolean retval = false;
 		boolean noFunction = false;
-		//L.getGlobal("debug");
-		//L.getField(L.getTop(), "traceback");
-		//L.remove(-2);
 		int index = t.findPointerIndex(pointerId);
 		start_x = new Float(t.getX(index));
 		start_x = start_x+1;
-		/*L.getGlobal("OnTouchEvent");
-		if(!L.isFunction(L.getTop())) {
-			//return false;
-			noFunction = true;
-		}
-		if(!noFunction) {
-			L.pushJavaObject(t);
-			
-			int ret = L.pcall(1, 1, -3);
-			if(ret != 0) {
-				Log.e("LUAWINDOW","Error in onTouchEvent:"+L.getLuaObject(-1).getString());
-			} else {
-				retval = L.getLuaObject(-1).getBoolean();
-				//Log.e("LUAWINDOW","TouchEvent called");
-			}
-			if(retval) return true;
-		}*/
 		
-		
-		if(the_tree.getBrokenLineCount() != 0) {
+		if(mBuffer.getBrokenLineCount() != 0) {
 			Rect rect = new Rect();
 			if(!finger_down) {
-				if(constrictWindow) {
-					rect.top = mAnchorTop;
-					rect.left = mAnchorLeft;
-					rect.right = mAnchorLeft + mWidth;
-					rect.bottom = mAnchorTop + mHeight;
-				} else {
-					rect.top = 0;
-					rect.left = 0;
-					rect.right = mWidth;
-					rect.bottom = mHeight;
-				}
+				
+				rect.top = 0;
+				rect.left = 0;
+				rect.right = mWidth;
+				rect.bottom = mHeight;
+				
 				
 				Point point = new Point();
 				point.x = (int) t.getX();
@@ -808,7 +642,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				start_x = new Float(t.getX(index));
 				start_y = new Float(t.getY(index));
 				pre_event = MotionEvent.obtainNoHistory(t);
-				fling_velocity = 0.0f;
+				mFlingVelocity = 0.0f;
 				finger_down = true;
 				finger_down_to_up = false;
 				prev_draw_time = 0;
@@ -827,35 +661,26 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				y = (float) ((float)this.getHeight() - y + (scrollback-SCROLL_MIN));
 				
-				float xform_to_line = y / (float)PREF_LINESIZE;
+				float xform_to_line = y / (float)mPrefLineSize;
 				int line = (int)Math.floor(xform_to_line);
 				
-				float xform_to_column = x / (float)one_char_is_this_wide;
+				float xform_to_column = x / (float)mOneCharWidth;
 				int column = (int)Math.floor(xform_to_column);
-				if(textSelectionEnabled) {
-					//Log.e("sfdsf","starting text selection");
+				if(mTextSelectionEnabled) {
 					mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_STARTSELECTION, line, column), 1500);
-				} else {
-					//Log.e("sfdsf","not starting text selection");
 				}
 				
 				if(homeWidgetShowing) {
-					if(homeWidgetRect.contains((int)x,(int)t.getY())) {
+					if(mHomeWidgetRect.contains((int)x,(int)t.getY())) {
 						homeWidgetFingerDown = true;
 					}
 				}
 				
-				//Log.e("FLUF","IN ON DOWN: "+scrollback);
-			}
-			
-			if(!increadedPriority) {
-				increadedPriority = true;
 			}
 			
 			if(t.getAction() == MotionEvent.ACTION_MOVE) {
 				
 	
-				//Float now_x = new Float(t.getX(t.getPointerId(0)));
 				Float now_y = new Float(t.getY(index));
 				
 				
@@ -869,7 +694,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				float dist = now_y - prev_y;
 				diff_amount = (int)dist;
 				
-				if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
+				if(Math.abs(now_y - start_y) > mPrefLineSize*1.5) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
 				}
 				
@@ -882,23 +707,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						velocity = MAX_VELOCITY * -1;
 					}
 				}
-				fling_velocity = velocity;
+				mFlingVelocity = velocity;
 				
-				if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5*density) {
+				if(Math.abs(now_y - start_y) > mPrefLineSize*1.5*mDensity) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
-					//homeWidgetFingerDown = false;
-					
 				}
 				
-				if(Math.abs(diff_amount) > 5*density) {
+				if(Math.abs(diff_amount) > 5*mDensity) {
 					
 					pre_event = MotionEvent.obtainNoHistory(t);
 				}
 				
-				//Log.e("FLUF","IN ON MOVE: "+scrollback);
-	
-			}
-			
+			}			
 			int pointers = t.getPointerCount();
 			for(int i=0;i<pointers;i++) {
 				
@@ -915,11 +735,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				pre_event = null;
 				prev_y = new Float(0);
-				//mHandler.removeMessages(Window.MSG_BUTTONDROPSTART);
 		        
 		        //reset the priority
-		        increadedPriority = false;
-		        //_runner.dcbPriority(Process.THREAD_PRIORITY_DEFAULT);
 		        pointer = -1;
 	
 		        pre_event = null;
@@ -927,18 +744,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		        finger_down_to_up = true;
 		         
 				if(touchInLink > -1) {
-					mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
+					mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
 			        touchInLink = -1;
 				}
 				
-				//Log.e("FLUF","IN ON UP: "+scrollback);
 				
-				//if(Math.abs(now_y - start_y) > PREF_LINESIZE*1.5) {
-					mHandler.removeMessages(MESSAGE_STARTSELECTION);
-				//}
+				mHandler.removeMessages(MESSAGE_STARTSELECTION);
 					
 				if(homeWidgetShowing && homeWidgetFingerDown) {
-					if(homeWidgetRect.contains((int)t.getX(index),(int)t.getY(index))) {
+					if(mHomeWidgetRect.contains((int)t.getX(index),(int)t.getY(index))) {
 						scrollback = SCROLL_MIN;
 						homeWidgetFingerDown = false;
 						this.invalidate();
@@ -956,91 +770,81 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		return false;
 	}
 	
-
-	float fling_accel = 200.0f; //(units per sec);
-	
 	private void calculateScrollBack() {
-		//synchronized(the_tree) {
-			
-			
 		
-			if(prev_draw_time == 0) { //never drawn before
-				if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) { scrollback = SCROLL_MIN; return;}
-				if(finger_down) {
-					scrollback = (double)Math.floor(scrollback + diff_amount);
-					if(scrollback < SCROLL_MIN) {
-						scrollback = SCROLL_MIN;
-						//Log.e("FLUF","1: "+scrollback);
-					} else {
-						if(scrollback >= ((the_tree.getBrokenLineCount() * PREF_LINESIZE))) {
-							
-							scrollback = (double)((the_tree.getBrokenLineCount() * PREF_LINESIZE));
-							//Log.e("FLUF","2: "+scrollback);
-						}
-					}
-					diff_amount = 0;
+		if(prev_draw_time == 0) { //never drawn before
+			if(mBuffer.getBrokenLineCount() <= mCalculatedLinesInWindow) { scrollback = SCROLL_MIN; return;}
+			if(finger_down) {
+				scrollback = (double)Math.floor(scrollback + diff_amount);
+				if(scrollback < SCROLL_MIN) {
+					scrollback = SCROLL_MIN;
+					//Log.e("FLUF","1: "+scrollback);
 				} else {
-					if(finger_down_to_up) {
-						prev_draw_time = System.currentTimeMillis(); 
-						Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
-						mHandler.sendEmptyMessage(Window.MSG_UPPRIORITY);
-						finger_down_to_up=false;
+					if(scrollback >= ((mBuffer.getBrokenLineCount() * mPrefLineSize))) {
+						
+						scrollback = (double)((mBuffer.getBrokenLineCount() * mPrefLineSize));
+						//Log.e("FLUF","2: "+scrollback);
 					}
 				}
+				diff_amount = 0;
+			} else {
+				if(finger_down_to_up) {
+					prev_draw_time = System.currentTimeMillis(); 
+					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
+					finger_down_to_up=false;
+				}
+			}
+		} else {
+			
+			if(finger_down == true) {
+
 			} else {
 				
-				if(finger_down == true) {
-
-				} else {
-					
-					long nowdrawtime = System.currentTimeMillis(); 
-					
-					float duration_since_last_frame = ((float)(nowdrawtime-prev_draw_time)) / 1000.0f; //convert to seconds
-					prev_draw_time = System.currentTimeMillis();
-					//compute change in velocity: v = vo + at;
-					if(fling_velocity < 0) {
-						fling_velocity = fling_velocity + fling_accel*duration_since_last_frame;
-						scrollback =  (scrollback + fling_velocity*duration_since_last_frame);
-						//Log.e("FLUF","3: "+scrollback);
-					} else if (fling_velocity > 0) {
-						
-						fling_velocity = fling_velocity - fling_accel*duration_since_last_frame;
-						scrollback =  (scrollback + fling_velocity*duration_since_last_frame);
-						//Log.e("FLUF","4: "+scrollback);
-					}
-					
-					if(Math.abs(new Double(fling_velocity)) < 15) {
-						fling_velocity = 0;
-						prev_draw_time = 0;
-						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
-					}
-						
-					if(scrollback <= SCROLL_MIN) {
-						scrollback = SCROLL_MIN;
-						//Log.e("FLUF","5: "+scrollback);
-						fling_velocity = 0;
-						prev_draw_time = 0;
-						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
-
-						//mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
-					}
-					
-					if(scrollback >= ((the_tree.getBrokenLineCount() * PREF_LINESIZE))) {
-						//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
-						scrollback = (double)((the_tree.getBrokenLineCount() * PREF_LINESIZE));
-						//Log.e("FLUF","6: "+scrollback);
-						fling_velocity = 0;
-						prev_draw_time = 0;
-						Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-						mHandler.sendEmptyMessage(Window.MSG_NORMALPRIORITY);
-						
-					}
-				}
-
+				long nowdrawtime = System.currentTimeMillis(); 
 				
+				float duration_since_last_frame = ((float)(nowdrawtime-prev_draw_time)) / 1000.0f; //convert to seconds
+				prev_draw_time = System.currentTimeMillis();
+				//compute change in velocity: v = vo + at;
+				if(mFlingVelocity < 0) {
+					mFlingVelocity = mFlingVelocity + fling_accel*duration_since_last_frame;
+					scrollback =  (scrollback + mFlingVelocity*duration_since_last_frame);
+					//Log.e("FLUF","3: "+scrollback);
+				} else if (mFlingVelocity > 0) {
+					
+					mFlingVelocity = mFlingVelocity - fling_accel*duration_since_last_frame;
+					scrollback =  (scrollback + mFlingVelocity*duration_since_last_frame);
+					//Log.e("FLUF","4: "+scrollback);
+				}
+				
+				if(Math.abs(new Double(mFlingVelocity)) < 15) {
+					mFlingVelocity = 0;
+					prev_draw_time = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+				}
+					
+				if(scrollback <= SCROLL_MIN) {
+					scrollback = SCROLL_MIN;
+					//Log.e("FLUF","5: "+scrollback);
+					mFlingVelocity = 0;
+					prev_draw_time = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+
+					//mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
+				}
+				
+				if(scrollback >= ((mBuffer.getBrokenLineCount() * mPrefLineSize))) {
+					//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
+					scrollback = (double)((mBuffer.getBrokenLineCount() * mPrefLineSize));
+					//Log.e("FLUF","6: "+scrollback);
+					mFlingVelocity = 0;
+					prev_draw_time = 0;
+					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
+					
+				}
 			}
+
+			
+		}
 			
 	}
 	
@@ -1112,61 +916,42 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 		}
 		
-		//if(mName != null && mName.equals("map_window")) {
-		//	long xtmp = 10;
-		//	xtmp += System.currentTimeMillis();
-		//}
 		
-		if(the_tree.getBrokenLineCount() != 0) {
+		if(mBuffer.getBrokenLineCount() != 0) {
 			if(linkColor == null) {
 				
 				linkColor = new Paint();
 				linkColor.setAntiAlias(true);
-				linkColor.setColor(linkHighlightColor);
+				linkColor.setColor(mLinkHighlightColor);
 			}
 			
-			linkColor.setColor(linkHighlightColor);
-			//try {	
-			//Log.e("ondraw","Calculating scrollback before:" + scrollback);
+			linkColor.setColor(mLinkHighlightColor);
 			calculateScrollBack();
-			//Log.e("ondraw","Calculating scrollback after:" + scrollback);
 			c.save();
 			Rect clip = new Rect();
-			if(constrictWindow) {
 			
-				clip.top = mAnchorTop;
-				clip.left = mAnchorLeft;
-				clip.right = clip.left + mWidth;
-				clip.bottom = clip.top + mHeight;
-				
-			} else {
-				clip.top = 0;
-				clip.left = 0;
-				clip.right = mWidth;
-				clip.bottom = mHeight;
-			}
+			clip.top = 0;
+			clip.left = 0;
+			clip.right = mWidth;
+			clip.bottom = mHeight;
+			
 			c.clipRect(clip);
-			if(constrictWindow) {
-				c.translate(mAnchorLeft, mAnchorTop);
-			}
+			
 			//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
 			Paint b = new Paint();
 			b.setColor(0xFF0A0A0A);
 			c.drawColor(0xFF0A0A0A); //fill with black
-			//c.drawColor(0xFF0A0A0A);
 			c.drawRect(0,0,clip.right-clip.left,clip.top-clip.bottom,b);
-			p.setTypeface(PREF_FONT);
+			p.setTypeface(mPrefFont);
 			p.setAntiAlias(true);
-			p.setTextSize(PREF_FONTSIZE);
+			p.setTextSize(mPrefFontSize);
 			p.setColor(0xFFFFFFFF);
-			
-			//float char_width = p.measureText("T");
 			
 			float x = 0;
 			float y = 0;
-			if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
+			if(mPrefLineSize * mCalculatedLinesInWindow < this.getHeight()) {
 				
-				y = ((PREF_LINESIZE * CALCULATED_LINESINWINDOW) - this.getHeight()) - PREF_LINESIZE;
+				y = ((mPrefLineSize * mCalculatedLinesInWindow) - this.getHeight()) - mPrefLineSize;
 				//Log.e("STARTY","STARTY IS:"+y);
 			}
 			
@@ -1204,7 +989,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			while(!gotIt && tries <= maxTries) {
 				try {
 					tries = tries + 1;
-					bundle = getScreenIterator(scrollback,PREF_LINESIZE);
+					bundle = getScreenIterator(scrollback,mPrefLineSize);
 					gotIt = true;
 					
 				} catch (ConcurrentModificationException e) {
@@ -1245,9 +1030,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 				for(Unit u : l.getData()) {
 					if(u instanceof TextTree.Color) {
-						xterm256Color = false;
-						xterm256FGStart = false;
-						xterm256BGStart = false;
+						mXterm256Color = false;
+						mXterm256FGStart = false;
+						mXterm256BGStart = false;
 						for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
 						//for(Integer o : ((TextTree.Color) u).getOperations()) {
 							
@@ -1259,10 +1044,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							
 						}
 						//bleeding = ((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
-						if(xterm256FGStart) {
-							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, xterm256Color));
+						if(mXterm256FGStart) {
+							p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor, mXterm256Color));
 						} else {//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
-							p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor, false));
+							p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor, false));
 							
 						}
 						
@@ -1297,33 +1082,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			linkBoxes.clear();
 			
 			int postmp = screenIt.previousIndex();
-//			if(mName.equals("mainDisplay")) {
-//				Log.e("WINDOW","starting drawing iterator at:"+postmp);
-//			}
-			//try {
 			while(!stop && screenIt.hasPrevious()) {
-				//int index = screenIt.previousIndex();
-				//boolean started = false;
 				int loc = screenIt.previousIndex();
 				Line l = screenIt.previous();
-				//String tmpstr = TextTree.deColorLine(l).toString();
-				/*if(mName.equals("map_window")) {
-					Log.e("map","map window line: "+tmpstr+"|"+l.viswidth+" calc:"+CALCULATED_ROWSINWINDOW);
-				}*/
 				
-//				if(mName.equals("mainDisplay")) {
-//					String str = TextTree.deColorLine(l).toString();
-//					Log.e("WINDOW",drawnlines+":"+loc+":"+y+":"+str);
-//				}
 				
-				if(centerJustify) {
+				if(mCenterJustify) {
 					//center justify.
 
-					int amount = one_char_is_this_wide*l.charcount;
+					int amount = mOneCharWidth*l.charcount;
 					x = (float) ((mWidth/2.0)-(amount/2.0));
 				}
-				//c.drawText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":", x, y, p);
-				//x += p.measureText(Integer.toString(index)+":"+Integer.toString(drawnlines)+":");
 				unitIterator = l.getIterator();
 				
 				int linemode = 0;
@@ -1335,27 +1104,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					
 					linemode = 3;
 				} else if(endline == workingline) {
-					//Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
 					linemode = 4;
 					
 				}
 				
-//				if(mName.equals("mainDisplay")) {
-//					if(!unitIterator.hasNext()) {
-//						Log.e("WINDOW","HEY, THIS LINE HAS NO UNITS");
-//					} else {
-//						Log.e("WINDOW","Line has:"+l.getData().size() + " units.");
-//						while(unitIterator.hasNext()) {
-//							Unit u = unitIterator.next();
-//							Log.e("WINDOW","UNIT TYPE:"+u.getClass().toString());
-//						}
-//						
-//						while(unitIterator.hasPrevious()) {
-//							unitIterator.previous();
-//						}
-//						
-//					}
-//				}
 				boolean finishedWithNewLine = false;
 				
 				while(unitIterator.hasNext()) {
@@ -1367,8 +1119,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					}
 					
 					switch(u.type) {
-					//if(u instanceof TextTree.Text && !(u instanceof TextTree.WhiteSpace)) {
-					//if(u instanceof TextTree.Text) {
 					case WHITESPACE:
 					case TEXT:
 						TextTree.Text text = ((TextTree.Text)u);
@@ -1384,145 +1134,62 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						
 						if(theSelection  != null) {
 							
-							//Log.e("Window","doing selection run: start={"+startline2+","+startcol+"} end={"+endline+","+endcol);
 							switch(linemode) {
 							case 1:
 								int finishCol = workingcol + text.bytecount;
 								if(finishCol > startcol && finishCol-1 <= endcol){
 									if((finishCol - startcol) < text.bytecount) {
 										int overshoot = startcol - workingcol;
-										int overshootPixels = overshoot * one_char_is_this_wide;
+										int overshootPixels = overshoot * mOneCharWidth;
 										int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize()+(3*density), x + stringWidth, y+(4*density), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize()+(3*mDensity), x + stringWidth, y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize()+(2*density), x + p.measureText(text.getString()), y+(4*density), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
 									}
 								} else if(finishCol > endcol) {
 									if((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
-										int overshootPixels = overshoot * one_char_is_this_wide;
-										//int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x, y - p.getTextSize()+(2*density), x + overshootPixels, y+(4*density), textSelectionIndicatorBackgroundPaint);
-									} else {
-										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-									}
-								} else {
-									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-								}
+										int overshootPixels = overshoot * mOneCharWidth;
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+									} 
+								} 
 								break;
 							case 2:
 								finishCol = workingcol + text.bytecount;
 								if(finishCol > startcol) {
 									if((finishCol - startcol) < text.bytecount) {
 										int overshoot = startcol - workingcol;
-										int overshootPixels = overshoot * one_char_is_this_wide;
+										int overshootPixels = overshoot * mOneCharWidth;
 										int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize()+(2*density), x + stringWidth, y+(4*density), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize()+(2*mDensity), x + stringWidth, y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize()+(2*density), x + p.measureText(text.getString()), y+(4*density), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
 									}
-								} else {
-									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-								}
-//								} else if(finishCol > endcol) {
-//									if((finishCol - endcol) < text.bytecount) {
-//										int overshoot = endcol - workingcol + 1;
-//										int overshootPixels = overshoot * one_char_is_this_wide;
-//										//int stringWidth = (int) p.measureText(text.getString());
-//										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
-//									} else {
-//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//									}
-//								} else {
-//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//								}
+								} 
 								break;
 							case 3:
 								
-								c.drawRect(x, y - p.getTextSize()+(2*density), x + p.measureText(text.getString()), y+(4*density), textSelectionIndicatorBackgroundPaint);
+								c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
 								break;
 							case 4:
 								finishCol = workingcol + text.bytecount;
-//								if(finishCol > startcol && finishCol-1 <= endcol){
-//									if((finishCol - startcol) < text.bytecount) {
-//										int overshoot = startcol - workingcol;
-//										int overshootPixels = overshoot * one_char_is_this_wide;
-//									int stringWidth = (int) p.measureText(text.getString());
-//										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
-//									} else {
-//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//									}
-								//Log.e("ACEFJSAf","x:"+x+" y:"+y +" text:"+text.getString()+"|" + " finishCol="+finishCol+" workingCol="+workingcol + " endcol="+endcol);
 								if(finishCol >= endcol) {
 									if((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
-										int overshootPixels = overshoot * one_char_is_this_wide;
-										//int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x, y - p.getTextSize()+(2*density), x + overshootPixels, y+(4*density), scroller_paint);
-									} else {
-										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
+										int overshootPixels = overshoot * mOneCharWidth;
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), scroller_paint);
 									}
 								} else {
-									c.drawRect(x, y - p.getTextSize()+(2*density), x + p.measureText(text.getString()), y+(4*density), textSelectionIndicatorBackgroundPaint);
+									c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
 								}
 								break;
 							default:
 								break;
 							}
 						}
-							
-//							if(startline2 == endline && startline2 == workingline) {
-//								int finishCol = workingcol + text.bytecount;
-//								if(finishCol > startcol && finishCol-1 <= endcol){
-//									if((finishCol - startcol) < text.bytecount) {
-//										int overshoot = startcol - workingcol;
-//										int overshootPixels = overshoot * one_char_is_this_wide;
-//										int stringWidth = (int) p.measureText(text.getString());
-//										c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
-//									} else {
-//										c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//									}
-//								} else if(finishCol > endcol) {
-//									if((finishCol - endcol) < text.bytecount) {
-//										int overshoot = endcol - workingcol + 1;
-//										int overshootPixels = overshoot * one_char_is_this_wide;
-//										//int stringWidth = (int) p.measureText(text.getString());
-//										c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
-//									} else {
-//										//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//									}
-//								} else {
-//									//c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//								}
-//							} else if(startline2 == workingline) {
-//								int finishCol = workingcol + text.bytecount;
-//								if((finishCol - startcol) < text.bytecount) {
-//									int overshoot = startcol - workingcol + 1;
-//									int overshootPixels = overshoot * one_char_is_this_wide;
-//									//int stringWidth = (int) p.measureText(text.getString());
-//									c.drawRect(x, y - p.getTextSize(), x + overshootPixels, y+5, scroller_paint);
-//								} else {
-//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//								}
-//							} else if(startline2 > workingline && endline < workingline) {
-//								c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//								Log.e("wondow","drawing in between line:" +workingline+ " ypos:"+y);
-//							} else if(endline == workingline) {
-//								int finishCol = workingcol + text.bytecount;
-//								if((finishCol - endcol) < text.bytecount) {
-//									int overshoot = endcol - workingcol;
-//									int overshootPixels = overshoot * one_char_is_this_wide;
-//									int stringWidth = (int) p.measureText(text.getString());
-//									c.drawRect(x + overshootPixels, y - p.getTextSize(), x + stringWidth, y+5, scroller_paint);
-//								} else {
-//									c.drawRect(x, y - p.getTextSize(), x + p.measureText(text.getString()), y+5, scroller_paint);
-//								}
-//							}
-//						}
 						
 						if(useBackground) {
-							//Log.e("WINDOW","DRAWING BACKGROUND HIGHLIGHT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
-							c.drawRect(x, y - p.getTextSize()+(2*density), x + p.measureText(text.getString()), y+(4*density), b);
+							c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), b);
 						}
 						
 						if(text.isLink() || doingLink) {
@@ -1545,8 +1212,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								r.top = (int) (y - p.getTextSize());
 								r.right = (int) (x + p.measureText(text.getString()));
 								r.bottom = (int) (y+5);
-								if(linkMode == LINK_MODE.BACKGROUND) {
-									linkColor.setColor(linkHighlightColor);
+								if(mLinkMode == LINK_MODE.BACKGROUND) {
+									linkColor.setColor(mLinkHighlightColor);
 									c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
 								}
 								
@@ -1565,7 +1232,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							}
 						}
 						if(doingLink) {
-							switch(linkMode) {
+							switch(mLinkMode) {
 							case NONE:
 								linkColor.setTextSize(p.getTextSize());
 								linkColor.setTypeface(p.getTypeface());
@@ -1581,15 +1248,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							case HIGHLIGHT_COLOR:
 								linkColor.setTextSize(p.getTextSize());
 								linkColor.setTypeface(p.getTypeface());
-								linkColor.setColor(linkHighlightColor);
+								linkColor.setColor(mLinkHighlightColor);
 								linkColor.setUnderlineText(true);
 								break;
 							case HIGHLIGHT_COLOR_ONLY_BLAND:
 								
 								linkColor.setTextSize(p.getTextSize());
 								linkColor.setTypeface(p.getTypeface());
-								if(selectedColor == 37) {
-									linkColor.setColor(linkHighlightColor);
+								if(mSelectedColor == 37) {
+									linkColor.setColor(mLinkHighlightColor);
 								} else {
 									linkColor.setColor(p.getColor());
 								}
@@ -1600,14 +1267,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								linkColor.setTypeface(p.getTypeface());
 								linkColor.setUnderlineText(false);
 								//calculate the "reverse-most-constrasty-color"
-								int counterpart = 0xFF000000 | (linkHighlightColor ^ 0xFFFFFFFF);
+								int counterpart = 0xFF000000 | (mLinkHighlightColor ^ 0xFFFFFFFF);
 								linkColor.setColor(counterpart);
 								break;
 							default:
 								linkColor.setTextSize(p.getTextSize());
 								linkColor.setTypeface(p.getTypeface());
 								linkColor.setUnderlineText(false);
-								linkColor.setColor(linkHighlightColor);
+								linkColor.setColor(mLinkHighlightColor);
 							}
 							
 							if(doIndicator) {
@@ -1633,11 +1300,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							x += p.measureText(text.getString());
 							
 						} else {
-							//p.setUnderlineText(false);
-							if(useBackground) {
-								//Log.e("WINDOW","DRAWING BACKGROUND TEXT: B:" + Integer.toHexString(b.getColor()) + " P:" + Integer.toHexString(p.getColor()));
-							}
-							boolean backGroundSelection = false;
 							
 							if(doIndicator) {
 								int unitEndCol = workingcol + (text.bytecount-1);
@@ -1665,37 +1327,36 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						
 						break;
 					case COLOR:
-					//if(u instanceof TextTree.Color) {
-						xterm256Color = false;
-						xterm256FGStart = false;
-						xterm256BGStart = false;
+						mXterm256Color = false;
+						mXterm256FGStart = false;
+						mXterm256BGStart = false;
 						for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
 							updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
 						}
 						
-						if(debug_mode == 2 || debug_mode == 3) {
+						if(mColorDebugMode == 2 || mColorDebugMode == 3) {
 							p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37,false));
 							b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40,false));
 						} else {
-							if(xterm256FGStart) {
-								if(selectedColor == 33) {
-									selectedColor = 33;
+							if(mXterm256FGStart) {
+								if(mSelectedColor == 33) {
+									mSelectedColor = 33;
 								}
-								p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,xterm256Color));
+								p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor,mXterm256Color));
 							} else {
-								if(!xterm256BGStart) {
-									p.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor,false));
+								if(!mXterm256BGStart) {
+									p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor,false));
 								}
 							}
 							
-							if(xterm256BGStart) {
-								b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,xterm256Color));
+							if(mXterm256BGStart) {
+								b.setColor(0xFF000000 | Colorizer.getColorValue(0, mSelectedBackground,mXterm256Color));
 							} else {
-								b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground,false));
+								b.setColor(0xFF000000 | Colorizer.getColorValue(0, mSelectedBackground,false));
 								
 							}
 						}
-						if(debug_mode == 1 || debug_mode == 2) {
+						if(mColorDebugMode == 1 || mColorDebugMode == 2) {
 							String str = "";
 							try {
 								str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
@@ -1707,10 +1368,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						}
 						break;
 					case NEWLINE:
-						//x = 0;
-						//break;
 					case BREAK:
-					//if(u instanceof TextTree.NewLine || u instanceof TextTree.Break) {
 						if(u instanceof TextTree.NewLine) {
 							if(doingLink) {
 								for(int z=0;z<linkBoxes.size();z++) {
@@ -1732,7 +1390,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								
 								linemode = 3;
 							} else if(endline == workingline) {
-								//Log.e("window","doing linemode 4 for line:"+workingline + " ypos:"+y);
 								linemode = 4;
 								
 							} else {
@@ -1743,73 +1400,46 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						finishedWithNewLine = true;
 						
 						//TODO: make sure that where this is moved to works
-						y = y + PREF_LINESIZE;
+						y = y + mPrefLineSize;
 						
 						
-						//if(mName.equals("mainDisplay")) {
-							//Log.e("WINDOW","Calculating starting position, y="+y+ " offset="+offset+" extra="+extra+" delta="+delta);
-							//Log.e("WINDOW","Calculating starting position, y="+y);
-						//}
-						//Log.e("SCREENIT","GET SCREEN ITERATOR, EXTRA:"+extra);
 						x = 0;
-						//workingline = workingline - 1;
 						drawnlines++;
 						workingcol = 0;
-						if(drawnlines > CALCULATED_LINESINWINDOW + extraLines) {
-							//Log.e("WINDOW","STOPPING DRAWING BECAUSE WE DREW: " +drawnlines+" lines");
+						if(drawnlines > mCalculatedLinesInWindow + extraLines) {
 							stop = true;
 						}
 						break;
 					default:
-						//Log.e("WINDOW","DEFAULT CASE FOR DRAW LOOP, FERRET OUT THAT BUG");
 						break;
 					}
 				}
 				if(!finishedWithNewLine) {
-					y = y + PREF_LINESIZE;
+					y = y + mPrefLineSize;
 					x = 0;
 					drawnlines++;
 					workingcol = 0;
 				}
-				//y = y + PREF_LINESIZE;
 				workingline = workingline - 1;
 				workingcol = 0;
 				l.resetIterator();
 			}
-//			if(!drawingIterator.hasPrevious()) {
-//				Log.e("WINDOW","STOPPED DRAWING BECAUSE WE WERE OUT OF LINES AFTER:"+drawnlines);
-//				
-//			}
-			//}
 			showScroller(c);
 			c.restore();
-			if(Math.abs(fling_velocity) > PREF_LINESIZE) {
-				//this.sendEmptyMessageDelayed(MSG_DRAW, 3); //throttle myself, just a little bit.
-				//this.invalidate();
-				//Log.e("SFS","fling redrawing");
-				//fling_velocity = 0;
+			if(Math.abs(mFlingVelocity) > mPrefLineSize) {
 				if(!mHandler.hasMessages(MESSAGE_DRAW)) {
 					this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
 				}
 			} else {
-				fling_velocity = 0;
+				mFlingVelocity = 0;
 			}
 		
-		} else {
-			if(!hasDrawRoutine) {
-			//Log.e("BUFFERTEST","WINDOW ASKED TO DRAW BUT DID NOT BECAUSE NO DATA");
-			}
 		}
 		
 		//phew, do the lua stuff, and lets be done with this.
 		c.save();
-		if(constrictWindow) {
-		c.clipRect(mAnchorLeft, mAnchorTop, mAnchorLeft+mWidth, mAnchorTop+mHeight);
-		c.translate(mAnchorLeft, mAnchorTop);
-		}
-		//c.drawBitmap(bmp, 0, 0, null);
 		if(hasDrawRoutine){
-			if(L != null) {
+			if(mL != null) {
 				
 /*! \page entry_points
  * \section window Window Lua State Entry Points
@@ -1821,61 +1451,34 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
  * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
  */
 				
-				L.getGlobal("debug");
-				L.getField(L.getTop(), "traceback");
-				L.remove(-2);
+				mL.getGlobal("debug");
+				mL.getField(mL.getTop(), "traceback");
+				mL.remove(-2);
 				
 				
-				L.getGlobal("OnDraw");
-				if(L.isFunction(L.getTop())) {
-					L.pushJavaObject(c);
+				mL.getGlobal("OnDraw");
+				if(mL.isFunction(mL.getTop())) {
+					mL.pushJavaObject(c);
 					
 					
 					
-					int ret = L.pcall(1, 1, -3);
+					int ret = mL.pcall(1, 1, -3);
 					if(ret != 0) {
-						displayLuaError("Error calling OnDraw: " + L.getLuaObject(-1).toString());
+						displayLuaError("Error calling OnDraw: " + mL.getLuaObject(-1).toString());
 					} else {
 						//Log.e("LUAWINDOW","OnDraw success!");
 						//hasDrawRoutine = false;
-						L.pop(2);
+						mL.pop(2);
 					}
 				} else {
 					hasDrawRoutine = false;
-					L.pop(2);
+					mL.pop(2);
 				}
 			}
-		} else {
-			//Log.e("DRAW","Skipping draw routine cuz there is none.");
 		}
-		
-		
-		//omg, after *all* of that we still have to draw the borders.
-		//ArrayList<Border> borders = mLayerManager.borders;
-		
-//		for(int i = 0;i<borders.size();i++) {
-//			Border b = borders.get(i);
-//			c.drawLine(b.p1.x, b.p1.y, b.p2.x, b.p2.y, p);
-//		}
-		/*if(edgeLeft) {
-			c.drawLine(0, 0, 0, mHeight, borderPaint);
-		}
-		if(edgeRight) {
-			c.drawLine(mWidth, 0, mWidth, mHeight, borderPaint);
-		}
-		if(edgeTop) {
-			c.drawLine(0, 0, mWidth, 0,borderPaint);
-		}
-		if(edgeBottom) {
-			c.drawLine(0, mHeight, mWidth, mHeight, borderPaint);
-		}*/
 		
 		c.restore();
-		
-		//}
 	}
-	
-	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
 	
 	private class LinkBox {
 		private String data;
@@ -1896,24 +1499,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 	
-	private Paint scroller_paint = new Paint();
-	private boolean homeWidgetShowing = false;
-	Rect scrollerRect = new Rect();
+
 	public void showScroller(Canvas c) {
 		scroller_paint.setColor(0xFFFF0000);
 		
-		if(the_tree.getBrokenLineCount() < 1) {
+		if(mBuffer.getBrokenLineCount() < 1) {
 			return; //no scroller to show.
 		}
 		
-		if(scrollback > SCROLL_MIN +3*density && the_tree.getBrokenLineCount() > CALCULATED_LINESINWINDOW) {
+		if(scrollback > SCROLL_MIN +3*mDensity && mBuffer.getBrokenLineCount() > mCalculatedLinesInWindow) {
 			homeWidgetShowing = true;
-			//c.save();
-			//c.translate(homeWidgetRect.left, homeWidgetRect.bottom);
-			//homeWidgetDrawable.draw(c);
-			//c.restore();
-			//homeWidgetDrawable.draw(c);
-			c.drawBitmap(homeWidgetDrawable, homeWidgetRect.left, homeWidgetRect.top, null);
+			c.drawBitmap(mHomeWidgetDrawable, mHomeWidgetRect.left, mHomeWidgetRect.top, null);
 		} else {
 			homeWidgetShowing = false;
 		}
@@ -1925,18 +1521,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		float workingHeight = mHeight;
 		float workingWidth = mWidth;
 		
-		if(constrictWindow) {
-			workingHeight = mHeight;
-			workingWidth = mWidth;
-		}
-		
-		Float windowPercent = workingHeight / (the_tree.getBrokenLineCount()*PREF_LINESIZE);
+		Float windowPercent = workingHeight / (mBuffer.getBrokenLineCount()*mPrefLineSize);
 		if(windowPercent > 1) {
 			//then we have but 1 page to show
 			return;
 		} else {
 			scrollerSize = windowPercent*workingHeight;
-			posPercent = (scrollback - (workingHeight/2))/(the_tree.getBrokenLineCount()*PREF_LINESIZE);
+			posPercent = (scrollback - (workingHeight/2))/(mBuffer.getBrokenLineCount()*mPrefLineSize);
 			scrollerPos = workingHeight*posPercent;
 			scrollerPos = workingHeight-scrollerPos;
 		}
@@ -1955,22 +1546,22 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(theSelection != null) {
 			//compute rects for the guys.
 			//compute the current line in pixels from the bottom of the screen.
-			int currentLine = theSelection.start.line * PREF_LINESIZE;
+			int currentLine = theSelection.start.line * mPrefLineSize;
 			currentLine = (int) (currentLine - (scrollback - SCROLL_MIN));
 			
 			
 			int startBottom = (int) (this.getHeight() - currentLine);
-			int startTop = startBottom - PREF_LINESIZE;
-			int startLeft = theSelection.start.column * one_char_is_this_wide;
-			int startRight = startLeft + one_char_is_this_wide;
+			int startTop = startBottom - mPrefLineSize;
+			int startLeft = theSelection.start.column * mOneCharWidth;
+			int startRight = startLeft + mOneCharWidth;
 			
-			currentLine = theSelection.end.line * PREF_LINESIZE;
+			currentLine = theSelection.end.line * mPrefLineSize;
 			currentLine = (int) (currentLine - (scrollback - SCROLL_MIN));
 			
 			int endBottom = (int) (this.getHeight() - currentLine);
-			int endTop = endBottom - PREF_LINESIZE;
-			int endLeft = theSelection.end.column * one_char_is_this_wide;
-			int endRight = endLeft + one_char_is_this_wide;
+			int endTop = endBottom - mPrefLineSize;
+			int endLeft = theSelection.end.column * mOneCharWidth;
+			int endRight = endLeft + mOneCharWidth;
 			
 			//int scroll_from_bottom = (int) (scrollback-SCROLL_MIN);
 			
@@ -2015,18 +1606,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			cancelPaint.setAntiAlias(true);
 			cancelPaint.setColor(0xFFFF0000);
 			int third = (selectionIndicatorHalfDimension*2)/3;
-			if(textSelectionCopyBitmap.isRecycled()) {
+			if(mTextSelectionCopyBitmap.isRecycled()) {
 				//Log.e("sf","bitmap is recycled");
 			}
-			mSelectionIndicatorCanvas.drawBitmap(textSelectionCopyBitmap, 0,0, null);
-			mSelectionIndicatorCanvas.drawBitmap(textSelectionCancelBitmap, 0,2*third, null);
-			mSelectionIndicatorCanvas.drawBitmap(textSelectionSwapBitmap, 2*third,0, null);
+			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionCopyBitmap, 0,0, null);
+			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionCancelBitmap, 0,2*third, null);
+			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionSwapBitmap, 2*third,0, null);
 			
-			//mSelectionIndicatorCanvas.drawCircle(third/2, third/2, 15, cancelPaint);
-			//mSelectionIndicatorCanvas.drawCircle((2*third)+(third/2), third/2, 15, cancelPaint);
-			
-			//mSelectionIndicatorCanvas.drawCircle(third/2,(2*third)+(third/2) , 15, cancelPaint);
-			//mSelectionIndicatorCanvas.drawCircle((2*third)+(third/2),(2*third)+(third/2) , 15, cancelPaint);
 			
 			float left = (float) (selectionIndicatorHalfDimension-(0.5*one_selection_char_is_this_wide));
 			float top = (float)(selectionIndicatorHalfDimension-(0.5*SELECTIONINDICATOR_FONTSIZE));
@@ -2042,23 +1628,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 
 	public void clearText() {
-		the_tree.dumpToBytes(false);
-		the_tree.prune();
+		mBuffer.dumpToBytes(false);
+		mBuffer.prune();
 	}
 	
 	//Object synch = new Object();
 	public void flushBuffer() {
-		//synchronized(synch) {
 			try {
 				
-					the_tree.addBytesImpl(buffer.dumpToBytes(false));
+					mBuffer.addBytesImpl(mHoldBuffer.dumpToBytes(false));
 				
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			the_tree.prune();
-		//}
+			mBuffer.prune();
 		drawingIterator = null;
 		this.invalidate();
 	}
@@ -2073,160 +1656,111 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public void setInputType(EditText t) {
 		input = t;
 	}
-	public void setNewTextIndicator(View fill2) {
-		new_text_in_buffer_indicator = fill2;
-	}
 
 	public void jumpToZero() {
 
 		synchronized(token) {
 			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
 			scrollback = SCROLL_MIN;
-			fling_velocity=0;
+			mFlingVelocity=0;
 		}
 				
 	}
 
 	public void doDelayedDraw(int i) {
-		/*if(_runner == null || _runner.threadHandler == null || !_runner.isAlive()) return;
-		if(!_runner.threadHandler.hasMessages(ByteView.DrawRunner.MSG_DRAW)) {
-			_runner.threadHandler.sendEmptyMessageDelayed(DrawRunner.MSG_DRAW,i);
-		} else {
-			//Log.e("SLICK","VIEW ALREADY HAS DRAW MESSAGES");
-		}*/
-		//this.invalidate();
 		if(!mHandler.hasMessages(MESSAGE_DRAW)) {
 			mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW, i);
 		}
 	}
 
 	public void setColorDebugMode(int i) {
-		debug_mode = i;
+		mColorDebugMode = i;
 		doDelayedDraw(1);
 	}
 
 	public void setEncoding(String pEncoding) {
-		//encoding = pEncoding;
-		//synchronized(token) {
-			the_tree.setEncoding(pEncoding);
-		//}
+			mBuffer.setEncoding(pEncoding);
 	}
 
 	public void setCharacterSizes(int fontSize, int fontSpaceExtra) {
-		PREF_FONTSIZE = fontSize;
-		PREF_LINEEXTRA = fontSpaceExtra;
-		PREF_LINESIZE = (int) (PREF_FONTSIZE + PREF_LINEEXTRA);
+		mPrefFontSize = fontSize;
+		mPrefLineExtra = fontSpaceExtra;
+		mPrefLineSize = (int) (mPrefFontSize + mPrefLineExtra);
 		calculateCharacterFeatures(mWidth,mHeight);
 	}
 
 	public void setMaxLines(int maxLines) {
-		the_tree.setMaxLines(maxLines);
+		mBuffer.setMaxLines(maxLines);
 	}
 
 	public void setFont(Typeface font) {
-		PREF_FONT = font;
+		mPrefFont = font;
 	}
 	
 	public void setBold(boolean bold) {
 		if(bold) {
-			PREF_FONT = Typeface.create(PREF_FONT, Typeface.BOLD);
-			p.setTypeface(PREF_FONT);
+			mPrefFont = Typeface.create(mPrefFont, Typeface.BOLD);
+			p.setTypeface(mPrefFont);
 		} else {
-			PREF_FONT = Typeface.create(PREF_FONT, Typeface.NORMAL);
-			p.setTypeface(PREF_FONT);
+			mPrefFont = Typeface.create(mPrefFont, Typeface.NORMAL);
+			p.setTypeface(mPrefFont);
 		}
 	}
 	
 	public Typeface getFont() {
-		return PREF_FONT;
+		return mPrefFont;
 	}
 	
 	
 	boolean automaticBreaks = true;
 	public void setLineBreaks(Integer i) {
 		
-		//synchronized(synch) {
 			if(i == 0) {
-				if(CALCULATED_ROWSINWINDOW != 0) {
-					the_tree.setLineBreakAt(CALCULATED_ROWSINWINDOW);
-					//Log.e("BYTE","SET LINE BREAKS TO: " + CALCULATED_ROWSINWINDOW);
+				if(mCalculatedRowsInWindow != 0) {
+					mBuffer.setLineBreakAt(mCalculatedRowsInWindow);
 				} else {
-					the_tree.setLineBreakAt(80);
-					//Log.e("BYTE","SET LINE BREAKS TO DEFAULT BECAUSE CALCULATED WAS 0");
+					mBuffer.setLineBreakAt(80);
 				}
-				//jumpToZero();
 				automaticBreaks = true;
 			} else {
-				the_tree.setLineBreakAt(i);
+				mBuffer.setLineBreakAt(i);
 				automaticBreaks = false;
-				//jumpToZero();
-				//Log.e("BYTE","SET LINE BREAKS TO: " + i);
 			}
 		
 		
 			
-		//}
-		
-		
-//		if(_runner != null && _runner.threadHandler != null) {
-//			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
-//				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
-//
-//			}
-//		}
 		this.invalidate();
 	}
 	
 	public void setWordWrap(boolean pIn ) {
 		
-		//synchronized(synch) {
-			the_tree.setWordWrap(pIn);
-		//}
+			mBuffer.setWordWrap(pIn);
 		
 			jumpToZero();
 		
-//			if(_runner != null && _runner.threadHandler != null) {
-//				if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
-//					_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
-//	
-//				}
-//			}
 			this.invalidate();
-		//}
 	}
 	
 	public void setLinkMode(LINK_MODE mode) {
-		this.linkMode = mode;
+		this.mLinkMode = mode;
 	}
 	
 	public void setLinkColor(int linkColor) {
-		this.linkHighlightColor = linkColor;
+		this.mLinkHighlightColor = linkColor;
 	}
 	
 	public void clearAllText() {
-		//_runner.threadHandler.sendEmptyMessage(DrawRunner.MESSAGE_EMPTY_TREE);
-		//synchronized(synch) {
-			the_tree.empty();
-		//}
+			mBuffer.empty();
 	}
 	
 	public void addBytes(byte[] obj,boolean jumpToEnd) {
-		//if(updateHandler == null) {
 			addBytesImpl(obj,jumpToEnd);
-		//} else {
-		//	updateHandler.handler.sendMessage(updateHandler.handler.obtainMessage(ThreadUpdater.MESSAGE_ADDTEXT,(jumpToEnd == true) ? 1 : 0, 0, obj));
-		//}
-		//		synchronized(token) {
-//			addBytesImpl(obj,jumpToEnd);
-//		}
 	}
 	
 	public void addText(String str,boolean jumpToEnd) {
-		//Log.e("LUA","ADDING STRING TO TREE ("+this.getName()+":"+this.mHeight+"): "+str);
 		try {
-			addBytesImpl(str.getBytes(the_tree.getEncoding()),jumpToEnd);
+			addBytesImpl(str.getBytes(mBuffer.getEncoding()),jumpToEnd);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -2235,38 +1769,38 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private void addBytesImpl(byte[] obj,boolean jumpToEnd) {
 		if(obj.length == 0) return;
 		
-			if(bufferText) {
+			if(mBufferText) {
 				//synchronized(synch) {
-					buffer.addBytesImplSimple(obj);
+					mHoldBuffer.addBytesImplSimple(obj);
 				//}
 				return;
 			}
 			
-			int oldbrokencount = the_tree.getBrokenLineCount();
-			double old_max = the_tree.getBrokenLineCount() * PREF_LINESIZE;
+			int oldbrokencount = mBuffer.getBrokenLineCount();
+			double old_max = mBuffer.getBrokenLineCount() * mPrefLineSize;
 			//synchronized(synch) {
 			int linesadded = 0;
 			try {
-				linesadded = the_tree.addBytesImpl(obj);
+				linesadded = mBuffer.addBytesImpl(obj);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
-			int tmpcount = the_tree.getBrokenLineCount();
+			int tmpcount = mBuffer.getBrokenLineCount();
 			drawingIterator = null;
 			
 			if(jumpToEnd) {
 				scrollback = SCROLL_MIN;
 				//mHandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
 			} else {
-				if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
+				if(mBuffer.getBrokenLineCount() <= mCalculatedLinesInWindow) {
 					scrollback = (double)mHeight;
 				} else {
-					if(scrollback > SCROLL_MIN + PREF_LINESIZE ) {
+					if(scrollback > SCROLL_MIN + mPrefLineSize ) {
 						//scrollback = oldposition * (the_tree.getBrokenLineCount()*PREF_LINESIZE);
-						double new_max = the_tree.getBrokenLineCount()*PREF_LINESIZE;
-						int lines = (int) ((new_max - old_max)/PREF_LINESIZE);
+						double new_max = mBuffer.getBrokenLineCount()*mPrefLineSize;
+						int lines = (int) ((new_max - old_max)/mPrefLineSize);
 						
-						scrollback += linesadded*PREF_LINESIZE;
+						scrollback += linesadded*mPrefLineSize;
 						//Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
 						
 					} else {
@@ -2276,56 +1810,32 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 				if(scrollback > mHeight) {
 					if(!indicated) {
-						if(fling_velocity > 0) {
-							//play with no animation
-							//new_text_in_buffer_indicator.startAnimation(indicator_on_no_cycle);
-							//mHandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR);
-						} else {
-							//new_text_in_buffer_indicator.startAnimation(indicator_on);
-							//mHandler.sendEmptyMessage(MSG_SET_NEW_TEXT_INDICATOR_ANIMATED);
-							//indicated = true;
-						}
-						//Log.e("BYTE","REPORTED");
+						
 						indicated = true;
 					}
 				} else {
-					//new_text_in_buffer_indicator.startAnimation(indicator_off);
-					//mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
 					indicated = false;
-					//indicated = false;
 				}
 			}
-			the_tree.prune();
-			tmpcount = the_tree.getBrokenLineCount();
-		//}
-			//}
-		
-//		if(_runner != null && _runner.isAlive()) {
-//			if(!_runner.threadHandler.hasMessages(DrawRunner.MSG_DRAW)) {
-//				_runner.threadHandler.sendEmptyMessage(DrawRunner.MSG_DRAW);
-//
-//			}
-//		}
-		//if(drawOnDemand) {
-		//	this.invalidate();
-		//}
+			mBuffer.prune();
+			tmpcount = mBuffer.getBrokenLineCount();
 		this.invalidate();
 	}
 	
-	boolean indicated = false;
+	
 	
 	private Colorizer.COLOR_TYPE updateColorRegisters(Integer i) {
 		if(i == null) return Colorizer.COLOR_TYPE.NOT_A_COLOR;
 		
-		if(xterm256Color) {
-			if(xterm256FGStart) {
-				selectedColor = i;
+		if(mXterm256Color) {
+			if(mXterm256FGStart) {
+				mSelectedColor = i;
 				//xterm256FGStart = false;
 				//xterm256Color = false;
 			}
 			
-			if(xterm256BGStart) {
-				selectedBackground = i;
+			if(mXterm256BGStart) {
+				mSelectedBackground = i;
 				//xterm256BGStart = false;
 				//xterm256Color = false;
 			}
@@ -2336,45 +1846,45 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		Colorizer.COLOR_TYPE type = Colorizer.getColorType(i);
 		switch(type) {
 		case FOREGROUND:
-			selectedColor = i;
-			xterm256FGStart = false;
-			xterm256BGStart = false;
-			xterm256Color = false;
+			mSelectedColor = i;
+			mXterm256FGStart = false;
+			mXterm256BGStart = false;
+			mXterm256Color = false;
 			//opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBright, selectedColor));
 			//notFound = false;
 			break;
 		case BACKGROUND:
 			//Log.e("SLICK","BACKGROUND COLOR ENCOUNTERED: " + i);
-			selectedBackground = i;
-			xterm256FGStart = false;
-			xterm256BGStart = false;
-			xterm256Color = false;
+			mSelectedBackground = i;
+			mXterm256FGStart = false;
+			mXterm256BGStart = false;
+			mXterm256Color = false;
 			//bg_opts.setColor(0xFF000000 | Colorizer.getColorValue(selectedBackgroundBright, selectedBackgroundColor));
 			break;
 		case ZERO_CODE:
 			//Log.e("WINDOW","ZERO CODE ENCOUNTERED");
-			selectedBright = 0;
-			selectedColor = 37;
-			selectedBackground = 40;
-			xterm256FGStart = false;
-			xterm256BGStart = false;
-			xterm256Color = false;
+			mSelectedBright = 0;
+			mSelectedColor = 37;
+			mSelectedBackground = 40;
+			mXterm256FGStart = false;
+			mXterm256BGStart = false;
+			mXterm256Color = false;
 			break;
 		case BRIGHT_CODE:
-			selectedBright = 1;
-			xterm256FGStart = false;
-			xterm256BGStart = false;
-			xterm256Color = false;
+			mSelectedBright = 1;
+			mXterm256FGStart = false;
+			mXterm256BGStart = false;
+			mXterm256Color = false;
 			break;
 		case XTERM_256_FG_START:
-			xterm256FGStart = true;
+			mXterm256FGStart = true;
 			break;
 		case XTERM_256_BG_START:
-			xterm256BGStart = true;
+			mXterm256BGStart = true;
 			break;
 		case XTERM_256_FIVE:
-			if(xterm256BGStart || xterm256FGStart) {
-				xterm256Color = true;
+			if(mXterm256BGStart || mXterm256FGStart) {
+				mXterm256Color = true;
 			} else {
 				//this would be a "blink" command, but blink sucks, so do nothing.
 			}
@@ -2391,7 +1901,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public void setCullExtraneous(boolean pIn) {
 		
 		//synchronized(synch) {
-			the_tree.setCullExtraneous(pIn);
+			mBuffer.setCullExtraneous(pIn);
 		//}
 			
 	}
@@ -2436,45 +1946,35 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	ListIterator<Line> drawingIterator = null;
 	private IteratorBundle getScreenIterator(double pIn,float pLineSize) {
 		float working_h = 0;
-		//int position = 0;
-		
-		//Log.e("BYTE","TREE HAS:" + the_tree.getBrokenLineCount() + " total lines.");
 		double pY = pIn;
-		double max = the_tree.getBrokenLineCount() * pLineSize;
+		double max = mBuffer.getBrokenLineCount() * pLineSize;
 		if(pY >= max) {
 			pY = max;
 		}
 		
 		int startline = 0;
-		//Log.e("BYTE","SCROLLBACK IS:" +pIn);
 		int current = 0;
 		if(drawingIterator == null) {
-			drawingIterator = the_tree.getLines().listIterator();
+			drawingIterator = mBuffer.getLines().listIterator();
 		} else {
 			while(drawingIterator.hasPrevious()) {
 				drawingIterator.previous(); //reset to beginning
 			}
 		}
 		
-		if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
-			//calculate how few.
+		if(mBuffer.getBrokenLineCount() <= mCalculatedLinesInWindow) {
 			int offset = 0;
-			if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
+			if(mPrefLineSize * mCalculatedLinesInWindow < this.getHeight()) {
 				
-				offset = ((PREF_LINESIZE) * CALCULATED_LINESINWINDOW) - this.getHeight();
-				//Log.e("STARTY","STARTY IS:"+y);
+				offset = ((mPrefLineSize) * mCalculatedLinesInWindow) - this.getHeight();
 			}
-			//int offset =
-			int under = CALCULATED_LINESINWINDOW-(the_tree.getBrokenLineCount()-1);
+			int under = mCalculatedLinesInWindow-(mBuffer.getBrokenLineCount()-1);
 			while(drawingIterator.hasNext()) {drawingIterator.next(); startline += 1;}
-			//return new IteratorBundle(the_tree.getLines().listIterator(the_tree.getLines().size()),under*pLineSize,0);
-			float tmpy = (under*pLineSize-(offset+(PREF_LINESIZE/3)));
+			float tmpy = (under*pLineSize-(offset+(mPrefLineSize/3)));
 			
-			//if(mName.equals("chats")) Log.e("MATH",tmpy+"="+under+"*"+pLineSize+"-("+offset+"("+PREF_LINESIZE+"/3)))");
 			return new IteratorBundle(drawingIterator,tmpy,0,startline);
 		}
 		int lines = 1;
-		//double target = Math.floor(pY/pLineSize);
 		
 		while(drawingIterator.hasNext()) {
 			//position = drawingIterator.nextIndex();
@@ -2485,33 +1985,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			if(working_h >= pY) {
 				int y = 0;
-				if(PREF_LINESIZE * CALCULATED_LINESINWINDOW < this.getHeight()) {
+				if(mPrefLineSize * mCalculatedLinesInWindow < this.getHeight()) {
 					
-					y = ((PREF_LINESIZE) * CALCULATED_LINESINWINDOW) - this.getHeight();
-					//Log.e("STARTY","STARTY IS:"+y);
+					y = ((mPrefLineSize) * mCalculatedLinesInWindow) - this.getHeight();
 				}
-				//if(mName.equals("mainDisplay")) {
-				//	Log.e("WINDOW","Calculating starting position, y="+y);
-				//}
 				double delta = working_h - pY;
 				double offset = delta - pLineSize;
 				int extra = (int) Math.ceil(delta/pLineSize);
-//				if(mName.equals("mainDisplay")) {
-//					//Log.e("WINDOW","Calculating starting position, y="+y+ " offset="+offset+" extra="+extra+" delta="+delta);
-//					Log.e("WINDOW","Calculating starting position, measured:"+lines);
-//				}
-				
-				//if(mName.equals("chats")) Log.e("MATH","extra="+extra+" offset="+offset+" delta="+delta);
-				//Log.e("SCREENIT","GET SCREEN ITERATOR, EXTRA:"+extra);
 				if(drawingIterator.hasPrevious()) drawingIterator.previous();
 				if(l.breaks > 0) {
 					startline += l.breaks;
 				}
 				return new IteratorBundle(drawingIterator,-1*offset,extra,startline);
-			} else {
-				//next line
-				//position++;
-			}
+			} 
 			startline += 1 + l.getBreaks();
 		}
 		
@@ -2520,18 +2006,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 
 	public void setLinksEnabled(boolean hyperLinkEnabled) {
-		the_tree.setLinkify(hyperLinkEnabled);
+		mBuffer.setLinkify(hyperLinkEnabled);
 	}
 
 	public boolean windowShowing = false;
 	public boolean loaded() {
-		
-//		if(_runner == null || _runner.threadHandler == null || !_runner.isAlive()) {
-//			if(_runner != null && !_runner.isAlive()) {
-//				//Log.e("WINDOW","HOLY GOD THE THREAD IS DEAD");
-//			}
-//			return false;
-//		}
 		
 		return windowShowing;
 	}
@@ -2548,7 +2027,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 
 		public String getName() throws RemoteException {
-			// TODO Auto-generated method stub
 			return Window.this.mName;
 		}
 
@@ -2603,29 +2081,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		return mCallback;
 	}
 
-	/*public void setDisplayDimensions(int x, int y, int width, int height) {
-		if(x ==0 && y==0 && height == 0 && width==0) {
-			constrictWindow = false;
-			return;
-		}
-		
-		constrictWindow = true;
-		constrictedHeight = height;
-		constrictedWidth = width;
-		
-		mAnchorLeft = x;
-		mAnchorTop = y;
-		
-		calculateCharacterFeatures(width,height);
-		
-	}*/
-
 	public void setBufferText(boolean bufferText) {
-		this.bufferText = bufferText;
+		this.mBufferText = bufferText;
 	}
 
 	public boolean isBufferText() {
-		return bufferText;
+		return mBufferText;
 	}
 
 	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
@@ -2658,138 +2119,103 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//}
 
 		
-		homeWidgetRect.set(mWidth-homeWidgetDrawable.getWidth(),mHeight-homeWidgetDrawable.getHeight(),mWidth,mHeight);
+		mHomeWidgetRect.set(mWidth-mHomeWidgetDrawable.getWidth(),mHeight-mHomeWidgetDrawable.getHeight(),mWidth,mHeight);
 		
 		Float foo = new Float(0);
 		//foo.
 		
-		if(L == null || !hasOnSizeChanged) return;
-		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
-		L.remove(-2);
-		L.getGlobal("OnSizeChanged");
-		if(L.getLuaObject(L.getTop()).isFunction()) {
-			L.pushString(Integer.toString(w));
-			L.pushString(Integer.toString(h));
-			L.pushString(Integer.toString(oldw));
-			L.pushString(Integer.toString(oldh));
-			int ret = L.pcall(4, 1, -6);
+		if(mL == null || !hasOnSizeChanged) return;
+		mL.getGlobal("debug");
+		mL.getField(mL.getTop(), "traceback");
+		mL.remove(-2);
+		mL.getGlobal("OnSizeChanged");
+		if(mL.getLuaObject(mL.getTop()).isFunction()) {
+			mL.pushString(Integer.toString(w));
+			mL.pushString(Integer.toString(h));
+			mL.pushString(Integer.toString(oldw));
+			mL.pushString(Integer.toString(oldh));
+			int ret = mL.pcall(4, 1, -6);
 			if(ret != 0) {
-				displayLuaError("Window("+mName+") OnSizeChangedError: " + L.getLuaObject(-1).getString());
+				displayLuaError("Window("+mName+") OnSizeChangedError: " + mL.getLuaObject(-1).getString());
 			} else {
-				L.pop(2);
+				mL.pop(2);
 			}
 		} else {
 			//Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
 			hasOnSizeChanged = false;
-			L.pop(2);
+			mL.pop(2);
 		}
 		this.invalidate();
 	}
 	boolean hasOnSizeChanged = true;
 	
-	
-	private void pushTable(String key,Map<String,Object> map) {
-		/*if(!key.equals("")) {
-			L.pushString(key);
-		}
-		
-		L.newTable();
-		
-		for(String tmp : map.keySet()) {
-			Object o = map.get(tmp);
-			if(o instanceof Map) {
-				pushTable(tmp,(Map)o);
-			} else {
-				if(o instanceof String) {
-					L.pushString(tmp);
-					L.pushString((String)o);
-					L.setTable(-3);
-				}
-			}
-		}
-		if(!key.equals("")) {
-			L.setTable(-3);
-		}*/
-	}
-	
 	protected void xcallS(String string, String str) {
-		if(L == null) return;
-		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
-		L.remove(-2);
+		if(mL == null) return;
+		mL.getGlobal("debug");
+		mL.getField(mL.getTop(), "traceback");
+		mL.remove(-2);
 		
-		L.getGlobal(string);
-		if(L.getLuaObject(-1).isFunction()) {
+		mL.getGlobal(string);
+		if(mL.getLuaObject(-1).isFunction()) {
 			
 			//need to start iterating the given map, re-creating the table on the other side.
 			//pushTable("",obj);
-			L.pushString(str);
+			mL.pushString(str);
 			
-			int ret = L.pcall(1, 1, -3);
+			int ret = mL.pcall(1, 1, -3);
 			if(ret !=0) {
-				displayLuaError("WindowXCallT Error:" + L.getLuaObject(-1).getString());
+				displayLuaError("WindowXCallT Error:" + mL.getLuaObject(-1).getString());
 			} else {
 				//success!
-				L.pop(2);
+				mL.pop(2);
 			}
 			
 		} else {
-			L.pop(2);
+			mL.pop(2);
 		}
 	}
 	
 
 	private void initLua() {
-		L.openLibs();
-		
-		//String dataDir = null;
-		//try {
-		//	ApplicationInfo ai = this..getPackageManager().getApplicationInfo(parent.service.getPackageName(), PackageManager.GET_META_DATA);
-		//	dataDir = ai.dataDir;
-		//} catch (NameNotFoundException e) {
-		//	// TODO Auto-generated catch block
-		//	e.printStackTrace();
-		//}
+		mL.openLibs();
 		
 		if(dataDir == null) {
 			//this is bad.
 		} else {
 			
 			//set up the path/cpath.
-			L.getGlobal("package");
-			L.pushString(dataDir + "/lua/share/5.1/?.lua");
-			L.setField(-2, "path");
+			//TODO: add the plugin load path.
+			mL.getGlobal("package");
+			mL.pushString(dataDir + "/lua/share/5.1/?.lua");
+			mL.setField(-2, "path");
 			
-			L.pushString(dataDir + "/lua/lib/5.1/?.so");
-			L.setField(-2, "cpath");
-			L.pop(1);
+			mL.pushString(dataDir + "/lua/lib/5.1/?.so");
+			mL.setField(-2, "cpath");
+			mL.pop(1);
 			
 		}
 		
 		
-		//InvalidateFunction iv = new InvalidateFunction(L);
-		NoteFunction df = new NoteFunction(L);
-		//BoundsFunction bf = new BoundsFunction(L);
-		OptionsMenuFunction omf = new OptionsMenuFunction(L);
-		PluginXCallSFunction pxcf = new PluginXCallSFunction(L);
-		SheduleCallbackFunction scf = new SheduleCallbackFunction(L);
-		CancelSheduleCallbackFunction cscf = new CancelSheduleCallbackFunction(L);
-		GetDisplayDensityFunction gddf = new GetDisplayDensityFunction(L); 
-		SendToServerFunction stsf = new SendToServerFunction(L);
-		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(L);
-		PushMenuStackFunction pmsf = new PushMenuStackFunction(L);
-		PopMenuStackFunction popmsf = new PopMenuStackFunction(L);
-		GetStatusBarHeight gsbshf = new GetStatusBarHeight(L);
-		StatusBarHiddenMethod sghm = new StatusBarHiddenMethod(L);
-		GetActionBarHeightFunction gabhf = new GetActionBarHeightFunction(L);
-		GetPluginInstallDirectoryFunction gpisdf = new GetPluginInstallDirectoryFunction(L);
-        CloseOptionsDialogFunction codf = new CloseOptionsDialogFunction(L);
-        GetActivityFunction gaf = new GetActivityFunction(L);
-        PluginInstalledFunction pif = new PluginInstalledFunction(L);
-        WindowSupportsFunction wsf = new WindowSupportsFunction(L);
-        WindowCallFunction wcf = new WindowCallFunction(L);
-        WindowBroadcastFunction wbcf = new WindowBroadcastFunction(L);
+		NoteFunction df = new NoteFunction(mL);
+		OptionsMenuFunction omf = new OptionsMenuFunction(mL);
+		PluginXCallSFunction pxcf = new PluginXCallSFunction(mL);
+		SheduleCallbackFunction scf = new SheduleCallbackFunction(mL);
+		CancelSheduleCallbackFunction cscf = new CancelSheduleCallbackFunction(mL);
+		GetDisplayDensityFunction gddf = new GetDisplayDensityFunction(mL); 
+		SendToServerFunction stsf = new SendToServerFunction(mL);
+		GetExternalStorageDirectoryFunction gesdf = new GetExternalStorageDirectoryFunction(mL);
+		PushMenuStackFunction pmsf = new PushMenuStackFunction(mL);
+		PopMenuStackFunction popmsf = new PopMenuStackFunction(mL);
+		GetStatusBarHeight gsbshf = new GetStatusBarHeight(mL);
+		StatusBarHiddenMethod sghm = new StatusBarHiddenMethod(mL);
+		GetActionBarHeightFunction gabhf = new GetActionBarHeightFunction(mL);
+		GetPluginInstallDirectoryFunction gpisdf = new GetPluginInstallDirectoryFunction(mL);
+        CloseOptionsDialogFunction codf = new CloseOptionsDialogFunction(mL);
+        GetActivityFunction gaf = new GetActivityFunction(mL);
+        PluginInstalledFunction pif = new PluginInstalledFunction(mL);
+        WindowSupportsFunction wsf = new WindowSupportsFunction(mL);
+        WindowCallFunction wcf = new WindowCallFunction(mL);
+        WindowBroadcastFunction wbcf = new WindowBroadcastFunction(mL);
 		try {
 			
 			gsbshf.register("GetStatusBarHeight");
@@ -2815,11 +2241,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			wsf.register("WindowSupports");
 			wbcf.register("WindowBroadcast");
 		} catch (LuaException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		//Log.e("WINDOW","LOADING LUA FOR "+mName);
 	}
 	
 	
@@ -2827,76 +2251,66 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public void loadScript(String body) {
 		
 		if(body == null || body.equals("")) {
-			//Log.e("Window","NO SCRIPT SPECIFIED, SHUTTING DOWN LUA:"+mName);
 			noScript = true;
-			if(L != null) {
-				L.close();
-				L = null;
+			if(mL != null) {
+				mL.close();
+				mL = null;
 			}
 			return;
 		} else {
 			noScript = false;
 		}
-		if(L != null) {
-			L.close();
-			L = null;
+		if(mL != null) {
+			mL.close();
+			mL = null;
 		}
-		this.L = LuaStateFactory.newLuaState();
+		this.mL = LuaStateFactory.newLuaState();
 		initLua();
-		L.pushJavaObject(this);
-		L.setGlobal("view");
-		//DrawFunction draw = new DrawFunction(L);
-		//try {
-		//	draw.register("draw");
-		//} catch (LuaException e) {
-		//	e.printStackTrace();
-		//}
-		
-		//L.pushJavaObject(parent);
+		mL.pushJavaObject(this);
+		mL.setGlobal("view");
 		
 		
 		
-		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
-		L.remove(-2);
-		L.LloadString(body);
-		int ret = L.pcall(0, 1, -2);
+		mL.getGlobal("debug");
+		mL.getField(mL.getTop(), "traceback");
+		mL.remove(-2);
+		mL.LloadString(body);
+		int ret = mL.pcall(0, 1, -2);
 		if(ret != 0) {
-			displayLuaError("Error Loading Script: "+L.getLuaObject(L.getTop()).getString());
+			displayLuaError("Error Loading Script: "+mL.getLuaObject(mL.getTop()).getString());
 		} else {
-			//Log.e("LUAWINDOW","Loaded script body for: " + mName + " id:"+this.toString());
-			L.pop(2);
+			mL.pop(2);
 		}
 
 	}
 	
 	public void runScriptOnCreate() {
-		if(L == null) return;
-		L.getGlobal("debug");
-		L.getField(-1, "traceback");
-		L.remove(-2);
+		if(mL == null) return;
+		mL.getGlobal("debug");
+		mL.getField(-1, "traceback");
+		mL.remove(-2);
 		
 		
-		L.getGlobal("OnCreate");
-		if(L.getLuaObject(-1).isFunction()) {
-			int tmp = L.pcall(0, 1, -2);
+		mL.getGlobal("OnCreate");
+		if(mL.getLuaObject(-1).isFunction()) {
+			int tmp = mL.pcall(0, 1, -2);
 			if(tmp != 0) {
-				displayLuaError("Calling OnCreate: "+L.getLuaObject(-1).getString());
+				displayLuaError("Calling OnCreate: "+mL.getLuaObject(-1).getString());
 			} else {
 				//Log.e("LUAWINDOW","OnCreate Success for window ("+this.getName()+")!");
-				L.pop(2);
+				mL.pop(2);
 			}
 		} else {
-			L.pop(2);
+			mL.pop(2);
 		}
 		
-		L.getGlobal("OnMeasure");
-		if(L.isFunction(-1)) {
-			hasScriptOnMeasure = true;
+		mL.getGlobal("OnMeasure");
+		if(mL.isFunction(-1)) {
+			mHasScriptOnMeasure = true;
 		} else {
-			hasScriptOnMeasure = false;
+			mHasScriptOnMeasure = false;
 		}
-		L.pop(1);
+		mL.pop(1);
 	}
 	
 	/*! \page page1
@@ -2931,7 +2345,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 		public OptionsMenuFunction(LuaState L) {
 			super(L);
-			// TODO Auto-generated constructor stub
 		}
 
 		@Override
@@ -2949,14 +2362,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			
 			//Handler h = 
-			Message msg = mainHandler.obtainMessage(MainWindow.MESSAGE_ADDOPTIONCALLBACK);
+			Message msg = mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_ADDOPTIONCALLBACK);
 			if(o != null) msg.obj = o;
 			Bundle b = msg.getData();
 			b.putString("funcName", funcName);
 			b.putString("title", title);
 			b.putString("window", mName);
 			msg.setData(b);
-			mainHandler.sendMessage(msg);
+			mMainWindowHandler.sendMessage(msg);
 			return 0;
 		}
 		
@@ -3019,7 +2432,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException {
 			// TODO Auto-generated method stub
-			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_CLOSEOPTIONSDIALOG));
+			mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_CLOSEOPTIONSDIALOG));
 			return 0;
 		}
 	}
@@ -3034,7 +2447,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException {
 			// TODO Auto-generated method stub
-			L.pushString(Integer.toString(((int)Window.this.parent.getTitleBarHeight())));
+			L.pushString(Integer.toString(((int)Window.this.mParent.getTitleBarHeight())));
 			return 1;
 		}
 		
@@ -3065,7 +2478,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException {
 			//Log.e("PLUGIN","Get External storage state:"+Environment)
-			L.pushJavaObject((Activity)parent.getActivity());
+			L.pushJavaObject((Activity)mParent.getActivity());
 			return 1;
 		}
 		
@@ -3130,7 +2543,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			} else {
 				L.pushNil();
 			}*/
-			String path = parent.getPathForPlugin(mOwner);
+			String path = mParent.getPathForPlugin(mOwner);
 			//Log.e("LUA","FETCHED PATH ("+path+") for plugin, "+mOwner);
 			File file = new File(path);
 			String dir = file.getParent();
@@ -3152,7 +2565,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException {
 			// TODO Auto-generated method stub
-			L.pushString(Integer.toString((int)Window.this.parent.getStatusBarHeight()));
+			L.pushString(Integer.toString((int)Window.this.mParent.getStatusBarHeight()));
 			return 1;
 		}
 		
@@ -3187,7 +2600,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException {
 			// TODO Auto-generated method stub
-			L.pushBoolean(Window.this.parent.isStatusBarHidden());
+			L.pushBoolean(Window.this.mParent.isStatusBarHidden());
 			return 1;
 		}
 		
@@ -3206,7 +2619,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException {
 			String foo = this.getParam(2).getString();
 			//Log.e("LUAWINDOW","DEBUG:"+foo);
-			Window.this.parent.dispatchLuaText(foo);
+			Window.this.mParent.dispatchLuaText(foo);
 			return 0;
 		}
 		
@@ -3260,48 +2673,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 			}*/
 			//mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_X, obj))
-			Message msg = mainHandler.obtainMessage(MainWindow.MESSAGE_PLUGINXCALLS,foo.getString());
+			Message msg = mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_PLUGINXCALLS,foo.getString());
 			
 			msg.getData().putString("PLUGIN",mOwner);
 			msg.getData().putString("FUNCTION", function);
 			
-			mainHandler.sendMessage(msg);
+			mMainWindowHandler.sendMessage(msg);
 			// TODO Auto-generated method stub
 			return 0;
-		}
-		
-		public HashMap<String,Object> dumpTable(String tablePath,int idx) {
-			
-			HashMap<String,Object> tmp = new HashMap<String,Object>();
-			int counter = 1;
-			L.pushNil();
-			while(L.next(idx) != 0) {
-				//String id = L.toString(-2);
-				String id = null;
-				if(L.isNumber(-2)) {
-					id = Integer.toString(counter);
-					counter++;
-				} else if(L.isString(-2)) {
-					id = L.toString(-2);
-				}
-				LuaObject l = L.getLuaObject(-1);
-				if(l.isTable()) {
-					//need to dump more tables
-					tmp.put(id, dumpTable(tablePath+"."+id,L.getTop()));
-					//Log.e("PLUGIN","TABLE RECURSIVE DUMP:"+L.getTop()+":"+(L.getLuaObject(L.getTop()).toString()));
-				
-				} else {
-					//Log.e("PLUGIN","WXCALLT:"+tablePath+"|"+id+"<==>"+l.getString());
-					tmp.put(id, l.getString());
-				}
-				
-				L.pop(1);
-			}
-			
-			//L.pop(1);
-			return tmp;
-		}
-		
+		}		
 		
 	}
 	
@@ -3332,7 +2712,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 		@Override
 		public int execute() throws LuaException {
-			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_POPMENUSTACK));
+			mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_POPMENUSTACK));
 			return 0;
 		}
 		
@@ -3379,10 +2759,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			//Log.e("PUSHMENUSTACK","FUNCTION NAME:"+function);
 			
-			Message m = mainHandler.obtainMessage(MainWindow.MESSAGE_PUSHMENUSTACK,Window.this.mName);
+			Message m = mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_PUSHMENUSTACK,Window.this.mName);
 			m.getData().putString("CALLBACK", function);
 			
-			mainHandler.sendMessage(m);
+			mMainWindowHandler.sendMessage(m);
 			return 0;
 		}
 		
@@ -3400,7 +2780,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException {
 			if(this.getParam(2).isNil()) { return 0; }
 			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
-			mainHandler.sendMessage(mainHandler.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,this.getParam(2).getString()));
+			mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_SENDBUTTONDATA,this.getParam(2).getString()));
 			return 0;
 		}
 		
@@ -3464,47 +2844,47 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	
 	private void callScheduleCallback(int id,String callback) {
-		if(L == null) return;
-		L.getGlobal("debug");
-		L.getField(-1, "traceback");
-		L.remove(-2);
+		if(mL == null) return;
+		mL.getGlobal("debug");
+		mL.getField(-1, "traceback");
+		mL.remove(-2);
 		
-		L.getGlobal(callback);
-		if(L.getLuaObject(-1).isFunction()) {
+		mL.getGlobal(callback);
+		if(mL.getLuaObject(-1).isFunction()) {
 			//prepare to call.
-			L.pushString(Integer.toString(id));
-			int ret = L.pcall(1, 1, -3);
+			mL.pushString(Integer.toString(id));
+			int ret = mL.pcall(1, 1, -3);
 			if(ret != 0) {
-				displayLuaError("Scheduled callback("+callback+") error:"+L.getLuaObject(-1).toString());
+				displayLuaError("Scheduled callback("+callback+") error:"+mL.getLuaObject(-1).toString());
 			} else {
-				L.pop(2);
+				mL.pop(2);
 			}
 		} else {
 			//error no function.
-			L.pop(2);
+			mL.pop(2);
 		}
 	}
 	
 	public void callFunction(String callback, String data) {
-		L.getGlobal("debug");
-		L.getField(L.getTop(), "traceback");
-		L.remove(-2);
+		mL.getGlobal("debug");
+		mL.getField(mL.getTop(), "traceback");
+		mL.remove(-2);
 		
-		L.getGlobal(callback);
-		if(L.isFunction(L.getTop())) {
+		mL.getGlobal(callback);
+		if(mL.isFunction(mL.getTop())) {
 			if(data != null) {
-				L.pushString(data);
+				mL.pushString(data);
 			} else {
-				L.pushNil();
+				mL.pushNil();
 			}
-			int tmp = L.pcall(1, 1, -3);
+			int tmp = mL.pcall(1, 1, -3);
 			if(tmp != 0) {
-				displayLuaError("Error calling window script function "+callback+": "+L.getLuaObject(-1).getString());
+				displayLuaError("Error calling window script function "+callback+": "+mL.getLuaObject(-1).getString());
 			} else {
-				L.pop(1);
+				mL.pop(1);
 			}
 		} else {
-			L.pop(1);
+			mL.pop(1);
 		}
 	}
 	
@@ -3518,7 +2898,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		@Override
 		public int execute() throws LuaException, RemoteException {
 			String desired = this.getParam(2).getString();
-			boolean result = parent.isPluginInstalled(desired);
+			boolean result = mParent.isPluginInstalled(desired);
 			//parent.isPluginInstalled();
 			L.pushBoolean(result);
 			return 1;
@@ -3537,7 +2917,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException, RemoteException {
 			String desired = this.getParam(2).getString();
 			String function = this.getParam(2).getString();
-			boolean ret = parent.checkWindowSupports(desired,function);
+			boolean ret = mParent.checkWindowSupports(desired,function);
 			L.pushBoolean(ret);
 			return 1;
 		}
@@ -3555,7 +2935,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		public int execute() throws LuaException, RemoteException {
 			String function = this.getParam(2).getString();
 			String data = this.getParam(3).getString();
-			parent.windowBroadcast(function, data);
+			mParent.windowBroadcast(function, data);
 			
 			return 0;
 		}
@@ -3575,7 +2955,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			String function = this.getParam(3).getString();
 			String data = this.getParam(4).getString();
 			
-			parent.windowCall(window,function,data);
+			mParent.windowCall(window,function,data);
 			return 0;
 		}
 		
@@ -3718,22 +3098,22 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 				break;				
 			case font_size:
-				setCharacterSizes((Integer)o.getValue(),PREF_LINEEXTRA);
+				setCharacterSizes((Integer)o.getValue(),mPrefLineExtra);
 				break;
 			case line_extra:
-				setCharacterSizes(PREF_FONTSIZE,(Integer)o.getValue());
+				setCharacterSizes(mPrefFontSize,(Integer)o.getValue());
 				break;
 			case buffer_size:
-				the_tree.setMaxLines((Integer)o.getValue());
-				Message msg = mainHandler.obtainMessage(MainWindow.MESSAGE_WINDOWBUFFERMAXCHANGED);
+				mBuffer.setMaxLines((Integer)o.getValue());
+				Message msg = mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_WINDOWBUFFERMAXCHANGED);
 				msg.arg1 = (Integer)o.getValue();
 				msg.getData().putString("PLUGIN", this.mOwner);
 				msg.getData().putString("WINDOW", mName);
-				mainHandler.sendMessage(msg);
+				mMainWindowHandler.sendMessage(msg);
 				break;
 			case font_path:
-				PREF_FONT = loadFontFromName((String)o.getValue());
-				p.setTypeface(PREF_FONT);
+				mPrefFont = loadFontFromName((String)o.getValue());
+				p.setTypeface(mPrefFont);
 				this.invalidate();
 				break;
 				
@@ -3775,29 +3155,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		font_path
 	}
 	
-	/*@Override
-	protected void onLayout(boolean changed,int left,int top,int right,int bottom) {
-		//Log.e("WINDOW","WINDOW ONLAYOUT CALLED: "+changed);
-		if(changed) {
-			sizeChanged = true;
-		}
-	}*/
-	
-	//boolean sizeChanged = false;
-	/*@Override
-	public RelativeLayout.LayoutParams getLayoutParams() {
-		return this.getLayoutParams();
-	}*/
 
-	/*public int getMHeight() {
-		// TODO Auto-generated method stub
-		return mHeight;
-	}*/
-	
-	/*public void startAnimation(Animation a) {
-		View v = ((View)this.getParent());
-		v.startAnimation(a);
-	}*/
 	private Typeface loadFontFromName(String name) {
 		Typeface font = Typeface.MONOSPACE;
 		//Log.e("WINDOW","FONT SELECTION IS:" + tmpname);
@@ -3843,10 +3201,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			y += (scrollback-SCROLL_MIN);
 			
-			float xform_to_line = y / (float)PREF_LINESIZE;
+			float xform_to_line = y / (float)mPrefLineSize;
 			int line = (int)Math.floor(xform_to_line);
 			
-			float xform_to_column = x / (float)one_char_is_this_wide;
+			float xform_to_column = x / (float)mOneCharWidth;
 			int column = (int)Math.floor(xform_to_column);
 			
 			switch(event.getAction()) {
@@ -3892,7 +3250,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								case 1:
 									//upper middle
 									selectionButtonDown = SelectionWidgetButtons.UP;
-									int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE)-PREF_LINESIZE;
+									int remainder = ((int)(scrollback-SCROLL_MIN) % mPrefLineSize)-mPrefLineSize;
 									//selectorCenterY -= PREF_LINESIZE;
 									//if(selectorCenterY - (2*PREF_LINESIZE) < remainder) {
 										//selectorCenterY = selectorCenterY + PREF_LINESIZE;
@@ -4009,7 +3367,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					widgetCenterMovedY -= (event.getY() - widgetCenterMoveYLast);
 					widgetCenterMoveXLast = (int) x;
 					widgetCenterMoveYLast = (int) event.getY();
-					if(Math.abs(widgetCenterMovedX) > one_char_is_this_wide) {
+					if(Math.abs(widgetCenterMovedX) > mOneCharWidth) {
 						int sign = (int)Math.signum(widgetCenterMovedX);
 						if(sign > 0) {
 							scrollRepeatRate = scrollRepeatRateInitial;
@@ -4020,19 +3378,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							scrollRepeatRateStep = 1;
 							doScrollLeft(false);
 						}
-//						selectedSelector.column += 1 * Math.signum(widgetCenterMovedX);
-//						selectorCenterX += one_char_is_this_wide * Math.signum(widgetCenterMovedX);
-//						calculateWidgetPosition(selectorCenterX,selectorCenterY);
 						widgetCenterMovedX = 0;
-						//mHandler.removeMessages(MESSAGE_SCROLLDOWN);
-						//mHandler.removeMessages(MESSAGE_SCROLLUP);
 						v.invalidate();
-					} else {
-//						mHandler.removeMessages(MESSAGE_SCROLLDOWN);
-//						mHandler.removeMessages(MESSAGE_SCROLLUP);
-//						mHandler.removeMessages(MESSAGE_SCROLLLEFT);
-//						mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
-					}
+					} 
 					
 					if(Math.abs(widgetCenterMovedY) > SELECTIONINDICATOR_FONTSIZE) {
 						int sign = (int) Math.signum(widgetCenterMovedY);
@@ -4046,13 +3394,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							doScrollDown(false);
 						}
 
-						/*selectedSelector.line += 1 * Math.signum(widgetCenterMovedY);
-						selectorCenterY += PREF_LINESIZE * -Math.signum(widgetCenterMovedY);
-						calculateWidgetPosition(selectorCenterX,selectorCenterY);
-						*/
 						widgetCenterMovedY = 0;
-						//mHandler.removeMessages(MESSAGE_SCROLLDOWN);
-						//mHandler.removeMessages(MESSAGE_SCROLLUP);
 						v.invalidate();
 					}
 
@@ -4069,50 +3411,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
 					scrollRepeatRate = scrollRepeatRateInitial;
 					scrollRepeatRateStep = 1;
-					/*if(selectedSelector != null) {
-						selectedSelector = null;
-						v.invalidate();
-						return true;
-					}*/
-//					boolean doselection = false;
-//					
-//					int startline,startcol,endline,endcol;
-//					if(theSelection.end.line > theSelection.start.line) {
-//						
-//						startline = theSelection.end.line;
-//						startcol = theSelection.end.column;
-//						endline = theSelection.start.line;
-//						endcol = theSelection.start.column;
-//					} else {
-//						startline = theSelection.start.line;
-//						startcol = theSelection.start.column;
-//						endline = theSelection.end.line;
-//						endcol = theSelection.end.column;
-//					}
-//					
-//					if(startline == endline) {
-//						if(startcol < column && endcol > column && startline == line) {
-//							doselection = true;
-//						}
-//					} else {
-//						if(startline > line && endline < line) {
-//							doselection = true;
-//						} else if(startline == line) {
-//							if(startcol < column) {
-//								doselection = true;
-//							}
-//						} else if(endline == line) {
-//							if(endcol > column) {
-//								doselection = true;
-//							}
-//						}
-//					}
-//					
-//					if(doselection) {
-//						String text = the_tree.getTextSection(theSelection);
-//						Log.e("window","copied text:\n" + text);
-//						v.invalidate();
-//					}
 					
 					int mod2x = (int) x - (widgetX - selectionIndicatorHalfDimension);
 					int mod2y = (int) event.getY() - (widgetY - selectionIndicatorHalfDimension);
@@ -4183,44 +3481,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						if(selectionButtonDown != null && tmp == selectionButtonDown) {
 							switch(tmp) {
 							case UP:
-								//Log.e("widget","widget up pressed");
 								doScrollUp(false);
-//								selectedSelector.line += 1;
-//								if(selectedSelector.line == the_tree.getBrokenLineCount()) {
-//									selectedSelector.line -= 1;
-//									return true;
-//								} else {
-//									int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE)-PREF_LINESIZE;
-//									selectorCenterY -= PREF_LINESIZE;
-//									if(selectorCenterY - (PREF_LINESIZE) < remainder) {
-//										selectorCenterY = selectorCenterY + PREF_LINESIZE;
-//										scrollback += PREF_LINESIZE;
-//									}
-//									calculateWidgetPosition(selectorCenterX,selectorCenterY);
-//								}
+
 								break;
 							case DOWN:
-								//Log.e("widget","widget down pressed");
 								doScrollDown(false);
-//								selectedSelector.line -= 1;
-//								if(selectedSelector.line < 0) {
-//									selectedSelector.line = 0;
-//									return true;
-//								} else {
-//									int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE) + PREF_LINESIZE;
-//									selectorCenterY += PREF_LINESIZE;
-//									if(selectorCenterY > v.getHeight() - remainder) {
-//										selectorCenterY -= PREF_LINESIZE;
-//										scrollback -= PREF_LINESIZE;
-//									}
-//									calculateWidgetPosition(selectorCenterX,selectorCenterY);
-//								}
 								break;
 							case NEXT:
-								//Log.e("widget","widget next pressed");
-								//copy the bitches and resume normal operation.
-								String copy = the_tree.getTextSection(theSelection);
-								//Log.e("copied text","text copied:\n"+copy);
+								String copy = mBuffer.getTextSection(theSelection);
 								ClipboardManager cpMan = (ClipboardManager) v.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
 								cpMan.setText(copy);
 								v.setOnTouchListener(null);
@@ -4232,17 +3500,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								Window.this.setBufferText(false);
 								v.invalidate();
 								return true;
-								//break;
 							case LEFT:
-								//Log.e("widget","widget left pressed");
 								doScrollLeft(false);
 								break;
 							case RIGHT:
-								//.e("widget","widget right pressed");
 								doScrollRight(false);
 								break;
 							case CENTER:
-								//Log.e("widget","widget center pressed");
 								break;
 							case COPY:
 								//actually switch.
@@ -4251,7 +3515,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								} else {
 									selectedSelector = theSelection.end;
 								}
-								//calculateWidgetPosition(selectedSelector.line,selectedSelector.column);
 								moveWidgetToSelector(selectedSelector);
 								break;
 							case EXIT:
@@ -4276,15 +3539,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				selectionButtonDown = null;
 				break;
 			}
-			
-
-			//String word = the_tree.getWordAt(line,column);
-			//the_tree.
-			//Log.e("texttree","word at line:"+line+" column:"+column+" is: " + word);
-			
-			
-			//break;
-			//}
 			return true;
 		}
 	};
@@ -4321,23 +3575,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		int newWidgetY = (int) ((int) (startY + selectionIndicatorVectorY));
 		
 		if((newWidgetX + (selectionIndicatorHalfDimension)) > this.getWidth()) {
-			selectionIndicatorVectorX -= one_char_is_this_wide;
-			if(selectionIndicatorVectorX < (one_char_is_this_wide + selectionIndicatorHalfDimension)) {
-				selectionIndicatorVectorX = -(selectionIndicatorVectorX+one_char_is_this_wide);
+			selectionIndicatorVectorX -= mOneCharWidth;
+			if(selectionIndicatorVectorX < (mOneCharWidth + selectionIndicatorHalfDimension)) {
+				selectionIndicatorVectorX = -(selectionIndicatorVectorX+mOneCharWidth);
 			}
 			newWidgetX = (int) (startX + selectionIndicatorVectorX);
 			
 		} else if((newWidgetX - selectionIndicatorHalfDimension) < 0) {
 			//flip the vector
-			selectionIndicatorVectorX += one_char_is_this_wide;
-			if(selectionIndicatorVectorX > -(one_char_is_this_wide+selectionIndicatorHalfDimension)) {
-				selectionIndicatorVectorX = -(selectionIndicatorVectorX-one_char_is_this_wide);
+			selectionIndicatorVectorX += mOneCharWidth;
+			if(selectionIndicatorVectorX > -(mOneCharWidth+selectionIndicatorHalfDimension)) {
+				selectionIndicatorVectorX = -(selectionIndicatorVectorX-mOneCharWidth);
 			}
 			newWidgetX = (int) (startX + selectionIndicatorVectorX);
 		}
 		
 		if((newWidgetY + (selectionIndicatorHalfDimension)) > this.getHeight()) {
-			selectionIndicatorVectorY -= PREF_LINESIZE;
+			selectionIndicatorVectorY -= mPrefLineSize;
 			//only if we run into 
 			newWidgetY = (int) (startY + selectionIndicatorVectorY);
 			if(newWidgetY + selectionIndicatorHalfDimension > this.getHeight()) {
@@ -4346,7 +3600,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			
 		} else if ((newWidgetY - selectionIndicatorHalfDimension) < 0) {
-			selectionIndicatorVectorY += PREF_LINESIZE;
+			selectionIndicatorVectorY += mPrefLineSize;
 			
 			newWidgetY = (int) (startY + selectionIndicatorVectorY);
 			if(newWidgetY - selectionIndicatorHalfDimension < 0) {
@@ -4362,9 +3616,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	private void moveWidgetToSelector(TextTree.SelectionCursor cursor) {
 		
-		int part1 = (int) (selectedSelector.line * PREF_LINESIZE + (0.5*SELECTIONINDICATOR_FONTSIZE));
+		int part1 = (int) (selectedSelector.line * mPrefLineSize + (0.5*SELECTIONINDICATOR_FONTSIZE));
 		//int part2 = (int) (scrollback);
-		int part2 = (int) (selectedSelector.line * PREF_LINESIZE - (0.5*SELECTIONINDICATOR_FONTSIZE));
+		int part2 = (int) (selectedSelector.line * mPrefLineSize - (0.5*SELECTIONINDICATOR_FONTSIZE));
 		
 		
 		if(part1 > scrollback) {
@@ -4376,8 +3630,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			scrollback -= ((scrollback-SCROLL_MIN) - part2);
 		}
 		
-		int endx = (int) ((selectedSelector.column * one_char_is_this_wide) + (0.5*one_char_is_this_wide));
-		int endy = (int) ((this.getHeight() - ((selectedSelector.line * PREF_LINESIZE) + (0.5*SELECTIONINDICATOR_FONTSIZE) - (scrollback-SCROLL_MIN))));
+		int endx = (int) ((selectedSelector.column * mOneCharWidth) + (0.5*mOneCharWidth));
+		int endy = (int) ((this.getHeight() - ((selectedSelector.line * mPrefLineSize) + (0.5*SELECTIONINDICATOR_FONTSIZE) - (scrollback-SCROLL_MIN))));
 		//widgetX = endx;
 		//widgetY = endy;
 		selectorCenterX = endx;
@@ -4405,29 +3659,29 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	public void shutdown() {
 		//Log.e("LUAWINDOW","SHUTTING DOWN: "+mName);
-		if(L == null) return;
+		if(mL == null) return;
 		//call into lua to notify shutdown imminent.
-		L.getGlobal("debug");
-		L.getField(-1, "traceback");
-		L.remove(-2);
+		mL.getGlobal("debug");
+		mL.getField(-1, "traceback");
+		mL.remove(-2);
 		
-		L.getGlobal("OnDestroy");
-		if(L.getLuaObject(L.getTop()).isFunction()) {
-			int ret = L.pcall(0, 1, -2);
+		mL.getGlobal("OnDestroy");
+		if(mL.getLuaObject(mL.getTop()).isFunction()) {
+			int ret = mL.pcall(0, 1, -2);
 			if(ret != 0) {
-				displayLuaError("Error in OnDestroy: "+L.getLuaObject(-1).getString());
+				displayLuaError("Error in OnDestroy: "+mL.getLuaObject(-1).getString());
 			} else {
-				L.pop(2);
+				mL.pop(2);
 			}
 		} else {
 			//no method.
-			L.pop(2);
+			mL.pop(2);
 		}
 		
 		//callbackHandler.removeCallbacksAndMessages(token)
 		
-		L.close();
-		L = null;
+		mL.close();
+		mL = null;
 		
 	}
 	
@@ -4438,11 +3692,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			selectedSelector.line = 0;
 			repeat = false;
 		} else {
-			int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE) + PREF_LINESIZE;
-			selectorCenterY += PREF_LINESIZE;
+			int remainder = ((int)(scrollback-SCROLL_MIN) % mPrefLineSize) + mPrefLineSize;
+			selectorCenterY += mPrefLineSize;
 			if(selectorCenterY > this.getHeight() - remainder) {
-				selectorCenterY -= PREF_LINESIZE;
-				scrollback -= PREF_LINESIZE;
+				selectorCenterY -= mPrefLineSize;
+				scrollback -= mPrefLineSize;
 			}
 			calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		}
@@ -4458,15 +3712,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private void doScrollUp(boolean repeat) {
 		//Log.e("FOO","do scroll up");
 		selectedSelector.line += 1;
-		if(selectedSelector.line == the_tree.getBrokenLineCount()) {
+		if(selectedSelector.line == mBuffer.getBrokenLineCount()) {
 			selectedSelector.line -= 1;
 			repeat = false;
 		} else {
-			int remainder = ((int)(scrollback-SCROLL_MIN) % PREF_LINESIZE)-PREF_LINESIZE;
-			selectorCenterY -= PREF_LINESIZE;
-			if(selectorCenterY - (PREF_LINESIZE) < remainder) {
-				selectorCenterY = selectorCenterY + PREF_LINESIZE;
-				scrollback += PREF_LINESIZE;
+			int remainder = ((int)(scrollback-SCROLL_MIN) % mPrefLineSize)-mPrefLineSize;
+			selectorCenterY -= mPrefLineSize;
+			if(selectorCenterY - (mPrefLineSize) < remainder) {
+				selectorCenterY = selectorCenterY + mPrefLineSize;
+				scrollback += mPrefLineSize;
 			}
 			calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		}
@@ -4492,8 +3746,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		if(selectedSelector.column < 0) {
 			selectedSelector.column = 0;
 		} else {
-			selectorCenterX -= one_char_is_this_wide;
-			widgetY -= one_char_is_this_wide;
+			selectorCenterX -= mOneCharWidth;
+			widgetY -= mOneCharWidth;
 			calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		}
 		this.invalidate();
@@ -4506,7 +3760,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	private void doScrollRight(boolean repeat) {
 		selectedSelector.column += 1;
-		selectorCenterX += one_char_is_this_wide;
+		selectorCenterX += mOneCharWidth;
 		calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		this.invalidate();
 		if(repeat) {
@@ -4517,13 +3771,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public boolean isTextSelectionEnabled() {
-		return textSelectionEnabled;
+		return mTextSelectionEnabled;
 	}
 
 
 
 	public void setTextSelectionEnabled(boolean textSelectionEnabled) {
-		this.textSelectionEnabled = textSelectionEnabled;
+		this.mTextSelectionEnabled = textSelectionEnabled;
 		//Log.e("sfdsf","setting text selection enabled="+textSelectionEnabled);
 	}
 	
@@ -4537,74 +3791,69 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	public void jumpToStart() {
 		scrollback = SCROLL_MIN;
-		fling_velocity=0;
+		mFlingVelocity=0;
 		this.invalidate();
 	}
 
-	private int scrollRepeatRateStep = 1;
-	private int scrollRepeatRateInitial = 300;
-	private int scrollRepeatRate = scrollRepeatRateInitial;
-	private int scrollRepeatRateMin = 60;
-	
-	public int gravity = Gravity.LEFT;
+
 
 	
 	public void populateMenu(Menu menu) {
-		if(L == null) return;
-		L.getGlobal("debug");
-		L.getField(-1, "traceback");
-		L.remove(-2);
+		if(mL == null) return;
+		mL.getGlobal("debug");
+		mL.getField(-1, "traceback");
+		mL.remove(-2);
 		
-		L.getGlobal("PopulateMenu");
-		if(L.getLuaObject(-1).isFunction()) {
-			L.pushJavaObject(menu);
-			int ret = L.pcall(1, 1, -3);
+		mL.getGlobal("PopulateMenu");
+		if(mL.getLuaObject(-1).isFunction()) {
+			mL.pushJavaObject(menu);
+			int ret = mL.pcall(1, 1, -3);
 			if(ret != 0) {
-				displayLuaError("Error in PopulateMenu:"+L.getLuaObject(-1).getString());
+				displayLuaError("Error in PopulateMenu:"+mL.getLuaObject(-1).getString());
 			} else {
-				L.pop(2);
+				mL.pop(2);
 			}
 		} else {
-			L.pop(2);
+			mL.pop(2);
 		}
 	}
 
 	public void setBuffer(TextTree buffer) {
 		// TODO Auto-generated method stub
-		this.the_tree = buffer;
+		this.mBuffer = buffer;
 		
 	}
 
 	public boolean checkSupports(String function) {
-		if(L != null) {
-			L.getGlobal(function);
+		if(mL != null) {
+			mL.getGlobal(function);
 			
-			boolean ret = L.isFunction(-1);
-			L.pop(1);
+			boolean ret = mL.isFunction(-1);
+			mL.pop(1);
 			return ret;
 		}
 		return false;
 	}
 
 	public boolean isCenterJustify() {
-		return centerJustify;
+		return mCenterJustify;
 	}
 
 	public void setCenterJustify(boolean centerJustify) {
-		this.centerJustify = centerJustify;
+		this.mCenterJustify = centerJustify;
 	}
 	
 	public int getLineSize() {
-		return PREF_LINESIZE;
+		return mPrefLineSize;
 	}
 	
 	public void fitFontSize(int chars) {
 		//Log.e("LUA","SETTING FITCHARS:"+chars);
-		fitChars = chars;
+		mFitChars = chars;
 	}
 		
 	public void doFitFontSize(int width) {
-		if(fitChars < 0) return;
+		if(mFitChars < 0) return;
 		//Log.e("LUA","DOING THE FIT ROUTINE: "+mWidth+" chars:"+fitChars + " for window: "+this.getName());
 		int windowWidth = width;
 		//int windowWidth = service.getResources().getDisplayMetrics().widthPixels;
@@ -4622,7 +3871,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		float charWidth = p.measureText("A");
 		float charsPerLine = windowWidth / charWidth;
 		
-		if(charsPerLine < fitChars) {
+		if(charsPerLine < mFitChars) {
 			//for QVGA screens, this test will always fail on the first step.
 			done = true;
 		} else {
@@ -4633,7 +3882,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		while(!done) {
 			charWidth = p.measureText("A");
 			charsPerLine = windowWidth / charWidth;
-			if(charsPerLine < fitChars) {
+			if(charsPerLine < mFitChars) {
 				done = true;
 				fontSize -= delta; //return to the previous font size that produced > 80 characters.
 			} else {
@@ -4642,66 +3891,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 		}
 		
-		PREF_FONTSIZE = (int) fontSize;
-		PREF_LINESIZE = PREF_FONTSIZE + PREF_LINEEXTRA;
+		mPrefFontSize = (int) fontSize;
+		mPrefLineSize = mPrefFontSize + mPrefLineExtra;
 		calculateCharacterFeatures(mWidth,mHeight);
 		//return (int)fontSize;
 	}
-	
-	public void setHasText(boolean has) {
-		boolean hasText = has;
-	}
-//	private class ThreadUpdater extends Thread {
-//		public final static int MESSAGE_ADDTEXT = 1;
-//		public final static int MESSAGE_QUIT = 2;
-//		TextTree buffer = null;
-//		Object synch = null;
-//		Handler mainHandler = null;
-//		public Handler handler = null;
-//		public ThreadUpdater(TextTree buffer,Handler h,Object synch) {
-//			this.buffer = buffer;
-//			this.mainHandler = h;
-//			this.synch = synch;
-//		}
-//		
-//		@Override
-//		public void run() {
-//			Looper.prepare();
-//			
-//			this.handler = new Handler() {
-//				public void handleMessage(Message msg) {
-//					switch(msg.what) {
-//					case MESSAGE_ADDTEXT:
-//						synchronized(synch) {
-//							//try {
-//								boolean jumptoend = false;
-//								if(msg.arg1 == 1) jumptoend = true;
-//								Window.this.addBytesImpl((byte[])msg.obj,jumptoend);
-//								//buffer.addBytesImpl((byte[])msg.obj);
-//							//} catch (UnsupportedEncodingException e) {
-//								// TODO Auto-generated catch block
-//							//	e.printStackTrace();
-//							//}
-//							synch.notify();
-//						}
-//						break;
-//					case MESSAGE_QUIT:
-//						this.getLooper().quit();
-//						break;
-//					}
-//				}
-//			};
-//			
-//			Looper.loop();
-//		}
-		
-		
-	//}
-	
-	//private ThreadUpdater updateHandler = null;
-	//private Object updateSynch = new Object();
+
 	public TextTree getBuffer() {
-		return the_tree;
+		return mBuffer;
 	}
 	
 	public double measure(String str) {
