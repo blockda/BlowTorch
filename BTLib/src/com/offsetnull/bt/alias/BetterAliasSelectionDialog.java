@@ -111,7 +111,7 @@ public class BetterAliasSelectionDialog extends PluginFilterSelectionDialog impl
 		//HashMap<String,TriggerData> list = null;
 		//pull the list down, clear out the items list, populate it, and call the superclass to reload the table.
 		try {
-			if(currentPlugin.equals(MAIN_SETTINGS)) {
+			if (currentPlugin.equals(MAIN_SETTINGS)) {
 				dataMap = (HashMap<String, AliasData>) service.getAliases();
 			} else {
 				dataMap = (HashMap<String, AliasData>) service.getPluginAliases(currentPlugin);
