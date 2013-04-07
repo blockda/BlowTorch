@@ -88,6 +88,23 @@ public final class TC {
 	public static final byte BELL = (byte) 0x07;
 	/** The Suppress goahead byte. */
 	public static final byte SUPPRESS_GOAHEAD = (byte) 0x03;
+	/** The minimum length for a gmcp telnet subnegotiation. */
+	private static final int GMCP_SUB_MIN_LENGTH = 5;
+	/** The position of the start of meat of a gmcp telnet subnegotiation. */
+	private static final int GMCP_SUB_DATA_POSITION = 3;
+	/** The amount of bytes that are intrinsic to a telnet subnegotiation. */
+	private static final int TELNET_SUB_INTRINSIC_BYTES = 4;
+	/** The minimum amount of bytes required for a TERMTYPE subnegotiation. */
+	private static final int TERMTYPE_SUB_MIN_LENGTH = 6;
+	/** The first data byte of a NAWS subnegotiation. */
+	private static final int NAWS_POS_1 = 3;
+	/** The second data byte of a NAWS subnegotiation. */
+	private static final int NAWS_POS_2 = 4;
+	/** The third data byte of a NAWS subnegotiation. */
+	private static final int NAWS_POS_3 = 5;
+	/** The fourth data byte of a NAWS subnegotiation. */
+	private static final int NAWS_POS_4 = 6;
+
 	
 	/** Private constructor. */
 	private TC() {
@@ -161,7 +178,7 @@ public final class TC {
 	public static String decodeSUB(final byte[] in) {
 		String ret = "";
 		
-		int datalen = in.length - 4; //SB ACTION DATA IAC SB
+		int datalen = in.length - TELNET_SUB_INTRINSIC_BYTES; //SB ACTION DATA IAC SB
 		
 		if (datalen > 0) {
 			ret += "IAC SB ";
@@ -169,11 +186,11 @@ public final class TC {
 			switch(in[2]) {
 			case TERM:
 				ByteBuffer tmp = ByteBuffer.wrap(in);
-				if (in.length > 6) {
-					byte[] type = new byte[in.length - 6];
+				if (in.length > TERMTYPE_SUB_MIN_LENGTH) {
+					byte[] type = new byte[in.length - TERMTYPE_SUB_MIN_LENGTH];
 					tmp.rewind();
-					tmp.position(4);
-					tmp.get(type, 0, in.length - 6);
+					tmp.position(TELNET_SUB_INTRINSIC_BYTES);
+					tmp.get(type, 0, in.length - TERMTYPE_SUB_MIN_LENGTH);
 					ret += "IS " + new String(type) + " IAC SE";
 					return ret;
 				} else {
@@ -182,26 +199,25 @@ public final class TC {
 				}
 			case GMCP:
 				ByteBuffer t = ByteBuffer.wrap(in);
-				if(in.length > 5) { //has to be if valid gmcp message IAC SB GMCP <lotsofdata> IAC SE
-					byte[] data = new byte[in.length -5];
+				if (in.length > GMCP_SUB_MIN_LENGTH) { //has to be if valid gmcp message IAC SB GMCP <lotsofdata> IAC SE
+					byte[] data = new byte[in.length - GMCP_SUB_MIN_LENGTH];
 					t.rewind();
-					t.position(3);
-					t.get(data,0,in.length - 5);
+					t.position(GMCP_SUB_DATA_POSITION);
+					t.get(data, 0, in.length - GMCP_SUB_MIN_LENGTH);
 					try {
 						ret += new String(data, "UTF-8");
 						ret += " IAC SE";
 						return ret;
 					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
 				break;
 			case NAWS:
-				ret +=  Integer.toString(0x0000FF&in[3]) + " " + 
-						    Integer.toString(0x000000FF&in[4]) + " " +
-						   Integer.toString(0x000000FF&in[5]) + " " +
-						  Integer.toString(0x000000FF&in[6]) + " IAC SE";
+				ret +=  Integer.toString(LSB_MASK & in[NAWS_POS_1]) + " "
+						    + Integer.toString(LSB_MASK & in[NAWS_POS_2]) + " " 
+						    + Integer.toString(LSB_MASK & in[NAWS_POS_3]) + " " 
+						    + Integer.toString(LSB_MASK & in[NAWS_POS_4]) + " IAC SE";
 				return ret;
 							
 			default:
@@ -224,22 +240,27 @@ public final class TC {
 		return ret;
 	}
 	
-	public static String decodeIAC(byte[] in) {
+	/** Decodes an telnet negotiation (not subnegotiation).
+	 * 
+	 * @param in The telnet negotiation to decode.
+	 * @return The decoded telnet negotiation.
+	 */
+	public static String decodeIAC(final byte[] in) {
 		String ret = "";
-		for(int i=0;i<in.length;i++) {
-			if(in[i] == IAC && in[i+1] == SB) {
+		for (int i = 0; i < in.length; i++) {
+			if (in[i] == IAC && in[i + 1] == SB) {
 				ByteBuffer b = ByteBuffer.wrap(in);
-				byte[] len = new byte[in.length-i];
+				byte[] len = new byte[in.length - i];
 				b.position(i);
-				b.get(len, 0, in.length-i);
+				b.get(len, 0, in.length - i);
 				ret += decodeSUB(len);
 				return ret;
 			} else {
-				ret += getByteName(in[i]) +" ";
+				ret += getByteName(in[i]) + " ";
 			}
 		}
 		
-		return ret.substring(0, ret.length()-1);
+		return ret.substring(0, ret.length() - 1);
 	}
 
 }

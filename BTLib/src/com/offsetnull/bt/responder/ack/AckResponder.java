@@ -96,7 +96,7 @@ public class AckResponder extends TriggerResponder implements Parcelable {
 					str = "Error in trigger("+((TriggerData)source).getName()+"): " + L.getLuaObject(-1).getString();
 				}
 				
-				dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.colorRed + str + Colorizer.colorWhite + "\n"));
+				dispatcher.sendMessage(dispatcher.obtainMessage(Connection.MESSAGE_PLUGINLUAERROR,"\n" + Colorizer.getRedColor() + str + Colorizer.getWhiteColor() + "\n"));
 				L.pop(1);
 			}
 			L.pop(1);

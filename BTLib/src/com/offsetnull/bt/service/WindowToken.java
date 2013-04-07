@@ -1,7 +1,9 @@
+/*
+ * Copyright (C) Dan Block 2013
+ */
 package com.offsetnull.bt.service;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -18,277 +20,157 @@ import com.offsetnull.bt.window.TextTree;
 import android.content.res.Configuration;
 import android.os.Parcel;
 import android.os.Parcelable;
-//import android.util.Log;
-import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 
+/** The serializable data that constitutes a foreground miniwindow. */
 public class WindowToken implements Parcelable {
-	HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup> layouts;
-	
-	private String name;
-	//private int x;
-	//private int y;
-	//private int width;
-	//private int height;
-	private boolean bufferText = false;
-	private int id;
-	private TextTree buffer;
-	private String displayHost;
-	//private String owner;
-	//SettingsChangedListener mSettingsChangedListener = null;
-	
-	private SettingsGroup settings = null;
-	/*public enum TYPE {
-		NORMAL,
-		SCRIPT
-	}*/
+	/** Default hyperlink color. */
+	public static final int DEFAULT_HYPERLINK_COLOR = 0xFF0000FF;
+	/** Default hyperlink mode. */
+	public static final int DEFAULT_HYPERLINK_MODE = 3;
+	/** Default colorizing mode. */
+	public static final int DEFAULT_COLOR_MODE = 0;
+	/** Default font size. */
+	public static final int DEFAULT_FONT_SIZE = 18;
+	/** Default line spacing extra size. */
+	public static final int DEFAULT_LINE_EXTRA = 3;
+	/** Default buffer size. */
+	public static final int DEFAULT_BUFFER_SIZE = 300;
+	/** Default font path. */
+	public static final String DEFAULT_FONT_PATH = "monospace";
+	/** Required field for the parcelable interface. */
+	public static final Parcelable.Creator<WindowToken> CREATOR = new Parcelable.Creator<WindowToken>() {
+
+		public WindowToken createFromParcel(final Parcel arg0) {
+			return new WindowToken(arg0);
+		}
+
+		public WindowToken[] newArray(final int arg0) {
+			return new WindowToken[arg0];
+		}
+	};
+	/** Enumeration containing the possible settings keys for a window. */
 	public enum OPTION_KEY {
+		/** Hyperlinking on or off. */
 		hyperlinks_enabled,
+		/** Hyperlink style (colorize, no colorize, only colorize if bland). */
 		hyperlink_mode,
+		/** Color to make hyperlinks. */
 		hyperlink_color,
+		/** Word wrapping on or off. */
 		word_wrap,
+		/** Color mode (see color debug option). */
 		color_option,
+		/** Font size option. */
 		font_size,
+		/** Line extra option. */
 		line_extra,
+		/** Buffer size. */
 		buffer_size,
+		/** Path to the font to use. */
 		font_path
 	}
-	//private TYPE type = TYPE.NORMAL;
+	/** Hyperlink decoration off. */
+	private static final int HYPERLINK_OFF = 0;
+	/** Hyperlink highlight. */
+	private static final int HYPERLINK_HIGHLIGHT = 1;
+	/** Hyperlink colorize. */
+	private static final int HYPERLINK_HIGHLIGHT_COLOR = 2;
+	/** Hyperlink colorize if bland. */
+	private static final int HYPERLINK_HIGHLIGHT_IF_BLAND = 3;
+	/** Hyperlink background colorize. */
+	private static final int HYPERLINK_BACKGROUND = 4;
+	/** Small layout int for parcel indicator. */
+	private static final int LAYOUT_SMALL = 0;
+	/** Normal layout int for parcel indicator. */
+	private static final int LAYOUT_NORMAL = 1;
+	/** Large layout int for parcel indicator. */
+	private static final int LAYOUT_LARGE = 2;
+	/** XLarge layout int for parcel indicator. */
+	private static final int LAYOUT_XLARGE = 3;
 	
-	private String scriptName;
-	private String pluginName;
+	/** The layout map for this window, maps layout type to the layoutgroup object. */
+	private HashMap<LayoutGroup.LAYOUT_TYPE, LayoutGroup> mLayouts;
+	/** The name of this window. */
+	private String mName;
+	/** Weather or not to buffer incoming text. */
+	private boolean mBufferText = false;
+	/** The id of this window. */
+	private int mId;
+	/** The text buffer for this window. */
+	private TextTree mBuffer;
+	/** The connection display name that owns this window. */
+	private String mDisplayHost;
+	/** The settings for this window. */
+	private SettingsGroup mSettings = null;
+	/** The name of the script to execute when this window is initialized. */
+	private String mScriptName;
+	/** The name of the plugin that owns this window. */
+	private String mPluginName;
 	
+	/** Generic constructor. */
 	public WindowToken() {
-		name = "";
-		displayHost = "";
-		//type = TYPE.NORMAL;
-		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
+		mName = "";
+		mDisplayHost = "";
+		mLayouts = new HashMap<LayoutGroup.LAYOUT_TYPE, LayoutGroup>(0);
 		initSettings();
 	}
 	
-	/*public WindowToken(String name,int x,int y,int width,int height) {
-		type = TYPE.NORMAL;
-		this.name = name;
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
-		this.scriptName = null;
-		this.pluginName = null;
-		buffer = new TextTree();
-		//this.owner = owner;
-		//portraitParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-		//landscapeParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-		layouts = new ArrayList<LayoutGroup>();
-	}*/
-	
-	public WindowToken(String name,String scriptName,String pluginName,String displayHost) {
+	/** A more functional constructor.
+	 * 
+	 * @param name The name of this window.
+	 * @param scriptName The script body to execute (can be null).
+	 * @param pluginName The plugin name that owns this window.
+	 * @param displayHost The display name of the connection that owns this window.
+	 */
+	public WindowToken(final String name, final String scriptName, final String pluginName, final String displayHost) {
 		//type = TYPE.SCRIPT;
-		this.name = name;
-		this.displayHost = displayHost;
+		this.mName = name;
+		this.mDisplayHost = displayHost;
 
-		this.scriptName = scriptName;
-		this.pluginName = pluginName;
-		//this.owner = owner;
-		buffer = new TextTree();
-		//portraitParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-		//landscapeParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT,RelativeLayout.LayoutParams.FILL_PARENT);
-		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>(4);
+		this.mScriptName = scriptName;
+		this.mPluginName = pluginName;
+		mBuffer = new TextTree();
+		mLayouts = new HashMap<LayoutGroup.LAYOUT_TYPE, LayoutGroup>(0);
 		
 		initSettings();
-		//setSettings(new SettingsGroup());
-		
-		
 	}
 	
-	private void initSettings() {
-		SettingsGroup window = new SettingsGroup();
-		window.setTitle("Window");
-		window.setDescription("Options involved with the display of text or interaction with the window.");
-		window.setKey("window_group");
-		
-		SettingsGroup hyperlinks = new SettingsGroup();
-		hyperlinks.setTitle("Hyperlink Settings");
-		hyperlinks.setDescription("Options for highlighting web page URLs.");
-		hyperlinks.setKey("hyperlinks_options");
-		
-		BooleanOption hyperlinks_enabled = new BooleanOption();
-		hyperlinks_enabled.setTitle("Enable Hyperlinks?");
-		hyperlinks_enabled.setDescription("Make text that starts with http:// or www. a clickable link.");
-		hyperlinks_enabled.setKey("hyperlinks_enabled");
-		hyperlinks_enabled.setValue(true);
-		hyperlinks.addOption(hyperlinks_enabled);
-		
-		ListOption hyperlink_mode = new ListOption();
-		hyperlink_mode.setTitle("Hyperlink Mode");
-		hyperlink_mode.setDescription("How hyperlinks are presented.");
-		hyperlink_mode.setKey("hyperlink_mode");
-		hyperlink_mode.addItem("None");
-		hyperlink_mode.addItem("Underline");
-		hyperlink_mode.addItem("Underline with specified Color");
-		hyperlink_mode.addItem("Underline and Colorize, only if no ANSI color is specified");
-		hyperlink_mode.addItem("Background highlight with specified color");
-		hyperlink_mode.setValue(new Integer(3));
-		hyperlinks.addOption(hyperlink_mode);
-		
-		ColorOption hyperlink_color = new ColorOption();
-		hyperlink_color.setTitle("Hyperlink Color");
-		hyperlink_color.setDescription("The color the hyperlink will be colorized with.");
-		hyperlink_color.setKey("hyperlink_color");
-		hyperlink_color.setValue(new Integer(0xFF0000FF));
-		hyperlinks.addOption(hyperlink_color);
-		
-		window.addOption(hyperlinks);
-		
-		BooleanOption word_wrap = new BooleanOption();
-		word_wrap.setTitle("Word Wrap?");
-		word_wrap.setDescription("Broken text will be wrapped at the nearest whitespace.");
-		word_wrap.setKey("word_wrap");
-		word_wrap.setValue(true);
-		window.addOption(word_wrap);
-		
-		ListOption color_option = new ListOption();
-		color_option.setTitle("ANSI Color");
-		color_option.setDescription("Options for handling or disabling ANSI Color");
-		color_option.setKey("color_option");
-		color_option.setValue(0);
-		color_option.addItem("Enabled");
-		color_option.addItem("Disabled");
-		color_option.addItem("Show and colorize codes");
-		color_option.addItem("Show codes, do not colorize");
-		window.addOption(color_option);
-		
-		IntegerOption font_size = new IntegerOption();
-		font_size.setTitle("Font Size");
-		font_size.setDescription("The height of a drawn character.");
-		font_size.setKey("font_size");
-		font_size.setValue(13);
-		window.addOption(font_size);
-		
-		IntegerOption line_extra = new IntegerOption();
-		line_extra.setTitle("Line Spacing");
-		line_extra.setDescription("The extra space in between lines (in pixels)");
-		line_extra.setKey("line_extra");
-		line_extra.setValue(2);
-		window.addOption(line_extra);
-		
-		IntegerOption buffer_size = new IntegerOption();
-		buffer_size.setTitle("Text Buffer Size");
-		buffer_size.setDescription("The number of lines kept by the window for scrollback.");
-		buffer_size.setKey("buffer_size");
-		buffer_size.setValue(300);
-		window.addOption(buffer_size);
-		
-		FileOption font_path = new FileOption();
-		font_path.setTitle("Font");
-		font_path.setDescription("The font used by the window to render text.");
-		font_path.setKey("font_path");
-		font_path.setValue("monospace");
-		font_path.addItem("monospace");
-		font_path.addItem("sans serrif");
-		font_path.addItem("default");
-		font_path.addPath("/system/fonts/");
-		font_path.addPath("BlowTorch/");
-		font_path.addExtension(".ttf");
-		window.addOption(font_path);
-		
-		setSettings(window);
-	}
-	
-	public WindowToken copy() {
-		WindowToken w = null;
-		//if(this.scriptName == null) {
-		//	w = new WindowToken(this.name,this.x,this.y,this.width,this.height);
-		//} else {
-		w = new WindowToken(this.name,this.scriptName,this.pluginName,this.displayHost);
-		//}
-		w.setSettings(this.getSettings());
-		this.setSettings(null);
-		this.initSettings();
-		w.id = this.id;
-		
-		int numgroups = this.layouts.size();
-		for(LayoutGroup g : this.layouts.values()) {
-			//LayoutGroup g = layouts.get(i);
-			LayoutGroup newg = new LayoutGroup();
-			newg.type = g.type;
-			RelativeLayout.LayoutParams pparams = g.getPortraitParams();
-			RelativeLayout.LayoutParams newportraitparams = new RelativeLayout.LayoutParams(pparams.width,pparams.height);
-			newportraitparams.setMargins(pparams.leftMargin, pparams.topMargin, pparams.rightMargin, pparams.bottomMargin);
-			int[] rules = pparams.getRules();
-			for(int j=0;j<rules.length;j++) {
-				if(rules[j] != 0) {
-					newportraitparams.addRule(j,rules[j]);
-				}
-			}
-			
-			RelativeLayout.LayoutParams lparams = g.getLandscapeParams();
-			RelativeLayout.LayoutParams newlandscapeparams = new RelativeLayout.LayoutParams(lparams.width,lparams.height);
-			newportraitparams.setMargins(lparams.leftMargin, lparams.topMargin, lparams.rightMargin, lparams.bottomMargin);
-			rules = null;
-			rules = lparams.getRules();
-			for(int j=0;j<rules.length;j++) {
-				if(rules[j] != 0) {
-					newlandscapeparams.addRule(j,rules[j]);
-				}
-			}
-			
-			newg.setLandscapeParams(newlandscapeparams);
-			newg.setPortraitParams(newportraitparams);
-			
-			w.layouts.put(newg.type,newg);
-			//pparams = g.getPortraitParams();
-			//newg.setPortraitParams(g.clone());
-		}
-		
-		
-		/*w.landscapeParams = new RelativeLayout.LayoutParams(this.landscapeParams);
-		int[] rules = this.landscapeParams.getRules();
-		for(int i=0;i<rules.length;i++) {
-			if(rules[i] != 0) {
-				w.landscapeParams.addRule(i,rules[i]);
-			}
-		}
-		w.portraitParams = new RelativeLayout.LayoutParams(this.portraitParams);
-		rules = this.portraitParams.getRules();
-		for(int i=0;i<rules.length;i++) {
-			if(rules[i] != 0) {
-				w.portraitParams.addRule(i,rules[i]);
-			}
-		}*/
-		return w;
-	}
-	
-
-	public WindowToken(Parcel p) {
+	/** Parcellable constructor. Constructs from a parcel.
+	 * 
+	 * @param p The incoming parcel object.
+	 */
+	public WindowToken(final Parcel p) {
 		//owner = p.readString();
-		name = p.readString();
+		mName = p.readString();
 		//if(name.equals("chats")) {
 		//	long ssfd = System.currentTimeMillis();
 		//	ssfd = ssfd +10;
 		//}
-		displayHost = p.readString();
-		id = p.readInt();
+		mDisplayHost = p.readString();
+		mId = p.readInt();
 		//Log.e("TOKEN","PARCEL: READING WINDOW WITH ID:" + id);
-		layouts = new HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup>();
+		mLayouts = new HashMap<LayoutGroup.LAYOUT_TYPE, LayoutGroup>();
 		//layout paramters.
 		int numLayoutGroups = p.readInt();
-		for(int i=0;i<numLayoutGroups;i++) {
+		for (int i = 0; i < numLayoutGroups; i++) {
 			LayoutGroup g = new LayoutGroup();
 			int layoutType = p.readInt();
 			switch(layoutType) {
-			case 0:
-				g.type = LAYOUT_TYPE.small;
+			case LAYOUT_SMALL:
+				g.setType(LAYOUT_TYPE.small);
 				break;
-			case 1:
-				g.type = LAYOUT_TYPE.normal;
+			case LAYOUT_NORMAL:
+				g.setType(LAYOUT_TYPE.normal);
 				break;
-			case 2:
-				g.type = LAYOUT_TYPE.large;
+			case LAYOUT_LARGE:
+				g.setType(LAYOUT_TYPE.large);
 				break;
-			case 3:
-				g.type = LAYOUT_TYPE.xlarge;
+			case LAYOUT_XLARGE:
+				g.setType(LAYOUT_TYPE.xlarge);
+				break;
+			default:
 				break;
 			}
 			
@@ -305,9 +187,9 @@ public class WindowToken implements Parcelable {
 			portraitParams.setMargins(pMarginLeft, pMarginTop, pMarginRight, pMarginBottom);
 			//int numrules = p.readInt();
 			boolean done = false;
-			while(!done) {
+			while (!done) {
 				int rule = p.readInt();
-				if(rule > -1) {
+				if (rule > -1) {
 					int option = p.readInt();
 					portraitParams.addRule(rule, option);
 				} else {
@@ -327,9 +209,9 @@ public class WindowToken implements Parcelable {
 			landscapeParams.width = lWidth;
 			landscapeParams.setMargins(lMarginLeft, lMarginTop, lMarginRight, lMarginBottom);
 			done = false;
-			while(!done) {
+			while (!done) {
 				int rule = p.readInt();
-				if(rule > -1) {
+				if (rule > -1) {
 					int option = p.readInt();
 					landscapeParams.addRule(rule, option);
 				} else {
@@ -337,85 +219,242 @@ public class WindowToken implements Parcelable {
 				}
 			}
 			
-			layouts.put(g.type, g);
+			mLayouts.put(g.getType(), g);
 		}
-		setBufferText((p.readInt()==0) ? false : true);
+		setBufferText((p.readInt() == 0) ? false : true);
 		int script = p.readInt();
-		if(script != 1) {
-			scriptName = null;
-			pluginName = null;
+		if (script != 1) {
+			mScriptName = null;
+			mPluginName = null;
 		} else {
-			scriptName = p.readString();
-			pluginName = p.readString();
+			mScriptName = p.readString();
+			mPluginName = p.readString();
 		}
 		byte[] buf = p.createByteArray();
-		buffer = new TextTree();
+		mBuffer = new TextTree();
 		//type = TYPE.SCRIPT;
 		
 		try {
-			buffer.addBytesImpl(buf);
+			mBuffer.addBytesImpl(buf);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		settings = p.readParcelable(com.offsetnull.bt.service.plugin.settings.SettingsGroup.class.getClassLoader());
+		mSettings = p.readParcelable(com.offsetnull.bt.service.plugin.settings.SettingsGroup.class.getClassLoader());
 		
 	}
-
-	/*public void setScriptPath(String scriptPath) {
-		this.scriptPath = scriptPath;
-	}
-
-	public String getScriptPath() {
-		return scriptPath;
-	}*/
-
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return name;
+	
+	/** The real initialization routine. */
+	private void initSettings() {
+		SettingsGroup window = new SettingsGroup();
+		window.setTitle("Window");
+		window.setDescription("Options involved with the display of text or interaction with the window.");
+		window.setKey("window_group");
+		
+		SettingsGroup hyperlinks = new SettingsGroup();
+		hyperlinks.setTitle("Hyperlink Settings");
+		hyperlinks.setDescription("Options for highlighting web page URLs.");
+		hyperlinks.setKey("hyperlinks_options");
+		
+		BooleanOption hyperlinksEnabled = new BooleanOption();
+		hyperlinksEnabled.setTitle("Enable Hyperlinks?");
+		hyperlinksEnabled.setDescription("Make text that starts with http:// or www. a clickable link.");
+		hyperlinksEnabled.setKey("hyperlinks_enabled");
+		hyperlinksEnabled.setValue(true);
+		hyperlinks.addOption(hyperlinksEnabled);
+		
+		ListOption hyperlinkMode = new ListOption();
+		hyperlinkMode.setTitle("Hyperlink Mode");
+		hyperlinkMode.setDescription("How hyperlinks are presented.");
+		hyperlinkMode.setKey("hyperlink_mode");
+		hyperlinkMode.addItem("None");
+		hyperlinkMode.addItem("Underline");
+		hyperlinkMode.addItem("Underline with specified Color");
+		hyperlinkMode.addItem("Underline and Colorize, only if no ANSI color is specified");
+		hyperlinkMode.addItem("Background highlight with specified color");
+		hyperlinkMode.setValue(Integer.valueOf(DEFAULT_HYPERLINK_MODE));
+		hyperlinks.addOption(hyperlinkMode);
+		
+		ColorOption hyperlinkColor = new ColorOption();
+		hyperlinkColor.setTitle("Hyperlink Color");
+		hyperlinkColor.setDescription("The color the hyperlink will be colorized with.");
+		hyperlinkColor.setKey("hyperlink_color");
+		hyperlinkColor.setValue(Integer.valueOf(DEFAULT_HYPERLINK_COLOR));
+		hyperlinks.addOption(hyperlinkColor);
+		
+		window.addOption(hyperlinks);
+		
+		BooleanOption wordWrap = new BooleanOption();
+		wordWrap.setTitle("Word Wrap?");
+		wordWrap.setDescription("Broken text will be wrapped at the nearest whitespace.");
+		wordWrap.setKey("word_wrap");
+		wordWrap.setValue(true);
+		window.addOption(wordWrap);
+		
+		ListOption colorOption = new ListOption();
+		colorOption.setTitle("ANSI Color");
+		colorOption.setDescription("Options for handling or disabling ANSI Color");
+		colorOption.setKey("color_option");
+		colorOption.setValue(0);
+		colorOption.addItem("Enabled");
+		colorOption.addItem("Disabled");
+		colorOption.addItem("Show and colorize codes");
+		colorOption.addItem("Show codes, do not colorize");
+		window.addOption(colorOption);
+		
+		IntegerOption fontSize = new IntegerOption();
+		fontSize.setTitle("Font Size");
+		fontSize.setDescription("The height of a drawn character.");
+		fontSize.setKey("font_size");
+		fontSize.setValue(DEFAULT_FONT_SIZE);
+		window.addOption(fontSize);
+		
+		IntegerOption lineExtra = new IntegerOption();
+		lineExtra.setTitle("Line Spacing");
+		lineExtra.setDescription("The extra space in between lines (in pixels)");
+		lineExtra.setKey("line_extra");
+		lineExtra.setValue(2);
+		window.addOption(lineExtra);
+		
+		IntegerOption bufferSize = new IntegerOption();
+		bufferSize.setTitle("Text Buffer Size");
+		bufferSize.setDescription("The number of lines kept by the window for scrollback.");
+		bufferSize.setKey("buffer_size");
+		bufferSize.setValue(DEFAULT_BUFFER_SIZE);
+		window.addOption(bufferSize);
+		
+		FileOption fontPath = new FileOption();
+		fontPath.setTitle("Font");
+		fontPath.setDescription("The font used by the window to render text.");
+		fontPath.setKey("font_path");
+		fontPath.setValue("monospace");
+		fontPath.addItem("monospace");
+		fontPath.addItem("sans serrif");
+		fontPath.addItem("default");
+		fontPath.addPath("/system/fonts/");
+		fontPath.addPath("BlowTorch/");
+		fontPath.addExtension(".ttf");
+		window.addOption(fontPath);
+		
+		setSettings(window);
 	}
 	
-	public String getDisplayHost() {
-		return displayHost;
+	/** Shallow copy function.
+	 * 
+	 * @return A new WindowToken with the exact settings as this one.
+	 */
+	public final WindowToken copy() {
+		WindowToken w = null;
+		//if(this.scriptName == null) {
+		//	w = new WindowToken(this.name,this.x,this.y,this.width,this.height);
+		//} else {
+		w = new WindowToken(this.mName, this.mScriptName, this.mPluginName, this.mDisplayHost);
+		//}
+		w.setSettings(this.getSettings());
+		this.setSettings(null);
+		this.initSettings();
+		w.mId = this.mId;
+		
+		for (LayoutGroup g : this.mLayouts.values()) {
+			//LayoutGroup g = layouts.get(i);
+			LayoutGroup newg = new LayoutGroup();
+			newg.setType(g.getType());
+			RelativeLayout.LayoutParams pparams = g.getPortraitParams();
+			RelativeLayout.LayoutParams newportraitparams = new RelativeLayout.LayoutParams(pparams.width, pparams.height);
+			newportraitparams.setMargins(pparams.leftMargin, pparams.topMargin, pparams.rightMargin, pparams.bottomMargin);
+			int[] rules = pparams.getRules();
+			for (int j = 0; j < rules.length; j++) {
+				if (rules[j] != 0) {
+					newportraitparams.addRule(j, rules[j]);
+				}
+			}
+			
+			RelativeLayout.LayoutParams lparams = g.getLandscapeParams();
+			RelativeLayout.LayoutParams newlandscapeparams = new RelativeLayout.LayoutParams(lparams.width, lparams.height);
+			newportraitparams.setMargins(lparams.leftMargin, lparams.topMargin, lparams.rightMargin, lparams.bottomMargin);
+			rules = null;
+			rules = lparams.getRules();
+			for (int j = 0; j < rules.length; j++) {
+				if (rules[j] != 0) {
+					newlandscapeparams.addRule(j, rules[j]);
+				}
+			}
+			
+			newg.setLandscapeParams(newlandscapeparams);
+			newg.setPortraitParams(newportraitparams);
+			
+			w.mLayouts.put(newg.getType(), newg);
+		}
+
+		return w;
 	}
 	
-	public void setDisplayHost(String str) {
-		displayHost = str;
+	/** Setter for mName.
+	 * 
+	 * @param name The name to use.
+	 */
+	public final void setName(final String name) {
+		this.mName = name;
 	}
 
-	public int describeContents() {
-		// TODO Auto-generated method stub
+	/** Getter for mName.
+	 * 
+	 * @return mName
+	 */
+	public final String getName() {
+		return mName;
+	}
+	
+	/** Getter for mDisplayHost.
+	 * 
+	 * @return mDisplayHost
+	 */
+	public final String getDisplayHost() {
+		return mDisplayHost;
+	}
+	
+	/** Setter for mDisplayHost.
+	 * 
+	 * @param str The display host name to use.
+	 */
+	public final void setDisplayHost(final String str) {
+		mDisplayHost = str;
+	}
+
+	/** Required method for the Parcellable interface. I think this needs to return a unique random int.
+	 * 
+	 * @return The integer description for the contents of this parcel.
+	 */
+	public final int describeContents() {
 		return 0;
 	}
 
-	public void writeToParcel(Parcel p, int arg1) {
-		//p.writeString(owner);
-		p.writeString(name);
-		p.writeString(displayHost);
-		//Log.e("TOKEN","PARCEL: WRITING WINDOW WITH ID:" + id);
-		p.writeInt(id);
-		Set<LayoutGroup.LAYOUT_TYPE> keySet = layouts.keySet();
+	/** Implementation of the Parcelable writeToParcel method.
+	 * 
+	 * @param p The parcel to write to.
+	 * @param arg1 The flags for the operation.
+	 */
+	public final void writeToParcel(final Parcel p, final int arg1) {
+		p.writeString(mName);
+		p.writeString(mDisplayHost);
+		p.writeInt(mId);
+		Set<LayoutGroup.LAYOUT_TYPE> keySet = mLayouts.keySet();
 		p.writeInt(keySet.size());
-		for(LayoutGroup g : layouts.values()) {
-			//LayoutGroup.LAYOUT_TYPE = keySet.
-			//LayoutGroup g = layouts.get(j);
-			switch(g.type) {
+		for (LayoutGroup g : mLayouts.values()) {
+			switch(g.getType()) {
 			case small:
-				p.writeInt(0);
+				p.writeInt(LAYOUT_SMALL);
 				break;
 			case normal:
-				p.writeInt(1);
+				p.writeInt(LAYOUT_NORMAL);
 				break;
 			case large:
-				p.writeInt(2);
+				p.writeInt(LAYOUT_LARGE);
 				break;
 			case xlarge:
-				p.writeInt(3);
+				p.writeInt(LAYOUT_XLARGE);
+				break;
+			default:
 				break;
 			}
 			
@@ -429,8 +468,8 @@ public class WindowToken implements Parcelable {
 			p.writeInt(portraitParams.bottomMargin);
 			
 			int[] rules = portraitParams.getRules();
-			for(int i=0;i<rules.length;i++) {
-				if(rules[i] != 0) {
+			for (int i = 0; i < rules.length; i++) {
+				if (rules[i] != 0) {
 					p.writeInt(i);
 					p.writeInt(rules[i]);
 				}
@@ -446,284 +485,324 @@ public class WindowToken implements Parcelable {
 			
 			rules = null;
 			rules = landscapeParams.getRules();
-			for(int i=0;i<rules.length;i++) {
-				if(rules[i] != 0) {
+			for (int i = 0; i < rules.length; i++) {
+				if (rules[i] != 0) {
 					p.writeInt(i);
 					p.writeInt(rules[i]);
 				}
 			}
 			p.writeInt(-1);
 		}
-		if(bufferText) {
+		if (mBufferText) {
 			p.writeInt(1);
 		} else {
 			p.writeInt(0);
 		}
-		if(scriptName != null) {
+		if (mScriptName != null) {
 			p.writeInt(1);
-			p.writeString(scriptName);
-			p.writeString(pluginName);
-			p.writeByteArray(buffer.dumpToBytes(true));
+			p.writeString(mScriptName);
+			p.writeString(mPluginName);
+			p.writeByteArray(mBuffer.dumpToBytes(true));
 		} else {
 			p.writeInt(0);
 			//Log.e("PARCEL","WINDOWTOKEN("+name+") DUMPING: " + buffer.getLines().size() + " lines.");
-			p.writeByteArray(buffer.dumpToBytes(true));
+			p.writeByteArray(mBuffer.dumpToBytes(true));
 		}
 		
-		p.writeParcelable(settings, arg1);
-		ListOption o = (ListOption) settings.findOptionByKey("color_option");
-		Log.e("WINDOW","WINDOWTOKEN PARCELING, "+ this.getName() + " color option value is: " + o.getValue().toString());
+		p.writeParcelable(mSettings, arg1);
 	}
-	public void setBuffer(TextTree buffer) {
-		this.buffer = buffer;
-	}
-
-	public TextTree getBuffer() {
-		return buffer;
-	}
-	
-	public void setBufferText(boolean bufferText) {
-		this.bufferText = bufferText;
+	/** Setter for mBuffer.
+	 * 
+	 * @param buffer The new buffer to use.
+	 */
+	public final void setBuffer(final TextTree buffer) {
+		this.mBuffer = buffer;
 	}
 
-	public boolean isBufferText() {
-		return bufferText;
-	}
-	public void setScriptName(String scriptName) {
-		this.scriptName = scriptName;
-	}
-
-	public String getScriptName() {
-		return scriptName;
-	}
-	public void setPluginName(String pluginName) {
-		this.pluginName = pluginName;
-	}
-
-	public String getPluginName() {
-		return pluginName;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public int getId() {
-		return id;
+	/** Getter for mBuffer.
+	 * 
+	 * @return mBuffer
+	 */
+	public final TextTree getBuffer() {
+		return mBuffer;
 	}
 	
-	public HashMap<LayoutGroup.LAYOUT_TYPE,LayoutGroup> getLayouts() {
-		return layouts;
+	/** Setter for mBufferText.
+	 * 
+	 * @param bufferText The new bufferText value.
+	 */
+	public final void setBufferText(final boolean bufferText) {
+		this.mBufferText = bufferText;
+	}
+
+	/** Getter for mBufferText.
+	 * 
+	 * @return mBufferText
+	 */
+	public final boolean isBufferText() {
+		return mBufferText;
 	}
 	
-	//public void setType(LayoutGrou)
-
-	public static final Parcelable.Creator<WindowToken> CREATOR = new Parcelable.Creator<WindowToken>() {
-
-		public WindowToken createFromParcel(Parcel arg0) {
-			return new WindowToken(arg0);
-		}
-
-		public WindowToken[] newArray(int arg0) {
-			return new WindowToken[arg0];
-		}
-	};
-
-	public static final int DEFAULT_HYPERLINK_COLOR = 0xFF0000FF;
-
-	public static final int DEFAULT_HYPERLINK_MODE = 3;
-
-	public static final int DEFAULT_COLOR_MODE = 0;
-
-	public static final int DEFAULT_FONT_SIZE = 18;
-
-	public static final int DEFAULT_LINE_EXTRA = 3;
-
-	public static final int DEFAULT_BUFFER_SIZE = 300;
-
-	public static final String DEFAULT_FONT_PATH = "monospace";
-
-	public void resetToDefaults() {
-		name = "";
-		id = 0;
-		bufferText = false;
-		layouts.clear();
+	/** Setter for mScriptName.
+	 * 
+	 * @param scriptName The new script name to execute on window initialization.
+	 */
+	public final void setScriptName(final String scriptName) {
+		this.mScriptName = scriptName;
 	}
 
-	public LayoutParams getLayout(int size, boolean landscape) {
+	/** Getter for mScriptName.
+	 * 
+	 * @return mScriptName
+	 */
+	public final String getScriptName() {
+		return mScriptName;
+	}
+	/** Setter for mPluginName.
+	 * 
+	 * @param pluginName The new plugin owner name to use.
+	 */
+	public final void setPluginName(final String pluginName) {
+		this.mPluginName = pluginName;
+	}
+
+	/** Getter for mPluginName.
+	 * 
+	 * @return mPluginName
+	 */
+	public final String getPluginName() {
+		return mPluginName;
+	}
+
+	/** Setter for mId.
+	 * 
+	 * @param id The new id value to use.
+	 */
+	public final void setId(final int id) {
+		this.mId = id;
+	}
+
+	/** Getter for mId.
+	 * 
+	 * @return mId
+	 */
+	public final int getId() {
+		return mId;
+	}
+	
+	/** Getter for mLayouts.
+	 * 
+	 * @return mLayouts
+	 */
+	public final HashMap<LayoutGroup.LAYOUT_TYPE, LayoutGroup> getLayouts() {
+		return mLayouts;
+	}
+	
+	/** Utility method to reset this window token to the default values. */
+	public final void resetToDefaults() {
+		mName = "";
+		mId = 0;
+		mBufferText = false;
+		mLayouts.clear();
+	}
+
+	/** Layout getter routine.
+	 * 
+	 * @param size The size value for the display.
+	 * @param landscape True for landscape, false for portrait.
+	 * @return The layout paramter object to be used for the current layout.
+	 */
+	public final LayoutParams getLayout(final int size, final boolean landscape) {
 		
 		switch(size) {
 		case Configuration.SCREENLAYOUT_SIZE_SMALL:
 			//tmp.setLayoutParams(w.getLayout(Configuration.SCREENLAYOUT_SIZE_SMALL,landscape));
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
+			if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
 			} else {
-				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 				return p;
 			}
 			//break;
 		case Configuration.SCREENLAYOUT_SIZE_NORMAL:
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
+			if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
 			} else {
-				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 				return p;
 			}
 			//break;
 		case Configuration.SCREENLAYOUT_SIZE_LARGE:
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
+			if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.small) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.small).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.small).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
 			} else {
-				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 				return p;
 			}
 			
 		case Configuration.SCREENLAYOUT_SIZE_XLARGE:
-			if(layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
+			if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.xlarge).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.large) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.large).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
-			} else if(layouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
-				if(landscape) {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
+			} else if (mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal) != null) {
+				if (landscape) {
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getLandscapeParams();
 				} else {
-					return layouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
+					return mLayouts.get(LayoutGroup.LAYOUT_TYPE.normal).getPortraitParams();
 				}
 			} else {
-				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+				RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 				return p;
 			}
+		default:
+			break;
 		}
-		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		return p;
 		//return null;
 	}
 
-	public SettingsGroup getSettings() {
-		return settings;
+	/** Getter for mSettings.
+	 * 
+	 * @return mSettings
+	 */
+	public final SettingsGroup getSettings() {
+		return mSettings;
 	}
 
-	public void setSettings(SettingsGroup settings) {
-		this.settings = settings;
+	/** Setter for mSettings.
+	 * 
+	 * @param settings The new settings group to use for this window's settings.
+	 */
+	public final void setSettings(final SettingsGroup settings) {
+		this.mSettings = settings;
 	}
 
-	public void setBufferSize(int amount) {
-		this.buffer.setMaxLines(amount);
-		this.buffer.prune();
+	/** Utility method to set a new buffer size, prunes the tree after setting the value.
+	 * 
+	 * @param amount The new buffer size to use.
+	 */
+	public final void setBufferSize(final int amount) {
+		this.mBuffer.setMaxLines(amount);
+		this.mBuffer.prune();
 	}
 
-	public void importV1Settings(HyperSettings s) {
+	/** Utility method to absorb v1 window settings into this window.
+	 * 
+	 * @param s The old deprecated HyperSettings object to sniff for settings.
+	 */
+	public final void importV1Settings(final HyperSettings s) {
 		this.getSettings().setOption("hyperlinks_enabled", Boolean.toString(s.isHyperLinkEnabled()));
 		//HyperSettings.LINK_MODE.
 		switch(s.getHyperLinkMode()) {
 		case NONE:
-			this.getSettings().setOption("hyperlink_mode", Integer.toString(0));
+			this.getSettings().setOption("hyperlink_mode", Integer.toString(HYPERLINK_OFF));
 			break;
 		case HIGHLIGHT:
-			this.getSettings().setOption("hyperlink_mode", Integer.toString(1));
+			this.getSettings().setOption("hyperlink_mode", Integer.toString(HYPERLINK_HIGHLIGHT));
 			break;
 		case HIGHLIGHT_COLOR:
-			this.getSettings().setOption("hyperlink_mode", Integer.toString(2));
+			this.getSettings().setOption("hyperlink_mode", Integer.toString(HYPERLINK_HIGHLIGHT_COLOR));
 			break;
 		case HIGHLIGHT_COLOR_ONLY_BLAND:
-			this.getSettings().setOption("hyperlink_mode", Integer.toString(3));
+			this.getSettings().setOption("hyperlink_mode", Integer.toString(HYPERLINK_HIGHLIGHT_IF_BLAND));
 			break;
 		case BACKGROUND:
-			this.getSettings().setOption("hyperlink_mode", Integer.toString(4));
+			this.getSettings().setOption("hyperlink_mode", Integer.toString(HYPERLINK_BACKGROUND));
+			break;
+		default:
 			break;
 		}
 		
 		this.getSettings().setOption("hyperlink_color", Integer.toString(s.getHyperLinkColor()));
 		this.getSettings().setOption("word_wrap", Boolean.toString(s.isWordWrap()));
-		Log.e("WINDOW","WINDOWTOKEN IMPORT OLD SETTING: " + s.isDisableColor() + " name: " + this.getName());
-		this.getSettings().setOption("color_option", Integer.toString((s.isDisableColor() == true)?1:0));
-		ListOption o = (ListOption)this.getSettings().findOptionByKey("color_option");
+		this.getSettings().setOption("color_option", Integer.toString(s.isDisableColor() ? 1 : 0));
 		
-		Log.e("WINDOW","WINDOWTOKEN ABSORBED COLOR SETTING, NOW: " + o.getValue().toString() + " name: " + this.getName());
 		this.getSettings().setOption("font_size", Integer.toString(s.getLineSize()));
 		this.getSettings().setOption("line_extra", Integer.toString(s.getLineSpaceExtra()));
-		this.getSettings().setOption("buffer_size",Integer.toString(s.getMaxLines()));
-		if(s.getFontName().equals("")) {
+		this.getSettings().setOption("buffer_size", Integer.toString(s.getMaxLines()));
+		if (s.getFontName().equals("")) {
 			this.getSettings().setOption("font_path", s.getFontPath());
 		} else {
 			this.getSettings().setOption("font_path", s.getFontName());
