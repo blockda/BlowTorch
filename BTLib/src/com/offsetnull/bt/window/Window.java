@@ -73,11 +73,37 @@ import com.offsetnull.bt.window.TextTree.Unit;
 
 @SuppressWarnings("deprecation")
 public class Window extends View implements AnimatedRelativeLayout.OnAnimationEndListener, SettingsChangedListener {
-
-	/** \brief test
-	 * 
-	 *  Seriously how does this work.
-	 */
+	/** Add text to the main output window. */
+	private static final int MESSAGE_ADDTEXT = 0;
+	/** Redraw the screen. */
+	private static final int MESSAGE_DRAW = 117;
+	/** Immediately send the contents of the input bar to the server. */
+	private static final int MESSAGE_FLUSHBUFFER = 118;
+	/** Shutdown all windows and exit (?). */
+	private static final int MESSAGE_SHUTDOWN = 119;
+	/** Cross thread bridge message for the WindowXCallS function. */
+	private static final int MESSAGE_PROCESSXCALLS = 4;
+	/** Clear all the text in the input bar. */
+	private static final int MESSAGE_CLEARTEXT = 5;
+	/** Indicate that the settings have changed and should be reloaded. */
+	private static final int MESSAGE_SETTINGSCHANGED = 6;
+	/** Indicates that the system encoding has changed. */
+	private static final int MESSAGE_ENCODINGCHANGED = 7;
+	/** Sent from the onTouchEvent handler to indicate that selection should begin. */
+	private static final int MESSAGE_STARTSELECTION = 8;
+	/** Sent from the selection widget, scroll down. */
+	private static final int MESSAGE_SCROLLDOWN = 9;
+	/** Sent from the selection widget, scroll up. */
+	private static final int MESSAGE_SCROLLUP = 10;
+	/** Sent from the selection widget, scroll right. */
+	private static final int MESSAGE_SCROLLRIGHT = 11;
+	/** Sent from the selection widget, scroll left. */
+	private static final int MESSAGE_SCROLLLEFT = 12;
+	/** Cross thread bridge message for the WindowXCallB lua function. */
+	private static final int MESSAGE_XCALLB = 13;
+	/** Message used from lua I think to reset the window, and add text to it. */
+	private static final int MESSAGE_RESETWITHDATA = 14;
+	
 	/** The activity that owns this window. */
 	private MainWindowCallback mParent = null;
 	/** The bitmap that holds the "return to the bottom of the buffer" button graphic. */
@@ -154,30 +180,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private Handler mHandler = null;
 	/** The handler message queue for the main window that holds this window. */
 	private Handler mMainWindowHandler = null;
-	private Paint textSelectionIndicatorPaint = new Paint();
-	private Paint textSelectionIndicatorBackgroundPaint = new Paint();
-	private Paint textSelectionIndicatorCirclePaint = new Paint();
-	
-	public static final int MESSAGE_ADDTEXT = 0;
-
-	private static final int MESSAGE_DRAW = 117;
-	
-	protected static final int MESSAGE_FLUSHBUFFER = 118;
-	protected static final int MESSAGE_SHUTDOWN = 119;
-	public static final int MESSAGE_PROCESSXCALLS = 4;
-	protected static final int MESSAGE_CLEARTEXT = 5;
-	protected static final int MESSAGE_SETTINGSCHANGED = 6;
-	protected static final int MESSAGE_ENCODINGCHANGED = 7;
-	protected static final int MESSAGE_STARTSELECTION = 8;
-	protected static final int MESSAGE_SCROLLDOWN=9;
-	protected static final int MESSAGE_SCROLLUP=10;
-	protected static final int MESSAGE_SCROLLRIGHT = 11;
-	protected static final int MESSAGE_SCROLLLEFT = 12;
-	protected static final int MESSAGE_XCALLB = 13;
-	protected static final int MESSAGE_RESETWITHDATA = 14;
-	
-	Handler dataDispatch = null;
-	EditText input = null;
+	/** Paint object associated with drawing text inside of the magnifier widget. */
+	private Paint mTextSelectionIndicatorPaint = new Paint();
+	/** Paint object associated with drawing the background highlight color of the magnifier widget. */
+	private Paint mTextSelectionIndicatorBackgroundPaint = new Paint();
+	/** The paint object associated with drawing the circle around the magnifier widget. */
+	private Paint mTextSelectionIndicatorCirclePaint = new Paint();
 	
 	Object token = new Object(); //token for synchronization.
 	private SettingsGroup settings = null;
@@ -334,21 +342,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mTextSelectionCopyBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.copy_tiny);
 		mTextSelectionSwapBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.swap);
 		
-		textSelectionIndicatorPaint.setStyle(Paint.Style.STROKE);
-		textSelectionIndicatorPaint.setStrokeWidth(1*mDensity);
-		textSelectionIndicatorPaint.setColor(0xFFFF0000);
-		textSelectionIndicatorPaint.setAntiAlias(true);
+		mTextSelectionIndicatorPaint.setStyle(Paint.Style.STROKE);
+		mTextSelectionIndicatorPaint.setStrokeWidth(1*mDensity);
+		mTextSelectionIndicatorPaint.setColor(0xFFFF0000);
+		mTextSelectionIndicatorPaint.setAntiAlias(true);
 		
-		textSelectionIndicatorBackgroundPaint.setStyle(Paint.Style.FILL);
-		textSelectionIndicatorBackgroundPaint.setColor(0x770000FF);
+		mTextSelectionIndicatorBackgroundPaint.setStyle(Paint.Style.FILL);
+		mTextSelectionIndicatorBackgroundPaint.setColor(0x770000FF);
 		
-		textSelectionIndicatorCirclePaint.setStyle(Paint.Style.STROKE);
-		textSelectionIndicatorCirclePaint.setStrokeWidth(2);
-		textSelectionIndicatorCirclePaint.setColor(0xFFFFFFFF);
+		mTextSelectionIndicatorCirclePaint.setStyle(Paint.Style.STROKE);
+		mTextSelectionIndicatorCirclePaint.setStrokeWidth(2);
+		mTextSelectionIndicatorCirclePaint.setColor(0xFFFFFFFF);
 		DashPathEffect dpe = new DashPathEffect(new float[]{3,3}, 0);
 		
-		textSelectionIndicatorCirclePaint.setPathEffect(dpe);
-		textSelectionIndicatorCirclePaint.setAntiAlias(true);
+		mTextSelectionIndicatorCirclePaint.setPathEffect(dpe);
+		mTextSelectionIndicatorCirclePaint.setAntiAlias(true);
 		this.settings = settings;
 		this.settings.setListener(this);
 		mBuffer = new TextTree();
@@ -790,7 +798,6 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			} else {
 				if(finger_down_to_up) {
 					prev_draw_time = System.currentTimeMillis(); 
-					Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY);
 					finger_down_to_up=false;
 				}
 			}
@@ -1142,15 +1149,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * mOneCharWidth;
 										int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize()+(3*mDensity), x + stringWidth, y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize()+(3*mDensity), x + stringWidth, y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 									}
 								} else if(finishCol > endcol) {
 									if((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
 										int overshootPixels = overshoot * mOneCharWidth;
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 									} 
 								} 
 								break;
@@ -1161,15 +1168,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * mOneCharWidth;
 										int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize()+(2*mDensity), x + stringWidth, y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize()+(2*mDensity), x + stringWidth, y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 									}
 								} 
 								break;
 							case 3:
 								
-								c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+								c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 								break;
 							case 4:
 								finishCol = workingcol + text.bytecount;
@@ -1180,7 +1187,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), scroller_paint);
 									}
 								} else {
-									c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), textSelectionIndicatorBackgroundPaint);
+									c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
 								}
 								break;
 							default:
@@ -1565,8 +1572,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			//int scroll_from_bottom = (int) (scrollback-SCROLL_MIN);
 			
-			c.drawRect(startLeft, startTop-2, startRight, startBottom-2, textSelectionIndicatorPaint);
-			c.drawRect(endLeft, endTop-2, endRight, endBottom-2, textSelectionIndicatorPaint);
+			c.drawRect(startLeft, startTop-2, startRight, startBottom-2, mTextSelectionIndicatorPaint);
+			c.drawRect(endLeft, endTop-2, endRight, endBottom-2, mTextSelectionIndicatorPaint);
 			
 			int x=0,y=0;
 			if(selectedSelector == theSelection.end) {
@@ -1578,9 +1585,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			
 			if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
-				c.drawCircle(x, y-2, 50*density, textSelectionIndicatorCirclePaint);
+				c.drawCircle(x, y-2, 50*density, mTextSelectionIndicatorCirclePaint);
 			} else {
-				c.drawCircle(x, y-2, 33*density, textSelectionIndicatorCirclePaint);
+				c.drawCircle(x, y-2, 33*density, mTextSelectionIndicatorCirclePaint);
 			}
 			
 		}
@@ -1650,12 +1657,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	public void setButtonHandler(Handler useme) {
 		//realbuttonhandler = useme;
 	}
-	public void setDispatcher(Handler h) {
-		dataDispatch = h;
-	}
-	public void setInputType(EditText t) {
-		input = t;
-	}
+	//public void setDispatcher(Handler h) {
+	//	dataDispatch = h;
+	//}
+	//public void setInputType(EditText t) {
+		// t;
+	//}
 
 	public void jumpToZero() {
 
