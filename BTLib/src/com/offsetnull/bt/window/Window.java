@@ -103,7 +103,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private static final int MESSAGE_XCALLB = 13;
 	/** Message used from lua I think to reset the window, and add text to it. */
 	private static final int MESSAGE_RESETWITHDATA = 14;
-	
+	/** Scroll repeat rate inital value. */
+	private static final int SCROLL_REPEAT_RATE = 300;
 	/** The activity that owns this window. */
 	private MainWindowCallback mParent = null;
 	/** The bitmap that holds the "return to the bottom of the buffer" button graphic. */
@@ -186,51 +187,64 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private Paint mTextSelectionIndicatorBackgroundPaint = new Paint();
 	/** The paint object associated with drawing the circle around the magnifier widget. */
 	private Paint mTextSelectionIndicatorCirclePaint = new Paint();
-	
-	Object token = new Object(); //token for synchronization.
-	private SettingsGroup settings = null;
-	//private int myWidth = -1;
-	//LayerManager mManager = null;
-	Context mContext = null;
-	
-	Bitmap mSelectionIndicatorBitmap = null;
-	Canvas mSelectionIndicatorCanvas = null;
-	
-	int SELECTIONINDICATOR_FONTSIZE = 30;
-	Paint selectionIndicatorPaint = new Paint();
-	int one_selection_char_is_this_wide = 1;
-	int selectionIndicatorHalfDimension = 60;
-	
-	Path selectionIndicatorClipPath = new Path();
-	
-	Rect selectionIndicatorLeftButtonRect = new Rect();
-	Rect selectionIndicatorRightButtonRect = new Rect();
-	Rect selectionIndicatorUpButtonRect = new Rect();
-	Rect selectionIndicatorDownButtonRect = new Rect();
-	Rect selectionIndicatorCenterButtonRect = new Rect();
-	
-	Rect selectionIndicatorRect = new Rect();
-	
-	private int scrollRepeatRateStep = 1;
-	private int scrollRepeatRateInitial = 300;
-	private int scrollRepeatRate = scrollRepeatRateInitial;
-	private int scrollRepeatRateMin = 60;
-	
-	public int gravity = Gravity.LEFT;
-	
+	/** Synchronization target for touch handling and text adding (i think). */
+	private Object mToken = new Object(); //token for synchronization.
+	/** The user configurable settings for this window. */
+	private SettingsGroup mSettings = null;
+	/** Application context. */
+	//private Context mContext = null;
+	/** Bitmap that holds the selection indicator widget. */
+	private Bitmap mSelectionIndicatorBitmap = null;
+	/** Canvas that allows drawing to the selection indicator bitmap. */
+	private Canvas mSelectionIndicatorCanvas = null;
+	/** The font size for the selection widget. */
+	private int mSelectionIndicatorFontSize = 30;
+	/** Another patint object associatied with drawing the selection indicator. */
+	private Paint mSelectionIndicatorPaint = new Paint();
+	/** The measure of one character in the selection widget. */
+	private int mSelectionCharacterWidth = 1;
+	/** The measure of half of the selection widget. */
+	private int mSelectionIndicatorHalfDimension = 60;
+	/** Clip object to cut away the outside of the circle by masking. */
+	private Path mSelectionIndicatorClipPath = new Path();
+	/** Left button hot zone for the selection widget. */
+	private Rect mSelectionIndicatorLeftButtonRect = new Rect();
+	/** right button hot zone for the selection widget. */
+	private Rect mSelectionIndicatorRightButtonRect = new Rect();
+	/** top button hot zone for the selection widget. */
+	private Rect mSelectionIndicatorUpButtonRect = new Rect();
+	/** bottom button hot zone for the selection widget. */
+	private Rect mSelectionIndicatorDownButtonRect = new Rect();
+	/** center button hot zone for the selection widget. */
+	private Rect mSelectionIndicatorCenterButtonRect = new Rect();
+	/** hot zone for the selection widget. */
+	private Rect mSelectionIndicatorRect = new Rect();
+	/** Scroll repeat acceleration. */
+	private int mScrollRepeatRateStep = 1;
+	/** Scroll repeat rate variable. */
+	private int mScrollRepeatRate = SCROLL_REPEAT_RATE;
+	/** The minimum scroll repeat rate. */
+	private int mScrollRepeatRateMin = 60;
+	/** Indicates that a finger is currently down on the touchpad. */
 	boolean finger_down = false;
+	/** The difference between the last touch event and this event. */
 	int diff_amount = 0;
-	public Boolean is_in_touch = false;
+	/** The x value of the start of the touch event. */
 	Float start_x = null;
+	/** The y value of the start of the touch event. */
 	Float start_y = null;
+	/** The previous touch event. */
 	MotionEvent pre_event  = null;
+	/** Indicates that the finger has left the touchpad. */
 	boolean finger_down_to_up = false;
+	/** The system time in millis that the last frame was drawn at. */
 	long prev_draw_time = 0;
-	Float prev_y = 0f;
-	int bx = 0;
-	int by = 0;
+	
+	//Float prev_y = 0f;
+	//int bx = 0;
+	//int by = 0;
 	public int touchInLink = -1;
-	long target = 0;
+	//long target = 0;
 	boolean homeWidgetFingerDown = false;
 	int touchStartY;
 	int pointer = -1;
@@ -331,12 +345,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		this.dataDir = dataDir;
 		this.mDensity = this.getContext().getResources().getDisplayMetrics().density;
 		if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
-			selectionIndicatorHalfDimension = (int) (90*mDensity);
+			mSelectionIndicatorHalfDimension = (int) (90*mDensity);
 		} else {
-			selectionIndicatorHalfDimension = (int) (60*mDensity);
+			mSelectionIndicatorHalfDimension = (int) (60*mDensity);
 		}
 		
-		selectionIndicatorClipPath.addCircle(selectionIndicatorHalfDimension,selectionIndicatorHalfDimension,selectionIndicatorHalfDimension-10,Path.Direction.CCW);
+		mSelectionIndicatorClipPath.addCircle(mSelectionIndicatorHalfDimension,mSelectionIndicatorHalfDimension,mSelectionIndicatorHalfDimension-10,Path.Direction.CCW);
 		mHomeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.offsetnull.bt.R.drawable.homewidget);
 		mTextSelectionCancelBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.cancel_tiny);
 		mTextSelectionCopyBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.copy_tiny);
@@ -357,8 +371,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		mTextSelectionIndicatorCirclePaint.setPathEffect(dpe);
 		mTextSelectionIndicatorCirclePaint.setAntiAlias(true);
-		this.settings = settings;
-		this.settings.setListener(this);
+		this.mSettings = settings;
+		this.mSettings.setListener(this);
 		mBuffer = new TextTree();
 		if(name.equals("mainDisplay")) {
 			mBuffer.debugLineAdd = true;
@@ -371,19 +385,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					Window.this.resetAndAddText((byte[])msg.obj);
 					break;
 				case MESSAGE_SCROLLLEFT:
-					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollLeft(true);
 					break;
 				case MESSAGE_SCROLLRIGHT:
-					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollRight(true);
 					break;
 				case MESSAGE_SCROLLDOWN:
-					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollDown(true);
 					break;
 				case MESSAGE_SCROLLUP:
-					scrollRepeatRate -= (scrollRepeatRateStep++)*5; if(scrollRepeatRate < scrollRepeatRateMin) { scrollRepeatRate = scrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollUp(true);
 					break;
 				case MESSAGE_STARTSELECTION:
@@ -436,19 +450,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		mName = name;
 		
-		mSelectionIndicatorBitmap = Bitmap.createBitmap(2*selectionIndicatorHalfDimension, 2*selectionIndicatorHalfDimension, Bitmap.Config.ARGB_8888);
+		mSelectionIndicatorBitmap = Bitmap.createBitmap(2*mSelectionIndicatorHalfDimension, 2*mSelectionIndicatorHalfDimension, Bitmap.Config.ARGB_8888);
 		mSelectionIndicatorCanvas = new Canvas(mSelectionIndicatorBitmap);
 		
-		int full = selectionIndicatorHalfDimension * 2;
+		int full = mSelectionIndicatorHalfDimension * 2;
 		int third = full / 3;
 		
-		selectionIndicatorLeftButtonRect.set(third, 0, 2*third, 40);
-		selectionIndicatorUpButtonRect.set(0, third, 40, 2*third);
-		selectionIndicatorRightButtonRect.set(full-40, third, full, 2*third);
-		selectionIndicatorDownButtonRect.set(third, 2*third, 2*third, full);
-		selectionIndicatorCenterButtonRect.set(third, third, 2*third, 2*third);
+		mSelectionIndicatorLeftButtonRect.set(third, 0, 2*third, 40);
+		mSelectionIndicatorUpButtonRect.set(0, third, 40, 2*third);
+		mSelectionIndicatorRightButtonRect.set(full-40, third, full, 2*third);
+		mSelectionIndicatorDownButtonRect.set(third, 2*third, 2*third, full);
+		mSelectionIndicatorCenterButtonRect.set(third, third, 2*third, 2*third);
 		
-		selectionIndicatorRect.set(0,0,full,full);
+		mSelectionIndicatorRect.set(0,0,full,full);
 		
 		//start extracting and setting settings.
 		IntegerOption fontsize = (IntegerOption) settings.findOptionByKey("font_size");
@@ -542,7 +556,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 
 	protected void doUpdateSetting(String key, String value) {
-		settings.setOption(key, value);
+		mSettings.setOption(key, value);
 	}
 
 	public void setTWidth(int height) {
@@ -568,11 +582,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mOneCharWidth = (int)Math.ceil(featurePaint.measureText("a")); //measure a single character
 		mCalculatedRowsInWindow = (width / mOneCharWidth);
 		
-		selectionIndicatorPaint.setTextSize(SELECTIONINDICATOR_FONTSIZE);
-		selectionIndicatorPaint.setTypeface(mPrefFont);
-		selectionIndicatorPaint.setAntiAlias(true);
-		one_selection_char_is_this_wide = (int) Math.ceil(selectionIndicatorPaint.measureText("a"));
-		selectionIndicatorVectorX = mOneCharWidth + selectionIndicatorHalfDimension;
+		mSelectionIndicatorPaint.setTextSize(mSelectionIndicatorFontSize);
+		mSelectionIndicatorPaint.setTypeface(mPrefFont);
+		mSelectionIndicatorPaint.setAntiAlias(true);
+		mSelectionCharacterWidth = (int) Math.ceil(mSelectionIndicatorPaint.measureText("a"));
+		selectionIndicatorVectorX = mOneCharWidth + mSelectionIndicatorHalfDimension;
 		if(automaticBreaks) {
 			this.setLineBreaks(0);
 		}
@@ -644,7 +658,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			
 			
-			synchronized(token) {
+			synchronized(mToken) {
 			if(t.getAction() == MotionEvent.ACTION_DOWN) {
 				pointer = pointerId;
 				start_x = new Float(t.getX(index));
@@ -732,17 +746,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				
 				Float y_val = new Float(t.getY(index));
 				Float x_val = new Float(t.getX(index));
-				bx = x_val.intValue();
-				by = y_val.intValue();
+				//bx = x_val.intValue();
+				//by = y_val.intValue();
 				
-				prev_y = y_val;
+				//prev_y = y_val;
 			}
 			
 			
 			if(t.getAction() == (MotionEvent.ACTION_UP)) {
 				
 				pre_event = null;
-				prev_y = new Float(0);
+				//prev_y = new Float(0);
 		        
 		        //reset the priority
 		        pointer = -1;
@@ -885,15 +899,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int color = scroller_paint.getColor();
 			int newcolor = 0xFF000000 | color;
 			scroller_paint.setColor(newcolor);
-			mSelectionIndicatorCanvas.drawRect(selectionIndicatorLeftButtonRect, scroller_paint);
-			mSelectionIndicatorCanvas.drawRect(selectionIndicatorUpButtonRect, scroller_paint);
-			mSelectionIndicatorCanvas.drawRect(selectionIndicatorRightButtonRect, scroller_paint);
-			mSelectionIndicatorCanvas.drawRect(selectionIndicatorDownButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorLeftButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorUpButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorRightButtonRect, scroller_paint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorDownButtonRect, scroller_paint);
 			//mSelectionIn
 			scroller_paint.setColor(color);
 			
 			mSelectionIndicatorCanvas.save();
-			mSelectionIndicatorCanvas.clipPath(selectionIndicatorClipPath);
+			mSelectionIndicatorCanvas.clipPath(mSelectionIndicatorClipPath);
 			mSelectionIndicatorCanvas.drawColor(0xFF444444);
 			
 		}
@@ -1290,10 +1304,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 									float size = p.getTextSize();
 									p.setTextSize(30);
 									int overshoot = (workingcol - selectedSelector.column);
-									int ix = 0,iy=SELECTIONINDICATOR_FONTSIZE;
+									int ix = 0,iy=mSelectionIndicatorFontSize;
 									//if(overshoot > 0) {
-										ix = (int) (selectionIndicatorHalfDimension + (overshoot*one_selection_char_is_this_wide) - 0.5*one_selection_char_is_this_wide);
-										iy = (int) (selectionIndicatorHalfDimension+(0.5*SELECTIONINDICATOR_FONTSIZE)) + (indicatorlineoffset*SELECTIONINDICATOR_FONTSIZE);
+										ix = (int) (mSelectionIndicatorHalfDimension + (overshoot*mSelectionCharacterWidth) - 0.5*mSelectionCharacterWidth);
+										iy = (int) (mSelectionIndicatorHalfDimension+(0.5*mSelectionIndicatorFontSize)) + (indicatorlineoffset*mSelectionIndicatorFontSize);
 									
 									
 									
@@ -1314,10 +1328,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 									float size = p.getTextSize();
 									p.setTextSize(30);
 									int overshoot = (workingcol - selectedSelector.column);
-									int ix = 0,iy=SELECTIONINDICATOR_FONTSIZE;
+									int ix = 0,iy=mSelectionIndicatorFontSize;
 									//if(overshoot > 0) {
-										ix = (int) (selectionIndicatorHalfDimension + (overshoot*one_selection_char_is_this_wide) - 0.5*one_selection_char_is_this_wide);
-										iy = (int) (selectionIndicatorHalfDimension+(0.5*SELECTIONINDICATOR_FONTSIZE)) + (indicatorlineoffset*SELECTIONINDICATOR_FONTSIZE);
+										ix = (int) (mSelectionIndicatorHalfDimension + (overshoot*mSelectionCharacterWidth) - 0.5*mSelectionCharacterWidth);
+										iy = (int) (mSelectionIndicatorHalfDimension+(0.5*mSelectionIndicatorFontSize)) + (indicatorlineoffset*mSelectionIndicatorFontSize);
 									
 									
 									
@@ -1605,14 +1619,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			edgePaint.setAntiAlias(true);
 			edgePaint.setColor(0xFFAA22AA);
 			
-			mSelectionIndicatorCanvas.drawPath(selectionIndicatorClipPath, edgePaint);
+			mSelectionIndicatorCanvas.drawPath(mSelectionIndicatorClipPath, edgePaint);
 			
 			//draw the cancel, start, end and copy buttons.
 			Paint cancelPaint = new Paint();
 			cancelPaint.setStyle(Paint.Style.FILL);
 			cancelPaint.setAntiAlias(true);
 			cancelPaint.setColor(0xFFFF0000);
-			int third = (selectionIndicatorHalfDimension*2)/3;
+			int third = (mSelectionIndicatorHalfDimension*2)/3;
 			if(mTextSelectionCopyBitmap.isRecycled()) {
 				//Log.e("sf","bitmap is recycled");
 			}
@@ -1621,13 +1635,13 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionSwapBitmap, 2*third,0, null);
 			
 			
-			float left = (float) (selectionIndicatorHalfDimension-(0.5*one_selection_char_is_this_wide));
-			float top = (float)(selectionIndicatorHalfDimension-(0.5*SELECTIONINDICATOR_FONTSIZE));
-			float right = (float)(selectionIndicatorHalfDimension+(0.5*one_selection_char_is_this_wide));
-			float bottom = (float)(selectionIndicatorHalfDimension+(0.5*SELECTIONINDICATOR_FONTSIZE));
+			float left = (float) (mSelectionIndicatorHalfDimension-(0.5*mSelectionCharacterWidth));
+			float top = (float)(mSelectionIndicatorHalfDimension-(0.5*mSelectionIndicatorFontSize));
+			float right = (float)(mSelectionIndicatorHalfDimension+(0.5*mSelectionCharacterWidth));
+			float bottom = (float)(mSelectionIndicatorHalfDimension+(0.5*mSelectionIndicatorFontSize));
 			
-			c.drawBitmap(mSelectionIndicatorBitmap, widgetX-selectionIndicatorHalfDimension, widgetY-selectionIndicatorHalfDimension, null);
-			c.drawRect(left+(widgetX-selectionIndicatorHalfDimension),top+(widgetY-selectionIndicatorHalfDimension),right+(widgetX-selectionIndicatorHalfDimension),bottom+(widgetY-selectionIndicatorHalfDimension), scroller_paint);		
+			c.drawBitmap(mSelectionIndicatorBitmap, widgetX-mSelectionIndicatorHalfDimension, widgetY-mSelectionIndicatorHalfDimension, null);
+			c.drawRect(left+(widgetX-mSelectionIndicatorHalfDimension),top+(widgetY-mSelectionIndicatorHalfDimension),right+(widgetX-mSelectionIndicatorHalfDimension),bottom+(widgetY-mSelectionIndicatorHalfDimension), scroller_paint);		
 			//c.restore();
 			//this.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 		}
@@ -1666,7 +1680,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 	public void jumpToZero() {
 
-		synchronized(token) {
+		synchronized(mToken) {
 			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
 			scrollback = SCROLL_MIN;
 			mFlingVelocity=0;
@@ -3069,7 +3083,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	@Override
 	public void updateSetting(String key, String value) {
 		//convert to enum value, then switch, handle accordingly.
-		BaseOption o = (BaseOption) settings.findOptionByKey(key);
+		BaseOption o = (BaseOption) mSettings.findOptionByKey(key);
 		o.setValue(value);
 		try {
 			KEYS tmp = KEYS.valueOf(key);
@@ -3233,14 +3247,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						//Log.e("window","moving end selector");
 						v.invalidate();
 					} else {
-						int modx = (int) x - (widgetX - selectionIndicatorHalfDimension);
-						int mody = (int) event.getY() - (widgetY - selectionIndicatorHalfDimension);
-						if(selectionIndicatorRect.contains(modx,mody)) {
+						int modx = (int) x - (widgetX - mSelectionIndicatorHalfDimension);
+						int mody = (int) event.getY() - (widgetY - mSelectionIndicatorHalfDimension);
+						if(mSelectionIndicatorRect.contains(modx,mody)) {
 							
 							//int newx = (int) (x - selectionIndicatorRect.left);
 							//int newy = (int) (mody - selectionIndicatorRect.top);
 							
-							int full = selectionIndicatorHalfDimension * 2;
+							int full = mSelectionIndicatorHalfDimension * 2;
 							int third = full / 3;
 							
 							int col = modx / third;
@@ -3329,15 +3343,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					widgetCenterMovedY -= (event.getY() - widgetCenterMoveYLast);
 					widgetCenterMoveXLast = (int) x;
 					widgetCenterMoveYLast = (int) event.getY();
-					if(Math.abs(widgetCenterMovedX) > one_selection_char_is_this_wide) {
+					if(Math.abs(widgetCenterMovedX) > mSelectionCharacterWidth) {
 						int sign = (int)Math.signum(widgetCenterMovedX);
 						if(sign > 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollRight(false);
 						} else if(sign < 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollLeft(false);
 						}
 //						selectedSelector.column += 1 * Math.signum(widgetCenterMovedX);
@@ -3346,15 +3360,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						widgetCenterMovedX = 0;
 						v.invalidate();
 					}
-					if(Math.abs(widgetCenterMovedY) > SELECTIONINDICATOR_FONTSIZE) {
+					if(Math.abs(widgetCenterMovedY) > mSelectionIndicatorFontSize) {
 						int sign = (int)Math.signum(widgetCenterMovedY);
 						if(sign > 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollUp(false);
 						} else if(sign < 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollDown(false);
 						}
 //						selectedSelector.line += 1 * Math.signum(widgetCenterMovedY);
@@ -3377,27 +3391,27 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					if(Math.abs(widgetCenterMovedX) > mOneCharWidth) {
 						int sign = (int)Math.signum(widgetCenterMovedX);
 						if(sign > 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollRight(false);
 						} else if(sign < 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollLeft(false);
 						}
 						widgetCenterMovedX = 0;
 						v.invalidate();
 					} 
 					
-					if(Math.abs(widgetCenterMovedY) > SELECTIONINDICATOR_FONTSIZE) {
+					if(Math.abs(widgetCenterMovedY) > mSelectionIndicatorFontSize) {
 						int sign = (int) Math.signum(widgetCenterMovedY);
 						if(sign > 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollUp(false);
 						} else if(sign < 0) {
-							scrollRepeatRate = scrollRepeatRateInitial;
-							scrollRepeatRateStep = 1;
+							mScrollRepeatRate = SCROLL_REPEAT_RATE;
+							mScrollRepeatRateStep = 1;
 							doScrollDown(false);
 						}
 
@@ -3416,17 +3430,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					mHandler.removeMessages(MESSAGE_SCROLLUP);
 					mHandler.removeMessages(MESSAGE_SCROLLLEFT);
 					mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
-					scrollRepeatRate = scrollRepeatRateInitial;
-					scrollRepeatRateStep = 1;
+					mScrollRepeatRate = SCROLL_REPEAT_RATE;
+					mScrollRepeatRateStep = 1;
 					
-					int mod2x = (int) x - (widgetX - selectionIndicatorHalfDimension);
-					int mod2y = (int) event.getY() - (widgetY - selectionIndicatorHalfDimension);
-					if(selectionIndicatorRect.contains(mod2x,mod2y)) {
+					int mod2x = (int) x - (widgetX - mSelectionIndicatorHalfDimension);
+					int mod2y = (int) event.getY() - (widgetY - mSelectionIndicatorHalfDimension);
+					if(mSelectionIndicatorRect.contains(mod2x,mod2y)) {
 						
 						//int newx = (int) (x - (widgetX - selectionIndic);
 						//int newy = (int) (event.getY() - selectionIndicatorRect.top);
 						
-						int full = selectionIndicatorHalfDimension * 2;
+						int full = mSelectionIndicatorHalfDimension * 2;
 						int third = full / 3;
 						
 						int col = mod2x / third;
@@ -3581,37 +3595,37 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		int newWidgetX = (int) (startX + selectionIndicatorVectorX);
 		int newWidgetY = (int) ((int) (startY + selectionIndicatorVectorY));
 		
-		if((newWidgetX + (selectionIndicatorHalfDimension)) > this.getWidth()) {
+		if((newWidgetX + (mSelectionIndicatorHalfDimension)) > this.getWidth()) {
 			selectionIndicatorVectorX -= mOneCharWidth;
-			if(selectionIndicatorVectorX < (mOneCharWidth + selectionIndicatorHalfDimension)) {
+			if(selectionIndicatorVectorX < (mOneCharWidth + mSelectionIndicatorHalfDimension)) {
 				selectionIndicatorVectorX = -(selectionIndicatorVectorX+mOneCharWidth);
 			}
 			newWidgetX = (int) (startX + selectionIndicatorVectorX);
 			
-		} else if((newWidgetX - selectionIndicatorHalfDimension) < 0) {
+		} else if((newWidgetX - mSelectionIndicatorHalfDimension) < 0) {
 			//flip the vector
 			selectionIndicatorVectorX += mOneCharWidth;
-			if(selectionIndicatorVectorX > -(mOneCharWidth+selectionIndicatorHalfDimension)) {
+			if(selectionIndicatorVectorX > -(mOneCharWidth+mSelectionIndicatorHalfDimension)) {
 				selectionIndicatorVectorX = -(selectionIndicatorVectorX-mOneCharWidth);
 			}
 			newWidgetX = (int) (startX + selectionIndicatorVectorX);
 		}
 		
-		if((newWidgetY + (selectionIndicatorHalfDimension)) > this.getHeight()) {
+		if((newWidgetY + (mSelectionIndicatorHalfDimension)) > this.getHeight()) {
 			selectionIndicatorVectorY -= mPrefLineSize;
 			//only if we run into 
 			newWidgetY = (int) (startY + selectionIndicatorVectorY);
-			if(newWidgetY + selectionIndicatorHalfDimension > this.getHeight()) {
-				selectionIndicatorVectorY = -selectionIndicatorHalfDimension;
+			if(newWidgetY + mSelectionIndicatorHalfDimension > this.getHeight()) {
+				selectionIndicatorVectorY = -mSelectionIndicatorHalfDimension;
 				newWidgetY = (int) (startY + selectionIndicatorVectorY);
 			}
 			
-		} else if ((newWidgetY - selectionIndicatorHalfDimension) < 0) {
+		} else if ((newWidgetY - mSelectionIndicatorHalfDimension) < 0) {
 			selectionIndicatorVectorY += mPrefLineSize;
 			
 			newWidgetY = (int) (startY + selectionIndicatorVectorY);
-			if(newWidgetY - selectionIndicatorHalfDimension < 0) {
-				selectionIndicatorVectorY = +selectionIndicatorHalfDimension;
+			if(newWidgetY - mSelectionIndicatorHalfDimension < 0) {
+				selectionIndicatorVectorY = +mSelectionIndicatorHalfDimension;
 				newWidgetY = (int) (startY + selectionIndicatorVectorY);
 			}
 		}
@@ -3623,9 +3637,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 	private void moveWidgetToSelector(TextTree.SelectionCursor cursor) {
 		
-		int part1 = (int) (selectedSelector.line * mPrefLineSize + (0.5*SELECTIONINDICATOR_FONTSIZE));
+		int part1 = (int) (selectedSelector.line * mPrefLineSize + (0.5*mSelectionIndicatorFontSize));
 		//int part2 = (int) (scrollback);
-		int part2 = (int) (selectedSelector.line * mPrefLineSize - (0.5*SELECTIONINDICATOR_FONTSIZE));
+		int part2 = (int) (selectedSelector.line * mPrefLineSize - (0.5*mSelectionIndicatorFontSize));
 		
 		
 		if(part1 > scrollback) {
@@ -3638,7 +3652,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 		int endx = (int) ((selectedSelector.column * mOneCharWidth) + (0.5*mOneCharWidth));
-		int endy = (int) ((this.getHeight() - ((selectedSelector.line * mPrefLineSize) + (0.5*SELECTIONINDICATOR_FONTSIZE) - (scrollback-SCROLL_MIN))));
+		int endy = (int) ((this.getHeight() - ((selectedSelector.line * mPrefLineSize) + (0.5*mSelectionIndicatorFontSize) - (scrollback-SCROLL_MIN))));
 		//widgetX = endx;
 		//widgetY = endy;
 		selectorCenterX = endx;
@@ -3710,7 +3724,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	
 		this.invalidate();
 		if(repeat) {
-			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLDOWN,scrollRepeatRate);
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLDOWN,mScrollRepeatRate);
 		} else {
 			mHandler.removeMessages(MESSAGE_SCROLLDOWN);
 		}
@@ -3742,7 +3756,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		//calculateWidgetPosition()
 		this.invalidate();
 		if(repeat) {
-			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLUP,scrollRepeatRate);
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLUP,mScrollRepeatRate);
 		} else {
 			mHandler.removeMessages(MESSAGE_SCROLLUP);
 		}
@@ -3759,7 +3773,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		this.invalidate();
 		if(repeat) {
-			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLLEFT,scrollRepeatRate);
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLLEFT,mScrollRepeatRate);
 		}else {
 			mHandler.removeMessages(MESSAGE_SCROLLLEFT);
 		}
@@ -3771,7 +3785,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		this.invalidate();
 		if(repeat) {
-			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLRIGHT, scrollRepeatRate);
+			mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLLRIGHT, mScrollRepeatRate);
 		}else {
 			mHandler.removeMessages(MESSAGE_SCROLLRIGHT);
 		}

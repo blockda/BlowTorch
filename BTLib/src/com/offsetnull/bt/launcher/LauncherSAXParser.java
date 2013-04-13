@@ -62,7 +62,10 @@ public class LauncherSAXParser extends BaseParser {
 		try {
 			Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			//throw new RuntimeException(e);
+			e.printStackTrace();
+			//get all the files in private storage and list them.
+			return null;
 		}
 		
 		return tmp;
