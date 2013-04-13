@@ -362,7 +362,13 @@ public class Launcher extends Activity implements ReadyListener {
 			fos.close();
 			LauncherSAXParser parser = new LauncherSAXParser("blowtorch_launcher_list.xml",this);
 			launcher_settings = parser.load();
-			
+			if(launcher_settings == null) {
+				launcher_settings = new LauncherSettings();
+				String[] files = this.fileList();
+				for(String file : files) {
+					Log.e("BLOWTORCH","Internal settings: " + file);
+				}
+			}
 			//buildList();
 			//Log.e("LAUNCHER","LOADING XML LAUNCHER");
 		} catch (FileNotFoundException e) {
