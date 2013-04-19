@@ -105,6 +105,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private static final int MESSAGE_RESETWITHDATA = 14;
 	/** Scroll repeat rate inital value. */
 	private static final int SCROLL_REPEAT_RATE = 300;
+	/** Lua relative stack location -2. */
+	private static final int TOP_MINUS_TWO = -2;
+	/** Lua relative stack location -2. */
+	private static final int TOP_MINUS_THREE = -3;
+	/** Lua relative stack location -2. */
+	private static final int TOP_MINUS_FOUR = -4;
+	/** Lua relative stack location -2. */
+	private static final int TOP_MINUS_FIVE = -5;
+	/** Maximum fling velocity. */
+	private static final float MAX_VELOCITY = 700; 
 	/** The activity that owns this window. */
 	private MainWindowCallback mParent = null;
 	/** The bitmap that holds the "return to the bottom of the buffer" button graphic. */
@@ -226,95 +236,146 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	/** The minimum scroll repeat rate. */
 	private int mScrollRepeatRateMin = 60;
 	/** Indicates that a finger is currently down on the touchpad. */
-	boolean finger_down = false;
+	boolean mFingerDown = false;
 	/** The difference between the last touch event and this event. */
 	int diff_amount = 0;
 	/** The x value of the start of the touch event. */
 	Float start_x = null;
 	/** The y value of the start of the touch event. */
-	Float start_y = null;
+	Float mStartY = null;
 	/** The previous touch event. */
-	MotionEvent pre_event  = null;
+	MotionEvent mTouchPreEvent  = null;
 	/** Indicates that the finger has left the touchpad. */
 	boolean finger_down_to_up = false;
 	/** The system time in millis that the last frame was drawn at. */
-	long prev_draw_time = 0;
-	
-	//Float prev_y = 0f;
-	//int bx = 0;
-	//int by = 0;
-	public int touchInLink = -1;
-	//long target = 0;
+	long mLastFrameTime = 0;
+	/** If a touch event happened inside of a link hitbox it will be noted here. */
+	public int mTouchInLink = -1;
+	/** Indicates weather a touch event happened inside of the jump to home button. */
 	boolean homeWidgetFingerDown = false;
-	int touchStartY;
+	/** The first finger pointer id. */
 	int pointer = -1;
+	/** Fling acceleration for scrolling. */
 	float fling_accel = 200.0f; //(units per sec);
-	
-	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>();
-	
-	private Paint scroller_paint = new Paint();
+	/** List of link boxes found on the current drawing routine. */
+	private ArrayList<LinkBox> linkBoxes = new ArrayList<LinkBox>(); /** TODO: make this into a preallocated list of a fixed size so you don't reallocate during the draw phase. */
+	/** Paint object for the scroll bar. */
+	private Paint mScrollerPaint = new Paint();
+	/** Indicates if the home widget is being drawn. */
 	private boolean homeWidgetShowing = false;
+	/** View bounds for the the scroller rectangle. */
 	Rect scrollerRect = new Rect();
+	/** This is kind of a promiscuous variable, color is set on the fly. */
 	Paint featurePaint = new Paint();
-
-	boolean indicated = false;
+	/** The internal memory location of the internal lua default libraries for BlowTorch. */
+	private String mDataDir = null;
+	/** Foreground text paint object, short name for code readability. */
+	Paint p = new Paint();
+	/** Backgrond highlighting paint object, short name for code readabliity. */
+	Paint b = new Paint();
+	/** The configured hyperlink background or highlight color. */
+	Paint linkColor = null;
+	/** The minimum amount of scroll, i think this gets set before use. */
+	private Double SCROLL_MIN = 24d;
+	/** The current scrollback amount. */
+	private Double mScrollback = SCROLL_MIN;
+	/** Uhg. The screen iterator. I'm not really sure this whole thing is worth it. There has to be a better way. */
+	ListIterator<TextTree.Line> screenIt = null;
+	/** Helper object for the draw routine, iterates a line object unit to unit. */
+	ListIterator<Unit> unitIterator = null;
+	/** The minimum hitbox size for a link. */
+	private int mLinkBoxHeightMinimum = 20;
+	/** Inidcates the presence of a global OnDraw(Canvas) function in the backing script. */
+	boolean mHasDrawRoutine = true;
+	/** The name of this window. */
+	private String mName = null;
+	/** The clipping rectangle for the draw routine. */
+	private Rect mClipRect = new Rect();
+	/** The current link click that is being clicked. */
+	private StringBuffer mCurrentLink = new StringBuffer();
 	
-	public Window(String dataDir,Context context,String name,String owner,Handler mainWindowHandler,SettingsGroup settings,MainWindowCallback activity) {
+	/** Constructor to be used, the others aren't really suppposed to be there. 
+	 * 
+	 * @param pDataDir The path to the internal lua libraries.
+	 * @param context The application context.
+	 * @param name The name of the window. 
+	 * @param owner The plugin owner of the window.
+	 * @param mainWindowHandler The callback handler to the MainWindow Activity.
+	 * @param settings The serializable settings for the window.
+	 * @param activity The MainWindowCallback to use to report changes from the scripts
+	 */
+	public Window(final String pDataDir,
+			final Context context,
+			final String name,
+			final String owner,
+			final Handler mainWindowHandler,
+			final SettingsGroup settings,
+			final MainWindowCallback activity) {
 		super(context);
 		this.mParent = activity;
-		init(dataDir,name,owner,mainWindowHandler,settings);
+		init(pDataDir, name, owner, mainWindowHandler, settings);
 	}
 	
-	public Window(Context c) {
+	/** Generic window constructor, here to pass the lint test. Will not work. 
+	 * 
+	 * @param c Application Context
+	 */
+	public Window(final Context c) {
 		super(c);
 	}
 	
-	public Window(Context c, AttributeSet a) {
-		super(c,a);
+	/** XML Inflation constructor, here to pass the lint test. Will not work. 
+	 * 
+	 * @param c Application context
+	 * @param a I'm not really sure but you can't use it from lua.
+	 */
+	public Window(final Context c, final AttributeSet a) {
+		super(c, a);
 	}
 	
-	public void displayLuaError(String message) {
-		mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR,"\n" + Colorizer.getRedColor() + message + Colorizer.getWhiteColor() + "\n"));
+	/** Kicks off a lua error message to the main output window. This has to be sent round trip through the Service in order to be picked up by the internal buffer.
+	 * 
+	 * @param message The lua error to display.
+	 */
+	public final void displayLuaError(final String message) {
+		mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_DISPLAYLUAERROR, "\n" + Colorizer.getRedColor() + message + Colorizer.getWhiteColor() + "\n"));
 	}
 	
-	public void onCreate(Bundle b) {
-		fitFontSize(-1);
+	@Override
+	protected final void onAttachedToWindow() {
+		windowShowing = true;
 	}
 	
-	protected void onAttachedToWindow() {
-		viewCreate();
+	@Override
+	protected final void onDetachedFromWindow() {
+		windowShowing = false;
 	}
 	
-	protected void onDetachedFromWindow() {
-		viewDestroy();
-	}
-	
-	protected void onMeasure(int widthSpec,int heightSpec) {
+	@Override
+	protected final void onMeasure(final int widthSpec, final int heightSpec) {
 		int height = MeasureSpec.getSize(heightSpec);
 		int width = MeasureSpec.getSize(widthSpec);
 		
-		if(mHasScriptOnMeasure && mL != null) {
+		if (mHasScriptOnMeasure && mL != null) {
 			mL.getGlobal("debug");
 			mL.getField(-1, "traceback");
-			mL.remove(-2);
+			mL.remove(TOP_MINUS_TWO);
 			
 			mL.getGlobal("OnMeasure");
-			if(mL.isFunction(-1)) {
+			if (mL.isFunction(-1)) {
 				mL.pushNumber(widthSpec);
 				mL.pushNumber(heightSpec);
-				int ret = mL.pcall(2,2,-4);
-				if(ret !=0) {
+				int ret = mL.pcall(2, 2, TOP_MINUS_FOUR);
+				if (ret != 0) {
 					displayLuaError("Error in OnMeasure:" + mL.getLuaObject(-1).getString());
-					setMeasuredDimension(1,1);
-					
+					setMeasuredDimension(1, 1);
 					mL.pop(1);
 					return;
 				} else {
-					//get the return values.
-					int ret_height = (int) mL.getLuaObject(-1).getNumber();
-					int ret_width = (int) mL.getLuaObject(-2).getNumber();
+					int retHeight = (int) mL.getLuaObject(-1).getNumber();
+					int retWidth = (int) mL.getLuaObject(TOP_MINUS_TWO).getNumber();
 					mL.pop(2);
-					setMeasuredDimension(ret_width,ret_height);
+					setMeasuredDimension(retWidth, retHeight);
 					return;
 				}
 			} else {
@@ -322,7 +383,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 		}
 		int hspec = MeasureSpec.getMode(heightSpec);
-		if(width != mWidth) {
+		if (width != mWidth) {
 			doFitFontSize(width);
 		}
 		switch(hspec) {
@@ -331,33 +392,41 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		case MeasureSpec.EXACTLY:
 			break;
 		case MeasureSpec.UNSPECIFIED:
-			height = (mBuffer.getBrokenLineCount()*mPrefLineSize) + mPrefLineExtra;
+			height = (mBuffer.getBrokenLineCount() * mPrefLineSize) + mPrefLineExtra;
+			break;
+		default:
 			break;
 		}
 		
-		setMeasuredDimension(width,height);
+		setMeasuredDimension(width, height);
 		
 	}
-	
-	private String dataDir = null;
-	
-	private void init(String dataDir,String name,String owner,Handler mainWindowHandler,SettingsGroup settings) {
-		this.dataDir = dataDir;
+
+	/** Initialization routine. It all starts here.
+	 * 
+	 * @param dataDir The path to the internal lua libraries.
+	 * @param name The name of the window. 
+	 * @param owner The plugin owner of the window.
+	 * @param mainWindowHandler The callback handler to the MainWindow Activity.
+	 * @param settings The serializable settings for the window.
+	 */
+	private void init(final String dataDir, final String name, final String owner, final Handler mainWindowHandler, final SettingsGroup settings) {
+		this.mDataDir = dataDir;
 		this.mDensity = this.getContext().getResources().getDisplayMetrics().density;
-		if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
-			mSelectionIndicatorHalfDimension = (int) (90*mDensity);
+		if ((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+			mSelectionIndicatorHalfDimension = (int) (90 * mDensity);
 		} else {
-			mSelectionIndicatorHalfDimension = (int) (60*mDensity);
+			mSelectionIndicatorHalfDimension = (int) (60 * mDensity);
 		}
 		
-		mSelectionIndicatorClipPath.addCircle(mSelectionIndicatorHalfDimension,mSelectionIndicatorHalfDimension,mSelectionIndicatorHalfDimension-10,Path.Direction.CCW);
-		mHomeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(),com.offsetnull.bt.R.drawable.homewidget);
+		mSelectionIndicatorClipPath.addCircle(mSelectionIndicatorHalfDimension, mSelectionIndicatorHalfDimension, mSelectionIndicatorHalfDimension - 10, Path.Direction.CCW);
+		mHomeWidgetDrawable = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.homewidget);
 		mTextSelectionCancelBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.cancel_tiny);
 		mTextSelectionCopyBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.copy_tiny);
 		mTextSelectionSwapBitmap = BitmapFactory.decodeResource(this.getContext().getResources(), com.offsetnull.bt.R.drawable.swap);
 		
 		mTextSelectionIndicatorPaint.setStyle(Paint.Style.STROKE);
-		mTextSelectionIndicatorPaint.setStrokeWidth(1*mDensity);
+		mTextSelectionIndicatorPaint.setStrokeWidth(1 * mDensity);
 		mTextSelectionIndicatorPaint.setColor(0xFFFF0000);
 		mTextSelectionIndicatorPaint.setAntiAlias(true);
 		
@@ -367,47 +436,47 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		mTextSelectionIndicatorCirclePaint.setStyle(Paint.Style.STROKE);
 		mTextSelectionIndicatorCirclePaint.setStrokeWidth(2);
 		mTextSelectionIndicatorCirclePaint.setColor(0xFFFFFFFF);
-		DashPathEffect dpe = new DashPathEffect(new float[]{3,3}, 0);
+		DashPathEffect dpe = new DashPathEffect(new float[]{3, 3}, 0);
 		
 		mTextSelectionIndicatorCirclePaint.setPathEffect(dpe);
 		mTextSelectionIndicatorCirclePaint.setAntiAlias(true);
 		this.mSettings = settings;
 		this.mSettings.setListener(this);
 		mBuffer = new TextTree();
-		if(name.equals("mainDisplay")) {
+		if (name.equals("mainDisplay")) {
 			mBuffer.debugLineAdd = true;
 		}
 		mHoldBuffer = new TextTree();
 		mHandler = new Handler() {
-			public void handleMessage(Message msg) {
+			public void handleMessage(final Message msg) {
 				switch(msg.what) {
 				case MESSAGE_RESETWITHDATA:
-					Window.this.resetAndAddText((byte[])msg.obj);
+					Window.this.resetAndAddText((byte[]) msg.obj);
 					break;
 				case MESSAGE_SCROLLLEFT:
-					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++) * 5; if (mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollLeft(true);
 					break;
 				case MESSAGE_SCROLLRIGHT:
-					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++) *5 ; if (mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollRight(true);
 					break;
 				case MESSAGE_SCROLLDOWN:
-					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++) * 5; if (mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollDown(true);
 					break;
 				case MESSAGE_SCROLLUP:
-					mScrollRepeatRate -= (mScrollRepeatRateStep++)*5; if(mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
+					mScrollRepeatRate -= (mScrollRepeatRateStep++) * 5; if (mScrollRepeatRate < mScrollRepeatRateMin) { mScrollRepeatRate = mScrollRepeatRateMin; }
 					Window.this.doScrollUp(true);
 					break;
 				case MESSAGE_STARTSELECTION:
-					Window.this.startSelection(msg.arg1,msg.arg2);
+					Window.this.startSelection(msg.arg1, msg.arg2);
 					break;
 				case MESSAGE_ENCODINGCHANGED:
-					Window.this.updateEncoding((String)msg.obj);
+					Window.this.updateEncoding((String) msg.obj);
 					break;
 				case MESSAGE_SETTINGSCHANGED:
-					Window.this.doUpdateSetting(msg.getData().getString("KEY"),msg.getData().getString("VALUE"));
+					Window.this.doUpdateSetting(msg.getData().getString("KEY"), msg.getData().getString("VALUE"));
 					break;
 				case MESSAGE_CLEARTEXT:
 					mBuffer.empty();
@@ -424,19 +493,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					break;
 					
 				case MESSAGE_ADDTEXT:
-					Window.this.addBytes((byte[])msg.obj, false);
+					Window.this.addBytes((byte[]) msg.obj, false);
 					break;
 				case MESSAGE_PROCESSXCALLS:
-					Window.this.xcallS(msg.getData().getString("FUNCTION"),(String)msg.obj);
+					Window.this.xcallS(msg.getData().getString("FUNCTION"), (String) msg.obj);
 					
 					break;
 				case MESSAGE_XCALLB:
 					//try {
 					try {
-						Window.this.xcallB(msg.getData().getString("FUNCTION"),(byte[])msg.obj);
+						Window.this.xcallB(msg.getData().getString("FUNCTION"), (byte[]) msg.obj);
 					} catch (LuaException e) {
 						e.printStackTrace();
 					}
+					break;
+				default:
 					break;
 				}
 			}
@@ -450,43 +521,43 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		mName = name;
 		
-		mSelectionIndicatorBitmap = Bitmap.createBitmap(2*mSelectionIndicatorHalfDimension, 2*mSelectionIndicatorHalfDimension, Bitmap.Config.ARGB_8888);
+		mSelectionIndicatorBitmap = Bitmap.createBitmap(2 * mSelectionIndicatorHalfDimension, 2 * mSelectionIndicatorHalfDimension, Bitmap.Config.ARGB_8888);
 		mSelectionIndicatorCanvas = new Canvas(mSelectionIndicatorBitmap);
 		
 		int full = mSelectionIndicatorHalfDimension * 2;
 		int third = full / 3;
 		
-		mSelectionIndicatorLeftButtonRect.set(third, 0, 2*third, 40);
-		mSelectionIndicatorUpButtonRect.set(0, third, 40, 2*third);
-		mSelectionIndicatorRightButtonRect.set(full-40, third, full, 2*third);
-		mSelectionIndicatorDownButtonRect.set(third, 2*third, 2*third, full);
-		mSelectionIndicatorCenterButtonRect.set(third, third, 2*third, 2*third);
+		mSelectionIndicatorLeftButtonRect.set(third, 0, 2 * third, 40);
+		mSelectionIndicatorUpButtonRect.set(0, third, 40, 2 * third);
+		mSelectionIndicatorRightButtonRect.set(full - 40, third, full, 2 * third);
+		mSelectionIndicatorDownButtonRect.set(third, 2 * third, 2 * third, full);
+		mSelectionIndicatorCenterButtonRect.set(third, third, 2 * third, 2 * third);
 		
-		mSelectionIndicatorRect.set(0,0,full,full);
+		mSelectionIndicatorRect.set(0, 0, full, full);
 		
 		//start extracting and setting settings.
 		IntegerOption fontsize = (IntegerOption) settings.findOptionByKey("font_size");
 		IntegerOption lineextra = (IntegerOption) settings.findOptionByKey("line_extra");
 		IntegerOption buffersize = (IntegerOption) settings.findOptionByKey("buffer_size");
-		FileOption fontpath = (FileOption)settings.findOptionByKey("font_path");
+		FileOption fontpath = (FileOption) settings.findOptionByKey("font_path");
 		ListOption colorOption = (ListOption) settings.findOptionByKey("color_option");
 		ColorOption hyperlinkcolor = (ColorOption) settings.findOptionByKey("hyperlink_color");
 		
-		BooleanOption wordwrap = (BooleanOption)settings.findOptionByKey("word_wrap");
-		BooleanOption hlenabled = (BooleanOption)settings.findOptionByKey("hyperlinks_enabled");
+		BooleanOption wordwrap = (BooleanOption) settings.findOptionByKey("word_wrap");
+		BooleanOption hlenabled = (BooleanOption) settings.findOptionByKey("hyperlinks_enabled");
 		
-		ListOption hlmode = (ListOption)settings.findOptionByKey("hyperlink_mode");
+		ListOption hlmode = (ListOption) settings.findOptionByKey("hyperlink_mode");
 		
-		mPrefFont = loadFontFromName((String)fontpath.getValue());
+		mPrefFont = loadFontFromName((String) fontpath.getValue());
 		p.setTypeface(mPrefFont);
 		
-		mBuffer.setMaxLines((Integer)buffersize.getValue());
+		mBuffer.setMaxLines((Integer) buffersize.getValue());
 		
-		mPrefLineExtra = (Integer)lineextra.getValue();
-		mPrefFontSize = (Integer)fontsize.getValue();
-		setCharacterSizes(mPrefFontSize,mPrefLineExtra);
+		mPrefLineExtra = (Integer) lineextra.getValue();
+		mPrefFontSize = (Integer) fontsize.getValue();
+		setCharacterSizes(mPrefFontSize, mPrefLineExtra);
 		
-		switch((Integer)colorOption.getValue()) {
+		switch((Integer) colorOption.getValue()) {
 		case 0:
 			this.setColorDebugMode(0);
 			break;
@@ -498,32 +569,44 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			break;
 		case 3:
 			this.setColorDebugMode(2);
+		default:
+			break;
 		}
 		
-		this.setWordWrap((Boolean)wordwrap.getValue());
-		this.setLinkColor((Integer)hyperlinkcolor.getValue());
-		this.setLinkMode((Integer)hlmode.getValue());
-		this.setLinksEnabled((Boolean)hlenabled.getValue());
+		this.setWordWrap((Boolean) wordwrap.getValue());
+		this.setLinkColor((Integer) hyperlinkcolor.getValue());
+		this.setLinkMode((Integer) hlmode.getValue());
+		this.setLinksEnabled((Boolean) hlenabled.getValue());
 	}
 	
-	protected void resetAndAddText(byte[] obj) {
+	/** Resets the buffer with the given argument. 
+	 * 
+	 * @param obj The text to add in bytes.
+	 */
+	protected final void resetAndAddText(final byte[] obj) {
 		mBuffer.empty();
 		mHoldBuffer.empty();
-		addBytes(obj,true);
+		addBytes(obj, true);
 	}
 
-	protected void xcallB(String string,byte[] bytes) throws LuaException {
-		if(mL == null) { return;}
+	/** The end of the WindowXCallB Lua function.
+	 * 
+	 * @param string The name of the global callback function to call.
+	 * @param bytes The bytes to provide to it (gets converted to a lua string without going through java.
+	 * @throws LuaException Thown when there is a problem with lua.
+	 */
+	protected final void xcallB(final String string, final byte[] bytes) throws LuaException {
+		if (mL == null) { return; }
 		mL.getGlobal("debug");
 		mL.getField(-1, "traceback");
-		mL.remove(-2);
+		mL.remove(TOP_MINUS_TWO);
 		
 		mL.getGlobal(string);
-		if(mL.getLuaObject(-1).isFunction()) {
+		if (mL.getLuaObject(-1).isFunction()) {
 			mL.pushObjectValue(bytes);
-			int ret = mL.pcall(1, 1, -3);
-			if(ret != 0) {
-				displayLuaError("WindowXCallB calling: " + string + " error:"+mL.getLuaObject(-1).getString());
+			int ret = mL.pcall(1, 1, TOP_MINUS_THREE);
+			if (ret != 0) {
+				displayLuaError("WindowXCallB calling: " + string + " error:" + mL.getLuaObject(-1).getString());
 			} else {
 				mL.pop(2);
 			}
@@ -532,10 +615,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 
-	private void startSelection(int line,int column) {
+	/** Starts the selection mode, sets up structures and flags that cause the widget to be drawn in onDraw(...).
+	 * 
+	 * @param line Starting line.
+	 * @param column Starting column.
+	 */
+	private void startSelection(final int line, final int column) {
 		
-		theSelection = mBuffer.getSelectionForPoint(line,column);
-		if(theSelection == null) {
+		theSelection = mBuffer.getSelectionForPoint(line, column);
+		if (theSelection == null) {
 			firstPress = true;
 		} else {
 			this.setOnTouchListener(textSelectionTouchHandler);
@@ -549,99 +637,94 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 	}
 	
-	protected void updateEncoding(String value) {
+	/** Called from the MainWindow when the system encoding changes. 
+	 * 
+	 * @param value The new encoding value.
+	 */
+	protected final void updateEncoding(final String value) {
 		mBuffer.setEncoding(value);
 	}
 
-
-
-	protected void doUpdateSetting(String key, String value) {
+	/** Implementation of the settings handler routine to handle when settings change. 
+	 * 
+	 * @param key The key of the setting that changed.
+	 * @param value The new value of the setting.
+	 */
+	protected final void doUpdateSetting(final String key, final String value) {
 		mSettings.setOption(key, value);
 	}
-
-	public void setTWidth(int height) {
-		mWidth=height;
-		//the_tree.se
-		calculateCharacterFeatures(mWidth,mHeight);
-	}
 	
-	public int getTWidth() {
-		return mWidth;
-	}
-	
-	private boolean featuresChanged = true;
-	public void calculateCharacterFeatures(int width,int height) {
+	/** Updates relevant draw routine structures and temporary values. Measures one character and handles the fit routine. 
+	 * 
+	 * @param width Window width.
+	 * @param height Window height.
+	 */
+	public final void calculateCharacterFeatures(final int width, final int height) {
 		
-		if(height == 0 && width == 0) {
+		if (height == 0 && width == 0) {
 			return;
 		}
 		mCalculatedLinesInWindow = (int) (height / mPrefLineSize);
 		
 		featurePaint.setTypeface(mPrefFont);
 		featurePaint.setTextSize(mPrefFontSize);
-		mOneCharWidth = (int)Math.ceil(featurePaint.measureText("a")); //measure a single character
-		mCalculatedRowsInWindow = (width / mOneCharWidth);
+		mOneCharWidth = (int) Math.ceil(featurePaint.measureText("a")); //measure a single character
+		mCalculatedRowsInWindow = width / mOneCharWidth;
 		
 		mSelectionIndicatorPaint.setTextSize(mSelectionIndicatorFontSize);
 		mSelectionIndicatorPaint.setTypeface(mPrefFont);
 		mSelectionIndicatorPaint.setAntiAlias(true);
 		mSelectionCharacterWidth = (int) Math.ceil(mSelectionIndicatorPaint.measureText("a"));
 		selectionIndicatorVectorX = mOneCharWidth + mSelectionIndicatorHalfDimension;
-		if(automaticBreaks) {
+		if (automaticBreaks) {
 			this.setLineBreaks(0);
 		}
 		
-		if(mBuffer.getBrokenLineCount() == 0) {
+		if (mBuffer.getBrokenLineCount() == 0) {
 			jumpToZero();
 		}
 		
 	}
-
-
 	
-	public void viewCreate() {
-		windowShowing = true;
-	}
 
-	private String mName = null;
-	
-	public void setName(String name) {
+	/** Setter for mName.
+	 * 
+	 * @param name New name value.
+	 */
+	public final void setName(final String name) {
 		mName = name;
 	}
 	
-	public String getName() {
+	/** Getter for mName. 
+	 * 
+	 * @return The name of this window.
+	 */
+	public final String getName() {
 		return mName;
-	}
-	
-	public void viewDestroy() {
-		windowShowing = false;
 	}
 	
 
 	@Override
-	public boolean onTouchEvent(MotionEvent t) {
-		int action = t.getAction() & MotionEvent.ACTION_MASK;     
+	public final boolean onTouchEvent(final MotionEvent t) {
 		int pointerIndex = (t.getAction() & MotionEvent.ACTION_POINTER_ID_MASK) >> MotionEvent.ACTION_POINTER_ID_SHIFT;
 		int pointerId = t.getPointerId(pointerIndex);
 		
-		if(pointer > 0 && pointerId != pointer) {
+		if (pointer > 0 && pointerId != pointer) {
 			//but invalidate this anyway
 			this.invalidate();
 			return false;
 		}
 			//normal
-		if(!scrollingEnabled) {
+		if (!scrollingEnabled) {
 			return false;
 		}
-		boolean retval = false;
-		boolean noFunction = false;
 		int index = t.findPointerIndex(pointerId);
-		start_x = new Float(t.getX(index));
-		start_x = start_x+1;
+		start_x = Float.valueOf(t.getX(index));
+		start_x = start_x + 1;
 		
-		if(mBuffer.getBrokenLineCount() != 0) {
+		if (mBuffer.getBrokenLineCount() != 0) {
 			Rect rect = new Rect();
-			if(!finger_down) {
+			if (!mFingerDown) {
 				
 				rect.top = 0;
 				rect.left = 0;
@@ -652,78 +735,75 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				Point point = new Point();
 				point.x = (int) t.getX();
 				point.y = (int) t.getY();
-				if(!rect.contains((int)t.getX(),(int)t.getY())) {
+				if (!rect.contains((int) t.getX(), (int) t.getY())) {
 					return false;
 				}
 			}
 			
-			
-			synchronized(mToken) {
-			if(t.getAction() == MotionEvent.ACTION_DOWN) {
+			synchronized (mToken) {
+			if (t.getAction() == MotionEvent.ACTION_DOWN) {
 				pointer = pointerId;
-				start_x = new Float(t.getX(index));
-				start_y = new Float(t.getY(index));
-				pre_event = MotionEvent.obtainNoHistory(t);
-				mFlingVelocity = 0.0f;
-				finger_down = true;
-				finger_down_to_up = false;
-				prev_draw_time = 0;
-				
-				for(int tmpCount=0;tmpCount<linkBoxes.size();tmpCount++) {
-					if(linkBoxes.get(tmpCount).getBox().contains((int)(float)start_x,(int)(float)start_y)) {
-						touchInLink = tmpCount;
-					}
-				}
-				
+				start_x = Float.valueOf(t.getX(index));
+				mStartY = Float.valueOf(t.getY(index));
+				mTouchPreEvent = MotionEvent.obtainNoHistory(t);
 				//calculate row/col
 				float x = t.getX(index);
 				float y = t.getY(index);
+				t.recycle();
+				mFlingVelocity = 0.0f;
+				mFingerDown = true;
+				finger_down_to_up = false;
+				mLastFrameTime = 0;
+				
+				for (int tmpCount = 0; tmpCount < linkBoxes.size(); tmpCount++) {
+					if (linkBoxes.get(tmpCount).getBox().contains(start_x.intValue(), mStartY.intValue())) {
+						mTouchInLink = tmpCount;
+					}
+				}
 				
 				//convert y to be at the bottom of the screen.
 				
-				y = (float) ((float)this.getHeight() - y + (scrollback-SCROLL_MIN));
+				y = (float) ((float) this.getHeight() - y + (mScrollback - SCROLL_MIN));
 				
-				float xform_to_line = y / (float)mPrefLineSize;
-				int line = (int)Math.floor(xform_to_line);
+				int line = (int) Math.floor(y / (float) mPrefLineSize);
 				
-				float xform_to_column = x / (float)mOneCharWidth;
-				int column = (int)Math.floor(xform_to_column);
-				if(mTextSelectionEnabled) {
+				int column = (int) Math.floor(x / (float) mOneCharWidth);
+				if (mTextSelectionEnabled) {
 					mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_STARTSELECTION, line, column), 1500);
 				}
 				
-				if(homeWidgetShowing) {
-					if(mHomeWidgetRect.contains((int)x,(int)t.getY())) {
+				if (homeWidgetShowing) {
+					if (mHomeWidgetRect.contains((int) x, (int) t.getY())) {
 						homeWidgetFingerDown = true;
 					}
 				}
 				
 			}
 			
-			if(t.getAction() == MotionEvent.ACTION_MOVE) {
+			if (t.getAction() == MotionEvent.ACTION_MOVE) {
 				
 	
-				Float now_y = new Float(t.getY(index));
+				Float nowY = Float.valueOf(t.getY(index));
 				
 				
 	
-				float thentime = pre_event.getEventTime();
+				float thentime = mTouchPreEvent.getEventTime();
 				float nowtime = t.getEventTime();
 				
 				float time = (nowtime - thentime) / 1000.0f; //convert to seconds
 				
-				float prev_y = pre_event.getY(index);
-				float dist = now_y - prev_y;
-				diff_amount = (int)dist;
+				float prevY = mTouchPreEvent.getY(index);
+				float dist = nowY - prevY;
+				diff_amount = (int) dist;
 				
-				if(Math.abs(now_y - start_y) > mPrefLineSize*1.5) {
+				if (Math.abs(nowY - mStartY) > mPrefLineSize * 1.5) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
 				}
 				
 				float velocity = dist / time;
-				float MAX_VELOCITY = 700; 
-				if(Math.abs(velocity) > MAX_VELOCITY) {
-					if(velocity > 0) {
+				
+				if (Math.abs(velocity) > MAX_VELOCITY) {
+					if (velocity > 0) {
 						velocity = MAX_VELOCITY;
 					} else {
 						velocity = MAX_VELOCITY * -1;
@@ -731,51 +811,41 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 				mFlingVelocity = velocity;
 				
-				if(Math.abs(now_y - start_y) > mPrefLineSize*1.5*mDensity) {
+				if (Math.abs(nowY - mStartY) > mPrefLineSize * 1.5 * mDensity) {
 					mHandler.removeMessages(MESSAGE_STARTSELECTION);
 				}
 				
-				if(Math.abs(diff_amount) > 5*mDensity) {
+				if (Math.abs(diff_amount) > 5 * mDensity) {
 					
-					pre_event = MotionEvent.obtainNoHistory(t);
+					mTouchPreEvent = MotionEvent.obtainNoHistory(t);
+					t.recycle();
 				}
 				
-			}			
-			int pointers = t.getPointerCount();
-			for(int i=0;i<pointers;i++) {
-				
-				Float y_val = new Float(t.getY(index));
-				Float x_val = new Float(t.getX(index));
-				//bx = x_val.intValue();
-				//by = y_val.intValue();
-				
-				//prev_y = y_val;
-			}
+			}						
 			
-			
-			if(t.getAction() == (MotionEvent.ACTION_UP)) {
+			if (t.getAction() == (MotionEvent.ACTION_UP)) {
 				
-				pre_event = null;
+				mTouchPreEvent = null;
 				//prev_y = new Float(0);
 		        
 		        //reset the priority
 		        pointer = -1;
 	
-		        pre_event = null;
-		        finger_down=false;
+		        mTouchPreEvent = null;
+		        mFingerDown = false;
 		        finger_down_to_up = true;
 		         
-				if(touchInLink > -1) {
-					mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(touchInLink).getData()));
-			        touchInLink = -1;
+				if (mTouchInLink > -1) {
+					mMainWindowHandler.sendMessage(mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_LAUNCHURL, linkBoxes.get(mTouchInLink).getData()));
+			        mTouchInLink = -1;
 				}
 				
 				
 				mHandler.removeMessages(MESSAGE_STARTSELECTION);
 					
-				if(homeWidgetShowing && homeWidgetFingerDown) {
-					if(mHomeWidgetRect.contains((int)t.getX(index),(int)t.getY(index))) {
-						scrollback = SCROLL_MIN;
+				if (homeWidgetShowing && homeWidgetFingerDown) {
+					if (mHomeWidgetRect.contains((int) t.getX(index), (int) t.getY(index))) {
+						mScrollback = SCROLL_MIN;
 						homeWidgetFingerDown = false;
 						this.invalidate();
 					}
@@ -792,73 +862,59 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		return false;
 	}
 	
+	/** Called from onDraw, calculates a new scrollback value for this frame. */
 	private void calculateScrollBack() {
 		
-		if(prev_draw_time == 0) { //never drawn before
-			if(mBuffer.getBrokenLineCount() <= mCalculatedLinesInWindow) { scrollback = SCROLL_MIN; return;}
-			if(finger_down) {
-				scrollback = (double)Math.floor(scrollback + diff_amount);
-				if(scrollback < SCROLL_MIN) {
-					scrollback = SCROLL_MIN;
-					//Log.e("FLUF","1: "+scrollback);
+		if (mLastFrameTime == 0) { //never drawn before
+			if (mBuffer.getBrokenLineCount() <= mCalculatedLinesInWindow) { mScrollback = SCROLL_MIN; return;}
+			if (mFingerDown) {
+				mScrollback = (double) Math.floor(mScrollback + diff_amount);
+				if (mScrollback < SCROLL_MIN) {
+					mScrollback = SCROLL_MIN;
 				} else {
-					if(scrollback >= ((mBuffer.getBrokenLineCount() * mPrefLineSize))) {
-						
-						scrollback = (double)((mBuffer.getBrokenLineCount() * mPrefLineSize));
-						//Log.e("FLUF","2: "+scrollback);
+					if (mScrollback >= ((mBuffer.getBrokenLineCount() * mPrefLineSize))) {
+						mScrollback = (double) ((mBuffer.getBrokenLineCount() * mPrefLineSize));
 					}
 				}
 				diff_amount = 0;
 			} else {
-				if(finger_down_to_up) {
-					prev_draw_time = System.currentTimeMillis(); 
-					finger_down_to_up=false;
+				if (finger_down_to_up) {
+					mLastFrameTime = System.currentTimeMillis(); 
+					finger_down_to_up = false;
 				}
 			}
 		} else {
 			
-			if(finger_down == true) {
-
-			} else {
-				
+			if (!mFingerDown) {				
 				long nowdrawtime = System.currentTimeMillis(); 
 				
-				float duration_since_last_frame = ((float)(nowdrawtime-prev_draw_time)) / 1000.0f; //convert to seconds
-				prev_draw_time = System.currentTimeMillis();
-				//compute change in velocity: v = vo + at;
-				if(mFlingVelocity < 0) {
-					mFlingVelocity = mFlingVelocity + fling_accel*duration_since_last_frame;
-					scrollback =  (scrollback + mFlingVelocity*duration_since_last_frame);
-					//Log.e("FLUF","3: "+scrollback);
+				float durationSinceLastFrame = ((float) (nowdrawtime - mLastFrameTime)) / 1000.0f; //convert to seconds
+				mLastFrameTime = System.currentTimeMillis();
+				if (mFlingVelocity < 0) {
+					mFlingVelocity = mFlingVelocity + fling_accel * durationSinceLastFrame;
+					mScrollback =  mScrollback + mFlingVelocity * durationSinceLastFrame;
 				} else if (mFlingVelocity > 0) {
-					
-					mFlingVelocity = mFlingVelocity - fling_accel*duration_since_last_frame;
-					scrollback =  (scrollback + mFlingVelocity*duration_since_last_frame);
-					//Log.e("FLUF","4: "+scrollback);
+					mFlingVelocity = mFlingVelocity - fling_accel * durationSinceLastFrame;
+					mScrollback =  mScrollback + mFlingVelocity * durationSinceLastFrame;
 				}
 				
-				if(Math.abs(new Double(mFlingVelocity)) < 15) {
+				if (Math.abs(Double.valueOf(mFlingVelocity)) < 15) {
 					mFlingVelocity = 0;
-					prev_draw_time = 0;
+					mLastFrameTime = 0;
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 				}
 					
-				if(scrollback <= SCROLL_MIN) {
-					scrollback = SCROLL_MIN;
-					//Log.e("FLUF","5: "+scrollback);
+				if (mScrollback <= SCROLL_MIN) {
+					mScrollback = SCROLL_MIN;
 					mFlingVelocity = 0;
-					prev_draw_time = 0;
+					mLastFrameTime = 0;
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-
-					//mHandler.sendEmptyMessage(Window.MSG_CLEAR_NEW_TEXT_INDICATOR);
 				}
 				
-				if(scrollback >= ((mBuffer.getBrokenLineCount() * mPrefLineSize))) {
-					//Log.e("WINDOW","UPPER CAP OF THE BUFFER REACHED!");
-					scrollback = (double)((mBuffer.getBrokenLineCount() * mPrefLineSize));
-					//Log.e("FLUF","6: "+scrollback);
+				if (mScrollback >= ((mBuffer.getBrokenLineCount() * mPrefLineSize))) {
+					mScrollback = (double) ((mBuffer.getBrokenLineCount() * mPrefLineSize));
 					mFlingVelocity = 0;
-					prev_draw_time = 0;
+					mLastFrameTime = 0;
 					Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
 					
 				}
@@ -869,62 +925,38 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 	}
 	
-	Paint p = new Paint();
 
-	
-	Paint b = new Paint();
-	
-	Paint linkColor = null;
-	private Double SCROLL_MIN = 24d;
-	private Double scrollback = SCROLL_MIN;
-	ListIterator<TextTree.Line> screenIt = null;// = the_tree.getLines().iterator();
-	ListIterator<Unit> unitIterator = null;
-	private int mLinkBoxHeightMinimum = 20;
-	
-	boolean hasDrawRoutine = true;
-	//private boolean drawn = false;
-	public void onDraw(Canvas c) {
-		/*if(drawn && !drawOnDemand) {
-			Log.e("Window","Not drawing ("+mName+")-drawn and not draw on demand");
-			return;//dont draw
-			
-		}*/
-		//drawn = true;
-		
-		//synchronized(updateSynch) {
-		
-		if(selectedSelector != null) {
-			//int full = selectionIndicatorHalfDimension * 2;
-			//int third = (selectionIndicatorHalfDimension * 2) / 3;
-			int color = scroller_paint.getColor();
+	@Override
+	public final void onDraw(final Canvas c) {
+		if (selectedSelector != null) {
+			int color = mScrollerPaint.getColor();
 			int newcolor = 0xFF000000 | color;
-			scroller_paint.setColor(newcolor);
-			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorLeftButtonRect, scroller_paint);
-			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorUpButtonRect, scroller_paint);
-			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorRightButtonRect, scroller_paint);
-			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorDownButtonRect, scroller_paint);
-			//mSelectionIn
-			scroller_paint.setColor(color);
+			mScrollerPaint.setColor(newcolor);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorLeftButtonRect, mScrollerPaint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorUpButtonRect, mScrollerPaint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorRightButtonRect, mScrollerPaint);
+			mSelectionIndicatorCanvas.drawRect(mSelectionIndicatorDownButtonRect, mScrollerPaint);
+			mScrollerPaint.setColor(color);
 			
 			mSelectionIndicatorCanvas.save();
 			mSelectionIndicatorCanvas.clipPath(mSelectionIndicatorClipPath);
 			mSelectionIndicatorCanvas.drawColor(0xFF444444);
 			
 		}
-		int startline2=0,startcol=0,endline=0,endcol=0;
-		if(theSelection  != null) {
+		int startline2 = 0, startcol = 0, endline = 0, endcol = 0;
+		if (theSelection  != null) {
 
-			if(theSelection.start.line == theSelection.end.line) {
+			if (theSelection.start.line == theSelection.end.line) {
 				startline2 = theSelection.start.line;
 				endline = theSelection.start.line;
-				if(theSelection.end.column < theSelection.start.column) {
+				if (theSelection.end.column < theSelection.start.column) {
 					startcol = theSelection.end.column;
 					endcol = theSelection.start.column;
 				} else{
 					startcol = theSelection.start.column;
 					endcol = theSelection.end.column;
 				}
-			} else if(theSelection.end.line >  theSelection.start.line) {
+			} else if (theSelection.end.line >  theSelection.start.line) {
 				startline2 = theSelection.end.line;
 				startcol = theSelection.end.column;
 				endline = theSelection.start.line;
@@ -938,8 +970,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 		
-		if(mBuffer.getBrokenLineCount() != 0) {
-			if(linkColor == null) {
+		if (mBuffer.getBrokenLineCount() != 0) {
+			if (linkColor == null) {
 				
 				linkColor = new Paint();
 				linkColor.setAntiAlias(true);
@@ -949,20 +981,18 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			linkColor.setColor(mLinkHighlightColor);
 			calculateScrollBack();
 			c.save();
-			Rect clip = new Rect();
 			
-			clip.top = 0;
-			clip.left = 0;
-			clip.right = mWidth;
-			clip.bottom = mHeight;
 			
-			c.clipRect(clip);
+			mClipRect.top = 0;
+			mClipRect.left = 0;
+			mClipRect.right = mWidth;
+			mClipRect.bottom = mHeight;
 			
-			//now 0,0 is the lower left hand corner of the screen, and X and Y both increase positivly.
-			Paint b = new Paint();
+			c.clipRect(mClipRect);
+			
 			b.setColor(0xFF0A0A0A);
 			c.drawColor(0xFF0A0A0A); //fill with black
-			c.drawRect(0,0,clip.right-clip.left,clip.top-clip.bottom,b);
+			c.drawRect(0, 0, mClipRect.right - mClipRect.left, mClipRect.top - mClipRect.bottom, b);
 			p.setTypeface(mPrefFont);
 			p.setAntiAlias(true);
 			p.setTextSize(mPrefFontSize);
@@ -970,7 +1000,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			float x = 0;
 			float y = 0;
-			if(mPrefLineSize * mCalculatedLinesInWindow < this.getHeight()) {
+			if (mPrefLineSize * mCalculatedLinesInWindow < this.getHeight()) {
 				
 				y = ((mPrefLineSize * mCalculatedLinesInWindow) - this.getHeight()) - mPrefLineSize;
 				//Log.e("STARTY","STARTY IS:"+y);
@@ -1007,10 +1037,10 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int maxTries = 20;
 			int tries = 0;
 			
-			while(!gotIt && tries <= maxTries) {
+			while (!gotIt && tries <= maxTries) {
 				try {
 					tries = tries + 1;
-					bundle = getScreenIterator(scrollback,mPrefLineSize);
+					bundle = getScreenIterator(mScrollback, mPrefLineSize);
 					gotIt = true;
 					
 				} catch (ConcurrentModificationException e) {
@@ -1025,16 +1055,15 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					}
 				}
 			}
-			if(!gotIt) {
+			if (!gotIt) {
 				this.invalidate();
 				return;
 			}
 			screenIt = bundle.getI();
 			y = bundle.getOffset();
 
-			
 			int extraLines = bundle.getExtraLines();
-			if(screenIt == null) { return;}
+			if (screenIt == null) { return;}
 			
 			int startline = bundle.getStartLine();
 			int workingline = startline;
@@ -1044,30 +1073,26 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			//find bleed.
 			boolean bleeding = false;
 			int back = 0;
-			while(screenIt.hasNext() && !bleeding) {
+			while (screenIt.hasNext() && !bleeding) {
 				
 				Line l = screenIt.next();
 				back++;
 
-				for(Unit u : l.getData()) {
-					if(u instanceof TextTree.Color) {
+				for (Unit u : l.getData()) {
+					if (u instanceof TextTree.Color) {
 						mXterm256Color = false;
 						mXterm256FGStart = false;
 						mXterm256BGStart = false;
-						for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
-						//for(Integer o : ((TextTree.Color) u).getOperations()) {
-							
+						for (int i = 0; i < ((TextTree.Color) u).getOperations().size(); i++) {
 							updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
 							Colorizer.COLOR_TYPE type = Colorizer.getColorType(((TextTree.Color) u).getOperations().get(i));
-							if(type != Colorizer.COLOR_TYPE.NOT_A_COLOR && type != Colorizer.COLOR_TYPE.BACKGROUND && type != Colorizer.COLOR_TYPE.BRIGHT_CODE) {
+							if (type != Colorizer.COLOR_TYPE.NOT_A_COLOR && type != Colorizer.COLOR_TYPE.BACKGROUND && type != Colorizer.COLOR_TYPE.BRIGHT_CODE) {
 								bleeding = true;
 							}
-							
 						}
-						//bleeding = ((TextTree.Color)u).updateColorRegisters(selectedBright, selectedColor, selectedBackground);
-						if(mXterm256FGStart) {
+						if (mXterm256FGStart) {
 							p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor, mXterm256Color));
-						} else {//b.setColor(0xFF000000 | Colorizer.getColorValue(0, selectedBackground));
+						} else {
 							p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor, false));
 							
 						}
@@ -1078,130 +1103,125 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				}
 			}
 			
-			if(!bleeding) {
-				//Log.e("WINDOW","WINDOW " + this.getName() + " is not bleeding");
-				p.setColor(0xFF000000 | Colorizer.getColorValue(0,37,false));
+			if (!bleeding) {
+				p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37, false));
 			}
 			//TODO: STEP 4
 			//advance the iterator back the number of units it took to find a bleed.
 			//second real expensive move. In the case of a no color text buffer, it would walk from scroll to end and back every time. USE COLOR 
-			while(back > 0) {
+			while (back > 0) {
 				screenIt.previous();
 				back--;
 			}
-			if(screenIt.hasNext()) {
-			screenIt.next(); // the bleed/back stuff seems to be messing with my calculation
-			//of what the next line is.
-			}
+			
+			if (screenIt.hasNext()) {
+				screenIt.next(); // the bleed/back stuff seems to be messing with my calculation
+			} 
 			//TODO: STEP 5
 			//draw the text, from top to bottom.	
 			
 			int drawnlines = 0;
 			
 			boolean doingLink = false;
-			StringBuffer currentLink = new StringBuffer();
+			
+			mCurrentLink.setLength(0);
 			linkBoxes.clear();
 			
-			int postmp = screenIt.previousIndex();
-			while(!stop && screenIt.hasPrevious()) {
-				int loc = screenIt.previousIndex();
+			while (!stop && screenIt.hasPrevious()) {
 				Line l = screenIt.previous();
 				
 				
-				if(mCenterJustify) {
+				if (mCenterJustify) {
 					//center justify.
 
-					int amount = mOneCharWidth*l.charcount;
-					x = (float) ((mWidth/2.0)-(amount/2.0));
+					int amount = mOneCharWidth * l.charcount;
+					x = (float) ((mWidth / 2.0) - (amount / 2.0));
 				}
 				unitIterator = l.getIterator();
 				
 				int linemode = 0;
-				if(startline2 == endline && startline2 == workingline) {
+				if (startline2 == endline && startline2 == workingline) {
 					linemode = 1;
-				} else if(startline2 == workingline) {
+				} else if (startline2 == workingline) {
 					linemode = 2;
-				} else if(startline2 > workingline && endline < workingline) {
+				} else if (startline2 > workingline && endline < workingline) {
 					
 					linemode = 3;
-				} else if(endline == workingline) {
+				} else if (endline == workingline) {
 					linemode = 4;
 					
 				}
 				
 				boolean finishedWithNewLine = false;
 				
-				while(unitIterator.hasNext()) {
+				while (unitIterator.hasNext()) {
 					Unit u = unitIterator.next();
-					//p.setColor(color)
 					boolean useBackground = false;
-					if(b.getColor() != 0xFF0A0A0A && b.getColor() != 0xFF000000) {
+					if (b.getColor() != 0xFF0A0A0A && b.getColor() != 0xFF000000) {
 						useBackground = true;
 					}
 					
 					switch(u.type) {
 					case WHITESPACE:
 					case TEXT:
-						TextTree.Text text = ((TextTree.Text)u);
+						TextTree.Text text = (TextTree.Text) u;
 						boolean doIndicator = false;
 						int indicatorlineoffset = 0;
-						boolean backgroundSelection = false;
-						if(selectedSelector != null && selectedSelector.line == workingline) {
+						if (selectedSelector != null && selectedSelector.line == workingline) {
 							doIndicator = true;
-						} else if(selectedSelector != null && Math.abs(selectedSelector.line -workingline) < 3) {
+						} else if (selectedSelector != null && Math.abs(selectedSelector.line - workingline) < 3) {
 							doIndicator = true;
 							indicatorlineoffset = selectedSelector.line - workingline;
 						}
 						
-						if(theSelection  != null) {
-							
+						if (theSelection  != null) {
 							switch(linemode) {
 							case 1:
 								int finishCol = workingcol + text.bytecount;
-								if(finishCol > startcol && finishCol-1 <= endcol){
-									if((finishCol - startcol) < text.bytecount) {
+								if (finishCol > startcol && finishCol - 1 <= endcol){
+									if ((finishCol - startcol) < text.bytecount) {
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * mOneCharWidth;
 										int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize()+(3*mDensity), x + stringWidth, y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize() + (3 * mDensity), x + stringWidth, y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + p.measureText(text.getString()), y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 									}
-								} else if(finishCol > endcol) {
-									if((finishCol - endcol) < text.bytecount) {
+								} else if (finishCol > endcol) {
+									if ((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
 										int overshootPixels = overshoot * mOneCharWidth;
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + overshootPixels, y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 									} 
 								} 
 								break;
 							case 2:
 								finishCol = workingcol + text.bytecount;
-								if(finishCol > startcol) {
-									if((finishCol - startcol) < text.bytecount) {
+								if (finishCol > startcol) {
+									if ((finishCol - startcol) < text.bytecount) {
 										int overshoot = startcol - workingcol;
 										int overshootPixels = overshoot * mOneCharWidth;
 										int stringWidth = (int) p.measureText(text.getString());
-										c.drawRect(x + overshootPixels, y - p.getTextSize()+(2*mDensity), x + stringWidth, y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+										c.drawRect(x + overshootPixels, y - p.getTextSize() + (2 * mDensity), x + stringWidth, y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 									} else {
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+										c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + p.measureText(text.getString()), y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 									}
 								} 
 								break;
 							case 3:
 								
-								c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+								c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + p.measureText(text.getString()), y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 								break;
 							case 4:
 								finishCol = workingcol + text.bytecount;
-								if(finishCol >= endcol) {
-									if((finishCol - endcol) < text.bytecount) {
+								if (finishCol >= endcol) {
+									if ((finishCol - endcol) < text.bytecount) {
 										int overshoot = endcol - workingcol + 1;
 										int overshootPixels = overshoot * mOneCharWidth;
-										c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + overshootPixels, y+(4*mDensity), scroller_paint);
+										c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + overshootPixels, y + (4 * mDensity), mScrollerPaint);
 									}
 								} else {
-									c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), mTextSelectionIndicatorBackgroundPaint);
+									c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + p.measureText(text.getString()), y + (4 * mDensity), mTextSelectionIndicatorBackgroundPaint);
 								}
 								break;
 							default:
@@ -1209,50 +1229,50 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 							}
 						}
 						
-						if(useBackground) {
-							c.drawRect(x, y - p.getTextSize()+(2*mDensity), x + p.measureText(text.getString()), y+(4*mDensity), b);
+						if (useBackground) {
+							c.drawRect(x, y - p.getTextSize() + (2 * mDensity), x + p.measureText(text.getString()), y + (4 * mDensity), b);
 						}
 						
-						if(text.isLink() || doingLink) {
-							if(u instanceof TextTree.WhiteSpace) {
+						if (text.isLink() || doingLink) {
+							if (u instanceof TextTree.WhiteSpace) {
 								//DO LINK BOX.
-								for(int z=0;z<linkBoxes.size();z++) {
-									if(linkBoxes.get(z).getData() == null) {
-										linkBoxes.get(z).setData(currentLink.toString());
+								for (int z = 0; z < linkBoxes.size(); z++) {
+									if (linkBoxes.get(z).getData() == null) {
+										linkBoxes.get(z).setData(mCurrentLink.toString());
 									}
 								}
-								currentLink.setLength(0);
+								mCurrentLink.setLength(0);
 								doingLink = false;
 							} else {
 								doingLink = true;
-								currentLink.append(text.getString());
+								mCurrentLink.append(text.getString());
 								
 								
 								Rect r = new Rect();
 								r.left = (int) x;
 								r.top = (int) (y - p.getTextSize());
 								r.right = (int) (x + p.measureText(text.getString()));
-								r.bottom = (int) (y+5);
-								if(mLinkMode == LINK_MODE.BACKGROUND) {
+								r.bottom = (int) (y + 5);
+								if (mLinkMode == LINK_MODE.BACKGROUND) {
 									linkColor.setColor(mLinkHighlightColor);
 									c.drawRect(r.left, r.top, r.right, r.bottom, linkColor);
 								}
 								
 								int linkBoxHeightDips = (int) ((r.bottom - r.top) / this.getResources().getDisplayMetrics().density);
-								if( linkBoxHeightDips < mLinkBoxHeightMinimum) {
-									int additionalAmount = (mLinkBoxHeightMinimum - linkBoxHeightDips)/2;
-									if(additionalAmount > 0) {
+								if (linkBoxHeightDips < mLinkBoxHeightMinimum) {
+									int additionalAmount = (mLinkBoxHeightMinimum - linkBoxHeightDips) / 2;
+									if (additionalAmount > 0) {
 										r.top -= additionalAmount * this.getResources().getDisplayMetrics().density;
 										r.bottom += additionalAmount * this.getResources().getDisplayMetrics().density;
 									}
 								}
 								
-								LinkBox linkbox = new LinkBox(null,r);
+								LinkBox linkbox = new LinkBox(null, r);
 								linkBoxes.add(linkbox);
 								
 							}
 						}
-						if(doingLink) {
+						if (doingLink) {
 							switch(mLinkMode) {
 							case NONE:
 								linkColor.setTextSize(p.getTextSize());
@@ -1276,7 +1296,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								
 								linkColor.setTextSize(p.getTextSize());
 								linkColor.setTypeface(p.getTypeface());
-								if(mSelectedColor == 37) {
+								if (mSelectedColor == 37) {
 									linkColor.setColor(mLinkHighlightColor);
 								} else {
 									linkColor.setColor(p.getColor());
@@ -1298,51 +1318,41 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								linkColor.setColor(mLinkHighlightColor);
 							}
 							
-							if(doIndicator) {
-								int unitEndCol = workingcol + (text.bytecount-1);
-								if(unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column +10) {
+							if (doIndicator) {
+								int unitEndCol = workingcol + (text.bytecount - 1);
+								if (unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column + 10) {
 									float size = p.getTextSize();
 									p.setTextSize(30);
-									int overshoot = (workingcol - selectedSelector.column);
-									int ix = 0,iy=mSelectionIndicatorFontSize;
-									//if(overshoot > 0) {
-										ix = (int) (mSelectionIndicatorHalfDimension + (overshoot*mSelectionCharacterWidth) - 0.5*mSelectionCharacterWidth);
-										iy = (int) (mSelectionIndicatorHalfDimension+(0.5*mSelectionIndicatorFontSize)) + (indicatorlineoffset*mSelectionIndicatorFontSize);
-									
-									
-									
+									int overshoot = workingcol - selectedSelector.column;
+									int ix = 0, iy = mSelectionIndicatorFontSize;
+									ix = (int) (mSelectionIndicatorHalfDimension + (overshoot * mSelectionCharacterWidth) - 0.5 * mSelectionCharacterWidth);
+									iy = (int) (mSelectionIndicatorHalfDimension + (0.5 * mSelectionIndicatorFontSize)) + (indicatorlineoffset * mSelectionIndicatorFontSize);
 									mSelectionIndicatorCanvas.drawText(text.getString(), ix, iy, p);
-									
 									p.setTextSize(size);
 								}
 								
 							}
-							c.drawText(text.getString(),x,y,linkColor);
+							c.drawText(text.getString(), x, y, linkColor);
 							x += p.measureText(text.getString());
 							
 						} else {
 							
-							if(doIndicator) {
-								int unitEndCol = workingcol + (text.bytecount-1);
-								if(unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column +10) {
+							if (doIndicator) {
+								int unitEndCol = workingcol + (text.bytecount - 1);
+								if (unitEndCol > selectedSelector.column - 10 && workingcol < selectedSelector.column + 10) {
 									float size = p.getTextSize();
 									p.setTextSize(30);
-									int overshoot = (workingcol - selectedSelector.column);
-									int ix = 0,iy=mSelectionIndicatorFontSize;
-									//if(overshoot > 0) {
-										ix = (int) (mSelectionIndicatorHalfDimension + (overshoot*mSelectionCharacterWidth) - 0.5*mSelectionCharacterWidth);
-										iy = (int) (mSelectionIndicatorHalfDimension+(0.5*mSelectionIndicatorFontSize)) + (indicatorlineoffset*mSelectionIndicatorFontSize);
-									
-									
-									
+									int overshoot = workingcol - selectedSelector.column;
+									int ix = 0 , iy = mSelectionIndicatorFontSize;
+									ix = (int) (mSelectionIndicatorHalfDimension + (overshoot * mSelectionCharacterWidth) - 0.5 * mSelectionCharacterWidth);
+									iy = (int) (mSelectionIndicatorHalfDimension + (0.5 * mSelectionIndicatorFontSize)) + (indicatorlineoffset * mSelectionIndicatorFontSize);
 									mSelectionIndicatorCanvas.drawText(text.getString(), ix, iy, p);
-									
 									p.setTextSize(size);
 								}
 								
 							}
 							workingcol += text.bytecount;
-							c.drawText(text.getString(),x,y,p);
+							c.drawText(text.getString(), x, y, p);
 							x += p.measureText(text.getString());
 						}
 						
@@ -1351,66 +1361,66 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						mXterm256Color = false;
 						mXterm256FGStart = false;
 						mXterm256BGStart = false;
-						for(int i=0;i<((TextTree.Color) u).getOperations().size();i++) {
+						for (int i = 0; i < ((TextTree.Color) u).getOperations().size(); i++) {
 							updateColorRegisters(((TextTree.Color) u).getOperations().get(i));
 						}
 						
-						if(mColorDebugMode == 2 || mColorDebugMode == 3) {
+						if (mColorDebugMode == 2 || mColorDebugMode == 3) {
 							p.setColor(0xFF000000 | Colorizer.getColorValue(0, 37,false));
 							b.setColor(0xFF000000 | Colorizer.getColorValue(0, 40,false));
 						} else {
-							if(mXterm256FGStart) {
-								if(mSelectedColor == 33) {
+							if (mXterm256FGStart) {
+								if (mSelectedColor == 33) {
 									mSelectedColor = 33;
 								}
-								p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor,mXterm256Color));
+								p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor, mXterm256Color));
 							} else {
-								if(!mXterm256BGStart) {
-									p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor,false));
+								if (!mXterm256BGStart) {
+									p.setColor(0xFF000000 | Colorizer.getColorValue(mSelectedBright, mSelectedColor, false));
 								}
 							}
 							
-							if(mXterm256BGStart) {
+							if (mXterm256BGStart) {
 								b.setColor(0xFF000000 | Colorizer.getColorValue(0, mSelectedBackground,mXterm256Color));
 							} else {
 								b.setColor(0xFF000000 | Colorizer.getColorValue(0, mSelectedBackground,false));
 								
 							}
 						}
-						if(mColorDebugMode == 1 || mColorDebugMode == 2) {
+						if (mColorDebugMode == 1 || mColorDebugMode == 2) {
 							String str = "";
 							try {
-								str = new String(((TextTree.Color)u).bin,"ISO-8859-1");
+								str = new String(((TextTree.Color) u).bin,"ISO-8859-1");
 							} catch (UnsupportedEncodingException e) {
 								e.printStackTrace();
 							}
-							c.drawText(str,x,y,p);
+							c.drawText(str, x, y, p);
 							x += p.measureText(str);
 						}
 						break;
 					case NEWLINE:
 					case BREAK:
-						if(u instanceof TextTree.NewLine) {
-							if(doingLink) {
-								for(int z=0;z<linkBoxes.size();z++) {
-									if(linkBoxes.get(z).getData() == null) {
-										linkBoxes.get(z).setData(currentLink.toString());
+						if (u instanceof TextTree.NewLine) {
+							if (doingLink) {
+								for (int z = 0; z < linkBoxes.size(); z++) {
+									if (linkBoxes.get(z).getData() == null) {
+										linkBoxes.get(z).setData(mCurrentLink.toString());
 									}
 								}
-								currentLink.setLength(0);
+								mCurrentLink.setLength(0);
 								doingLink = false;
 								//REGISTER LINK BOX
 							}
-						} else if(u instanceof TextTree.Break) {
+						} else if (u instanceof TextTree.Break) {
 							workingline = workingline -1;
-							if(startline2 == endline && startline2 == workingline) {
+							if (startline2 == endline && startline2 == workingline) {
 								linemode = 1;
-							} else if(startline2 == workingline) {
+							} else if (startline2 == workingline) {
 								linemode = 2;
-							} else if(startline2 > workingline && endline < workingline) {
+							} else if (startline2 > workingline && endline < workingline) {
 								
 								linemode = 3;
-							} else if(endline == workingline) {
+							} else if (endline == workingline) {
 								linemode = 4;
 								
 							} else {
@@ -1427,7 +1437,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						x = 0;
 						drawnlines++;
 						workingcol = 0;
-						if(drawnlines > mCalculatedLinesInWindow + extraLines) {
+						if (drawnlines > mCalculatedLinesInWindow + extraLines) {
 							stop = true;
 						}
 						break;
@@ -1435,7 +1445,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						break;
 					}
 				}
-				if(!finishedWithNewLine) {
+				if (!finishedWithNewLine) {
 					y = y + mPrefLineSize;
 					x = 0;
 					drawnlines++;
@@ -1447,9 +1457,9 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 			showScroller(c);
 			c.restore();
-			if(Math.abs(mFlingVelocity) > mPrefLineSize) {
-				if(!mHandler.hasMessages(MESSAGE_DRAW)) {
-					this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW,3);
+			if (Math.abs(mFlingVelocity) > mPrefLineSize) {
+				if (!mHandler.hasMessages(MESSAGE_DRAW)) {
+					this.mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW, 3);
 				}
 			} else {
 				mFlingVelocity = 0;
@@ -1459,8 +1469,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		
 		//phew, do the lua stuff, and lets be done with this.
 		c.save();
-		if(hasDrawRoutine){
-			if(mL != null) {
+		if (mHasDrawRoutine) {
+			if (mL != null) {
 				
 /*! \page entry_points
  * \section window Window Lua State Entry Points
@@ -1469,30 +1479,28 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
  * 
  * \param canvas
  * 
- * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
+ * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. 
+ * A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. 
+ * It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. 
+ * So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
  */
 				
 				mL.getGlobal("debug");
 				mL.getField(mL.getTop(), "traceback");
-				mL.remove(-2);
+				mL.remove(TOP_MINUS_TWO);
 				
 				
 				mL.getGlobal("OnDraw");
-				if(mL.isFunction(mL.getTop())) {
+				if (mL.isFunction(mL.getTop())) {
 					mL.pushJavaObject(c);
-					
-					
-					
-					int ret = mL.pcall(1, 1, -3);
-					if(ret != 0) {
+					int ret = mL.pcall(1, 1, TOP_MINUS_THREE);
+					if (ret != 0) {
 						displayLuaError("Error calling OnDraw: " + mL.getLuaObject(-1).toString());
 					} else {
-						//Log.e("LUAWINDOW","OnDraw success!");
-						//hasDrawRoutine = false;
 						mL.pop(2);
 					}
 				} else {
-					hasDrawRoutine = false;
+					mHasDrawRoutine = false;
 					mL.pop(2);
 				}
 			}
@@ -1501,34 +1509,56 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		c.restore();
 	}
 	
+	/** Utility class to keep track of a drawn link's hitbox and link info. */
 	private class LinkBox {
-		private String data;
-		private Rect box;
-		public LinkBox(String link,Rect rect) {
-			this.data = link;
-			this.box = rect;
+		/** The link data (url). */
+		private String mData;
+		/** The hitbox in view coordinates. */
+		private Rect mBox;
+		/** Public constructor.
+		 * 
+		 * @param link Link data.
+		 * @param rect Hitbox. 
+		 */
+		public LinkBox(final String link, final Rect rect) {
+			//this.mData = link;
+			this.mBox = rect;
 		}
-		public void setData(String data) {
-			this.data = data;
+		/** Setter for data. 
+		 * 
+		 * @param data The data.
+		 */
+		public void setData(final String data) {
+			this.mData = data;
 		}
+		/** Getter for data.
+		 * 
+		 * @return The data.
+		 */
 		public String getData() {
-			return data;
+			return mData;
 		}
-		
+		/** Getter for the hitbox. 
+		 * 
+		 * @return The hitbox.
+		 */
 		public Rect getBox() {
-			return box;
+			return mBox;
 		}
 	}
 	
-
-	public void showScroller(Canvas c) {
-		scroller_paint.setColor(0xFFFF0000);
+	/** Draws the scroller rectangle (and I think the selection box. 
+	 * 
+	 * @param c The canvas to draw on.
+	 */
+	public final void showScroller(final Canvas c) {
+		mScrollerPaint.setColor(0xFFFF0000);
 		
-		if(mBuffer.getBrokenLineCount() < 1) {
+		if (mBuffer.getBrokenLineCount() < 1) {
 			return; //no scroller to show.
 		}
 		
-		if(scrollback > SCROLL_MIN +3*mDensity && mBuffer.getBrokenLineCount() > mCalculatedLinesInWindow) {
+		if (mScrollback > SCROLL_MIN + 3 * mDensity && mBuffer.getBrokenLineCount() > mCalculatedLinesInWindow) {
 			homeWidgetShowing = true;
 			c.drawBitmap(mHomeWidgetDrawable, mHomeWidgetRect.left, mHomeWidgetRect.top, null);
 		} else {
@@ -1543,32 +1573,31 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		float workingWidth = mWidth;
 		
 		Float windowPercent = workingHeight / (mBuffer.getBrokenLineCount()*mPrefLineSize);
-		if(windowPercent > 1) {
+		if (windowPercent > 1) {
 			//then we have but 1 page to show
 			return;
 		} else {
-			scrollerSize = windowPercent*workingHeight;
-			posPercent = (scrollback - (workingHeight/2))/(mBuffer.getBrokenLineCount()*mPrefLineSize);
-			scrollerPos = workingHeight*posPercent;
-			scrollerPos = workingHeight-scrollerPos;
+			scrollerSize = windowPercent * workingHeight;
+			posPercent = (mScrollback - (workingHeight / 2)) / (mBuffer.getBrokenLineCount() * mPrefLineSize);
+			scrollerPos = workingHeight * posPercent;
+			scrollerPos = workingHeight - scrollerPos;
 		}
 		
-		int blue_value = (int) (-1*255*posPercent + 255);
-		int red_value = (int) (255*posPercent);
-		int alpha_value = (int) ((255-70)*posPercent+70);
-		int final_color = android.graphics.Color.argb(alpha_value, red_value, 100, blue_value);
-		scroller_paint.setColor( final_color);
+		int blueValue = (int) (-1*255*posPercent + 255);
+		int redValue = (int) (255 * posPercent);
+		int alphaValue = (int) ((255 - 70) * posPercent + 70);
+		int finalColor = android.graphics.Color.argb(alphaValue, redValue, 100, blueValue);
+		mScrollerPaint.setColor(finalColor);
 		float density = this.getResources().getDisplayMetrics().density;
-		scrollerRect.set((int)workingWidth-(int)(2*density),(int)(scrollerPos - scrollerSize/2),(int)workingWidth,(int)(scrollerPos + scrollerSize/2));
+		scrollerRect.set((int) workingWidth - (int) (2 * density), (int) (scrollerPos - scrollerSize / 2), (int) workingWidth, (int) (scrollerPos + scrollerSize / 2));
 		
-		c.drawRect(scrollerRect, scroller_paint);
+		c.drawRect(scrollerRect, mScrollerPaint);
 		
-		
-		if(theSelection != null) {
+		if (theSelection != null) {
 			//compute rects for the guys.
 			//compute the current line in pixels from the bottom of the screen.
 			int currentLine = theSelection.start.line * mPrefLineSize;
-			currentLine = (int) (currentLine - (scrollback - SCROLL_MIN));
+			currentLine = (int) (currentLine - (mScrollback - SCROLL_MIN));
 			
 			
 			int startBottom = (int) (this.getHeight() - currentLine);
@@ -1577,7 +1606,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			int startRight = startLeft + mOneCharWidth;
 			
 			currentLine = theSelection.end.line * mPrefLineSize;
-			currentLine = (int) (currentLine - (scrollback - SCROLL_MIN));
+			currentLine = (int) (currentLine - (mScrollback - SCROLL_MIN));
 			
 			int endBottom = (int) (this.getHeight() - currentLine);
 			int endTop = endBottom - mPrefLineSize;
@@ -1586,16 +1615,16 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 			//int scroll_from_bottom = (int) (scrollback-SCROLL_MIN);
 			
-			c.drawRect(startLeft, startTop-2, startRight, startBottom-2, mTextSelectionIndicatorPaint);
-			c.drawRect(endLeft, endTop-2, endRight, endBottom-2, mTextSelectionIndicatorPaint);
+			c.drawRect(startLeft, startTop - 2, startRight, startBottom - 2, mTextSelectionIndicatorPaint);
+			c.drawRect(endLeft, endTop - 2, endRight, endBottom - 2, mTextSelectionIndicatorPaint);
 			
-			int x=0,y=0;
-			if(selectedSelector == theSelection.end) {
-				x = endLeft + (endRight - endLeft)/2;
-				y = endTop + (endBottom - endTop)/2;
+			int x = 0, y = 0;
+			if (selectedSelector == theSelection.end) {
+				x = endLeft + (endRight - endLeft) / 2;
+				y = endTop + (endBottom - endTop) / 2;
 			} else {
-				x = startLeft + (startRight - startLeft)/2;
-				y = startTop + (startBottom - startTop)/2;
+				x = startLeft + (startRight - startLeft) / 2;
+				y = startTop + (startBottom - startTop) / 2;
 			}
 			
 			if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
@@ -1626,81 +1655,75 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			cancelPaint.setStyle(Paint.Style.FILL);
 			cancelPaint.setAntiAlias(true);
 			cancelPaint.setColor(0xFFFF0000);
-			int third = (mSelectionIndicatorHalfDimension*2)/3;
-			if(mTextSelectionCopyBitmap.isRecycled()) {
-				//Log.e("sf","bitmap is recycled");
-			}
-			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionCopyBitmap, 0,0, null);
-			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionCancelBitmap, 0,2*third, null);
-			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionSwapBitmap, 2*third,0, null);
+			int third = (mSelectionIndicatorHalfDimension * 2 ) / 3;
+			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionCopyBitmap, 0, 0, null);
+			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionCancelBitmap, 0, 2 * third, null);
+			mSelectionIndicatorCanvas.drawBitmap(mTextSelectionSwapBitmap, 2 * third, 0, null);
 			
 			
-			float left = (float) (mSelectionIndicatorHalfDimension-(0.5*mSelectionCharacterWidth));
-			float top = (float)(mSelectionIndicatorHalfDimension-(0.5*mSelectionIndicatorFontSize));
-			float right = (float)(mSelectionIndicatorHalfDimension+(0.5*mSelectionCharacterWidth));
-			float bottom = (float)(mSelectionIndicatorHalfDimension+(0.5*mSelectionIndicatorFontSize));
+			float left = (float) (mSelectionIndicatorHalfDimension - (0.5 * mSelectionCharacterWidth));
+			float top = (float) (mSelectionIndicatorHalfDimension - (0.5 * mSelectionIndicatorFontSize));
+			float right = (float) (mSelectionIndicatorHalfDimension + (0.5 * mSelectionCharacterWidth));
+			float bottom = (float) (mSelectionIndicatorHalfDimension + (0.5 * mSelectionIndicatorFontSize));
 			
-			c.drawBitmap(mSelectionIndicatorBitmap, widgetX-mSelectionIndicatorHalfDimension, widgetY-mSelectionIndicatorHalfDimension, null);
-			c.drawRect(left+(widgetX-mSelectionIndicatorHalfDimension),top+(widgetY-mSelectionIndicatorHalfDimension),right+(widgetX-mSelectionIndicatorHalfDimension),bottom+(widgetY-mSelectionIndicatorHalfDimension), scroller_paint);		
-			//c.restore();
-			//this.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+			c.drawBitmap(mSelectionIndicatorBitmap, mWidgetX - mSelectionIndicatorHalfDimension, mWidgetY - mSelectionIndicatorHalfDimension, null);
+			c.drawRect(left + (mWidgetX - mSelectionIndicatorHalfDimension), 
+					top + (mWidgetY - mSelectionIndicatorHalfDimension), 
+					right + (mWidgetX - mSelectionIndicatorHalfDimension),
+					bottom + (mWidgetY - mSelectionIndicatorHalfDimension), 
+					mScrollerPaint);		
 		}
 		
 	}
 
-	public void clearText() {
+	/** Clears all text from the buffer. */
+	public final void clearText() {
 		mBuffer.dumpToBytes(false);
 		mBuffer.prune();
 	}
 	
-	//Object synch = new Object();
-	public void flushBuffer() {
-			try {
-				
-					mBuffer.addBytesImpl(mHoldBuffer.dumpToBytes(false));
-				
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-			mBuffer.prune();
+	/** If the window was in buffering mode, this function will dump the buffered text into the real buffer. */
+	public final void flushBuffer() {
+		try {
+			mBuffer.addBytesImpl(mHoldBuffer.dumpToBytes(false));
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		mBuffer.prune();
 		drawingIterator = null;
 		this.invalidate();
 	}
-	
-	
-	public void setButtonHandler(Handler useme) {
-		//realbuttonhandler = useme;
-	}
-	//public void setDispatcher(Handler h) {
-	//	dataDispatch = h;
-	//}
-	//public void setInputType(EditText t) {
-		// t;
-	//}
 
-	public void jumpToZero() {
-
-		synchronized(mToken) {
-			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
-			scrollback = SCROLL_MIN;
-			mFlingVelocity=0;
+	/** If the window has been scrolled back, this function will return it to home. */
+	public final void jumpToZero() {
+		synchronized (mToken) {
+			SCROLL_MIN = mHeight - (double) (5 * Window.this.getResources().getDisplayMetrics().density);
+			mScrollback = SCROLL_MIN;
+			mFlingVelocity = 0;
 		}
-				
 	}
 
-	public void doDelayedDraw(int i) {
-		if(!mHandler.hasMessages(MESSAGE_DRAW)) {
+	/** This is kind of a hack function, schedule a redraw for i milliseconds.
+	 * 
+	 * @param i The number of milliseconds to wait before drawing.
+	 */
+	public final void doDelayedDraw(final int i) {
+		if (!mHandler.hasMessages(MESSAGE_DRAW)) {
 			mHandler.sendEmptyMessageDelayed(MESSAGE_DRAW, i);
 		}
 	}
 
+	/** Sets the color debug mode for the window. */
 	public void setColorDebugMode(int i) {
 		mColorDebugMode = i;
 		doDelayedDraw(1);
 	}
 
-	public void setEncoding(String pEncoding) {
-			mBuffer.setEncoding(pEncoding);
+	/** Sets the active encoding for the window. */
+	public void setEncoding(String pEncoding) {	
+		mBuffer.setEncoding(pEncoding);
+		mHoldBuffer.setEncoding(pEncoding);
+		
 	}
 
 	public void setCharacterSizes(int fontSize, int fontSpaceExtra) {
@@ -1712,6 +1735,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 	public void setMaxLines(int maxLines) {
 		mBuffer.setMaxLines(maxLines);
+		mHoldBuffer.setMaxLines(maxLines);
 	}
 
 	public void setFont(Typeface font) {
@@ -1810,32 +1834,24 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			drawingIterator = null;
 			
 			if(jumpToEnd) {
-				scrollback = SCROLL_MIN;
+				mScrollback = SCROLL_MIN;
 				//mHandler.sendEmptyMessage(MSG_CLEAR_NEW_TEXT_INDICATOR);
 			} else {
 				if(mBuffer.getBrokenLineCount() <= mCalculatedLinesInWindow) {
-					scrollback = (double)mHeight;
+					mScrollback = (double)mHeight;
 				} else {
-					if(scrollback > SCROLL_MIN + mPrefLineSize ) {
+					if(mScrollback > SCROLL_MIN + mPrefLineSize ) {
 						//scrollback = oldposition * (the_tree.getBrokenLineCount()*PREF_LINESIZE);
 						double new_max = mBuffer.getBrokenLineCount()*mPrefLineSize;
 						int lines = (int) ((new_max - old_max)/mPrefLineSize);
 						
-						scrollback += linesadded*mPrefLineSize;
+						mScrollback += linesadded*mPrefLineSize;
 						//Log.e("BYTE",mName+"REPORT: old_max="+old_max+" new_max="+new_max+" delta="+(new_max-old_max)+" scrollback="+scrollback + " lines="+lines + " oldbroken="+oldbrokencount+ "newbroken="+the_tree.getBrokenLineCount());
 						
 					} else {
-						scrollback = SCROLL_MIN;
+						mScrollback = SCROLL_MIN;
 					}
 				
-				}
-				if(scrollback > mHeight) {
-					if(!indicated) {
-						
-						indicated = true;
-					}
-				} else {
-					indicated = false;
 				}
 			}
 			mBuffer.prune();
@@ -2125,14 +2141,14 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 		//int diff = oldh - h;
 		//scrollback -= diff;
-		if(scrollback == SCROLL_MIN) {
+		if(mScrollback == SCROLL_MIN) {
 			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
-			scrollback = SCROLL_MIN;
+			mScrollback = SCROLL_MIN;
 		} else {
 			//we have to calculate the new scrollback position.
 			double oldmin = SCROLL_MIN;
 			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
-			scrollback -= oldmin - SCROLL_MIN;
+			mScrollback -= oldmin - SCROLL_MIN;
 		}
 		
 		//if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
@@ -2200,17 +2216,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private void initLua() {
 		mL.openLibs();
 		
-		if(dataDir == null) {
+		if(mDataDir == null) {
 			//this is bad.
 		} else {
 			
 			//set up the path/cpath.
 			//TODO: add the plugin load path.
 			mL.getGlobal("package");
-			mL.pushString(dataDir + "/lua/share/5.1/?.lua");
+			mL.pushString(mDataDir + "/lua/share/5.1/?.lua");
 			mL.setField(-2, "path");
 			
-			mL.pushString(dataDir + "/lua/lib/5.1/?.so");
+			mL.pushString(mDataDir + "/lua/lib/5.1/?.so");
 			mL.setField(-2, "cpath");
 			mL.pop(1);
 			
@@ -3220,7 +3236,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			//convert y to be at the bottom of the screen.
 			y = (float)v.getHeight() - y;
 			
-			y += (scrollback-SCROLL_MIN);
+			y += (mScrollback-SCROLL_MIN);
 			
 			float xform_to_line = y / (float)mPrefLineSize;
 			int line = (int)Math.floor(xform_to_line);
@@ -3247,8 +3263,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 						//Log.e("window","moving end selector");
 						v.invalidate();
 					} else {
-						int modx = (int) x - (widgetX - mSelectionIndicatorHalfDimension);
-						int mody = (int) event.getY() - (widgetY - mSelectionIndicatorHalfDimension);
+						int modx = (int) x - (mWidgetX - mSelectionIndicatorHalfDimension);
+						int mody = (int) event.getY() - (mWidgetY - mSelectionIndicatorHalfDimension);
 						if(mSelectionIndicatorRect.contains(modx,mody)) {
 							
 							//int newx = (int) (x - selectionIndicatorRect.left);
@@ -3271,7 +3287,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 								case 1:
 									//upper middle
 									selectionButtonDown = SelectionWidgetButtons.UP;
-									int remainder = ((int)(scrollback-SCROLL_MIN) % mPrefLineSize)-mPrefLineSize;
+									int remainder = ((int)(mScrollback-SCROLL_MIN) % mPrefLineSize)-mPrefLineSize;
 									//selectorCenterY -= PREF_LINESIZE;
 									//if(selectorCenterY - (2*PREF_LINESIZE) < remainder) {
 										//selectorCenterY = selectorCenterY + PREF_LINESIZE;
@@ -3433,8 +3449,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 					mScrollRepeatRate = SCROLL_REPEAT_RATE;
 					mScrollRepeatRateStep = 1;
 					
-					int mod2x = (int) x - (widgetX - mSelectionIndicatorHalfDimension);
-					int mod2y = (int) event.getY() - (widgetY - mSelectionIndicatorHalfDimension);
+					int mod2x = (int) x - (mWidgetX - mSelectionIndicatorHalfDimension);
+					int mod2y = (int) event.getY() - (mWidgetY - mSelectionIndicatorHalfDimension);
 					if(mSelectionIndicatorRect.contains(mod2x,mod2y)) {
 						
 						//int newx = (int) (x - (widgetX - selectionIndic);
@@ -3569,8 +3585,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	private int widgetCenterMoveXLast = 0;
 	private int widgetCenterMoveYLast = 0;
 	
-	private int widgetX = 0;
-	private int widgetY = 0;
+	private int mWidgetX = 0;
+	private int mWidgetY = 0;
 	
 	private SelectionCursor selectedSelector;
 	private Selection theSelection;
@@ -3630,8 +3646,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			}
 		}
 		
-		widgetX = newWidgetX;
-		widgetY = newWidgetY;
+		mWidgetX = newWidgetX;
+		mWidgetY = newWidgetY;
 		
 	}
 	
@@ -3642,17 +3658,17 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		int part2 = (int) (selectedSelector.line * mPrefLineSize - (0.5*mSelectionIndicatorFontSize));
 		
 		
-		if(part1 > scrollback) {
+		if(part1 > mScrollback) {
 			//calculate how much scroll to go to get to be true.
 			//int tmp = (int) (scrollback-SCROLL_MIN);
 			//int howmuch = part2 - part1;
-			scrollback = (double) part1;
-		} else if(part2 < (scrollback-SCROLL_MIN)) {
-			scrollback -= ((scrollback-SCROLL_MIN) - part2);
+			mScrollback = (double) part1;
+		} else if(part2 < (mScrollback-SCROLL_MIN)) {
+			mScrollback -= ((mScrollback-SCROLL_MIN) - part2);
 		}
 		
 		int endx = (int) ((selectedSelector.column * mOneCharWidth) + (0.5*mOneCharWidth));
-		int endy = (int) ((this.getHeight() - ((selectedSelector.line * mPrefLineSize) + (0.5*mSelectionIndicatorFontSize) - (scrollback-SCROLL_MIN))));
+		int endy = (int) ((this.getHeight() - ((selectedSelector.line * mPrefLineSize) + (0.5*mSelectionIndicatorFontSize) - (mScrollback-SCROLL_MIN))));
 		//widgetX = endx;
 		//widgetY = endy;
 		selectorCenterX = endx;
@@ -3713,11 +3729,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			selectedSelector.line = 0;
 			repeat = false;
 		} else {
-			int remainder = ((int)(scrollback-SCROLL_MIN) % mPrefLineSize) + mPrefLineSize;
+			int remainder = ((int)(mScrollback-SCROLL_MIN) % mPrefLineSize) + mPrefLineSize;
 			selectorCenterY += mPrefLineSize;
 			if(selectorCenterY > this.getHeight() - remainder) {
 				selectorCenterY -= mPrefLineSize;
-				scrollback -= mPrefLineSize;
+				mScrollback -= mPrefLineSize;
 			}
 			calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		}
@@ -3737,11 +3753,11 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			selectedSelector.line -= 1;
 			repeat = false;
 		} else {
-			int remainder = ((int)(scrollback-SCROLL_MIN) % mPrefLineSize)-mPrefLineSize;
+			int remainder = ((int)(mScrollback-SCROLL_MIN) % mPrefLineSize)-mPrefLineSize;
 			selectorCenterY -= mPrefLineSize;
 			if(selectorCenterY - (mPrefLineSize) < remainder) {
 				selectorCenterY = selectorCenterY + mPrefLineSize;
-				scrollback += mPrefLineSize;
+				mScrollback += mPrefLineSize;
 			}
 			calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		}
@@ -3768,7 +3784,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			selectedSelector.column = 0;
 		} else {
 			selectorCenterX -= mOneCharWidth;
-			widgetY -= mOneCharWidth;
+			mWidgetY -= mOneCharWidth;
 			calculateWidgetPosition(selectorCenterX,selectorCenterY);
 		}
 		this.invalidate();
@@ -3811,7 +3827,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	public void jumpToStart() {
-		scrollback = SCROLL_MIN;
+		mScrollback = SCROLL_MIN;
 		mFlingVelocity=0;
 		this.invalidate();
 	}
