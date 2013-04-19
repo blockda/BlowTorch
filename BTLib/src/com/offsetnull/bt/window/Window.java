@@ -2215,15 +2215,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 	private void initLua() {
 		mL.openLibs();
-		
+		String launchPath = mParent.getPathForPlugin(mOwner);
 		if(mDataDir == null) {
 			//this is bad.
 		} else {
 			
 			//set up the path/cpath.
 			//TODO: add the plugin load path.
+			String packagePath = mDataDir + "/lua/share/5.1/?.lua";
+			if(launchPath != null) {
+				packagePath += ";" + launchPath;
+			}
 			mL.getGlobal("package");
-			mL.pushString(mDataDir + "/lua/share/5.1/?.lua");
+			mL.pushString(packagePath);
 			mL.setField(-2, "path");
 			
 			mL.pushString(mDataDir + "/lua/lib/5.1/?.so");

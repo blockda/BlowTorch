@@ -28,6 +28,9 @@ import com.offsetnull.bt.trigger.TriggerData;
 import com.offsetnull.bt.trigger.TriggerParser;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Handler;
 import android.sax.Element;
 import android.sax.ElementListener;
@@ -123,6 +126,40 @@ public class PluginParser extends BasePluginParser {
 				if(d.getName().equals("bootstrap") || d.isExecute()) {
 					//run this script.
 					LuaState pL = p.getLuaState();
+					String dataDir = null;
+					mContext = parent.getContext();
+					try {
+						ApplicationInfo ai = mContext.getPackageManager().getApplicationInfo(mContext.getPackageName(), PackageManager.GET_META_DATA);
+						dataDir = ai.dataDir;
+					} catch (NameNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					if(dataDir == null) {
+						//this is bad.
+						
+					} else {
+						//String launchPath = Plugin.this.getFullPath();
+						//L.pushString(mDataDir + "/lua/share/5.1/?.lua;"+launchPath);
+						//set up the path/cpath.
+						pL.getGlobal("package");
+						//L.getField(-1, "path");
+						//String str = L.toString(-1);
+						String packagePath = dataDir + "/lua/share/5.1/?.lua";
+						if(type == TYPE.EXTERNAL) {
+							packagePath += ";"+path;
+						}
+						pL.pushString(packagePath);
+						pL.setField(-2, "path");
+						//L.pop(1);
+						
+						pL.pushString(dataDir + "/lua/lib/5.1/?.so");
+						pL.setField(-2, "cpath");
+						pL.pop(1);
+						
+					}
+					
 					pL.getGlobal("debug");
 					pL.getField(-1, "traceback");
 					pL.remove(-2);
