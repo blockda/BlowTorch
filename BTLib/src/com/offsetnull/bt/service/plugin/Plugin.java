@@ -111,33 +111,7 @@ public class Plugin implements SettingsChangedListener {
 		L = LuaStateFactory.newLuaState();
 		L.openLibs();
 		//set up the path and cpath.
-		String dataDir = null;
-		mContext = parent.getContext();
-		try {
-			ApplicationInfo ai = mContext.getPackageManager().getApplicationInfo(mContext.getPackageName(), PackageManager.GET_META_DATA);
-			dataDir = ai.dataDir;
-		} catch (NameNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		
-		if(dataDir == null) {
-			//this is bad.
-			
-		} else {
-			//set up the path/cpath.
-			L.getGlobal("package");
-			//L.getField(-1, "path");
-			//String str = L.toString(-1);
-			L.pushString(dataDir + "/lua/share/5.1/?.lua");
-			L.setField(-2, "path");
-			//L.pop(1);
-			
-			L.pushString(dataDir + "/lua/lib/5.1/?.so");
-			L.setField(-2, "cpath");
-			L.pop(1);
-			
-		}
 		
 		
 		//this is going to get ugly.
@@ -210,7 +184,6 @@ public class Plugin implements SettingsChangedListener {
 
 	private void initLua() throws LuaException {
 		//need to set up global functions, it all goes here.
-		
 		
 		TriggerEnabledFunction tef = new TriggerEnabledFunction(L,this,mHandler);
 		tef.register("EnableTrigger");
