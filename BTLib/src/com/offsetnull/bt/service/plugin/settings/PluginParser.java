@@ -148,7 +148,7 @@ public class PluginParser extends BasePluginParser {
 						//String str = L.toString(-1);
 						String packagePath = dataDir + "/lua/share/5.1/?.lua";
 						if(type == TYPE.EXTERNAL) {
-							packagePath += ";"+path;
+							//packagePath += ";"+path;
 						}
 						pL.pushString(packagePath);
 						pL.setField(-2, "path");

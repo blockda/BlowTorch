@@ -11,6 +11,7 @@ import com.offsetnull.bt.service.plugin.Plugin;
 
 public class TriggerEnabledFunction extends PluginFunction {
 
+	
 	public TriggerEnabledFunction(LuaState L,Plugin p,Handler h) {
 		super(L,p,h);
 		//this.L = L;

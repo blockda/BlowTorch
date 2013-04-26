@@ -266,31 +266,7 @@ public class DataPumper extends Thread {
 				}
 				break;
 			case MESSAGE_END:
-				mHandler.removeMessages(MESSAGE_RETRIEVE);
-				Log.e("TEST", "DATA PUMPER STARTING END SEQUENCE");
-				try {
-					if (mWriterThread != null) {
-						mWriterThread.mOutputHandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
-						try {
-							Log.e("TEST", "KILLING WRITER THREAD");
-							mWriterThread.join();
-							Log.e("TEST", "WRITER THREAD DEAD");
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					if (mReader != null) {
-						mReader.close();
-					}
-					if (mSocket != null) {
-						mSocket.close();
-					}
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				Log.e("TEST", "Net reader thread stopping self.");
-			
-				mHandler.getLooper().quit();
+				shutdownSocket();
 				break;
 			case MESSAGE_INITXFER:
 				break;
@@ -318,7 +294,41 @@ public class DataPumper extends Thread {
 					mHandler.sendEmptyMessageDelayed(MESSAGE_RETRIEVE, THROTTLE_DELAY);
 				}
 			}
+			
+			if(mClosing) {
+				shutdownSocket();
+			}
 			return true;
+		}
+
+		private void shutdownSocket() {
+			mHandler.removeMessages(MESSAGE_RETRIEVE);
+			Log.e("TEST", "DATA PUMPER STARTING END SEQUENCE");
+			try {
+				if (mWriterThread != null) {
+					mWriterThread.mOutputHandler.sendEmptyMessage(OutputWriterThread.MESSAGE_END);
+					try {
+						Log.e("TEST", "KILLING WRITER THREAD");
+						mWriterThread.join();
+						Log.e("TEST", "WRITER THREAD DEAD");
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				if (mReader != null) {
+					mReader.close();
+				}
+				if (mSocket != null) {
+					mSocket.close();
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			Log.e("TEST", "Net reader thread stopping self.");
+			
+			Looper.myLooper().quit();
+			DataPumper.this.interrupt();
+			//Looper.myLooper().quit();
 		}
 	}
 		

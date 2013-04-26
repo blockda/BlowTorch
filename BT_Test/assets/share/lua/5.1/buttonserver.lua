@@ -636,5 +636,13 @@ function importButtons(data)
 	local data = loadstring(data)()
 end
 
+function exportButtons(target)
+	local wad = {}
+	wad.selected = current_set
+	wad.sets = buttonsets
+	wad.defaults = buttonset_defaults
+	CallPlugin(target,"importButtons",serialize(wad))
+end
+
 debugString("Button Server Loaded")
 
