@@ -515,7 +515,6 @@ public class StellarService extends Service {
 		note.flags = Notification.FLAG_ONGOING_EVENT;
 		
 		
-		
 		if (!mHasForegroundNotification) {
 			mForegroundNotificationId = notificationID;
 			this.startForeground(mForegroundNotificationId, note);
@@ -547,13 +546,15 @@ public class StellarService extends Service {
 			//get the first connection and make it the new foreground notification
 			if (mConnectionNotificationMap.size() == 0) { 
 				mConnectionClutch = ""; 
-				return; 
+				return;
 			}
 			String[] tmp = new String[mConnectionNotificationMap.size()];
-			tmp = mConnectionNotificationMap.values().toArray(tmp);
+			tmp = mConnectionNotificationMap.keySet().toArray(tmp);
 			int tmpID = mConnectionNotificationIdMap.get(tmp[0]);
 			mConnectionClutch = tmp[0];
 			Notification tmpNote = mConnectionNotificationMap.get(tmp[0]);
+			//mNotificationManager.cancel(mForegroundNotificationId);
+			mForegroundNotificationId = tmpID;
 			mNotificationManager.cancel(tmpID);
 			this.startForeground(tmpID, tmpNote);
 		}
@@ -1157,7 +1158,9 @@ public class StellarService extends Service {
 		@Override
 		public SettingsGroup getSettings() throws RemoteException {
 			if (mConnections.size() == 0) { return null; }
-			return mConnections.get(mConnectionClutch).getSettings();
+			Connection c = mConnections.get(mConnectionClutch);
+			if (c == null) { return null; }
+			return c.getSettings();
 		}
 
 		@Override

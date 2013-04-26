@@ -1,18 +1,5 @@
---Note("package path:"..package.path)
-package.path = GetPluginInstallDirectory().."/?.lua"
---package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
---Note("package path:"..package.path)
 respath = package.path
 respath = string.sub(respath,0,string.find(respath,"?")-1).."res"
---Note("RESPATH: "..respath)
-
---Note("NEW BUTTON LAYER INIT")
-status = jit.status()
-if(status) then
---Note("Jit is on")
-else
---Note("Jit is off")
-end
 
 require("button")
 require("serialize")
@@ -30,10 +17,6 @@ end
 
 debugString("Button Window Script Loading...")
 
---set up the density value.
---local ctmp = view:getContext()
---local res = ctmp:getResources()
---local displaymetrics = res:getDisplayMetrics()
 density = GetDisplayDensity()
 Configuration = luajava.bindClass("android.content.res.Configuration")
 
@@ -41,7 +24,6 @@ TypedValue = luajava.bindClass("android.util.TypedValue")
 Adapter = luajava.bindClass("android.widget.Adapter")
 ListView = luajava.bindClass("android.widget.ListView")
 ImageButton = luajava.bindClass("android.widget.ImageButton")
---LinearLayout = luajava.bindClass("android.widget.LinearLayout")
 LayoutInflater = luajava.bindClass("android.view.LayoutInflater")
 Context = luajava.bindClass("android.content.Context")
 R_id = luajava.bindClass("com.offsetnull.bt.R$id")
@@ -74,73 +56,29 @@ ORIENTATION_PORTRAIT = Configuration.ORIENTATION_PORTRAIT
 
 DisplayMetrics = view:getContext():getResources():getDisplayMetrics()
 
-		--assert(marshal.encode(orig))
-		
-		--local str = marshal.encode(orig)
-		--local copy = marshal.decode(str)
-		--Note("trying to copy")
-local bit1 = bit.tobit(7)
-local bit2 = bit.bnot(bit1)
-local bit3 = bit.tohex(bit2)
-
 suppress_editor = false
---Note("BitOp Test:"..bit3)		
 
 function loadButtons(args)
 
 
 	debugString("Button Window loading buttons...")
-	--Note("WindowXCallS Succeeded!")
-	--for i,v in pairs(args) do
-	--	if(istable(v)) then
-	--	Note(i.."=>"..v)
-	--end
-	--printTable("args",args)
-	
-	
-	--local tmp = loadstring(args)()
-	--assert(marshal.decode(args))
-	--local String = luajava.bindClass("java.lang.String")
-	
-	--local data = luajava.new(String,args)
 	
 	local tmp = marshal.decode(args)
-	--Note("deserialized table: answer="..tmp.answer)
-	--printTable("defs",tmp.default)
 	lastLoadedSet = tmp.name
 	debugString("Button Window decompressed data, set name: "..lastLoadedSet)
 	
-	--set up metatables.
-	--if(args.defaults == nil) then
 	defaults = BUTTONSET_DATA:new(tmp.default)
-	--setmetatable(BUTTON_DATA,defaults)
-	--BUTTON_DATA.__index = defaults
 	
-	--setmetatable(BUTTON_DATA,defaults)
 	BUTTON_DATA.__index = defaults
-	--defaults.__index = 
 	buttons = {}
-	--setmetatable(BUTTON_DATA,defaults)
 	local set = tmp.set
 	for i=1,#set do
-	--for i,v in pairs(tmp.set) do
-		--local v = set[i]
-		--Note("PROCESSING NEW BUTTON"..i)
 		buttons[i] = BUTTON:new(set[i],density)
 	end
-	--Note(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
-	--for i,v in pairs(buttons) do
-	--	Note("buuuuuton"..i)
-	--end
-	--buttons = foo
 	drawButtons()
-	--invalidate()
 	view:invalidate()
 	
 	debugString(string.format("Button Window loaded button set, %s successfully",lastLoadedSet))
-	--else
-	--end
-	
 end
 
 function printTable(key,o)
@@ -194,8 +132,6 @@ function moveTouch.onTouch(v,e)
 			if(moveCapOnce) then
 				moveStart.x = x
 				moveStart.y = y
-				--boundsStart.x = moveBounds:centerX()
-				--boundsStart.y = moveBounds:centerY()
 				moveCapOnce = false
 			end
 			return true
@@ -210,17 +146,11 @@ function moveTouch.onTouch(v,e)
 			moveDelta.y = y - moveCurrent.y
 			moveCurrent.x = x
 			moveCurrent.y = y
-			--Note("moving box")
 			if(gridsnap) then
-				--debugPrint("gridsnapping")
-				--totalDelta.x = totalDelta.x + moveDelta.x
-				--totalDelta.y = totalDelta.y + moveDelta.y
 				local tmpx = x % (gridXwidth/2)
 				local tmpy = y % (gridYwidth/2)
 				local gridx = math.floor(x/(gridXwidth/2))
 				local gridy = math.floor(y/(gridYwidth/2))
-				--lastgridx = 
-				--debugPrint("gridx:"..gridx.." gridy:"..gridy)
 				local wtmp = (moveBounds.right - moveBounds.left)/2
 				local htmp = (moveBounds.bottom - moveBounds.top)/2
 				totalDelta.x = totalDelta.x - (moveBounds.left - (gridx*(gridXwidth/2)-wtmp))
@@ -263,14 +193,12 @@ function enterMoveMode()
 		if(b.selected == true) then
 			local r = b.rect
 			if(first) then
-				--debugPrint("here")
 				x1 = r.left
 				y1 = r.top
 				x2 = r.right
 				y2 = r.bottom
 				first = false
 			else
-				--debugPrint("there")
 				if(r.left < x1) then
 					x1 = r.left
 				end
@@ -287,19 +215,14 @@ function enterMoveMode()
 			end
 		end
 	end
-	--debugPrint("nhere")
 	moveBounds:set(x1,y1,x2,y2)
 	
 	moveBounds:inset(-40,-40)
 	
-	--debugPrint("mhere")
 	local width = moveBounds.right - moveBounds.left
 	local height = moveBounds.bottom - moveBounds.top
-	--debugPrint("making new bitmap:"..width.."x"..height)
 	moveBitmap = Bitmap:createBitmap(width,height,BitmapConfig.ARGB_8888)
 	moveCanvas = luajava.newInstance("android.graphics.Canvas",moveBitmap)
-	--draw the shiz.
-	--debugPrint("zhere")
 	moveCanvas:drawARGB(0x88,0x88,0x88,0x88)
 	view:setOnTouchListener(moveTouch_cb)
 	moveCanvas:save()
@@ -308,8 +231,6 @@ function enterMoveMode()
 	for i,b in pairs(buttons) do
 		if(b.selected == true) then
 			b:draw(1,moveCanvas)
-			--debugPrint("debugprinting:"..x1.."x"..y1)
-			--moveCanvas:drawRect(b.rect,b.paintOpts)
 		end
 	end
 	drawButtonsNoSelected()
@@ -322,16 +243,12 @@ function exitMoveMode()
 	moveBitmap = nil
 	local dx = totalDelta.x
 	local dy = totalDelta.y
-			--if(gridsnap) then
-				--dx = 
-			--end
 			
 	totalDelta.x = 0
 	totalDelta.y = 0
 	for i,b in pairs(buttons) do
 		if(b.selected == true) then
 			local r = b.rect
-			--r:offset(dx,dy)
 			b.data.x = b.data.x + dx
 			b.data.y = b.data.y + dy
 			b.selected = false
@@ -350,21 +267,12 @@ touchStartY = 0
 managerTouch = {}
 gridsnap = true
 function managerTouch.onTouch(v,e)
-	--debugPrint("ALT TOUCH ROUTINE YEA!"..e:getX().." "..e:getY())
 	local x = e:getX()
 	local y = e:getY()
-	--debugPrint("on touch event started")
 	if(e:getAction() == MotionEvent.ACTION_DOWN) then
-		--debugPrint("manager move down")
 		--find if press was in a button
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
-			--if(b.selected) then
-				--launch the editor.
-			--else
-			--	b.selected = true
-				
-			--end
 			touchStartX = x
 			touchStartY = y
 			fingerdown = true
@@ -374,19 +282,10 @@ function managerTouch.onTouch(v,e)
 			updateSelected(b,true)
 			view:invalidate()
 			if(b.selected) then
-				--debugPrint("SELECTEDTOUCHSTART")
 				selectedtouchstart = true
 			else
 				selectedtouchstart = false
 			end
-			--debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.data.x,touchedbutton.data.y))
-			--if(#buttons > 50 and not manage) then
-			--	aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
-				--aa = AlphaAnimation.new(1.0,0.0)
-			--	aa:setDuration(1500)
-			--	aa:setFillAfter(false)
-			--	view:startAnimation(aa)
-			--end
 			return true
 		else
 			--we are draggin now
@@ -413,26 +312,18 @@ function managerTouch.onTouch(v,e)
 
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
 	
-		--if(not manage
-		--debugPrint("manager move move")
 		if(prevevent == 0) then
 			prevevent = e:getEventTime()
 		else
 			now = e:getEventTime()
 			local elapsed = now - prevevent
 			if(elapsed > 10) then
-			--proceed
-				--debugPrint("processing move event")
 				prevevent = now
 			else
 				return true --consume but dont process.
 			end
 		end
 
-
-
-
-		--debugPrint("ACTION MOVING"..touchedbutton.x)
 
 		if(not fingerdown and manage) then
 			--we are drag moving now.
@@ -445,7 +336,6 @@ function managerTouch.onTouch(v,e)
 			end
 			dragmoving = true
 			
-			--drawDragBox()
 			checkIntersects()
 			view:invalidate()
 			return true
@@ -457,21 +347,16 @@ function managerTouch.onTouch(v,e)
 		 	local diffy = math.abs(y - touchStartY)
 		 	
 		 	local dist = math.sqrt(diffx*diffx + diffy*diffy)
-		 	--debugPrint("DIST IS NOW:"..touchStartX)
 		 	if(dist < 10*density) then
-		 		--don't actually enter move
 		 		return true
 		 	end
 		 
-		 	--debugPrint("ENTERING MOVE MODE")
 		 	touchMoving = true
 		 	moveCurrent.x = x
 			moveCurrent.y = y
 			if(moveCapOnce) then
 				moveStart.x = x
 				moveStart.y = y
-				--boundsStart.x = moveBounds:centerX()
-				--boundsStart.y = moveBounds:centerY()
 				moveCapOnce = false
 			end
 			fingerdown = false
@@ -479,55 +364,28 @@ function managerTouch.onTouch(v,e)
 		 	enterMoveMode()
 		 	return true
 		 end
-		 --if(fingerdown and manage) then
-		--	local modx = (math.floor(e:getX()/gridwidth)*gridwidth)+(gridwidth/2)
-		--	local mody = (math.floor(e:getY()/gridwidth)*gridwidth)+(gridwidth/2)
-			
-		--	touchedbutton.data.x = modx
-		--	touchedbutton.data.y = mody
-		--	touchedbutton:updateRect(statusoffset)
-		--	drawButtons()
-		--	invalidate()
-		--	return true
-		--else
-		--	return true
-		--end
 	end
 
 	if(e:getAction() == MotionEvent.ACTION_UP) then
-		--debugPrint("manager move up")
 		if(dragmoving) then
-		--debugPrint("dragmoving")
-			--redraw the screen without the drag rect
-
-			--drawButtons()
 			dragmoving = false
 			view:invalidate()
 			return true
 		end
 		if(manage and not fingerdown and not buttoncleared) then
-		--debugPrint("new button")
-			--lawl, make new button
 			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
 			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
-			--Note("new button at: "..modx..","..mody)
 			local butt = addButton(modx,mody-statusoffset)
-			--butt.width = gridwidth
-			--butt.height = gridwidth
-			--canvas:drawRoundRect(butt.rect,5,5,paint)
 			butt:draw(0,buttonCanvas)
 			view:invalidate()
 			return true
 		end
 		if(manage and fingerdown and touchedbutton.selected == true and selectedtouchstart) then
-			--launch editor selection screen
-			--debugPrint("selected touched")
 			showEditorSelection()
 			touchedbutton={}
 			fingerdown = false
 			return true
 		elseif(manage and fingerdown and touchedbutton.selected == false) then
-			--debugPrint("button_selected")
 			for i,b in ipairs(buttons) do
 				if(b.selected) then
 					b.selected = false
@@ -548,7 +406,6 @@ function managerTouch.onTouch(v,e)
 	end
 
 	return false
-	--return true
 end
 
 managerTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",managerTouch)
@@ -810,8 +667,10 @@ function OnCreate()
 	--bounds = getBounds()
 	--drawButtons()
 	--addOptionCallback("buttonOptions","Lua Button Options",nil)
-	AddOptionCallback("buttonList","Lua Button Sets",nil)
+	AddOptionCallback("buttonList","Ex Button Sets",nil)
 	view:bringToFront()
+	
+	--PluginXCallS("checkImport","blank")
 end
 
 
@@ -3831,7 +3690,7 @@ function PopulateMenu(menu)
 		end
 		
 	--if(topMenuItem == nil) then
-		topMenuItem = menu:add(0,401,401,"Lua Button Sets")
+		topMenuItem = menu:add(0,401,401,"Ex Button Sets")
 		topMenuItem:setIcon(R_drawable.ic_menu_button_sets)
 		topMenuItem:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
 		
@@ -3922,6 +3781,31 @@ function setDebug(off)
 		--WindowXCallS("button_window","setDebug","off")
 		debugInfo = false
 	end
+end
+
+local importDialogClick = {}
+function importDialogClick.onClick(dialog,which)
+	local DialogInterface = luajava.bindClass("android.content.DialogInterface")
+	
+	if(which == DialogInterface.BUTTON_POSITIVE) then
+		PluginXCallS("doImport","blank")
+		dialog:dismiss()
+	else
+		dialog:dismiss()
+	end
+end
+
+local importDialogClick_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",importDialogClick)
+
+function askImport()
+	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	
+	build:setPositiveButton("Yes",importDialogClick_cb)
+	build:setNegativeButton("No",importDialogClick_cb);
+	build:setTitle("Import Buttons?")
+	build:setMessage("Import internal button settings?")
+	alert = build:create()
+	alert:show()
 end
 
 PluginXCallS("buttonLayerReady","")

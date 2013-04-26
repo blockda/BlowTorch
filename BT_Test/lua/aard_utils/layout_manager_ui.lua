@@ -192,12 +192,12 @@ function AddWindow(config)
 			local mod = 0
 			if config.indexmod ~= nil then mod = config.indexmod end
 			if(target:getChildCount() < mod) then
-				target:addView(source)
+				target:addView(source,0)
 			else
 				target:addView(source,mod)
 			end
 		else
-			target:addView(source)
+			target:addView(source,0)
 		end
 		
 		

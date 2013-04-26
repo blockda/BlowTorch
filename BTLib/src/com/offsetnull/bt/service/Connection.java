@@ -279,10 +279,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	private static final Matcher LINE_MATCHER = LINE_PATTERN.matcher("");
 	
 
-	/** This variable is used in conjunction with mWindowCallbackMap to track IWindowCallback aidl connections
-	 * window names.
-	 */
-	private static boolean mCallbacksStarted = false;
+
 	
 	/** The configurable character denoting that the input to follow should be executed as a script. */
 	private static String mScriptBlock = "/";
@@ -294,7 +291,10 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	 * on the next pass of dispatch().
 	 */
 	private static boolean triggersDirty = false;
-	
+	/** This variable is used in conjunction with mWindowCallbackMap to track IWindowCallback aidl connections
+	 * window names.
+	 */
+	private boolean mCallbacksStarted = false;
 	/** String builder used by the alias parsing routine. */
 	private final StringBuffer mDataToServer = new StringBuffer();
 	/** String builder used by the alias parsing routine. */
@@ -375,6 +375,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	
 	/** Port indication for this connection. */
 	private int mPort;
+	
+	/** Synchronization target to manage window loading/unloading. */
+	private Object mWindowSynch = new Object();
 	
 	/** Mapping of window names to IWindowCallback aidl bridge connections. */
 	private HashMap<String, IWindowCallback> mWindowCallbackMap = 
@@ -766,6 +769,10 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			if (p != null) {
 				if (p.getStorageType().equals("INTERNAL")) {
 					saveMainSettings();
+				} else {
+					if(p.getSettings().isDirty()) {
+						saveMainSettings(); //ugly, need to be able to save plugins individually.
+					}
 				}
 			}
 		}
@@ -1174,10 +1181,12 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	 * @param callback The IWindowCallback aidl conenction object associated with the window.
 	 */
 	public final void registerWindowCallback(final String name, final IWindowCallback callback) {
+		synchronized (mWindowSynch) {
+		Log.e("LOG","REGISTERING WINDOW "+name + " mCallbacksStarte="+mCallbacksStarted);
 		if (mCallbacksStarted) {
 			mWindowCallbacks.finishBroadcast();
 		}
-		
+		Log.e("LOG","REGISTERING " + name);
 		mWindowCallbacks.register(callback);
 		
 		int n = mWindowCallbacks.beginBroadcast();
@@ -1190,6 +1199,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			}
 		}
 		mCallbacksStarted = true;
+		}
 	}
 	
 	/** Called from the aidl bridge housing in StellarService when the foreground window has stopped and destroyed a
@@ -1198,11 +1208,19 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	 * @param callback The IWindowCallback aidl connection object of the destroyed window.
 	 */
 	public final void unregisterWindowCallback(final IWindowCallback callback) {
-		
+		synchronized (mWindowSynch) {
+		Log.e("LOG","UNREGISTERING WINDOW "+" mCallbacksStarted="+mCallbacksStarted);
 		if (mCallbacksStarted) {
 			mWindowCallbacks.finishBroadcast();
-			mCallbacksStarted = false;
+			//mCallbacksStarted = false;
 		}
+		try {
+			Log.e("LOG","UNREGISTERING " + callback.getName());
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		mWindowCallbacks.unregister(callback);
 
 		mWindowCallbackMap.clear();
 		int n = mWindowCallbacks.beginBroadcast();
@@ -1215,7 +1233,8 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			}
 		}
 		
-		if (!mCallbacksStarted) { mCallbacksStarted = true; }
+		mCallbacksStarted = true;
+		}
 	}
 	
 	/** Called from the DataPumper when the net threads have been shut down.
@@ -1252,13 +1271,17 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		}
 		if (mPump != null) {
 			if (mPump.getHandler() != null) {
+				mPump.closeSocket();
+				//mPump.getHandler().removeMessages(DataPumper.MESSAGE_RETRIEVE);
+				mPump.getHandler().removeCallbacksAndMessages(null);
 				mPump.getHandler().sendEmptyMessage(DataPumper.MESSAGE_END);
-			}
-			mPump.closeSocket();
-			try {
-				mPump.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			
+			
+				try {
+					mPump.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		
@@ -1830,17 +1853,31 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		mSemiMatcher.reset(string);
 		boolean matched = false;
 		boolean append = false;
+		boolean firstSemi = true;
 		//int lastLength = -1;
 		while (mSemiMatcher.find()) {
 			matched = true;
 			mCommandBuilder.setLength(0);
+			
 			mSemiMatcher.appendReplacement(mCommandBuilder, "");
 			if (mCommandBuilder.length() == 0) {
 				append = true;
-				list.add(list.remove(list.size() - 1) + ";");
+				if (list.size() == 0) {
+					if (!firstSemi) {
+						list.add(";");
+					} else {
+						firstSemi = false; //don't add the first one, but add subsequent ones.
+					}
+				} else {
+					list.add(list.remove(list.size() - 1) + ";");
+				}
 			} else {
 				if (append) {
-					list.add(list.remove(list.size() - 1) + mCommandBuilder.toString());
+					if (list.size() == 0) {
+						list.add(";");
+					} else {
+						list.add(list.remove(list.size() - 1) + mCommandBuilder.toString());
+					}
 					append = false;
 				} else {
 					list.add(mCommandBuilder.toString());
@@ -1855,7 +1892,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			mCommandBuilder.setLength(0);
 			mSemiMatcher.appendTail(mCommandBuilder);
 			if (append) {
-				list.add(list.remove(list.size() - 1) + mCommandBuilder.toString());
+				if(list.size() != 0) {
+					list.add(list.remove(list.size() - 1) + mCommandBuilder.toString());
+				}
 			} else {
 				list.add(mCommandBuilder.toString());
 			}
