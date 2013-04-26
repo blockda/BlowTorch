@@ -5,11 +5,11 @@ public class DocumentsHolder {
 	public static int FOO = 4;
 	public DocumentsHolder() {
 /*! \page luaoverview Overview of Lua, Java and Android
-\section overview Overview
+\section top Overview
 \subsection intro Introduction
 The Android NDK is used to cross compile the LuaJIT source code and additional libraries into ARMv5 compatible (or other processor architecture) library and loaded into the process by the Linux side of the Android OS. Communication between the Native code and the Dalvik (Java) code is facilitated by the LuaJava API that utilizes java reflection and JNI. This combined with some harness and support code in the BlowTorch core, we arrive at the lua solution presented.
 SQLite, luabins, libmarshal, serialize lua modules are pre built and included with the blowtorch distribution.
-\section Embedding
+\section embedding Embedding
 \subsection Overview
 image: the big diagram of all the lua states
 \subsection native Native Android
@@ -133,7 +133,6 @@ raw_byte_array = Array:newInstance(RawByte,1024)
 --only raw_byte_array would be a string, so if passed to a function that expects a byte[] it would error.
 \endluacode
 \tableofcontents
-
 */
 	}
 	

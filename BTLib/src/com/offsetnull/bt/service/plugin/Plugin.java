@@ -60,8 +60,8 @@ import com.offsetnull.bt.service.ConnectionPluginCallback;
 import com.offsetnull.bt.service.SettingsChangedListener;
 import com.offsetnull.bt.service.StellarService;
 import com.offsetnull.bt.service.WindowToken;
-import com.offsetnull.bt.service.plugin.function.DrawWindowFunction;
 import com.offsetnull.bt.service.plugin.function.NoteFunction;
+import com.offsetnull.bt.service.plugin.function.PluginFunction;
 import com.offsetnull.bt.service.plugin.function.TriggerEnabledFunction;
 import com.offsetnull.bt.service.plugin.settings.BaseOption;
 import com.offsetnull.bt.service.plugin.settings.Option;
@@ -131,6 +131,7 @@ public class Plugin implements SettingsChangedListener {
 		
 		
 		this.parent = parent;
+		mContext = parent.getContext();
 		//initTimers();
 		initLua();
 		
@@ -185,7 +186,7 @@ public class Plugin implements SettingsChangedListener {
 	private void initLua() throws LuaException {
 		//need to set up global functions, it all goes here.
 		
-		TriggerEnabledFunction tef = new TriggerEnabledFunction(L,this,mHandler);
+		TriggerEnabledFunction tef = new TriggerEnabledFunction(L);
 		tef.register("EnableTrigger");
 		L.pushJavaObject(settings.getTriggers());
 		L.setGlobal("triggers");
@@ -196,8 +197,8 @@ public class Plugin implements SettingsChangedListener {
 		NoteFunction nf = new NoteFunction(L,this,mHandler);
 		nf.register("Note");
 		
-		DrawWindowFunction dwf = new DrawWindowFunction(L,this,mHandler);
-		dwf.register("DrawWindow");
+		//DrawWindowFunction dwf = new DrawWindowFunction(L,this,mHandler);
+		//dwf.register("DrawWindow");
 		
 		WindowFunction wf = new WindowFunction(L);
 		ExecuteScriptFunction esf = new ExecuteScriptFunction(L);
@@ -230,6 +231,7 @@ public class Plugin implements SettingsChangedListener {
 		EnableTriggerGroupFunction etgf = new EnableTriggerGroupFunction(L);
 		SimulateInputFunction sif = new SimulateInputFunction(L);
 		DeleteTriggerGroupFunction dtgf = new DeleteTriggerGroupFunction(L);
+		GetPluginNameFunction gpnf = new GetPluginNameFunction(L);
 		//common functions
 		
 		gabhf.register("GetActionBarHeight");
@@ -262,6 +264,7 @@ public class Plugin implements SettingsChangedListener {
 		etgf.register("EnableTriggerGroup");
 		sif.register("Simulate");
 		dtgf.register("DeleteTriggerGroup");
+		gpnf.register("GetPluginName");
 		/*L.getGlobal("Note");
 		L.pushString("this is a test");
 		int ret = L.pcall(1, 0, 0);
@@ -474,41 +477,21 @@ public class Plugin implements SettingsChangedListener {
 		}*/
 	}
 	
-	
-	private class EnableTriggerGroupFunction extends JavaFunction {
-		public EnableTriggerGroupFunction(LuaState L) {
-			super(L);
-		}
+  /*! \page page1 Lua Functions
+   	* \section common Common Functions
+\subsection GetActionBarHeight GetActionBarHeight
+Executes a script that has been loaded during the plugin parsing phase.
 
-		@Override
-		public int execute() throws LuaException {
-			String group = this.getParam(2).getString();
-			boolean state = this.getParam(3).getBoolean();
-			for(TriggerData t : Plugin.this.settings.getTriggers().values()) {
-				if(t.getGroup().equals(group)) {
-					t.setEnabled(state);
-				}
-			}
-			parent.setTriggersDirty();
-			return 0;
-		}
-	}
-	
-  /*! \page page1
-   * \section common Common Functions
-	* \subsection GetActionBarHeight GetActionBarHeight
-	* Executes a script that has been loaded during the plugin parsing phase.
-	* 
-	* \par Full Signature
-	* \code
-	* GetActionBarHeight()
-	* \endcode
-	* \param none
-	* \returns \b number the height of the ActionBar, 0 if running on Android 2.3 or lower.
-	* \par Example 
-	* \code
-	* barHeight = GetActionBarHeight()
-	* \endcode
+\par Full Signature
+\luacode
+GetActionBarHeight()
+\endluacode
+\param none
+\returns \b number the height of the ActionBar, 0 if running on Android 2.3 or lower.
+\par Example 
+\luacode
+barHeight = GetActionBarHeight()
+\endluacode
 	*/
 	private class GetActionBarHeightFunction extends JavaFunction {
 	
@@ -526,20 +509,20 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 
-  /*! \page page1
-	* \subsection GetDisplayDensity GetDisplayDensity
-	* Executes a script that has been loaded during the plugin parsing phase.
-	* 
-	* \par Full Signature
-	* \code
-	* GetActionBarHeight()
-	* \endcode
-	* \param none
-	* \returns \b number the height of the ActionBar, 0 if running on Android 2.3 or lower.
-	* \par Example 
-	* \code
-	* barHeight = GetActionBarHeight()
-	* \endcode
+  /*! \page page1 Lua Functions
+\subsection GetDisplayDensity GetDisplayDensity
+Executes a script that has been loaded during the plugin parsing phase.
+
+\par Full Signature
+\luacode
+GetActionBarHeight()
+\endluacode
+\param none
+\returns \b number the height of the ActionBar, 0 if running on Android 2.3 or lower.
+\par Example 
+\luacode
+barHeight = GetActionBarHeight()
+\endluacode
 	*/
 	private class GetDisplayDensityFunction extends JavaFunction {
 	
@@ -561,34 +544,35 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 
-  /*! \page page1
-	* \subsection GetExternalStorageDirectory GetExternalStorageDirectory
-	* Get the current external storage volume directory. Checks if the volume exists but \b not if it is write protected.
-	* 
-	* \par Full Signature
-	* \code
-	* GetExternalStorageDirectory()
-	* \endcode
-	* \param none
-	* \returns \c string the absolute path to the root of the external storage directory.
-	* \returns \c nil if there is no current external storage volume available.
-	* \par Example 
-	* \code
-	* path = GetExternalStorageDirectory()
-	* \endcode
-	* \note Equivelent lua code
-	* \code
-	* Environment = luajava.bindClass("android.os.Environment")
-	* local path = nil
-	* if(Environment:getExternalStorageState() == Environment.MEDIA_MOUNTED) then
-	*  path = Environment:getExternalStorageDirectory():getAbsolutePath()
-	* else
-	*  if(Environment:getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY) then
-	*   path = Environment:getExternalStorageDirectory():getAbsolutePath()
-	*   Note("alert: external storage is read only!")
-	*  end
-	* end
-	* \endcode
+  /*! \page page1 Lua Functions
+\subsection GetExternalStorageDirectory GetExternalStorageDirectory
+Get the current external storage volume directory. Checks if the volume exists but \b not if it is write protected.
+
+\par Full Signature
+\luacode
+GetExternalStorageDirectory()
+\endluacode
+\param none
+\returns \b string the absolute path to the root of the external storage directory.
+\returns \b nil if there is no current external storage volume available.
+\par Example 
+\luacode
+path = GetExternalStorageDirectory()
+\endluacode
+\note Equivelent lua code
+\luacode
+Environment = luajava.bindClass("android.os.Environment")
+local path = nil
+if(Environment:getExternalStorageState() == Environment.MEDIA_MOUNTED) then
+	path = Environment:getExternalStorageDirectory():getAbsolutePath()
+else
+	if(Environment:getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY) then
+		path = Environment:getExternalStorageDirectory():getAbsolutePath()
+		Note("alert: external storage is read only!")
+	end
+end
+
+\endluacode
 	*/
 	private class GetExternalStorageDirectoryFunction extends JavaFunction {
 	
@@ -610,20 +594,20 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 
-  /*! \page page1
-	* \subsection GetPluginID GetPluginID
-	* Gets the plugin id associated with this plugin.
-	* 
-	* \par Full Signature
-	* \code
-	* GetPluginID()
-	* \endcode
-	* \param none
-	* \returns \c string the id that has been assigned to this plugin.
-	* \par Example 
-	* \code
-	* id = GetPluginID()
-	* \endcode
+  /*! \page page1 Lua Functions
+\subsection GetPluginID GetPluginID
+Gets the plugin id associated with this plugin.
+
+\par Full Signature
+\luacode
+GetPluginID()
+\endluacode
+\param none
+\returns \b string the id that has been assigned to this plugin.
+\par Example 
+\luacode
+id = GetPluginID()
+\endluacode
 	*/
 	private class GetPluginIdFunction extends JavaFunction {
 		public GetPluginIdFunction(LuaState L) {
@@ -641,22 +625,54 @@ public class Plugin implements SettingsChangedListener {
 		}
 		
 	}
+	
+ /*! \page page1 Lua Functions
+\subsection GetPluginName GetPluginName
+Gets the plugin id associated with this plugin.
 
-  /*! \page page1
-	* \subsection GetPluginInstallDirectory GetPluginInstallDirectory
-	* Get the absolute path to the path that the plugin was loaded from.
-	* 
-	* \par Full Signature
-	* \code
-	* GetPluginInstallDirectory()
-	* \endcode
-	* \param none
-	* \returns \c string the absolute path to where the plugin was loaded
-	* \par Example 
-	* \code
-	* path = GetPluginInstallDirectory()
-	* \endcode
-	* \note this function should always return the path regardless if the path no longer exists to the external volume being unmounted etc.
+\par Full Signature
+\luacode
+GetPluginName()
+\endluacode
+\param none
+\returns \b string the name of this plugin.
+\par Example 
+\luacode
+id = GetPluginID()
+\endluacode
+	*/
+	private class GetPluginNameFunction extends JavaFunction {
+		public GetPluginNameFunction(LuaState L) {
+			super(L);
+		}
+		
+		@Override
+		public int execute() throws LuaException {
+			//if(this.getParam(2).isNil()) { return 0; }
+			this.L.pushString(Plugin.this.getSettings().getName());
+			
+			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
+			//parent.handler.sendMessage(parent.handler.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,this.getParam(2).getString()));
+			return 1;
+		}
+		
+	}
+
+  /*! \page page1 Lua Functions
+\subsection GetPluginInstallDirectory GetPluginInstallDirectory
+Get the absolute path to the path that the plugin was loaded from.
+
+\par Full Signature
+\luacode
+GetPluginInstallDirectory()
+\endluacode
+\param none
+\returns \b string the absolute path to where the plugin was loaded
+\par Example 
+\luacode
+path = GetPluginInstallDirectory()
+\endluacode
+\note this function should always return the path regardless if the path no longer exists to the external volume being unmounted etc.
 	*/
 	private class GetPluginInstallDirectoryFunction extends JavaFunction {
 	
@@ -683,20 +699,20 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 
-  /*! \page page1
-	* \subsection GetStatusBarHeight GetStatusBarHeight
-	* Gets the current height of the status bar.
-	* 
-	* \par Full Signature
-	* \code
-	* GetStatusBarHeight()
-	* \endcode
-	* \param none
-	* \returns \c number the size of the status bar, will always be constant regardless of the full screen state.
-	* \par Example
-	* \code
-	* height = GetStatusBarHeight()
-	* \endcode
+  /*! \page page1 Lua Functions
+\subsection GetStatusBarHeight GetStatusBarHeight
+Gets the current height of the status bar.
+
+\par Full Signature
+\luacode
+GetStatusBarHeight()
+\endluacode
+\param none
+\returns \b number the size of the status bar, will always be constant regardless of the full screen state.
+\par Example
+\luacode
+height = GetStatusBarHeight()
+\endluacode
 	*/
 	private class GetStatusBarHeight extends JavaFunction {
 	
@@ -715,6 +731,549 @@ public class Plugin implements SettingsChangedListener {
 	}
 	
 	
+	
+
+/*! \page page1 Lua Functions
+ 
+\subsection sec1 Note
+This is the basic linkage between Lua and the Console. The function will echo the parameter string to the main window.
+\par Full Signature
+\luacode
+Note(text)
+\endluacode
+\param text The text to echo back
+\returns nothing
+\par Example
+\luacode
+Note("Example text!")
+\endluacode
+*/ 
+
+/*! \page page1 Lua Functions
+\subsection SendToServer SendToServer
+Send the given string to the server.
+
+\par Full Signature
+\luacode
+SendToServer(str)
+\endluacode
+\param str \b string the data to send to the server
+\returns nothing
+\par Example 
+\luacode
+SendToServer("run north;open door")
+\endluacode
+\note This is the same as sending data from the keyboard. The data is processed for special commands and aliases.
+	*/
+	private class SendToServerFunction extends JavaFunction {
+	
+		public SendToServerFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+	
+		@Override
+		public int execute() throws LuaException {
+			if(this.getParam(2).isNil()) { return 0; }
+			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
+			Plugin.this.mHandler.sendMessage(Plugin.this.mHandler.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,this.getParam(2).getString()));
+			return 0;
+		}
+		
+	}
+
+/*! \page page1
+\section service Service Functions
+\subsection AppendLineToWindow AppendLineToWindow
+Sends a packet of gmcp data to the server
+ 
+\par Full Signature
+\luacode
+AppendLineToWindow(line,windowName)
+\endluacode
+\param line \b com.offsetnull.bt.window.TextTree$Line the line to append, this usually comes from a trigger callback
+\returns none
+\par Example 
+\luacode
+function calledFromTrigger(line,number,map)
+	AppendLineToWindow(line,GetPluginID().."_chat_window")
+end
+\endluacode
+*/
+		private class AppendLineToWindowFunction extends JavaFunction {
+	
+			public AppendLineToWindowFunction(LuaState L) {
+				super(L);
+			}
+	
+			@Override
+			public int execute() throws LuaException {
+				//the only arguments should be a TextTree.Line copied from the one passed to it from a trigger script action
+				//and the window id to send it to.
+				LuaObject o = this.getParam(3);
+				
+				TextTree.Line line = null;
+				String windowId = (this.getParam(2).getString());
+				
+				if(o.isJavaObject()) {
+					//test if it is a real line.
+					Object tmp = o.getObject();
+					if(tmp instanceof TextTree.Line) {
+						line = (TextTree.Line)tmp;
+						
+						//now abuse the lineToWindow handler from the replace action to ferry this bad boy across
+						Message m = mHandler.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);
+						m.getData().putString("TARGET", windowId);
+						mHandler.sendMessage(m);
+					} else {
+						//error is java object but not a TextTree.Line
+					}
+				} else if(o.isString()) {
+					//construct a new line and append it.
+					Message m = mHandler.obtainMessage(Connection.MESSAGE_LINETOWINDOW,o.getString());
+					m.getData().putString("TARGET", windowId);
+					mHandler.sendMessage(m);
+				} else {
+					//error bad argument
+				}
+				
+				//TextTree.Line line = (TextTree.Line)(this.getParam(3)).getObject();
+				
+				
+				
+				return 0;
+			}
+			
+		}
+
+	/*! \page page1
+\subsection AppendWindowSettings AppendWindowSettings
+Attatches a settings group from a window to the plugin settings block. This is to allow a plugin writer to include window settings in the main options dialog block at thier discretion.
+
+\par Full Signature
+\luacode
+AppendWindowSettings(name)
+\endluacode
+\param name \b string the line to append, this usually comes from a trigger callback
+\returns none
+\par Example 
+\luacode
+function OnBackgroundStartup()
+	AppendWindowSettings(GetPluginID().."_chat_window")
+end
+\endluacode
+	*/
+		
+	private class AppendWindowSettingsFunction extends JavaFunction {
+	
+		public AppendWindowSettingsFunction(LuaState L) {
+			super(L);
+			
+		}
+	
+		@Override
+		public int execute() throws LuaException {
+			//float density = parent.getContext().getResources().getDisplayMetrics().density;
+			//if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+			//	density = density * 1.5f;
+			//}
+			//Log.e("WINODW","PUSHING DENSITY:"+Float.toString(density));
+			//L.pushNumber(density);
+			String name = this.getParam(2).getString();
+			WindowToken w = Plugin.this.getSettings().getWindows().get(name);
+			if(w != null) {
+				//mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
+				parent.attatchWindowSettingsChangedListener(w);
+				w.getSettings().setSkipForPluginSave(true);
+				Plugin.this.getSettings().getOptions().addOption(w.getSettings());
+				//optionSkipSaveList.add(Plugin.this.getSettings().getOptions().getOptions().size()-1);
+			}
+			return 0;
+		}
+		
+	}
+	
+	/*! \page page1
+\subsection CallPlugin CallPlugin
+Calls an named global function in another plugin.
+
+\par Full Signature
+\luacode
+CallPlugin(name,function,arguments[,...])
+\endluacode
+\param name \b string the line to append, this usually comes from a trigger callback
+\param function \b function the global function to call.
+\param arguments a list of arguments to provide, can be more than one sperated by commas. Numbers or strings.
+\returns none
+\par Example 
+\luacode
+CallPlugin("button_window","newbutton",400,800,299,894)
+\endluacode
+\note use PluginSupports to test to see if a plugin has a global function with the desired name. 
+	*/
+	private class CallPluginFunction extends JavaFunction {
+		public CallPluginFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			
+			String plugin = this.getParam(2).getString();
+			String function = this.getParam(3).getString();
+			String data = this.getParam(4).getString();
+			
+			parent.callPlugin(plugin,function,data);
+			
+			return 0;
+		}
+		
+		
+	}
+	
+	/*! \page page1
+\subsection DeleteTrigger DeleteTrigger
+Deletes a trigger.
+
+\par Full Signature
+\luacode
+DeleteTrigger(name)
+\endluacode
+\param name \b string the the trigger to delete
+\returns none
+\par Example 
+\luacode
+DeleteTrigger("mob_alert_1")
+\endluacode
+	*/
+	private class DeleteTriggerFunction extends JavaFunction {
+		public DeleteTriggerFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			
+			String name = this.getParam(2).getString();
+			if(name != null) {
+				if(Plugin.this.settings.getTriggers().containsKey(name)) {
+					Plugin.this.settings.getTriggers().remove(name);
+				}
+			}
+			parent.setTriggersDirty();
+			return 0;
+		}
+	}
+
+	/*! \page page1
+\subsection DeleteTriggerGroup DeleteTriggerGroup
+Deletes an entire group of triggers.
+
+\par Full Signature
+\luacode
+DeleteTriggerGroup(name)
+\endluacode
+\param name \b string the name of the trigger group to delete.
+\returns none
+\par Example 
+\luacode
+DeleteTriggerGroup("campaign_targets")
+\endluacode
+	*/
+	private class DeleteTriggerGroupFunction extends JavaFunction {
+		public DeleteTriggerGroupFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException, RemoteException,
+				UnsupportedEncodingException {
+			String group = this.L.LcheckString(2);
+			
+			if(group == null) return 0;
+			
+			ArrayList<String> tmp = new ArrayList<String>();
+			for(TriggerData t : Plugin.this.settings.getTriggers().values()) {
+				if(t.getGroup().equals(group)) {
+					tmp.add(t.getName());
+				}
+				//tmp.add(t.getName());
+			}
+			
+			for(String name : tmp) {
+				Plugin.this.settings.getTriggers().remove(name);
+			}
+			
+			parent.setTriggersDirty();
+			
+			return 0;
+		}
+	}
+	/*! \page page1
+\subsection EnableTriggerGroup EnableTriggerGroup
+Sets the enabled state for all triggers in a group.
+
+\par Full Signature
+\luacode
+EnableTriggerGroup(name,state)
+\endluacode
+\param name \b string Name of the trigger group to manipulate.
+\param state \b boolean Enabled state for the group's triggers.
+\returns none
+\par Example 
+\luacode
+EnableTriggerGroup("auto_hunt")
+\endluacode
+	*/
+	private class EnableTriggerGroupFunction extends JavaFunction {
+		public EnableTriggerGroupFunction(LuaState L) {
+			super(L);
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			String group = this.getParam(2).getString();
+			boolean state = this.getParam(3).getBoolean();
+			for(TriggerData t : Plugin.this.settings.getTriggers().values()) {
+				if(t.getGroup().equals(group)) {
+					t.setEnabled(state);
+				}
+			}
+			parent.setTriggersDirty();
+			return 0;
+		}
+	}
+/*! \page page1
+\subsection ExecuteScript ExecuteScript
+Executes a script that has been loaded during the plugin parsing phase.
+ 
+\par Full Signature
+\luacode
+ExecuteScript(name)
+\endluacode
+\param name \b name of the script to run, this is configured in the plugin settings.
+\returns none
+\par Example 
+\luacode
+ExecuteScript("parseInventory")
+\endluacode
+*/	
+	  private class ExecuteScriptFunction extends JavaFunction {
+	
+			public ExecuteScriptFunction(LuaState L) {
+				super(L);
+				// TODO Auto-generated constructor stub
+			}
+	
+			@Override
+			public int execute() throws LuaException {
+				// TODO Auto-generated method stub
+				String pName = this.getParam(2).getString();
+				ScriptData d = Plugin.this.getSettings().getScripts().get(pName);
+				String body = d.getData();
+				if(body != null) {
+					L.LdoString(body);
+				} else {
+					//error
+					//L.pushString(bytes)
+					//L.error();
+				}
+				return 0;
+			}
+			
+		}
+	/*! \page page1
+\subsection GetWindowTokenByName GetWindowTokenByName
+Gets the raw /c com.offsetnull.bt.service.WindowToken object that is being held by the background service. This is to allow direct manipulation of the buffer.
+
+\par Full Signature
+\luacode
+GetWindowTokenByName(name)
+\endluacode
+\param name \b string the id of the window to get.
+\returns none
+\par Example 
+\luacode
+window = GetWindowTokenByName(GetPluginID().."_chat_window")
+\endluacode
+	*/	
+	private class GetWindowFunction extends JavaFunction {
+
+		public GetWindowFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public int execute() throws LuaException {
+			/*int x = (int) this.getParam(2).getNumber();
+			int y = (int) this.getParam(3).getNumber();
+			int width = (int) this.getParam(4).getNumber();
+			int height = (int) this.getParam(5).getNumber();
+			
+			Message msg = mHandler.obtainMessage(Connection.MESSAGE_MODMAINWINDOW);
+			Bundle b = msg.getData();
+			b.putInt("X", x);
+			b.putInt("Y", y);
+			b.putInt("WIDTH", width);
+			b.putInt("HEIGHT", height);
+			msg.setData(b);
+			mHandler.sendMessage(msg);*/
+			String desired = this.getParam(2).getString();
+			WindowToken t = parent.getWindowByName(desired);
+			if(t == null) {
+				//check our local window that haven't been loaded into the main window group.
+				for(WindowToken tmp : settings.getWindows().values()) {
+					if(tmp.getName().equals(desired)) {
+						t = tmp;
+					}					
+				}
+			}
+			L.pushJavaObject(t);
+			
+			return 1;
+		}
+		
+	}
+	
+	/*! \page page1
+
+\subsection InvalidateWindowText InvalidateWindowText
+Invalidates a foreground windows text and forces it to redraw.
+
+\par Full Signature
+\luacode
+InvalidateWindowText(name)
+\endluacode
+\param name \b string the name of the winodw to redraw
+\returns none
+\par Example 
+\luacode
+InvalidateWindowText(GetPluginID().."_chat_window")
+\endluacode
+	*/
+	private class InvalidateWindowTextFunction extends JavaFunction {
+	
+		public InvalidateWindowTextFunction(LuaState L) {
+			super(L);
+			// TODO Auto-generated constructor stub
+		}
+	
+		@Override
+		public int execute() throws LuaException {
+			String name = this.getParam(2).getString();
+			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_INVALIDATEWINDOWTEXT,name));
+			return 0;
+		}
+		
+	}
+
+	/*! \page page1
+
+\subsection GetPluginSettings GetPluginSettings
+Gets the raw \b com.offsetnull.bt.service.settings.SettingsGroup settings, this is to allow direct manipluation.
+
+\par Full Signature
+\luacode
+InvalidateWindowText(name)
+\endluacode
+\param none
+\returns a \b com.offsetnull.bt.service.settings.SettingsGroup object that can be directly manipulated.
+\par Example 
+\luacode
+settings = GetPluginSettings()
+\endluacode
+	*/
+	private class GetPluginSettingsFunction extends JavaFunction {
+		public GetPluginSettingsFunction(LuaState L) {
+			super(L);
+		}
+		
+		@Override
+		public int execute() throws LuaException {
+			//if(this.getParam(2).isNil()) { return 0; }
+			this.L.pushJavaObject(Plugin.this.getSettings().getOptions());
+			
+			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
+			//parent.handler.sendMessage(parent.handler.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,this.getParam(2).getString()));
+			return 1;
+		}
+		
+	}
+
+	/*! \page page1
+\subsection NewTrigger NewTrigger
+Makes a new trigger with the given parameters
+
+\par Full Signature
+\luacode
+NewTrigger(name,pattern,config[,action,...])
+\endluacode
+\param name \b string name of the new trigger.
+\param pattern \b string the pattern to use
+\param config \b table Configuration of the trigger options like, regex, fireOnce, etc. see example.
+\param action \b table representing response actions to perform when triggered. May have as many as desired, see example.
+\returns none
+\par Example
+\luacode
+--configuration paramters is a table that can have the following properties defined:
+--regex = [boolean] indicates use of regular expression or literal text.
+--group = [string] group name to enroll this trigger into.
+--fireOnce = [boolean] indicates weather or not this trigger is a one shot trigger.
+--notification action table configuration can have the following properties
+--{
+--	type="notification", (must be set for the action type)
+--	title = [string], title of the notification
+--	message = [string], long message of the notification
+--	soundpath = [string/boolean/nil], absolute path to the sound file to play for this notification. 
+--	if nil/not set it will play the default sound. if set to false it won't play sound.
+--	vibrate = [number], vibrate pattern to use, 0=short, 1=medium, 2=long, 3=super long
+--	spawnNew = [boolean], indicates weather or not to spawn a new notification.
+--} 		
+
+--toast action table configuration
+--{
+--	type = "toast", (must be set for the action type)
+--	message = [string], message to display
+--	duration = [number], 0 = short duration, 1 = long duration.
+--}
+
+--send action table configuratio
+--{
+--	type = "send", (must be set for the action type)
+--	text = [string] text to send to the server.
+--}
+
+--gag action table configuration
+--{
+--	type = "gag"
+--	output=[boolean], gag from output
+--	log = [boolean], gag from log
+--	retarget = [string] window to send this gagged line to.
+--}
+
+--replace action table configuration
+--{
+--	type = "replace", (must be set for the action type).
+--	text = [string] text to replace matched text with.
+--}
+
+--color action table configuration
+--{
+--	type = "color", (must be set for the action type).
+--	foreground = [number], 1-256 indicating the foreground xterm256 color to use.
+--	background = [number], 1-256 indicating the background xterm256 color to use.
+--}
+--simple notification
+NewTrigger("tmp", "^foo\.$", 
+	{ regex = true,group = "test", fireOnce = false }, 
+	{ type = "notification", title="custom title", message="custom message", vibrate = 2 })
+--literal trigger with colorize and response to the server.
+NewTrigger("tmp2", "fox", { regex = false },
+	{ type = "color", foreground = 36, background = 75},
+	{ type = "send", text = "listen fox" })
+\endluacode
+	*/
 	private class NewTriggerFunction extends JavaFunction {
 		
 		public NewTriggerFunction(LuaState L) {
@@ -1018,414 +1577,26 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 
-   /*! \page page1
-	 * 
-	 * \subsection sec1 Note
-	 * This is the basic linkage between Lua and the Console. The function will echo the parameter string to the main window.
-	 * \par Full Signature
-	 * \code
-	 * Note(text)
-	 * \endcode
-	 * \param text The text to echo back
-	 * \returns nothing
-	 * \par Example
-	 * \code
-	 * Note("Example text!")
-	 * \endcode
-	 * 
-	*/
-	
-  /*! \page page1
-	* \subsection SendToServer SendToServer
-	* Send the given string to the server.
-	* 
-	* \par Full Signature
-	* \code
-	* SendToServer(str)
-	* \endcode
-	* \param str \c string the data to send to the server
-	* \returns nothing
-	* \par Example 
-	* \code
-	* SendToServer("run north;open door")
-	* \endcode
-	* \note This is the same as sending data from the keyboard. The data is processed for special commands and aliases.
-	*/
-	private class SendToServerFunction extends JavaFunction {
-	
-		public SendToServerFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-	
-		@Override
-		public int execute() throws LuaException {
-			if(this.getParam(2).isNil()) { return 0; }
-			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
-			Plugin.this.mHandler.sendMessage(Plugin.this.mHandler.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,this.getParam(2).getString()));
-			return 0;
-		}
-		
-	}
-
 	/*! \page page1
-	   * \section service Service Functions
-		* \subsection AppendLineToWindow AppendLineToWindow
-		* Sends a packet of gmcp data to the server
-		* 
-		* \par Full Signature
-		* \code
-		* AppendLineToWindow(line,windowName)
-		* \endcode
-		* \param line \c com.offsetnull.bt.window.TextTree$Line the line to append, this usually comes from a trigger callback
-		* \returns none
-		* \par Example 
-		* \code
-		* function calledFromTrigger(line,number,map)
-		*  AppendLineToWindow(line,GetPluginID().."_chat_window")
-		* end
-		* \endcode
-		*/
-		private class AppendLineToWindowFunction extends JavaFunction {
-	
-			public AppendLineToWindowFunction(LuaState L) {
-				super(L);
-			}
-	
-			@Override
-			public int execute() throws LuaException {
-				//the only arguments should be a TextTree.Line copied from the one passed to it from a trigger script action
-				//and the window id to send it to.
-				LuaObject o = this.getParam(3);
-				
-				TextTree.Line line = null;
-				String windowId = (this.getParam(2).getString());
-				
-				if(o.isJavaObject()) {
-					//test if it is a real line.
-					Object tmp = o.getObject();
-					if(tmp instanceof TextTree.Line) {
-						line = (TextTree.Line)tmp;
-						
-						//now abuse the lineToWindow handler from the replace action to ferry this bad boy across
-						Message m = mHandler.obtainMessage(Connection.MESSAGE_LINETOWINDOW,line);
-						m.getData().putString("TARGET", windowId);
-						mHandler.sendMessage(m);
-					} else {
-						//error is java object but not a TextTree.Line
-					}
-				} else if(o.isString()) {
-					//construct a new line and append it.
-					Message m = mHandler.obtainMessage(Connection.MESSAGE_LINETOWINDOW,o.getString());
-					m.getData().putString("TARGET", windowId);
-					mHandler.sendMessage(m);
-				} else {
-					//error bad argument
-				}
-				
-				//TextTree.Line line = (TextTree.Line)(this.getParam(3)).getObject();
-				
-				
-				
-				return 0;
-			}
-			
-		}
+\subsection NewWindow NewWindow
+Makes a new window with the given paramters.
 
-	/*! \page page1
-	* \subsection AppendWindowSettings AppendWindowSettings
-	* Attatches a settings group from a window to the plugin settings block. This is to allow a plugin writer to include window settings in the main options dialog block at thier discretion.
-	* 
-	* \par Full Signature
-	* \code
-	* AppendWindowSettings(name)
-	* \endcode
-	* \param name \c string the line to append, this usually comes from a trigger callback
-	* \returns none
-	* \par Example 
-	* \code
-	* function OnBackgroundStartup()
-	* 	AppendWindowSettings(GetPluginID().."_chat_window")
-	* end
-	* \endcode
-	*/
-		
-	private class AppendWindowSettingsFunction extends JavaFunction {
-	
-		public AppendWindowSettingsFunction(LuaState L) {
-			super(L);
-			
-		}
-	
-		@Override
-		public int execute() throws LuaException {
-			//float density = parent.getContext().getResources().getDisplayMetrics().density;
-			//if((Window.this.getContext().getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
-			//	density = density * 1.5f;
-			//}
-			//Log.e("WINODW","PUSHING DENSITY:"+Float.toString(density));
-			//L.pushNumber(density);
-			String name = this.getParam(2).getString();
-			WindowToken w = Plugin.this.getSettings().getWindows().get(name);
-			if(w != null) {
-				//mWindows.get(0).getSettings().setListener(new WindowSettingsChangedListener(mWindows.get(0).getName()));
-				parent.attatchWindowSettingsChangedListener(w);
-				w.getSettings().setSkipForPluginSave(true);
-				Plugin.this.getSettings().getOptions().addOption(w.getSettings());
-				//optionSkipSaveList.add(Plugin.this.getSettings().getOptions().getOptions().size()-1);
-			}
-			return 0;
-		}
-		
-	}
-	
-	private class CallPluginFunction extends JavaFunction {
-		public CallPluginFunction(LuaState L) {
-			super(L);
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			
-			String plugin = this.getParam(2).getString();
-			String function = this.getParam(3).getString();
-			String data = this.getParam(4).getString();
-			
-			parent.callPlugin(plugin,function,data);
-			
-			return 0;
-		}
-		
-		
-	}
-	
-	private class DeleteTriggerFunction extends JavaFunction {
-		public DeleteTriggerFunction(LuaState L) {
-			super(L);
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			
-			String name = this.getParam(2).getString();
-			if(name != null) {
-				if(Plugin.this.settings.getTriggers().containsKey(name)) {
-					Plugin.this.settings.getTriggers().remove(name);
-				}
-			}
-			parent.setTriggersDirty();
-			return 0;
-		}
-	}
-
-	
-	private class DeleteTriggerGroupFunction extends JavaFunction {
-		public DeleteTriggerGroupFunction(LuaState L) {
-			super(L);
-		}
-
-		@Override
-		public int execute() throws LuaException, RemoteException,
-				UnsupportedEncodingException {
-			String group = this.L.LcheckString(2);
-			
-			if(group == null) return 0;
-			
-			ArrayList<String> tmp = new ArrayList<String>();
-			for(TriggerData t : Plugin.this.settings.getTriggers().values()) {
-				if(t.getGroup().equals(group)) {
-					tmp.add(t.getName());
-				}
-				//tmp.add(t.getName());
-			}
-			
-			for(String name : tmp) {
-				Plugin.this.settings.getTriggers().remove(name);
-			}
-			
-			parent.setTriggersDirty();
-			
-			return 0;
-		}
-	}
-	/*! \page page1
-		* \subsection ExecuteScript ExecuteScript
-		* Executes a script that has been loaded during the plugin parsing phase.
-		* 
-		* \par Full Signature
-		* \code
-		* ExecuteScript(name)
-		* \endcode
-		* \param name \c name of the script to run, this is configured in the plugin settings.
-		* \returns none
-		* \par Example 
-		* \code
-		* ExecuteScript("parseInventory")
-		* \endcode
-		*/	
-	  private class ExecuteScriptFunction extends JavaFunction {
-	
-			public ExecuteScriptFunction(LuaState L) {
-				super(L);
-				// TODO Auto-generated constructor stub
-			}
-	
-			@Override
-			public int execute() throws LuaException {
-				// TODO Auto-generated method stub
-				String pName = this.getParam(2).getString();
-				ScriptData d = Plugin.this.getSettings().getScripts().get(pName);
-				String body = d.getData();
-				if(body != null) {
-					L.LdoString(body);
-				} else {
-					//error
-					//L.pushString(bytes)
-					//L.error();
-				}
-				return 0;
-			}
-			
-		}
-	/*! \page page1
-	* \subsection GetWindowTokenByName GetWindowTokenByName
-	* Gets the raw /c com.offsetnull.bt.service.WindowToken object that is being held by the background service. This is to allow direct manipulation of the buffer.
-	* 
-	* \par Full Signature
-	* \code
-	* GetWindowTokenByName(name)
-	* \endcode
-	* \param name \c string the id of the window to get.
-	* \returns none
-	* \par Example 
-	* \code
-	* window = GetWindowTokenByName(GetPluginID().."_chat_window")
-	* \endcode
-	*/	
-	private class GetWindowFunction extends JavaFunction {
-
-		public GetWindowFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public int execute() throws LuaException {
-			/*int x = (int) this.getParam(2).getNumber();
-			int y = (int) this.getParam(3).getNumber();
-			int width = (int) this.getParam(4).getNumber();
-			int height = (int) this.getParam(5).getNumber();
-			
-			Message msg = mHandler.obtainMessage(Connection.MESSAGE_MODMAINWINDOW);
-			Bundle b = msg.getData();
-			b.putInt("X", x);
-			b.putInt("Y", y);
-			b.putInt("WIDTH", width);
-			b.putInt("HEIGHT", height);
-			msg.setData(b);
-			mHandler.sendMessage(msg);*/
-			String desired = this.getParam(2).getString();
-			WindowToken t = parent.getWindowByName(desired);
-			if(t == null) {
-				//check our local window that haven't been loaded into the main window group.
-				for(WindowToken tmp : settings.getWindows().values()) {
-					if(tmp.getName().equals(desired)) {
-						t = tmp;
-					}					
-				}
-			}
-			L.pushJavaObject(t);
-			
-			return 1;
-		}
-		
-	}
-	
-	/*! \page page1
-	* 
-	* \subsection InvalidateWindowText InvalidateWindowText
-	* Invalidates a foreground windows text and forces it to redraw.
-	* 
-	* \par Full Signature
-	* \code
-	* InvalidateWindowText(name)
-	* \endcode
-	* \param name \c string the name of the winodw to redraw
-	* \returns none
-	* \par Example 
-	* \code
-	* InvalidateWindowText(GetPluginID().."_chat_window")
-	* \endcode
-	*/
-	private class InvalidateWindowTextFunction extends JavaFunction {
-	
-		public InvalidateWindowTextFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
-	
-		@Override
-		public int execute() throws LuaException {
-			String name = this.getParam(2).getString();
-			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_INVALIDATEWINDOWTEXT,name));
-			return 0;
-		}
-		
-	}
-
-	/*! \page page1
-	* 
-	* \subsection GetPluginSettings GetPluginSettings
-	* Gets the raw \c com.offsetnull.bt.service.settings.SettingsGroup settings, this is to allow direct manipluation.
-	* 
-	* \par Full Signature
-	* \code
-	* InvalidateWindowText(name)
-	* \endcode
-	* \param none
-	* \returns a \c com.offsetnull.bt.service.settings.SettingsGroup object that can be directly manipulated.
-	* \par Example 
-	* \code
-	* settings = GetPluginSettings()
-	* \endcode
-	*/
-	private class GetPluginSettingsFunction extends JavaFunction {
-		public GetPluginSettingsFunction(LuaState L) {
-			super(L);
-		}
-		
-		@Override
-		public int execute() throws LuaException {
-			//if(this.getParam(2).isNil()) { return 0; }
-			this.L.pushJavaObject(Plugin.this.getSettings().getOptions());
-			
-			//Log.e("LUAWINDOW","script is sending:"+this.getParam(2).getString()+" to server.");
-			//parent.handler.sendMessage(parent.handler.obtainMessage(Connection.MESSAGE_SENDDATA_STRING,this.getParam(2).getString()));
-			return 1;
-		}
-		
-	}
-
-	/*! \page page1
-	* \subsection NewWindow NewWindow
-	* Makes a new window with the given paramters.
-	* 
-	* \par Full Signature
-	* \code
-	* NewWindow(name,x,y,width,height,script)
-	* \endcode
-	* \param name \c string name or id of the window
-	* \param x \c number the x coordinate of the window
-	* \param y \c number the y coordinate of the window
-	* \param width \c number the width of the window
-	* \param height \c number the height of the window
-	* \param script \c string the named script to load into the window's Lua state.
-	* \returns none
-	* \par Example 
-	* \code
-	* NewWindow("chat_window",0,0,400,400,"chat_script")
-	* \endcode
-	* \note positioning the window and having it interact with other windows is a much more complicated problem that deserves its own page.
+\par Full Signature
+\luacode
+NewWindow(name,x,y,width,height,script)
+\endluacode
+\param name \b string name or id of the window
+\param x \b number the x coordinate of the window
+\param y \b number the y coordinate of the window
+\param width \b number the width of the window
+\param height \b number the height of the window
+\param script \b string the named script to load into the window's Lua state.
+\returns none
+\par Example 
+\luacode
+NewWindow("chat_window",0,0,400,400,"chat_script")
+\endluacode
+\note Windows don't work like this anymore. I'm prettys sure this won't work as intented or it will work but the size arguments will all be ignored.
 	*/
 	private class WindowFunction extends JavaFunction {
 	
@@ -1489,6 +1660,24 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 	
+/*! \page page1
+* \subsection PluginSupports PluginSupports
+Checks weather or not a plugin has a global function of a desired name.
+
+\par Full Signature
+\luacode
+PluginSupports(name,function)
+\endluacode
+\param name \b string the name of the plugin to interrogate.
+\param function \b string the name of the global function to be checked.
+\returns none
+\par Example 
+\luacode
+if(PluginSupports("button_window","exportButtons")) then
+	CallPlugin("button_window","exportButtons")
+end
+\endluacode
+*/
 	private class PluginSupportsFunction extends JavaFunction {
 		public PluginSupportsFunction(LuaState L) {
 			super(L);
@@ -1505,22 +1694,21 @@ public class Plugin implements SettingsChangedListener {
 		}
 	}
 
-	/*! \page page1
-	* \subsection ReloadSettings ReloadSettings
-	* Causes the BlowTorch core to dump the current settings and reload them from the source files.
-	* 
-	* \par Full Signature
-	* \code
-	* ReloadSettings()
-	* \endcode
-	* \param none
-	* \returns none
-	* \par Example 
-	* \code
-	* ReloadSettings()
-	* \endcode
-	* \note positioning the window and having it interact with other windows is a much more complicated problem that deserves its own page.
-	*/
+/*! \page page1
+\subsection ReloadSettings ReloadSettings
+Causes the BlowTorch core to dump the current settings and reload them from the source files.
+
+\par Full Signature
+\luacode
+ReloadSettings()
+\endluacode
+\param none
+\returns none
+\par Example 
+\luacode
+ReloadSettings()
+\endluacode
+*/
 	private class ReloadSettingsFunction extends JavaFunction {
 		public ReloadSettingsFunction(LuaState L) {
 			super(L);
@@ -1538,26 +1726,26 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 
-	/*! \page page1
-	* \subsection RegisterSpecialCommand RegisterSpecialCommand
-	* Adds and entry into the "special command" processor, or .nameyouwant and it will call the specified global function
-	* 
-	* \par Full Signature
-	* \code
-	* RegisterSpecialCommand(sortName,callbackName)
-	* \endcode
-	* \param shortName \c string short name that will be searched for
-	* \param callbackName \c string the name of a global function to call when this is called.
-	* \returns none
-	* \par Example 
-	* \code
-	* function goHome(args)
-	* 	SendToServer("enter portal")
-	* end
-	* RegisterSpecialCommand("home","goHome")
-	* \endcode
-	* \note the callback that is called when the command is processed will give the arguments as a single string to the callback function.
-	*/
+/*! \page page1
+\subsection RegisterSpecialCommand RegisterSpecialCommand
+Adds and entry into the "special command" processor, or .nameyouwant and it will call the specified global function
+
+\par Full Signature
+\luacode
+RegisterSpecialCommand(sortName,callbackName)
+\endluacode
+\param shortName \b string short name that will be searched for
+\param callbackName \b string the name of a global function to call when this is called.
+\returns none
+\par Example 
+\luacode
+function goHome(args)
+	SendToServer("enter portal")
+end
+RegisterSpecialCommand("home","goHome")
+\endluacode
+\note the callback that is called when the command is processed will give the arguments as a single string to the callback function.
+*/
 	private class RegisterFunctionCallback extends JavaFunction {
 	
 		public RegisterFunctionCallback(LuaState L) {
@@ -1603,20 +1791,20 @@ public class Plugin implements SettingsChangedListener {
 		
 	}
 	/*! \page page1
-	* \subsection SaveSettings SaveSettings
-	* Initiates the saving of the whole settings wad for the currently open connection.
-	*  
-	* \par Full Signature
-	* \code
-	* SaveSettings()
-	* \endcode
-	* \param none
-	* \returns none
-	* \par Example 
-	* \code
-	* SaveSettings()
-	* \endcode
-	* \note the callback that is called when the command is processed will give the arguments as a single string to the callback function.
+	\subsection SaveSettings SaveSettings
+	Initiates the saving of the whole settings wad for the currently open connection.
+	 
+	\par Full Signature
+	\luacode
+	SaveSettings()
+	\endluacode
+	\param none
+	\returns none
+	\par Example 
+	\luacode
+	SaveSettings()
+	\endluacode
+	\note the callback that is called when the command is processed will give the arguments as a single string to the callback function.
 	*/
 	private class SaveSettingsFunction extends JavaFunction {
 		
@@ -1626,11 +1814,27 @@ public class Plugin implements SettingsChangedListener {
 	
 		@Override
 		public int execute() throws LuaException {
+			Plugin.this.getSettings().setDirty(true);
 			mHandler.sendMessage(mHandler.obtainMessage(Connection.MESSAGE_SAVESETTINGS,Plugin.this.getName()));
 			return 0;
 		}
 	}
 	
+	/*! \page page1
+	\subsection SimulateInput SimulateInput
+	Simulates incoming data from the server. Will be processed for triggers but not for telnet data (although it probably should).
+	
+	\par Full Signature
+	\luacode
+	SimulateInput(data)
+	\endluacode
+	\param data \b string the data to simulate
+	\returns note
+	\par Example 
+	\luacode
+	SimulateInput("\n[this looks like a prompt]->\n")
+	\endluacode
+	*/
 	private class SimulateInputFunction extends JavaFunction {
 
 		public SimulateInputFunction(LuaState L) {
@@ -1651,20 +1855,20 @@ public class Plugin implements SettingsChangedListener {
 	}
 
 	/*! \page page1
-	* \subsection GMCPSend Send_GMCP_Packet
-	* Sends a packet of gmcp data to the server
-	* 
-	* \par Full Signature
-	* \code
-	* Send_GMCP_Packet(str)
-	* \endcode
-	* \param \c string the data to send, please see the GMCP Documentation
-	* \returns note
-	* \par Example 
-	* \code
-	* GMCPSend("core.hello foo")
-	* \endcode
-	*/
+\subsection GMCPSend Send_GMCP_Packet
+Sends a packet of gmcp data to the server
+	
+\par Full Signature
+\luacode
+Send_GMCP_Packet(str)
+\endluacode
+\param str \b string the data to send, more in the gmcp documentation.
+\returns note
+\par Example 
+\luacode
+Send_GMCP_Packet("core.hello foo")
+\endluacode
+*/
 	private class GMCPSendFunction extends JavaFunction {
 		public GMCPSendFunction(LuaState L) {
 			super(L);
@@ -1681,20 +1885,77 @@ public class Plugin implements SettingsChangedListener {
 		
 		
 	}
+	
 	/*! \page page1
-	* \subsection UserPresent UserPresent
-	* Call to get a boolean indicating if the screen is on / user present.
-	* 
-	* \par Full Signature
-	* \code
-	* UserPresent()
-	* \endcode
-	* \param none
-	* \returns boolean true if the user is present, false if not
-	* \par Example 
-	* \code
-	* present = UserPresent()
-	* \endcode
+\subsection TriggerEnabled TriggerEnabled
+Sets or Tests the enabled state of a trigger
+
+\par Full Signature
+\luacode
+TriggerEnabled(name[,state])
+\endluacode
+\param name \b string the trigger to test or manipulate
+\param state \b boolean the new enabled state
+\returns The enabled state of the trigger if state is nil, if state is true or false, the return value is true if the state was successfully changed.
+\par Example 
+\luacode
+if(TriggerEnabled("afk")) then
+	TriggerEnabled("afk",false)
+end
+\endluacode
+	*/
+	public class TriggerEnabledFunction extends JavaFunction {
+
+		
+		public TriggerEnabledFunction(LuaState L) {
+			super(L);
+			//this.L = L;
+		}
+		
+		@Override
+		public int execute() throws LuaException {
+			String trigger = this.getParam(2).getString();
+			
+			if(Plugin.this.getSettings().getTriggers().containsKey(trigger)) {
+				//execute function
+				if(this.getParam(3) == null) {
+					L.pushBoolean(Plugin.this.getSettings().getTriggers().get(trigger).isEnabled());
+					return 1;
+				}
+				Boolean state = this.getParam(3).getBoolean();
+				Plugin.this.getSettings().getTriggers().get(trigger).setEnabled(state);
+				
+				Plugin.this.markTriggersDirty();
+				//this.mPlugin.buildTriggerSystem();
+				L.pushBoolean(true);
+				return 1;
+				
+			} else {
+				//return error
+				L.pushString("Function: TriggerEnabled(string,boolean) Error: \""+trigger+"\" does not exist");
+				return 1;
+			}
+			
+			//return 0;
+		}
+
+		
+		
+	}
+	/*! \page page1
+\subsection UserPresent UserPresent
+Call to get a boolean indicating if the screen is on / user present.
+
+\par Full Signature
+\luacode
+UserPresent()
+\endluacode
+\param none
+\returns boolean true if the user is present, false if not
+\par Example 
+\luacode
+present = UserPresent()
+\endluacode
 	*/
 	private class UserPresentFunction extends JavaFunction {
 	
@@ -1712,20 +1973,20 @@ public class Plugin implements SettingsChangedListener {
 	}
 
 	/*! \page page1
-	* \subsection WindowBuffer WindowBuffer
-	* Instructs a named window to either start or stop buffering incoming text
-	* 
-	* \par Full Signature
-	* \code
-	* WindowBuffer(name,state)
-	* \endcode
-	* \param name \c string the name of the window to affect
-	* \param state \c boolean the state of the buffering desired
-	* \returns nothing
-	* \par Example 
-	* \code
-	* WindowBuffer(GetPluginID().."_chat_window",false)
-	* \endcode
+\subsection WindowBuffer WindowBuffer
+Instructs a named window to either start or stop buffering incoming text
+
+\par Full Signature
+\luacode
+WindowBuffer(name,state)
+\endluacode
+\param name \b string the name of the window to affect
+\param state \b boolean the state of the buffering desired
+\returns nothing
+\par Example 
+\luacode
+WindowBuffer(GetPluginID().."_chat_window",false)
+\endluacode
 	*/
 	private class WindowBufferFunction extends JavaFunction {
 
@@ -1747,21 +2008,21 @@ public class Plugin implements SettingsChangedListener {
 	}
 	
 	/*! \page page1
-	* \subsection WindowXCallB WindowXCallB
-	* Sends a message to a foreground window that it should run a specified callback with the desired argument data.
-	* 
-	* \par Full Signature
-	* \code
-	* WindowXCallB(name,data)
-	* \endcode
-	* \param name \c string the global callback in the window to call
-	* \param data \c string the data to send
-	* \returns nothing
-	* \par Example 
-	* \code
-	* WindowXCallB(GetPluginID().."_chat_window",42)
-	* \note Symantically this is the same as WindowXCallS only great care has been taken to ensure that the data that is ferried across the aidl bridge and delivered to the foreground window's lua state as an array of \b bytes without having any intervention by the DalvikVM host converting it through a java string to avoid corruption. This is largley to support large data tables being serialized with libmarshal or any other binary serialization format.
-	* \endcode
+\subsection WindowXCallB WindowXCallB
+Sends a message to a foreground window that it should run a specified callback with the desired argument data.
+
+\par Full Signature
+\luacode
+WindowXCallB(name,data)
+\endluacode
+\param name \b string the global callback in the window to call
+\param data \b string the data to send
+\returns nothing
+\par Example 
+\luacode
+WindowXCallB(GetPluginID().."_chat_window",42)
+\endluacode
+\note Symantically this is the same as WindowXCallS only great care has been taken to ensure that the data that is ferried across the aidl bridge and delivered to the foreground window's lua state as an array of \b bytes without having any intervention by the DalvikVM host converting it through a java string to avoid corruption. This is largley to support large data tables being serialized with libmarshal or any other binary serialization format.
 	*/
 	private class WindowXCallBFunction extends JavaFunction {
 	
@@ -1800,21 +2061,21 @@ public class Plugin implements SettingsChangedListener {
 	}
 
 	/*! \page page1
-	* \subsection WindowXCallS WindowXCallS
-	* Sends a message to a foreground window that it should run a specified callback with the desired argument data.
-	* 
-	* \par Full Signature
-	* \code
-	* WindowXCallS(name,data)
-	* \endcode
-	* \param name \c string the global callback in the window to call
-	* \param data \c string the data to send
-	* \returns nothing
-	* \par Example 
-	* \code
-	* WindowXCallS(GetPluginID().."_chat_window",42)
-	* \note Symantically this is the same as WindowXCallB, only the data is cross converted to a DalviVM string through the aidl bridge, this can cause some problems with binary data. If you need very large serialized tables, or any kind of binary data, see WindowXCallB
-	* \endcode
+\subsection WindowXCallS WindowXCallS
+Sends a message to a foreground window that it should run a specified callback with the desired argument data.
+
+\par Full Signature
+\luacode
+WindowXCallS(name,data)
+\endluacode
+\param name \b string the global callback in the window to call
+\param data \b string the data to send
+\returns nothing
+\par Example 
+\luacode
+WindowXCallS(GetPluginID().."_chat_window",42)
+\endluacode
+\note Symantically this is the same as WindowXCallB, only the data is cross converted to a DalviVM string through the aidl bridge, this can cause some problems with binary data. If you need very large serialized tables, or any kind of binary data, see WindowXCallB
 	*/
 	private class WindowXCallSFunction extends JavaFunction {
 		//HashMap<String,String> 
@@ -2651,7 +2912,7 @@ public class Plugin implements SettingsChangedListener {
 
 	
 /*! \page entry_points Lua State Entry Points
- * \section service Background Service Entry Points
+ * \section entrypoints Background Service Entry Points
  * \subsection OnBackgroundStartup OnBackgroundStartup
  * Called when all plugins have been parsed and loaded, but before the connection to the server is initiated.
  * 
@@ -2681,7 +2942,7 @@ public class Plugin implements SettingsChangedListener {
  * \subsection OnXmlExport OnXmlExport
  * When the BlowTorch core has initatied a settings serialization (saves the settings) this will be called to notify the plugin that it needs to serialize any data that it needs to, and provides an android.xml.XMLSerializer that is set up to be either to the main settings wad or the external plugin's descriptor file.
  * 
- * \param out \c android.xml.XmlSerialzer represent the output serialzer object.
+ * \param out \b android.xml.XmlSerialzer represent the output serialzer object.
  * 
  * \note Please check the documentation of the android java class or the examples for saving data for details of what the body of this function should look like. 
  */
@@ -2798,8 +3059,8 @@ public class Plugin implements SettingsChangedListener {
  * \subsection OnOptionsChanged OnOptionsChanged
  * This function is called whenever a plugin defied option has changed through the user activating the options menu UI.
  * 
- * \param key \c string the key value of the option that changed
- * \param value \c string the new value of the option
+ * \param key \b string the key value of the option that changed
+ * \param value \b string the new value of the option
  * 
  * \note There are a few deomnstrations on how to use this function in the button window and chat window plugins.
  */

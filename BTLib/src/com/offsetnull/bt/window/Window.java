@@ -749,7 +749,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				//calculate row/col
 				float x = t.getX(index);
 				float y = t.getY(index);
-				t.recycle();
+				//t.recycle();
 				mFlingVelocity = 0.0f;
 				mFingerDown = true;
 				finger_down_to_up = false;
@@ -818,7 +818,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 				if (Math.abs(diff_amount) > 5 * mDensity) {
 					
 					mTouchPreEvent = MotionEvent.obtainNoHistory(t);
-					t.recycle();
+					//t.recycle();
 				}
 				
 			}						
@@ -2223,8 +2223,12 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			//set up the path/cpath.
 			//TODO: add the plugin load path.
 			String packagePath = mDataDir + "/lua/share/5.1/?.lua";
-			if(launchPath != null) {
-				packagePath += ";" + launchPath;
+			if(launchPath != null && !launchPath.equals("")) {
+				File file = new File(launchPath);
+				String dir = file.getParent();
+				//file.getPar
+				//L.pushString(dir);
+				packagePath += ";" + dir + "/?.lua";
 			}
 			mL.getGlobal("package");
 			mL.pushString(packagePath);
@@ -2355,32 +2359,32 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	/*! \page page1
-	* \section window Window Functions
-	* \subsection sec2 AddOptionCallback
-	* Add a top level menu item that will call a global function when pressed.
-	* 
-	* \par Full Signature
-	* \code
-	* AddOptionCallback(functionName,menuText,iconDrawable)
-	* \endcode
-	* \param functionName \c string value of the function name that will be called when the menu item is pressed.
-	* \param menuText \c string value that will appear on the menu item.
-	* \param iconDrawable \c android.graphics.drawable.Drawable the drawable resource that will be used for the icon.
-	* \returns nothing
-	* \par Example with no icon
-	* \code
-	* AddOptionCallback("functionName","Click Me!",nil)
-	* \endcode
-	* \par Example with icon
-	* \code
-	* drawable = luajava.newInstance("android.drawable.BitmapDrawable",context:getResources(),"/path/to/image.png")
-	* function menuClicked()
-	* 	Note("Menu Item Clicked!")
-	* end
-	* 
-	* AddOptionCallback("menuClicked","Click Me!",drawable)
-	* \endcode
-	* 
+\section window Window Functions
+\subsection AddOptionCallback AddOptionCallback
+Add a top level menu item that will call a global function when pressed.
+
+\par Full Signature
+\luacode
+AddOptionCallback(functionName,menuText,iconDrawable)
+\endluacode
+\param functionName \b string value of the function name that will be called when the menu item is pressed.
+\param menuText \b string value that will appear on the menu item.
+\param iconDrawable \b android.graphics.drawable.Drawable the drawable resource that will be used for the icon.
+\returns nothing
+\par Example with no icon
+\luacode
+AddOptionCallback("functionName","Click Me!",nil)
+\endluacode
+\par Example with icon
+\luacode
+drawable = luajava.newInstance("android.drawable.BitmapDrawable",context:getResources(),"/path/to/image.png")
+function menuClicked()
+	Note("Menu Item Clicked!")
+end
+
+AddOptionCallback("menuClicked","Click Me!",drawable)
+\endluacode
+
 	*/
 	private class OptionsMenuFunction extends JavaFunction {
 
@@ -2417,20 +2421,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
   /*! \page page1
-	* \subsection sec4 CancelCallback
-	* Cancel a scheduled call made with ScheduleCallback.
-	* \note This will cancel all pending callbacks with the given identifier.
-	* 
-	* \par Full Signature
-	* \code
-	* CancelCallback(id)
-	* \endcode
-	* \param id \c number the callback id to cancel
-	* \returns nothing
-	* \par Example 
-	* \code
-	* CancelCallback(100)
-	* \endcode
+\subsection sec4 CancelCallback
+Cancel a scheduled call made with ScheduleCallback.
+\note This will cancel all pending callbacks with the given identifier.
+
+\par Full Signature
+\luacode
+CancelCallback(id)
+\endluacode
+\param id \b number the callback id to cancel
+\returns nothing
+\par Example 
+\luacode
+CancelCallback(100)
+\endluacode
 	*/
 	private class CancelSheduleCallbackFunction extends JavaFunction {
 
@@ -2451,19 +2455,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
   /*! \page page1
-	* \subsection sec16 CloseOptionsDialog
-	* Closes the Options dialog if it is currently open.
-	* 
-	* \par Full Signature
-	* \code
-	* CloseOptionsDialog()
-	* \endcode
-	* \param none
-	* \returns nothing
-	* \par Example 
-	* \code
-	* CloseOptionsDialog()
-	* \endcode
+\subsection sec16 CloseOptionsDialog
+Closes the Options dialog if it is currently open.
+
+\par Full Signature
+\luacode
+CloseOptionsDialog()
+\endluacode
+\param none
+\returns nothing
+\par Example 
+\luacode
+CloseOptionsDialog()
+\endluacode
 	*/
 	private class CloseOptionsDialogFunction extends JavaFunction {
 		public CloseOptionsDialogFunction(LuaState L) {
@@ -2495,19 +2499,19 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
  /*! \page page1
-	* \subsection sec0 GetActivity
-	* Get a handle to the current Activity that is hosting the foreground window process.
-	* 
-	* \par Full Signature
-	* \code
-	* GetActivity()
-	* \endcode
-	* \param none
-	* \returns \c android.app.Activity the current Activity that is hosting the foreground processes.
-	* \par Example 
-	* \code
-	* activity = GetActivity()
-	* \endcode
+\subsection sec0 GetActivity
+Get a handle to the current Activity that is hosting the foreground window process.
+
+\par Full Signature
+\luacode
+GetActivity()
+\endluacode
+\param none
+\returns \b android.app.Activity the current Activity that is hosting the foreground processes.
+\par Example 
+\luacode
+activity = GetActivity()
+\endluacode
 	*/
 	private class GetActivityFunction extends JavaFunction {
 
@@ -2613,23 +2617,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
 	/*! \page page1
-	* \subsection sec14 IsStatusBarHidden
-	* Gets the state of the status bar.
-	* 
-	* \par Full Signature
-	* \code
-	* IsStatusBarHidden()
-	* \endcode
-	* \param none
-	* \returns \c bool true if the status bar is hidden (full screen), false if the status bar is being shown (non full screen)
-	* \par Example 
-	* \code
-	* if(IsStatusBarHidden()) then
-	*  Note("status bar hidden")
-	* else
-	*  Note("status bar not hidden")
-	* end
-	* \endcode
+\subsection sec14 IsStatusBarHidden
+Gets the state of the status bar.
+
+\par Full Signature
+\luacode
+IsStatusBarHidden()
+\endluacode
+\param none
+\returns \b bool true if the status bar is hidden (full screen), false if the status bar is being shown (non full screen)
+\par Example 
+\luacode
+if(IsStatusBarHidden()) then
+ Note("status bar hidden")
+else
+ Note("status bar not hidden")
+end
+\endluacode
 	*/
 	private class StatusBarHiddenMethod extends JavaFunction {
 
@@ -2667,21 +2671,21 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 	
   /*! \page page1
-	* \subsection PluginXCallS PluginXCallS
-	* Calls a function in the parent plugin's lua state. Provides one way signaling across the aidl bridge to the plugin host running in the background.
-	* 
-	* \par Full Signature
-	* \code
-	* PluginXCallS(functionName,data)
-	* \endcode
-	* \param functionName \c string the global function in the plugin's host lua state.
-	* \param data \c string the data to pass as a argument to the given function
-	* \returns nothing
-	* \par Example 
-	* \code
-	* PluginXCallS("saveData","300")
-	* \endcode
-	* \note tables can be serialized to a string and reconstituted in the plugin using loadstring(...) but the performance may suffer if the tables are large. See PluginXCallB for a slightly faster method of communication that doesn't involve the heavy java string manipulation.
+\subsection PluginXCallS PluginXCallS
+Calls a function in the parent plugin's lua state. Provides one way signaling across the aidl bridge to the plugin host running in the background.
+
+\par Full Signature
+\luacode
+PluginXCallS(functionName,data)
+\endluacode
+\param functionName \b string the global function in the plugin's host lua state.
+\param data \b string the data to pass as a argument to the given function
+\returns nothing
+\par Example 
+\luacode
+PluginXCallS("saveData","300")
+\endluacode
+\note tables can be serialized to a string and reconstituted in the plugin using loadstring(...) but the performance may suffer if the tables are large. See PluginXCallB for a slightly faster method of communication that doesn't involve the heavy java string manipulation.
 	*/
 	private class PluginXCallSFunction extends JavaFunction {
 		//HashMap<String,String> 
@@ -2729,20 +2733,20 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 	
   /*! \page page1
-	* \subsection sec12 PopMenuStack
-	* Removes the current menu item and returns the menu stack to its previous state.
-	* 
-	* \par Full Signature
-	* \code
-	* PopMenuStack()
-	* \endcode
-	* \param none
-	* \returns nothing
-	* \par Example 
-	* \code
-	* PopMenuStack()
-	* \endcode
-	* \see PushMenuStack
+\subsection sec12 PopMenuStack
+Removes the current menu item and returns the menu stack to its previous state.
+
+\par Full Signature
+\luacode
+PopMenuStack()
+\endluacode
+\param none
+\returns nothing
+\par Example 
+\luacode
+PopMenuStack()
+\endluacode
+\see PushMenuStack
 	*/
 	private class PopMenuStackFunction extends JavaFunction {
 
@@ -2760,23 +2764,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 		
  /*! \page page1
-	* \subsection sec11 PushMenuStack
-	* Starts a new menu object, providing a global function name to call that will populate the menu
-	* 
-	* \par Full Signature
-	* \code
-	* PushMenuStack(callbackName)
-	* \endcode
-	* \param \c string the name of a global function to call in order to populate the new menu item.
-	* \returns nothing
-	* \par Example 
-	* \code
-	* function addMenu(menu)
-	*  menu:addItem(0,0,0,foo)
-	* end
-	* PushMenuStack("addMenu")
-	* \endcode
-	* \see this relies largely on the android Menu and MenuItem classes, please refer to the documentation and other menu related sample code.
+\subsection sec11 PushMenuStack
+Starts a new menu object, providing a global function name to call that will populate the menu
+
+\par Full Signature
+\luacode
+PushMenuStack(callbackName)
+\endluacode
+\param \b string the name of a global function to call in order to populate the new menu item.
+\returns nothing
+\par Example 
+\luacode
+function addMenu(menu)
+ menu:addItem(0,0,0,foo)
+end
+PushMenuStack("addMenu")
+\endluacode
+\see this relies largely on the android Menu and MenuItem classes, please refer to the documentation and other menu related sample code.
 	*/
 	private class PushMenuStackFunction extends JavaFunction {
 
@@ -2828,27 +2832,27 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 	}
 		
   /*! \page page1
-	* \subsection sec3 ScheduleCallback
-	* Add a top level menu item that will call a global function when pressed.
-	* 
-	* \par Full Signature
-	* \code
-	* ScheduleCallback(id,callbackName,delayMillis)
-	* \endcode
-	* \param id \c number unique identifier associated with this event, will be passed to the callback.
-	* \param callbackName \c string name of the global function to call after the desired elapsed time.
-	* \param delayMillis \c dumber how long in milliseconds to delay the execution of the callback
-	* \returns nothing
-	* \par Example
-	* \code
-	* function delayCallback(id)
-	*  Note(string.format("event %d fired.",id))
-	* end
-	* 
-	* ScheduleCallback(100,"delayCallback",3000)
-	* ScheduleCallback(104,"delayCallback",5000)
-	* \endcode
-	* \tableofcontents
+\subsection sec3 ScheduleCallback
+Add a top level menu item that will call a global function when pressed.
+
+\par Full Signature
+\luacode
+ScheduleCallback(id,callbackName,delayMillis)
+\endluacode
+\param id \b number unique identifier associated with this event, will be passed to the callback.
+\param callbackName \b string name of the global function to call after the desired elapsed time.
+\param delayMillis \b dumber how long in milliseconds to delay the execution of the callback
+\returns nothing
+\par Example
+\luacode
+function delayCallback(id)
+ Note(string.format("event %d fired.",id))
+end
+
+ScheduleCallback(100,"delayCallback",3000)
+ScheduleCallback(104,"delayCallback",5000)
+\endluacode
+\tableofcontents
 	*/
 	private class SheduleCallbackFunction extends JavaFunction {
 
@@ -2929,6 +2933,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 	}
 	
+  /*! \page page1
+\subsection PluginInstalled PluginInstalled
+Checks weather or not a plugin is installed.
+
+\par Full Signature
+\luacode
+PluginInstalled(name)
+\endluacode
+\param name \b the plugin name to test.
+\returns \b boolean weather or not the plugin is installed.
+\par Example 
+\luacode
+if(PluginInstalled("button_window")) then
+	WindowCall("button_window","clearButtons")
+end
+\endluacode
+	*/
 	private class PluginInstalledFunction extends JavaFunction {
 
 		public PluginInstalledFunction(LuaState L) {
@@ -2946,25 +2967,23 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 	}
-	
-	private class WindowSupportsFunction extends JavaFunction {
 
-		public WindowSupportsFunction(LuaState L) {
-			super(L);
-			// TODO Auto-generated constructor stub
-		}
+  /*! \page page1
+\subsection WindowBroadcast WindowBroadcast
+Calls a named global function in every window (if the window has defined it).
 
-		@Override
-		public int execute() throws LuaException, RemoteException {
-			String desired = this.getParam(2).getString();
-			String function = this.getParam(2).getString();
-			boolean ret = mParent.checkWindowSupports(desired,function);
-			L.pushBoolean(ret);
-			return 1;
-		}
-		
-	}
-	
+\par Full Signature
+\luacode
+WindowBroadcast(function,arg)
+\endluacode
+\param function \b the function to call.
+\param arg \b string a string or number to provide to the function as an argument.
+\returns nothing
+\par Example 
+\luacode
+WindowBroadcast("adjustZOrder","now")
+\endluacode
+	*/
 	private class WindowBroadcastFunction extends JavaFunction {
 
 		public WindowBroadcastFunction(LuaState L) {
@@ -2982,7 +3001,24 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 	}
-	
+  /*! \page page1
+\subsection WindowCall WindowCall
+Calls a named global function on the target window.
+
+\par Full Signature
+\luacode
+WindowCall(name,function,arg)
+\endluacode
+\param name \b string the name of the window to target.
+\param function \b the function to call.
+\param arg \b string a string or number to provide to the function as an argument.
+\returns nothing
+\par Example 
+\luacode
+WindowCall("button_window","loadButtonSet","default")
+\endluacode
+\see WindowSupports to test weather or not it has a global function of a desired name.
+	*/
 	private class WindowCallFunction extends JavaFunction {
 
 		public WindowCallFunction(LuaState L) {
@@ -3001,6 +3037,42 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		}
 		
 	}
+	  /*! \page page1
+\subsection WindowSupports WindowSupports
+Tests weather or not a named global function exists in the target window.
+
+\par Full Signature
+\luacode
+WindowSupports(name,function)
+\endluacode
+\param name \b string the name of the window to target.
+\param function \b the function to test.
+\returns \b boolean true if the window has a global function named \b function, false if not.
+\par Example 
+\luacode
+if(WindowSupports("button_window","clearButtons")) then
+	WindowCall("button_window","clearButtons")
+end
+\endluacode
+\tableofcontents
+		*/
+		private class WindowSupportsFunction extends JavaFunction {
+
+			public WindowSupportsFunction(LuaState L) {
+				super(L);
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public int execute() throws LuaException, RemoteException {
+				String desired = this.getParam(2).getString();
+				String function = this.getParam(2).getString();
+				boolean ret = mParent.checkWindowSupports(desired,function);
+				L.pushBoolean(ret);
+				return 1;
+			}
+			
+		}
 	
 	/*public void callFunction(String callback,Object o) {
 		L.getGlobal("debug");
@@ -3696,6 +3768,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
  * \param none
  * 
  * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
+ * \tableofcontents
  */
 		
 	public void shutdown() {
