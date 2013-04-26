@@ -801,7 +801,7 @@ bounds = nil
 
 
 function OnCreate()
-	--Note("in oncreate, loading "..#buttons.." buttons.")	
+	--Note("\n\n---------in oncreate--------\n\n")
 	debugString("Button window in View.onCreate()")
 	for i,b in ipairs(buttons) do
 		updateRect(b)

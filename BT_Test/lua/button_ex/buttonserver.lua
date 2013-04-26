@@ -1,13 +1,7 @@
---Note("package path:"..package.path)
 package.path = GetPluginInstallDirectory().."/?.lua"
---package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
-
---Note("package path:"..package.path)
 require("button")
 require("serialize")
 local marshal = require("marshal")
---this is the back end of the script, it will take care of reading/writing buttons to disk
---and storing all the loaded buttons in memory.
 
 debugInfo = false
 local function debugString(string)
@@ -18,87 +12,26 @@ end
 
 debugString("Button Server Loading...")
 
---communicates back and fourth with the window script to huck data.
---Note("STARTING THE WHO BOOTSTRAP SEQUENCE!")
 buttonsets = {} --raw table, holds tables of buttons.
 buttonset_defaults = {} --raw table, holds defaults for a set name.
 
 set_def = BUTTONSET_DATA:new()
 set = {}
 
-local b1 = BUTTON_DATA:new({x=200,y=200,label="butt1"})
-local b2 = BUTTON_DATA:new({x=500,y=360,label="butt2"}) --raw default.
-
-table.insert(set,b1)
-table.insert(set,b2)
-
---buttonset_defaults["DEFAULT"] = set_def
---buttonsets["DEFAULT"] = set
-
-alt = {}
-local b3 = BUTTON_DATA:new({x=300,y=200})
-local b4 = BUTTON_DATA:new({x=400,y=200}) 
-
-b3.label = "YEA"
-b4.label = "HEA!"
-
-table.insert(alt,b3)
-table.insert(alt,b4)
-
---buttonset_defaults["ALT"] = set_def
---buttonsets["ALT"] = alt
-
 lob = {}
-
 
 function loadButtonSet(args)
 	
-	--Note("trying to load.."..args.." setcount:"..#buttonsets)
 	debugString("Button Server sending button set, "..args)
-	--for i,b in pairs(buttonsets) do
-	--	printTable(i,b)
-	--end
-	
+
 	lob.name = args
 	lob.set = buttonsets[args]
 	lob.default = buttonset_defaults[args]
 	
 	if(lob.set ~= nil) then
-		--local lob = {}
 		current_set = args
-		--Note(serialize(lob))
-		--WindowXCallS("button_window","loadButtons",serialize(lob))
-		--local orig = { answer = 42}
-		
-		
-		--assert(marshal.encode(orig))
-		
-		--local str = marshal.encode(orig)
-		--Note("attempting byte dump")
-		--for i=1,#str do
-		--	local c = str:sub(i,i)
-			--local df = tonumber(c)
-			--if(df ~= nil) then
-		--		Note("byte: "..string.byte(c))
-			--else
-			--	Note("byte nil, probably 0x8e");
-			--end
-		--end
-		
-		
-		--Note("trying to copy")
-		--local copy = marshal.clone(orig)
-		--Note("cloned value"..copy.answer)
-		--local copy = marshal.decode(str)
-		
-		--Note(copy.answer)
-		
-		--Note(str)
-		WindowXCallB("button_window","loadButtons",marshal.encode(lob))
-		
+		WindowXCallB("button_window_ex","loadButtons",marshal.encode(lob))
 	end
-	
-	
 end
 
 function loadAndEditSet(data)
@@ -110,8 +43,7 @@ function loadAndEditSet(data)
 	
 	if(lob.set ~= nil) then
 		current_set = data
-		--WindowXCallS("button_window","loadAndEditSet",serialize(lob))
-		WindowXCallB("button_window","loadAndEditSet",marshal.encode(lob))
+		WindowXCallB("button_window_ex","loadAndEditSet",marshal.encode(lob))
 	end
 end
 
@@ -122,7 +54,7 @@ current_set = DEFAULT
 
 function clearButtons()
 	--all that needs to be done is call into the window to kick the process off
-	WindowXCallS("button_window","clearButtons","")
+	WindowXCallS("button_window_ex","clearButtons","")
 end
 
 function saveButtons(arg)
@@ -314,7 +246,7 @@ function getButtonSetList(s)
 		setdata[i] = #v
 	end
 	
-	WindowXCallS("button_window","showButtonList",serialize(setdata))
+	WindowXCallS("button_window_ex","showButtonList",serialize(setdata))
 end
 
 function saveSetDefaults(data)
@@ -482,7 +414,7 @@ end
 
 --boolean windowReady
 function loadOptions()
-	WindowXCallS("button_window","loadOptions",serialize(options))
+	WindowXCallS("button_window_ex","loadOptions",serialize(options))
 end
 
 function setAutoLaunch(value)
@@ -611,29 +543,51 @@ options.roundness = 6
 options.auto_launch = true
 options.auto_create = true
 
-function testxcall(data)
-	Note("Button window recieving testxcall:"..data)
-	if(PluginSupports("chat_miniwindow","recvxcall")) then
-		CallPlugin("chat_miniwindow","recvxcall","daaaata")
-	else
-		Note("chat_miniwindow does not support recvxcall")
-	end
-end
-
 function setDebug(off)
 	if(not off) then
 		debugString("Button server entering debug mode...")
-		WindowXCallS("button_window","setDebug","on")
+		WindowXCallS("button_window_ex","setDebug","on")
 		debugInfo = true
 	else
 		debugString("Button leaving debug mode...")
-		WindowXCallS("button_window","setDebug","off")
+		WindowXCallS("button_window_ex","setDebug","off")
 		debugInfo = false
 	end
 end
 
+function callbackImport()
+	checkImport()
+end
+
 function importButtons(data)
 	local data = loadstring(data)()
+end
+
+--utility functions for the external button window to harvest the internal buttons.
+function checkImport()
+	if(PluginSupports("button_window","exportButtons")) then
+		WindowXCallS("button_window_ex","askImport")
+	end
+end
+
+function doImport()
+	CallPlugin("button_window","exportButtons","button_window_ex")
+end
+
+function exportButtons(target)
+	local wad = {}
+	wad.selected = current_set
+	wad.sets = buttonsets
+	wad.defaults = buttonset_defaults
+	CallPlugin(target,"importButtons",serialize(wad))
+end
+
+function importButtons(data)
+	local wad = loadstring(data)()
+	current_set = wad.selected
+	buttonsets = wad.sets
+	buttonset_defaults = wad.defaults
+	loadButtonSet(current_set)
 end
 
 debugString("Button Server Loaded")
