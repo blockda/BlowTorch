@@ -1,18 +1,27 @@
 package com.offsetnull.bt.service.function;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import android.os.RemoteException;
 
 import com.offsetnull.bt.service.Connection;
+import com.offsetnull.bt.speedwalk.DirectionData;
 
 public class SpeedwalkCommand extends SpecialCommand {
 	
+	private HashMap<String,DirectionData> mDirections = null;
+	private com.offsetnull.bt.service.Connection.Data mData = null;
 	
-	
-	public SpeedwalkCommand() {
+	public SpeedwalkCommand(HashMap<String,DirectionData> directions,com.offsetnull.bt.service.Connection.Data data) {
 		this.commandName = "run";
+		mDirections = directions;
+		mData = data;
+	}
+	
+	public void setDirections(HashMap<String,DirectionData> directions) {
+		mDirections = directions;
 	}
 	public Object execute(Object o,Connection c) {
 		String str = (String)o;
@@ -71,10 +80,10 @@ public class SpeedwalkCommand extends SpecialCommand {
 						buf.append(crlf);
 					} else {
 						//check if the testVal has a mapping in the table
-						/*if(the_settings.getDirections().containsKey(testVal)) {
+						if(mDirections.containsKey(testVal)) {
 							valid = true;
-							respString = the_settings.getDirections().get(testVal).getCommand();
-						}*/
+							respString = mDirections.get(testVal).getCommand();
+						}
 					}
 					
 					
@@ -167,12 +176,13 @@ public class SpeedwalkCommand extends SpecialCommand {
 			}
 		}
 		
-		Data d = new Data();
-		d.cmdString = buf.toString();
-		d.cmdString = d.cmdString.substring(0, d.cmdString.length()-2); //strip trailing crlf
-		d.visString = ".run " + str;
+		//mData = new com.offsetnull.bt.service.Connection.Data();
+		String cmd = buf.toString();
 		
-		return d;
+		mData.setCmdString(cmd.substring(0, cmd.length()-2)); //strip trailing crlf
+		mData.setVisString(".run " + str);
+		
+		return mData;
 	}
 	
 	public class Data {

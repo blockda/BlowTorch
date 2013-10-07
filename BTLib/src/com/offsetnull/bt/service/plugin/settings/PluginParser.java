@@ -177,11 +177,11 @@ public class PluginParser extends BasePluginParser {
 						
 /*! \page entry_points
  * \subsection OnPrepareXML OnPrepareXML
- * This function is called during the loading process when it is time for a script to attatch custom xml element listeners in order to parse custom data that is saved in the descriptor file.
+ * This function is called during the loading process when scripts attach xml element listeners. These are used in order to parse custom data that is saved in the descriptor file.
  * 
  * \param none
  * 
- * \note This is not the best way to do this, it came out of a necessity for dealing with legacy button data in the new button plugin. It is advantageous to save custom data in a separate file, and saving it using the android xml suites is relativly easy using the luajava api.
+ * \note This is not the best way to do this, it came out of a necessity for dealing with legacy button data in the new button plugin. It is advantageous to save custom data in a separate file, and saving it using the Android xml suites is relatively easy using the luajava api.
  */
 		
 						

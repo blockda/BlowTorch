@@ -251,6 +251,22 @@ public class StellarService extends Service {
 		}
 		mCallbacks.finishBroadcast();
 	}
+	
+	public void dispatchSaveError(String error) throws RemoteException {
+		final int n = mCallbacks.beginBroadcast();
+		for (int i = 0; i < n; i++) {
+			mCallbacks.getBroadcastItem(i).displaySaveError(error);
+		}
+		mCallbacks.finishBroadcast();
+	}
+
+	public void dispatchPluginSaveError(String plugin, String error) throws RemoteException {
+		final int n = mCallbacks.beginBroadcast();
+		for (int i = 0; i < n; i++) {
+			mCallbacks.getBroadcastItem(i).displayPluginSaveError(plugin,error);
+		}
+		mCallbacks.finishBroadcast();
+	}
 
 	/** Enables Wifi KeepAlive. */
 	public final void enableWifiKeepAlive() {
@@ -1314,6 +1330,11 @@ public class StellarService extends Service {
 			return mConnections.get(mConnectionClutch).isPluginInstalled(desired);
 		}
 
+		@Override
+		public void setShowRegexWarning(boolean state) throws RemoteException {
+			mConnections.get(mConnectionClutch).updateBooleanSetting("show_regex_warning", state);
+		}
+
 	};
 
 	/** Dispatches data to the foreground window.
@@ -1458,6 +1479,24 @@ public class StellarService extends Service {
 		for (int i = 0; i < n; i++) {
 			try {
 				mCallbacks.getBroadcastItem(i).setKeepLast((boolean) value);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		mCallbacks.finishBroadcast();
+		
+	}
+	
+	/** Implementation of the working method that sets the foreground window trigger editor regex warning message state.
+	 * 
+	 * @param value True for show warning, false for no warning.
+	 */
+	public final void dispatchShowRegexWarning(final Boolean value) {
+		final int n = mCallbacks.beginBroadcast();
+		for (int i = 0; i < n; i++) {
+			try {
+				mCallbacks.getBroadcastItem(i).setRegexWarning((boolean) value);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -1687,4 +1726,6 @@ public class StellarService extends Service {
 		}
 		mCallbacks.finishBroadcast();
 	}
+
+
 }

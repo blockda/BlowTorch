@@ -351,56 +351,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		windowShowing = false;
 	}
 	
-	@Override
-	protected final void onMeasure(final int widthSpec, final int heightSpec) {
-		int height = MeasureSpec.getSize(heightSpec);
-		int width = MeasureSpec.getSize(widthSpec);
-		
-		if (mHasScriptOnMeasure && mL != null) {
-			mL.getGlobal("debug");
-			mL.getField(-1, "traceback");
-			mL.remove(TOP_MINUS_TWO);
-			
-			mL.getGlobal("OnMeasure");
-			if (mL.isFunction(-1)) {
-				mL.pushNumber(widthSpec);
-				mL.pushNumber(heightSpec);
-				int ret = mL.pcall(2, 2, TOP_MINUS_FOUR);
-				if (ret != 0) {
-					displayLuaError("Error in OnMeasure:" + mL.getLuaObject(-1).getString());
-					setMeasuredDimension(1, 1);
-					mL.pop(1);
-					return;
-				} else {
-					int retHeight = (int) mL.getLuaObject(-1).getNumber();
-					int retWidth = (int) mL.getLuaObject(TOP_MINUS_TWO).getNumber();
-					mL.pop(2);
-					setMeasuredDimension(retWidth, retHeight);
-					return;
-				}
-			} else {
-				mL.pop(2);
-			}
-		}
-		int hspec = MeasureSpec.getMode(heightSpec);
-		if (width != mWidth) {
-			doFitFontSize(width);
-		}
-		switch(hspec) {
-		case MeasureSpec.AT_MOST:
-			break;
-		case MeasureSpec.EXACTLY:
-			break;
-		case MeasureSpec.UNSPECIFIED:
-			height = (mBuffer.getBrokenLineCount() * mPrefLineSize) + mPrefLineExtra;
-			break;
-		default:
-			break;
-		}
-		
-		setMeasuredDimension(width, height);
-		
-	}
+
 
 	/** Initialization routine. It all starts here.
 	 * 
@@ -923,6 +874,44 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			
 		}
 			
+	}
+	
+	public void runScriptOnCreate() {
+		if(mL == null) return;
+		mL.getGlobal("debug");
+		mL.getField(-1, "traceback");
+		mL.remove(-2);
+		
+/*! \page entry_points
+ * \section window Window Lua State Entry Points
+ * \subsection OnCreate OnCreate
+ * Called during window creation. After the main script has been loaded and the actual backing android View is created and shown.
+ * 
+ * \param none
+ * 
+ * \note General initialization of code can be done when the script is loaded. But certain graphical subsystems will be unavailable until this callback is called.
+ */
+		
+		mL.getGlobal("OnCreate");
+		if(mL.getLuaObject(-1).isFunction()) {
+			int tmp = mL.pcall(0, 1, -2);
+			if(tmp != 0) {
+				displayLuaError("Calling OnCreate: "+mL.getLuaObject(-1).getString());
+			} else {
+				//Log.e("LUAWINDOW","OnCreate Success for window ("+this.getName()+")!");
+				mL.pop(2);
+			}
+		} else {
+			mL.pop(2);
+		}
+		
+		mL.getGlobal("OnMeasure");
+		if(mL.isFunction(-1)) {
+			mHasScriptOnMeasure = true;
+		} else {
+			mHasScriptOnMeasure = false;
+		}
+		mL.pop(1);
 	}
 	
 
@@ -1473,9 +1462,8 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			if (mL != null) {
 				
 /*! \page entry_points
- * \section window Window Lua State Entry Points
  * \subsection OnDraw OnDraw
- * This function is called whenever the window is dirty and needs redrawing of custom content.
+ * This function is called whenever the window is dirty and needs to redraw custom content.
  * 
  * \param canvas
  * 
@@ -2126,65 +2114,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 		return mBufferText;
 	}
 
-	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
-		boolean dofit = false;
-		if(mWidth != w) {
-			dofit = true;
-		}
-		mWidth = w;
-		mHeight = h;
-		if(dofit) {
-			doFitFontSize(mWidth);
-		}
-		calculateCharacterFeatures(mWidth,mHeight);
-		
 
-		//int diff = oldh - h;
-		//scrollback -= diff;
-		if(mScrollback == SCROLL_MIN) {
-			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
-			mScrollback = SCROLL_MIN;
-		} else {
-			//we have to calculate the new scrollback position.
-			double oldmin = SCROLL_MIN;
-			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
-			mScrollback -= oldmin - SCROLL_MIN;
-		}
-		
-		//if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
-		//	scrollback = 0.0;
-		//}
-
-		
-		mHomeWidgetRect.set(mWidth-mHomeWidgetDrawable.getWidth(),mHeight-mHomeWidgetDrawable.getHeight(),mWidth,mHeight);
-		
-		Float foo = new Float(0);
-		//foo.
-		
-		if(mL == null || !hasOnSizeChanged) return;
-		mL.getGlobal("debug");
-		mL.getField(mL.getTop(), "traceback");
-		mL.remove(-2);
-		mL.getGlobal("OnSizeChanged");
-		if(mL.getLuaObject(mL.getTop()).isFunction()) {
-			mL.pushString(Integer.toString(w));
-			mL.pushString(Integer.toString(h));
-			mL.pushString(Integer.toString(oldw));
-			mL.pushString(Integer.toString(oldh));
-			int ret = mL.pcall(4, 1, -6);
-			if(ret != 0) {
-				displayLuaError("Window("+mName+") OnSizeChangedError: " + mL.getLuaObject(-1).getString());
-			} else {
-				mL.pop(2);
-			}
-		} else {
-			//Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
-			hasOnSizeChanged = false;
-			mL.pop(2);
-		}
-		this.invalidate();
-	}
-	boolean hasOnSizeChanged = true;
 	
 	protected void xcallS(String string, String str) {
 		if(mL == null) return;
@@ -2329,34 +2259,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 
 	}
 	
-	public void runScriptOnCreate() {
-		if(mL == null) return;
-		mL.getGlobal("debug");
-		mL.getField(-1, "traceback");
-		mL.remove(-2);
-		
-		
-		mL.getGlobal("OnCreate");
-		if(mL.getLuaObject(-1).isFunction()) {
-			int tmp = mL.pcall(0, 1, -2);
-			if(tmp != 0) {
-				displayLuaError("Calling OnCreate: "+mL.getLuaObject(-1).getString());
-			} else {
-				//Log.e("LUAWINDOW","OnCreate Success for window ("+this.getName()+")!");
-				mL.pop(2);
-			}
-		} else {
-			mL.pop(2);
-		}
-		
-		mL.getGlobal("OnMeasure");
-		if(mL.isFunction(-1)) {
-			mHasScriptOnMeasure = true;
-		} else {
-			mHasScriptOnMeasure = false;
-		}
-		mL.pop(1);
-	}
+
 	
 	/*! \page page1
 \section window Window Functions
@@ -2672,20 +2575,20 @@ end
 	
   /*! \page page1
 \subsection PluginXCallS PluginXCallS
-Calls a function in the parent plugin's lua state. Provides one way signaling across the aidl bridge to the plugin host running in the background.
+Calls a function in the parent plugin's Lua state. Provides one way signaling across the AIDL bridge to the plugin host running in the background.
 
 \par Full Signature
 \luacode
 PluginXCallS(functionName,data)
 \endluacode
-\param functionName \b string the global function in the plugin's host lua state.
+\param functionName \b string the global function in the plugin's host Lua state.
 \param data \b string the data to pass as a argument to the given function
 \returns nothing
 \par Example 
 \luacode
 PluginXCallS("saveData","300")
 \endluacode
-\note tables can be serialized to a string and reconstituted in the plugin using loadstring(...) but the performance may suffer if the tables are large. See PluginXCallB for a slightly faster method of communication that doesn't involve the heavy java string manipulation.
+\note Tables can be serialized to a string and reconstituted in the plugin using loadstring(...) but the performance may suffer if the tables are large. See PluginXCallB for a slightly faster method of communication that doesn't involve the heavy Java string manipulation.
 	*/
 	private class PluginXCallSFunction extends JavaFunction {
 		//HashMap<String,String> 
@@ -2780,7 +2683,7 @@ function addMenu(menu)
 end
 PushMenuStack("addMenu")
 \endluacode
-\see this relies largely on the android Menu and MenuItem classes, please refer to the documentation and other menu related sample code.
+\see this relies largely on the Android Menu and MenuItem classes, please refer to the documentation and other menu related sample code.
 	*/
 	private class PushMenuStackFunction extends JavaFunction {
 
@@ -2935,14 +2838,14 @@ ScheduleCallback(104,"delayCallback",5000)
 	
   /*! \page page1
 \subsection PluginInstalled PluginInstalled
-Checks weather or not a plugin is installed.
+Checks whether a plugin is installed.
 
 \par Full Signature
 \luacode
 PluginInstalled(name)
 \endluacode
 \param name \b the plugin name to test.
-\returns \b boolean weather or not the plugin is installed.
+\returns \b boolean whether or not the plugin is installed.
 \par Example 
 \luacode
 if(PluginInstalled("button_window")) then
@@ -3017,7 +2920,7 @@ WindowCall(name,function,arg)
 \luacode
 WindowCall("button_window","loadButtonSet","default")
 \endluacode
-\see WindowSupports to test weather or not it has a global function of a desired name.
+\see WindowSupports to test whether or not it has a global function of a desired name.
 	*/
 	private class WindowCallFunction extends JavaFunction {
 
@@ -3039,7 +2942,7 @@ WindowCall("button_window","loadButtonSet","default")
 	}
 	  /*! \page page1
 \subsection WindowSupports WindowSupports
-Tests weather or not a named global function exists in the target window.
+Tests whether a named global function exists in the target window.
 
 \par Full Signature
 \luacode
@@ -3763,18 +3666,18 @@ end
 
 /*! \page entry_points
  * \subsection OnDestroy OnDestroy
- * When the foreground process is being terimnated normally, this function will be called and it is appropriate to put memory management stuff here (freeing custom bitmaps, data, stuff that needs to be garbage collected).
+ * When the foreground process is being terimnated normally; used for memory management (freeing custom bitmaps, data, stuff that needs to be garbage collected).
  * 
  * \param none
  * 
- * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and weather or not it worked. A good example is the button window, it has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the appliation after a phone call or web browser and it immediatly exits, this may be the culprit.
- * \tableofcontents
+ * \note It is difficult to know exactly what needs to be freed for garbage collection, how to do it, and wheather or not it worked. See the button window script for an example demonstrating use. The button window has many custom resources and I had run into memory issues with it when closing/opening the window a few times. It may never happen, it may happen after 100 open/close cycles, or 5, but the general trend of running the foreground process out of memory is an immediate termination of the window. So if you are in a case where you are coming back into the BlowTorch after a phone call or web browser session and it immediatly exits, this may be the culprit.
  */
 		
 	public void shutdown() {
 		//Log.e("LUAWINDOW","SHUTTING DOWN: "+mName);
 		if(mL == null) return;
 		//call into lua to notify shutdown imminent.
+		
 		mL.getGlobal("debug");
 		mL.getField(-1, "traceback");
 		mL.remove(-2);
@@ -3798,6 +3701,196 @@ end
 		mL = null;
 		
 	}
+	
+	@Override
+	protected final void onMeasure(final int widthSpec, final int heightSpec) {
+		int height = MeasureSpec.getSize(heightSpec);
+		int width = MeasureSpec.getSize(widthSpec);
+		
+/*! \page entry_points
+ * \subsection OnMeasure OnMeasure
+ * Whenever the layout hierarchy initiates re-measuring (window hierarchy changed) this function is called, many times. There is much to know about this function. More documentation will come, but the information passed in the variables is called a measure spec. It contains the target dimension and the measurement mode. More information can be found here. <insert link>
+ * 
+ * \param widthspec
+ * \param heightspec
+ * 
+ * \return width and height, see note
+\par Example
+\luacode
+function OnMeasure(wspec,hspec)	
+	if(wspec == measurespec_width and hspec == measurespec_height) then return measured_width,measured_height end
+	--Note(string.format("measurespecs: %d, %d\n",wspec,hspec))
+	measurespec_width = wspec
+	measurespec_height = hspec
+	measured_width = MeasureSpec:getSize(wspec)
+	--local wmode = MeasureSpec:getMode(wspec)
+	
+	measured_height = MeasureSpec:getSize(hspec)
+	--local hmode = MeasureSpec:getMode(hspec)
+	
+	function test()
+		local orientation = view:getParent():getOrientation()
+	end
+	local ret,err = pcall(test,debug.traceback)
+	if(not ret) then
+		--there was a problem, but do we care
+		--Note("stat widget is relative, width:"..measured_width.." height:"..measured_height.."\n")
+		return measured_width,measured_height
+	end
+	
+	
+	local orientation = view:getParent():getOrientation()
+	if(orientation == LinearLayout.VERTICAL) then
+		view:fitFontSize(36)
+		view:doFitFontSize(measured_width)
+		measured_height = view:getLineSize()*view:getBuffer():getBrokenLineCount()
+		
+		--Note("stat widget is vertical, width:"..measured_width.." height:"..measured_height.."\n")
+		return measured_width,measured_height
+	else
+		view:setCharacterSizes((measured_height-6)/3,2)
+		measured_width = 37*view:measure("a")
+		view:fitFontSize(-1)
+		measured_height = view:getLineSize()*view:getBuffer():getBrokenLineCount()
+		--Note("stat widget is horizontal, width:"..measured_width.." height:"..measured_height.."\n")
+		return measured_width,measured_height
+	end
+	--end
+	
+	
+
+end
+\endluacode
+ * 
+ * \note This function expects a measured width and height value returned, e.g. return width,height is expected. If it is not supplied the window will not appear. 
+ */
+		if (mHasScriptOnMeasure && mL != null) {
+			mL.getGlobal("debug");
+			mL.getField(-1, "traceback");
+			mL.remove(TOP_MINUS_TWO);
+			
+			mL.getGlobal("OnMeasure");
+			if (mL.isFunction(-1)) {
+				mL.pushNumber(widthSpec);
+				mL.pushNumber(heightSpec);
+				int ret = mL.pcall(2, 2, TOP_MINUS_FOUR);
+				if (ret != 0) {
+					displayLuaError("Error in OnMeasure:" + mL.getLuaObject(-1).getString());
+					setMeasuredDimension(1, 1);
+					mL.pop(1);
+					return;
+				} else {
+					int retHeight = (int) mL.getLuaObject(-1).getNumber();
+					int retWidth = (int) mL.getLuaObject(TOP_MINUS_TWO).getNumber();
+					mL.pop(2);
+					setMeasuredDimension(retWidth, retHeight);
+					return;
+				}
+			} else {
+				mL.pop(2);
+			}
+		}
+		int hspec = MeasureSpec.getMode(heightSpec);
+		if (width != mWidth) {
+			doFitFontSize(width);
+		}
+		switch(hspec) {
+		case MeasureSpec.AT_MOST:
+			break;
+		case MeasureSpec.EXACTLY:
+			break;
+		case MeasureSpec.UNSPECIFIED:
+			height = (mBuffer.getBrokenLineCount() * mPrefLineSize) + mPrefLineExtra;
+			break;
+		default:
+			break;
+		}
+		
+		setMeasuredDimension(width, height);
+		
+	}
+	
+	protected void onSizeChanged(int w,int h,int oldw,int oldh) {
+		boolean dofit = false;
+		if(mWidth != w) {
+			dofit = true;
+		}
+		mWidth = w;
+		mHeight = h;
+		if(dofit) {
+			doFitFontSize(mWidth);
+		}
+		calculateCharacterFeatures(mWidth,mHeight);
+		
+
+		//int diff = oldh - h;
+		//scrollback -= diff;
+		if(mScrollback == SCROLL_MIN) {
+			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
+			mScrollback = SCROLL_MIN;
+		} else {
+			//we have to calculate the new scrollback position.
+			double oldmin = SCROLL_MIN;
+			SCROLL_MIN = mHeight-(double)(5*Window.this.getResources().getDisplayMetrics().density);
+			mScrollback -= oldmin - SCROLL_MIN;
+		}
+		
+		//if(the_tree.getBrokenLineCount() <= CALCULATED_LINESINWINDOW) {
+		//	scrollback = 0.0;
+		//}
+
+		
+		mHomeWidgetRect.set(mWidth-mHomeWidgetDrawable.getWidth(),mHeight-mHomeWidgetDrawable.getHeight(),mWidth,mHeight);
+		
+		Float foo = new Float(0);
+		//foo.
+		
+/*! \page entry_points
+ * \subsection OnSizeChanged OnSizeChanged
+ * If the window's size changes this function is called.
+ * 
+ * \param new width
+ * \param new height
+ * \param old width
+ * \param old height
+ * 
+ * \return none
+\par Example
+\luacode
+function OnSizeChanged(w,h,oldw,oldh)
+	Note("Window starting OnSizeChanged()")
+	if(w == 0 and h == 0) then
+		draw = false
+	end
+end
+\endluacode
+ * 
+ */
+		
+		if(mL == null || !hasOnSizeChanged) return;
+		mL.getGlobal("debug");
+		mL.getField(mL.getTop(), "traceback");
+		mL.remove(-2);
+		mL.getGlobal("OnSizeChanged");
+		if(mL.getLuaObject(mL.getTop()).isFunction()) {
+			mL.pushString(Integer.toString(w));
+			mL.pushString(Integer.toString(h));
+			mL.pushString(Integer.toString(oldw));
+			mL.pushString(Integer.toString(oldh));
+			int ret = mL.pcall(4, 1, -6);
+			if(ret != 0) {
+				displayLuaError("Window("+mName+") OnSizeChangedError: " + mL.getLuaObject(-1).getString());
+			} else {
+				mL.pop(2);
+			}
+		} else {
+			//Log.e("LUAWINDOW","Window("+mName+"): No OnSizeChanged Function Defined.");
+			hasOnSizeChanged = false;
+			mL.pop(2);
+		}
+		this.invalidate();
+	}
+	boolean hasOnSizeChanged = true;
 	
 	private void doScrollDown(boolean repeat) {
 		//Log.e("FOO","do scroll down");
@@ -3917,7 +4010,36 @@ end
 		mL.getGlobal("debug");
 		mL.getField(-1, "traceback");
 		mL.remove(-2);
-		
+/*! \page entry_points
+ * \subsection PopulateMenu PopulateMenu
+ * Called during the activity creation process. [I think] Before OnCreate is called, but after the plugin windows have been loaded and the script bodies run.
+ * 
+ * \param menu android.menu.Menu that is the menu for the foreground window activity.
+\par Example
+\luacode
+menucallback = {}
+
+function menucallback.onMenuItemClick(item)
+	Note("menu item clicked")
+	
+	--this function must return true if it consumes the click event.
+	return true
+end
+menucallback_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",menucallback)
+
+ 
+function PopulateMenu(menu)
+ 	--see android Menu documentation, menu:add() returns an android.menu.MenuItem
+ 	--that can be manipulated to have a drawable (more sample code coming soon)
+ 	--and can be configured for Android 4.0 (ICS)+ features.
+ 	item = menu:add(0,401,401,"Ex Button Sets")
+	item:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
+end
+ 
+\endluacode
+ * \note Need some example code. It is necessary to create and attach menu items to the top level menu. This is how the button window script attaches its menu item into the top level list.
+ *  \tableofcontents
+ */
 		mL.getGlobal("PopulateMenu");
 		if(mL.getLuaObject(-1).isFunction()) {
 			mL.pushJavaObject(menu);

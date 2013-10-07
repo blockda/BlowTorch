@@ -59,6 +59,7 @@ LayoutAnimationController = luajava.bindClass("android.view.animation.LayoutAnim
 HapticFeedbackConstants = luajava.bindClass("android.view.HapticFeedbackConstants")
 Validator = luajava.newInstance("com.offsetnull.bt.validator.Validator")
 MenuItem = luajava.bindClass("android.view.MenuItem")
+DialogInterface = luajava.bindClass("android.content.DialogInterface")
 Validator_Number = Validator.VALIDATE_NUMBER
 Validator_Not_Blank = Validator.VALIDATE_NOT_BLANK
 Validator_Number_Not_Blank = bit.bor(Validator_Number,Validator_Not_Blank)
@@ -1359,6 +1360,16 @@ function showButtonList(data)
 	
 	--end
 	mSelectorDialog:show()
+end
+
+function updateButtonListDialog()
+	Note("\nConfirmingDelete")
+	mListView:setAdapter(buttonListAdapter_cb)
+end
+
+function updateButtonListDialogNoItems()
+	mListView:setAdapter(buttonListAdapter_cb)
+	emptyButtons()
 end
 
 
@@ -3295,6 +3306,40 @@ function toolbarLoadClicked.onClick(v)
 end
 toolbarLoadClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarLoadClicked)
 
+deleteConfirmListener = {}
+function deleteConfirmListener.onClick(dialog,which)
+	--Note("deleting,"..which)
+	if(which == DialogInterface.BUTTON_POSITIVE) then
+		--find the button set.
+		local entry = buttonSetList[lastSelectedIndex+1]
+		--if(entry.name ~= lastLoadedSet) then
+		buttonSetList[entry] = nil
+		table.remove(buttonSetList,lastSelectedIndex+1)
+		PluginXCallS("deleteButtonSet",entry.name)
+		--end
+	end
+end
+deleteConfirmListener_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",deleteConfirmListener)
+
+deleteCancelListener = {}
+function deleteCancelListener.onClick(dialog,which)
+	dialog:dismiss()
+end
+deleteCancelListener_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",deleteCancelListener)
+toolbarDeleteClicked = {}
+function toolbarDeleteClicked.onClick(v)
+	local builder = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	builder:setTitle("Delete Button Set")
+	builder:setMessage("Confirm delete?")
+	builder:setPositiveButton("Yes",deleteConfirmListener_cb)
+	builder:setNegativeButton("No",deleteCancelListener_cb)
+	
+	local dialog = builder:create()
+	dialog:show()
+	
+end
+toolbarDeleteClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarDeleteClicked)
+
 function loadAndEditSet(data)
 	--Note("Loading and editing: "..data)
 	loadButtons(data)
@@ -3792,6 +3837,12 @@ function clearButtons()
 	buttons = revertButtonSet
 	drawButtons()
 	suppress_editor = true
+	view:invalidate()
+end
+
+function emptyButtons()
+	buttons = {}
+	drawButtons()
 	view:invalidate()
 end
 

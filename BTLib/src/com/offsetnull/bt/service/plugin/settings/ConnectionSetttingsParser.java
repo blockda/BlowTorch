@@ -62,7 +62,7 @@ public class ConnectionSetttingsParser extends PluginParser {
 		debug_telnet,
 		bell_vibrate,
 		bell_notification,
-		bell_display, use_gmcp, gmcp_supports
+		bell_display, use_gmcp, gmcp_supports, show_regex_warning
 	}
 	
 	ConnectionSettingsPlugin settings = null;
@@ -451,6 +451,11 @@ public class ConnectionSetttingsParser extends PluginParser {
 						break;
 					case debug_telnet:
 						if((Boolean)opt.getValue() != false) {
+							dooutput = true;
+						}
+						break;
+					case show_regex_warning:
+						if((Boolean)opt.getValue() != true) {
 							dooutput = true;
 						}
 						break;
