@@ -141,6 +141,69 @@ function makeNewButtonSet(name)
 	loadAndEditSet(name)
 end
 
+function deleteButtonSet(name)
+	local nextset = nil
+	if(name == current_set) then
+		buttonSetList = {}
+		for k in pairs(buttonSetList) do
+			buttonSetList[k] = nil
+		end
+		
+		
+		local setdata = {}
+		for i,v in pairs(buttonsets) do
+			setdata[i] = #v
+		end
+		
+		local counter = 1
+		selectedIndex = -1
+		for i,k in pairs(setdata) do
+			tmp = {}
+			tmp.name = i
+			tmp.count = k
+			table.insert(buttonSetList,tmp)
+	
+		end
+		
+		local sorter = function(a,b) if(a.name < b.name) then return true end return false end
+		table.sort(buttonSetList,sorter)
+		
+		for i,b in ipairs(buttonSetList) do
+			if(b.name == name) then
+			selectedIndex = counter
+			end
+			counter = counter + 1
+		end
+			
+		local nextindex = selectedIndex - 1
+		if(nextindex > 0) then
+			nextset = buttonSetList[nextindex].name
+		end
+			
+	end
+	
+	buttonsets[name] = nil
+	buttonset_defaults[name] = nil
+	
+	local left = 0
+	for i,b in pairs(buttonsets) do
+		left = left + 1
+	end
+	
+	if(nextset ~= nil and left > 0) then
+		loadButtonSet(nextset)
+	end
+	local left = 0
+	for i,b in pairs(buttonsets) do
+		left = left + 1
+	end
+	if(left == 0) then
+		WindowXCallS("button_window","updateButtonListDialogNoItems","now")
+	else
+		WindowXCallS("button_window","updateButtonListDialog","now")
+	end
+end
+
 
 function printTable(key,o)
 	for i,v in pairs(o) do
@@ -559,14 +622,14 @@ function alignDefaultButtons()
 	local defaults = buttonset_defaults["default"]
 
 	for i,b in pairs(set) do
-		b.x = b.x*density
-		b.y = b.y*density
+		b.x = b.x * density
+		b.y = b.y * density
 		
 		local width = b.width or defaults.width
 		local height = b.height or defaults.height
 		
-		width = width*density
-		height = height*density
+		width = width * density
+		height = height * density
 		
 		local l = b.x - width/2
 		local r = b.x + width/2

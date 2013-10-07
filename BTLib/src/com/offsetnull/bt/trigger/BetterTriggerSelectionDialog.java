@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
@@ -22,13 +24,15 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 
 	HashMap<String,TriggerData> dataMap;
 	String[] sortedKeys;
+	private boolean mShowWarning = true;
 	
 	public BetterTriggerSelectionDialog(Context context,
-			IConnectionBinder service) {
+			IConnectionBinder service,boolean showWarning) {
 		super(context, service);
 		buildList();
 		this.setToolbarListener(this);
 		this.setTitle("TRIGGERS");
+		mShowWarning = showWarning;
 	}
 
 	@Override
@@ -36,7 +40,7 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 		TriggerData d = dataMap.get(sortedKeys[row]);
 		Log.e("Trigger","trigger item selected for modification: "+d.getName());
 
-		TriggerEditorDialog editor = new TriggerEditorDialog(BetterTriggerSelectionDialog.this.getContext(),d,service,triggerEditorDoneHandler,currentPlugin);
+		TriggerEditorDialog editor = new TriggerEditorDialog(BetterTriggerSelectionDialog.this.getContext(),d,service,triggerEditorDoneHandler,currentPlugin,mShowWarning);
 		editor.show();
 	}
 
@@ -82,7 +86,7 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 
 	@Override
 	public void onNewPressed(View v) {
-		TriggerEditorDialog editor = new TriggerEditorDialog(BetterTriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler,currentPlugin);
+		TriggerEditorDialog editor = new TriggerEditorDialog(BetterTriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler,currentPlugin,mShowWarning);
 		editor.show();
 	}
 
@@ -98,7 +102,9 @@ public class BetterTriggerSelectionDialog extends PluginFilterSelectionDialog im
 	
 	@Override
 	public void onHelp() {
-		Log.e("Error","Help pressed.");
+		Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse("http://bt.happygoatstudios.com/?view=triggers"));
+		this.getContext().startActivity(web_help);
+		//Log.e("Error","Help pressed.");
 	}
 	
 	@Override

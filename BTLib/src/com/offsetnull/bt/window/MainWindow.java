@@ -147,6 +147,8 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	public static final int MESSAGE_RELOADBUTTONSET = 208;
 	protected static final int MESSAGE_BUTTONREQUESTINGSETCHANGE = 207;
 	protected static final int MESSAGE_XMLERROR = 397;
+	protected static final int MESSAGE_SAVEERROR = 3993;
+	protected static final int MESSAGE_PLUGINSAVEERROR = 3994;
 	protected static final int MESSAGE_COLORDEBUG = 675;
 	protected static final int MESSAGE_DIRTYEXITNOW = 943;
 	protected static final int MESSAGE_DOHAPTICFEEDBACK = 856;
@@ -199,6 +201,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	protected static final int MESSAGE_DORESETSETTINGS = 905;
 	protected static final int MESSAGE_EXPORTSETTINGS = 906;
 	public static final int MESSAGE_CLOSEOPTIONSDIALOG = 907;
+	public static final int MESSAGE_SHOWREGEXWARNING = 908;
 	protected boolean settingsDialogRun = false;
 	boolean mHideIcons = true;
 	
@@ -452,7 +455,6 @@ public class MainWindow extends Activity implements MainWindowCallback {
 //			}
 //		});
 //        
-        
         mInputBox.setOnKeyListener(new TextView.OnKeyListener() {
 
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -565,6 +567,9 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			public void handleMessage(Message msg) {
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				switch(msg.what) {
+				case MESSAGE_SHOWREGEXWARNING:
+					mShowRegexWarning = (msg.arg1 == 1) ? true : false;
+					break;
 				case MESSAGE_CLOSEOPTIONSDIALOG:
 					closeOptionsDialog();
 					break;
@@ -902,6 +907,53 @@ public class MainWindow extends Activity implements MainWindowCallback {
 					TextView tvtmp = (TextView)error.findViewById(android.R.id.message);
 					tvtmp.setTypeface(Typeface.MONOSPACE);
 					
+					break;
+				case MESSAGE_SAVEERROR:
+					String saveerror = (String)msg.obj;
+					AlertDialog.Builder sbuilder = new AlertDialog.Builder(MainWindow.this);
+					sbuilder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
+						
+						public void onClick(DialogInterface arg0, int arg1) {
+							arg0.dismiss();
+						}
+					});
+					
+					sbuilder.setMessage(saveerror + "\nSettings have not been saved.");
+					sbuilder.setTitle("Error Saving Settings");
+					
+					
+					//tvtmp.setText("TESTING");
+					//builder.setView(tvtmp);
+					
+					
+					AlertDialog serror = sbuilder.create();
+					serror.show();
+					TextView stvtmp = (TextView)serror.findViewById(android.R.id.message);
+					stvtmp.setTypeface(Typeface.MONOSPACE);
+					break;
+				case MESSAGE_PLUGINSAVEERROR:
+					String pserror = (String)msg.obj;
+					
+					AlertDialog.Builder psbuilder = new AlertDialog.Builder(MainWindow.this);
+					psbuilder.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
+						
+						public void onClick(DialogInterface arg0, int arg1) {
+							arg0.dismiss();
+						}
+					});
+					
+					psbuilder.setMessage(pserror + "\nPlugin has not been saved.");
+					psbuilder.setTitle("Error Saving Plugin");
+					
+					
+					//tvtmp.setText("TESTING");
+					//builder.setView(tvtmp);
+					
+					
+					AlertDialog pserrord = psbuilder.create();
+					pserrord.show();
+					TextView pstvtmp = (TextView)pserrord.findViewById(android.R.id.message);
+					pstvtmp.setTypeface(Typeface.MONOSPACE);
 					break;
 				case MESSAGE_LOADSETTINGS:
 					//the service is connected at this point, so the service is alive and settings are loaded
@@ -1758,7 +1810,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			//launch the sweet trigger dialog.
 			//TriggerSelectionDialog trigger_selector = new TriggerSelectionDialog(this,service);
 			//trigger_selector.show();
-			BetterTriggerSelectionDialog btsd = new BetterTriggerSelectionDialog(this,service);
+			BetterTriggerSelectionDialog btsd = new BetterTriggerSelectionDialog(this,service,mShowRegexWarning);
 			btsd.show();
 			break;
 		default:
@@ -2418,6 +2470,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	}
 	
 	private int orientation;
+	private Boolean mShowRegexWarning;
 	private void loadSettings() {
 		//TODO: NEW LOAD SETTINGS PLACE
 		//if(!isResumed || !screen2.loaded()) {
@@ -2451,6 +2504,9 @@ public class MainWindow extends Activity implements MainWindowCallback {
 				MainWindow.this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 				MainWindow.this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			}
+			
+			mShowRegexWarning = (Boolean)((BaseOption)(group.findOptionByKey("show_regex_warning"))).getValue();
+			
 			//
 
 			MainWindow.this.findViewById(R.id.window_container).requestLayout();
@@ -2686,6 +2742,21 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			
 		}
 
+		@Override
+		public void displaySaveError(String error) throws RemoteException {
+			Message saveerror = myhandler.obtainMessage(MESSAGE_SAVEERROR);
+			saveerror.obj = error;
+			myhandler.sendMessage(saveerror);
+		}
+		
+		@Override
+		public void displayPluginSaveError(String plugin, String error) throws RemoteException {
+			Message saveerror = myhandler.obtainMessage(MESSAGE_SAVEERROR);
+			saveerror.obj = error;
+			saveerror.getData().putString("PLUGIN", plugin);
+			myhandler.sendMessage(saveerror);
+		}
+
 		public void executeColorDebug(int arg) throws RemoteException {
 			Message colordebug = myhandler.obtainMessage(MESSAGE_COLORDEBUG);
 			colordebug.arg1 = arg;
@@ -2884,6 +2955,12 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		@Override
 		public void setCompatibilityMode(boolean value) throws RemoteException {
 			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_USECOMPATIBILITYMODE,(value==true) ? 1 : 0,0));
+		}
+
+		@Override
+		public void setRegexWarning(boolean value) throws RemoteException {
+			// TODO Auto-generated method stub
+			myhandler.sendMessage(myhandler.obtainMessage(MESSAGE_SHOWREGEXWARNING,(value==true) ? 1 : 0,0));
 		}
 	};
 	

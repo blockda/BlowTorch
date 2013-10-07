@@ -546,7 +546,7 @@ barHeight = GetActionBarHeight()
 
   /*! \page page1 Lua Functions
 \subsection GetExternalStorageDirectory GetExternalStorageDirectory
-Get the current external storage volume directory. Checks if the volume exists but \b not if it is write protected.
+Get the current external storage volume directory. Checks if the volume exists, but \b not if it is write protected.
 
 \par Full Signature
 \luacode
@@ -559,7 +559,7 @@ GetExternalStorageDirectory()
 \luacode
 path = GetExternalStorageDirectory()
 \endluacode
-\note Equivelent lua code
+\note Equivalent Lua code
 \luacode
 Environment = luajava.bindClass("android.os.Environment")
 local path = nil
@@ -596,7 +596,7 @@ end
 
   /*! \page page1 Lua Functions
 \subsection GetPluginID GetPluginID
-Gets the plugin id associated with this plugin.
+Gets the plugin ID associated with this plugin.
 
 \par Full Signature
 \luacode
@@ -628,7 +628,7 @@ id = GetPluginID()
 	
  /*! \page page1 Lua Functions
 \subsection GetPluginName GetPluginName
-Gets the plugin id associated with this plugin.
+Gets the plugin name associated with this plugin.
 
 \par Full Signature
 \luacode
@@ -638,7 +638,7 @@ GetPluginName()
 \returns \b string the name of this plugin.
 \par Example 
 \luacode
-id = GetPluginID()
+name = GetPluginName()
 \endluacode
 	*/
 	private class GetPluginNameFunction extends JavaFunction {
@@ -672,7 +672,7 @@ GetPluginInstallDirectory()
 \luacode
 path = GetPluginInstallDirectory()
 \endluacode
-\note this function should always return the path regardless if the path no longer exists to the external volume being unmounted etc.
+\note This function should always return the path if the path no longer exists to the external volume being unmounted etc.
 	*/
 	private class GetPluginInstallDirectoryFunction extends JavaFunction {
 	
@@ -785,7 +785,7 @@ SendToServer("run north;open door")
 /*! \page page1
 \section service Service Functions
 \subsection AppendLineToWindow AppendLineToWindow
-Sends a packet of gmcp data to the server
+Sends a packet of GMCP data to the server
  
 \par Full Signature
 \luacode
@@ -848,7 +848,7 @@ end
 
 	/*! \page page1
 \subsection AppendWindowSettings AppendWindowSettings
-Attatches a settings group from a window to the plugin settings block. This is to allow a plugin writer to include window settings in the main options dialog block at thier discretion.
+Attaches a settings group from a window to the plugin settings block. This is to allow a plugin writer to include window settings in the main options dialog block at their discretion.
 
 \par Full Signature
 \luacode
@@ -895,7 +895,7 @@ end
 	
 	/*! \page page1
 \subsection CallPlugin CallPlugin
-Calls an named global function in another plugin.
+Calls a named global function in another plugin.
 
 \par Full Signature
 \luacode
@@ -903,7 +903,7 @@ CallPlugin(name,function,arguments[,...])
 \endluacode
 \param name \b string the line to append, this usually comes from a trigger callback
 \param function \b function the global function to call.
-\param arguments a list of arguments to provide, can be more than one sperated by commas. Numbers or strings.
+\param arguments a list of arguments to provide, can be more than one separated by commas. Numbers or strings.
 \returns none
 \par Example 
 \luacode
@@ -1145,7 +1145,7 @@ Invalidates a foreground windows text and forces it to redraw.
 \luacode
 InvalidateWindowText(name)
 \endluacode
-\param name \b string the name of the winodw to redraw
+\param name \b string the name of the window to redraw
 \returns none
 \par Example 
 \luacode
@@ -1171,7 +1171,7 @@ InvalidateWindowText(GetPluginID().."_chat_window")
 	/*! \page page1
 
 \subsection GetPluginSettings GetPluginSettings
-Gets the raw \b com.offsetnull.bt.service.settings.SettingsGroup settings, this is to allow direct manipluation.
+Gets the raw \b com.offsetnull.bt.service.settings.SettingsGroup settings, this is to allow direct manipulation.
 
 \par Full Signature
 \luacode
@@ -1216,10 +1216,10 @@ NewTrigger(name,pattern,config[,action,...])
 \returns none
 \par Example
 \luacode
---configuration paramters is a table that can have the following properties defined:
+--configuration parameters is a table that can have the following properties defined:
 --regex = [boolean] indicates use of regular expression or literal text.
 --group = [string] group name to enroll this trigger into.
---fireOnce = [boolean] indicates weather or not this trigger is a one shot trigger.
+--fireOnce = [boolean] indicates whether this trigger is a one shot trigger.
 --notification action table configuration can have the following properties
 --{
 --	type="notification", (must be set for the action type)
@@ -1228,7 +1228,7 @@ NewTrigger(name,pattern,config[,action,...])
 --	soundpath = [string/boolean/nil], absolute path to the sound file to play for this notification. 
 --	if nil/not set it will play the default sound. if set to false it won't play sound.
 --	vibrate = [number], vibrate pattern to use, 0=short, 1=medium, 2=long, 3=super long
---	spawnNew = [boolean], indicates weather or not to spawn a new notification.
+--	spawnNew = [boolean], indicates whether to spawn a new notification.
 --} 		
 
 --toast action table configuration
@@ -1596,7 +1596,7 @@ NewWindow(name,x,y,width,height,script)
 \luacode
 NewWindow("chat_window",0,0,400,400,"chat_script")
 \endluacode
-\note Windows don't work like this anymore. I'm prettys sure this won't work as intented or it will work but the size arguments will all be ignored.
+\note Windows don't work like this anymore. I'm pretty sure this won't work as intended or it will work but the size arguments will all be ignored.
 	*/
 	private class WindowFunction extends JavaFunction {
 	
@@ -1662,7 +1662,7 @@ NewWindow("chat_window",0,0,400,400,"chat_script")
 	
 /*! \page page1
 * \subsection PluginSupports PluginSupports
-Checks weather or not a plugin has a global function of a desired name.
+Checks whether a plugin has a global function of a desired name.
 
 \par Full Signature
 \luacode
@@ -1744,7 +1744,7 @@ function goHome(args)
 end
 RegisterSpecialCommand("home","goHome")
 \endluacode
-\note the callback that is called when the command is processed will give the arguments as a single string to the callback function.
+\note The callback, called when the command is processed, gives the arguments as a single string to the callback function.
 */
 	private class RegisterFunctionCallback extends JavaFunction {
 	
@@ -1856,13 +1856,13 @@ RegisterSpecialCommand("home","goHome")
 
 	/*! \page page1
 \subsection GMCPSend Send_GMCP_Packet
-Sends a packet of gmcp data to the server
+Sends a packet of GMCP data to the server
 	
 \par Full Signature
 \luacode
 Send_GMCP_Packet(str)
 \endluacode
-\param str \b string the data to send, more in the gmcp documentation.
+\param str \b string the data to send, more in the GMCP documentation.
 \returns note
 \par Example 
 \luacode
@@ -1896,7 +1896,7 @@ TriggerEnabled(name[,state])
 \endluacode
 \param name \b string the trigger to test or manipulate
 \param state \b boolean the new enabled state
-\returns The enabled state of the trigger if state is nil, if state is true or false, the return value is true if the state was successfully changed.
+\returns Returns the enabled state of the trigger if state is nil. If state is set to true or false, will return true if the state was successfully changed.
 \par Example 
 \luacode
 if(TriggerEnabled("afk")) then
@@ -2022,7 +2022,7 @@ WindowXCallB(name,data)
 \luacode
 WindowXCallB(GetPluginID().."_chat_window",42)
 \endluacode
-\note Symantically this is the same as WindowXCallS only great care has been taken to ensure that the data that is ferried across the aidl bridge and delivered to the foreground window's lua state as an array of \b bytes without having any intervention by the DalvikVM host converting it through a java string to avoid corruption. This is largley to support large data tables being serialized with libmarshal or any other binary serialization format.
+\note Semantically this is the same as WindowXCallS, only great care has been taken to ensure that the data that is ferried across the AIDL bridge and delivered to the foreground window's Lua state as an array of \b bytes without having any intervention by the DalvikVM host converting it through a Java string to avoid corruption. This is largely to support large data tables being serialized with libmarshal or any other binary serialization format.
 	*/
 	private class WindowXCallBFunction extends JavaFunction {
 	
@@ -2075,7 +2075,7 @@ WindowXCallS(name,data)
 \luacode
 WindowXCallS(GetPluginID().."_chat_window",42)
 \endluacode
-\note Symantically this is the same as WindowXCallB, only the data is cross converted to a DalviVM string through the aidl bridge, this can cause some problems with binary data. If you need very large serialized tables, or any kind of binary data, see WindowXCallB
+\note Semantically this is the same as WindowXCallB, only the data is cross converted to a DalvikVM string through the AIDL bridge. This can cause some problems with binary data. For very large serialized tables, or any kind of binary data, see WindowXCallB.
 	*/
 	private class WindowXCallSFunction extends JavaFunction {
 		//HashMap<String,String> 
@@ -2940,9 +2940,9 @@ WindowXCallS(GetPluginID().."_chat_window",42)
 
 /*! \page entry_points
  * \subsection OnXmlExport OnXmlExport
- * When the BlowTorch core has initatied a settings serialization (saves the settings) this will be called to notify the plugin that it needs to serialize any data that it needs to, and provides an android.xml.XMLSerializer that is set up to be either to the main settings wad or the external plugin's descriptor file.
+ * When the BlowTorch core has initiated a settings serialization (saves the settings) this will be called to notify the plugin that it needs to serialize any data that it needs to, and provides an android.xml.XMLSerializer that is set up to be either to the main settings wad or the external plugin's descriptor file.
  * 
- * \param out \b android.xml.XmlSerialzer represent the output serialzer object.
+ * \param out \b android.xml.XmlSerialzer represent the output serializer object.
  * 
  * \note Please check the documentation of the android java class or the examples for saving data for details of what the body of this function should look like. 
  */
@@ -3057,12 +3057,12 @@ WindowXCallS(GetPluginID().."_chat_window",42)
 
 /*! \page entry_points
  * \subsection OnOptionsChanged OnOptionsChanged
- * This function is called whenever a plugin defied option has changed through the user activating the options menu UI.
+ * This function is called whenever a plugin defined option has changed through the user activating the options menu UI.
  * 
  * \param key \b string the key value of the option that changed
  * \param value \b string the new value of the option
  * 
- * \note There are a few deomnstrations on how to use this function in the button window and chat window plugins.
+ * \note There are a few demonstrations on how to use this function in the button window and chat window plugins.
  */
 	
 	@Override

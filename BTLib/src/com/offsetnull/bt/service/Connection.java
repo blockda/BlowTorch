@@ -4,9 +4,12 @@
 package com.offsetnull.bt.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
@@ -71,6 +74,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -333,6 +337,8 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	/** The main looper handler for this "foreground" thread, although I'm not sure
 	 *  if service processes get "foreground threads". */
 	private Handler mHandler = null;
+	/** Global handler for the speedwalk command, useful for changing the settings. */
+	private SpeedwalkCommand mSpeedwalkCommand = null;
 	
 	/** Pattern for matching .xml extensions not case sensitive. */
 	private final Pattern mXMLExtensionPattern = Pattern.compile("^.+\\.[xX][mM][lL]$");
@@ -446,7 +452,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		mKeyboardCommand = new KeyboardCommand();
 		DisconnectCommand dccmd = new DisconnectCommand();
 		ReconnectCommand rccmd = new ReconnectCommand();
-		SpeedwalkCommand swcmd = new SpeedwalkCommand();
+		mSpeedwalkCommand = new SpeedwalkCommand(null, new Data());
 		LoadButtonsCommand lbcmd = new LoadButtonsCommand();
 		ClearButtonCommand cbcmd = new ClearButtonCommand();
 		mSpecialCommands.put(colordebug.commandName, colordebug);
@@ -458,7 +464,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		mSpecialCommands.put("kb", mKeyboardCommand);
 		mSpecialCommands.put(dccmd.commandName, dccmd);
 		mSpecialCommands.put(rccmd.commandName, rccmd);
-		mSpecialCommands.put(swcmd.commandName, swcmd);
+		mSpecialCommands.put(mSpeedwalkCommand.commandName, mSpeedwalkCommand);
 		mSpecialCommands.put(lbcmd.commandName, lbcmd);
 		mSpecialCommands.put(cbcmd.commandName, cbcmd);
 		SwitchWindowCommand swdcmd = new SwitchWindowCommand();
@@ -947,6 +953,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			tmp.put("k", new DirectionData("k", "sw"));
 			tmp.put("l", new DirectionData("l", "se"));
 			mSettings.setDirections(tmp);
+			mSpeedwalkCommand.setDirections(tmp);
+		} else {
+			mSpeedwalkCommand.setDirections(mSettings.getDirections());
 		}
 		
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -1600,6 +1609,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	 * @param str The message fro the dialog.
 	 */
 	protected final void dispatchDialog(final String str) {
+		if (mHandler == null || str == null) { return; }
 		if (mAutoReconnect) {
 			if (mAutoReconnectAttempt < mAutoReconnectLimit) {
 				mAutoReconnectAttempt++;
@@ -1944,6 +1954,14 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			this.mCmdString = cmd;
 		}
 	}
+	
+	/** Data generator for outside package use of the Data class.
+	 * 
+	 * @return A new data
+	 */
+	/*public static Data makeData() {
+		return new Data();
+	}*/
 	
 	/** Generic command processor. This looks for "." commands.
 	 * 
@@ -2861,7 +2879,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				mSettings.setSemiIsNewLine((Boolean) o.getValue());
 				break;
 			case debug_telnet:
-				mProcessor.setDebugTelnet((Boolean) o.getValue());
+				if (mProcessor != null) {
+					mProcessor.setDebugTelnet((Boolean) o.getValue());
+				}
 				break;
 			case encoding:
 				this.doUpdateEncoding((String) o.getValue());
@@ -2919,6 +2939,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				break;
 			case bell_display:
 				this.doSeBellDisplay((Boolean) o.getValue());
+				break;
+			case show_regex_warning:
+				doSetRegexWarning((Boolean) o.getValue());
 				break;
 			case use_gmcp:
 				this.doSetUseGMCP((Boolean) o.getValue());
@@ -3054,12 +3077,22 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	private void doSetKeepLast(final Boolean value) {
 		mService.dispatchKeepLast(value);
 	}
+	
+	/** Impelemntation of the show regex warning handler.
+	 * 
+	 * @param value New value to use.
+	 */
+	private void doSetRegexWarning(final Boolean value) {
+		mService.dispatchShowRegexWarning(value);
+	}
+	
 
 	/** Impelemntation of the system encoding settings handler.
 	 * 
 	 * @param value New value to use.
 	 */
 	private void doUpdateEncoding(final String value) {
+		if (mProcessor == null) { return; }
 		mProcessor.setEncoding(value);
 		//this.encoding = value;
 		mSettings.setEncoding(value);
@@ -3143,7 +3176,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		/** Use GMCP. */
 		use_gmcp, 
 		/** GMCP Supports string. */
-		gmcp_supports
+		gmcp_supports, 
+		/** Show Regex Warning. */
+		show_regex_warning
 	}
 	
 	/** Work horse function of sending data to the server, this initiates all levels of processing.
@@ -3251,6 +3286,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		boolean domessage = false;
 		boolean addextra = false;
 		String filename = path;
+		File cachedir = this.getContext().getCacheDir();
 		if (!filename.startsWith("/")) {
 			//mod
 			domessage = true;
@@ -3263,62 +3299,155 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				filename = filename + ".xml";
 				addextra = true;
 			}
-		}
-		try {
-			File file = new File(filename);
-			FileOutputStream fos = new FileOutputStream(file);
-			String foo = ConnectionSetttingsParser.outputXML(mSettings, mPlugins);
-			fos.write(foo.getBytes());
-			fos.close();
 			
-			for (String link : mLinkMap.keySet()) {
-				ArrayList<String> plugins  = mLinkMap.get(link);
-				boolean doExport = false;
-				String fullpath = "";
-				for (String plugin : plugins) {
-					Plugin p = mPluginMap.get(plugin);
-					if (p.getSettings().isDirty()) {
-						doExport = true;
-						fullpath = p.getFullPath();
-					}
-				}
-				
-				if (doExport) {
-					XmlSerializer out = Xml.newSerializer();
-					StringWriter writer = new StringWriter();
-					
-					out.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
-					out.setOutput(writer);
-					out.startDocument("UTF-8", true);
-					out.startTag("", "blowtorch");
-					out.attribute("", "xmlversion", "2");
-					out.startTag("", "plugins");
-					for (String plugin :plugins) {
-						Plugin p = mPluginMap.get(plugin);
-						PluginParser.saveToXml(out, p);
-						p.getSettings().setDirty(false);
-					}
-					
-					out.endTag("", "plugins");
-					out.endTag("", "blowtorch");
-					out.endDocument();
-					
-					File extfile = new File(fullpath);
-					FileOutputStream extfilestream = new FileOutputStream(extfile);
-					extfilestream.write(writer.toString().getBytes());
-					extfilestream.close();
-				}
-				
+			if(Build.VERSION.SDK_INT > Build.VERSION_CODES.ECLAIR_MR1) {
+				cachedir = this.getContext().getExternalCacheDir();
+			} else {
+				String packagename = this.getContext().getPackageName();
+				cachedir = new File(Environment.getExternalStorageDirectory(),"/Android/data/"+packagename+"/cache/");
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
+		
+		//try to output the file.
+		boolean passed = true;
+		File file = new File(filename);
+		//File cachedir = this.getContext().getCacheDir();
+		FileOutputStream fos = null;
+		File tmpfile = null;
+		try {
+		tmpfile = File.createTempFile("settings", "xml",cachedir);
+		
+		fos = new FileOutputStream(tmpfile);
+		String foo = ConnectionSetttingsParser.outputXML(mSettings, mPlugins);
+		fos.write(foo.getBytes());
+		fos.close();
+		} catch (Exception e) {
+			//dispatch error.
+			//do not copy files
+			try {
+				mService.dispatchSaveError(e.getLocalizedMessage());
+			} catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			passed = false;
+		} finally {
+			if(passed) {
+				try {
+					fos.close();
+				} catch (IOException e) {
+					//we are in real trouble here.
+				}
+				
+				//copy the file over to the real path.
+				boolean success = tmpfile.renameTo(file);
+				if(success) {
+					Log.e("BT","file shadow copy success");
+				} else {
+					Log.e("BT","file shadow copy failed");
+				}
+			} else {
+				if(fos != null) {
+					try {
+						fos.close();
+					} catch (IOException e) {
+						//real trouble.
+					}
+				}
+			}
+		}
+		
+		
+		for (String link : mLinkMap.keySet()) {
+			ArrayList<String> plugins  = mLinkMap.get(link);
+			boolean doExport = false;
+			String fullpath = "";
+			for (String plugin : plugins) {
+				Plugin p = mPluginMap.get(plugin);
+				if (p.getSettings().isDirty()) {
+					doExport = true;
+					fullpath = p.getFullPath();
+				}
+			}
+			
+			if (doExport) {
+				XmlSerializer out = Xml.newSerializer();
+				StringWriter writer = new StringWriter();
+				
+				File extfile = null;
+				FileOutputStream extfilestream = null;
+				passed = true;
+				File extcachedir = null;
+				if(Build.VERSION.SDK_INT > Build.VERSION_CODES.ECLAIR_MR1) {
+					extcachedir = this.getContext().getExternalCacheDir();
+				} else {
+					String packagename = this.getContext().getPackageName();
+					extcachedir = new File(Environment.getExternalStorageDirectory(),"/Android/data/"+packagename+"/cache/");
+				}
+				//File cachedir = this.getContext().getCacheDir();
+				//FileOutputStream fos = null;
+				File tmppluginfile = null;
+				String currentplugin = "";
+				try {
+				
+				out.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+				out.setOutput(writer);
+				out.startDocument("UTF-8", true);
+				out.startTag("", "blowtorch");
+				out.attribute("", "xmlversion", "2");
+				out.startTag("", "plugins");
+				
+				for (String plugin :plugins) {
+					currentplugin = plugin;
+					Plugin p = mPluginMap.get(plugin);
+					PluginParser.saveToXml(out, p);
+					p.getSettings().setDirty(false);
+				}
+				
+				out.endTag("", "plugins");
+				out.endTag("", "blowtorch");
+				out.endDocument();
+				
+				tmppluginfile = File.createTempFile("plugin_settings", "xml",extcachedir);
+				
+				extfile = new File(fullpath);
+				extfilestream = new FileOutputStream(tmppluginfile);
+				extfilestream.write(writer.toString().getBytes());
+				extfilestream.close();
+				} catch(Exception e) {
+					try {
+						mService.dispatchPluginSaveError(currentplugin,e.getLocalizedMessage());
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					passed = false;
+				} finally {
+					if(extfilestream != null) {
+						try {
+							extfilestream.close();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
+					if(passed) {
+						//try and copy the file over.
+						long start = System.currentTimeMillis();
+						boolean success = tmppluginfile.renameTo(extfile);
+						int duraction = (int)(System.currentTimeMillis() - start);
+						if(success) {
+							Log.e("BT","Plugin shadow copy success, took " + duraction);
+						} else {
+							Log.e("BT","Plugin shadow copy failure, took " + duraction);
+						}
+					}
+				}
+			}
+			
+		}
+		
 		
 		if (domessage) {
 			String message = "Settings Exported to " + filename;
@@ -3360,6 +3489,39 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 			boolean isLegacy = vpp.isLegacy();
 			if (isLegacy) {
 				Log.e("XMLPARSE", "LOADING V1 SETTINGS FROM PATH: " + path);
+				
+				if(!path.startsWith(Environment.getExternalStorageDirectory().getAbsolutePath())) {
+					//internal legacy file being loaded, export the settings to the external blowtorch directory.
+					//convert path to external settings directory.
+					//get the package path.
+					//mService.getApplicationContext().getFilesDir();
+					File f = new File(mService.getApplicationContext().getFilesDir(),path);
+					String file = f.getName();
+					File p = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/recovered/");
+					if(!p.exists()) {
+						p.mkdirs();
+					}
+					File newfile = new File(p,file);
+					
+					if(!newfile.exists()) {
+						newfile.createNewFile();
+					}
+					
+				    InputStream in = new FileInputStream(f);
+				    OutputStream out = new FileOutputStream(newfile);
+
+				    
+				    // Transfer bytes from in to out
+				    byte[] buf = new byte[1024];
+				    int len;
+				    while ((len = in.read(buf)) > 0) {
+				        out.write(buf, 0, len);
+				    }
+				    in.close();
+				    out.close();
+					
+				}
+				
 				HyperSAXParser p = new HyperSAXParser(path, mService.getApplicationContext());
 				HyperSettings s = p.load();
 				
@@ -3369,6 +3531,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				tmpplugs = newsettings.load(this);
 				
 				Plugin buttonwindow = tmpplugs.get(1);
+				ConnectionSettingsPlugin root_settings = (ConnectionSettingsPlugin)tmpplugs.get(0);
 				
 				if (path != null) { //import old buttons
 				
@@ -3542,6 +3705,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				}
 				
 				} else {
+					//default settings are being loaded.
 					//run the adjustment for the new buttons
 					LuaState pL = buttonwindow.getLuaState();
 					pL.getGlobal("debug");
@@ -3561,7 +3725,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				
 				
 				
-				WindowToken tmp = mSettings.getSettings().getWindows().get("mainDisplay");
+				WindowToken tmp = root_settings.getSettings().getWindows().get("mainDisplay");
 				tmp.importV1Settings(s);
 				
 				//handle button settings.
@@ -3594,7 +3758,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				}
 				String summary = Colorizer.getWhiteColor() + verb + " legacy settings file.\n";
 				loadPlugins(tmpplugs, summary);
-				mSettings.importV1Settings(s);
+				root_settings.importV1Settings(s);
 				if (!s.isRoundButtons()) {
 					buttonops.setOption("button_roundness", Integer.toString(0));
 				} 
@@ -3862,6 +4026,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	 */
 	private void doDeletePlugin(final String plugin) {
 		Plugin p = mPluginMap.remove(plugin);
+		
 		String remove = null;
 		if (p.getStorageType().equals("EXTERNAL")) {
 			for (String path : mSettings.getLinks()) {
@@ -3870,9 +4035,11 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				}
 			}
 		}
-		if (remove == null) { return; }
-		mSettings.getLinks().remove(remove);
-		mLinkMap.remove(remove);
+		if (remove != null) { 
+			mSettings.getLinks().remove(remove);
+			mLinkMap.remove(remove);
+		}
+		
 		mPlugins.remove(p);
 		saveMainSettings();
 		reloadSettings();
@@ -3912,6 +4079,7 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	 */
 	public final void setDirectionData(final HashMap<String, DirectionData> data) {
 		mSettings.setDirections(data);
+		mSpeedwalkCommand.setDirections(data);
 	}
 
 	/** Getter for the title bar height. 

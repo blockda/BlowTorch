@@ -178,6 +178,14 @@ public class ConnectionSettingsPlugin extends Plugin {
 		debug_telnet.setValue(false);
 		servOptions.addOption(debug_telnet);
 		
+		BooleanOption show_regex_warning = new BooleanOption();
+		show_regex_warning.setTitle("Regular Expression Warning?");
+		show_regex_warning.setDescription("Show the warning message about regular expressions in the trigger editor.");
+		show_regex_warning.setKey("show_regex_warning");
+		show_regex_warning.setValue(true);
+		servOptions.addOption(show_regex_warning);
+		
+		
 		SettingsGroup gmcpOptions = new SettingsGroup();
 		gmcpOptions.setTitle("GMCP Options");
 		gmcpOptions.setDescription("Options for the GMCP out of band communication channel.");

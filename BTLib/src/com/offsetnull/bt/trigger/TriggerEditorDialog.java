@@ -2,6 +2,7 @@ package com.offsetnull.bt.trigger;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -16,6 +17,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.text.util.Linkify;
 //import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -64,6 +66,8 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	
 	private Handler finish_with;
 	
+	private boolean mEditorWarning = true;
+	
 	//private CheckBox literal;
 	private CheckBox once;
 	
@@ -71,8 +75,9 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 	HashMap<Integer,Integer> checkclosed;
 	String selectedPlugin = null;
 	
-	public TriggerEditorDialog(Context context,TriggerData input,IConnectionBinder pService,Handler finisher,String selectedPlugin) {
+	public TriggerEditorDialog(Context context,TriggerData input,IConnectionBinder pService,Handler finisher,String selectedPlugin,boolean showWarning) {
 		super(context);
+		mEditorWarning = showWarning;
 		this.selectedPlugin = selectedPlugin;
 		service = pService;
 		finish_with = finisher;
@@ -586,15 +591,78 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 		
 	}
 	
+	private class WarningCheckChangedLitener implements CompoundButton.OnCheckedChangeListener {
+
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView,
+				boolean isChecked) {
+			TriggerEditorDialog.this.mEditorWarning = isChecked;
+			try {
+				service.setShowRegexWarning(isChecked);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
 	private class LiteralCheckChangedListener implements CompoundButton.OnCheckedChangeListener {
 
 		public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
 			if(arg1) {
 				the_trigger.setInterpretAsRegex(false); //NO NOT INTERPRET AS REGEX
 			} else {
+				the_trigger.setInterpretAsRegex(true);
+				if(!mEditorWarning) { return; };
 				AlertDialog.Builder builder = new AlertDialog.Builder(TriggerEditorDialog.this.getContext());
-				builder.setTitle("Don't kill your phone.");
-				builder.setMessage("You have turned on regular expression parsing for this trigger. Poorly formed expressions can cause the following: break other triggers, drain your battery, dump thousands of bytes to the server, etc. Please read the guide to the Java Pattern Class if you need more information. Have a nice day.");
+				builder.setTitle("Warning");
+				//builder.setMessage("You have turned on regular expression parsing for this trigger. Poorly formed expressions can cause the following: break other triggers, drain your battery, dump thousands of bytes to the server, etc. Please read the guide to the Java Pattern Class if you need more information. Have a nice day.");
+				//build the custom view with a checkbox.
+				ScrollView scroller = new ScrollView(getContext());
+				LinearLayout top = new LinearLayout(TriggerEditorDialog.this.getContext());
+				LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT);
+				scroller.setLayoutParams(tp);
+				TextView v = new TextView(TriggerEditorDialog.this.getContext());
+				v.setText("Regular expressions have been enabled. Unpredictable or poor performance can result from overly broad regular expressions. Please see the documentation for the Java Pattern Class for more information.");
+				int pad = (int) (5.0f * getContext().getResources().getDisplayMetrics().density);
+				
+				v.setTextAppearance(getContext(), android.R.attr.textAppearanceMedium);
+				v.setTextSize(3*pad);
+				Pattern wikiWordMatcher = Pattern.compile("Java Pattern Class");
+				String wikiViewURL =    "";
+				Linkify.TransformFilter transform = new Linkify.TransformFilter() {
+					
+					@Override
+					public String transformUrl(Matcher match, String url) {
+						// TODO Auto-generated method stub
+						return "http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html";
+					}
+				};
+				Linkify.MatchFilter matcher = new Linkify.MatchFilter() {
+					
+					@Override
+					public boolean acceptMatch(CharSequence s, int start, int end) {
+						// TODO Auto-generated method stub
+						return true;
+					}
+				};
+				Linkify.addLinks(v, wikiWordMatcher, wikiViewURL,matcher,transform);
+				v.setPadding(pad, pad, pad, pad);
+				CheckBox b = new CheckBox(getContext());
+				b.setChecked(mEditorWarning);
+				b.setOnCheckedChangeListener(new WarningCheckChangedLitener());
+				b.setText("Always display this message.");
+				//b.setChecked(true);
+				b.setPadding(pad, pad, pad, pad);
+				b.setLayoutParams(tp);
+				v.setLayoutParams(tp);
+				top.setLayoutParams(tp);
+				top.addView(v);
+				top.addView(b);
+				top.setOrientation(LinearLayout.VERTICAL);
+				scroller.addView(top);
+				builder.setView(scroller);
 				builder.setPositiveButton("Acknowledge.", new DialogInterface.OnClickListener() {
 
 					public void onClick(DialogInterface arg0, int arg1) {
@@ -605,7 +673,7 @@ public class TriggerEditorDialog extends Dialog implements DialogInterface.OnCli
 				
 				AlertDialog dialog = builder.create();
 				dialog.show();
-				the_trigger.setInterpretAsRegex(true); //DO INTERPRET AS REGEX.
+				//the_trigger.setInterpretAsRegex(true); //DO INTERPRET AS REGEX.
 			}
 		}
 		
