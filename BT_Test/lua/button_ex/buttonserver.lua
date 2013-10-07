@@ -567,6 +567,8 @@ end
 function checkImport()
 	if(PluginSupports("button_window","exportButtons")) then
 		WindowXCallS("button_window_ex","askImport")
+	else
+		WindowXCallS("button_window_ex","failImport","Internal button window plugin does not support exporting buttons. Please update BlowTorch")
 	end
 end
 
@@ -588,6 +590,15 @@ function importButtons(data)
 	buttonsets = wad.sets
 	buttonset_defaults = wad.defaults
 	loadButtonSet(current_set)
+	
+	--count the buttons for the import message.
+	local count = 0
+	for i,v in pairs(buttonsets) do
+		for j,k in pairs(v) do
+			count = count + 1
+		end
+	end
+	WindowXCallS("button_window_ex","importSuccess",tostring(count))
 end
 
 debugString("Button Server Loaded")

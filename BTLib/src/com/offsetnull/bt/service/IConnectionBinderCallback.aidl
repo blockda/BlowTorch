@@ -12,6 +12,8 @@ interface IConnectionBinderCallback {
 	void rawBufferIncoming(inout byte[] incoming);
 	void loadSettings();
 	void displayXMLError(String error);
+	void displaySaveError(String error);
+	void displayPluginSaveError(String plugin, String error);
 	void executeColorDebug(int arg);
 	void invokeDirtyExit();
 	void showMessage(String message,boolean longtime);
@@ -43,4 +45,5 @@ interface IConnectionBinderCallback {
 	void setUseFullscreenEditor(boolean value);
 	void setUseSuggestions(boolean value);
 	void setCompatibilityMode(boolean value);
+	void setRegexWarning(boolean value);
 }

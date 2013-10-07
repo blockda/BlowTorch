@@ -3790,6 +3790,7 @@ function importDialogClick.onClick(dialog,which)
 	if(which == DialogInterface.BUTTON_POSITIVE) then
 		PluginXCallS("doImport","blank")
 		dialog:dismiss()
+		CloseOptionsDialog()
 	else
 		dialog:dismiss()
 	end
@@ -3797,13 +3798,41 @@ end
 
 local importDialogClick_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",importDialogClick)
 
+local dismissDialog = {}
+function dismissDialog.onClick(dialog,which)
+	dialog:dismiss()
+end
+local dismissDialog_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",dismissDialog)
+
+function failImport(str)
+	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	
+	build:setPositiveButton("Ok",dismissDialog_cb)
+	--build:setNegativeButton("No",importDialogClick_cb);
+	build:setTitle("Import Failed")
+	build:setMessage(str)
+	alert = build:create()
+	alert:show()
+end
+
+function importSuccess(str)
+	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	
+	build:setPositiveButton("Ok",dismissDialog_cb)
+	--build:setNegativeButton("No",importDialogClick_cb);
+	build:setTitle("Import Complete")
+	build:setMessage(str.." Buttons imported")
+	alert = build:create()
+	alert:show()
+end
+
 function askImport()
 	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
 	
 	build:setPositiveButton("Yes",importDialogClick_cb)
 	build:setNegativeButton("No",importDialogClick_cb);
 	build:setTitle("Import Buttons?")
-	build:setMessage("Import internal button settings?")
+	build:setMessage("Import buttons from internal settings?")
 	alert = build:create()
 	alert:show()
 end

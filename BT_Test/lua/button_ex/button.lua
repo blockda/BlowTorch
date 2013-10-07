@@ -6,9 +6,9 @@ statusoffset = 0
 
 buttonRoundness = 6
 BUTTONSET_DATA = {
-						height 			= 80,
-						width 			= 80,
-						labelSize 		= 23,
+						height 			= 48,
+						width 			= 48,
+						labelSize 		= 16,
 						primaryColor 	= Color:argb(0x88,0x00,0x00,0xFF),
 						labelColor		= Color:argb(0xAA,0xAA,0xAA,0xAA),
 						selectedColor 	= Color:argb(0x88,0x00,0xFF,0x00),

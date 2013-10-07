@@ -135,4 +135,5 @@ interface IConnectionBinder {
 	void dispatchLuaText(String str);
 	void callPluginFunction(String plugin,String function);
 	boolean isPluginInstalled(String desired);
+	void setShowRegexWarning(boolean state);
 }
