@@ -8,6 +8,9 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.RemoteException;
 import android.util.Log;
@@ -48,8 +51,25 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 		this.setNewButtonLabel("Load");
 		
 		this.setTitle("PLUGINS");
+		
+		
 	}
 	
+	@Override
+	public void onCreate(Bundle b) {
+		super.onCreate(b);
+		this.mOptionsButton.setOnClickListener(new HelpClickedListener());
+		this.promoteHelp();
+	}
+	private class HelpClickedListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse("http://bt.happygoatstudios.com/?view=special#run"));
+			BetterPluginSelectionDialog.this.getContext().startActivity(web_help);
+		}
+		
+	}
 	
 	@Override
 	public void onButtonPressed(View v, int row, int index) {
@@ -62,6 +82,8 @@ public class BetterPluginSelectionDialog extends StandardSelectionDialog impleme
 		// TODO Auto-generated method stub
 		
 	}
+	
+
 
 	@Override
 	public void onItemDeleted(int row) {

@@ -36,7 +36,7 @@
   				android:layout_width="wrap_content"
   				android:layout_height="wrap_content"
   				android:layout_alignParentRight="true"
-  				android:layout_alignBottom="@id/spacer"
+  				
   				android:focusable="false"
   				android:focusableInTouchMode="false"
   				android:src="@drawable/notificationicon"
@@ -61,7 +61,7 @@
   			android:id="@+id/infoTitle"
   			android:layout_width="fill_parent"
   			android:layout_height="wrap_content"
-  			android:layout_alignTop="@id/spacer"
+  			
   			android:layout_above="@id/extendedPanel"
   			android:text="Main Title"
   			android:focusable="false"

@@ -45,7 +45,7 @@ public class BaseSelectionDialog extends Dialog {
 	private ListView mOptionsList;
 	private boolean mOptionsListToggle;
 	private ArrayAdapter<ItemEntry> mAdapter;
-	private Button mOptionsButton;
+	protected Button mOptionsButton;
 	
 	private int mLastSelectedIndex = -1;
 	private int mTargetIndex;
@@ -155,7 +155,7 @@ public class BaseSelectionDialog extends Dialog {
 		mList.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
 		
 		mList.setOnFocusChangeListener(new ListFocusFixerListener());
-		
+		mList.setSelector(R.drawable.filter_selection_selector);
 		mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			@Override
@@ -239,7 +239,7 @@ public class BaseSelectionDialog extends Dialog {
 			
 			plugins = new String[pluginList.length+4];
 			plugins[0] = "Help";
-			plugins[1] = "Disable All";
+			//plugins[1] = "Disable All";
 			plugins[2] = "divider";
 			plugins[3] = "Main";
 			
@@ -311,6 +311,15 @@ public class BaseSelectionDialog extends Dialog {
 			
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
+				if(mPromoteHelp) {
+					//launch the help menu and return.
+					if(mOptionItemClickListener != null) {
+						//actually, click help.
+						mOptionItemClickListener.onOptionItemClicked(0);
+					}	
+					return;
+				}
+				
 				if(mOptionsListToggle) {
 					mOptionsListToggle = false;
 					Animation outAnimation = new TranslateAnimation(0,0,0,-mOptionsList.getHeight());
@@ -344,6 +353,11 @@ public class BaseSelectionDialog extends Dialog {
 				}
 			}
 		});
+		
+		if(mPromoteHelp) {
+			mOptionsButton.setText("?");
+		}
+		//mOptionsButton.invalidate();
 		//optionsButton.setOnClickListener()
 		
 		mTitlebar = (TextView) this.findViewById(R.id.titlebar);
@@ -1090,6 +1104,7 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 	}
 	
 	ArrayList<BaseOptionItem> optionItems = new ArrayList<BaseOptionItem>();
+	private boolean mPromoteHelp = false;
 	
 	public void hideOptionsMenu() {
 		if(mOptionsList.getVisibility() == View.VISIBLE) {
@@ -1165,8 +1180,9 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 						index = mList.getFirstVisiblePosition();
 					}
 					mList.setSelection(mLastSelectedIndex);
-					mList.getChildAt(index).findViewById(R.id.toolbar_tab).setFocusable(true);
-					mList.getChildAt(index).findViewById(R.id.toolbar_tab).requestFocus();
+					//mList.getChildAt(index).performClick();
+					//mList.getChildAt(index).findViewById(R.id.toolbar_tab_close).setFocusable(true);
+					//mList.getChildAt(index).findViewById(R.id.toolbar_tab_close).requestFocus();
 				}
 				
 			}
@@ -1194,6 +1210,15 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 	
 	public void clearToolbarButtons() {
 		mToolbarButtons.clear();
+	}
+	
+	protected void promoteHelp() {
+		//promotes the help button to the filter selection dialog.
+		mPromoteHelp = true;
+		if(mOptionsButton != null) {
+			mOptionsButton.setText("?");
+			mOptionsButton.invalidate();
+		}
 	}
 	
 }

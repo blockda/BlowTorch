@@ -187,7 +187,7 @@ public class TriggerSelectionDialog extends Dialog {
 		newbutton.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View arg0) {
-				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler,currentPlugin);
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),null,service,triggerEditorDoneHandler,currentPlugin,true);
 				editor.show();
 			}
 		});
@@ -574,7 +574,7 @@ public class TriggerSelectionDialog extends Dialog {
 				} else {
 					data = service.getPluginTrigger(currentPlugin,entry.name);
 				}
-				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler,currentPlugin);
+				TriggerEditorDialog editor = new TriggerEditorDialog(TriggerSelectionDialog.this.getContext(),data,service,triggerEditorDoneHandler,currentPlugin,true);
 				editor.show();
 				
 				

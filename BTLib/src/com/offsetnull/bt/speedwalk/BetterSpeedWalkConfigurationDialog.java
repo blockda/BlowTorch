@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.RemoteException;
 import android.view.View;
 import android.widget.ImageButton;
@@ -11,6 +14,7 @@ import android.widget.LinearLayout;
 
 import com.offsetnull.bt.R;
 import com.offsetnull.bt.service.IConnectionBinder;
+import com.offsetnull.bt.window.BetterPluginSelectionDialog;
 import com.offsetnull.bt.window.StandardSelectionDialog;
 import com.offsetnull.bt.window.BaseSelectionDialog;
 
@@ -69,6 +73,22 @@ public class BetterSpeedWalkConfigurationDialog extends StandardSelectionDialog 
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+	}
+	
+	@Override
+	public void onCreate(Bundle b) {
+		super.onCreate(b);
+		this.mOptionsButton.setOnClickListener(new HelpClickedListener());
+		this.promoteHelp();
+	}
+	private class HelpClickedListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse("http://bt.happygoatstudios.com/?view=speedwalks"));
+			BetterSpeedWalkConfigurationDialog.this.getContext().startActivity(web_help);
 		}
 		
 	}

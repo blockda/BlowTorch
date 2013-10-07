@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
@@ -99,7 +101,9 @@ public class BetterAliasSelectionDialog extends PluginFilterSelectionDialog impl
 	
 	@Override
 	public void onHelp() {
-		Log.e("Error","Help pressed.");
+		Intent web_help = new Intent(Intent.ACTION_VIEW,Uri.parse("http://bt.happygoatstudios.com/?view=aliases"));
+		this.getContext().startActivity(web_help);
+		//Log.e("Error","Alias editor Help pressed.");
 	}
 	
 	@Override
