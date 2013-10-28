@@ -152,7 +152,7 @@ public class BaseSelectionDialog extends Dialog {
 		
 		mList.setScrollbarFadingEnabled(false);
 		
-		mList.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+		mList.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
 		
 		mList.setOnFocusChangeListener(new ListFocusFixerListener());
 		mList.setSelector(R.drawable.filter_selection_selector);
@@ -196,7 +196,22 @@ public class BaseSelectionDialog extends Dialog {
 		
 		//list.setOnFocusChangeListener(new ListFocusFixerListener());
 		
-		mList.setSelector(R.drawable.transparent);
+		mList.setSelector(R.drawable.blue_frame_nomargin_nobackground);
+		
+		mList.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				Log.e("LIST","LIST HAS FOCUS: " + hasFocus);
+				if(!hasFocus) {
+					mList.setSelector(R.drawable.transparent);
+				} else {
+					mList.setSelector(R.drawable.blue_frame_nomargin_nobackground);
+				}
+				mList.invalidate();
+				
+			}
+		});
 		
 		
 		mList.setEmptyView(findViewById(R.id.empty));
@@ -450,8 +465,12 @@ public class BaseSelectionDialog extends Dialog {
 					mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
 				}
 				rl.addView(mToolbar);
+				mToolbar.getChildAt(1).setFocusable(true);
+				mToolbar.getChildAt(1).requestFocus();
+				Log.e("RE","REQUESTING FOCUS FOR BUTTON");
+				//mToolbar.requestFocus();
 			} else if(mLastSelectedIndex != pos) {
-				Log.e("SLDF","AM I EVEN HERE");
+				//Log.e("SLDF","AM I EVEN HERE");
 				AnimatedRelativeLayout holder = (AnimatedRelativeLayout)mToolbar.getParent();
 				if(holder != null) {
 					if(mList.getFirstVisiblePosition() <= mLastSelectedIndex && mList.getLastVisiblePosition() >= mLastSelectedIndex) {
@@ -477,6 +496,8 @@ public class BaseSelectionDialog extends Dialog {
 							mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
 						}
 						rl.addView(mToolbar);
+						mToolbar.getChildAt(1).setFocusable(true);
+						mToolbar.getChildAt(1).requestFocus();
 						//rl.addView(mToolbar);
 					}
 				}
@@ -499,6 +520,8 @@ public class BaseSelectionDialog extends Dialog {
 					}
 					//rl.addView(mToolbar);
 					holder.addView(mToolbar);
+					mToolbar.getChildAt(1).setFocusable(true);
+					mToolbar.getChildAt(1).requestFocus();
 				} else {
 					mTargetIndex = pos;
 					mToolbar.startAnimation(animateOutNoTransition);
@@ -582,6 +605,9 @@ public class BaseSelectionDialog extends Dialog {
 				
 				label.setText(e.title);
 				extra.setText(e.extra);
+				
+				label.setBackgroundColor(0x00000000);
+				extra.setBackgroundColor(0x00000000);
 				
 			}
 			
