@@ -19,16 +19,19 @@ import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationSet;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
+import android.widget.AbsListView;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.LinearLayout.LayoutParams;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -54,7 +57,7 @@ public class BaseSelectionDialog extends Dialog {
 	private LayoutAnimationController animateInController;
 	private TranslateAnimation animateOut;
 	private TranslateAnimation animateOutNoTransition;
-	
+	private TranslateAnimation animateIn;
 	//private ArrayList<Drawable> miniIcons;
 	
 	
@@ -152,66 +155,86 @@ public class BaseSelectionDialog extends Dialog {
 		
 		mList.setScrollbarFadingEnabled(false);
 		
-		mList.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+		//mList.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+		mList.setOnItemSelectedListener(new DpadSelectionListener());
+		//mList.setOnFocusChangeListener(new ListFocusFixerListener());
+		//mList.setSelector(R.drawable.filter_selection_selector);
+		mList.setOnScrollListener(new AbsListView.OnScrollListener() {
+			
+			@Override
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+				if(scrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+					if(mToolbar.getParent() != null) {
+						removeToolbar();
+					}
+				}
+			}
+			
+			@Override
+			public void onScroll(AbsListView view, int firstVisibleItem,
+					int visibleItemCount, int totalItemCount) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		
-		mList.setOnFocusChangeListener(new ListFocusFixerListener());
-		mList.setSelector(R.drawable.filter_selection_selector);
 		mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				//we just want to have one
-				arg1.performClick();
+				
+				if(mToolbar.getParent() != null) {
+					removeToolbar();
+					return;
+				}
+				//arg1.performClick();
+				int duration = 500;
+				
+				
+				//determine if target is all the way visible;
+				if(arg1.getBottom() > mList.getHeight() || arg1.getTop() < 0) {
+					mList.smoothScrollToPosition(arg2,100);
+					mList.postDelayed(new ScrollSelectionRunner(arg2), 100);
+					Log.e("CLICK","bringing view into full visibility" + arg2);
+					return;
+				}
+				
+				RelativeLayout target = (RelativeLayout)mList.getParent().getParent();
+				FrameLayout frame = (FrameLayout)mList.getParent();
+				//oops, re make the toolbar insertion code.
+				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+				params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+				params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+				
+				
+				int v_top = mList.getChildAt(arg2 - mList.getFirstVisiblePosition()).getTop();
+				int f_top = frame.getTop();
+				
+				Log.e("WINDOW","MARGIN TOP: " + v_top +" + " + f_top + " " + arg2);
+				params.setMargins(0, v_top + f_top, 0, 0);
+				
+				mToolbar.setLayoutParams(params);
+				target.addView(mToolbar);
+				mToolbar.startAnimation(animateIn);
+				mToolbar.getChildAt(1).requestFocus();
+				//show the toolbar.
+				
+				
+				
+				//insert the toolbar into the hierarchy.
+				
+				
 				Log.e("CLICK","CLICK CLICK CLICK CLICK");
 			}
 		});
-		
-		mList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
-			public void onItemSelected(AdapterView<?> arg0, View arg1,
-					int arg2, long arg3) {
-				if(arg2 != mLastSelectedIndex) {
-					//arg0.is
-					if(arg0.getFirstVisiblePosition() <= mLastSelectedIndex && arg0.getLastVisiblePosition() >= mLastSelectedIndex) {
-						if(mToolbar.getParent() != null) {
-							mToolbar.startAnimation(animateOutNoTransition);
-						}
-					} else {
-						if(mToolbar.getParent() != null) {
-							((RelativeLayout)mToolbar.getParent()).removeAllViews();
-						}
-					}
-				}
-				mLastSelectedIndex = arg2;
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-				// TODO Auto-generated method stub
-				
-				Log.e("LIST","NOTHING SELECTED");
-				
-			}
-		});
+	
 		
 		//list.setOnFocusChangeListener(new ListFocusFixerListener());
 		
 		mList.setSelector(R.drawable.blue_frame_nomargin_nobackground);
 		
-		mList.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-			
-			@Override
-			public void onFocusChange(View v, boolean hasFocus) {
-				Log.e("LIST","LIST HAS FOCUS: " + hasFocus);
-				if(!hasFocus) {
-					mList.setSelector(R.drawable.transparent);
-				} else {
-					mList.setSelector(R.drawable.blue_frame_nomargin_nobackground);
-				}
-				mList.invalidate();
-				
-			}
-		});
 		
 		
 		mList.setEmptyView(findViewById(R.id.empty));
@@ -386,6 +409,46 @@ public class BaseSelectionDialog extends Dialog {
 		
 	}
 	
+	private class ScrollSelectionRunner implements Runnable {
+		int target;
+		public ScrollSelectionRunner(int target) {
+			this.target = target;
+		}
+		@Override
+		public void run() {
+			//mList.setSelection(target);
+			//mList.performClick();
+			Log.e("WINDOW","Clicking on list item: " + target);
+			mList.performItemClick(mList.getAdapter().getView(target, null, null), target, target);
+		}
+		
+	}
+	
+	private class DpadSelectionListener implements AdapterView.OnItemSelectedListener {
+
+		@Override
+		public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2,
+				long arg3) {
+			if(arg1.getTop() < 0 || arg1.getBottom() > mList.getHeight()) {
+				mList.smoothScrollToPosition(arg2,100);
+			}
+		}
+
+		@Override
+		public void onNothingSelected(AdapterView<?> arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	
+
+	
+	private void removeToolbar() {
+		mToolbar.startAnimation(animateOut);
+		
+	}
+	
 	public void setNewButtonLabel(String str) {
 		mNewTitle = str;
 	}
@@ -443,128 +506,7 @@ public class BaseSelectionDialog extends Dialog {
 		mAdapter.notifyDataSetInvalidated();
 	}
 	
-	private class LineClickedListener implements View.OnClickListener {
 
-		@Override
-		public void onClick(View v) {
-			int pos = v.getId() / 157;
-			Log.e("CLICK","this is the clicker, clicked view:"+ pos);
-			
-			if(mLastSelectedIndex < 0) {
-				
-				mLastSelectedIndex = pos;
-				RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
-				rl.setLayoutAnimation(animateInController);
-				ItemEntry data = mAdapter.getItem(pos);
-				/*if(data.enabled) {
-					((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_on);
-				} else {
-					((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_off);
-				}*/
-				if(mToolbarListener != null) {
-					mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
-				}
-				rl.addView(mToolbar);
-				mToolbar.getChildAt(1).setFocusable(true);
-				mToolbar.getChildAt(1).requestFocus();
-				Log.e("RE","REQUESTING FOCUS FOR BUTTON");
-				//mToolbar.requestFocus();
-			} else if(mLastSelectedIndex != pos) {
-				//Log.e("SLDF","AM I EVEN HERE");
-				AnimatedRelativeLayout holder = (AnimatedRelativeLayout)mToolbar.getParent();
-				if(holder != null) {
-					if(mList.getFirstVisiblePosition() <= mLastSelectedIndex && mList.getLastVisiblePosition() >= mLastSelectedIndex) {
-					
-						holder.setAnimationListener(mCustomAnimationListener);
-						holder.startAnimation(animateOut);
-						mTargetIndex = pos;
-						targetHolder = (RelativeLayout) v.findViewById(R.id.toolbarholder);
-						if(mToolbarListener != null) {
-							mToolbarListener.willHideToolbar(mToolbar, mLastSelectedIndex);
-						}
-					} else {
-						holder.removeAllViews();
-						RelativeLayout rl = (RelativeLayout)v.findViewById(R.id.toolbarholder);
-						rl.setLayoutAnimation(animateInController);
-						ItemEntry data = mAdapter.getItem(pos);
-						/*if(data.enabled) {
-							((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_on);
-						} else {
-							((ImageButton)mToolbar.getChildAt(1)).setImageResource(data.mini_icon_off);
-						}*/
-						if(mToolbarListener != null) {
-							mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
-						}
-						rl.addView(mToolbar);
-						mToolbar.getChildAt(1).setFocusable(true);
-						mToolbar.getChildAt(1).requestFocus();
-						//rl.addView(mToolbar);
-					}
-				}
-				//theToolbar.startAnimation(animateOut);
-			} else {
-				
-				//lastSelectedIndex = -1;
-				if(mToolbar.getParent() == null) {
-					mLastSelectedIndex = pos;
-					RelativeLayout holder = (RelativeLayout)v.findViewById(R.id.toolbarholder);
-					holder.setLayoutAnimation(animateInController);
-					/*TriggerItem data = mAdapter.getItem(pos);
-					if(data.enabled) {
-						((ImageButton)mToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleon_button);
-					} else {
-						((ImageButton)mToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
-					}*/
-					if(mToolbarListener != null) {
-						mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
-					}
-					//rl.addView(mToolbar);
-					holder.addView(mToolbar);
-					mToolbar.getChildAt(1).setFocusable(true);
-					mToolbar.getChildAt(1).requestFocus();
-				} else {
-					mTargetIndex = pos;
-					mToolbar.startAnimation(animateOutNoTransition);
-					
-				}
-			}
-		}
-		
-	}
-	
-	private LineClickedListener mLineClicker = new LineClickedListener();
-	
-	public class CustomAnimationEndListener implements AnimatedRelativeLayout.OnAnimationEndListener {
-
-		@Override
-		public void onCustomAnimationEnd() {
-			
-			RelativeLayout rl = (RelativeLayout)mToolbar.getParent();
-			if(rl == null) {
-				return;
-			}
-			rl.removeAllViews();
-
-			if(targetHolder != null) {
-				//set the image view.
-				ItemEntry data = mAdapter.getItem(mTargetIndex);
-				if(data.enabled) {
-					((ImageButton)mToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleon_button);
-				} else {
-					((ImageButton)mToolbar.getChildAt(1)).setImageResource(R.drawable.toolbar_toggleoff_button);
-				}
-				targetHolder.setLayoutAnimation(animateInController);
-				
-				targetHolder.addView(mToolbar);
-			}
-			mLastSelectedIndex = mTargetIndex;
-		}
-		
-	}
-	
-	public CustomAnimationEndListener mCustomAnimationListener = new CustomAnimationEndListener();
-	
-	
 	private class ItemAdapter extends ArrayAdapter<ItemEntry> {
 
 		public ItemAdapter(Context context, int textViewResourceId,
@@ -581,7 +523,7 @@ public class BaseSelectionDialog extends Dialog {
 				v = li.inflate(R.layout.editor_selection_list_row,null);
 				
 				RelativeLayout root = (RelativeLayout) v.findViewById(R.id.root);
-				root.setOnClickListener(mLineClicker);
+				//root.setOnClickListener(mLineClicker);
 			}
 			
 			RelativeLayout holder = (RelativeLayout)v.findViewById(R.id.toolbarholder);
@@ -763,6 +705,7 @@ public class BaseSelectionDialog extends Dialog {
 		toolbarParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		mToolbar.setLayoutParams(toolbarParams);
 		
+		
 		//ImageButton toggle = new ImageButton(BaseSelectionDialog.this.getContext());
 		//ImageButton modify = new ImageButton(BaseSelectionDialog.this.getContext());
 		//ImageButton delete = new ImageButton(BaseSelectionDialog.this.getContext());
@@ -778,6 +721,9 @@ public class BaseSelectionDialog extends Dialog {
 			tmp.setImageResource(b.imageResource);
 			tmp.setBackgroundColor(0);
 			tmp.setOnKeyListener(theButtonKeyListener);
+			//hack for the new toolbar paradigm
+			tmp.setNextFocusDownId(mList.getId());
+			tmp.setNextFocusUpId(mList.getId());
 			switch(b.action) {
 			case DELETE:
 				tmp.setOnClickListener(new DeleteButtonListener());
@@ -832,33 +778,31 @@ public class BaseSelectionDialog extends Dialog {
 			@Override
 			public void onClick(View v) {
 				
-				LinearLayout linear = (LinearLayout) v.getParent();
-				RelativeLayout line = (RelativeLayout)linear.getParent().getParent();
-				line.performClick();
+				removeToolbar();
 			}
 		});
 		
 		toolbarLength = toolbarLength + close.getDrawable().getIntrinsicWidth();// + (((ImageButton)(mToolbar.getChildAt(0))).getDrawable().getIntrinsicWidth() * 3); 
 		
-		TranslateAnimation animation2 = new TranslateAnimation(toolbarLength,0,0,0);
-		animation2.setDuration(300);
+		animateIn = new TranslateAnimation(toolbarLength,0,0,0);
+		animateIn.setDuration(300);
 		AnimationSet set = new AnimationSet(true);
-		set.addAnimation(animation2);
+		set.addAnimation(animateIn);
 		animateInController = new LayoutAnimationController(set);
 		
 		animateOut = new TranslateAnimation(0,toolbarLength,0,0);
 		animateOut.setDuration(300);
+		
 
 		animateOutNoTransition = new TranslateAnimation(0,toolbarLength,0,0);
 		animateOutNoTransition.setDuration(300);
-		animateOutNoTransition.setAnimationListener(new AnimationListener() {
+		animateOut.setAnimationListener(new AnimationListener() {
 
 			@Override
 			public void onAnimationEnd(Animation animation) {
-				RelativeLayout rl = (RelativeLayout)mToolbar.getParent();
-				rl.removeAllViews();
-				mLastSelectedIndex = mTargetIndex;
-				mLastSelectedIndex = -1;
+				RelativeLayout parent = (RelativeLayout) mToolbar.getParent();
+				parent.removeView(mToolbar);
+				mList.requestFocus();
 				
 			}
 
@@ -882,32 +826,11 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
 			switch(keyCode) {
 			case KeyEvent.KEYCODE_DPAD_UP:
-				int first = 0;
-				//int last = list.getLastVisiblePosition();
-				if(mLastSelectedIndex - 1 >= first) {
-					/*list.setSelection(lastSelectedIndex -1);
-					RelativeLayout row = (RelativeLayout) list.getChildAt(lastSelectedIndex -1);
-					row.performClick();*/
-					mList.setSelection(mLastSelectedIndex - 1);
-					return true;
-				} else {
-					return false;
-				}
-				//break;
+				removeToolbar();
+				break;
 			case KeyEvent.KEYCODE_DPAD_DOWN:
-				int last = mList.getCount() -1;
-				if(mLastSelectedIndex + 1 <= last) {
-					/*list.setSelection(lastSelectedIndex +1);
-					int childCount = list.getChildCount();
-					//list.getAdapter().get
-					RelativeLayout row = (RelativeLayout) list.getChildAt(lastSelectedIndex +1);
-					row.performClick();*/
-					mList.setSelection(mLastSelectedIndex + 1);
-					return true;
-				} else {
-					return false;
-				}
-				//break;
+				removeToolbar();
+				break;
 			}
 			return false;
 		}
@@ -1170,7 +1093,7 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 		mList.setFocusable(false);
 		mList.setOnFocusChangeListener(null);
 		buildRawList();
-		mList.setOnFocusChangeListener(new ListFocusFixerListener());
+		//mList.setOnFocusChangeListener(new ListFocusFixerListener());
 		mList.setFocusable(true);
 	}
 	
@@ -1184,37 +1107,7 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 		}
 	}
 	
-	public class ListFocusFixerListener implements View.OnFocusChangeListener {
-		public void onFocusChange(View v, boolean hasFocus) {
-			if(hasFocus) {
-				for(int i=0;i<mAdapter.getCount();i++) {
-					View view = mList.getChildAt(i);
-					if(view != null)  {
-						//view.findViewById(R.id.toolbar_tab).setFocusable(false);
-					}
-				}
-				if(mLastSelectedIndex < 0) {
-					
-				} else {
-					Log.e("LIST","SETTING FOCUS ON:" + mLastSelectedIndex);
-					int index = mLastSelectedIndex;
-					int first = mList.getFirstVisiblePosition();
-					int last = mList.getLastVisiblePosition();
-					if(first <= index && index <= last) {
-						index = index - first;
-					} else {
-						index = mList.getFirstVisiblePosition();
-					}
-					mList.setSelection(mLastSelectedIndex);
-					//mList.getChildAt(index).performClick();
-					//mList.getChildAt(index).findViewById(R.id.toolbar_tab_close).setFocusable(true);
-					//mList.getChildAt(index).findViewById(R.id.toolbar_tab_close).requestFocus();
-				}
-				
-			}
-			Log.e("FOCUS","FOCUS CHANGE LISTENER FIRE, focus is " + hasFocus);
-		}
-	}
+	
 	
 	public void addToolbarButton(int drawable,int id) {
 		UtilityButton edit = new UtilityButton();
