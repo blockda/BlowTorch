@@ -53,7 +53,7 @@
         		  
 	
     </application>
-    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="13"/>
+    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13"/>
     
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
