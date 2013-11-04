@@ -201,6 +201,7 @@ public class BaseSelectionDialog extends Dialog {
 					return;
 				}
 				
+				mLastSelectedIndex = arg2;
 				RelativeLayout target = (RelativeLayout)mList.getParent().getParent();
 				FrameLayout frame = (FrameLayout)mList.getParent();
 				//oops, re make the toolbar insertion code.
@@ -217,6 +218,7 @@ public class BaseSelectionDialog extends Dialog {
 				
 				mToolbar.setLayoutParams(params);
 				target.addView(mToolbar);
+				mToolbarListener.willShowToolbar(mToolbar, mLastSelectedIndex);
 				mToolbar.startAnimation(animateIn);
 				mToolbar.getChildAt(1).requestFocus();
 				//show the toolbar.
@@ -1081,7 +1083,10 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 		entry.mini_icon = resource;
 		//if the toolbar is out, fetch up the icon and change it, otherwise invalidate the list
 		if(mToolbar.getParent() != null) {
-			RelativeLayout root = (RelativeLayout)mToolbar.getParent().getParent();
+			//we now have to find the view of the last selected item.
+			
+			
+			RelativeLayout root = (RelativeLayout)mList.getChildAt(row - mList.getFirstVisiblePosition());
 			((ImageView)root.findViewById(R.id.icon)).setImageResource(entry.mini_icon);
 			
 		} else {

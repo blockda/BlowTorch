@@ -7,13 +7,16 @@ public class DocumentsHolder {
 /*! \page anatomy Plugin Anatomy
 \section top General Construction
 \subsection intro Introduction
-Plugins for BlowTorch are a rough collection of files in a directory on the sdcard (or internal memory). A plugin contains a unique Lua state that it uses to load and run scripts.
-A plugin contains a unique set of triggers, timers, aliases, scripts and windows. The BlowTorch main settings file contains a list of externally linked plugins; essentially a list of paths to xml files to load as part of the boot up sequence.
-The scripting system will call certain global functions in the Lua state if they are defined at certain points during core operation.
-this is what happens when we try to \image html test.jpg "Special Image"	
+A plugin for BlowTorch is a collection of files in a directory on the sdcard (or internal memory). 
+A plugin contains a unique set of triggers, timers, aliases, scripts and windows. 
+Each plugin has an individual Lua state that is used to load and run scripts.
+The BlowTorch main settings file contains any internal plugins that are loaded as part of the main loading sequence, as well as a list of externally linked plugins; essentially a list of paths to xml files to load as part of the boot up sequence.
+The core will call certain global functions if defined in the plugin's Lua state at points during core operation.
+\image html test.jpg "Figure 1: Encapsulation of data in Connection Settings and Plugin configuration files."	
 
 \subsection construction General Construction
-A plugin consists of a snippet of XML that defines key parameters about the configuration and content it carries. Plugins may be grouped into a single file. The general structure of a plugin looks like the following:
+A plugin is loaded via an XML file that defines the configuration, behavior and content it carries. 
+Multiple plugins may be grouped into a single file. The general structure of a plugin looks like the following:
 \code
 <plugin>
 	<author>Author Name</author>
@@ -26,17 +29,26 @@ A plugin consists of a snippet of XML that defines key parameters about the conf
 </plugin>
 \endcode
 
-It essentially looks like a settings file without the root level global configuration nodes. Browsing data elements, such as triggers, timers, or aliases, can be done in client by filtering the items from the extended options button in the appropriate selection dialog. [insert screen shot/pictures]
+It essentially looks like a settings file without the root level global configuration nodes.
+Examining and editing data elements such as triggers, timers, or aliases, can be done in client by filtering the items from the extended options button in the appropriate selection dialog. [insert screen shot/pictures]
 
 \subsection loading Loading Plugins
-Load plugins using the MENU->Plugins->Load button. Use the Load menu to select valid XML plugin files from the [external memory folder]/BlowTorch/plugins folder. Once loaded, plugins may display description and author information. Invalid plugins will display the parse error to assist with debugging. Already loaded plugins should be indicated through the following icons:
+Load plugins using the MENU->Plugins->Load button. 
+Use the Load menu to select valid XML plugin files from the [external memory folder]/BlowTorch/plugins folder. 
+Once loaded, plugins may display description and author information. Invalid plugins will display the parse error to assist with debugging.
+Already loaded plugins should be indicated through the following icons:
 	- Unloaded valid plugin file: [icon image]
 	- Loaded valid plugin file: [icon image]
  	- Invalid plugin file: [icon image]
  
 \subsection settings Saving Settings and Menu Items
-Settings can be implemented in the plugin description file. These settings are available under the MENU->[Your plugin name]. Settings are saved when the BlowTorch core rewrites the plugin descriptor file in the save sequence. 
-Settings are identified via the key property, which must be unique. When settings are changed from the the Options menu, it will call the global function OnOptionsChanged if defined in the plugin's Lua state. OnOptionsChanged is also called during the settings loading routine, once for every option that the plugin defines. This gives the opportunity for scripts to appropriately act on the setting value before windows are loaded or normal program operation starts.
+Settings can be implemented in the plugin description file. 
+These settings are available under the MENU->[Your plugin name]. 
+Settings are saved when the BlowTorch core rewrites the plugin descriptor file in the save sequence. 
+Settings are identified via the key property, which must be unique. 
+When settings are changed from the the Options menu, it will call the global function OnOptionsChanged if defined in the plugin's Lua state. 
+OnOptionsChanged is also called during the settings loading routine, once for every option that the plugin defines. 
+This gives the opportunity for scripts to appropriately act on the setting value before windows are loaded or normal program operation starts.
  
 \subsection windows Windowing System
 The windowing system is going to have its own specific documentation but it is worth noting how the structure of the XML looks. As it appears in [link to the big picture], each window contains its own configuration data. The configuration data looks like following:
