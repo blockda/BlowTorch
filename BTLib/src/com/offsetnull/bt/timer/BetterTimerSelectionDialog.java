@@ -108,9 +108,9 @@ public class BetterTimerSelectionDialog extends PluginFilterSelectionDialog impl
 		Log.e("Trigger","timer item selected for "+action+": "+d.getName());
 		
 		//Log.e("Trigger","trigger item selected for modification: "+d.getName());
-		RelativeLayout trow = (RelativeLayout)v.getParent().getParent().getParent();
-		((ImageView)trow.findViewById(R.id.icon)).setImageResource(icon);
-		
+		//RelativeLayout trow = (RelativeLayout)v.getParent().getParent().getParent();
+		//((ImageView)trow.findViewById(R.id.icon)).setImageResource(icon);
+		this.setItemMiniIcon(row, icon);
 	}
 
 	@Override
