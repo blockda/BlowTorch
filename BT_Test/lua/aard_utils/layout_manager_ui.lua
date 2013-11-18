@@ -268,7 +268,7 @@ local scroll_target = luajava.new(LinearLayout,context)
 
 local scrollViewConfig_0 = {}
 scrollViewConfig_0.id = 886795
-scrollViewConfig_0.width = 300
+scrollViewConfig_0.width = 600
 scrollViewConfig_0.height = 100
 scrollViewConfig_0.type = "relative"
 scrollViewConfig_0.target = "root"
@@ -427,7 +427,7 @@ bottomHolderConfig_0.affects.inputBar[RelativeLayout.ABOVE] = 9983
 
 local bottomHolderConfig_2 = {}
 setmetatable(bottomHolderConfig_2,{__index = bottomHolderConfig_0})
-bottomHolderConfig_2.height = 100*density
+bottomHolderConfig_2.height = 50*density
 
 layout_config.configs[1][bottomHolderConfig_0.id] = bottomHolderConfig_0
 layout_config.configs[2][bottomHolderConfig_2.id] = bottomHolderConfig_2

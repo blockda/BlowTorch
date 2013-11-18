@@ -232,7 +232,7 @@ public class BetterTimerSelectionDialog extends PluginFilterSelectionDialog impl
 	public void onOptionItemClicked(int row) {
 		super.onOptionItemClicked(row);
 		this.hideOptionsMenu();
-		if(row < 3) return;
+		if(row < 2) return;
 		buildList();	
 		
 	}
