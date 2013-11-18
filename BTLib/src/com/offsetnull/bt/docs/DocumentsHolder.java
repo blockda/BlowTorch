@@ -12,25 +12,56 @@ A plugin contains a unique set of triggers, timers, aliases, scripts and windows
 Each plugin has an individual Lua state that is used to load and run scripts.
 The BlowTorch main settings file contains any internal plugins that are loaded as part of the main loading sequence, as well as a list of externally linked plugins; essentially a list of paths to xml files to load as part of the boot up sequence.
 The core will call certain global functions if defined in the plugin's Lua state at points during core operation.
-\image html test.jpg "Figure 1: Encapsulation of data in Connection Settings and Plugin configuration files."	
 
 \subsection construction General Construction
 A plugin is loaded via an XML file that defines the configuration, behavior and content it carries. 
 Multiple plugins may be grouped into a single file. The general structure of a plugin looks like the following:
-\code
-<plugin>
-	<author>Author Name</author>
-	<description>A short description.</description>
-	<version>3</version>
-	<triggers>
-		<trigger name="foo" pattern="bar">
-			<gag/>
-	</trigger>
-</plugin>
+\code{.html}
+<blowtorch xmlversion="2">
+  	<plugins>
+		<plugin>
+			<author>Author Name</author>
+			<description>A short description.</description>
+			<version>3</version>
+			<triggers>
+				<trigger name="foo" pattern="bar">
+					<gag/>
+				</trigger>
+			</triggers>
+		</plugin>
+	</plugins>
+</blowtorch>
 \endcode
 
 It essentially looks like a settings file without the root level global configuration nodes.
 Examining and editing data elements such as triggers, timers, or aliases, can be done in client by filtering the items from the extended options button in the appropriate selection dialog. [insert screen shot/pictures]
+
+\subsection scripts Plugin Scripts
+Each plugin has a number of scripts that are associated with it. Each script is defined in the pluin settings file as a <script> node with attributes for a name and weather or not it should be executed when the plugin is loaded.
+\code{.html}
+<blowtorch xmlversion="2">
+  	<plugins>
+		<plugin>
+			<script name="stat_window_ui" execute="false>
+			<![CDATA[
+			Note("Stat window UI code loading.")
+			dofile("stat_window_ui.lua")
+			]]>
+			</script>
+			<script name="stat_window_server execute="true">
+			<![CDATA[
+			Note("Starts when plugin is loaded")
+			dofile("stat_window_server.lua")
+			]]>
+			</script>
+		</plugin>
+	</plugins>
+</blowtorch>
+\endcode
+
+\note There is no <scripts> node in the plugin settings files. Script nodes are children of the plugin node.
+
+\note The search path for require("...") has the directory that the plugin's xml descriptor file exits in automatically appended to it.
 
 \subsection loading Loading Plugins
 Load plugins using the MENU->Plugins->Load button. 
@@ -41,15 +72,44 @@ Already loaded plugins should be indicated through the following icons:
 	- Loaded valid plugin file: [icon image]
  	- Invalid plugin file: [icon image]
  
-\subsection settings Saving Settings and Menu Items
-Settings can be implemented in the plugin description file. 
+\subsection options Custom Options
+Options/settings can be added in the plugin description file. 
 These settings are available under the MENU->[Your plugin name]. 
 Settings are saved when the BlowTorch core rewrites the plugin descriptor file in the save sequence. 
 Settings are identified via the key property, which must be unique. 
 When settings are changed from the the Options menu, it will call the global function OnOptionsChanged if defined in the plugin's Lua state. 
 OnOptionsChanged is also called during the settings loading routine, once for every option that the plugin defines. 
 This gives the opportunity for scripts to appropriately act on the setting value before windows are loaded or normal program operation starts.
- 
+
+\code
+<blowtorch xmlversion="2">
+	<plugins>
+		<plugin>
+			<options title="Custom Plugin Options" summary="Click to explore.">
+		       <boolean title="Boolean Option" key="bool_option" summary="Checkbox widget">true</boolean>
+		       <string title="String Option" key="string_option" summary="Click to edit.">Test string.</boolean>
+		       <integer title="Integer Option" key="int_option" summary="Click to edit, value shown in widget.">6</integer>
+		       <list title="List Option" key="list_option" summary="A list of values, click to edit.">
+		               <value>0</value>
+		               <item>Item 1</item>
+		               <item>Item 2</item>
+		               <item>Item 3</item>
+		       </list>
+		       <color title="Color Option" key="color_option" summary="Click to edit the value in the color picker.">FF0000</color>
+		       <callback title="Callback Option" key="callback_option" summary="Click to call a function in the plugin.">callbackTest</callback>
+			</options>
+		</plugin>
+	</plugins>
+</blowtorch>
+\endcode
+
+\subsection Menu Items
+Plugins can add custom menu items to the action bar or menu button list depending on the operating system version.
+Unfortunatly at this time only foreground windows can add menu items to the global menu or manuplate the menu stack.
+See the section on the PopulateMenu window entry point on [this page](entry_points.html#PopulateMenu).
+Foreground windows also can create an entire new Action Bar or menu item list and temporarily replace the default menu items with the new menu.
+See the functions PushMenuStack and PopMenuStack on [this page](page1.html#sec12).
+
 \subsection windows Windowing System
 The windowing system is going to have its own specific documentation but it is worth noting how the structure of the XML looks. As it appears in [link to the big picture], each window contains its own configuration data. The configuration data looks like following:
 \code

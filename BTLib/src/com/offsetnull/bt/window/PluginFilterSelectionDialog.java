@@ -78,7 +78,7 @@ public class PluginFilterSelectionDialog extends BaseSelectionDialog implements 
 			currentPlugin = MAIN_SETTINGS;
 			break;
 		default:
-			currentPlugin = pluginList[row-4];
+			currentPlugin = pluginList[row-3];
 			break;
 		}
 	}

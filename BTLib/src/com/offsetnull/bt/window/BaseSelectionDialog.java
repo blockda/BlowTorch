@@ -277,18 +277,18 @@ public class BaseSelectionDialog extends Dialog {
 			String[] pluginList = new String[] { "foo","bar","baz" };
 			
 			
-			plugins = new String[pluginList.length+4];
+			plugins = new String[pluginList.length+3];
 			plugins[0] = "Help";
 			//plugins[1] = "Disable All";
-			plugins[2] = "divider";
-			plugins[3] = "Main";
+			plugins[1] = "divider";
+			plugins[2] = "Main";
 			
 			//String[] tmp = new String[pluginList.size()];
 			//tmp = pluginList.toArray(tmp);
 			//String 
 			java.util.Arrays.sort(pluginList);
 			for(int i=0;i<pluginList.length;i++) {
-				plugins[i+4] = pluginList[i];
+				plugins[i+3] = pluginList[i];
 				
 			}
 			//java.util.Arrays.sort(plugins);
@@ -386,6 +386,10 @@ public class BaseSelectionDialog extends Dialog {
 				} else {
 					mOptionsListToggle = true;
 					mOptionsList.setVisibility(View.VISIBLE);
+					mOptionsList.bringToFront();
+					TextView tst = (TextView) BaseSelectionDialog.this.findViewById(R.id.titlebar);
+					tst.bringToFront();
+					mOptionsButton.bringToFront();
 					mOptionsList.invalidate();
 					Animation inAnimation = new TranslateAnimation(0,0,-mOptionsList.getHeight(),0);
 					inAnimation.setDuration(300);
@@ -447,7 +451,9 @@ public class BaseSelectionDialog extends Dialog {
 
 	
 	private void removeToolbar() {
-		mToolbar.startAnimation(animateOut);
+		if(mToolbar.getParent() != null) {
+			mToolbar.startAnimation(animateOut);
+		}
 		
 	}
 	
@@ -494,6 +500,7 @@ public class BaseSelectionDialog extends Dialog {
 	
 	public void invalidateList() {
 		if(mAdapter == null) return;
+		removeToolbar();
 		this.mAdapter.notifyDataSetChanged();
 		this.mAdapter.notifyDataSetInvalidated();
 	}
@@ -961,8 +968,8 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 		}
 		
 		public void onAnimationEnd(Animation animation) {
-			mList.setOnFocusChangeListener(null);
-			mList.setFocusable(false);
+			//mList.setOnFocusChangeListener(null);
+			//mList.setFocusable(false);
 			
 			mAdapter.remove(mAdapter.getItem(mLastSelectedIndex));
 			mAdapter.notifyDataSetInvalidated();
@@ -970,7 +977,7 @@ public ToolBarButtonKeyListener theButtonKeyListener = new ToolBarButtonKeyListe
 				mToolbarListener.onItemDeleted(mLastSelectedIndex);
 			}
 			
-			((AnimatedRelativeLayout)mToolbar.getParent()).removeView(mToolbar);
+			((RelativeLayout)mToolbar.getParent()).removeView(mToolbar);
 			
 			mLastSelectedIndex = -1;
 			
