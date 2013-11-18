@@ -3170,12 +3170,24 @@ public class MainWindow extends Activity implements MainWindowCallback {
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-					
+					Log.e("WINDOW","SHUTTING DOWN WINDOW " + w.getName());
 					((com.offsetnull.bt.window.Window)tmp).shutdown();
+					
+					
+				}
+			}
+		}
+		
+		for(Object x : mWindows) {
+			if(x instanceof WindowToken) {
+				WindowToken w = (WindowToken)x;
+				View tmp = rl.findViewWithTag(w.getName());
+				if(tmp instanceof com.offsetnull.bt.window.Window) {
+					((com.offsetnull.bt.window.Window)tmp).closeLua();
 					windowMap.remove(w.getName());
 					rl.removeView(tmp);
 					tmp = null;
-					
+					Log.e("WINDOW","SHUT DOWN WINDOW" + w.getName() + "SUCCESS");
 				}
 			}
 		}

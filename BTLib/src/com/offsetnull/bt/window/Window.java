@@ -46,6 +46,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.text.ClipboardManager;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import android.view.Gravity;
 import android.view.Menu;
@@ -2668,20 +2669,26 @@ PopMenuStack()
 		
  /*! \page page1
 \subsection sec11 PushMenuStack
-Starts a new menu object, providing a global function name to call that will populate the menu
+Starts the creating of a new menu object, providing a global function name to call that will handle weather or not the back button is pressed while the menu stack is active.
+After this function is called, the [PopulateMenu](entry_points.html#PopulateMenu) entry point will be called when the operating system has created the new menu to show.
+
 
 \par Full Signature
 \luacode
 PushMenuStack(callbackName)
 \endluacode
-\param \b string the name of a global function to call in order to populate the new menu item.
+\param \b string the name of a global function to call if the back button is pressed to cancel the menu.
 \returns nothing
 \par Example 
 \luacode
-function addMenu(menu)
- menu:addItem(0,0,0,foo)
+function PopulateMenu(menu)
+ menu:addItem(0,1,1,foo)
 end
-PushMenuStack("addMenu")
+PushMenuStack("menuBackPressed")
+
+function menuBackPressed()
+	PopMenuStack()
+end
 \endluacode
 \see this relies largely on the Android Menu and MenuItem classes, please refer to the documentation and other menu related sample code.
 	*/
@@ -3682,12 +3689,18 @@ end
 		mL.getField(-1, "traceback");
 		mL.remove(-2);
 		
+		Log.e("WINDOW","   Calling OnDestroy for state: " + mL.getStateId());
+		
 		mL.getGlobal("OnDestroy");
+		Log.e("WINDOW"," getting global");
 		if(mL.getLuaObject(mL.getTop()).isFunction()) {
+			Log.e("WINDOW"," is function");
 			int ret = mL.pcall(0, 1, -2);
 			if(ret != 0) {
+				Log.e("WINDOW","LUA ERROR:" + mL.getLuaObject(-1).getString());
 				displayLuaError("Error in OnDestroy: "+mL.getLuaObject(-1).getString());
 			} else {
+				Log.e("window","poping lua stack");
 				mL.pop(2);
 			}
 		} else {
@@ -3697,9 +3710,15 @@ end
 		
 		//callbackHandler.removeCallbacksAndMessages(token)
 		
-		mL.close();
-		mL = null;
+		//mL = null;
 		
+	}
+	
+	public void closeLua() {
+		if(mL != null) {
+			mL.close();
+			mL = null;
+		}
 	}
 	
 	@Override
