@@ -12,16 +12,15 @@ A plugin contains a unique set of triggers, timers, aliases, scripts and windows
 Each plugin has an individual Lua state that is used to load and run scripts.
 The BlowTorch main settings file contains any internal plugins that are loaded as part of the main loading sequence, as well as a list of externally linked plugins; essentially a list of paths to xml files to load as part of the boot up sequence.
 The core will call certain global functions if defined in the plugin's Lua state at points during core operation.
-
 \subsection construction General Construction
 A plugin is loaded via an XML file that defines the configuration, behavior and content it carries. 
 Multiple plugins may be grouped into a single file. The general structure of a plugin looks like the following:
-\code{.html}
+\xmlcode
 <blowtorch xmlversion="2">
   	<plugins>
-		<plugin>
+		<plugin name="Test Plugin" id="88743">
 			<author>Author Name</author>
-			<description>A short description.</description>
+			\<description\>A short description.\</description\>
 			<version>3</version>
 			<triggers>
 				<trigger name="foo" pattern="bar">
@@ -31,17 +30,18 @@ Multiple plugins may be grouped into a single file. The general structure of a p
 		</plugin>
 	</plugins>
 </blowtorch>
-\endcode
+\endxmlcode
 
 It essentially looks like a settings file without the root level global configuration nodes.
-Examining and editing data elements such as triggers, timers, or aliases, can be done in client by filtering the items from the extended options button in the appropriate selection dialog. [insert screen shot/pictures]
+Examining and editing data elements such as triggers, timers, or aliases, can be done in client by filtering the items from the extended options button in the appropriate selection dialog.
+\image html ex_filters.png
 
 \subsection scripts Plugin Scripts
 Each plugin has a number of scripts that are associated with it. Each script is defined in the pluin settings file as a <script> node with attributes for a name and weather or not it should be executed when the plugin is loaded.
-\code{.html}
+\xmlcode
 <blowtorch xmlversion="2">
   	<plugins>
-		<plugin>
+		<plugin name="Stat Window" id="3343459">
 			<script name="stat_window_ui" execute="false>
 			<![CDATA[
 			Note("Stat window UI code loading.")
@@ -57,7 +57,7 @@ Each plugin has a number of scripts that are associated with it. Each script is 
 		</plugin>
 	</plugins>
 </blowtorch>
-\endcode
+\endxmlcode
 
 \note There is no <scripts> node in the plugin settings files. Script nodes are children of the plugin node.
 
@@ -68,9 +68,7 @@ Load plugins using the MENU->Plugins->Load button.
 Use the Load menu to select valid XML plugin files from the [external memory folder]/BlowTorch/plugins folder. 
 Once loaded, plugins may display description and author information. Invalid plugins will display the parse error to assist with debugging.
 Already loaded plugins should be indicated through the following icons:
-	- Unloaded valid plugin file: [icon image]
-	- Loaded valid plugin file: [icon image]
- 	- Invalid plugin file: [icon image]
+\image html plugin_load_states.png
  
 \subsection options Custom Options
 Options/settings can be added in the plugin description file. 
@@ -81,38 +79,40 @@ When settings are changed from the the Options menu, it will call the global fun
 OnOptionsChanged is also called during the settings loading routine, once for every option that the plugin defines. 
 This gives the opportunity for scripts to appropriately act on the setting value before windows are loaded or normal program operation starts.
 
-\code
+\xmlcode
 <blowtorch xmlversion="2">
 	<plugins>
-		<plugin>
+		<plugin name="Plugin Options" id="556783">
 			<options title="Custom Plugin Options" summary="Click to explore.">
 		       <boolean title="Boolean Option" key="bool_option" summary="Checkbox widget">true</boolean>
 		       <string title="String Option" key="string_option" summary="Click to edit.">Test string.</boolean>
 		       <integer title="Integer Option" key="int_option" summary="Click to edit, value shown in widget.">6</integer>
-		       <list title="List Option" key="list_option" summary="A list of values, click to edit.">
-		               <value>0</value>
-		               <item>Item 1</item>
-		               <item>Item 2</item>
-		               <item>Item 3</item>
-		       </list>
-		       <color title="Color Option" key="color_option" summary="Click to edit the value in the color picker.">FF0000</color>
+		       \<list title="List Option" key="list_option" summary="A list of values, click to edit."\>
+		               \<value\>0\</value\>
+		               \<item\>Item 1\</item\>
+		               \<item\>Item 2\</item\>
+		               \<item\>Item 3\</item\>
+		       \</list\>
+		       <color title="Color Option" key="color_option" summary="Click to edit the value in the color picker.">#FFFF0000</color>
 		       <callback title="Callback Option" key="callback_option" summary="Click to call a function in the plugin.">callbackTest</callback>
 			</options>
 		</plugin>
 	</plugins>
 </blowtorch>
-\endcode
+\endxmlcode
+\image html custom_options.png
+\note color picker values should aways be in the form of #<alpha><red><blue><green>, thus #FFFF0000 is 100% opaque red.
 
-\subsection Menu Items
+\subsection menu Custom Menu Items
 Plugins can add custom menu items to the action bar or menu button list depending on the operating system version.
 Unfortunatly at this time only foreground windows can add menu items to the global menu or manuplate the menu stack.
-See the section on the PopulateMenu window entry point on [this page](entry_points.html#PopulateMenu).
+See the section on the [PopulateMenu](entry_points.html#PopulateMenu) api call.
 Foreground windows also can create an entire new Action Bar or menu item list and temporarily replace the default menu items with the new menu.
-See the functions PushMenuStack and PopMenuStack on [this page](page1.html#sec12).
+See the functions [PushMenuStack](page1.html#sec13) and [PopMenuStack](page1.html#sec12).
 
 \subsection windows Windowing System
-The windowing system is going to have its own specific documentation but it is worth noting how the structure of the XML looks. As it appears in [link to the big picture], each window contains its own configuration data. The configuration data looks like following:
-\code
+The windowing system is going to have its own specific documentation but it is worth noting how the structure of the XML looks. As it appears in [system overview diagram](luaoverview.html#overview), each window contains its own configuration data. The configuration data looks like following:
+\xmlcode
 <blowtorch xmlversion="2">
   	<plugins>
 	    <plugin name="layout_manager" id="494">
@@ -135,7 +135,7 @@ The windowing system is going to have its own specific documentation but it is w
 		</plugin>
 	</plugins>
 </blowtorch>
-\endcode
+\endxmlcode
 
 The window tag has the following attributes and child nodes:
 	- Window Attributes
@@ -156,7 +156,25 @@ The window tag has the following attributes and child nodes:
 		- align_parent_bottom - true or false to align the bottom of this window to the bottom of the parent view container.
 	- options - have children option nodes
 		- option Attributes
-			- key - the unique option key, this can be any of the following, font_size, line_extra, font_path, color_mode, buffer_size, [Dan get the rest of the complete list]
+			- key - the unique option key, this can be any of the following, 
+				- font_size, integer value
+				- line_extra, integer value
+				- font_path, string value
+				- buffer_size, integer value
+				- word_wrap, boolean value
+				- hyperlinks_enabled, boolean value
+				- hyperlink_color, color value
+				- hyperlink_mode, list value
+					- 0, no link decoration
+					- 1, underline links
+					- 2, underline with specified color
+					- 3, underline with specified color only if no other ansi color code is present
+					- 4, background highlight the link with the specified color
+				- color_option
+					- 0, normal
+					- 1, show color codes colorized
+					- 2, show color codes but don't colorize
+					- 3, disable color codes				
 		- option Text value
 			- This value is loaded into the appropriate option at window creation time.
 
@@ -172,8 +190,8 @@ The window tag has the following attributes and child nodes:
 The Android NDK is used to cross compile the LuaJIT source code and additional libraries into ARMv5 compatible (or other processor architecture) library and loaded into the process by the Linux side of the Android OS. Communication between the Native code and the Dalvik (Java) code is facilitated by the LuaJava API that utilizes java reflection and JNI. This combined with some harness and support code in the BlowTorch core, is how Lua is embedded.
 SQLite, luabins, libmarshal, serialize lua modules are pre-built and included with the blowtorch distribution.
 \section embedding Embedding
-\subsection Overview
-image: the big diagram of all the lua states
+\subsection overview Overview
+\image html overview_arch.png
 \subsection native Native Android
 It is true that Android runs Java code, but technically it is a Linux process hosting a Dalvik Virtual Machine that is running Dalvik compatible byte code compiled from java code. This process is capable of loading native C code libraries, and the Dalvik VM can interface with this native code using the Java Native Interface (JNI). The JNI has been around for a very long time, much longer than Android.
 \subsection separation Process Separation
@@ -191,7 +209,7 @@ The AIDL bridge is bi-directional (allows for return values) but there is a dalv
 BlowTorch assigns a unique Lua State to each plugin that hosts the plugin code. 
 Additionally, each plugin defined or created window contains a unique Lua State that will drive the window behavior and UI actions. 
 Each have different API function calls because some things seemed appropriate to keep only on one side. 
-There is more information on this [here], but the API consists of a few global objects that are pushed for convenience and an array of global functions that can be called to get information about the environment and get information about the device or runtime, or set settings, etc.
+There is more information on this [here](page1.html), but the API consists of a few global objects that are pushed for convenience and an array of global functions that can be called to get information about the environment and get information about the device or runtime, or set settings, etc.
 \section luajava APIs
 \subsection overview Overview
 LuaJava is an amazingly thin middle layer that sets up a method for exposing and instantiating objects in the Java virtual machine (in Android the Dalvik virtual machine) and provide a mapping to those objects as Lua tables. 
@@ -203,10 +221,10 @@ Reflection in Java (and subsequently Dalvik) is a construct for interrogating an
 This process can be costly but there are a few ways to optimize its impact.
 \subsection luajava_api LuaJava API
 Essentially, the core API functions work with a "class" as the first argument. This is usually a string with the full classpath path to the desired object.
-\code
+\luacode
 paint = luajava.newInstance("android.graphics.Paint") 		  
 exit_button = luajava.newInstance("android.widget.Button",context)
-\endcode
+\endluacode
 		 
 However, the newInstance method goes through the whole reflection routine each time it is called like this. 
 LuaJava provides a way to cache these lookups in userdata tables that also provide access to static functions and fields. 
