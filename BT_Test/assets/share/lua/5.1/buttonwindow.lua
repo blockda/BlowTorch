@@ -1,18 +1,5 @@
---Note("package path:"..package.path)
---package.path = package.path..";"..GetExternalStorageDirectory().."/BlowTorch/?.lua"
---package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
---Note("package path:"..package.path)
 respath = package.path
 respath = string.sub(respath,0,string.find(respath,"?")-1).."res"
---Note("RESPATH: "..respath)
-
---Note("NEW BUTTON LAYER INIT")
-status = jit.status()
-if(status) then
---Note("Jit is on")
-else
---Note("Jit is off")
-end
 
 require("button")
 require("serialize")
@@ -30,10 +17,6 @@ end
 
 debugString("Button Window Script Loading...")
 
---set up the density value.
---local ctmp = view:getContext()
---local res = ctmp:getResources()
---local displaymetrics = res:getDisplayMetrics()
 density = GetDisplayDensity()
 Configuration = luajava.bindClass("android.content.res.Configuration")
 
@@ -41,7 +24,6 @@ TypedValue = luajava.bindClass("android.util.TypedValue")
 Adapter = luajava.bindClass("android.widget.Adapter")
 ListView = luajava.bindClass("android.widget.ListView")
 ImageButton = luajava.bindClass("android.widget.ImageButton")
---LinearLayout = luajava.bindClass("android.widget.LinearLayout")
 LayoutInflater = luajava.bindClass("android.view.LayoutInflater")
 Context = luajava.bindClass("android.content.Context")
 R_id = luajava.bindClass("com.offsetnull.bt.R$id")
@@ -75,73 +57,29 @@ ORIENTATION_PORTRAIT = Configuration.ORIENTATION_PORTRAIT
 
 DisplayMetrics = view:getContext():getResources():getDisplayMetrics()
 
-		--assert(marshal.encode(orig))
-		
-		--local str = marshal.encode(orig)
-		--local copy = marshal.decode(str)
-		--Note("trying to copy")
-local bit1 = bit.tobit(7)
-local bit2 = bit.bnot(bit1)
-local bit3 = bit.tohex(bit2)
-
 suppress_editor = false
---Note("BitOp Test:"..bit3)		
 
 function loadButtons(args)
 
 
 	debugString("Button Window loading buttons...")
-	--Note("WindowXCallS Succeeded!")
-	--for i,v in pairs(args) do
-	--	if(istable(v)) then
-	--	Note(i.."=>"..v)
-	--end
-	--printTable("args",args)
-	
-	
-	--local tmp = loadstring(args)()
-	--assert(marshal.decode(args))
-	--local String = luajava.bindClass("java.lang.String")
-	
-	--local data = luajava.new(String,args)
 	
 	local tmp = marshal.decode(args)
-	--Note("deserialized table: answer="..tmp.answer)
-	--printTable("defs",tmp.default)
 	lastLoadedSet = tmp.name
 	debugString("Button Window decompressed data, set name: "..lastLoadedSet)
 	
-	--set up metatables.
-	--if(args.defaults == nil) then
 	defaults = BUTTONSET_DATA:new(tmp.default)
-	--setmetatable(BUTTON_DATA,defaults)
-	--BUTTON_DATA.__index = defaults
 	
-	--setmetatable(BUTTON_DATA,defaults)
 	BUTTON_DATA.__index = defaults
-	--defaults.__index = 
 	buttons = {}
-	--setmetatable(BUTTON_DATA,defaults)
 	local set = tmp.set
 	for i=1,#set do
-	--for i,v in pairs(tmp.set) do
-		--local v = set[i]
-		--Note("PROCESSING NEW BUTTON"..i)
 		buttons[i] = BUTTON:new(set[i],density)
 	end
-	--Note(string.format("Debuggin:%d,%d",buttons[1].data.primaryColor,defaults.primaryColor))
-	--for i,v in pairs(buttons) do
-	--	Note("buuuuuton"..i)
-	--end
-	--buttons = foo
 	drawButtons()
-	--invalidate()
 	view:invalidate()
 	
 	debugString(string.format("Button Window loaded button set, %s successfully",lastLoadedSet))
-	--else
-	--end
-	
 end
 
 function printTable(key,o)
@@ -195,8 +133,6 @@ function moveTouch.onTouch(v,e)
 			if(moveCapOnce) then
 				moveStart.x = x
 				moveStart.y = y
-				--boundsStart.x = moveBounds:centerX()
-				--boundsStart.y = moveBounds:centerY()
 				moveCapOnce = false
 			end
 			return true
@@ -211,17 +147,11 @@ function moveTouch.onTouch(v,e)
 			moveDelta.y = y - moveCurrent.y
 			moveCurrent.x = x
 			moveCurrent.y = y
-			--Note("moving box")
 			if(gridsnap) then
-				--debugPrint("gridsnapping")
-				--totalDelta.x = totalDelta.x + moveDelta.x
-				--totalDelta.y = totalDelta.y + moveDelta.y
 				local tmpx = x % (gridXwidth/2)
 				local tmpy = y % (gridYwidth/2)
 				local gridx = math.floor(x/(gridXwidth/2))
 				local gridy = math.floor(y/(gridYwidth/2))
-				--lastgridx = 
-				--debugPrint("gridx:"..gridx.." gridy:"..gridy)
 				local wtmp = (moveBounds.right - moveBounds.left)/2
 				local htmp = (moveBounds.bottom - moveBounds.top)/2
 				totalDelta.x = totalDelta.x - (moveBounds.left - (gridx*(gridXwidth/2)-wtmp))
@@ -264,14 +194,12 @@ function enterMoveMode()
 		if(b.selected == true) then
 			local r = b.rect
 			if(first) then
-				--debugPrint("here")
 				x1 = r.left
 				y1 = r.top
 				x2 = r.right
 				y2 = r.bottom
 				first = false
 			else
-				--debugPrint("there")
 				if(r.left < x1) then
 					x1 = r.left
 				end
@@ -288,19 +216,14 @@ function enterMoveMode()
 			end
 		end
 	end
-	--debugPrint("nhere")
 	moveBounds:set(x1,y1,x2,y2)
 	
 	moveBounds:inset(-40,-40)
 	
-	--debugPrint("mhere")
 	local width = moveBounds.right - moveBounds.left
 	local height = moveBounds.bottom - moveBounds.top
-	--debugPrint("making new bitmap:"..width.."x"..height)
 	moveBitmap = Bitmap:createBitmap(width,height,BitmapConfig.ARGB_8888)
 	moveCanvas = luajava.newInstance("android.graphics.Canvas",moveBitmap)
-	--draw the shiz.
-	--debugPrint("zhere")
 	moveCanvas:drawARGB(0x88,0x88,0x88,0x88)
 	view:setOnTouchListener(moveTouch_cb)
 	moveCanvas:save()
@@ -309,8 +232,6 @@ function enterMoveMode()
 	for i,b in pairs(buttons) do
 		if(b.selected == true) then
 			b:draw(1,moveCanvas)
-			--debugPrint("debugprinting:"..x1.."x"..y1)
-			--moveCanvas:drawRect(b.rect,b.paintOpts)
 		end
 	end
 	drawButtonsNoSelected()
@@ -323,16 +244,12 @@ function exitMoveMode()
 	moveBitmap = nil
 	local dx = totalDelta.x
 	local dy = totalDelta.y
-			--if(gridsnap) then
-				--dx = 
-			--end
 			
 	totalDelta.x = 0
 	totalDelta.y = 0
 	for i,b in pairs(buttons) do
 		if(b.selected == true) then
 			local r = b.rect
-			--r:offset(dx,dy)
 			b.data.x = b.data.x + dx
 			b.data.y = b.data.y + dy
 			b.selected = false
@@ -351,21 +268,12 @@ touchStartY = 0
 managerTouch = {}
 gridsnap = true
 function managerTouch.onTouch(v,e)
-	--debugPrint("ALT TOUCH ROUTINE YEA!"..e:getX().." "..e:getY())
 	local x = e:getX()
 	local y = e:getY()
-	--debugPrint("on touch event started")
 	if(e:getAction() == MotionEvent.ACTION_DOWN) then
-		--debugPrint("manager move down")
 		--find if press was in a button
 		ret,b,index = buttonTouched(x,y)
 		if(ret) then
-			--if(b.selected) then
-				--launch the editor.
-			--else
-			--	b.selected = true
-				
-			--end
 			touchStartX = x
 			touchStartY = y
 			fingerdown = true
@@ -375,19 +283,10 @@ function managerTouch.onTouch(v,e)
 			updateSelected(b,true)
 			view:invalidate()
 			if(b.selected) then
-				--debugPrint("SELECTEDTOUCHSTART")
 				selectedtouchstart = true
 			else
 				selectedtouchstart = false
 			end
-			--debugPrint(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.data.x,touchedbutton.data.y))
-			--if(#buttons > 50 and not manage) then
-			--	aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
-				--aa = AlphaAnimation.new(1.0,0.0)
-			--	aa:setDuration(1500)
-			--	aa:setFillAfter(false)
-			--	view:startAnimation(aa)
-			--end
 			return true
 		else
 			--we are draggin now
@@ -414,26 +313,18 @@ function managerTouch.onTouch(v,e)
 
 	if(e:getAction() == MotionEvent.ACTION_MOVE) then
 	
-		--if(not manage
-		--debugPrint("manager move move")
 		if(prevevent == 0) then
 			prevevent = e:getEventTime()
 		else
 			now = e:getEventTime()
 			local elapsed = now - prevevent
 			if(elapsed > 10) then
-			--proceed
-				--debugPrint("processing move event")
 				prevevent = now
 			else
 				return true --consume but dont process.
 			end
 		end
 
-
-
-
-		--debugPrint("ACTION MOVING"..touchedbutton.x)
 
 		if(not fingerdown and manage) then
 			--we are drag moving now.
@@ -446,7 +337,6 @@ function managerTouch.onTouch(v,e)
 			end
 			dragmoving = true
 			
-			--drawDragBox()
 			checkIntersects()
 			view:invalidate()
 			return true
@@ -458,21 +348,16 @@ function managerTouch.onTouch(v,e)
 		 	local diffy = math.abs(y - touchStartY)
 		 	
 		 	local dist = math.sqrt(diffx*diffx + diffy*diffy)
-		 	--debugPrint("DIST IS NOW:"..touchStartX)
 		 	if(dist < 10*density) then
-		 		--don't actually enter move
 		 		return true
 		 	end
 		 
-		 	--debugPrint("ENTERING MOVE MODE")
 		 	touchMoving = true
 		 	moveCurrent.x = x
 			moveCurrent.y = y
 			if(moveCapOnce) then
 				moveStart.x = x
 				moveStart.y = y
-				--boundsStart.x = moveBounds:centerX()
-				--boundsStart.y = moveBounds:centerY()
 				moveCapOnce = false
 			end
 			fingerdown = false
@@ -480,55 +365,28 @@ function managerTouch.onTouch(v,e)
 		 	enterMoveMode()
 		 	return true
 		 end
-		 --if(fingerdown and manage) then
-		--	local modx = (math.floor(e:getX()/gridwidth)*gridwidth)+(gridwidth/2)
-		--	local mody = (math.floor(e:getY()/gridwidth)*gridwidth)+(gridwidth/2)
-			
-		--	touchedbutton.data.x = modx
-		--	touchedbutton.data.y = mody
-		--	touchedbutton:updateRect(statusoffset)
-		--	drawButtons()
-		--	invalidate()
-		--	return true
-		--else
-		--	return true
-		--end
 	end
 
 	if(e:getAction() == MotionEvent.ACTION_UP) then
-		--debugPrint("manager move up")
 		if(dragmoving) then
-		--debugPrint("dragmoving")
-			--redraw the screen without the drag rect
-
-			--drawButtons()
 			dragmoving = false
 			view:invalidate()
 			return true
 		end
 		if(manage and not fingerdown and not buttoncleared) then
-		--debugPrint("new button")
-			--lawl, make new button
 			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
 			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
-			--Note("new button at: "..modx..","..mody)
 			local butt = addButton(modx,mody-statusoffset)
-			--butt.width = gridwidth
-			--butt.height = gridwidth
-			--canvas:drawRoundRect(butt.rect,5,5,paint)
 			butt:draw(0,buttonCanvas)
 			view:invalidate()
 			return true
 		end
 		if(manage and fingerdown and touchedbutton.selected == true and selectedtouchstart) then
-			--launch editor selection screen
-			--debugPrint("selected touched")
 			showEditorSelection()
 			touchedbutton={}
 			fingerdown = false
 			return true
 		elseif(manage and fingerdown and touchedbutton.selected == false) then
-			--debugPrint("button_selected")
 			for i,b in ipairs(buttons) do
 				if(b.selected) then
 					b.selected = false
@@ -549,7 +407,6 @@ function managerTouch.onTouch(v,e)
 	end
 
 	return false
-	--return true
 end
 
 managerTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",managerTouch)
@@ -802,7 +659,7 @@ bounds = nil
 
 
 function OnCreate()
-	--Note("\n\n---------in oncreate--------\n\n")
+	--Note("in oncreate, loading "..#buttons.." buttons.")	
 	debugString("Button window in View.onCreate()")
 	for i,b in ipairs(buttons) do
 		updateRect(b)
@@ -811,8 +668,10 @@ function OnCreate()
 	--bounds = getBounds()
 	--drawButtons()
 	--addOptionCallback("buttonOptions","Lua Button Options",nil)
-	AddOptionCallback("buttonList","Lua Button Sets",nil)
+	AddOptionCallback("buttonList","Button Sets",nil)
 	view:bringToFront()
+	
+	--PluginXCallS("checkImport","blank")
 end
 
 
@@ -826,8 +685,8 @@ cpaint:setXfermode(xferModeClear)
 
 drawManagerLayer = true
 function enterManagerMode()
-	gridXwidth = defaults.width*density
-	gridYwidth = defaults.height*density
+	gridXwidth = defaults.gridXwidth*density
+	gridYwidth = defaults.gridYwidth*density
 	if(drawManagerLayer) then
 		managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
 		managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
@@ -936,14 +795,17 @@ end
 
 checkchange_cb = luajava.createProxy("android.widget.CompoundButton$OnCheckedChangeListener",checkchange)
 
-gridXwidth = 67 * density
-gridYwidth = 67 * density
+gridXwidth = 40 * density --67 * density
+gridYwidth = 40 * density --67 * density
 seekerX = {}
 function seekerX.onProgressChanged(v,prog,state)
 	----Note("seekbarchanged:"..prog)
 	local tmp = 32 + prog
-	gridXwidth = tmp*density
+	gridXwidth = tmp *density
 	gridXSizeLabel:setText("Grid X Spacing: "..tmp)
+	-- set default width
+	defaults.gridXwidth = tmp
+
 	--managerCanvas:clearCanvas()
 	drawManagerGrid()
 	--drawButtons()
@@ -955,8 +817,10 @@ seekerY = {}
 function seekerY.onProgressChanged(v,prog,state)
 	--debugPrint("seekbarchanged:"..prog)
 	local tmp = 32 + prog
-	gridYwidth = tmp*density
+	gridYwidth = tmp *density
 	gridYSizeLabel:setText("Grid Y Spacing: "..tmp)
+	-- set default height
+	defaults.gridYwidth = tmp
 	--managerCanvas:clearCanvas()
 	drawManagerGrid()
 	--drawButtons()
@@ -1365,11 +1229,13 @@ end
 function updateButtonListDialog()
 	Note("\nConfirmingDelete")
 	mListView:setAdapter(buttonListAdapter_cb)
+	mSelectorDialog:dismiss()
 end
 
 function updateButtonListDialogNoItems()
 	mListView:setAdapter(buttonListAdapter_cb)
 	emptyButtons()
+	mSelectorDialog:dismiss()
 end
 
 
@@ -1531,6 +1397,7 @@ end
 
 buttonOptionDone = {}
 function buttonOptionDone.onClick(view)
+	saveDefaultOptions()
 	alert:dismiss()
 end
 buttonOptionDone_cb = luajava.createProxy("android.view.View$OnClickListener",buttonOptionDone)
@@ -1832,8 +1699,8 @@ function addButton(pX,pY)
 	local newb = BUTTON:new({x=pX,y=pY,label="newb"},density)
 	--newb.x = x
 	--newb.y = y
-	newb.data.width = (gridXwidth-5)/density
-	newb.data.height = (gridYwidth-5)/density
+	newb.data.width = defaults.width --(gridXwidth-5)/density
+	newb.data.height = defaults.height --(gridYwidth-5)/density
 	newb.data.label = "newb"..counter
 	counter = counter+1
 	--newb.rect = luajava.newInstance("android.graphics.RectF")
@@ -2056,6 +1923,7 @@ function editorCancel.onClick(v)
 end
 editorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",editorCancel)
 
+-- Individual button editor 
 editorDone = {}
 function editorDone.onClick(v)
 	--apply the settings out.
@@ -2076,6 +1944,8 @@ function editorDone.onClick(v)
 	flipcmd = flipcmdtmp:toString()
 	nametmp = buttonNameEdit:getText()
 	name = nametmp:toString()
+	targettmp = buttonTargetSetEdit:getText();
+	target = targettmp:toString();
 	
 	xcoordtmp = xcoordEdit:getText()
 	xcoord = tonumber(xcoordtmp:toString())
@@ -2115,6 +1985,9 @@ function editorDone.onClick(v)
 		tmp.data.label = label
 		tmp.data.flipLabel = fliplabel
 		tmp.data.flipCommand = flipcmd
+		
+		tmp.data.name = name
+		tmp.data.switchTo = target
 		
 		tmp:updateRect(statusoffset)
 		--Note("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
@@ -2206,20 +2079,28 @@ labelSizeEdit = nil
 
 editorValues = {}
 
-textSize = 12
-textSizeSmall = 8
+tabMinHeight = (35 * density) -- dp value TODO
+bgGrey = Color:argb(255,0x99,0x99,0x99) -- background color
+
+textSizeBig = (18) -- sp value
+textSize = (14)  
+textSizeSmall = (10) 
+-- Note("Density: " .. density ..", TextSize: "..textSize .. "textSizeSmall: ".. textSizeSmall)
 screenlayout = view:getContext():getResources():getConfiguration().screenLayout
 local test = bit.band(screenlayout,Configuration.SCREENLAYOUT_SIZE_MASK)
 
 local function foo()
 	--Note(test)
 	--Note(Configuration.SCREENLAYOUT_SIZE_XLARGE)
+	--Note("Entering the foo()"..test)
 	if(test == Configuration.SCREENLAYOUT_SIZE_XLARGE) then
-		textSize = 26
-		textSizeSmall = 17
+		textSizeBig = (22)
+		textSize = (18)
+		textSizeSmall = (14)
 	end
 end
 pcall(foo)
+
 
 function getDialogDimensions()
 	local context = view:getContext()
@@ -2229,7 +2110,6 @@ function getDialogDimensions()
 	local displayHeight = display:getHeight()
 	local use = displayWidth
 	local orientation = context:getResources():getConfiguration().orientation
-	
 	if(displayHeight < displayWidth) then
 		use = displayHeight
 	end
@@ -2252,14 +2132,14 @@ function getDialogDimensions()
 		--portrait
 				--landscape
 		if(dpi_bucket >= 600) then
-			height_param = 300*density
+			height_param = LinearLayoutParams.WRAP_CONTENT -- 300*density
+			--TODO when should this be 300*density as opposed to wrap_content?
 		end
 		
 		if(width_param > displayWidth) then
 			width_param = displayWidth-(5*density)
 		end
 	end
-	
 	return width_param,height_param
 end
 
@@ -2367,11 +2247,11 @@ function showEditorDialog()
 	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
 	
 	titletext:setLayoutParams(titletextParams)
-	titletext:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	titletext:setTextSize(textSizeBig)
 	titletext:setText("EDIT BUTTON")
 	titletext:setGravity(GRAVITY_CENTER)
 	titletext:setTextColor(Color:argb(255,0x33,0x33,0x33))
-	titletext:setBackgroundColor(Color:argb(255,0x99,0x99,0x99))
+	titletext:setBackgroundColor(bgGrey)
 	titletext:setId(1)
 	top:addView(titletext)
 
@@ -2438,9 +2318,10 @@ function showEditorDialog()
 	label1 = luajava.new(TextView,context)
 	label1:setLayoutParams(fillparams)
 	label1:setText("Click")
-	label1:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	label1:setTextSize(textSizeBig)
 	label1:setBackgroundResource(R_drawable.tab_background)
 	label1:setGravity(GRAVITY_CENTER)
+	label1:setMinHeight(tabMinHeight)
 	
 	--first page.
 	
@@ -2461,14 +2342,14 @@ function showEditorDialog()
 	clickLabelRow:setLayoutParams(fillparams)
 	
 	clickLabel = luajava.new(TextView,context)
-	clickLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	clickLabel:setTextSize(textSize)
 	clickLabel:setText("Label:")
 	clickLabel:setGravity(Gravity.RIGHT)
 	clickLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	clickLabel:setLayoutParams(clickLabelParams)
 	
 	clickLabelEdit = luajava.new(EditText,context)
-	clickLabelEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	clickLabelEdit:setTextSize(textSize)
 	clickLabelEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	clickLabelEdit:setLines(1)
 	clickLabelEdit:setLayoutParams(clickLabelEditParams)
@@ -2489,14 +2370,14 @@ function showEditorDialog()
 	clickCmdRow:setLayoutParams(fillparams)
 	
 	clickCmdLabel = luajava.new(TextView,context)
-	clickCmdLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	clickCmdLabel:setTextSize(textSize)
 	clickCmdLabel:setText("CMD:")
 	clickCmdLabel:setGravity(Gravity.RIGHT)
 	clickCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	clickCmdLabel:setLayoutParams(clickLabelParams)
 	
 	clickCmdEdit = luajava.new(EditText,context)
-	clickCmdEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	clickCmdEdit:setTextSize(textSize)
 	clickCmdEditParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
 	clickCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
 	clickCmdEdit:setHorizontallyScrolling(false)
@@ -2524,9 +2405,10 @@ function showEditorDialog()
 	label2 = luajava.new(TextView,context)
 	label2:setLayoutParams(fillparams)
 	label2:setText("Flip")
-	label2:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	label2:setTextSize(textSizeBig)
 	label2:setBackgroundResource(R_drawable.tab_background)
 	label2:setGravity(GRAVITY_CENTER)
+	label2:setMinHeight(tabMinHeight)
 	
 	--second, flip page.
 	flipPageScroller = luajava.new(ScrollView,context)
@@ -2542,14 +2424,14 @@ function showEditorDialog()
 	flipLabelRow:setLayoutParams(fillparams)
 	
 	flipLabel = luajava.new(TextView,context)
-	flipLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	flipLabel:setTextSize(textSize)
 	flipLabel:setText("Label:")
 	flipLabel:setGravity(Gravity.RIGHT)
 	flipLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	flipLabel:setLayoutParams(flipLabelParams)
 	
 	flipLabelEdit = luajava.new(EditText,context)
-	flipLabelEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	flipLabelEdit:setTextSize(textSize)
 	flipLabelEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	flipLabelEdit:setLines(1)
 	flipLabelEdit:setLayoutParams(clickLabelEditParams)
@@ -2569,14 +2451,14 @@ function showEditorDialog()
 	flipCmdRow:setLayoutParams(fillparams)
 	
 	flipCmdLabel = luajava.new(TextView,context)
-	flipCmdLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	flipCmdLabel:setTextSize(textSize)
 	flipCmdLabel:setText("CMD:")
 	flipCmdLabel:setGravity(Gravity.RIGHT)
 	flipCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	flipCmdLabel:setLayoutParams(clickLabelParams)
 	
 	flipCmdEdit = luajava.new(EditText,context)
-	flipCmdEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	flipCmdEdit:setTextSize(textSize)
 	flipCmdEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	flipCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
 	flipCmdEdit:setHorizontallyScrolling(false)
@@ -2607,9 +2489,10 @@ function showEditorDialog()
 	label3 = luajava.new(TextView,context)
 	label3:setLayoutParams(fillparams)
 	label3:setText("Advanced")
-	label3:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+	label3:setTextSize(textSizeBig)
 	label3:setBackgroundResource(R_drawable.tab_background)
 	label3:setGravity(GRAVITY_CENTER)
+	label3:setMinHeight(tabMinHeight)
 	
 	--tmpview3 = luajava.new(TextView,context)
 	--tmpview3:setText("third page")
@@ -2738,6 +2621,7 @@ function makeAdvancedPage()
 	local fnew = luajava.new
 	--local slp = nil
 	local context = view:getContext()
+	local LabelWidth = nil -- margin size for different screen layouts
 	if(advancedPageScroller == nil) then
 		advancedPageScroller = fnew(ScrollView,context)
 		--slp = advancedPageScroller
@@ -2764,15 +2648,20 @@ function makeAdvancedPage()
 	else
 		buttonNameRow:setVisibility(View.VISIBLE)
 	end
+	-- Adjust margins for larger screen sizes
+	if(test == Configuration.SCREENLAYOUT_SIZE_XLARGE) then
+		LabelWidth = 100 * density
+	else
+		LabelWidth = 80 * density
+	end
 	
-	
-	buttonNameLabelParams = fnew(LinearLayoutParams,80*density,WRAP_CONTENT)
+	buttonNameLabelParams = fnew(LinearLayoutParams,LabelWidth,WRAP_CONTENT)
 	if(buttonNameLabel == nil) then
 		buttonNameLabel = fnew(TextView,context)
 		
 		buttonNameLabel:setLayoutParams(buttonNameLabelParams)
 		buttonNameLabel:setText("Name:")
-		buttonNameLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+		buttonNameLabel:setTextSize(textSize)
 		buttonNameLabel:setGravity(Gravity.RIGHT)
 		buttonNameRow:addView(buttonNameLabel)
 	end
@@ -2781,7 +2670,7 @@ function makeAdvancedPage()
 		
 	if(buttonNameEdit == nil) then
 		buttonNameEdit = fnew(EditText,context)	
-		buttonNameEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+		buttonNameEdit:setTextSize(textSize)
 		buttonNameEdit:setLines(1)
 		buttonNameEdit:setLayoutParams(buttonNameEditParams)
 		buttonNameRow:addView(buttonNameEdit)
@@ -2813,13 +2702,13 @@ function makeAdvancedPage()
 		buttonTargetSetRow:setVisibility(View.VISIBLE)
 	end
 	
-	buttonTargetSetLabelParams = fnew(LinearLayoutParams,80*density,WRAP_CONTENT)
+	buttonTargetSetLabelParams = fnew(LinearLayoutParams,LabelWidth,WRAP_CONTENT)
 	if(buttonTargetSetLabel == nil) then
 		buttonTargetSetLabel = fnew(TextView,context)
 		
 		buttonTargetSetLabel:setLayoutParams(buttonNameLabelParams)
 		buttonTargetSetLabel:setText("Target Set:")
-		buttonTargetSetLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+		buttonTargetSetLabel:setTextSize(textSize)
 		buttonTargetSetLabel:setGravity(Gravity.RIGHT)
 		buttonTargetSetRow:addView(buttonTargetSetLabel)
 	end
@@ -2828,7 +2717,7 @@ function makeAdvancedPage()
 		
 	if(buttonTargetSetEdit == nil) then
 		buttonTargetSetEdit = fnew(EditText,context)	
-		buttonTargetSetEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
+		buttonTargetSetEdit:setTextSize(textSize)
 		buttonTargetSetEdit:setLines(1)
 		buttonTargetSetEdit:setLayoutParams(buttonTargetSetEditParams)
 		buttonTargetSetRow:addView(buttonTargetSetEdit)
@@ -2845,14 +2734,17 @@ function makeAdvancedPage()
 	end
 	
 	
-	colortopLabelParams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
+	colortopLabelParams = fnew(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 		
 	if(colortopLabel == nil) then
 		colortopLabel = fnew(TextView,context)
-		colortopLabelParams:setMargins(0,10,0,0)
+		colortopLabelParams:setMargins(0,10,0,10)
 		colortopLabel:setLayoutParams(colortopLabelParams)
-		colortopLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSize,DisplayMetrics))
-		colortopLabel:setText("Colors:")
+		colortopLabel:setTextSize(textSize)
+		colortopLabel:setText("COLORS")
+		colortopLabel:setGravity(GRAVITY_CENTER)
+		colortopLabel:setTextColor(Color:argb(255,0x33,0x33,0x33))
+		colortopLabel:setBackgroundColor(bgGrey)
 		advancedPage:addView(colortopLabel)
 	end
 	
@@ -2943,7 +2835,7 @@ function makeAdvancedPage()
 		normalLabel:setLayoutParams(fillparams)
 		normalLabel:setGravity(GRAVITY_CENTER)
 		normalLabel:setText("Normal")
-		normalLabel:setTextSize(15)
+		normalLabel:setTextSize(textSizeSmall)
 		labelRowOne:addView(normalLabel)
 	end
 	
@@ -2952,7 +2844,7 @@ function makeAdvancedPage()
 		pressedLabel:setLayoutParams(fillparams)
 		pressedLabel:setGravity(GRAVITY_CENTER)
 		pressedLabel:setText("Pressed")
-		pressedLabel:setTextSize(15)
+		pressedLabel:setTextSize(textSizeSmall)
 		labelRowOne:addView(pressedLabel)
 	end
 	
@@ -2961,7 +2853,7 @@ function makeAdvancedPage()
 		flippedLabel:setLayoutParams(fillparams)
 		flippedLabel:setGravity(GRAVITY_CENTER)
 		flippedLabel:setText("Flipped")
-		flippedLabel:setTextSize(15)
+		flippedLabel:setTextSize(textSizeSmall)
 		labelRowOne:addView(flippedLabel)
 	end
 	
@@ -3039,7 +2931,7 @@ function makeAdvancedPage()
 		normalLabelLabel:setLayoutParams(fillparams)
 		normalLabelLabel:setGravity(GRAVITY_CENTER)
 		normalLabelLabel:setText("Label")
-		normalLabelLabel:setTextSize(15)
+		normalLabelLabel:setTextSize(textSizeSmall)
 		labelRowTwo:addView(normalLabelLabel)
 	end
 	
@@ -3048,7 +2940,7 @@ function makeAdvancedPage()
 		flipLabelLabel:setLayoutParams(fillparams)
 		flipLabelLabel:setGravity(GRAVITY_CENTER)
 		flipLabelLabel:setText("FlipLabel")
-		flipLabelLabel:setTextSize(15)
+		flipLabelLabel:setTextSize(textSizeSmall)
 		labelRowTwo:addView(flipLabelLabel)
 	end
 	
@@ -3057,18 +2949,21 @@ function makeAdvancedPage()
 		invisLabel:setLayoutParams(fillparams)
 		invisLabel:setGravity(GRAVITY_CENTER)
 		invisLabel:setText("FlipLabel")
-		invisLabel:setTextSize(15)
+		invisLabel:setTextSize(textSizeSmall)
 		invisLabel:setVisibility(View.INVISIBLE)
 		labelRowTwo:addView(invisLabel)
 	end
 	
 	if(typeInLabel == nil) then
 		typeInLabel = fnew(TextView,context)
-		typeInLabelParams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-		typeInLabelParams:setMargins(0,10,0,0)
+		typeInLabelParams = fnew(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
+		typeInLabelParams:setMargins(0,10,0,10)
 		typeInLabel:setLayoutParams(typeInLabelParams)
-		typeInLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
-		typeInLabel:setText("Type-In Controls:")
+		typeInLabel:setTextSize(textSize)
+		typeInLabel:setText("TYPE-IN CONTROLS")
+		typeInLabel:setGravity(GRAVITY_CENTER)
+		typeInLabel:setTextColor(Color:argb(255,0x33,0x33,0x33))
+		typeInLabel:setBackgroundColor(bgGrey)
 		advancedPage:addView(typeInLabel)
 	end
 	
@@ -3090,7 +2985,8 @@ function makeAdvancedPage()
 		labelSizeEdit = fnew(EditText,context)
 		labelSizeEdit:setInputType(TYPE_CLASS_NUMBER)
 		labelSizeEdit:setLayoutParams(numbereditorParams)
-		labelSizeEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		labelSizeEdit:setGravity(GRAVITY_CENTER)
+		labelSizeEdit:setTextSize(textSize)
 		controlHolderA:addView(labelSizeEdit)
 	end
 	if(editorValues.labelSize == "MULTI") then
@@ -3110,7 +3006,8 @@ function makeAdvancedPage()
 		widthEdit = fnew(EditText,context)
 		widthEdit:setLayoutParams(numbereditorParams)
 		widthEdit:setInputType(TYPE_CLASS_NUMBER)
-		widthEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		widthEdit:setGravity(GRAVITY_CENTER)
+		widthEdit:setTextSize(textSize)
 		controlHolderB:addView(widthEdit)
 	end
 	if(editorValues.width == "MULTI") then
@@ -3130,7 +3027,8 @@ function makeAdvancedPage()
 		heightEdit = fnew(EditText,context)
 		heightEdit:setLayoutParams(numbereditorParams)
 		heightEdit:setInputType(TYPE_CLASS_NUMBER)
-		heightEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		heightEdit:setGravity(GRAVITY_CENTER)
+		heightEdit:setTextSize(textSize)
 		controlHolderC:addView(heightEdit)
 	end
 	if(editorValues.height == "MULTI") then
@@ -3150,7 +3048,7 @@ function makeAdvancedPage()
 		labelSizeLabel:setLayoutParams(fillparams)
 		labelSizeLabel:setGravity(GRAVITY_CENTER)
 		labelSizeLabel:setText("Label Font Size")
-		labelSizeLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		labelSizeLabel:setTextSize(textSizeSmall)
 		labelRowThree:addView(labelSizeLabel)
 	end
 	
@@ -3159,7 +3057,7 @@ function makeAdvancedPage()
 		widthLabel:setLayoutParams(fillparams)
 		widthLabel:setGravity(GRAVITY_CENTER)
 		widthLabel:setText("Width")
-		widthLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		widthLabel:setTextSize(textSizeSmall)
 		labelRowThree:addView(widthLabel)
 	end
 	
@@ -3168,7 +3066,7 @@ function makeAdvancedPage()
 		heightLabel:setLayoutParams(fillparams)
 		heightLabel:setGravity(GRAVITY_CENTER)
 		heightLabel:setText("Height")
-		heightLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		heightLabel:setTextSize(textSizeSmall)
 		labelRowThree:addView(heightLabel)
 	--invisLabel:setVisibility(View.INVISIBLE)
 	end
@@ -3191,7 +3089,8 @@ function makeAdvancedPage()
 		xcoordEdit = fnew(EditText,context)
 		xcoordEdit:setLayoutParams(numbereditorParams)
 		xcoordEdit:setInputType(TYPE_CLASS_NUMBER)
-		xcoordEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		xcoordEdit:setGravity(GRAVITY_CENTER)
+		xcoordEdit:setTextSize(textSize)
 		controlHolderD:addView(xcoordEdit)
 	end
 	if(editorValues.x == "MULTI") then
@@ -3213,7 +3112,8 @@ function makeAdvancedPage()
 		ycoordEdit = fnew(EditText,context)
 		ycoordEdit:setLayoutParams(numbereditorParams)
 		ycoordEdit:setInputType(TYPE_CLASS_NUMBER)
-		ycoordEdit:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		ycoordEdit:setGravity(GRAVITY_CENTER)
+		ycoordEdit:setTextSize(textSize)
 		controlHolderE:addView(ycoordEdit)
 	end
 	if(editorValues.y == "MULTI") then
@@ -3247,7 +3147,7 @@ function makeAdvancedPage()
 		xcoordLabel:setLayoutParams(fillparams)
 		xcoordLabel:setGravity(GRAVITY_CENTER)
 		xcoordLabel:setText("X Coord")
-		xcoordLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		xcoordLabel:setTextSize(textSizeSmall)
 		labelRowFour:addView(xcoordLabel)
 	end
 	
@@ -3256,7 +3156,7 @@ function makeAdvancedPage()
 		ycoordLabel:setLayoutParams(fillparams)
 		ycoordLabel:setGravity(GRAVITY_CENTER)
 		ycoordLabel:setText("Y Coord")
-		ycoordLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		ycoordLabel:setTextSize(textSizeSmall)
 		labelRowFour:addView(ycoordLabel)
 	end
 	
@@ -3265,7 +3165,7 @@ function makeAdvancedPage()
 		invisControlLabel:setLayoutParams(fillparams)
 		invisControlLabel:setGravity(GRAVITY_CENTER)
 		invisControlLabel:setText("FlipLabel")
-		invisControlLabel:setTextSize(TypedValue:applyDimension(TypedValue.COMPLEX_UNIT_SP,textSizeSmall,DisplayMetrics))
+		invisControlLabel:setTextSize(textSizeSmall)
 		invisControlLabel:setVisibility(View.INVISIBLE)
 		labelRowFour:addView(invisControlLabel)
 	end
@@ -3305,6 +3205,7 @@ function toolbarLoadClicked.onClick(v)
 	mSelectorDialog:dismiss()
 end
 toolbarLoadClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarLoadClicked)
+
 
 deleteConfirmListener = {}
 function deleteConfirmListener.onClick(dialog,which)
@@ -3635,9 +3536,12 @@ function setSettingsButtonListener.onClick(v)
 	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
 	
 	titletext:setLayoutParams(titletextParams)
-	titletext:setTextSize(36)
+	titletext:setTextSize(textSize * 2)
 	titletext:setText("DEFAULTS EDITOR")
 	titletext:setGravity(GRAVITY_CENTER)
+	titletext:setTextColor(Color:argb(255,0x33,0x33,0x33))
+	titletext:setBackgroundColor(bgGrey)
+	--titleText:setTextColor()
 	titletext:setId(1)
 	top:addView(titletext)
 	
@@ -3758,9 +3662,31 @@ function setEditorDoneListener.onClick(v)
 	defaults.height = height
 	defaults.width = width
 	defaults.labelSize = labelsize
-
+	--defaults.gridYwidth = height --* density
+	--defaults.gridXwidth = width --* density
+		
+	--sbX:setProgress((gridXwidth/density)-32)
+	--sbY:setProgress((gridYwidth/density)-32)
+	
 	buttSetSettingsEditor:dismiss()
 	
+	saveDefaultOptions()
+	
+	--Note("gridXwidth:" .. gridXwidth)
+--	local tmp = {}
+--	for i,b in pairs(buttons) do
+--		tmp[i] = b.data
+--	end
+--		
+--	PluginXCallS("saveButtons",serialize(tmp))
+--	
+--	PluginXCallS("saveSetDefaults",serialize(defaults))
+--	
+--	drawButtons()
+end
+seteditorDone_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorDoneListener)
+
+function saveDefaultOptions()
 	local tmp = {}
 	for i,b in pairs(buttons) do
 		tmp[i] = b.data
@@ -3772,7 +3698,6 @@ function setEditorDoneListener.onClick(v)
 	
 	drawButtons()
 end
-seteditorDone_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorDoneListener)
 
 function loadOptions(data)
 	--Note("incoming options wad:"..data)
@@ -3840,6 +3765,7 @@ function clearButtons()
 	view:invalidate()
 end
 
+
 function emptyButtons()
 	buttons = {}
 	drawButtons()
@@ -3882,7 +3808,7 @@ function PopulateMenu(menu)
 		end
 		
 	--if(topMenuItem == nil) then
-		topMenuItem = menu:add(0,401,401,"Lua Button Sets")
+		topMenuItem = menu:add(0,401,401,"Button Sets")
 		topMenuItem:setIcon(R_drawable.ic_menu_button_sets)
 		topMenuItem:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
 		
@@ -3973,6 +3899,60 @@ function setDebug(off)
 		--WindowXCallS("button_window","setDebug","off")
 		debugInfo = false
 	end
+end
+
+local importDialogClick = {}
+function importDialogClick.onClick(dialog,which)
+	local DialogInterface = luajava.bindClass("android.content.DialogInterface")
+	
+	if(which == DialogInterface.BUTTON_POSITIVE) then
+		PluginXCallS("doImport","blank")
+		dialog:dismiss()
+		CloseOptionsDialog()
+	else
+		dialog:dismiss()
+	end
+end
+
+local importDialogClick_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",importDialogClick)
+
+local dismissDialog = {}
+function dismissDialog.onClick(dialog,which)
+	dialog:dismiss()
+end
+local dismissDialog_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",dismissDialog)
+
+function failImport(str)
+	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	
+	build:setPositiveButton("Ok",dismissDialog_cb)
+	--build:setNegativeButton("No",importDialogClick_cb);
+	build:setTitle("Import Failed")
+	build:setMessage(str)
+	alert = build:create()
+	alert:show()
+end
+
+function importSuccess(str)
+	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	
+	build:setPositiveButton("Ok",dismissDialog_cb)
+	--build:setNegativeButton("No",importDialogClick_cb);
+	build:setTitle("Import Complete")
+	build:setMessage(str.." Buttons imported")
+	alert = build:create()
+	alert:show()
+end
+
+function askImport()
+	local build = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
+	
+	build:setPositiveButton("Yes",importDialogClick_cb)
+	build:setNegativeButton("No",importDialogClick_cb);
+	build:setTitle("Import Buttons?")
+	build:setMessage("Import buttons from internal settings?")
+	alert = build:create()
+	alert:show()
 end
 
 PluginXCallS("buttonLayerReady","")

@@ -1,13 +1,6 @@
---Note("package path:"..package.path)
-package.path = package.path..";"..GetExternalStorageDirectory().."/BlowTorch/?.lua"
---package.cpath = GetExternalStorageDirectory().."/BlowTorch/?.so"
-
---Note("package path:"..package.path)
 require("button")
 require("serialize")
 local marshal = require("marshal")
---this is the back end of the script, it will take care of reading/writing buttons to disk
---and storing all the loaded buttons in memory.
 
 debugInfo = false
 local function debugString(string)
@@ -18,87 +11,26 @@ end
 
 debugString("Button Server Loading...")
 
---communicates back and fourth with the window script to huck data.
---Note("STARTING THE WHO BOOTSTRAP SEQUENCE!")
 buttonsets = {} --raw table, holds tables of buttons.
 buttonset_defaults = {} --raw table, holds defaults for a set name.
 
 set_def = BUTTONSET_DATA:new()
 set = {}
 
-local b1 = BUTTON_DATA:new({x=200,y=200,label="butt1"})
-local b2 = BUTTON_DATA:new({x=500,y=360,label="butt2"}) --raw default.
-
-table.insert(set,b1)
-table.insert(set,b2)
-
---buttonset_defaults["DEFAULT"] = set_def
---buttonsets["DEFAULT"] = set
-
-alt = {}
-local b3 = BUTTON_DATA:new({x=300,y=200})
-local b4 = BUTTON_DATA:new({x=400,y=200}) 
-
-b3.label = "YEA"
-b4.label = "HEA!"
-
-table.insert(alt,b3)
-table.insert(alt,b4)
-
---buttonset_defaults["ALT"] = set_def
---buttonsets["ALT"] = alt
-
 lob = {}
-
 
 function loadButtonSet(args)
 	
-	--Note("trying to load.."..args.." setcount:"..#buttonsets)
 	debugString("Button Server sending button set, "..args)
-	--for i,b in pairs(buttonsets) do
-	--	printTable(i,b)
-	--end
-	
+
 	lob.name = args
 	lob.set = buttonsets[args]
 	lob.default = buttonset_defaults[args]
 	
 	if(lob.set ~= nil) then
-		--local lob = {}
 		current_set = args
-		--Note(serialize(lob))
-		--WindowXCallS("button_window","loadButtons",serialize(lob))
-		--local orig = { answer = 42}
-		
-		
-		--assert(marshal.encode(orig))
-		
-		--local str = marshal.encode(orig)
-		--Note("attempting byte dump")
-		--for i=1,#str do
-		--	local c = str:sub(i,i)
-			--local df = tonumber(c)
-			--if(df ~= nil) then
-		--		Note("byte: "..string.byte(c))
-			--else
-			--	Note("byte nil, probably 0x8e");
-			--end
-		--end
-		
-		
-		--Note("trying to copy")
-		--local copy = marshal.clone(orig)
-		--Note("cloned value"..copy.answer)
-		--local copy = marshal.decode(str)
-		
-		--Note(copy.answer)
-		
-		--Note(str)
 		WindowXCallB("button_window","loadButtons",marshal.encode(lob))
-		
 	end
-	
-	
 end
 
 function loadAndEditSet(data)
@@ -110,7 +42,6 @@ function loadAndEditSet(data)
 	
 	if(lob.set ~= nil) then
 		current_set = data
-		--WindowXCallS("button_window","loadAndEditSet",serialize(lob))
 		WindowXCallB("button_window","loadAndEditSet",marshal.encode(lob))
 	end
 end
@@ -155,7 +86,7 @@ function deleteButtonSet(name)
 			setdata[i] = #v
 		end
 		
-		local counter = 1
+		local counter = 0
 		selectedIndex = -1
 		for i,k in pairs(setdata) do
 			tmp = {}
@@ -169,15 +100,17 @@ function deleteButtonSet(name)
 		table.sort(buttonSetList,sorter)
 		
 		for i,b in ipairs(buttonSetList) do
-			if(b.name == name) then
-			selectedIndex = counter
-			end
 			counter = counter + 1
+			if(b.name == name) then
+				selectedIndex = counter
+			end
 		end
 			
 		local nextindex = selectedIndex - 1
 		if(nextindex > 0) then
 			nextset = buttonSetList[nextindex].name
+		elseif (nextindex == 0 and counter > 1) then
+			nextset = buttonSetList[selectedIndex + 1].name 
 		end
 			
 	end
@@ -193,10 +126,7 @@ function deleteButtonSet(name)
 	if(nextset ~= nil and left > 0) then
 		loadButtonSet(nextset)
 	end
-	local left = 0
-	for i,b in pairs(buttonsets) do
-		left = left + 1
-	end
+
 	if(left == 0) then
 		WindowXCallS("button_window","updateButtonListDialogNoItems","now")
 	else
@@ -622,14 +552,14 @@ function alignDefaultButtons()
 	local defaults = buttonset_defaults["default"]
 
 	for i,b in pairs(set) do
-		b.x = b.x * density
-		b.y = b.y * density
+		b.x = b.x*density
+		b.y = b.y*density
 		
 		local width = b.width or defaults.width
 		local height = b.height or defaults.height
 		
-		width = width * density
-		height = height * density
+		width = width*density
+		height = height*density
 		
 		local l = b.x - width/2
 		local r = b.x + width/2
@@ -673,15 +603,6 @@ options.haptic_flip = 0
 options.roundness = 6
 options.auto_launch = true
 options.auto_create = true
-
-function testxcall(data)
-	Note("Button window recieving testxcall:"..data)
-	if(PluginSupports("chat_miniwindow","recvxcall")) then
-		CallPlugin("chat_miniwindow","recvxcall","daaaata")
-	else
-		Note("chat_miniwindow does not support recvxcall")
-	end
-end
 
 function setDebug(off)
 	if(not off) then
