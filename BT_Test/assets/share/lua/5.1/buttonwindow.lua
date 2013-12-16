@@ -1156,10 +1156,27 @@ doneButtonListener_cb = luajava.createProxy("android.view.View$OnClickListener",
 
 mSelectorDialog = nil
 
+local buttonSetListDialog = nil
+
 function showButtonList(data)
 	--Note(data)
 	setdata = loadstring(data)()
-
+	
+	--launch the new editor
+	if(1==1) then
+		for key,value in pairs(luajava) do
+    	Note("\npre found member " .. key);
+		end
+		if(buttonSetListDialog == nil) then
+			buttonSetListDialog = require("buttonlist")
+			buttonSetListDialog.init(mContext)
+		end
+		Note("Showing new list\n")
+		--buttonSetListDialog.init()
+		buttonSetListDialog.showList(setdata,lastLoadedSet)
+		return
+	end
+	
 	--makeToolbar()
 	lastSelectedIndex = -1
 	if(thetoolbar:getParent() ~= nil) then
@@ -1203,7 +1220,6 @@ function showButtonList(data)
 		mListView:setScrollbarFadingEnabled(false)
 		mListView:setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS)
 		mListView:setOnItemSelectedListener(listViewOnItemSelectedListener_cb)
-		--mListView:setOnFocusChangeListener(listViewFocusFixerListener_cb)
 		mListView:setSelector(R_drawable.transparent)
 		mListView:setAdapter(buttonListAdapter_cb)
 		--buttonListAdapter_cb:notifyDataSetInvalidated()
@@ -3308,38 +3324,30 @@ function makeToolbar()
 	animateOutNoTransition = nil
 	
 	
-	local tmpanim = luajava.new(TranslateAnimation,thetoolbarlength,0,0,0)
-	tmpanim:setDuration(300)
-	
-	local tmpset = luajava.new(AnimationSet,true)
-	tmpset:addAnimation(tmpanim)
-	
-	animateInController = luajava.new(LayoutAnimationController,tmpset)
+	animateIn = luajava.new(TranslateAnimation,thetoolbarlength,0,0,0)
+	animateIn:setDuration(300)
 	
 	animateOut = luajava.new(TranslateAnimation,0,thetoolbarlength,0,0)
 	animateOut:setDuration(300)
-	
-	animateOutNoTransition = luajava.new(TranslateAnimation,0,thetoolbarlength,0,0)
-	animateOutNoTransition:setDuration(300)
-	--Note("attatching removal listener")
-	animateOutNoTransition:setAnimationListener(animateOutNoTransition_cb)	
+	animateOut:setAnimationListener(animateOut_cb)
 	
 end
 
 
 
-animateOutNoTransition_handler = {}
-function animateOutNoTransition_handler.onAnimationEnd(animation)
+animateOutHandler = {}
+function animateOutHandler.onAnimationEnd(animation)
 	--local rl = thetoolbar:getParent()
 	--//rl:removeAllViews()
 	
 	--Note("animate out animation end firing.")
 	local parent = thetoolbar:getParent()
-	parent:removeAllViews()
-	parent:invalidate()
-	lastSelectedIndex = -1
+	if(parent ~= nil) then 
+		parent:removeView(thetoolbar)
+		mList:requestFocus()
+	end
 end
-animateOutNoTransition_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",animateOutNoTransition_handler)
+animateOut_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",animateOutHandler)
 
 makeToolbar()
 
@@ -3348,64 +3356,9 @@ lastSelectedPosition = -1
 
 rowClicker = {}
 function rowClicker.onClick(v)
-	local pos = v:getId() / 157
 	
-	if(lastSelectedIndex < 0) then
-		lastSelectedIndex = pos
-		local holder = v:findViewById(R_id.toolbarholder)
-		holder:setLayoutAnimation(animateInController)
-		local adapter = mListView:getAdapter()
-		entry = adapter:getItem(lastSelectedIndex)
-		holder:addView(thetoolbar)
-		--Note("row clicked, none selected")
-	elseif(lastSelectedIndex ~= pos) then
-		--Note("row clicked, not the selected row")
-		local parent = thetoolbar:getParent()
-		if(parent ~= nil) then
-			if(mListView:getFirstVisiblePosition() <= lastSelectedIndex and mListView:getLastVisiblePosition() >= lastSelectedIndex) then
-				parent:setAnimationListener(toolbarCustomAnimationListener_cb)
-				parent:startAnimation(animateOut)
-				targetIndex = pos
-				targetHolder = v:findViewById(R_id.toolbarholder)
-				--Note("starting custom animation")
-			else
-				parent:removeAllViews()
-				local holder = v:findViewById(R_id.toolbarholder)
-				holder:setLayoutAnimation(animateInController)
-				holder:addView(thetoolbar)
-				--Note("not starting custom animation")
-			end
-		end
-	else
-		--Note("selected row clicked")
-		local parent = thetoolbar:getParent()
-		if(parent == nil) then
-			lastSelectedIndex = pos
-			local holder = v:findViewById(R_id.toolbarholder)
-			holder:setLayoutAnimation(animateInController)
-			holder:addView(thetoolbar)
-		else
-			targetIndex = pos
-			thetoolbar:startAnimation(animateOutNoTransition)
-		end
-	end
 end
 rowClicker_cb = luajava.createProxy("android.view.View$OnClickListener",rowClicker)
-
-toolbarCustomAnimationListener = {}
-function toolbarCustomAnimationListener.onCustomAnimationEnd()
-	local parent = thetoolbar:getParent()
-	if(parent == nil) then return end
-	
-	parent:removeAllViews()
-	if(targetHolder ~= nil) then
-		targetHolder:setLayoutAnimation(animateInController)
-		targetHolder:addView(thetoolbar)
-	end
-	--Note("customanimationlistener fired,"..lastSelectedIndex.." target:"..targetIndex)
-	lastSelectedIndex = targetIndex
-end
-toolbarCustomAnimationListener_cb = luajava.createProxy("com.offsetnull.bt.window.AnimatedRelativeLayout$OnAnimationEndListener",toolbarCustomAnimationListener)
 
 managerDoneButtonListener = {}
 function managerDoneButtonListener.onClick(v)
@@ -3421,72 +3374,6 @@ function buttonSetSettingsButtonListener.onClick(v)
 end
 buttonSetSettingsButton_cb = luajava.createProxy("android.view.View$OnClickListener",buttonSetSettingsButtonListener)
 
-backWidgetMovePaddingBottom = 10
-backWidgetMoveLastY = -1
-backWidgetMoveTouchListener = {}
-backWidgetMoveTotal = 0
-function backWidgetMoveTouchListener.onTouch(v,e)
-	if(e:getAction() == MotionEvent.ACTION_MOVE) then
-		local dy = e:getY() - backWidgetMoveLastY
-		--Note("touch y event at: "..e:getY())
-		backWidgetMoveLastY = e:getY()
-		backWidgetMoveTotal = backWidgetMoveTotal - dy
-		backWidgetMovePaddingBottom = backWidgetMovePaddingBottom + backWidgetMoveTotal
-		backWidget:setPadding(0,0,0,backWidgetMovePaddingBottom)
-		--Note("relayotging:"..backWidgetMovePaddingBottom.." dy:"..dy)
-		backWidget:requestLayout()
-	elseif(e:getAction() == MotionEvent.ACTION_UP) then
-		backWidgetMoveTotal = 0
-		
-	elseif(e:getAction() == MotionEvent.ACTION_DOWN) then
-		backWidgetMoveLastY = e:getY()
-	end
-	return true
-end
-backWidgetMoveTouch_cb = luajava.createProxy("android.view.View$OnTouchListener",backWidgetMoveTouchListener)
-
-backWidget = nil
-function makeBackWidget()
-	if(backWidget ~= nil) then return backWidget end
-	
-	backWidget = luajava.new(LinearLayout,view:getContext())
-	
-	backWidgetParams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
-	backWidgetParams:addRule(RelativeLayout.ALIGN_LEFT,view:getId())
-	backWidgetParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-	
-	backWidget:setPadding(0,0,0,backWidgetMovePaddingBottom)
-	
-	backWidget:setLayoutParams(backWidgetParams)
-	backWidget:setOrientation(LinearLayout.VERTICAL)
-	backWidgetButtonParams = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
-	backWidgetButtonParams:setMargins(0,0,0,0)
-	
-	backWidgetMoveButton = luajava.new(ImageButton,view:getContext())
-	backWidgetMoveButton:setImageResource(R_drawable.toolbar_move_button)
-	backWidgetMoveButton:setPadding(0,0,0,0)
-	backWidgetMoveButton:setLayoutParams(backWidgetButtonParams)
-	backWidgetMoveButton:setOnTouchListener(backWidgetMoveTouch_cb)
-	
-	buttonSetSettingsButton = luajava.new(ImageButton,view:getContext())
-	buttonSetSettingsButton:setImageResource(R_drawable.toolbar_modify_button)
-	buttonSetSettingsButton:setPadding(0,0,0,0)
-	buttonSetSettingsButton:setLayoutParams(backWidgetButtonParams)
-	buttonSetSettingsButton:setOnClickListener(buttonSetSettingsButton_cb)
-	
-	managerDoneButton = luajava.new(ImageButton,view:getContext())
-	managerDoneButton:setImageResource(R_drawable.toolbar_check_button)
-	managerDoneButton:setPadding(0,0,0,0)
-	managerDoneButton:setLayoutParams(backWidgetButtonParams)
-	
-	managerDoneButton:setOnClickListener(managerDoneButton_cb)
-	
-	backWidget:addView(backWidgetMoveButton)
-	backWidget:addView(buttonSetSettingsButton)
-	backWidget:addView(managerDoneButton)
-	
-	return backWidget
-end
 
 setSettingsButtonListener = {}
 function setSettingsButtonListener.onClick(v)
