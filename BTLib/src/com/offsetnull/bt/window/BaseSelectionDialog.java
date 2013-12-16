@@ -138,7 +138,6 @@ public class BaseSelectionDialog extends Dialog {
 		optionItems.add(baz);*/
 	}
 	
-	
 	@Override
 	public void onCreate(Bundle b) {
 		
@@ -177,7 +176,7 @@ public class BaseSelectionDialog extends Dialog {
 				
 			}
 		});
-		
+	
 		mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			@Override
@@ -209,7 +208,6 @@ public class BaseSelectionDialog extends Dialog {
 				params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 				
-				
 				int v_top = mList.getChildAt(arg2 - mList.getFirstVisiblePosition()).getTop();
 				int f_top = frame.getTop();
 				
@@ -232,7 +230,6 @@ public class BaseSelectionDialog extends Dialog {
 			}
 		});
 	
-		
 		//list.setOnFocusChangeListener(new ListFocusFixerListener());
 		
 		mList.setSelector(R.drawable.blue_frame_nomargin_nobackground);
@@ -814,7 +811,7 @@ public class BaseSelectionDialog extends Dialog {
 				mList.requestFocus();
 				
 			}
-
+			
 			@Override
 			public void onAnimationRepeat(Animation animation) {
 				
