@@ -17,6 +17,7 @@ import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1732,21 +1733,25 @@ public class Launcher extends Activity implements ReadyListener {
 				e1.printStackTrace();
 			}
 			try {
-				BufferedReader in = new BufferedReader(new InputStreamReader(url2.openStream()));
+				URLConnection c = url2.openConnection();
+				
+				c.setUseCaches(false);
+				BufferedReader in = new BufferedReader(new InputStreamReader(c.getInputStream()));
 				StringBuffer buf = new StringBuffer();
 				String tmp;
 				while((tmp = in.readLine()) != null) {
 					buf.append(tmp);
 				}
 				try {
-					Integer newVersion = Integer.parseInt(buf.toString());
+					String data = buf.toString();
+					Integer newVersion = Integer.parseInt(data);
 					//Log.e("BlowTorch","Web update version: " + newVersion);
 					ApplicationInfo testLauncher = Launcher.this.getPackageManager().getApplicationInfo(launcher_source, PackageManager.GET_META_DATA);
 					int testversionName = testLauncher.metaData.getInt("BLOWTORCH_TEST_VERSION");
 					int testversion = newVersion;
 					PackageManager pm = Launcher.this.getPackageManager();
 					testversion = pm.getPackageInfo(testLauncher.packageName, PackageManager.GET_CONFIGURATIONS).versionCode;
-					if(newVersion > testversion) {
+					if (newVersion > testversion) {
 						//needsupdate = true;
 					} else {
 						//Toast t = Toast.makeText(Launcher.this, "BlowTorch Test Version "+testversionName+" is up to date.", Toast.LENGTH_SHORT);
