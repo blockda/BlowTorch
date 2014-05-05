@@ -3,134 +3,58 @@ local LinearLayoutParams = _G["LinearLayoutParams"]
 local LinearLayout = _G["LinearLayout"]
 local luajava = _G["luajava"]
 local TextView = _G["TextView"]
+local Gravity = _G["Gravity"]
 module(...)
 
 local WRAP_CONTENT = LinearLayoutParams.WRAP_CONTENT
 local FILL_PARENT = LinearLayoutParams.FILL_PARENT
+local GRAVITY_CENTER = Gravity.CENTER
 
-function showEditorDialog()
+local context = nil
+
+--widgets
+local title = nil
+local 
+
+function init(pContext)
+	context = pContext
+end
+
+function showEditorDialog(editorValues)
 	--make the parent view.
 	--local button = nil
-	editorValues = {}
-	--if(dialogView == nil) then
-	if(numediting == 1) then
-		button = buttons[lastselectedindex]
-		editorValues.label = button.data.label
-		editorValues.command = button.data.command
-		editorValues.flipLabel = button.data.flipLabel
-		editorValues.flipCommand = button.data.flipCommand
-		editorValues.name = button.data.name
-		--editorValues.name = "OMGANYTHING"
-		if(not editorValues.name) then editorValues.name = "" end
-		editorValues.primaryColor = button.data.primaryColor
-		editorValues.labelColor = button.data.labelColor
-		editorValues.selectedColor = button.data.selectedColor
-		editorValues.flipColor = button.data.flipColor
-		editorValues.flipLabelColor = button.data.flipLabelColor
-		editorValues.height = button.data.height
-		editorValues.switchTo = button.data.switchTo
-		editorValues.width = button.data.width
-		
-		editorValues.labelSize = button.data.labelSize
-		editorValues.x = button.data.x
-		editorValues.y = button.data.y
-		--Note("single editor loading:"..editorValues.x)
-		--Note("single editor loading:"..editorValues.y)
-	else 
-		for i,b in pairs(buttons) do
-			if(b.selected == true) then
-				--start comparing values
-				if(editorValues.primaryColor ~= b.data.primaryColor) then
-					editorValues.primaryColor = b.data.primaryColor
-				end
-			
-				if(editorValues.labelColor ~= b.data.labelColor) then
-					editorValues.labelColor = b.data.labelColor
-				end
-				
-				if(editorValues.selectedColor ~= b.data.selectedColor) then
-					editorValues.selectedColor = b.data.selectedColor
-				end
-				
-				if(editorValues.flipColor ~= b.data.flipColor) then
-					editorValues.flipColor = b.data.flipColor
-				end
-				
-				if(editorValues.flipLabelColor ~= b.data.flipLabelColor) then
-					editorValues.flipLabelColor = b.data.flipLabelColor
-				end
-				
-				if(editorValues.labelSize == nil) then
-					editorValues.labelSize = tonumber(b.data.labelSize)
-				elseif(editorValues.labelSize ~= tonumber(b.data.labelSize)) then
-					editorValues.labelSize = "MULTI"
-				end
-				
-				if(editorValues.height == nil) then
-					editorValues.height = tonumber(b.data.height)
-				elseif(editorValues.height ~= tonumber(b.data.height)) then
-					editorValues.height = "MULTI"
-				end
-				
-				if(editorValues.width == nil) then
-					editorValues.width = tonumber(b.data.width)
-					--Note("editorValue set to "..b.data.width)
-				elseif(editorValues.width ~= tonumber(b.data.width)) then
-					editorValues.width = "MULTI"
-					--Note("editorValue set to multi because "..b.data.width)
-				end
-				
-				if(editorValues.x == nil) then
-					editorValues.x = tonumber(b.data.x)
-				elseif(editorValues.x ~= tonumber(b.data.x)) then
-					editorValues.x = "MULTI"
-				end
-				
-				if(editorValues.y == nil) then
-					editorValues.y = tonumber(b.data.y)
-				elseif(editorValues.y ~= tonumber(b.data.y)) then
-					editorValues.y = "MULTI"
-				end
-			end
-		end
-	end
 	
 	local context = view:getContext()
 
 	local width_param,height_param = getDialogDimensions()
 	
-	top = luajava.new(LinearLayout,context)
-	topparams = luajava.new(LinearLayoutParams,width_param,height_param)
-	
-
+	local top = luajava.new(LinearLayout,context)
+	local topparams = luajava.new(LinearLayoutParams,width_param,height_param)
 	
 	top:setLayoutParams(topparams)
-	--top:setOrientation(LinearLayout.VERTICAL)
-	titletext = luajava.new(TextView,context)
+	
+	local title = luajava.new(TextView,context)
 	top:setOrientation(LinearLayout.VERTICAL)
 	titletextParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
 	
-	titletext:setLayoutParams(titletextParams)
-	titletext:setTextSize(textSizeBig)
-	titletext:setText("EDIT BUTTON")
-	titletext:setGravity(GRAVITY_CENTER)
-	titletext:setTextColor(Color:argb(255,0x33,0x33,0x33))
-	titletext:setBackgroundColor(bgGrey)
-	titletext:setId(1)
-	top:addView(titletext)
+	
+	title:setLayoutParams(titletextParams)
+	title:setTextSize(textSizeBig)
+	title:setText("EDIT BUTTON")
+	title:setGravity(GRAVITY_CENTER)
+	title:setTextColor(Color:argb(255,0x33,0x33,0x33))
+	title:setBackgroundColor(bgGrey)
+	title:setId(1)
+	top:addView(title)
 
 	--make the new tabhost.	
 	params = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
 	fillparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,1)
 	contentparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--fillparams:setGravity(Gravity.FILL_HORIZONTAL)
-	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
-	
+
 	hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,2)
 	host = luajava.new(TabHost,context)
-	--hostparams:addRule(RelativeLayout.BELOW,1)
-	--hostparams:addRule(RelativeLayout.ABOVE,2)
+
 	host:setId(3)
 	host:setLayoutParams(hostparams)
 	

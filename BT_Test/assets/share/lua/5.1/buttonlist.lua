@@ -9,6 +9,9 @@ local R_drawable = _G["R_drawable"]
 local ImageButton = _G["ImageButton"]
 local LinearLayoutParams = _G["LinearLayoutParams"]
 local Context = _G["Context"]
+local EditText = _G["EditText"]
+local LinearLayout = _G["LinearLayout"]
+local Button = _G["Button"]
 local pairs = _G["pairs"]
 local ipairs = _G["ipairs"]
 local table = _G["table"]
@@ -19,11 +22,15 @@ local View = _G["View"]
 local Color= _G["Color"]
 local Note = _G["Note"]
 local KeyEvent = _G["KeyEvent"]
+local modifyButtonSetCallback = _G["modifyButtonSet"]
+local DialogInterface = _G["DialogInterface"]
+local PluginXCallS = _G["PluginXCallS"]
 module(...)
 
 local lastSelectedIndex = -1
 local selectedIndex = -1
-local sortedList = nil;
+local selectedSet = nil
+local sortedList = nil
 local list = nil
 local itemClicked = nil
 local adapter = nil
@@ -37,6 +44,17 @@ local dpadselectionlistener = nil
 local makeToolbar = nil
 local layoutInflater = nil
 local context = nil
+local modifyClickListener = nil
+local newButtonListener = nil
+local newSetDoneListener = nil
+local newSetCancelListener = nil
+local newSetEdit = nil
+local newButtonSetDialog = nil
+local loadClickListener = nil
+local deleteClickListener = nil
+local deleteConfirmListener = nil
+local deleteCancelListener = nil
+local doneListener = nil
 
 local reclick_ = {}
 local scrollListener = {}
@@ -48,6 +66,16 @@ function init(pContext)
 	
 	makeToolbar()
 end
+
+modifyClickListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v)
+    Note("Modify clicked.")
+    modifyButtonSetCallback(sortedList[lastSelectedIndex+1])
+    
+    dialog:dismiss()
+  end
+})
+
 
 adapter = luajava.createProxy("android.widget.ListAdapter",{
 	getView = function(pos,v,parent)
@@ -98,15 +126,27 @@ adapter = luajava.createProxy("android.widget.ListAdapter",{
 		return newview
 	end,
 	getCount = function() return #sortedList end,
-	areAllItemsEndabled = function() return true end,
+	areAllItemsEnabled = function() return true end,
 	isEnabled = function(position) return true end,
 	getItem = function(position) return sortedList[position+1] end,
+	getItemId = function(position) return 1 end,
 	isEmpty = function() return false end,
 	hasStableIds = function() return true end,
-	getViewTypeCount = function() return 1 end
+	getViewTypeCount = function() return 1 end,
+	getItemViewType = function(pos) return 1 end
 })
 
+function dismissList()
+  if(dialog ~= nil) then
+    dialog:dismiss()
+  end
+end
+
 function showList(unsortedList,lastLoadedSet)
+	
+	if(adapter ~= nil) then    Note("\nadapter is not nil"); end
+	
+	selectedSet = lastLoadedSet
 	
 	if(toolbar:getParent() ~= nil) then
 		local parent = toolbar:getParent()
@@ -166,10 +206,10 @@ function showList(unsortedList,lastLoadedSet)
 	
 	local newbutton = layout:findViewById(R_id.add)
 	newbutton:setText("New Set")
-	newbutton:setOnClickListener(newButtonSetButton_cb)
+	newbutton:setOnClickListener(newButtonListener)
 	
 	local donebutton = layout:findViewById(R_id.done)
-	donebutton:setOnClickListener(doneButtonListener_cb)
+	donebutton:setOnClickListener(doneListener)
 	dialog = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",context,layout,false,nil)
 
 	--end
@@ -221,9 +261,9 @@ makeToolbar = function()
 			return button
 		end
 		
-		local toolbarToggle = makeButton(R_drawable.toolbar_load_button,toolbarLoadClicked_cb)
-		local toolbarModify = makeButton(R_drawable.toolbar_modify_button,toolbarModifyClicked_cb)
-		local toolbarDelete = makeButton(R_drawable.toolbar_delete_button,toolbarDeleteClicked_cb)
+		local toolbarToggle = makeButton(R_drawable.toolbar_load_button,loadClickListener)
+		local toolbarModify = makeButton(R_drawable.toolbar_modify_button,modifyClickListener)
+		local toolbarDelete = makeButton(R_drawable.toolbar_delete_button,deleteClickListener)
 		
 		toolbar:addView(toolbarToggle)
 		toolbar:addView(toolbarModify)
@@ -359,5 +399,126 @@ focusListener = luajava.createProxy("android.view.View$OnFocusChangeListener",{
 			list:setSelector(R_drawable.transparent)
 		end
 	end
+})
+
+newButtonListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v)
+    --Note("new button pressed")
+    dialog:dismiss()
+    --local context = view:getContext()
+    --make the new button set text input dialog and show it.
+    local linear = luajava.new(LinearLayout,context)
+    
+    local llparams = luajava.new(LinearLayoutParams,350*density,LinearLayoutParams.WRAP_CONTENT)
+    
+    local fillparams = luajava.new(LinearLayoutParams,LinearLayoutParams.FILL_PARENT,LinearLayoutParams.WRAP_CONTENT,1)
+    
+    local buttonholder = luajava.new(LinearLayout,context)
+    buttonholder:setLayoutParams(llparams)
+    buttonholder:setOrientation(LinearLayout.HORIZONTAL)
+    linear:setLayoutParams(llparams)
+    linear:setOrientation(LinearLayout.VERTICAL)
+    
+    newSetEdit = luajava.new(EditText,context)
+    newSetEdit:setHint("New Button Set Name")
+    
+    local done = luajava.new(Button,context)
+    done:setText("Done")
+    done:setLayoutParams(fillparams)
+    done:setOnClickListener(newSetDoneListener)
+    
+    local cancel = luajava.new(Button,context)
+    cancel:setText("Cancel")
+    cancel:setLayoutParams(fillparams)
+    cancel:setOnClickListener(newSetCancelListener)
+    
+    buttonholder:addView(done)
+    buttonholder:addView(cancel)
+    
+    linear:addView(newSetEdit)
+    linear:addView(buttonholder)
+    
+    newButtonSetDialog = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",context,linear,false,nil)
+    newButtonSetDialog:show()
+  end
+})
+
+newSetDoneListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(view)
+    newButtonSetDialog:dismiss()
+    local text = newSetEdit:getText():toString()
+    PluginXCallS("makeNewButtonSet",text)
+  end
+})
+
+newSetCancelListener = luajava.createProxy("android.view.View$OnClickListener",{ 
+  onClick = function(v)
+    newButtonSetDialog:dismiss()
+  end
+})
+
+loadClickListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v)
+  local entry = sortedList[lastSelectedIndex+1]
+  if(entry.name ~= selectedSet) then
+    PluginXCallS("loadButtonSet",entry.name)
+  end
+  dialog:dismiss()
+end
+})
+
+deleteConfirmListener = luajava.createProxy("android.content.DialogInterface$OnClickListener",{
+  onClick = function(dialog,which)
+  --Note("deleting,"..which)
+    if(which == DialogInterface.BUTTON_POSITIVE) then
+      --find the button set.
+      local entry = sortedList[lastSelectedIndex+1]
+      --if(entry.name ~= lastLoadedSet) then
+      sortedList[entry] = nil
+      table.remove(sortedList,lastSelectedIndex+1)
+      PluginXCallS("deleteButtonSet",entry.name)
+      --end
+    end
+  end
+})
+
+deleteCancelListener = luajava.createProxy("android.content.DialogInterface$OnClickListener",{
+  onClick = function(dialog,which)
+    dialog:dismiss()
+  end
+})
+
+deleteClickListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v)
+    local builder = luajava.newInstance("android.app.AlertDialog$Builder",v:getContext())
+    builder:setTitle("Delete Button Set")
+    builder:setMessage("Confirm delete?")
+    builder:setPositiveButton("Yes",deleteConfirmListener)
+    builder:setNegativeButton("No",deleteCancelListener)
+    
+    local canceldialog = builder:create()
+    canceldialog:show()
+  end
+})
+
+function updateButtonListDialog()
+  Note("\nConfirmingDelete")
+  --buttonSetListDialog.updateButtonListDialog()
+  list:setAdapter(adapter)
+  dialog:dismiss()
+end
+
+function updateButtonListDialogNoItems()
+  list:setAdapter(adapter)
+  --emptyButtons()
+  dialog:dismiss()
+end
+
+doneListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v)
+    local foo = nil
+    pcall(foo)
+    dialog:dismiss()
+  end
 })
 
