@@ -29,6 +29,11 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+import com.offsetnull.bt.service.Colorizer;
+
+import android.net.Proxy;
+import android.util.Log;
+
 /**
  * Class that implements the InvocationHandler interface.
  * This class is used in the LuaJava's proxy system.
@@ -84,11 +89,47 @@ public class LuaInvocationHandler implements InvocationHandler
 		  	return ret;
 	  	} catch(LuaException e) {
 	  		e.printStackTrace();
-	  		//StringWriter sw = new StringWriter();
-	  		//PrintWriter pw = new PrintWriter(sw);
-	  		//e.printStackTrace(pw);
-	  		//obj.L.pushString(sw.toString()); // stack trace as a string
-	  		//obj.L.error();
+	  		
+	  		StringWriter sw = new StringWriter();
+	  		PrintWriter pw = new PrintWriter(sw);
+	  		e.printStackTrace(pw);
+	  		String error = sw.toString(); // stack trace as a string
+	  		
+	  		error = "\n" + Colorizer.getRedColor() + "Error in lua proxy object:\n" + e.getLocalizedMessage() + Colorizer.getWhiteColor();
+	  		obj.L.getGlobal("debug");
+	  		obj.L.getField(obj.L.getTop(), "traceback");
+	  		obj.L.remove(-2);
+			
+	  		obj.L.getGlobal("Note");
+	  		
+			//if(obj.L.getLuaObject(-1).isFunction()) {
+				
+				//need to start iterating the given map, re-creating the table on the other side.
+				//pushTable("",obj);
+				obj.L.pushString(error);
+				//obj.L.pushNumber(2);
+				int ret = obj.L.pcall(1, 1, -3);
+				if(ret !=0) {
+					//displayLuaError("WindowXCallT Error:" + obj.L.getLuaObject(-1).getString());
+					//crazy i don't think this can happen.
+					Log.e("DFG", "failure");
+				} else {
+					//success!
+					Log.e("DFG", "success");
+					obj.L.pop(2);
+				}
+				
+			//} else {
+			//	obj.L.pop(2);
+			//	Log.e("DFG", "not a function");
+			//}
+	  		
+	  		
+	  		/*StringWriter sw = new StringWriter();
+	  		PrintWriter pw = new PrintWriter(sw);
+	  		e.printStackTrace(pw);
+	  		obj.L.pushString(sw.toString()); // stack trace as a string */
+	  		
 	  	}
 	  	return null;
 	  }
