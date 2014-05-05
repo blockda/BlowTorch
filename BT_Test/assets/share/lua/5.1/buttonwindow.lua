@@ -1243,15 +1243,16 @@ function showButtonList(data)
 end
 
 function updateButtonListDialog()
-	Note("\nConfirmingDelete")
-	mListView:setAdapter(buttonListAdapter_cb)
-	mSelectorDialog:dismiss()
+	--Note("\nConfirmingDelete")
+	buttonSetListDialog.updateButtonListDialog()
 end
 
 function updateButtonListDialogNoItems()
-	mListView:setAdapter(buttonListAdapter_cb)
+	--mListView:setAdapter(buttonListAdapter_cb)
+	--emptyButtons()
+	--mSelectorDialog:dismiss()
+	buttonSetListDialog.updateButtonListDialogNoItems()
 	emptyButtons()
-	mSelectorDialog:dismiss()
 end
 
 
@@ -3212,6 +3213,24 @@ function toolbarModifyClicked.onClick(v)
 end
 toolbarModifyClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarModifyClicked)
 
+modifyButtonSet = function(entry) 
+  Note("In Modify button set callback.")
+  if(buttonsCleared) then
+    revertButtons()
+  end
+  --local adapter = mListView:getAdapter()
+  --local entry = buttonSetList[lastSelectedIndex+1]
+  --Note("toolbarModifyClicked:"..entry.name)
+  if(entry.name ~= lastLoadedSet) then
+    PluginXCallS("loadAndEditSet",entry.name)
+    return
+  end
+
+  enterManagerMode()
+  showeditormenu = true
+  PushMenuStack("onEditorBackPressed")
+end
+
 toolbarLoadClicked = {}
 function toolbarLoadClicked.onClick(v)
 	local entry = buttonSetList[lastSelectedIndex+1]
@@ -3263,7 +3282,9 @@ function loadAndEditSet(data)
 	enterManagerMode()
 	showeditormenu = true
 	PushMenuStack("onEditorBackPressed")
-	mSelectorDialog:dismiss()
+	if(buttonSetListDialog ~= nil) then
+	 buttonSetListDialog.dismissList()
+	end
 end
 
 thetoolbar = nil
