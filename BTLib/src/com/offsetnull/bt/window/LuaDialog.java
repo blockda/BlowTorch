@@ -20,9 +20,10 @@ public class LuaDialog extends Dialog {
 	}
 	
 	public LuaDialog(Context context,View v,boolean title,Drawable border) {
-		super(context);
+		super(context,android.R.style.Theme_Black);
 		if(!title) {
 			this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+			//this.getWindow().setFla
 		}
 		if(border != null) {
 			this.getWindow().setBackgroundDrawable(border);
@@ -50,6 +51,11 @@ public class LuaDialog extends Dialog {
 			this.setContentView(mView);
 		}
 		
+		MainWindow w = (MainWindow)context;
+		if(w.isStatusBarHidden()) {
+			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
+		this.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.MATCH_PARENT);
 		//this.setCont
 	}
 	
