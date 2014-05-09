@@ -38,6 +38,7 @@ import android.view.LayoutInflater;
 import android.view.ViewParent;
 import android.view.Window;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.offsetnull.bt.R;
 
@@ -59,6 +60,7 @@ public class BaseSelectionDialog extends Dialog {
 	private TranslateAnimation animateOutNoTransition;
 	private TranslateAnimation animateIn;
 	//private ArrayList<Drawable> miniIcons;
+	private Context mContext;
 	
 	
 	
@@ -67,8 +69,9 @@ public class BaseSelectionDialog extends Dialog {
 	private CharSequence mNewTitle = "New";
 	
 	public BaseSelectionDialog(Context context) {
-		super(context);
+		super(context,android.R.style.Theme_Light);
 		// TODO Auto-generated constructor stub
+		mContext = context;
 		mToolbarButtons = new ArrayList<UtilityButton>();
 		
 		UtilityButton delete = new UtilityButton();
@@ -86,6 +89,8 @@ public class BaseSelectionDialog extends Dialog {
 		mToolbarButtons.add(toggle);
 		mToolbarButtons.add(edit);
 		mToolbarButtons.add(delete);
+		
+		
 		
 		//mToolbarButtons.
 		
@@ -143,8 +148,13 @@ public class BaseSelectionDialog extends Dialog {
 		
 		this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setBackgroundDrawableResource(R.drawable.dialog_window_crawler1);
+		MainWindow w = (MainWindow)mContext;
+		if(w.isStatusBarHidden()) {
+			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
 		this.setCanceledOnTouchOutside(false);
 		setContentView(R.layout.editor_selection_dialog);
+		this.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.MATCH_PARENT);
 		
 		TextView tst = (TextView) this.findViewById(R.id.titlebar);
 		tst.setText(mTitle);
