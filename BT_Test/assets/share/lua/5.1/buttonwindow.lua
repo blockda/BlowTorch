@@ -1242,9 +1242,11 @@ function showButtonList(data)
 	mSelectorDialog:show()
 end
 
-function updateButtonListDialog()
+function updateButtonListDialog(data)
 	--Note("\nConfirmingDelete")
-	buttonSetListDialog.updateButtonListDialog()
+	local incoming = loadstring(data)()
+	
+	buttonSetListDialog.updateButtonListDialog(incoming)
 end
 
 function updateButtonListDialogNoItems()

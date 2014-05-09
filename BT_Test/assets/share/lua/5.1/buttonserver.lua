@@ -113,6 +113,9 @@ function deleteButtonSet(name)
 			nextset = buttonSetList[selectedIndex + 1].name 
 		end
 			
+	else
+	 --selected set is not the deleted set
+	 nextset = current_set
 	end
 	
 	buttonsets[name] = nil
@@ -123,14 +126,23 @@ function deleteButtonSet(name)
 		left = left + 1
 	end
 	
-	if(nextset ~= nil and left > 0) then
+	if(nextset ~= nil and nextset ~= current_set and left > 0) then
 		loadButtonSet(nextset)
 	end
 
 	if(left == 0) then
 		WindowXCallS("button_window","updateButtonListDialogNoItems","now")
 	else
-		WindowXCallS("button_window","updateButtonListDialog","now")
+  	local list = {}
+    for i,v in pairs(buttonsets) do
+      list[i] = #v
+    end
+    
+  
+    local data = {}
+    data.setname = nextset
+    data.setlist = list
+		WindowXCallS("button_window","updateButtonListDialog",serialize(data))
 	end
 end
 

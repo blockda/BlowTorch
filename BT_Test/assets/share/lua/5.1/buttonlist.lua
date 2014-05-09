@@ -38,7 +38,9 @@ local dialog = nil
 local toolbar = nil
 local animateIn = nil
 local animateOut = {}
+local animateOutAndDelete = {}
 local animateOutListener = nil
+local animateOutAndDeleteListener = {}
 local dpadupdownlistener = nil
 local dpadselectionlistener = nil
 local makeToolbar = nil
@@ -142,6 +144,34 @@ function dismissList()
   end
 end
 
+function sortList(unsortedList)
+  sortedList = {}
+  for k,v in pairs(sortedList) do
+    sortedList[v] = nil;
+  end
+  sortedList = nil
+  sortedList = {}
+  
+  local counter = 1;
+  selectedIndex = -1;
+  for i,k in pairs(unsortedList) do
+    local tmp = {}
+    tmp.name = i
+    tmp.count = k
+    table.insert(sortedList,tmp)
+  end
+
+  table.sort(sortedList,function(a,b) if(a.name < b.name) then return true else return false end end)
+
+  --find the selectedindex
+  for i,k in ipairs(sortedList) do
+    if(k.name == selectedSet) then
+      selectedIndex = counter
+    end
+    counter = counter + 1
+  end
+end
+
 function showList(unsortedList,lastLoadedSet)
 	
 	if(adapter ~= nil) then    Note("\nadapter is not nil"); end
@@ -153,31 +183,7 @@ function showList(unsortedList,lastLoadedSet)
 		parent:removeView(toolbar)
 	end
 	--sort the list
-	sortedList = {}
-	for k,v in pairs(sortedList) do
-		sortedList[v] = nil;
-	end
-	sortedList = nil
-	sortedList = {}
-	
-	local counter = 1;
-	selectedIndex = -1;
-	for i,k in pairs(unsortedList) do
-		local tmp = {}
-		tmp.name = i
-		tmp.count = k
-		table.insert(sortedList,tmp)
-	end
-
-	table.sort(sortedList,function(a,b) if(a.name < b.name) then return true else return false end end)
-
-	--find the selectedindex
-	for i,k in ipairs(sortedList) do
-		if(k.name == lastLoadedSet) then
-			selectedIndex = counter
-		end
-		counter = counter + 1
-	end
+	sortList(unsortedList)
 	
 
 	--actually make the dialog
@@ -289,6 +295,10 @@ makeToolbar = function()
 	animateOut:setDuration(300)
 	animateOut:setAnimationListener(animateOutListener)
 	
+	animateOutAndDelete = luajava.new(TranslateAnimation,0,toolbarlength,0,0)
+	animateOutAndDelete:setDuration(300)
+	animateOutAndDelete:setAnimationListener(animateOutAndDeleteListener)
+	
 end
 
 local function removeToolbar()
@@ -333,6 +343,20 @@ animateOutListener = luajava.createProxy("android.view.animation.Animation$Anima
 			--list:requestFocus()
 		end
 	end
+})
+
+animateOutAndDeleteListener = luajava.createProxy("android.view.animation.Animation$AnimationListener",{
+  onAnimationEnd = function(animation)
+    local parent = toolbar:getParent()
+    if(parent ~= nil) then 
+      parent:removeView(toolbar)
+      --list:requestFocus()
+    end
+    local entry = sortedList[lastSelectedIndex+1]
+    sortedList[entry] = nil
+    table.remove(sortedList,lastSelectedIndex+1)
+    PluginXCallS("deleteButtonSet",entry.name)
+  end
 })
 
 
@@ -471,13 +495,11 @@ deleteConfirmListener = luajava.createProxy("android.content.DialogInterface$OnC
   onClick = function(dialog,which)
   --Note("deleting,"..which)
     if(which == DialogInterface.BUTTON_POSITIVE) then
-      --find the button set.
-      local entry = sortedList[lastSelectedIndex+1]
-      --if(entry.name ~= lastLoadedSet) then
-      sortedList[entry] = nil
-      table.remove(sortedList,lastSelectedIndex+1)
-      PluginXCallS("deleteButtonSet",entry.name)
-      --end
+      --local entry = sortedList[lastSelectedIndex+1]
+      --sortedList[entry] = nil
+      --table.remove(sortedList,lastSelectedIndex+1)
+      --PluginXCallS("deleteButtonSet",entry.name)
+      toolbar:startAnimation(animateOutAndDelete)
     end
   end
 })
@@ -501,23 +523,28 @@ deleteClickListener = luajava.createProxy("android.view.View$OnClickListener",{
   end
 })
 
-function updateButtonListDialog()
-  Note("\nConfirmingDelete")
+function updateButtonListDialog(data)
+  
   --buttonSetListDialog.updateButtonListDialog()
+  selectedSet = data.setname
+  --unsortedList = data.setlist
+  sortList(data.setlist)
+  Note("\nConfirmingDelete: " .. data.setname)
   list:setAdapter(adapter)
-  dialog:dismiss()
+  --dialog:dismiss()
 end
 
 function updateButtonListDialogNoItems()
+  sortedList = {}
   list:setAdapter(adapter)
   --emptyButtons()
-  dialog:dismiss()
+  --dialog:dismiss()
 end
 
 doneListener = luajava.createProxy("android.view.View$OnClickListener",{
   onClick = function(v)
-    local foo = nil
-    pcall(foo)
+    --local foo = nil
+    --pcall(foo)
     dialog:dismiss()
   end
 })

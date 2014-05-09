@@ -56,20 +56,21 @@
 		android:text="Done"/>
 		
 	<FrameLayout
-		android:id="@+id/frame"
-		android:layout_width = "fill_parent"
-		android:layout_height="fill_parent"
-		android:layout_margin="0dip"
-		android:padding="0dip"
-		android:layout_above="@id/add"
-		android:layout_below="@id/titlebar">
+	    android:id="@+id/frame"
+	    android:layout_width="wrap_content"
+	    android:layout_height="fill_parent"
+	    android:layout_above="@id/add"
+	    android:layout_below="@id/titlebar"
+	    android:layout_margin="0dip"
+	    android:padding="0dip" >
+
 		<ListView
 			android:id="@+id/list"
 			android:layout_height="fill_parent"
 			android:layout_width="280dip"/>
 		<TextView
 			android:id="@+id/empty"
-			android:layout_width="fill_parent"
+			android:layout_width="280dip"
 			android:layout_height="fill_parent"
 			android:text="No items to display."
 			android:textColor="#FFFFFFFF"
