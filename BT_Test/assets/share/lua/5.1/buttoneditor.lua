@@ -23,6 +23,8 @@ local ScrollView = _G["ScrollView"]
 local require = _G["require"]
 local View = _G["View"]
 local Note = _G["Note"]
+local pairs = _G["pairs"]
+local buttonEditorDone = _G["buttonEditorDone"]
 module(...)
 
 local textSizeBig = (18) -- sp value
@@ -36,10 +38,20 @@ local FILL_PARENT = LinearLayoutParams.FILL_PARENT
 local GRAVITY_CENTER = Gravity.CENTER
 
 local context = nil
-local getDialogDimensions
+local editorDialog
+
+local doneClickListener
+local cancelClickListener
 
 --widgets
-local title = nil
+local title = nil --title text view
+local clickLabelEdit --click state label editor
+local clickCmdEdit --click state command editor
+local flipLabelEdit --flip state label editor
+local flipCmdEdit --flip state command editor
+
+--the rest are harvested from the advanced page editor
+local advancedEditor -- the shared advanced page editor loaded from module
 
 function init(pContext)
 	context = pContext
@@ -50,8 +62,8 @@ function showEditorDialog(editorValues,numediting)
 	--local button = nil
 	
 	--local context = view:getContext()
-
-	local width_param,height_param = getDialogDimensions()
+  local utils = require("buttonutils")
+	local width_param,height_param = utils.getDialogDimensions(context)
 	
 	local top = luajava.new(LinearLayout,context)
 	local topparams = luajava.new(LinearLayoutParams,width_param,height_param)
@@ -98,12 +110,12 @@ function showEditorDialog(editorValues,numediting)
 	local done = luajava.new(Button,context)
 	done:setLayoutParams(fillparams)
 	done:setText("Done")
-	done:setOnClickListener(editorDone_cb)
+	done:setOnClickListener(doneClickListener)
 	
 	local cancel = luajava.new(Button,context)
 	cancel:setLayoutParams(fillparams)
 	cancel:setText("Cancel")
-	cancel:setOnClickListener(editorCancel_cb)
+	cancel:setOnClickListener(cancelClickListener)
 	finishHolder:addView(done)
 	finishHolder:addView(cancel)
 	top:addView(host)
@@ -163,7 +175,7 @@ function showEditorDialog(editorValues,numediting)
 	local clickLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	clickLabel:setLayoutParams(clickLabelParams)
 	
-	local clickLabelEdit = luajava.new(EditText,context)
+	clickLabelEdit = luajava.new(EditText,context)
 	clickLabelEdit:setTextSize(textSize)
 	local clickLabelEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	clickLabelEdit:setLines(1)
@@ -191,7 +203,7 @@ function showEditorDialog(editorValues,numediting)
 	local clickCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	clickCmdLabel:setLayoutParams(clickLabelParams)
 	
-	local clickCmdEdit = luajava.new(EditText,context)
+	clickCmdEdit = luajava.new(EditText,context)
 	clickCmdEdit:setTextSize(textSize)
 	local clickCmdEditParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
 	clickCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
@@ -245,7 +257,7 @@ function showEditorDialog(editorValues,numediting)
 	local flipLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	flipLabel:setLayoutParams(flipLabelParams)
 	
-	local flipLabelEdit = luajava.new(EditText,context)
+	flipLabelEdit = luajava.new(EditText,context)
 	flipLabelEdit:setTextSize(textSize)
 	local flipLabelEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	flipLabelEdit:setLines(1)
@@ -272,7 +284,7 @@ function showEditorDialog(editorValues,numediting)
 	local flipCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
 	flipCmdLabel:setLayoutParams(clickLabelParams)
 	
-	local flipCmdEdit = luajava.new(EditText,context)
+	flipCmdEdit = luajava.new(EditText,context)
 	flipCmdEdit:setTextSize(textSize)
 	local flipCmdEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
 	flipCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
@@ -313,7 +325,7 @@ function showEditorDialog(editorValues,numediting)
 	--tmpview3:setText("third page")
 	--tmpview3:setId(3)
 	--tmpview3:setLayoutParams(params);	
-	local advancedEditor = require("buttoneditoradvanced")
+	advancedEditor = require("buttoneditoradvanced")
 	advancedEditor.init(context)
 	local scrollerpage = advancedEditor.makeUI(editorValues,numediting)
 	local parent = scrollerpage:getParent()
@@ -321,45 +333,37 @@ function showEditorDialog(editorValues,numediting)
 		parent:removeView(scrollerpage)
 	end
 	--buttonNameRow:setVisibility(View.VISIBLE)
-	local controlRowTwo = advancedEditor.controlRowTwo
-	controlRowTwo:setVisibility(View.VISIBLE)
-	local labelRowFour = advancedEditor.labelRowFour
-	labelRowFour:setVisibility(View.VISIBLE)
 	
-	local buttonNameRow = advancedEditor.buttonNameRow
-	buttonNameRow:setVisibility(View.VISIBLE)
-	local buttonTargetSetRow = advancedEditor.buttonTargetSetRow
-	buttonTargetSetRow:setVisibility(View.VISIBLE)
 	
 	Validator:reset()
 	if(editorValues.width ~= "MULTI") then
-		Validator:add(widthEdit,Validator_Number_Not_Blank,"Width")
+		Validator:add(advancedEditor.getWidthEdit(),Validator_Number_Not_Blank,"Width")
 	else
-		Validator:add(widthEdit,Validator_Number_Or_Blank,"Width")
+		Validator:add(advancedEditor.getWidthEdit(),Validator_Number_Or_Blank,"Width")
 	end
 	
 	if(editorValues.height ~= "MULTI") then
-		Validator:add(heightEdit,Validator_Number_Not_Blank,"Height")
+		Validator:add(advancedEditor.getHeightEdit(),Validator_Number_Not_Blank,"Height")
 	else
-		Validator:add(heightEdit,Validator_Number_Or_Blank,"Height")
+		Validator:add(advancedEditor.getHeightEdit(),Validator_Number_Or_Blank,"Height")
 	end
 	
 	if(editorValues.x ~= "MULTI") then
-		Validator:add(xcoordEdit,Validator_Number_Not_Blank,"X Coordinate")
+		Validator:add(advancedEditor.getXCoordEdit(),Validator_Number_Not_Blank,"X Coordinate")
 	else
-		Validator:add(xcoordEdit,Validator_Number_Or_Blank,"X Coordinate")
+		Validator:add(advancedEditor.getXCoordEdit(),Validator_Number_Or_Blank,"X Coordinate")
 	end
 	
 	if(editorValues.y ~="MULTI") then
-		Validator:add(ycoordEdit,Validator_Number_Not_Blank,"Y Coordinate")
+		Validator:add(advancedEditor.getYCoordEdit(),Validator_Number_Not_Blank,"Y Coordinate")
 	else
-		Validator:add(ycoordEdit,Validator_Number_Or_Blank,"Y Coordinate")
+		Validator:add(advancedEditor.getYCoordEdit(),Validator_Number_Or_Blank,"Y Coordinate")
 	end
 	
 	if(editorValues.labelSize ~= "MULTI") then
-		Validator:add(labelSizeEdit,Validator_Number_Not_Blank,"Label size")
+		Validator:add(advancedEditor.getLabelSizeEdit(),Validator_Number_Not_Blank,"Label size")
 	else
-		Validator:add(labelSizeEdit,Validator_Number_Or_Blank,"Label size")
+		Validator:add(advancedEditor.getLabelSizeEdit(),Validator_Number_Or_Blank,"Label size")
 	end
 	
 	content:addView(scrollerpage)
@@ -389,43 +393,60 @@ function showEditorDialog(editorValues,numediting)
 	context = nil
 end
 
-getDialogDimensions = function()
-  --local context = view:getContext()
-  local wm = context:getSystemService(Context.WINDOW_SERVICE)
-  local display = wm:getDefaultDisplay()
-  local displayWidth = display:getWidth()
-  local displayHeight = display:getHeight()
-  local use = displayWidth
-  local orientation = context:getResources():getConfiguration().orientation
-  if(displayHeight < displayWidth) then
-    use = displayHeight
-  end
-  
-  local dpi_bucket = use / density
-  
-  local height_param = LinearLayoutParams.WRAP_CONTENT
-  local width_param = 450*density
-  
-  if(orientation == ORIENTATION_LANDSCAPE) then
-    --landscape
-    if(dpi_bucket >= 600) then
-      height_param = 300*density
+
+cancelClickListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v) editorDialog:dismiss() end
+})
+
+doneClickListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v) 
+    local str = Validator:validate()
+    if(str ~= nil) then
+    Validator:showMessage(view:getContext(),str)
+      return
     end
     
-    if(width_param > displayWidth) then
-      width_param = displayHeight
-    end
-  else
-    --portrait
-        --landscape
-    if(dpi_bucket >= 600) then
-      height_param = LinearLayoutParams.WRAP_CONTENT -- 300*density
-      --TODO when should this be 300*density as opposed to wrap_content?
+    --gather up editor data to pass back into the main button window callback
+    local d = {}
+
+  
+    d.label = clickLabelEdit:getText():toString()
+    --label = labeltmp:toString()
+    d.cmd = clickCmdEdit:getText():toString()
+    --cmd = cmdtmp:toString()
+    d.flipLabel = flipLabelEdit:getText():toString()
+    --fliplabel = fliplabeltmp:toString()
+    d.flipCmd = flipCmdEdit:getText():toString()
+    --flipcmd = flipcmdtmp:toString()
+    
+    local tmp = advancedEditor.getEditorValues()
+    
+    for i,v in pairs(tmp) do
+      d[i] = v;
     end
     
-    if(width_param > displayWidth) then
-      width_param = displayWidth-(5*density)
-    end
+    buttonEditorDone(d)
+    
+    --[[nametmp = buttonNameEdit:getText()
+    name = nametmp:toString()
+    targettmp = buttonTargetSetEdit:getText();
+    target = targettmp:toString();
+    
+    xcoordtmp = xcoordEdit:getText()
+    xcoord = tonumber(xcoordtmp:toString())
+    ycoordtmp = ycoordEdit:getText()
+    ycoord = tonumber(ycoordtmp:toString())
+    labelsizetmp = labelSizeEdit:getText()
+    labelsize = tonumber(labelsizetmp:toString())
+    ----Note(
+    heighttmp = heightEdit:getText()
+    
+    height = tonumber(heighttmp:toString())
+    --Note("height read from editor"..height)
+    widthtmp = widthEdit:getText()
+    width = tonumber(widthtmp:toString())]]
+      
+    editorDialog:dismiss()
   end
-  return width_param,height_param
-end
+})
+
