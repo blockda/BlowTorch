@@ -646,10 +646,12 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				break;
 			case MESSAGE_LUANOTE:
 				String str = (String) msg.obj;
-				try {
-					dispatchNoProcess(str.getBytes(mSettings.getEncoding()));
-				} catch (UnsupportedEncodingException e1) {
-					e1.printStackTrace();
+					if(str != null) {
+					try {
+						dispatchNoProcess(str.getBytes(mSettings.getEncoding()));
+					} catch (UnsupportedEncodingException e1) {
+						e1.printStackTrace();
+					}
 				}
 				break;
 			case MESSAGE_LINETOWINDOW:

@@ -912,6 +912,61 @@ end
 
 
 function buttonOptions()
+  local editorValues = {}
+  editorValues.primaryColor = defaults.primaryColor
+  editorValues.selectedColor = defaults.selectedColor
+  editorValues.flipColor = defaults.flipColor
+  editorValues.labelColor = defaults.labelColor
+  editorValues.flipLabelColor = defaults.flipLabelColor
+  editorValues.switchTo = ""
+  editorValues.height = defaults.height
+  editorValues.width = defaults.width
+  editorValues.labelSize = defaults.labelSize
+  editorValues.name = lastLoadedSet
+  editorValues.x = 0
+  editorValues.y = 0  
+  
+  editorValues.gridX = gridXwidth
+  editorValues.gridY = gridYwidth
+  editorValues.gridOpacity = manageropacity
+  editorValues.gridIntersectionTest = intersectMode
+  editorValues.gridSnap = gridsnap
+  
+  if(1==1) then
+    Note("launching new button editor")
+    local editorOptionsDialog = require("editoroptionsdialog")
+    editorOptionsDialog.init(mContext)
+    editorOptionsDialog.setEditorDoneCallback()
+    editorOptionsDialog.setGridSnapCallback(function(v)
+      gridsnap = v
+    end)
+    editorOptionsDialog.setGridXSpacingCallback(function(v)
+      gridXwidth = v
+      defaults.gridXwidth = v
+      drawManagerGrid()
+      view:invalidate()
+    end)
+    editorOptionsDialog.setGridYSpacingCallback(function(v)
+      gridYwidth = v
+      defaults.gridYwidth = v
+      drawManagerGrid()
+      view:invalidate()
+    end)
+    editorOptionsDialog.setGridOpacityCallback(function(v)
+      dpaint:setAlpha(v)
+      manageropacity = v
+      drawManagerGrid()
+      view:invalidate()
+    end)
+    editorOptionsDialog.setGridSnapTestCallback(function(v)
+      intersectMode = v
+    end)
+    
+    editorOptionsDialog.showDialog(editorValues)
+    return
+  end
+
+
 	ctex = view:getContext()
 
 	ll = luajava.newInstance("android.widget.LinearLayout",ctex)
@@ -1595,71 +1650,40 @@ function editorCancel.onClick(v)
 end
 editorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",editorCancel)
 
--- Individual button editor 
-editorDone = {}
-function editorDone.onClick(v)
+--[[BEGIN GLOBAL ENTRY POINT INTO buttonEditorDone
+    This is called from the buttoneditor module to process the new button data
+    Leave this global
+]]
+function buttonEditorDone(data)
 	--apply the settings out.
 	
-	local str = Validator:validate()
-	if(str ~= nil) then
-		Validator:showMessage(view:getContext(),str)
-		return
-	end
-	
-	labeltmp = clickLabelEdit:getText()
-	label = labeltmp:toString()
-	cmdtmp = clickCmdEdit:getText()
-	cmd = cmdtmp:toString()
-	fliplabeltmp = flipLabelEdit:getText()
-	fliplabel = fliplabeltmp:toString()
-	flipcmdtmp = flipCmdEdit:getText()
-	flipcmd = flipcmdtmp:toString()
-	nametmp = buttonNameEdit:getText()
-	name = nametmp:toString()
-	targettmp = buttonTargetSetEdit:getText();
-	target = targettmp:toString();
-	
-	xcoordtmp = xcoordEdit:getText()
-	xcoord = tonumber(xcoordtmp:toString())
-	ycoordtmp = ycoordEdit:getText()
-	ycoord = tonumber(ycoordtmp:toString())
-	labelsizetmp = labelSizeEdit:getText()
-	labelsize = tonumber(labelsizetmp:toString())
-	----Note(
-	heighttmp = heightEdit:getText()
-	
-	height = tonumber(heighttmp:toString())
-	--Note("height read from editor"..height)
-	widthtmp = widthEdit:getText()
-	width = tonumber(widthtmp:toString())
-	
 	if(numediting == 1) then
-		tmp = buttons[lastselectedindex]
+		local tmp = buttons[lastselectedindex]
 
 		
 		--Note("EDITING SINGLE BUTTON BEFORE BUTTON:"..tmp.data.height)
 		--printTable("button",tmp)
 		
 		
-		tmp.data.x = xcoord
-		tmp.data.y = ycoord
-		tmp.data.height = height
-		tmp.data.width = width
-		tmp.data.labelSize = labelsize
+		tmp.data.x = data.xCoord
+		tmp.data.y = data.yCoord
+		tmp.data.height = data.height
+		tmp.data.width = data.width
+		tmp.data.labelSize = data.labelSize
 		
-		tmp.data.primaryColor = theNormalColor
-		tmp.data.flipColor = theFlipColor
-		tmp.data.selectedColor = thePressedColor
-		tmp.data.labelColor = theNormalLabelColor
-		tmp.data.flipLabelColor = theFlipLabelColor
+		tmp.data.primaryColor = data.normalColor
+		tmp.data.flipColor = data.flipColor
+		tmp.data.selectedColor = data.pressedColor
+		tmp.data.labelColor = data.normalLabelColor
+		tmp.data.flipLabelColor = data.flipLabelColor
 		
-		tmp.data.command = cmd
-		tmp.data.label = label
-		tmp.data.flipLabel = fliplabel
-		tmp.data.flipCommand = flipcmd
+		tmp.data.command = data.cmd
+		tmp.data.label = data.label
+		tmp.data.flipLabel = data.flipLabel
+		tmp.data.flipCommand = data.flipCmd
 		
-		tmp.data.name = name
-		tmp.data.switchTo = target
+		tmp.data.name = data.name
+		tmp.data.switchTo = data.target
 		
 		tmp:updateRect(statusoffset)
 		--Note("EDITING SINGLE BUTTON AFTER BUTTON:"..tmp.data.height)
@@ -1669,44 +1693,44 @@ function editorDone.onClick(v)
 		for i,b in ipairs(buttons) do
 			if(b.selected == true) then
 				--do the settings update for relevent data
-				if(width ~= nil and width ~= editorValues.width) then
-					b.data.width = width
+				if(data.width ~= nil and data.width ~= editorValues.width) then
+					b.data.width = data.width
 				end
 				
-				if(height ~= nil and height ~= editorValues.height) then
-					b.data.height = height
+				if(data.height ~= nil and data.height ~= editorValues.height) then
+					b.data.height = data.height
 				end
 				
-				if(xcoord ~= nil and xcoord ~= editorValues.x) then
-					b.data.x = xcoord
+				if(data.xCoord ~= nil and data.xCoord ~= editorValues.x) then
+					b.data.x = data.xCoord
 				end
 				
-				if(ycoord ~= nil and ycoord ~= editorValues.y) then
-					b.data.y = ycoord
+				if(data.yCoord ~= nil and data.yCoord ~= editorValues.y) then
+					b.data.y = data.yCoord
 				end
 				
-				if(labelsize ~= nil and labelsize ~= editorValues.labelSize) then
-					b.data.labelSize = labelsize
+				if(data.labelSize ~= nil and data.labelSize ~= editorValues.labelSize) then
+					b.data.labelSize = data.labelSize
 				end
 				
-				if(theNormalColor ~= editorValues.primaryColor) then
-					b.data.primaryColor = theNormalColor
+				if(data.normalColor ~= editorValues.primaryColor) then
+					b.data.primaryColor = data.normalColor
 				end
 				
-				if(thePressedColor ~= editorValues.selectedColor) then
-					b.data.selectedColor = thePressedColor
+				if(data.pressedColor ~= editorValues.selectedColor) then
+					b.data.selectedColor = data.pressedColor
 				end
 				
-				if(theFlipColor ~= editorValues.flipColor) then
-					b.data.flipColor = theFlipColor
+				if(data.flipColor ~= editorValues.flipColor) then
+					b.data.flipColor = data.flipColor
 				end
 				
-				if(theNormalLabelColor ~= editorValues.labelColor) then
-					b.data.labelColor = theNormalLabelColor
+				if(data.normalLabelColor ~= editorValues.labelColor) then
+					b.data.labelColor = data.normalLabelColor
 				end
 				
-				if(theFlipLabelColor ~= editorValues.flipLabelColor) then
-					b.data.flipLabelColor = theFlipLabelColor
+				if(data.flipLabelColor ~= editorValues.flipLabelColor) then
+					b.data.flipLabelColor = data.flipLabelColor
 				end
 				
 				b:updateRect(statusoffset)
@@ -1714,21 +1738,10 @@ function editorDone.onClick(v)
 		end
 	end
 	
-	
-	--local tmp = {}
-	--for i,b in pairs(buttons) do
-	--	tmp[i] = b.data
-	--end
-		
-	--PluginXCallS("saveButtons",serialize(tmp))
-	
-	editorDialog:dismiss()
-	editorDialog = nil
 	drawButtons()
 	view:invalidate()
 end
-editorDone_cb = luajava.createProxy("android.view.View$OnClickListener",editorDone)
-
+--[[END buttonEditorDone global callback]]
 clickLabelEdit = nil
 clickCmdEdit = nil
 
@@ -1866,6 +1879,7 @@ function showEditorDialog()
 	if(1==1) then
 	 local buttonEditor = require("buttoneditor")
 	 buttonEditor.init(mContext)
+	 Note("showing button editor "..numediting)
 	 buttonEditor.showEditorDialog(editorValues,numediting)
 	 return
 	end
@@ -2463,8 +2477,33 @@ end
 buttonSetSettingsButton_cb = luajava.createProxy("android.view.View$OnClickListener",buttonSetSettingsButtonListener)
 
 
+--delete after testing
 setSettingsButtonListener = {}
 function setSettingsButtonListener.onClick(v)
+
+  local editorValues = {}
+  editorValues.primaryColor = defaults.primaryColor
+  editorValues.selectedColor = defaults.selectedColor
+  editorValues.flipColor = defaults.flipColor
+  editorValues.labelColor = defaults.labelColor
+  editorValues.flipLabelColor = defaults.flipLabelColor
+  editorValues.switchTo = ""
+  editorValues.height = defaults.height
+  editorValues.width = defaults.width
+  editorValues.labelSize = defaults.labelSize
+  editorValues.name = lastLoadedSet
+  editorValues.x = 0
+  editorValues.y = 0  
+  
+  if(1==1) then
+    Note("launching new button editor")
+    local editorOptionsDialog = require("editoroptionsdialog")
+    editorOptionsDialog.init(mContext)
+    editorOptionsDialog.setEditorDoneCallback()
+    editorOptionsDialog.showDialog(editorValues)  
+    return
+  end
+  --delete below after testing
 	local context = view:getContext()
 
 	editorValues = {}
@@ -2800,11 +2839,7 @@ end
 
 buttonsetMenuClicked = {}
 function buttonsetMenuClicked.onMenuItemClick(item)
-	--Note("menu item clicked")
-	buttonList()
-	--showeditormenu = true
-	--PushMenuStack()
-	
+    PluginXCallS("getButtonSetList","all")
 	return true
 end
 buttonsetMenuClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",buttonsetMenuClicked)
@@ -2823,7 +2858,9 @@ buttonsetMenuDoneClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuI
 
 buttonsetSettingsClicked = {}
 function buttonsetSettingsClicked.onMenuItemClick(item)
-	buttonOptions()
+	xpcall(buttonOptions,function(error) if error ~= nil then Note(error) end end) 
+	
+	
 	return true
 end
 buttonsetSettingsClicked_cb = luajava.createProxy("android.view.MenuItem$OnMenuItemClickListener",buttonsetSettingsClicked)

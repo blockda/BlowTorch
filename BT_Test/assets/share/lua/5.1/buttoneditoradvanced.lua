@@ -15,6 +15,9 @@ local GRAVITY_CENTER = _G["GRAVITY_CENTER"]
 local TYPE_CLASS_NUMBER = _G["TYPE_CLASS_NUMBER"]
 local math = _G["math"]
 local tostring = _G["tostring"]
+local Note = _G["Note"]
+local string = _G["string"]
+local tonumber = _G["tonumber"]
 module(...)
 
 local context = nil
@@ -31,6 +34,51 @@ local textSize = (14)
 local textSizeSmall = (10) 
 local bgGrey = Color:argb(255,0x99,0x99,0x99) -- background color
 local tabMinHeight = (35 * density) -- dp value TODO
+
+--widgets that need to be kept for harvesting
+local xCoordEdit
+local yCoordEdit
+local heightEdit
+local widthEdit
+local labelSizeEdit
+local nameEdit --button Name editor
+local targetEdit --switch to target editor
+--The actual color values that will be changed by the swatch click handler
+local normalColor
+local flipColor
+local pressedColor
+local normalLabelColor
+local flipLabelColor
+--The widget views that will launch and display the current color.
+local normalColorPicker
+local flipColorPicker
+local pressedColorPicker
+local normalLabelColorPicker
+local flipLabelColorPicker
+
+local selectedColorField --intermeidate variable to store which color field is currently selected
+
+--ui callback listeners
+local colorPickerDoneListener
+local swatchClickListener
+
+--funtions to hide/show the appropriate rows, defined later, leave global
+showSetEditorControls = nil
+showButtonEditorControls = nil
+
+--ui widgets that need to be remembered for hide/show
+local controlRowTwo
+local labelRowFour
+local buttonNameRow
+local buttonTargetSetRow
+
+--functions to get the appropriate editors to attatch the validator to, leave global
+getWidthEdit = function() return widthEdit end
+getHeightEdit = function() return heightEdit end
+getXCoordEdit = function() return xCoordEdit end
+getYCoordEdit = function() return yCoordEdit end
+getLabelSizeEdit = function() return labelSizeEdit end
+getButtonNameEdit = function() return nameEdit end
 
 function init(pContext)
   context = pContext
@@ -87,23 +135,25 @@ function makeUI(editorValues,numediting)
   buttonNameEditParams = fnew(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
     
   --local buttonNameEdit = makeEdit(buttonNameEditParams)
-  if(buttonNameEdit == nil) then
-    buttonNameEdit = fnew(EditText,context) 
-    buttonNameEdit:setTextSize(textSize)
-    buttonNameEdit:setLines(1)
-    buttonNameEdit:setLayoutParams(buttonNameEditParams)
-    buttonNameRow:addView(buttonNameEdit)
+  if(nameEdit == nil) then
+    nameEdit = fnew(EditText,context) 
+    nameEdit:setTextSize(textSize)
+    nameEdit:setLines(1)
+    nameEdit:setLayoutParams(buttonNameEditParams)
+    buttonNameRow:addView(nameEdit)
   end
   if(numediting > 1) then
     --Note("\nEditing multiple, not setting name\n")
-    buttonNameEdit:setText("")
-    buttonNameEdit:setEnabled(false)
+    nameEdit:setText("")
+    nameEdit:setEnabled(false)
+    --nameEdit:setVisibility(View.GONE)
   else
+    nameEdit:setVisibility(View.VISIBLE)
     --Note("\nSetting editor value,"..editorValues.name)
     if(editorValues.name ~= nil) then
     --Note("\nEditing button, name is,"..editorValues.name.."\n")
-      buttonNameEdit:setEnabled(true)
-      buttonNameEdit:setText(editorValues.name)
+      nameEdit:setEnabled(true)
+      nameEdit:setText(editorValues.name)
     else
       --Note("\nEditorvalues.name is nil\n")
     end
@@ -134,21 +184,21 @@ function makeUI(editorValues,numediting)
   
   buttonTargetSetEditParams = fnew(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
     
-  if(buttonTargetSetEdit == nil) then
-    buttonTargetSetEdit = fnew(EditText,context)  
-    buttonTargetSetEdit:setTextSize(textSize)
-    buttonTargetSetEdit:setLines(1)
-    buttonTargetSetEdit:setLayoutParams(buttonTargetSetEditParams)
-    buttonTargetSetRow:addView(buttonTargetSetEdit)
+  if(targetEdit == nil) then
+    targetEdit = fnew(EditText,context)  
+    targetEdit:setTextSize(textSize)
+    targetEdit:setLines(1)
+    targetEdit:setLayoutParams(buttonTargetSetEditParams)
+    buttonTargetSetRow:addView(targetEdit)
   end
   if(numediting > 1) then
-    buttonTargetSetEdit:setEnabled(false)
-    buttonTargetSetEdit:setText("")
+    targetEdit:setEnabled(false)
+    targetEdit:setText("")
     
   else
     if(editorValues.switchTo ~= nil) then
-      buttonTargetSetEdit:setEnabled(true)
-      buttonTargetSetEdit:setText(editorValues.switchTo)
+      targetEdit:setEnabled(true)
+      targetEdit:setText(editorValues.switchTo)
     end
   end
   
@@ -184,18 +234,18 @@ function makeUI(editorValues,numediting)
   wrapparams = fnew(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
   touchparams = fnew(LinearLayoutParams,60,60)
   
-  if(normalColor == nil) then
-    normalColor = fnew(View,context)
-    normalColor:setLayoutParams(touchparams)
-    theNormalColor = editorValues.primaryColor
-    normalColor:setBackgroundColor(theNormalColor)
-    normalColor:setTag("normal")
-    normalColor:setOnClickListener(swatchclicked_cb)
+  if(normalColorPicker == nil) then
+    normalColorPicker = fnew(View,context)
+    normalColorPicker:setLayoutParams(touchparams)
+    normalColor = editorValues.primaryColor
+    normalColorPicker:setBackgroundColor(normalColor)
+    normalColorPicker:setTag("normal")
+    normalColorPicker:setOnClickListener(swatchClickListener)
     --Note("addiing normal color")
-    colorHolderA:addView(normalColor)
+    colorHolderA:addView(normalColorPicker)
   else 
-    theNormalColor = editorValues.primaryColor
-    normalColor:setBackgroundColor(theNormalColor)
+    normalColor = editorValues.primaryColor
+    normalColorPicker:setBackgroundColor(normalColor)
   end
 
   if(colorHolderB == nil) then
@@ -206,19 +256,19 @@ function makeUI(editorValues,numediting)
     colorRowOne:addView(colorHolderB)
   end
   
-  if(pressedColor == nil) then
-    pressedColor = fnew(View,context)
-    pressedColor:setLayoutParams(touchparams)
-    pressedColor:setTag("pressed")
-    pressedColor:setOnClickListener(swatchclicked_cb)
+  if(pressedColorPicker == nil) then
+    pressedColorPicker = fnew(View,context)
+    pressedColorPicker:setLayoutParams(touchparams)
+    pressedColorPicker:setTag("pressed")
+    pressedColorPicker:setOnClickListener(swatchClickListener)
     --thePressedColor = Color:argb(255,120,250,250)
-    thePressedColor = editorValues.selectedColor
-    pressedColor:setBackgroundColor(thePressedColor)
+    pressedColor = editorValues.selectedColor
+    pressedColorPicker:setBackgroundColor(pressedColor)
     --Note("addiing pressed color")
-    colorHolderB:addView(pressedColor)
+    colorHolderB:addView(pressedColorPicker)
   else
-    thePressedColor = editorValues.selectedColor
-    pressedColor:setBackgroundColor(thePressedColor)
+    pressedColor = editorValues.selectedColor
+    pressedColorPicker:setBackgroundColor(pressedColor)
   end
   
   if(colorHolderC == nil) then
@@ -229,18 +279,18 @@ function makeUI(editorValues,numediting)
     colorRowOne:addView(colorHolderC)
   end
   
-  if(flipColor == nil) then
-    flipColor = fnew(View,context)
-    flipColor:setLayoutParams(touchparams)
-    flipColor:setTag("flip")
-    flipColor:setOnClickListener(swatchclicked_cb)
-    theFlipColor = editorValues.flipColor
+  if(flipColorPicker == nil) then
+    flipColorPicker = fnew(View,context)
+    flipColorPicker:setLayoutParams(touchparams)
+    flipColorPicker:setTag("flip")
+    flipColorPicker:setOnClickListener(swatchClickListener)
+    flipColor = editorValues.flipColor
     --Note("addiing flip color")
-    flipColor:setBackgroundColor(theFlipColor)
-    colorHolderC:addView(flipColor)
+    flipColorPicker:setBackgroundColor(flipColor)
+    colorHolderC:addView(flipColorPicker)
   else
-    theFlipColor = editorValues.flipColor
-    flipColor:setBackgroundColor(theFlipColor)
+    flipColor = editorValues.flipColor
+    flipColorPicker:setBackgroundColor(flipColor)
   end
   
   if(labelRowOne == nil) then
@@ -290,18 +340,18 @@ function makeUI(editorValues,numediting)
     colorHolderD:setGravity(GRAVITY_CENTER)
   end
   
-  if(normalLabelColor == nil) then
-    normalLabelColor = fnew(View,context)
-    normalLabelColor:setLayoutParams(touchparams)
-    theNormalLabelColor = editorValues.labelColor
-    normalLabelColor:setBackgroundColor(theNormalLabelColor)
-    normalLabelColor:setTag("label")
-    normalLabelColor:setOnClickListener(swatchclicked_cb)
-    colorHolderD:addView(normalLabelColor)
+  if(normalLabelColorPicker == nil) then
+    normalLabelColorPicker = fnew(View,context)
+    normalLabelColorPicker:setLayoutParams(touchparams)
+    normalLabelColor = editorValues.labelColor
+    normalLabelColorPicker:setBackgroundColor(normalLabelColor)
+    normalLabelColorPicker:setTag("label")
+    normalLabelColorPicker:setOnClickListener(swatchClickListener)
+    colorHolderD:addView(normalLabelColorPicker)
     colorRowTwo:addView(colorHolderD)
   else
-    theNormalLabelColor = editorValues.labelColor
-    normalLabelColor:setBackgroundColor(theNormalLabelColor)
+    normalLabelColor = editorValues.labelColor
+    normalLabelColorPicker:setBackgroundColor(normalLabelColor)
   end
   
   if(colorHolderE == nil) then
@@ -311,18 +361,18 @@ function makeUI(editorValues,numediting)
     colorRowTwo:addView(colorHolderE)
   end
   
-  if(flipLabelColor == nil) then
-    flipLabelColor = fnew(View,context)
-    flipLabelColor:setLayoutParams(touchparams)
-    flipLabelColor:setTag("flipLabel")
-    flipLabelColor:setOnClickListener(swatchclicked_cb)
+  if(flipLabelColorPicker == nil) then
+    flipLabelColorPicker = fnew(View,context)
+    flipLabelColorPicker:setLayoutParams(touchparams)
+    flipLabelColorPicker:setTag("flipLabel")
+    flipLabelColorPicker:setOnClickListener(swatchClickListener)
     --theFlipLabelColor = Color:argb(255,120,250,250)
-    theFlipLabelColor = editorValues.flipLabelColor
-    flipLabelColor:setBackgroundColor(theFlipLabelColor)
-    colorHolderE:addView(flipLabelColor)
+    flipLabelColor = editorValues.flipLabelColor
+    flipLabelColorPicker:setBackgroundColor(flipLabelColor)
+    colorHolderE:addView(flipLabelColorPicker)
   else
-    theFlipLabelColor = editorValues.flipLabelColor
-    flipLabelColor:setBackgroundColor(theFlipLabelColor)
+    flipLabelColor = editorValues.flipLabelColor
+    flipLabelColorPicker:setBackgroundColor(flipLabelColor)
   end
   
   if(colorHolderF == nil) then
@@ -504,20 +554,20 @@ function makeUI(editorValues,numediting)
     controlRowTwo:addView(controlHolderD)
   end
   --numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
-  if(xcoordEdit == nil) then
-    xcoordEdit = fnew(EditText,context)
-    xcoordEdit:setLayoutParams(numbereditorParams)
-    xcoordEdit:setInputType(TYPE_CLASS_NUMBER)
-    xcoordEdit:setGravity(GRAVITY_CENTER)
-    xcoordEdit:setTextSize(textSize)
-    controlHolderD:addView(xcoordEdit)
+  if(xCoordEdit == nil) then
+    xCoordEdit = fnew(EditText,context)
+    xCoordEdit:setLayoutParams(numbereditorParams)
+    xCoordEdit:setInputType(TYPE_CLASS_NUMBER)
+    xCoordEdit:setGravity(GRAVITY_CENTER)
+    xCoordEdit:setTextSize(textSize)
+    controlHolderD:addView(xCoordEdit)
   end
   if(editorValues.x == "MULTI") then
     --Note("setting x string:MULTI")
-    xcoordEdit:setText("")
+    xCoordEdit:setText("")
   else
     --Note("setting x string:"..editorValues.x)
-    xcoordEdit:setText(tostring(math.floor(editorValues.x)))
+    xCoordEdit:setText(tostring(math.floor(editorValues.x)))
   end
   
   if(controlHolderE == nil) then
@@ -527,18 +577,18 @@ function makeUI(editorValues,numediting)
     controlRowTwo:addView(controlHolderE)
   end
   --numbereditorParams = fnew(LinearLayoutParams,120,WRAP_CONTENT)
-  if(ycoordEdit == nil) then
-    ycoordEdit = fnew(EditText,context)
-    ycoordEdit:setLayoutParams(numbereditorParams)
-    ycoordEdit:setInputType(TYPE_CLASS_NUMBER)
-    ycoordEdit:setGravity(GRAVITY_CENTER)
-    ycoordEdit:setTextSize(textSize)
-    controlHolderE:addView(ycoordEdit)
+  if(yCoordEdit == nil) then
+    yCoordEdit = fnew(EditText,context)
+    yCoordEdit:setLayoutParams(numbereditorParams)
+    yCoordEdit:setInputType(TYPE_CLASS_NUMBER)
+    yCoordEdit:setGravity(GRAVITY_CENTER)
+    yCoordEdit:setTextSize(textSize)
+    controlHolderE:addView(yCoordEdit)
   end
   if(editorValues.y == "MULTI") then
-    ycoordEdit:setText("")
+    yCoordEdit:setText("")
   else
-    ycoordEdit:setText(tostring(math.floor(editorValues.y)))
+    yCoordEdit:setText(tostring(math.floor(editorValues.y)))
   end
   
   if(controlHolderF == nil) then
@@ -593,6 +643,23 @@ function makeUI(editorValues,numediting)
   
 end
 
+function getEditorValues()
+  local tmp = {}
+    tmp.xCoord = tonumber(xCoordEdit:getText():toString())
+    tmp.yCoord = tonumber(yCoordEdit:getText():toString())
+    tmp.name = nameEdit:getText():toString()
+    tmp.target = targetEdit:getText():toString()
+    tmp.normalColor = normalColor
+    tmp.flipColor = flipColor
+    tmp.pressedColor = pressedColor
+    tmp.normalLabelColor = normalLabelColor
+    tmp.flipLabelColor = flipLabelColor
+    tmp.labelSize = tonumber(labelSizeEdit:getText():toString())
+    tmp.height = tonumber(heightEdit:getText():toString())
+    tmp.width = tonumber(widthEdit:getText():toString())
+  return tmp
+end
+
 makeLabel = function(text,textSize,gravity,params)
   local tmp = quicknew(TextView,context)
   tmp:setLayoutParams(params)
@@ -609,3 +676,64 @@ makeEdit = function(params,pTextSize)
   tmp:setTextSize(pTextSize)
   return tmp
 end
+
+swatchClickListener = luajava.createProxy("android.view.View$OnClickListener",{
+  onClick = function(v)
+    selectedColorField = v:getTag()
+    local color = 0
+    if(selectedColorField == "flip") then
+      color = flipColor
+    elseif(selectedColorField == "normal") then
+      color = normalColor
+    elseif(selectedColorField == "pressed") then
+      color = pressedColor
+    elseif(selectedColorField == "label") then
+      color = normalLabelColor
+    elseif(selectedColorField == "flipLabel") then
+      color = flipLabelColor
+    end
+    colorpickerdialog = luajava.newInstance("com.offsetnull.bt.button.ColorPickerDialog",context,colorPickerDoneListener,color)
+    colorpickerdialog:show()
+  end
+})
+
+colorPickerDoneListener = luajava.createProxy("com.offsetnull.bt.button.ColorPickerDialog$OnColorChangedListener",{
+  colorChanged = function(color)
+    if(selectedColorField == "flip") then
+      flipColorPicker:setBackgroundColor(color)
+      flipColorPicker:invalidate()
+      flipColor = color
+    elseif(selectedColorField == "normal") then
+      normalColorPicker:setBackgroundColor(color)
+      normalColorPicker:invalidate()
+      normalColor = color;
+    elseif(selectedColorField == "pressed") then
+      pressedColorPicker:setBackgroundColor(color)
+      pressedColorPicker:invalidate()
+      pressedColor = color
+    elseif(selectedColorField == "label") then
+      normalLabelColorPicker:setBackgroundColor(color)
+      normalLabelColorPicker:invalidate()
+      normalLabelColor = color
+    elseif(selectedColorField == "flipLabel") then
+      flipLabelColorPicker:setBackgroundColor(color)
+      flipLabelColorPicker:invalidate()
+      flipLabelColor = color
+    end
+  end
+})
+
+showSetEditorControls = function()
+  buttonTargetSetRow:setVisibility(View.GONE)
+  buttonNameRow:setVisibility(View.VISIBLE)
+  controlRowTwo:setVisibility(View.GONE)
+  labelRowFour:setVisibility(View.GONE)
+end
+
+showButtonEditorControls = function()
+  controlRowTwo:setVisibility(View.VISIBLE)
+  labelRowFour:setVisibility(View.VISIBLE)
+  buttonNameRow:setVisibility(View.VISIBLE)
+  buttonTargetSetRow:setVisibility(View.VISIBLE)
+end
+
