@@ -43,6 +43,11 @@ public class LuaDialog extends Dialog {
 		mView = v;	
 		//ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
 		//mView.setLayoutParams(params);
+		MainWindow w = (MainWindow)context;
+		if(w.isStatusBarHidden()) {
+			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
+		this.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
 		if(mView.getLayoutParams() != null) {
 			//LayoutParams tmp = (LayoutParams) mView.getLayoutParams();
 			//ViewGroup.LayoutParams p = new ViewGroup.LayoutParams(tmp.width, tmp.height);
@@ -51,11 +56,7 @@ public class LuaDialog extends Dialog {
 			this.setContentView(mView);
 		}
 		
-		MainWindow w = (MainWindow)context;
-		if(w.isStatusBarHidden()) {
-			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		}
-		this.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.MATCH_PARENT);
+		
 		//this.setCont
 	}
 	
