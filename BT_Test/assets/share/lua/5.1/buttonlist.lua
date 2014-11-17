@@ -6,9 +6,9 @@ local RelativeLayout = _G["RelativeLayout"]
 local RelativeLayoutParams = _G["RelativeLayoutParams"]
 local TranslateAnimation = _G["TranslateAnimation"]
 local R_drawable = _G["R_drawable"]
-local ImageButton = _G["ImageButton"]
+local ImageButton = luajava.bindClass("android.widget.ImageButton")
 local LinearLayoutParams = _G["LinearLayoutParams"]
-local Context = _G["Context"]
+local Context = luajava.bindClass("android.content.Context")
 local EditText = _G["EditText"]
 local LinearLayout = _G["LinearLayout"]
 local Button = _G["Button"]
@@ -98,6 +98,7 @@ adapter = luajava.createProxy("android.widget.ListAdapter",{
 		
 		local holder = newview:findViewById(R_id.toolbarholder)
 		holder:setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS)
+		--holder:setFocusableInTouchMode(false)
 		
 		if(holder:getChildCount() > 0) then
 			holder:removeAllViews()
@@ -174,7 +175,7 @@ end
 
 function showList(unsortedList,lastLoadedSet)
 	
-	if(adapter ~= nil) then    Note("\nadapter is not nil"); end
+	--if(adapter ~= nil) then    Note("\nadapter is not nil"); end
 	
 	selectedSet = lastLoadedSet
 	
@@ -196,12 +197,13 @@ function showList(unsortedList,lastLoadedSet)
 	
 	list:setScrollbarFadingEnabled(false)
 	list:setOnItemClickListener(itemClicked)
-	list:setSelector(R_drawable.blue_frame_nomargin_nobackground)
+	list:setSelector(R_drawable.filter_selection_selector)
 	list:setAdapter(adapter)
 	list:setOnScrollListener(scrollListener)
 	list:setOnFocusChangeListener(focusListener)
 	list:setFocusable(true)
 	list:bringToFront()
+	list:setFocusableInTouchMode(false)
 	
 	local emptyView = layout:findViewById(R_id.empty)
 	list:setEmptyView(emptyView)
@@ -289,14 +291,14 @@ makeToolbar = function()
 	animateOut = nil	
 	
 	animateIn = luajava.new(TranslateAnimation,toolbarlength,0,0,0)
-	animateIn:setDuration(300)
+	animateIn:setDuration(200)
 	
 	animateOut = luajava.new(TranslateAnimation,0,toolbarlength,0,0)
-	animateOut:setDuration(300)
+	animateOut:setDuration(200)
 	animateOut:setAnimationListener(animateOutListener)
 	
 	animateOutAndDelete = luajava.new(TranslateAnimation,0,toolbarlength,0,0)
-	animateOutAndDelete:setDuration(300)
+	animateOutAndDelete:setDuration(200)
 	animateOutAndDelete:setAnimationListener(animateOutAndDeleteListener)
 	
 end
@@ -363,7 +365,7 @@ animateOutAndDeleteListener = luajava.createProxy("android.view.animation.Animat
 
 itemClicked = luajava.createProxy("android.widget.AdapterView$OnItemClickListener",{
 	onItemClick = function(arg0,view,position,arg3)
-		Note("\ndoing click\n")
+		--Note("\ndoing click\n")
 		if(toolbar:getParent() ~= nil) then
 			removeToolbar()
 			return
@@ -371,12 +373,14 @@ itemClicked = luajava.createProxy("android.widget.AdapterView$OnItemClickListene
 		
 		local duration = 500
 		if(view:getBottom() > list:getHeight() or view:getTop() < 0) then
-			Note("\nsmoothscrolling\n")
+			--Note("\nsmoothscrolling\n")
 			list:smoothScrollToPosition(position,100)
 			reclick_.target = position
 			list:postDelayed(luajava.createProxy("java.lang.Runnable",reclick_),100)
 			return
 		end
+		
+		--list:setSelector(R_drawable.blue_frame_nomargin_nobackground)
 		
 		lastSelectedIndex = position
 		local frame = list:getParent()
@@ -385,7 +389,7 @@ itemClicked = luajava.createProxy("android.widget.AdapterView$OnItemClickListene
 		params:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
 		params:addRule(RelativeLayout.ALIGN_PARENT_TOP)
 		local y = position - list:getFirstVisiblePosition()
-		Note("\ny pos="..y)
+		--Note("\ny pos="..y)
 		local v_top = (list:getChildAt(y)):getTop()
 		local f_top = frame:getTop()
 		
@@ -407,7 +411,13 @@ end
 scrollListener = luajava.createProxy("android.widget.AbsListView$OnScrollListener",{
 	onScrollStateChanged = function(view,scrollstate)
 		if(toolbar:getParent() ~= nil) then
+		  --toolbar:getParent():clearFocus()
+		  --list:setSelection(lastSelectedIndex)
 			removeToolbar()
+			
+			--list:setSelection(0)
+			--list:setSelector(R_drawable.transparent)
+			--list:clearFocus();
 		end
 	end,
 	onScroll = function(view,first,visCount,totalCount)
@@ -418,7 +428,7 @@ scrollListener = luajava.createProxy("android.widget.AbsListView$OnScrollListene
 focusListener = luajava.createProxy("android.view.View$OnFocusChangeListener",{
 	onFocusChange = function(view,hasfocus)
 		if(hasfocus) then
-			list:setSelector(R_drawable.blue_frame_nomargin_nobackground)
+			list:setSelector(R_drawable.filter_selection_selector)
 		else
 			list:setSelector(R_drawable.transparent)
 		end
@@ -529,7 +539,7 @@ function updateButtonListDialog(data)
   selectedSet = data.setname
   --unsortedList = data.setlist
   sortList(data.setlist)
-  Note("\nConfirmingDelete: " .. data.setname)
+  --Note("\nConfirmingDelete: " .. data.setname)
   list:setAdapter(adapter)
   --dialog:dismiss()
 end
