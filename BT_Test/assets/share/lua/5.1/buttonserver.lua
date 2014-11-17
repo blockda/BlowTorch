@@ -2,6 +2,8 @@ require("button")
 require("serialize")
 local marshal = require("marshal")
 
+local buttonWindowName = "button_window"
+
 debugInfo = false
 local function debugString(string)
 	if(debugInfo) then
@@ -29,7 +31,7 @@ function loadButtonSet(args)
 	
 	if(lob.set ~= nil) then
 		current_set = args
-		WindowXCallB("button_window","loadButtons",marshal.encode(lob))
+		WindowXCallB(buttonWindowName,"loadButtons",marshal.encode(lob))
 	end
 end
 
@@ -42,7 +44,7 @@ function loadAndEditSet(data)
 	
 	if(lob.set ~= nil) then
 		current_set = data
-		WindowXCallB("button_window","loadAndEditSet",marshal.encode(lob))
+		WindowXCallB(buttonWindowName,"loadAndEditSet",marshal.encode(lob))
 	end
 end
 
@@ -53,7 +55,7 @@ current_set = DEFAULT
 
 function clearButtons()
 	--all that needs to be done is call into the window to kick the process off
-	WindowXCallS("button_window","clearButtons","")
+	WindowXCallS(buttonWindowName,"clearButtons","")
 end
 
 function saveButtons(arg)
@@ -131,7 +133,7 @@ function deleteButtonSet(name)
 	end
 
 	if(left == 0) then
-		WindowXCallS("button_window","updateButtonListDialogNoItems","now")
+		WindowXCallS(buttonWindowName,"updateButtonListDialogNoItems","now")
 	else
   	local list = {}
     for i,v in pairs(buttonsets) do
@@ -142,7 +144,7 @@ function deleteButtonSet(name)
     local data = {}
     data.setname = nextset
     data.setlist = list
-		WindowXCallS("button_window","updateButtonListDialog",serialize(data))
+		WindowXCallS(buttonWindowName,"updateButtonListDialog",serialize(data))
 	end
 end
 
@@ -319,7 +321,7 @@ function getButtonSetList(s)
 		setdata[i] = #v
 	end
 	
-	WindowXCallS("button_window","showButtonList",serialize(setdata))
+	WindowXCallS(buttonWindowName,"showButtonList",serialize(setdata))
 end
 
 function saveSetDefaults(data)
@@ -487,7 +489,7 @@ end
 
 --boolean windowReady
 function loadOptions()
-	WindowXCallS("button_window","loadOptions",serialize(options))
+	WindowXCallS(buttonWindowName,"loadOptions",serialize(options))
 end
 
 function setAutoLaunch(value)
@@ -619,11 +621,11 @@ options.auto_create = true
 function setDebug(off)
 	if(not off) then
 		debugString("Button server entering debug mode...")
-		WindowXCallS("button_window","setDebug","on")
+		WindowXCallS(buttonWindowName,"setDebug","on")
 		debugInfo = true
 	else
 		debugString("Button leaving debug mode...")
-		WindowXCallS("button_window","setDebug","off")
+		WindowXCallS(buttonWindowName,"setDebug","off")
 		debugInfo = false
 	end
 end
