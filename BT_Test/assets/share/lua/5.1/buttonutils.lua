@@ -35,8 +35,8 @@ getDialogDimensions = function(context)
     --portrait
         --landscape
     if(dpi_bucket >= 600) then
-      height_param = LinearLayoutParams.WRAP_CONTENT -- 300*density
-      --TODO when should this be 300*density as opposed to wrap_content?
+      height_param = 300*density
+      
     end
     
     if(width_param > displayWidth) then

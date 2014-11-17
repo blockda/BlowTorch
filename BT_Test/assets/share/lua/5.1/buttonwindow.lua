@@ -20,12 +20,6 @@ debugString("Button Window Script Loading...")
 density = GetDisplayDensity()
 Configuration = luajava.bindClass("android.content.res.Configuration")
 
-TypedValue = luajava.bindClass("android.util.TypedValue")
-Adapter = luajava.bindClass("android.widget.Adapter")
-ListView = luajava.bindClass("android.widget.ListView")
-ImageButton = luajava.bindClass("android.widget.ImageButton")
-LayoutInflater = luajava.bindClass("android.view.LayoutInflater")
-Context = luajava.bindClass("android.content.Context")
 R_id = luajava.bindClass("com.offsetnull.bt.R$id")
 R_layout = luajava.bindClass("com.offsetnull.bt.R$layout")
 R_drawable = luajava.bindClass("com.offsetnull.bt.R$drawable")
@@ -42,6 +36,7 @@ HapticFeedbackConstants = luajava.bindClass("android.view.HapticFeedbackConstant
 Validator = luajava.newInstance("com.offsetnull.bt.validator.Validator")
 MenuItem = luajava.bindClass("android.view.MenuItem")
 DialogInterface = luajava.bindClass("android.content.DialogInterface")
+Context = luajava.bindClass("android.content.Context")
 Validator_Number = Validator.VALIDATE_NUMBER
 Validator_Not_Blank = Validator.VALIDATE_NOT_BLANK
 Validator_Number_Not_Blank = bit.bor(Validator_Number,Validator_Not_Blank)
@@ -752,26 +747,6 @@ function exitManagerModeNoSave()
 	view:invalidate()
 end
 
-checkchange = {}
-function checkchange.onCheckedChanged(v,ischecked)
-	--Note("starting check change")
-	gridsnap = ischecked
-	--drawManagerLayer = ischecked
-	--if(manage == true and ischecked == true) then
-	--	managerLayer = Bitmap:createBitmap(view:getWidth(),view:getHeight(),BitmapConfig.ARGB_8888)
-	--	managerCanvas = luajava.newInstance("android.graphics.Canvas",managerLayer)
-	--	debugPrint("drawingManagerLayer")
-	--	drawManagerGrid()	
-	--	invalidate()
-	--else
-	--	managerCanvas = nil
-	--	managerLayer:recycle()
-	--	managerLayer = nil
-	--	invalidate()
-	--end
-
-end
-
 function drawManagerGrid()
 		local c = managerCanvas
 		local width = view:getWidth()
@@ -793,71 +768,9 @@ function drawManagerGrid()
 
 end
 
-checkchange_cb = luajava.createProxy("android.widget.CompoundButton$OnCheckedChangeListener",checkchange)
 
 gridXwidth = 40 * density --67 * density
 gridYwidth = 40 * density --67 * density
-seekerX = {}
-function seekerX.onProgressChanged(v,prog,state)
-	----Note("seekbarchanged:"..prog)
-	local tmp = 32 + prog
-	gridXwidth = tmp *density
-	gridXSizeLabel:setText("Grid X Spacing: "..tmp)
-	-- set default width
-	defaults.gridXwidth = tmp
-
-	--managerCanvas:clearCanvas()
-	drawManagerGrid()
-	--drawButtons()
-	view:invalidate()
-end
-seekerX_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",seekerX)
-
-seekerY = {}
-function seekerY.onProgressChanged(v,prog,state)
-	--debugPrint("seekbarchanged:"..prog)
-	local tmp = 32 + prog
-	gridYwidth = tmp *density
-	gridYSizeLabel:setText("Grid Y Spacing: "..tmp)
-	-- set default height
-	defaults.gridYwidth = tmp
-	--managerCanvas:clearCanvas()
-	drawManagerGrid()
-	--drawButtons()
-	view:invalidate()
-end
-seekerY_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",seekerY)
-
-
-opacitySeeker = {}
-function opacitySeeker.onProgressChanged(v,prog,state)
-	dpaint:setAlpha(prog)
-	manageropacity = prog
-	--Note("manageropacity now:"..manageropacity)
-	local opacitypct = math.floor((manageropacity / 255)*100)
-	gridOpacityLabel:setText("Grid Opacity: "..opacitypct.."%")
-	drawManagerGrid()
-	view:invalidate()
-end
-
-opacitySeeker_cb = luajava.createProxy("android.widget.SeekBar$OnSeekBarChangeListener",opacitySeeker)
-
-radio = {}
-function radio.onCheckedChanged(group,id)
-	--debugPrint("radio buttons changed")
-	if(id == 0) then
-	 --intersect
-	 --debugPrint("intersect selected")
-	 intersectMode = id
-	end
-	if(id == 1) then
-	 --contains
-	 --debugPrint("contains selected")
-	 intersectMode = id
-	end
-end
-
-radio_cb = luajava.createProxy("android.widget.RadioGroup$OnCheckedChangeListener",radio)
 
 intersectMode = 1
 
@@ -881,14 +794,14 @@ function showButtonList(data)
 	
 	--launch the new editor
 	
-	for key,value in pairs(luajava) do
-  	Note("\npre found member " .. key);
-	end
+	--for key,value in pairs(luajava) do
+  --	Note("\npre found member " .. key);
+	--end
 	if(buttonSetListDialog == nil) then
 		buttonSetListDialog = require("buttonlist")
 		buttonSetListDialog.init(mContext)
 	end
-	Note("Showing new list\n")
+	--Note("Showing new list\n")
 	--buttonSetListDialog.init()
 	buttonSetListDialog.showList(setdata,lastLoadedSet)
 	return
@@ -903,9 +816,6 @@ function updateButtonListDialog(data)
 end
 
 function updateButtonListDialogNoItems()
-	--mListView:setAdapter(buttonListAdapter_cb)
-	--emptyButtons()
-	--mSelectorDialog:dismiss()
 	buttonSetListDialog.updateButtonListDialogNoItems()
 	emptyButtons()
 end
@@ -932,202 +842,39 @@ function buttonOptions()
   editorValues.gridIntersectionTest = intersectMode
   editorValues.gridSnap = gridsnap
   
-  if(1==1) then
-    Note("launching new button editor")
-    local editorOptionsDialog = require("editoroptionsdialog")
-    editorOptionsDialog.init(mContext)
-    editorOptionsDialog.setEditorDoneCallback()
-    editorOptionsDialog.setGridSnapCallback(function(v)
-      gridsnap = v
-    end)
-    editorOptionsDialog.setGridXSpacingCallback(function(v)
-      gridXwidth = v
-      defaults.gridXwidth = v
-      drawManagerGrid()
-      view:invalidate()
-    end)
-    editorOptionsDialog.setGridYSpacingCallback(function(v)
-      gridYwidth = v
-      defaults.gridYwidth = v
-      drawManagerGrid()
-      view:invalidate()
-    end)
-    editorOptionsDialog.setGridOpacityCallback(function(v)
-      dpaint:setAlpha(v)
-      manageropacity = v
-      drawManagerGrid()
-      view:invalidate()
-    end)
-    editorOptionsDialog.setGridSnapTestCallback(function(v)
-      intersectMode = v
-    end)
-    
-    editorOptionsDialog.showDialog(editorValues)
-    return
-  end
 
+  local editorOptionsDialog = require("editoroptionsdialog")
+  editorOptionsDialog.init(mContext)
+  editorOptionsDialog.setEditorDoneCallback()
+  editorOptionsDialog.setGridSnapCallback(function(v)
+    gridsnap = v
+  end)
+  editorOptionsDialog.setGridXSpacingCallback(function(v)
+    gridXwidth = v
+    defaults.gridXwidth = v
+    drawManagerGrid()
+    view:invalidate()
+  end)
+  editorOptionsDialog.setGridYSpacingCallback(function(v)
+    gridYwidth = v
+    defaults.gridYwidth = v
+    drawManagerGrid()
+    view:invalidate()
+  end)
+  editorOptionsDialog.setGridOpacityCallback(function(v)
+    dpaint:setAlpha(v)
+    manageropacity = v
+    drawManagerGrid()
+    view:invalidate()
+  end)
+  editorOptionsDialog.setGridSnapTestCallback(function(v)
+    intersectMode = v
+  end)
+  
+  editorOptionsDialog.showDialog(editorValues)
+  return
 
-	ctex = view:getContext()
-
-	ll = luajava.newInstance("android.widget.LinearLayout",ctex)
-	ll:setOrientation(1)
-	llparams = luajava.new(LinearLayoutParams,350*density,LinearLayoutParams.WRAP_CONTENT,1)
-	ll:setLayoutParams(llparams)
-	--ll:setGravity(Gravity.CENTER)
-	
-	local scroller = luajava.new(ScrollView,ctex)
-	scroller:setLayoutParams(llparams)
-	
-	fillparams = luajava.new(LinearLayoutParams,LinearLayoutParams.FILL_PARENT,LinearLayoutParams.WRAP_CONTENT,1)
-	wrapparams = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT,1)
-	wrapparams:setMargins(0,15,0,0)
-	wrapparamsNoWeight = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
-	
-	--lp = luajava.newInstance("android.view.ViewGroup$LayoutParams",-1,-2)
-
-	cb = luajava.newInstance("android.widget.CheckBox",ctex)
-	cb:setChecked(gridsnap)
-	cb:setText("Snap To Grid")
-	cb:setTextSize(textSizeSmall)
-	cb:setOnCheckedChangeListener(checkchange_cb)
-	cb:setLayoutParams(fillparams)
-	
-	local subrow = luajava.new(LinearLayout,ctex)
-	subrow:setLayoutParams(fillparams)
-	
-	--gridSizeRow = luajava.newInstance("android.widget.LinearLayout",ctex)
-	--gridSizeRow:setOrientation(1)
-	
-	--Note("seekbar creation")
-	sbX = luajava.newInstance("android.widget.SeekBar",ctex)
-	sbX:setOnSeekBarChangeListener(seekerX_cb)
-	sbX:setLayoutParams(fillparams)
-	gridXSizeLabel = luajava.newInstance("android.widget.TextView",ctex)
-	gridXSizeLabel:setLayoutParams(wrapparams)
-	gridXSizeLabel:setTextSize(textSizeSmall)
-	gridXSizeLabel:setText("Grid X Spacing: "..gridXwidth)
-	sbX:setProgress((gridXwidth/density)-32)
-	
-	sbY = luajava.newInstance("android.widget.SeekBar",ctex)
-	sbY:setOnSeekBarChangeListener(seekerY_cb)
-	sbY:setLayoutParams(fillparams)
-	gridYSizeLabel = luajava.newInstance("android.widget.TextView",ctex)
-	gridYSizeLabel:setLayoutParams(wrapparams)
-	gridYSizeLabel:setTextSize(textSizeSmall)
-	gridYSizeLabel:setText("Grid Y Spacing: "..gridYwidth)
-	sbY:setProgress((gridYwidth/density)-32)
-	
-	opacity = luajava.newInstance("android.widget.SeekBar",ctex)
-	
-	opacity:setLayoutParams(fillparams)
-	opacity:setMax(255)
-	----Note("settings opacity slider to:"..manageropacity)
-	opacity:setProgress(manageropacity)
-	opacity:setOnSeekBarChangeListener(opacitySeeker_cb)
-	
-	gridOpacityLabel = luajava.newInstance("android.widget.TextView",ctex)
-	gridOpacityLabel:setLayoutParams(wrapparams)
-	gridOpacityLabel:setTextSize(textSizeSmall)
-	gridOpacityLabel:setText("Grid Opacity: "..manageropacity)
-	
-	rg_static = luajava.bindClass("android.widget.RadioGroup")
-	
-	--local subrow2 = luajava.new(LinearLayout,ctex)
-	--subrow2:setLayoutParams(fillparams)
-	
-	rg = luajava.newInstance("android.widget.RadioGroup",ctex)
-	rgLayoutParams = luajava.newInstance("android.widget.LinearLayout$LayoutParams",-2,-2)
-	rg:setLayoutParams(rgLayoutParams)
-	rg:setOnCheckedChangeListener(radio_cb)
-	rg:setOrientation(0)
-	
-	contain = luajava.newInstance("android.widget.RadioButton",ctex)
-	contain:setText("Contains")
-	contain:setTextSize(textSizeSmall)
-	contain:setId(1)
-	
-	intersect = luajava.newInstance("android.widget.RadioButton",ctex)
-	intersect:setText("Intersect")
-	intersect:setTextSize(textSizeSmall)
-	intersect:setId(0)
-	
-	
-	
-	rg_lp = luajava.bindClass("android.widget.RadioGroup$LayoutParams")
-	
-	rg_lp_gen = luajava.new(rg_lp,fillparams)
-	rg_lp_gen2 = luajava.new(rg_lp,fillparams)
-	rg_lp_gen2:setMargins(25,0,0,0)
-	
-	rg:addView(intersect,0,rg_lp_gen)
-	rg:addView(contain,1,rg_lp_gen2)
-	rg:check(intersectMode)
-	
-	selectionTextLabel = luajava.newInstance("android.widget.TextView",ctex)
-	selectionTextLabel:setLayoutParams(wrapparams)
-	selectionTextLabel:setTextSize(textSizeSmall)
-	selectionTextLabel:setText("Drag rectangle selection test:")
-	
-	--subrow2:addView(selectionTextLabel)
-	--subrow2:addView(rg)
-	
-	setSettingsButton = luajava.new(Button,ctex)
-	setSettingsButton:setLayoutParams(fillparams)
-	setSettingsButton:setText("Edit Defaults")
-	setSettingsButton:setOnClickListener(setSettingsButton_cb)
-	--Note("adding views")
-	
-	subrow:addView(cb)
-	subrow:addView(setSettingsButton)
-	ll:addView(subrow)
-	ll:addView(gridXSizeLabel)
-	ll:addView(sbX)
-	ll:addView(gridYSizeLabel)
-	ll:addView(sbY)
-	ll:addView(gridOpacityLabel)
-	ll:addView(opacity)
-	ll:addView(selectionTextLabel)
-	ll:addView(rg)
-	
-	boptHolder = luajava.new(LinearLayout,ctex)
-	boptHolder:setLayoutParams(fillparams)
-	boptHolder:setGravity(Gravity.CENTER)
-	boptDoneButton = luajava.newInstance("android.widget.Button",ctex)
-	boptDoneButton:setText("Done")
-	boptDoneButton:setLayoutParams(wrapparamsNoWeight)
-	boptDoneButton:setOnClickListener(buttonOptionDone_cb)
-	boptHolder:addView(boptDoneButton)
-	
-	ll:addView(boptHolder)
-	
-	scroller:addView(ll)
-	--ll:addView(rg)
-	
-	--ll:addView(setSettingsButton)
-	--ll:addView(subrow)
-	--set up the show editor settings button.
-	--Note("builder alert creation")
-	--builder = luajava.newInstance("android.app.AlertDialog$Builder",ctex)
-	alert = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",ctex,scroller,false,nil)
-	alert:show()
-	--local hiddenview = luajava.new(TextView,view:getContext())
-	--hiddenview:setVisibility(View.GONE)
-	--builder:setCustomTitle(hiddenview)
-	--builder:setTitle("")
-	--builder:setMessage("")
-	--builder:setView(ll)
-	--alert = builder:create()
-	--local titleview = alert:findViewById(android_R_id.title)
-	--titleview:setVisibility(View.GONE)
-	--alert:show()
 end
-
-buttonOptionDone = {}
-function buttonOptionDone.onClick(view)
-	saveDefaultOptions()
-	alert:dismiss()
-end
-buttonOptionDone_cb = luajava.createProxy("android.view.View$OnClickListener",buttonOptionDone)
 
 tpaint = luajava.new(PaintClass)
 tpaint:setTextSize(15)
@@ -1236,136 +983,6 @@ dragstart.y = -1
 dragcurrent = {}
 dragcurrent.x = -1
 dragcurrent.y = -1
-
-function OldTouchEvent(e)
-	
-
-
-	x = e:getX()
-	y = e:getY()
-	--Note("on touch event started")
-	if(e:getAction() == MotionEvent.ACTION_DOWN) then
-		--find if press was in a button
-		ret,b,index = buttonTouched(x,y)
-		if(ret) then
-			fingerdown = true
-			touchedbutton = b
-			touchedindex = index
-			--Note(string.format("Button touched @ x:%d y:%d, buttoncenter x:%d,y:%d",x,y,touchedbutton.x,touchedbutton.y))
-			if(#buttons > 50 and not manage) then
-				aa = luajava.newInstance("android.view.animation.AlphaAnimation",1.0,0.0)
-				--aa = AlphaAnimation.new(1.0,0.0)
-				aa:setDuration(1500)
-				aa:setFillAfter(false)
-				view:startAnimation(aa)
-			end
-			return true
-		else
-			--we are draggin now
-			if(manage) then
-				dragstart.x = x
-				dragstart.y = y
-				return true
-			end
-		end
-	end
-
-	if(e:getAction() == MotionEvent.ACTION_MOVE) then
-
-		--if(not manage
-
-		if(prevevent == 0) then
-			prevevent = e:getEventTime()
-		else
-			now = e:getEventTime()
-			local elapsed = now - prevevent
-			if(elapsed > 30) then
-			--proceed
-				--Note("processing move event")
-				prevevent = now
-			else
-				return true --consume but dont process.
-			end
-		end
-
-
-
-
-		--Note("ACTION MOVING"..touchedbutton.x)
-
-		if(not fingerdown and manage) then
-			--we are drag moving now.
-			dragmoving = true
-			dragcurrent.x = x
-			dragcurrent.y = y
-			--drawDragBox()
-			checkIntersects()
-			view:invalidate()
-			return true
-		end
-
-		if(fingerdown and manage) then
-			local modx = (math.floor(e:getX()/gridXwidth)*gridXwidth)+(gridXwidth/2)
-			local mody = (math.floor(e:getY()/gridYwidth)*gridYwidth)+(gridYwidth/2)
-			
-			touchedbutton.x = modx
-			touchedbutton.y = mody
-			updateRect(touchedbutton)
-			--drawButton(touchedbutton)
-			drawButtons()
-			view:invalidate()
-			return true
-		else
-			return false
-		end
-	end
-
-	if(e:getAction() == MotionEvent.ACTION_UP) then
-		if(dragmoving) then
-			--redraw the screen without the drag rect
-
-			--drawButtons()
-			dragmoving = false
-			view:invalidate()
-			return true
-		end
-		if(manage and not fingerdown) then
-			--lawl, make new button
-			local modx = (math.floor(x/gridXwidth)*gridXwidth)+(gridXwidth/2)
-			local mody = (math.floor(y/gridYwidth)*gridYwidth)+(gridYwidth/2)
-			--Note("new button at: "..modx..","..mody)
-			local butt = addButton(modx,mody)
-			--butt.width = gridwidth
-			--butt.height = gridwidth
-			--canvas:drawRoundRect(butt.rect,5,5,paint)
-			butt:draw(0,buttonCanvas)
-			view:invalidate()
-			return true
-		end
-		if(manage and fingerdown and touchedbutton.selected == true) then
-			--launch editor selection screen
-			showEditorSelection()
-			touchedbutton={}
-			fingerdown = false
-			return true
-		end
-
-		touchedbutton = {}
-		fingerdown = false
-		return false
-	end
-
-	return false
-	
-end
-
---Float = luajava.newInstance("java.lang.Float",0)
---ten = luajava.newInstance("java.lang.Float",2)
---FloatClass = Float:getClass()
---rawfloatclass = FloatClass.TYPE
---farray = Array:newInstance(rawfloatclass, 2)
---Array:setFloat(farray,0,ten:floatValue())
---Array:setFloat(farray,1,ten:floatValue())
 
 String = luajava.newInstance("java.lang.String")
 StringClass = String:getClass()
@@ -1641,15 +1258,6 @@ WRAP_CONTENT = LinearLayoutParams.WRAP_CONTENT
 
 --dialogView = nil
 
---cancel button callback
-editorDialog = nil
-editorCancel = {}
-function editorCancel.onClick(v)
-	editorDialog:dismiss()
-	editorDialog = nil
-end
-editorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",editorCancel)
-
 --[[BEGIN GLOBAL ENTRY POINT INTO buttonEditorDone
     This is called from the buttoneditor module to process the new button data
     Leave this global
@@ -1742,25 +1350,11 @@ function buttonEditorDone(data)
 	view:invalidate()
 end
 --[[END buttonEditorDone global callback]]
-clickLabelEdit = nil
-clickCmdEdit = nil
-
-flipLabelEdit = nil
-flipCmdEdit = nil
-
-buttonNameEdit = nil
-
 normalColor = nil
 flipColor = nil
 pressedColor = nil
 normalLabelColor = nil
 flipLabelColor = nil
-
-xcoordEdit = nil
-ycoordEdit = nil
-widthEdit = nil
-heightEdit = nil
-labelSizeEdit = nil
 
 editorValues = {}
 
@@ -1876,432 +1470,19 @@ function showEditorDialog()
 		end
 	end
 	
-	if(1==1) then
-	 local buttonEditor = require("buttoneditor")
-	 buttonEditor.init(mContext)
-	 Note("showing button editor "..numediting)
-	 buttonEditor.showEditorDialog(editorValues,numediting)
-	 return
-	end
 	
-	local context = view:getContext()
-
-	local width_param,height_param = getDialogDimensions()
-	
-	top = luajava.new(LinearLayout,context)
-	topparams = luajava.new(LinearLayoutParams,width_param,height_param)
-	
-
-	
-	top:setLayoutParams(topparams)
-	--top:setOrientation(LinearLayout.VERTICAL)
-	titletext = luajava.new(TextView,context)
-	top:setOrientation(LinearLayout.VERTICAL)
-	titletextParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
-	
-	titletext:setLayoutParams(titletextParams)
-	titletext:setTextSize(textSizeBig)
-	titletext:setText("EDIT BUTTON")
-	titletext:setGravity(GRAVITY_CENTER)
-	titletext:setTextColor(Color:argb(255,0x33,0x33,0x33))
-	titletext:setBackgroundColor(bgGrey)
-	titletext:setId(1)
-	top:addView(titletext)
-
-	--make the new tabhost.	
-	params = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-	fillparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,1)
-	contentparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--fillparams:setGravity(Gravity.FILL_HORIZONTAL)
-	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
-	
-	hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,2)
-	host = luajava.new(TabHost,context)
-	--hostparams:addRule(RelativeLayout.BELOW,1)
-	--hostparams:addRule(RelativeLayout.ABOVE,2)
-	host:setId(3)
-	host:setLayoutParams(hostparams)
-	
-	
-	
-	--make the done and cancel buttons.
-	--have to stuff them in linearlayout.
-	finishHolderParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--finishHolderParams:addRule(RelativeLayout.BELOW,3)
-	finishHolder = luajava.new(LinearLayout,context)
-	finishHolder:setLayoutParams(finishHolderParams)
-	finishHolder:setId(2)
-	
-	--finishbuttonParams = luajava.new(RelativeLayoutParams,RLayoutParams.FILL_PARENT,WRAP_CONTENT)
-	done = luajava.new(Button,context)
-	done:setLayoutParams(fillparams)
-	done:setText("Done")
-	done:setOnClickListener(editorDone_cb)
-	
-	cancel = luajava.new(Button,context)
-	cancel:setLayoutParams(fillparams)
-	cancel:setText("Cancel")
-	cancel:setOnClickListener(editorCancel_cb)
-	finishHolder:addView(done)
-	finishHolder:addView(cancel)
-	top:addView(host)
-	top:addView(finishHolder)
-	
-	
-	holder = luajava.new(LinearLayout,context)
-	holder:setOrientation(LinearLayout.VERTICAL)
-	holder:setLayoutParams(fillparams)
-	
-	widget = luajava.new(TabWidget,context)
-	widget:setId(android_R_id.tabs)
-	widget:setLayoutParams(contentparams)
-	widget:setWeightSum(3)
-	
-	content = luajava.new(FrameLayout,context)
-	content:setId(android_R_id.tabcontent)
-	content:setLayoutParams(contentparams)
-	holder:addView(widget)
-	holder:addView(content)
-	
-	host:addView(holder)
-	host:setup()
-	
-	
-	tab1 = host:newTabSpec("tab_one_btn_tab")
-	label1 = luajava.new(TextView,context)
-	label1:setLayoutParams(fillparams)
-	label1:setText("Click")
-	label1:setTextSize(textSizeBig)
-	label1:setBackgroundResource(R_drawable.tab_background)
-	label1:setGravity(GRAVITY_CENTER)
-	label1:setMinHeight(tabMinHeight)
-	
-	--first page.
-	
-	--tmpview1 = luajava.new(TextView,context)
-	--tmpview1:setText("first page")
-	--tmpview1:setId(1)
-	--tmpview1:setLayoutParams(fillparams);
-	clickPageScroller = luajava.new(ScrollView,context)
-	clickPageScroller:setLayoutParams(fillparams)
-	clickPageScroller:setId(1)
-	
-	clickPage = luajava.new(LinearLayout,context)
-	clickPage:setLayoutParams(fillparams)
-	clickPage:setId(11)
-	clickPage:setOrientation(LinearLayout.VERTICAL)
-	
-	clickLabelRow = luajava.new(LinearLayout,context)
-	clickLabelRow:setLayoutParams(fillparams)
-	
-	clickLabel = luajava.new(TextView,context)
-	clickLabel:setTextSize(textSize)
-	clickLabel:setText("Label:")
-	clickLabel:setGravity(Gravity.RIGHT)
-	clickLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
-	clickLabel:setLayoutParams(clickLabelParams)
-	
-	clickLabelEdit = luajava.new(EditText,context)
-	clickLabelEdit:setTextSize(textSize)
-	clickLabelEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	clickLabelEdit:setLines(1)
-	clickLabelEdit:setLayoutParams(clickLabelEditParams)
-	if(numediting > 1) then
-		clickLabelEdit:setEnabled(false)
-	else
-		if(editorValues.label ~= nil) then
-			clickLabelEdit:setText(editorValues.label)
-		end
-	end
-	
-	
-	clickLabelRow:addView(clickLabel)
-	clickLabelRow:addView(clickLabelEdit)
-	
-	
-	clickCmdRow = luajava.new(LinearLayout,context)
-	clickCmdRow:setLayoutParams(fillparams)
-	
-	clickCmdLabel = luajava.new(TextView,context)
-	clickCmdLabel:setTextSize(textSize)
-	clickCmdLabel:setText("CMD:")
-	clickCmdLabel:setGravity(Gravity.RIGHT)
-	clickCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
-	clickCmdLabel:setLayoutParams(clickLabelParams)
-	
-	clickCmdEdit = luajava.new(EditText,context)
-	clickCmdEdit:setTextSize(textSize)
-	clickCmdEditParams = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-	clickCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
-	clickCmdEdit:setHorizontallyScrolling(false)
-	clickCmdEdit:setMaxLines(1000)
-	clickCmdEdit:setLayoutParams(clickLabelEditParams)
-	if(numediting > 1) then
-		clickCmdEdit:setEnabled(false)
-	else
-		if(editorValues.command ~= nil) then
-			clickCmdEdit:setText(editorValues.command)
-		end
-	end
-	
-	clickCmdRow:addView(clickCmdLabel)
-	clickCmdRow:addView(clickCmdEdit)
-	clickPage:addView(clickLabelRow)
-	clickPage:addView(clickCmdRow)
-	
-	clickPageScroller:addView(clickPage)
-	content:addView(clickPageScroller)
-	tab1:setIndicator(label1)
-	tab1:setContent(1)
-	
-	tab2 = host:newTabSpec("tab_two_btn_tab")
-	label2 = luajava.new(TextView,context)
-	label2:setLayoutParams(fillparams)
-	label2:setText("Flip")
-	label2:setTextSize(textSizeBig)
-	label2:setBackgroundResource(R_drawable.tab_background)
-	label2:setGravity(GRAVITY_CENTER)
-	label2:setMinHeight(tabMinHeight)
-	
-	--second, flip page.
-	flipPageScroller = luajava.new(ScrollView,context)
-	flipPageScroller:setLayoutParams(fillparams)
-	flipPageScroller:setId(2)
-	
-	flipPage = luajava.new(LinearLayout,context)
-	flipPage:setLayoutParams(fillparams)
-	flipPage:setId(22)
-	flipPage:setOrientation(LinearLayout.VERTICAL)
-	
-	flipLabelRow = luajava.new(LinearLayout,context)
-	flipLabelRow:setLayoutParams(fillparams)
-	
-	flipLabel = luajava.new(TextView,context)
-	flipLabel:setTextSize(textSize)
-	flipLabel:setText("Label:")
-	flipLabel:setGravity(Gravity.RIGHT)
-	flipLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
-	flipLabel:setLayoutParams(flipLabelParams)
-	
-	flipLabelEdit = luajava.new(EditText,context)
-	flipLabelEdit:setTextSize(textSize)
-	flipLabelEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	flipLabelEdit:setLines(1)
-	flipLabelEdit:setLayoutParams(clickLabelEditParams)
-	if(numediting > 1) then
-		flipLabelEdit:setEnabled(false)
-	else
-		if(editorValues.flipLabel ~= nil) then
-			flipLabelEdit:setText(editorValues.flipLabel)
-		end
-	end
-	
-	flipLabelRow:addView(flipLabel)
-	flipLabelRow:addView(flipLabelEdit)
-	
-	
-	flipCmdRow = luajava.new(LinearLayout,context)
-	flipCmdRow:setLayoutParams(fillparams)
-	
-	flipCmdLabel = luajava.new(TextView,context)
-	flipCmdLabel:setTextSize(textSize)
-	flipCmdLabel:setText("CMD:")
-	flipCmdLabel:setGravity(Gravity.RIGHT)
-	flipCmdLabelParams = luajava.new(LinearLayoutParams,80*density,WRAP_CONTENT)
-	flipCmdLabel:setLayoutParams(clickLabelParams)
-	
-	flipCmdEdit = luajava.new(EditText,context)
-	flipCmdEdit:setTextSize(textSize)
-	flipCmdEditParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	flipCmdEdit:setInputType(TYPE_TEXT_FLAG_MULTI_LINE)
-	flipCmdEdit:setHorizontallyScrolling(false)
-	flipCmdEdit:setMaxLines(1000)
-	flipCmdEdit:setLayoutParams(flipLabelEditParams)
-	if(numediting > 1) then
-		flipCmdEdit:setEnabled(false)
-	else
-		if(editorValues.flipCommand ~= nil) then
-			flipCmdEdit:setText(editorValues.flipCommand)
-		end
-	end
-	
-	flipCmdRow:addView(flipCmdLabel)
-	flipCmdRow:addView(flipCmdEdit)
-	flipPage:addView(flipLabelRow)
-	flipPage:addView(flipCmdRow)
-	--tmpview2 = luajava.new(TextView,context)
-	--tmpview2:setText("second page")
-	----tmpview2:setId(2)
-	--tmpview2:setLayoutParams(fillparams);
-	flipPageScroller:addView(flipPage)
-	content:addView(flipPageScroller)
-	tab2:setIndicator(label2)
-	tab2:setContent(2)
-	
-	tab3 = host:newTabSpec("tab_three_btn_tab")
-	label3 = luajava.new(TextView,context)
-	label3:setLayoutParams(fillparams)
-	label3:setText("Advanced")
-	label3:setTextSize(textSizeBig)
-	label3:setBackgroundResource(R_drawable.tab_background)
-	label3:setGravity(GRAVITY_CENTER)
-	label3:setMinHeight(tabMinHeight)
-	
-	--tmpview3 = luajava.new(TextView,context)
-	--tmpview3:setText("third page")
-	--tmpview3:setId(3)
-	--tmpview3:setLayoutParams(params);	
-	
-	local scrollerpage = makeAdvancedPage()
-	local parent = scrollerpage:getParent()
-	if(parent ~= nil) then
-		parent:removeView(scrollerpage)
-	end
-	--buttonNameRow:setVisibility(View.VISIBLE)
-	controlRowTwo:setVisibility(View.VISIBLE)
-	labelRowFour:setVisibility(View.VISIBLE)
-	
-	buttonNameRow:setVisibility(View.VISIBLE)
-	buttonTargetSetRow:setVisibility(View.VISIBLE)
-	
-	Validator:reset()
-	if(editorValues.width ~= "MULTI") then
-		Validator:add(widthEdit,Validator_Number_Not_Blank,"Width")
-	else
-		Validator:add(widthEdit,Validator_Number_Or_Blank,"Width")
-	end
-	
-	if(editorValues.height ~= "MULTI") then
-		Validator:add(heightEdit,Validator_Number_Not_Blank,"Height")
-	else
-		Validator:add(heightEdit,Validator_Number_Or_Blank,"Height")
-	end
-	
-	if(editorValues.x ~= "MULTI") then
-		Validator:add(xcoordEdit,Validator_Number_Not_Blank,"X Coordinate")
-	else
-		Validator:add(xcoordEdit,Validator_Number_Or_Blank,"X Coordinate")
-	end
-	
-	if(editorValues.y ~="MULTI") then
-		Validator:add(ycoordEdit,Validator_Number_Not_Blank,"Y Coordinate")
-	else
-		Validator:add(ycoordEdit,Validator_Number_Or_Blank,"Y Coordinate")
-	end
-	
-	if(editorValues.labelSize ~= "MULTI") then
-		Validator:add(labelSizeEdit,Validator_Number_Not_Blank,"Label size")
-	else
-		Validator:add(labelSizeEdit,Validator_Number_Or_Blank,"Label size")
-	end
-	
-	content:addView(scrollerpage)
-	tab3:setIndicator(label3)
-	tab3:setContent(3)
-	
-	host:addTab(tab1)
-	host:addTab(tab2)
-	host:addTab(tab3)
-	
-	
-	if(numediting > 1) then
-		host:setCurrentTab(2)
-	else
-		host:setCurrentTab(0)
-	end
-	
-	
-	--dialogView = top
-	--else
-		--set up the dialog
-		--Note("already constructed editor"..dialogView:toString())
-	--end
-	
-	editorDialog = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",context,top,false,nil)
-	editorDialog:show()
-	context = nil
+ local buttonEditor = require("buttoneditor")
+ buttonEditor.init(mContext)
+ --Note("showing button editor "..numediting)
+ buttonEditor.showEditorDialog(editorValues,numediting)
+ return
 end
-
-field = ""
-colorpickerdone = {}
-function colorpickerdone.colorChanged(color)
-	if(field == "flip") then
-		flipColor:setBackgroundColor(color)
-		flipColor:invalidate()
-		theFlipColor = color
-	elseif(field == "normal") then
-		normalColor:setBackgroundColor(color)
-		normalColor:invalidate()
-		theNormalColor = color;
-	elseif(field == "pressed") then
-		pressedColor:setBackgroundColor(color)
-		pressedColor:invalidate()
-		thePressedColor = color
-	elseif(field == "label") then
-		normalLabelColor:setBackgroundColor(color)
-		normalLabelColor:invalidate()
-		theNormalLabelColor = color
-	elseif(field == "flipLabel") then
-		flipLabelColor:setBackgroundColor(color)
-		flipLabelColor:invalidate()
-		theFlipLabelColor = color
-	end
-end
-colorpickerdone_cb = luajava.createProxy("com.offsetnull.bt.button.ColorPickerDialog$OnColorChangedListener",colorpickerdone)
-
-swatchclicked = {}
-function swatchclicked.onClick(v)
-	field = v:getTag()
-	color = 0
-	if(field == "flip") then
-		color = theFlipColor
-	elseif(field == "normal") then
-		color = theNormalColor
-	elseif(field == "pressed") then
-		color = thePressedColor
-	elseif(field == "label") then
-		color = theNormalLabelColor
-	elseif(field == "flipLabel") then
-		color = theFlipLabelColor
-	end
-	colorpickerdialog = luajava.newInstance("com.offsetnull.bt.button.ColorPickerDialog",view:getContext(),colorpickerdone_cb,color)
-	colorpickerdialog:show()
-end
-swatchclicked_cb = luajava.createProxy("android.view.View$OnClickListener",swatchclicked)
-
-
-
-toolbarModifyClicked = {}
-function toolbarModifyClicked.onClick(v)
-	
-	if(buttonsCleared) then
-		revertButtons()
-	end
-	--local adapter = mListView:getAdapter()
-	local entry = buttonSetList[lastSelectedIndex+1]
-	--Note("toolbarModifyClicked:"..entry.name)
-	if(entry.name ~= lastLoadedSet) then
-		PluginXCallS("loadAndEditSet",entry.name)
-		return
-	end
-
-	enterManagerMode()
-	showeditormenu = true
-	PushMenuStack("onEditorBackPressed")
-	
-	mSelectorDialog:dismiss()
-end
-toolbarModifyClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarModifyClicked)
 
 modifyButtonSet = function(entry) 
-  Note("In Modify button set callback.")
+  --Note("In Modify button set callback.")
   if(buttonsCleared) then
     revertButtons()
   end
-  --local adapter = mListView:getAdapter()
-  --local entry = buttonSetList[lastSelectedIndex+1]
-  --Note("toolbarModifyClicked:"..entry.name)
   if(entry.name ~= lastLoadedSet) then
     PluginXCallS("loadAndEditSet",entry.name)
     return
@@ -2311,51 +1492,6 @@ modifyButtonSet = function(entry)
   showeditormenu = true
   PushMenuStack("onEditorBackPressed")
 end
-
-toolbarLoadClicked = {}
-function toolbarLoadClicked.onClick(v)
-	local entry = buttonSetList[lastSelectedIndex+1]
-	if(entry.name ~= lastLoadedSet) then
-		PluginXCallS("loadButtonSet",entry.name)
-	end
-	mSelectorDialog:dismiss()
-end
-toolbarLoadClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarLoadClicked)
-
-
-deleteConfirmListener = {}
-function deleteConfirmListener.onClick(dialog,which)
-	--Note("deleting,"..which)
-	if(which == DialogInterface.BUTTON_POSITIVE) then
-		--find the button set.
-		local entry = buttonSetList[lastSelectedIndex+1]
-		--if(entry.name ~= lastLoadedSet) then
-		buttonSetList[entry] = nil
-		table.remove(buttonSetList,lastSelectedIndex+1)
-		PluginXCallS("deleteButtonSet",entry.name)
-		--end
-	end
-end
-deleteConfirmListener_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",deleteConfirmListener)
-
-deleteCancelListener = {}
-function deleteCancelListener.onClick(dialog,which)
-	dialog:dismiss()
-end
-deleteCancelListener_cb = luajava.createProxy("android.content.DialogInterface$OnClickListener",deleteCancelListener)
-toolbarDeleteClicked = {}
-function toolbarDeleteClicked.onClick(v)
-	local builder = luajava.newInstance("android.app.AlertDialog$Builder",view:getContext())
-	builder:setTitle("Delete Button Set")
-	builder:setMessage("Confirm delete?")
-	builder:setPositiveButton("Yes",deleteConfirmListener_cb)
-	builder:setNegativeButton("No",deleteCancelListener_cb)
-	
-	local dialog = builder:create()
-	dialog:show()
-	
-end
-toolbarDeleteClicked_cb = luajava.createProxy("android.view.View$OnClickListener",toolbarDeleteClicked)
 
 function loadAndEditSet(data)
 	--Note("Loading and editing: "..data)
@@ -2367,115 +1503,6 @@ function loadAndEditSet(data)
 	 buttonSetListDialog.dismissList()
 	end
 end
-
-thetoolbar = nil
-toolbarlength = 0
-
-function makeToolbar()
-	--thetoolbar = thetoolbar or {}
-	if(not thetoolbar) then
-	thetoolbar = layoutInflater:inflate(R_layout.editor_selection_list_row_toolbar,nil)
-	toolbarparams = luajava.new(RelativeLayoutParams,RelativeLayoutParams.WRAP_CONTENT,RelativeLayoutParams.WRAP_CONTENT)
-	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
-	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-	toolbarparams:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
-	thetoolbar:setLayoutParams(toolbarparams)
-	
-	toolbarToggle = luajava.new(ImageButton,view:getContext())
-	toolbarModify = luajava.new(ImageButton,view:getContext())
-	toolbarDelete = luajava.new(ImageButton,view:getContext())
-	
-	buttonParams = luajava.new(LinearLayoutParams,LinearLayoutParams.WRAP_CONTENT,LinearLayoutParams.WRAP_CONTENT)
-	buttonParams:setMargins(0,0,0,0)
-	
-	toolbarToggle:setLayoutParams(buttonParams) 
-	toolbarModify:setLayoutParams(buttonParams) 
-	toolbarDelete:setLayoutParams(buttonParams) 
-	
-	toolbarToggle:setPadding(0,0,0,0) 
-	toolbarModify:setPadding(0,0,0,0) 
-	toolbarDelete:setPadding(0,0,0,0) 
-	
-	toolbarToggle:setImageResource(R_drawable.toolbar_load_button)
-	toolbarModify:setImageResource(R_drawable.toolbar_modify_button)
-	toolbarDelete:setImageResource(R_drawable.toolbar_delete_button)
-	
-	toolbarToggle:setOnKeyListener(theButtonKeyListener)
-	toolbarModify:setOnKeyListener(theButtonKeyListener)
-	toolbarDelete:setOnKeyListener(theButtonKeyListener)
-	
-	toolbarToggle:setOnClickListener(toolbarLoadClicked_cb)
-	toolbarModify:setOnClickListener(toolbarModifyClicked_cb)
-	--Note("THE MODIFYCLICKER IS SET")
-	toolbarDelete:setOnClickListener(toolbarDeleteClicked_cb)
-	
-	thetoolbar:addView(toolbarToggle)
-	thetoolbar:addView(toolbarModify)
-	thetoolbar:addView(toolbarDelete)
-	
-	closeButton = thetoolbar:findViewById(R_id.toolbar_tab_close)
-	closeButton:setOnKeyListener(theButtonKeyListener)
-	
-	local tmpa = closeButton:getDrawable()
-	local tmpb = toolbarToggle:getDrawable()
-	
-	thetoolbarlength = tmpa:getIntrinsicWidth() + 3 * tmpb:getIntrinsicWidth()
-	end
-	animateInController = nil
-	animateOut = nil
-	animateOutNoTransition = nil
-	
-	
-	animateIn = luajava.new(TranslateAnimation,thetoolbarlength,0,0,0)
-	animateIn:setDuration(300)
-	
-	animateOut = luajava.new(TranslateAnimation,0,thetoolbarlength,0,0)
-	animateOut:setDuration(300)
-	animateOut:setAnimationListener(animateOut_cb)
-	
-end
-
-
-
-animateOutHandler = {}
-function animateOutHandler.onAnimationEnd(animation)
-	--local rl = thetoolbar:getParent()
-	--//rl:removeAllViews()
-	
-	--Note("animate out animation end firing.")
-	local parent = thetoolbar:getParent()
-	if(parent ~= nil) then 
-		parent:removeView(thetoolbar)
-		mList:requestFocus()
-	end
-end
-animateOut_cb = luajava.createProxy("android.view.animation.Animation$AnimationListener",animateOutHandler)
-
-makeToolbar()
-
-targetholder = nil
-lastSelectedPosition = -1
-
-rowClicker = {}
-function rowClicker.onClick(v)
-	
-end
-rowClicker_cb = luajava.createProxy("android.view.View$OnClickListener",rowClicker)
-
-managerDoneButtonListener = {}
-function managerDoneButtonListener.onClick(v)
-	--Note("exiting manager mode")
-	exitManagerMode()
-end
-
-managerDoneButton_cb = luajava.createProxy("android.view.View$OnClickListener",managerDoneButtonListener)
-
-buttonSetSettingsButtonListener = {}
-function buttonSetSettingsButtonListener.onClick(v)
-	buttonOptions()
-end
-buttonSetSettingsButton_cb = luajava.createProxy("android.view.View$OnClickListener",buttonSetSettingsButtonListener)
-
 
 --delete after testing
 setSettingsButtonListener = {}
@@ -2495,118 +1522,15 @@ function setSettingsButtonListener.onClick(v)
   editorValues.x = 0
   editorValues.y = 0  
   
-  if(1==1) then
-    Note("launching new button editor")
-    local editorOptionsDialog = require("editoroptionsdialog")
-    editorOptionsDialog.init(mContext)
-    editorOptionsDialog.setEditorDoneCallback()
-    editorOptionsDialog.showDialog(editorValues)  
-    return
-  end
-  --delete below after testing
-	local context = view:getContext()
+  local editorOptionsDialog = require("editoroptionsdialog")
+  editorOptionsDialog.init(mContext)
+  editorOptionsDialog.setEditorDoneCallback()
+  editorOptionsDialog.showDialog(editorValues)  
 
-	editorValues = {}
-	editorValues.primaryColor = defaults.primaryColor
-	editorValues.selectedColor = defaults.selectedColor
-	editorValues.flipColor = defaults.flipColor
-	editorValues.labelColor = defaults.labelColor
-	editorValues.flipLabelColor = defaults.flipLabelColor
-	editorValues.switchTo = ""
-	editorValues.height = defaults.height
-	editorValues.width = defaults.width
-	editorValues.labelSize = defaults.labelSize
-	editorValues.name = lastLoadedSet
-	editorValues.x = 0
-	editorValues.y = 0	
-
-	local page = makeAdvancedPage()
-	local parent = page:getParent()
-	if(parent ~= nil) then
-		parent:removeView(page)
-	end
-	
-	buttonNameRow:setVisibility(View.GONE)
-	buttonTargetSetRow:setVisibility(View.GONE)
-	buttonNameRow:setVisibility(View.VISIBLE)
-	controlRowTwo:setVisibility(View.GONE)
-	labelRowFour:setVisibility(View.GONE)
-	
-	Validator:reset()
-	Validator:add(buttonNameEdit,Validator_Not_Blank,"Set name")
-	Validator:add(widthEdit,Validator_Number_Not_Blank,"Width")
-	Validator:add(heightEdit,Validator_Number_Not_Blank,"Height")
-	Validator:add(labelSizeEdit,Validator_Number_Not_Blank,"Label size")
-	
-
-	local width_param,height_param = getDialogDimensions()
-	local top = luajava.new(LinearLayout,context)
-	local topparams = luajava.new(LinearLayoutParams,width_param,height_param)
-	
-	top:setLayoutParams(topparams)
-	top:setOrientation(LinearLayout.VERTICAL)
-	local titletext = luajava.new(TextView,context)
-	local titletextParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--titletextParams:addRule(RelativeLayout.ALIGN_PARENT_TOP)
-	
-	titletext:setLayoutParams(titletextParams)
-	titletext:setTextSize(textSize * 2)
-	titletext:setText("DEFAULTS EDITOR")
-	titletext:setGravity(GRAVITY_CENTER)
-	titletext:setTextColor(Color:argb(255,0x33,0x33,0x33))
-	titletext:setBackgroundColor(bgGrey)
-	--titleText:setTextColor()
-	titletext:setId(1)
-	top:addView(titletext)
-	
-	--buttonNameEdit:setText()
-
-	--make the new tabhost.	
-	local params = luajava.new(LinearLayoutParams,WRAP_CONTENT,WRAP_CONTENT)
-	local fillparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,1)
-	local contentparams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--fillparams:setGravity(Gravity.FILL_HORIZONTAL)
-	--hostparams = luajava.new(LinearLayoutParams,FILL_PARENT,FILL_PARENT)
-	--make the done and cancel buttons.
-	--have to stuff them in linearlayout.
-	local finishHolderParams = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT)
-	--finishHolderParams:addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-	local finishHolder = luajava.new(LinearLayout,context)
-	finishHolder:setLayoutParams(finishHolderParams)
-	finishHolder:setId(2)
-	
-	--local holder = luajava.new(LinearLayout,context)
-	--holder:addView(page,contentparams)
-	local holderparam = luajava.new(LinearLayoutParams,FILL_PARENT,WRAP_CONTENT,2)
-	--holderparam:addRule(RelativeLayout.ABOVE,2)
-	--holderparam:addRule(RelativeLayout.BELOW,1)
-	--holderparam:addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
-	--holderparam:addRule(RelativeLayout.ALIGN_PARENT_LEFT)
-	
-	page:setVisibility(View.VISIBLE)
-	top:addView(page,holderparam)
-	
-	
-	--finishbuttonParams = luajava.new(RelativeLayoutParams,RLayoutParams.FILL_PARENT,WRAP_CONTENT)
-	local done = luajava.new(Button,context)
-	done:setLayoutParams(fillparams)
-	done:setText("Done")
-	done:setOnClickListener(seteditorDone_cb)
-	
-	local cancel = luajava.new(Button,context)
-	cancel:setLayoutParams(fillparams)
-	cancel:setText("Cancel")
-	cancel:setOnClickListener(seteditorCancel_cb)
-	finishHolder:addView(done)
-	finishHolder:addView(cancel)
-	top:addView(finishHolder)
-	
-	buttSetSettingsEditor = luajava.newInstance("com.offsetnull.bt.window.LuaDialog",view:getContext(),top,false,nil)
-	
-	buttSetSettingsEditor:show()
 end
 setSettingsButton_cb = luajava.createProxy("android.view.View$OnClickListener",setSettingsButtonListener)
 
+--keep below for handling the data coming back from the advanced editor
 setEditorCancelListener = {}
 function setEditorCancelListener.onClick(v)
 	buttSetSettingsEditor:dismiss()
