@@ -2055,6 +2055,7 @@ WindowXCallB(GetPluginID().."_chat_window",42)
 			msg.getData().putString("FUNCTION", function);
 			//L.pushString(str);
 			mHandler.sendMessage(msg);
+			//android.R.style.TextAppearanceM
 			return 0;
 		}
 		
