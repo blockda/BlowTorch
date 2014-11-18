@@ -4137,7 +4137,7 @@ end
 		while(!done) {
 			charWidth = p.measureText("A");
 			charsPerLine = windowWidth / charWidth;
-			if(charsPerLine < mFitChars) {
+			if(Math.floor(charsPerLine) <= mFitChars) {
 				done = true;
 				fontSize -= delta; //return to the previous font size that produced > 80 characters.
 			} else {
