@@ -137,7 +137,8 @@ public class GMCPData {
 	 * @param completePath The complete path of the target location.
 	 */
 	private void insertData(final JSONObject object, final HashMap<String, Object> node, final String completePath) {
-		@SuppressWarnings("unchecked")
+		
+		//if(object == null) return;
 		Iterator<String> keys = object.keys();
 		while (keys.hasNext()) {
 			String tmp = keys.next();
@@ -145,19 +146,28 @@ public class GMCPData {
 			String strVal = "";
 			boolean anInt = false;
 			boolean skip = false;
-			try {
-				
+			
+			//Object sub = null;
+			try {			
 				JSONObject sub = object.getJSONObject(tmp);
+				//JSONObject sub = (JSONObject)sub;
 				if (node.containsKey(tmp)) {
 					node.remove(tmp);
 				}
 				HashMap<String, Object> newnode = new HashMap<String, Object>();
 				node.put(tmp, newnode);
-				insertData(sub, newnode, completePath + "." + tmp);
+				insertData((JSONObject)sub, newnode, completePath + "." + tmp);
 				//return;
 				skip = true;
-			} catch (JSONException e) {
-				e.printStackTrace();
+			} catch(JSONException e) {
+				//this is an ugly situation here where the object.getJSONObject call above must be done
+				//and if the result is anything but a json object it will throw an exception here.
+				//there used to be an e.printStackTrace() but it fires an awful lot.
+				//maybe the algorithm needs tweaking. maybe it should all be rewritten in lua
+				//and rewrite the blowtorch core to allow for telnet handling plugins.
+				//gun
+				
+				//e.printStackTrace();
 			}
 			if (!skip) {
 				try {
