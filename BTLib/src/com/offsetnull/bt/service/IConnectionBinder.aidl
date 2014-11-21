@@ -136,4 +136,5 @@ interface IConnectionBinder {
 	void callPluginFunction(String plugin,String function);
 	boolean isPluginInstalled(String desired);
 	void setShowRegexWarning(boolean state);
+	String getPluginOption(String plugin, String key);
 }

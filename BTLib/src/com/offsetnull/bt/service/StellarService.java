@@ -1335,6 +1335,14 @@ public class StellarService extends Service {
 			mConnections.get(mConnectionClutch).updateBooleanSetting("show_regex_warning", state);
 		}
 
+		@Override
+		public String getPluginOption(String plugin, String key)
+				throws RemoteException {
+			//mConnections.get(mConnectionClutch).getPluginOptionValue(plugin,key);
+			
+			return mConnections.get(mConnectionClutch).getPluginOptionValue(plugin,key);
+		}
+
 	};
 
 	/** Dispatches data to the foreground window.
