@@ -2192,6 +2192,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
         WindowSupportsFunction wsf = new WindowSupportsFunction(mL);
         WindowCallFunction wcf = new WindowCallFunction(mL);
         WindowBroadcastFunction wbcf = new WindowBroadcastFunction(mL);
+        GetOptionValueFunction ogvf = new GetOptionValueFunction(mL);
 		try {
 			
 			gsbshf.register("GetStatusBarHeight");
@@ -2216,6 +2217,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			wcf.register("WindowCall");
 			wsf.register("WindowSupports");
 			wbcf.register("WindowBroadcast");
+			ogvf.register("GetOptionValue");
 		} catch (LuaException e) {
 			e.printStackTrace();
 		}
@@ -2432,6 +2434,72 @@ activity = GetActivity()
 		}
 		
 	}
+	
+	 /*! \page page1
+	\subsection GetOptionValue GetOptionValue
+	Gets an option value by key from the parent plugin's option table.
+
+	\par Full Signature
+	\luacode
+	GetOptionValue(key)
+	\endluacode
+	\param key \b unique key for the option given.
+	\returns The value of the option, this could be a string, number or boolean, lists will return the ordinal of the selected value.
+	\par Example 
+	\luacode
+	value = GetOptionValue("input_mode")
+	\endluacode
+		*/
+		private class GetOptionValueFunction extends JavaFunction {
+			//HashMap<String,String> 
+			public GetOptionValueFunction(LuaState L) {
+				super(L);
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public int execute() throws LuaException {
+				//String token = this.getParam(2).getString();
+				String key = this.getParam(2).getString();
+				//LuaObject foo = this.getParam(3);
+				
+				
+				//--if(foo.isTable()) {
+				//	Log.e("DEBUG","ARGUMENT IS TABLE");
+				//}
+				//HashMap<String,Object> dump = dumpTable("t",3);
+				//
+				/*L.pushNil();
+				while(L.next(2) != 0) {
+					
+					String id = L.toString(-2);
+					LuaObject l = L.getLuaObject(-1);
+					if(l.isTable()) {
+						//need to dump more tables
+					} else {
+						
+					}
+				}*/
+				//mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_X, obj))
+				//Message msg = mMainWindowHandler.obtainMessage(MainWindow.MESSAGE_PLUGINXCALLS,foo.getString());
+				
+				String ret;
+				try {
+					ret = mParent.getPluginOption(mOwner, key);
+				} catch (RemoteException e) {
+					L.pushNil();
+					return 1;
+				}
+				
+				//msg.getData().putString("PLUGIN",mOwner);
+				//msg.getData().putString("FUNCTION", function);
+				L.pushString(ret);
+				//mMainWindowHandler.sendMessage(msg);
+				// TODO Auto-generated method stub
+				return 1;
+			}		
+			
+		}
 	
 	private class GetDisplayDensityFunction extends JavaFunction {
 

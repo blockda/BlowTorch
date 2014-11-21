@@ -246,6 +246,17 @@ public class SettingsGroup extends Option implements Parcelable {
 
 		
 	}
+	
+	public String getOptionValue(String key) {
+		BaseOption o = (BaseOption)optionsMap.get(key);
+		
+		if(o != null) {
+			return o.getValue().toString();
+		}
+		
+		return null;
+		
+	}
 
 	public SettingsChangedListener getListener() {
 		return listener;

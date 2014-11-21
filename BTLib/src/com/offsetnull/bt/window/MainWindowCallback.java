@@ -14,4 +14,5 @@ public interface MainWindowCallback {
 	boolean checkWindowSupports(String desired, String function);
 	void windowCall(String window, String function, String data);
 	void windowBroadcast(String function, String data);
+	String getPluginOption(String plugin, String value) throws RemoteException;
 }

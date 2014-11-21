@@ -3346,4 +3346,10 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			}
 		}
 	}
+
+	@Override
+	public String getPluginOption(String plugin, String value) throws RemoteException {
+		String ret = service.getPluginOption(plugin,value);
+		return ret;
+	}
 }

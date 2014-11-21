@@ -3238,6 +3238,13 @@ WindowXCallS(GetPluginID().."_chat_window",42)
 		this.scriptBlock = scriptBlock;
 	}
 
+	public String getOptionValue(String key) {
+		// TODO Auto-generated method stub
+		SettingsGroup g = settings.getOptions();
+		
+		return g.getOptionValue(key);
+	}
+
 
 	
 	

@@ -54,6 +54,7 @@ import com.offsetnull.bt.service.plugin.Plugin;
 import com.offsetnull.bt.service.plugin.settings.BaseOption;
 import com.offsetnull.bt.service.plugin.settings.BooleanOption;
 import com.offsetnull.bt.service.plugin.settings.ConnectionSetttingsParser;
+import com.offsetnull.bt.service.plugin.settings.IntegerOption;
 import com.offsetnull.bt.service.plugin.settings.Option;
 import com.offsetnull.bt.service.plugin.settings.PluginParser;
 import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
@@ -4432,4 +4433,11 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 	public final StellarService getService() {
 		return mService;
 	}
+
+	public String getPluginOptionValue(String plugin, String key) {
+		Plugin p = mPluginMap.get(plugin);
+		if(p == null) return "Plugin " + plugin + " does not exist.";
+		return p.getOptionValue(key);
+	}
+	
 }
