@@ -16,7 +16,6 @@
 			android:textSize = "20sp"
 			android:layout_height = "wrap_content"
 			android:layout_width = "300dip"
-			android:layout_below="@id/launcher_window_content"
 			android:id = "@+id/c_label"
 			android:layout_alignParentRight = "true"
 			android:layout_alignParentTop = "true"
