@@ -11,7 +11,7 @@ public class FreeLauncher extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.new_launcher_layout);
         
         Intent launch = new Intent(this,com.offsetnull.bt.launcher.Launcher.class);
         launch.putExtra("LAUNCH_MODE","com.happygoatstudios.bt");
