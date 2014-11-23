@@ -4,8 +4,8 @@ ifeq ($(TARGET_ARCH_ABI),armeabi)
 include $(CLEAR_VARS)
 LOCAL_MODULE := luabins
 LOCAL_MODULE_FILENAME := luabins
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lua
-LOCAL_SHARED_LIBRARIES := liblua
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../luajava
+LOCAL_SHARED_LIBRARIES := lua
 LOCAL_CFLAGS := -O3 -fpic -shared -std=c99 
 LOCAL_SRC_FILES := ./fwrite.c \
 				   ./load.c \
@@ -23,8 +23,8 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 include $(CLEAR_VARS)
 LOCAL_MODULE := luabins
 LOCAL_MODULE_FILENAME := luabins
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lua
-LOCAL_SHARED_LIBRARIES := liblua
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../luajava
+LOCAL_SHARED_LIBRARIES := lua
 LOCAL_CFLAGS := -O3 -fpic -shared -std=c99
 LOCAL_SRC_FILES := ./fwrite.c \
 				   ./load.c \
