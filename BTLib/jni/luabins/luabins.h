@@ -18,6 +18,25 @@
 
 #define LUABINS_MAXTABLENESTING (250)
 
+/* DCB - Adding this here because apparently luaconf.h doesn't have it anymore
+*  And putting here makes kind of more sense then trying to manage it in each
+*  new luajit version.
+*/
+/*
+@@ LUAI_BITSINT defines the number of bits in an int.
+** CHANGE here if Lua cannot automatically detect the number of bits of
+** your machine. Probably you do not need to change this.
+*/
+/* avoid overflows in comparison */
+#if INT_MAX-20 < 32760
+#define LUAI_BITSINT	16
+#elif INT_MAX > 2147483640L
+/* int has at least 32 bits */
+#define LUAI_BITSINT	32
+#else
+#error "you must define LUA_BITSINT with number of bits in an integer"
+#endif
+
 /*
 * Save Lua values from given state at given stack index range.
 * Lua value is left untouched. Note that empty range is not an error.
