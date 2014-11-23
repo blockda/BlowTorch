@@ -1,13 +1,13 @@
 LOCAL_PATH := $(call my-dir)
 
+
+ifeq ($(TARGET_ARCH_ABI),armeabi)
+
 include $(CLEAR_VARS)
 LOCAL_ARM_MODE := arm
 LOCAL_MODULE := luajit
-LOCAL_SRC_FILES := libluajit.a
+LOCAL_SRC_FILES := libluajit-armeabi.a
 include $(PREBUILT_STATIC_LIBRARY)
-
-
-ifeq ($(TARGET_ARCH_ABI),armeabi)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := lua
@@ -20,6 +20,12 @@ include $(BUILD_SHARED_LIBRARY)
 endif
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+
+include $(CLEAR_VARS)
+LOCAL_ARM_MODE := arm
+LOCAL_MODULE := luajit
+LOCAL_SRC_FILES := libluajit-armv7-a.a
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := lua
