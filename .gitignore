@@ -9,4 +9,5 @@ BT_Pro/gen
 BT_Pro/bin
 BT_Free/gen
 BT_Free/bin
-
+BTLIB/libs
+*.o

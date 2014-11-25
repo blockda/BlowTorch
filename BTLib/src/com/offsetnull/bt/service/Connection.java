@@ -73,6 +73,9 @@ import com.offsetnull.bt.button.SlickButtonData;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -3528,10 +3531,19 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				HyperSAXParser p = new HyperSAXParser(path, mService.getApplicationContext());
 				HyperSettings s = p.load();
 				
+				ApplicationInfo ai = null;
+				try {
+					ai = mService.getApplicationContext().getPackageManager().getApplicationInfo(mService.getPackageName(), PackageManager.GET_META_DATA);
+				} catch (NameNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				String dataDir = ai.dataDir;
+				
 				//load up the default settings and then merge the old settings into the new settings.
 				ArrayList<Plugin> tmpplugs = new ArrayList<Plugin>();
 				ConnectionSetttingsParser newsettings = new ConnectionSetttingsParser(null, mService.getApplicationContext(), tmpplugs, mHandler, this);
-				tmpplugs = newsettings.load(this);
+				tmpplugs = newsettings.load(this,dataDir);
 				
 				Plugin buttonwindow = tmpplugs.get(1);
 				ConnectionSettingsPlugin root_settings = (ConnectionSettingsPlugin)tmpplugs.get(0);
@@ -3771,7 +3783,16 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 					Log.e("XMLPARSE", "LOADING V2 SETTINGS FROM PATH: " + path);
 					ArrayList<Plugin> tmpplugs = new ArrayList<Plugin>();
 					ConnectionSetttingsParser csp = new ConnectionSetttingsParser(path, mService.getApplicationContext(), tmpplugs, mHandler, this);
-					tmpplugs = csp.load(this);
+					ApplicationInfo ai = null;
+					try {
+						ai = mService.getApplicationContext().getPackageManager().getApplicationInfo(mService.getPackageName(), PackageManager.GET_META_DATA);
+					} catch (NameNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					String dataDir = ai.dataDir;
+					tmpplugs = csp.load(this,dataDir);
+					
 					if (path == null) {
 						Plugin buttonwindow = tmpplugs.get(1);
 						//LuaState L = buttonwindow.getLuaState();

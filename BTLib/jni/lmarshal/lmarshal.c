@@ -314,6 +314,7 @@ static void mar_decode_value
 {
     size_t l;
     char val_type = **p;
+    lua_Number aligned_number; //for armv7 compatibility see below
     mar_incr_ptr(MAR_CHR);
     switch (val_type) {
     case LUA_TBOOLEAN:
@@ -321,7 +322,16 @@ static void mar_decode_value
         mar_incr_ptr(MAR_CHR);
         break;
     case LUA_TNUMBER:
-        lua_pushnumber(L, *(lua_Number*)*p);
+#ifdef __ARM_V7__
+	//instead of casting the unaligned memory section,
+	//read out the value directly using memcpy
+	memcpy(&aligned_number,*p,sizeof(lua_Number));
+	lua_pushnumber(L,aligned_number);
+#else
+	//original code
+	lua_pushnumber(L,*(lua_Number*)*p);
+#endif
+        //lua_pushnumber(L, *(lua_Number*)*p);
         mar_incr_ptr(MAR_I64);
         break;
     case LUA_TSTRING:
@@ -432,7 +442,7 @@ static void mar_decode_value
 
 static int mar_decode_table(lua_State *L, const char* buf, size_t len, size_t *idx)
 {
-    const char* p;
+    const char* p __attribute__ ((aligned (64)));
     p = buf;
     while (p - buf < len) {
         mar_decode_value(L, buf, len, &p, idx);

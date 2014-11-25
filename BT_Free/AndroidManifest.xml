@@ -9,8 +9,8 @@
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
-    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:allowBackup="true" android:process="com.offsetnull.bt">
-    <meta-data android:value="2" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
+    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:allowBackup="true" android:process="com.offsetnull.bt" android:hardwareAccelerated="true">
+    	<meta-data android:value="3" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
      	<activity android:name="com.offsetnull.btfree.FreeLauncher"
                   android:label="BlowTorch">
             <intent-filter>
@@ -26,7 +26,7 @@
         <activity android:name="com.offsetnull.bt.window.MainWindow"
         		  android:windowSoftInputMode="adjustPan|stateHidden"
         		  android:label="BlowTorch"
-				  android:configChanges="orientation|keyboard|keyboardHidden|screenLayout"
+				  android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|screenSize"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	
@@ -34,19 +34,9 @@
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <activity android:name="com.offsetnull.settings.HyperSettingsActivity"
-        		  android:label="Settings Editor"
-        		  
-        		  
-        		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
-        		  android:noHistory = "true">
-        		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"/>
-        		  	<category android:name="android.intent.category.DEFAULT"/>
-        		  </intent-filter>
-        </activity>
+        
         <service android:name="com.offsetnull.bt.service.StellarService"
-        		 android:process="com.offsetnull.bt_stellar">
+        		 android:process=":stellar" android:exported="false">
         		 <intent-filter>
         		 	
         		 	<action android:name="com.offsetnull.bt.service.IStellarService.MODE_NORMAL"/>

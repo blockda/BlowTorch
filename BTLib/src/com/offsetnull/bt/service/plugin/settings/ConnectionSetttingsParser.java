@@ -229,11 +229,11 @@ public class ConnectionSetttingsParser extends PluginParser {
 	
 	private GlobalHandler GLOBAL_HANDLER = new GlobalHandler();
 	
-	public ArrayList<Plugin> load(Connection parent) {
+	public ArrayList<Plugin> load(Connection parent,String dataDir) {
 		
 		ArrayList<Plugin> result = new ArrayList<Plugin>();
 		try {
-			settings = new ConnectionSettingsPlugin(serviceHandler,parent);
+			settings = new ConnectionSettingsPlugin(serviceHandler,parent,dataDir);
 		} catch (LuaException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
