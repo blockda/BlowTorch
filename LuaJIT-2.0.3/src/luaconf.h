@@ -58,8 +58,14 @@
 #define LUA_LCPATH1	";" LUA_LCDIR "?.so"
 #define LUA_LCPATH2	";" LUA_LCDIR "loadall.so"
 
-#define LUA_PATH_DEFAULT	"./?.lua" LUA_JPATH LUA_LLPATH LUA_RLPATH
-#define LUA_CPATH_DEFAULT	"./?.so" LUA_LCPATH1 LUA_RCPATH LUA_LCPATH2
+/* MODIFICATION DCB 11/23/2014 - OVERRIDING THE DEFAULT PATHS SUCH THAT THEY WILL WORK FOR AN AGNOSTIC ANDROID PACKAGE */
+//#define LUA_PATH_DEFAULT	"./?.lua" LUA_JPATH LUA_LLPATH LUA_RLPATH
+//#define LUA_CPATH_DEFAULT	"./?.so" LUA_LCPATH1 LUA_RCPATH LUA_LCPATH2
+#define LUA_PATH_DEFAULT	"/data/data/com.happygoatstudios.bttest/lua/share/5.1/?.lua"
+//#define LUA_PATH_DEFAULT	"lua/share/lua/5.1/?.lua"
+//#define LUA_CPATH_DEFAULT	"lib/lib?.so"
+#define LUA_CPATH_DEFAULT	"/data/data/com.happygoatstudios.bttest/lib/lib?.so"
+
 #endif
 
 /* Environment variable names for path overrides and initialization code. */
