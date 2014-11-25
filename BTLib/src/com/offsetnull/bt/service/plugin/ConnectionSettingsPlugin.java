@@ -23,13 +23,13 @@ import com.offsetnull.bt.speedwalk.DirectionData;
 import com.offsetnull.bt.trigger.TriggerData;
 
 public class ConnectionSettingsPlugin extends Plugin {
-	public ConnectionSettingsPlugin(Handler h,ConnectionPluginCallback parent) throws LuaException {
-		super(h,parent);
+	public ConnectionSettingsPlugin(Handler h,ConnectionPluginCallback parent,String dataDir) throws LuaException {
+		super(h,parent,null,dataDir);
 		init();
 	}
 	
-	public ConnectionSettingsPlugin(PluginSettings settings,Handler h,ConnectionPluginCallback parent) throws LuaException {
-		super(settings,h,parent);
+	public ConnectionSettingsPlugin(PluginSettings settings,Handler h,ConnectionPluginCallback parent,String dataDir) throws LuaException {
+		super(settings,h,parent,null,dataDir);
 		init();
 	}
 	

@@ -105,7 +105,7 @@ public class Plugin implements SettingsChangedListener {
 	public static final int LUA_TSTRING = 4;
 	
 	
-	public Plugin(Handler h,ConnectionPluginCallback parent) throws LuaException {
+	public Plugin(Handler h,ConnectionPluginCallback parent,String path,String dataDir) throws LuaException {
 		setSettings(new PluginSettings());
 		mHandler = h;
 		L = LuaStateFactory.newLuaState();
@@ -133,22 +133,29 @@ public class Plugin implements SettingsChangedListener {
 		this.parent = parent;
 		mContext = parent.getContext();
 		//initTimers();
-		initLua();
+		initLua(path,dataDir);
 		
 	}
 	
-	public Plugin(PluginSettings settings,Handler h,ConnectionPluginCallback parent) throws LuaException {
+	public Plugin(PluginSettings settings,Handler h,ConnectionPluginCallback parent,String path,String dataDir) throws LuaException {
 		this.settings = settings;
 		mHandler = h;
+	
 		L = LuaStateFactory.newLuaState();
 		mContext = parent.getContext();
 		this.parent = parent;
 		
 		//initTimers();
 		
-		initLua();
+		initLua(path,dataDir);
 	}
 	
+	/*public Plugin(Handler serviceHandler, ConnectionPluginCallback parent2,
+			String path) {
+		this.mPath = path;
+		
+	}*/
+
 	HashMap<String,Long> timerStartTimes;
 	
 	public void initTimers() {
@@ -183,9 +190,36 @@ public class Plugin implements SettingsChangedListener {
 		}
 	}
 
-	private void initLua() throws LuaException {
+	private void initLua(String launchPath,String mDataDir) throws LuaException {
 		//need to set up global functions, it all goes here.
 		
+		if(mDataDir == null) {
+			//this is bad.
+		} else {
+			
+			//set up the path/cpath.
+			//TODO: add the plugin load path.
+			String packagePath = mDataDir + "/lua/share/5.1/?.lua";
+			if(launchPath != null && !launchPath.equals("")) {
+				if(launchPath.contains("autohunt")) {
+					int ten = launchPath.length();
+					
+				}
+				File file = new File(launchPath);
+				String dir = file.getParent();
+				//file.getPar
+				//L.pushString(dir);
+				packagePath += ";" + dir + "/?.lua";
+			}
+			L.getGlobal("package");
+			L.pushString(packagePath);
+			L.setField(-2, "path");
+			
+			L.pushString(mDataDir + "/lib/lib?.so");
+			L.setField(-2, "cpath");
+			L.pop(1);
+			
+		}
 		TriggerEnabledFunction tef = new TriggerEnabledFunction(L);
 		tef.register("EnableTrigger");
 		L.pushJavaObject(settings.getTriggers());

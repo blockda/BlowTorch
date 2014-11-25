@@ -50,7 +50,7 @@ make HOST_CC="gcc -m32" CROSS=$ARMEABI_NDKP TARGET_FLAGS="$NDKF" TARGET_SYS=Linu
 mv src/libluajit.a src/libluajit-armeabi.a
 mv src/libluajit.so src/libluajit-armeabi.so
 
-NDKF_V7A="-march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=softfp --sysroot $NDK/platforms/android-$NDKABI/arch-arm"
+NDKF_V7A="--sysroot $NDK/platforms/android-$NDKABI/arch-arm"
 echo "Building ARMv7A TARGETS"
 make clean
 make HOST_CC="gcc -m32" CROSS=$ARMEABI_NDKP TARGET_FLAGS="$NDKF_V7A" TARGET_SYS=Linux

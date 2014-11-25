@@ -528,22 +528,14 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		
 				//EditText input_box = (EditText)findViewById(R.id.textinput);
 				
-			
-				if(event == null)  {
-					
-				}
-				
 				if(actionId == EditorInfo.IME_ACTION_SEND) {
-					event = new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_ENTER);
-				}
-				
-				if(((event.getKeyCode() == KeyEvent.KEYCODE_ENTER || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER) && event.getAction() == KeyEvent.ACTION_UP)) {
 					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
-					//screen2.jumpToZero();
-
-					if(actionId == EditorInfo.IME_ACTION_DONE) {
-							return true;
-					} else { return true; }
+					return true;
+				} 
+				if(event == null) return true;
+				if((((event.getKeyCode() == KeyEvent.KEYCODE_ENTER || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER) && event.getAction() == KeyEvent.ACTION_UP))) {
+					myhandler.sendEmptyMessage(MainWindow.MESSAGE_PROCESSINPUTWINDOW);
+					return true;
 				} else if(event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && event.getAction() == KeyEvent.ACTION_UP) {
 					String cmd = history.getNext();
 					mInputBox.setText(cmd);
@@ -1368,6 +1360,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	protected void setUseCompatibilityMode(boolean value) {
 		
 		mInputBox.setBackSpaceBugFix(value);
+		setupEditor(fullscreenEditor, value);
 		InputMethodManager imm = (InputMethodManager) mInputBox.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.restartInput(mInputBox);
 	}
@@ -2369,10 +2362,8 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		isResumed = false;
 		super.onPause();
 	}
-	private boolean debug = false;
 	public void onResume() {
 		super.onResume();
-		if(debug) return;
 		//Log.e("window","start onResume()");
 		//windowShowing = true;
 		
@@ -2401,7 +2392,9 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		} else {
 			//request buffer.
 			try {
-				service.windowShowing(true);
+				if(service != null) {
+					service.windowShowing(true);
+				}
 			} catch (RemoteException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -2411,10 +2404,12 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			String display = i.getStringExtra("DISPLAY");
 			
 			try {
+				if(service != null) {
 				if(!service.getConnectedTo().equals(display)) {
 					Log.e("LOG","ATTEMPTING TO SWITCH TO: " + display);
 					//this.cleanupWindows();
 					service.switchTo(display);
+				}
 				}
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
@@ -2622,27 +2617,31 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	private boolean fullscreenEditor = false;
 	private boolean useSuggestions = false;
 	public void setupEditor(boolean useExtractUI,boolean useSuggestions) {
+		mInputBox.setHorizontallyScrolling(false);
+		mInputBox.setMaxLines(19);
+	
 		if(useExtractUI) {
 			
 			
 			int current = mInputBox.getImeOptions();
 			int wanted = current & (0xFFFFFFFF^EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+			wanted = wanted | EditorInfo.IME_ACTION_SEND;
 			
 			//Log.e("WINDOW","ATTEMPTING TO SET FULL SCREEN IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 			mInputBox.setImeOptions(wanted);
-			mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+			mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 			//BetterEditText better = (BetterEditText)input_box;
 			mInputBox.setUseFullScreen(true);
 			//mInputBox.setBackSpaceBugFix(backSpaceBugFix)
 		} else {
 			int current = mInputBox.getImeOptions();
-			int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+			int wanted = current | EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_ACTION_SEND;
 			//Log.e("WINDOW","ATTEMPTING TO SET NO EXTRACT IME| WAS: "+ Integer.toHexString(current) +" WANT: " + Integer.toHexString(wanted));
 			mInputBox.setImeOptions(wanted);
 			if(useSuggestions) {
-				mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 			} else {
-				mInputBox.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+				mInputBox.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS|InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 				//mInputBox.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
 					
 			}
