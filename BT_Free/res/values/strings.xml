@@ -3,7 +3,7 @@
 	<string name="testMode">false</string>
 	<string name="windowAction">com.offsetnull.bt.window.MainWindow.NORMAL_MODE</string>
 	<string name="notificationIcon">blowtorch_notification2</string>
-	<string name="serviceProcessName">:stellar_free</string>
+	<string name="serviceProcessName">:stellar</string>
 	<string name="serviceBindAction">com.offsetnull.bt.service.IStellarService.MODE_NORMAL</string>
 	<string name="ongoingNotificationLabel">BlowTorch</string>
 	<string name="packageName">com.happygoatstudios.bt</string>

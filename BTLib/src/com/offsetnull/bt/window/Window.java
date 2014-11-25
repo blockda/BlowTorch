@@ -2165,7 +2165,7 @@ public class Window extends View implements AnimatedRelativeLayout.OnAnimationEn
 			mL.pushString(packagePath);
 			mL.setField(-2, "path");
 			
-			mL.pushString(mDataDir + "/lua/lib/5.1/?.so");
+			mL.pushString(mDataDir + "/lib/lib?.so");
 			mL.setField(-2, "cpath");
 			mL.pop(1);
 			

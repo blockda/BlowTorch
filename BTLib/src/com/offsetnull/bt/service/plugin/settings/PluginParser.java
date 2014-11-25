@@ -60,12 +60,22 @@ public class PluginParser extends BasePluginParser {
 	
 	protected TYPE type;
 	protected String shortName;
+	protected String mDataDir;
 	
 	public PluginParser(String location,String name, Context context,ArrayList<Plugin> plugins,Handler serviceHandler,Connection parent) {
 		super(location, context);
 		// TODO Auto-generated constructor stub
 		//L = p.getLuaState();
 		//this.p = p;
+		ApplicationInfo ai = null;
+		try {
+			ai = context.getApplicationContext().getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String dataDir = ai.dataDir;
+		mDataDir = dataDir;
 		this.parent = parent;
 		shortName = name;
 		this.serviceHandler = serviceHandler;
@@ -154,7 +164,7 @@ public class PluginParser extends BasePluginParser {
 						pL.setField(-2, "path");
 						//L.pop(1);
 						
-						pL.pushString(dataDir + "/lua/lib/5.1/?.so");
+						pL.pushString(dataDir + "/lib/lib?.so");
 						pL.setField(-2, "cpath");
 						pL.pop(1);
 						
@@ -307,7 +317,7 @@ public class PluginParser extends BasePluginParser {
 				//construct the new plugin.
 				Plugin p;
 				try {
-					p = new Plugin(serviceHandler,parent);
+					p = new Plugin(serviceHandler,parent,path,mDataDir);
 					tmp.setPath(path);
 					p.setSettings(tmp);
 					p.getSettings().getOptions().setListener(p);

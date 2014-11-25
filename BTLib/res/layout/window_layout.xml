@@ -44,8 +44,8 @@
     android:isScrollContainer = "false"
     android:keepScreenOn = "true"
     android:imeOptions = "actionSend"
-    android:maxLines = "8"
-    android:inputType = "textMultiLine"/>
+    android:maxLines = "18"
+    android:scrollHorizontally="false"/>
     
 
 

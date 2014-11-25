@@ -1,8 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH_ABI),armeabi)
-LOCAL_MODULE := bit
-LOCAL_MODULE_FILENAME := bit
+LOCAL_MODULE := libbit
+LOCAL_MODULE_FILENAME := libbit
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../luajava
 LOCAL_SRC_FILES := ./bit.c
 LOCAL_SHARED_LIBRARIES := lua
@@ -13,8 +13,8 @@ include $(BUILD_SHARED_LIBRARY)
 endif
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-LOCAL_MODULE := bit
-LOCAL_MODULE_FILENAME := bit
+LOCAL_MODULE := libbit
+LOCAL_MODULE_FILENAME := libbit
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../luajava
 LOCAL_SRC_FILES := ./bit.c
 LOCAL_SHARED_LIBRARIES := lua 
