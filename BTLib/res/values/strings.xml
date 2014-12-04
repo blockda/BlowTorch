@@ -4,5 +4,5 @@
     <string name="app_name">BaardTERM</string>
 <string name="thewelcometext">Welcome to BaardTERM version AWESOME!111!one!!!@1NOWWITHLINEBREAKSOMGWTFBBQOHANDYOUMADEITTAKEFOURTYPERCENTLESSBATTERY?!?!?!!??!!?OMGWTFBBQXIXORRRSSS!OMGDANISSOCOOL</string>
 <string name="hello2">This is the debug screen. However this text will dissapear when data arrives from the server.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n</string>
-<string name="whatisnew">--- BUG FIXES\n*Fixed an issue that was causing random force close problems on specific servers.\n\n--- NEW FEATURES\n*Default button set (for new connections).\n*Added .loadset and .clearbuttons special commands.\n\nVisit the website for more details!\nhttp://bt.happygoatstudios.com</string><string name="whatisnew_test">---- TEST VERSION 7 ----\n*Many bug fixes. Stay tuned for the switch over to the play store beta system.</string>
+<string name="whatisnew">--- New Features:\n*New button set editor\n*Auto Reconnect\n*Input bar now wraps and resizes\n*Lua Scripting Engine + sqlite3</string><string name="whatisnew_test">---- TEST VERSION 7 ----\n*Many bug fixes. Stay tuned for the switch over to the play store beta system.</string>
 </resources>

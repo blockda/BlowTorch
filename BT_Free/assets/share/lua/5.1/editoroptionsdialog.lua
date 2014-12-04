@@ -27,6 +27,7 @@ local tostring = _G["tostring"]
 local Note = _G["Note"]
 local string = _G["string"]
 local tonumber = _G["tonumber"]
+local serialize = _G["serialize"]
 module(...)
 
 local context
@@ -303,6 +304,7 @@ doneListener = luajava.createProxy("android.view.View$OnClickListener",{
         editorValues[i] = k
       end
     end
+    Note(serialize(editorValues))
     if(editorDone ~= nil) then
       editorDone(editorValues)
     end
