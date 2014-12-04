@@ -65,7 +65,8 @@ function saveButtons(arg)
 	
 	local tmp = loadstring(arg)()
 	
-	buttonsets[current_set] = tmp
+	buttonsets[current_set] = tmp.buttons
+	buttonset_defaults[current_set] = tmp.defaults
 	--printTable("arg",arg)
 	SaveSettings()
 end
@@ -332,6 +333,8 @@ function saveSetDefaults(data)
 	
 	buttonset_defaults[current_set] = defaults
 	--wow, that was easy.
+	
+	--don't save here, the call to saveButtons will come next
 end
 
 function OnXmlExport(out)

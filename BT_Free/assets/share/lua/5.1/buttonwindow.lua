@@ -719,7 +719,9 @@ function exitManagerMode()
 		if(b.selected) then b.selected = false end
 	end
 		
+	PluginXCallS("saveSetDefaults",serialize(defaults))
 	PluginXCallS("saveButtons",serialize(tmp))
+	
 	drawButtons()
 	view:invalidate()
 end
@@ -758,7 +760,7 @@ function drawManagerGrid()
 		--draw dashed lines.
 		local times = width / gridXwidth
 		for x=1,times do
-			c:drawLine(gridXwidth*x,0,gridXwidth*x,height,dpaint)
+			c:drawLine( gridXwidth*x,0,gridXwidth*x,height,dpaint)
 		end
 		
 		times = height / gridYwidth
@@ -836,8 +838,8 @@ function buttonOptions()
   editorValues.x = 0
   editorValues.y = 0  
   
-  editorValues.gridX = gridXwidth
-  editorValues.gridY = gridYwidth
+  editorValues.gridX = gridXwidth / density
+  editorValues.gridY = gridYwidth / density
   editorValues.gridOpacity = manageropacity
   editorValues.gridIntersectionTest = intersectMode
   editorValues.gridSnap = gridsnap
@@ -845,7 +847,29 @@ function buttonOptions()
 
   local editorOptionsDialog = require("editoroptionsdialog")
   editorOptionsDialog.init(mContext)
-  editorOptionsDialog.setEditorDoneCallback()
+  editorOptionsDialog.setEditorDoneCallback(function(tmp)
+    --v is a table with the values from the setPropertiesEditor as well as the things that are handled below but those are handled responsively
+    --(serialize(tmp))
+    --tmp.name = nameEdit:getText():toString()
+    --tmp.target = targetEdit:getText():toString()
+    --tmp.normalColor = normalColor
+    --tmp.flipColor = flipColor
+    --tmp.pressedColor = pressedColor
+    --tmp.normalLabelColor = normalLabelColor
+    --tmp.flipLabelColor = flipLabelColor
+    --tmp.labelSize = tonumber(labelSizeEdit:getText():toString())
+    --tmp.height = tonumber(heightEdit:getText():toString())
+    --tmp.width = tonumber(widthEdit:getText():toString())
+    defaults.width = tmp.width
+    defaults.height = tmp.height
+    defaults.primaryColor = tmp.normalColor
+    defaults.flipColor = tmp.flipColor
+    defaults.selectedColor = tmp.pressedColor
+    defaults.labelColor = tmp.normalLabelColor
+    defaults.flipLabelColor = tmp.pressedLabelColor
+    defaults.labelSize = tmp.labelSize
+    
+  end)
   editorOptionsDialog.setGridSnapCallback(function(v)
     gridsnap = v
   end)
@@ -1040,12 +1064,12 @@ end
 counter = 0
 
 function addButton(pX,pY) 
-	local newb = BUTTON:new({x=pX,y=pY,label="newb"},density)
+	local newb = BUTTON:new({x=pX,y=pY,label=""},density)
 	--newb.x = x
 	--newb.y = y
 	newb.data.width = defaults.width --(gridXwidth-5)/density
 	newb.data.height = defaults.height --(gridYwidth-5)/density
-	newb.data.label = "newb"..counter
+	--newb.data.label = "newb"..counter
 	counter = counter+1
 	--newb.rect = luajava.newInstance("android.graphics.RectF")
 	--newb.paintOpts = luajava.new(PaintClass,paint)
@@ -1537,6 +1561,7 @@ function setEditorCancelListener.onClick(v)
 end
 seteditorCancel_cb = luajava.createProxy("android.view.View$OnClickListener",setEditorCancelListener)
 
+--delete after testing
 setEditorDoneListener = {}
 function setEditorDoneListener.onClick(v)
 	--apply the settings.
@@ -1640,8 +1665,11 @@ end
 function loadOptions(data)
 	--Note("incoming options wad:"..data)
 	options = loadstring(data)()
-	buttonRoundness = tonumber(options.roundness)
+	buttonRoundness = tonumber(options.roundness) * density
+	--Note("options loaded, roundess="..buttonRoundness)
+	--clearButtons()
 	drawButtons()
+	view:invalidate()
 	--Note("loaded button options:"..options.auto_edit)
 end
 
@@ -1686,8 +1714,8 @@ buttonsCleared = false
 clearSet = {}
 revertButtonData = {}
 revertButtonData.label = "BACK"
-revertButtonData.width = 80*density
-revertButtonData.height = 25*density
+revertButtonData.width = 70 --this unit is in dips, density is applied later
+revertButtonData.height = 40 --same here.
 revertButtonData.x = 100
 revertButtonData.y = 100
 revertButton = BUTTON:new(revertButtonData,density)
@@ -1814,7 +1842,13 @@ function resLoader(root,bmp)
 		target = luajava.newInstance("android.graphics.drawable.BitmapDrawable",resources,root.."/hdpi/"..bmp)
 	end
 	
-	return target
+	local bmp = target:getBitmap()
+	local Bitmap = luajava.bindClass("android.graphics.Bitmap")
+	--scale to a bitmap of the appropriate size 40x40 dip? ish
+	local resize = luajava.newInstance("android.graphics.drawable.BitmapDrawable",resources,Bitmap:createScaledBitmap(bmp,40*density,40*density,true))
+	
+	
+	return resize
 end
 
 function onEditorBackPressed()

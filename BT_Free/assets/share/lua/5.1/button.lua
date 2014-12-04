@@ -4,10 +4,14 @@ Path = luajava.bindClass("android.graphics.Path")
 PathDirection = luajava.bindClass("android.graphics.Path$Direction")
 statusoffset = 0
 
-buttonRoundness = 6
+--typeface support for bolding text
+local Typeface = luajava.bindClass("android.graphics.Typeface")
+local DEFAULT_BOLD_TYPEFACE = Typeface.DEFAULT_BOLD
+
+buttonRoundness = 16
 BUTTONSET_DATA = {
-						height 			= 42,
-						width 			= 42,
+						height 			= 48,
+						width 			= 48,
 						labelSize 		= 16,
 						primaryColor 	= Color:argb(0x88,0x00,0x00,0xFF),
 						labelColor		= Color:argb(0xAA,0xAA,0xAA,0xAA),
@@ -20,8 +24,8 @@ BUTTONSET_DATA = {
 						flipCommand = "",
 						name = "",
 						switchTo = "",
-						gridXwidth = 45,
-						gridYwidth = 45			
+						gridXwidth = 50,
+						gridYwidth = 50			
 			  		}
 function BUTTONSET_DATA:new(o)
 	o = o or {}
@@ -61,6 +65,7 @@ function BUTTON:new(data,density)
 	o.paintOpts = luajava.newInstance("android.graphics.Paint")
 	o.paintOpts:setAntiAlias(true)
 	o.paintOpts:setXfermode(xferModeSRC)
+	o.paintOpts:setTypeface(DEFAULT_BOLD_TYPEFACE)
 	o.rect = luajava.newInstance("android.graphics.RectF")
 	o.inset = luajava.newInstance("android.graphics.RectF")
 	o.data = BUTTON_DATA:new(data)
@@ -98,7 +103,8 @@ function BUTTON:draw(state,canvas)
 	end
 	
 	local rect = self.rect
-	
+	--Note("drawing button, roundness is"..buttonRoundness)
+	--buttonRoundness = 30.0
 	if(usestate == 0) then
 		p:setColor(self.data.primaryColor)
 		canvas:drawRoundRect(rect,buttonRoundness,buttonRoundness,p)
@@ -114,9 +120,11 @@ function BUTTON:draw(state,canvas)
 	if(usestate == 0 or usestate == 1) then
 		p:setColor(self.data.labelColor)
 		p:setTextSize(tonumber(self.data.labelSize)*self.density)
+		--p:setTypeface(DEFAULT_BOLD_TYPEFACE)
 		label = self.data.label
 	elseif(usestate == 2) then
 		p:setColor(self.data.flipLabelColor)
+		--p:setTypeface(DEFAULT_BOLD_TYPEFACE)
 		if(self.data.flipLabel == "" or self.data.flipLabel == nil) then
 			label = self.data.label
 		else
@@ -126,7 +134,7 @@ function BUTTON:draw(state,canvas)
 	end
 	local tX = self.data.x - (p:measureText(label)/2)
 	local tY = self.data.y + (p:getTextSize()/2) + statusoffset
-	
+	p:setTypeface(DEFAULT_BOLD_TYPEFACE)
 	canvas:drawText(label,tX,tY,p)
 end
 

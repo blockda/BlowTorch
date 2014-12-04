@@ -144,8 +144,7 @@ doneClickListener = luajava.createProxy("android.view.View$OnClickListener",{
       return
     end
     
-    --gather up editor data to pass back into the main button window callback
-
+    --gather up editor data to pass back into the main button window callback   
     
     local tmp = advancedEditor.getEditorValues()
     
