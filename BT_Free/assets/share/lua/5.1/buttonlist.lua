@@ -71,7 +71,6 @@ end
 
 modifyClickListener = luajava.createProxy("android.view.View$OnClickListener",{
   onClick = function(v)
-    Note("Modify clicked.")
     modifyButtonSetCallback(sortedList[lastSelectedIndex+1])
     
     dialog:dismiss()

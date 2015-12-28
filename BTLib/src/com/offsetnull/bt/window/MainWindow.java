@@ -673,7 +673,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 					SharedPreferences.Editor edit = MainWindow.this.getSharedPreferences("CONNECT_TO", Context.MODE_PRIVATE).edit();
 					edit.putString("CONNECT_TO", MainWindow.this.getIntent().getStringExtra("DISPLAY"));
 					edit.commit();
-					MainWindow.this.bindService(new Intent(serviceBindAction),mConnection, 0);
+					MainWindow.this.bindService(new Intent(serviceBindAction, null, MainWindow.this.getApplicationContext(), StellarService.class),mConnection, 0);
 					//MainWindow.this.bindService(n, conn, flags)
 					
 					break;
@@ -2384,7 +2384,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			edit.putString("CONNECT_TO", MainWindow.this.getIntent().getStringExtra("DISPLAY"));
 			edit.commit();
 			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
-			this.bindService(new Intent(serviceBindAction),mConnection, 0);
+			this.bindService(new Intent(serviceBindAction,null,this,StellarService.class),mConnection, 0);
 			
 			isBound = true;
 			isResumed = true;

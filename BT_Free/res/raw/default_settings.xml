@@ -75,7 +75,7 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
   	 		</list>
   	 		
   	 	</options>
-		<script name="bootstrap">
+		<script name="bootstrap" execute="true">
 		<![CDATA[
 			require("buttonserver")
 		]]>
@@ -83,7 +83,6 @@ xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
 		<script name="buttonwindow">
 			<![CDATA[
 			require("buttonwindow")
-			--debugPrint("custom loaded file go!")
 		]]>
   		</script>
   		<buttonsets>
