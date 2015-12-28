@@ -79,14 +79,12 @@ function BUTTON:new(data,density)
 end
 
 function BUTTON:updateRect(statusoffset)
-	--local r = self.rect
 	local left = self.data.x - (self.data.width/2)*self.density
 	local right = self.data.x + (self.data.width/2)*self.density
 	local top = self.data.y - (self.data.height/2)*self.density + statusoffset
 	local bottom = self.data.y + (self.data.height/2)*self.density + statusoffset
 	local tmp = self.rect
 
-	
 	tmp:set(left,top,right,bottom)
 	self.inset:set(left+1.0,top+1.0,right-1.0,bottom-1.0)
 end
