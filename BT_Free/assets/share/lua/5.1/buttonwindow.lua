@@ -1,4 +1,4 @@
-respath = package.path
+ respath = package.path
 respath = string.sub(respath,0,string.find(respath,"?")-1).."res"
 
 require("button")
@@ -6,6 +6,8 @@ require("serialize")
 require("bit")
 local marshal = require("marshal")
 defaults = nil
+
+local props = require("config")
 
 debugInfo = false
 
@@ -849,17 +851,57 @@ function buttonOptions()
   editorOptionsDialog.init(mContext)
   editorOptionsDialog.setEditorDoneCallback(function(tmp)
     --v is a table with the values from the setPropertiesEditor as well as the things that are handled below but those are handled responsively
-    --(serialize(tmp))
-    --tmp.name = nameEdit:getText():toString()
-    --tmp.target = targetEdit:getText():toString()
-    --tmp.normalColor = normalColor
-    --tmp.flipColor = flipColor
-    --tmp.pressedColor = pressedColor
-    --tmp.normalLabelColor = normalLabelColor
-    --tmp.flipLabelColor = flipLabelColor
-    --tmp.labelSize = tonumber(labelSizeEdit:getText():toString())
-    --tmp.height = tonumber(heightEdit:getText():toString())
-    --tmp.width = tonumber(widthEdit:getText():toString())
+    
+    
+    --update old button sizes to new button sizes.
+    for i=1,#buttons do
+      local b = buttons[i]
+
+      local data = b.data
+      --local meta = getmetatable(data)
+      --local index = meta.__index
+      
+      local compare = function(x,c,z)
+        return tonumber(rawget(x,c)) == tonumber(z)
+      end
+      
+      if(compare(data,"width",defaults.width)) then
+        --Note("\n\nSPECIAL WIDTH CLEAR\n\n")
+        rawset(b.data,"width",nil)
+      end
+      
+      if(compare(data,"height",defaults.height)) then
+        --Note("\n\nSPECIAL LABEL CLEAR\n\n")
+        rawset(b.data,"height",nil)
+      end
+      
+      if(compare(data,"labelSize",defaults.labelSize)) then
+        rawset(b.data,"labelSize",nil)
+      end
+      --counter = counter + 1
+      if(compare(data,"primaryColor",defaults.primaryColor)) then
+        rawset(b.data,"primaryColor",nil)
+      end
+      
+      if(compare(data,"flipColor",defaults.flipColor)) then
+        rawset(b.data,"flipColor",nil)
+      end
+      
+      if(compare(data,"selectedColor",defaults.selectedColor)) then
+        rawset(b.data,"selectedColor",nil)
+      end
+      
+      if(compare(data,"labelColor",defaults.labelColor)) then
+        rawset(b.data,"labelColor",nil)
+      end
+      
+      if(compare(data,"flipLabelColor",defaults.flipLabelColor)) then
+        rawset(b.data,"flipLabelColor",nil)
+      end
+      
+     
+    end
+    
     defaults.width = tmp.width
     defaults.height = tmp.height
     defaults.primaryColor = tmp.normalColor
@@ -869,18 +911,27 @@ function buttonOptions()
     defaults.flipLabelColor = tmp.pressedLabelColor
     defaults.labelSize = tmp.labelSize
     
+    for i=1,#buttons do
+      local b = buttons[i]
+      b:updateRect(statusoffset)     
+    end
+    
+    --call redraw buttons to get any new colors in there.
+    drawButtons()
+    view:invalidate()
+    
   end)
   editorOptionsDialog.setGridSnapCallback(function(v)
     gridsnap = v
   end)
   editorOptionsDialog.setGridXSpacingCallback(function(v)
-    gridXwidth = v
+    gridXwidth = v*density
     defaults.gridXwidth = v
     drawManagerGrid()
     view:invalidate()
   end)
   editorOptionsDialog.setGridYSpacingCallback(function(v)
-    gridYwidth = v
+    gridYwidth = v*density
     defaults.gridYwidth = v
     drawManagerGrid()
     view:invalidate()
@@ -1067,8 +1118,9 @@ function addButton(pX,pY)
 	local newb = BUTTON:new({x=pX,y=pY,label=""},density)
 	--newb.x = x
 	--newb.y = y
-	newb.data.width = defaults.width --(gridXwidth-5)/density
-	newb.data.height = defaults.height --(gridYwidth-5)/density
+	--next two lines seem to be messing with the defaults.
+	--newb.data.width = defaults.width --(gridXwidth-5)/density
+	--newb.data.height = defaults.height --(gridYwidth-5)/density
 	--newb.data.label = "newb"..counter
 	counter = counter+1
 	--newb.rect = luajava.newInstance("android.graphics.RectF")
@@ -1774,7 +1826,8 @@ function PopulateMenu(menu)
 		end
 		
 	--if(topMenuItem == nil) then
-		topMenuItem = menu:add(0,401,401,"Button Sets")
+		topMenuItem = menu:add(0,401,401,props.label)
+
 		topMenuItem:setIcon(R_drawable.ic_menu_button_sets)
 		topMenuItem:setOnMenuItemClickListener(buttonsetMenuClicked_cb)
 		

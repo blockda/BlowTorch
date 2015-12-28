@@ -76,6 +76,7 @@ import com.offsetnull.bt.R;
 import com.offsetnull.bt.service.IConnectionBinder;
 import com.offsetnull.bt.service.IConnectionBinderCallback;
 import com.offsetnull.bt.service.ILauncherCallback;
+import com.offsetnull.bt.service.StellarService;
 import com.offsetnull.bt.settings.ConfigurationLoader;
 
 import dalvik.system.PathClassLoader;
@@ -502,11 +503,11 @@ public class Launcher extends Activity implements ReadyListener {
 
 		Log.e("LAUNCHER","STARTING SREVICE");
 		String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
-		startService(new Intent(action));
+		startService(new Intent(action,null,this, StellarService.class));
 		buildList();
 		if(!serviceBound) {
 			//String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
-			bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+			bindService(new Intent(action,null,this, StellarService.class),connectionChecker,Context.BIND_AUTO_CREATE);
 		}
 		
 	}
@@ -553,7 +554,7 @@ public class Launcher extends Activity implements ReadyListener {
 		}
 		if(!serviceBound) {
 			String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
-			bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+			bindService(new Intent(action,null,this, StellarService.class),connectionChecker,Context.BIND_AUTO_CREATE);
 		}
 	}
 	
@@ -563,7 +564,7 @@ public class Launcher extends Activity implements ReadyListener {
 		super.onResume();
 		if(!serviceBound) {
 			String action = ConfigurationLoader.getConfigurationValue("serviceBindAction",Launcher.this);
-			bindService(new Intent(action),connectionChecker,Context.BIND_AUTO_CREATE);
+			bindService(new Intent(action,null,this, StellarService.class),connectionChecker,Context.BIND_AUTO_CREATE);
 		}
 		//buildList();
 	}
