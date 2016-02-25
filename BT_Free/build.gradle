@@ -1,0 +1,46 @@
+apply plugin: 'com.android.application'
+
+android {
+	compileSdkVersion 19
+	buildToolsVersion "23.0.2"
+	signingConfigs {
+    		release {
+        		storeFile file("../BTLib/key/bt_privatekey.keystore")
+        		storePassword System.getenv("BT_RELEASE_PASS")
+        		keyAlias "btkey"
+        		keyPassword System.getenv("BT_RELEASE_PASS")
+    		}
+	}
+
+	defaultConfig {
+		minSdkVersion 8
+		targetSdkVersion 19
+		versionCode 219
+		versionName "2.0"
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled true
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+			signingConfig signingConfigs.release
+		}
+	}
+
+	sourceSets {
+		main {
+			manifest.srcFile 'AndroidManifest.xml'
+			java.srcDirs = ['src']
+			resources.srcDirs = ['src']
+			aidl.srcDirs = ['src']
+			res.srcDirs = ['res']
+			assets.srcDirs = ['assets']
+		}
+	}
+
+}
+
+dependencies {
+	compile project(":BTLib")
+}
+
