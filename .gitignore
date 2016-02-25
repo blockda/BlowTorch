@@ -10,4 +10,8 @@ BT_Pro/bin
 BT_Free/gen
 BT_Free/bin
 BTLIB/libs
+BTLib/build
+BT_Free/build
+BT_Aard/build
+build/
 *.o

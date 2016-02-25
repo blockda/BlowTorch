@@ -1,0 +1,118 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .DS_Store
+* ._.DS_Store
+* .checkstyle
+* ant.properties
+* build.xml
+* checkstyle.header
+* checkstyle_suppressions.xml
+* default.properties
+* key/
+* key/bt_privatekey.keystore
+* key/debug.keystore
+* key/debug.keystore.old
+* proguard-project.txt
+* release/
+* release/beta/
+* release/beta/BlowTorch.apk
+* release/beta/test_config_all.xml
+* release/beta/test_config_small.xml
+* release/v1.0.1/
+* release/v1.0.1/BlowTorch.apk
+* release/v1.0.2/
+* release/v1.0.2/BlowTorch.apk
+* release/v1.0.3/
+* release/v1.0.3/BlowTorch.apk
+* release/v1.0.4/
+* release/v1.0.4/BlowTorch.apk
+* release/v1.0.5/
+* release/v1.0.5/BlowTorch.apk
+* release/v1.0.6/
+* release/v1.0.6/BlowTorch.apk
+* release/v1.0.7/
+* release/v1.0.7/BlowTorch.apk
+* release/v1/
+* release/v1/BlowTorch.apk
+* tmp.out
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => BTLib2/src/main/AndroidManifest.xml
+* jni/ => BTLib2/src/main/jni/
+* libs/armeabi-v7a/libbit.so => BTLib2/src/main/jniLibs/armeabi-v7a/libbit.so
+* libs/armeabi-v7a/liblsqlite3.so => BTLib2/src/main/jniLibs/armeabi-v7a/liblsqlite3.so
+* libs/armeabi-v7a/liblua.so => BTLib2/src/main/jniLibs/armeabi-v7a/liblua.so
+* libs/armeabi-v7a/libluabins.so => BTLib2/src/main/jniLibs/armeabi-v7a/libluabins.so
+* libs/armeabi-v7a/libmarshal.so => BTLib2/src/main/jniLibs/armeabi-v7a/libmarshal.so
+* libs/armeabi-v7a/libsqlite3.so => BTLib2/src/main/jniLibs/armeabi-v7a/libsqlite3.so
+* libs/armeabi/libbit.so => BTLib2/src/main/jniLibs/armeabi/libbit.so
+* libs/armeabi/liblsqlite3.so => BTLib2/src/main/jniLibs/armeabi/liblsqlite3.so
+* libs/armeabi/libluabins.so => BTLib2/src/main/jniLibs/armeabi/libluabins.so
+* libs/armeabi/libmarshal.so => BTLib2/src/main/jniLibs/armeabi/libmarshal.so
+* lint.xml => BTLib2/lint.xml
+* res/ => BTLib2/src/main/res/
+* src/ => BTLib2/src/main/java/
+* src/.DS_Store => BTLib2/src/main/resources/.DS_Store
+* src/com/.DS_Store => BTLib2/src/main/resources/com/.DS_Store
+* src/com/offsetnull/.DS_Store => BTLib2/src/main/resources/com/offsetnull/.DS_Store
+* src/com/offsetnull/bt/.DS_Store => BTLib2/src/main/resources/com/offsetnull/bt/.DS_Store
+* src/com/offsetnull/bt/alias/.DS_Store => BTLib2/src/main/resources/com/offsetnull/bt/alias/.DS_Store
+* src/com/offsetnull/bt/alias/AliasData.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/alias/AliasData.aidl
+* src/com/offsetnull/bt/button/SlickButtonData.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/button/SlickButtonData.aidl
+* src/com/offsetnull/bt/responder/ack/AckResponder.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/ack/AckResponder.aidl
+* src/com/offsetnull/bt/responder/color/ColorAction.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/color/ColorAction.aidl
+* src/com/offsetnull/bt/responder/gag/GagAction.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/gag/GagAction.aidl
+* src/com/offsetnull/bt/responder/notification/NotificationResponder.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/notification/NotificationResponder.aidl
+* src/com/offsetnull/bt/responder/replace/ReplaceResponder.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/replace/ReplaceResponder.aidl
+* src/com/offsetnull/bt/responder/script/ScriptResponder.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/script/ScriptResponder.aidl
+* src/com/offsetnull/bt/responder/toast/ToastResponder.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/responder/toast/ToastResponder.aidl
+* src/com/offsetnull/bt/service/.DS_Store => BTLib2/src/main/resources/com/offsetnull/bt/service/.DS_Store
+* src/com/offsetnull/bt/service/IConnectionBinder.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/IConnectionBinder.aidl
+* src/com/offsetnull/bt/service/IConnectionBinderCallback.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/IConnectionBinderCallback.aidl
+* src/com/offsetnull/bt/service/ILauncherCallback.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/ILauncherCallback.aidl
+* src/com/offsetnull/bt/service/IWindowCallback.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/IWindowCallback.aidl
+* src/com/offsetnull/bt/service/WindowToken.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/WindowToken.aidl
+* src/com/offsetnull/bt/service/plugin/settings/BooleanOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/BooleanOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/CallbackOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/CallbackOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/ColorOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/ColorOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/EncodingOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/EncodingOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/FileOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/FileOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/IntegerOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/IntegerOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/ListOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/ListOption.aidl
+* src/com/offsetnull/bt/service/plugin/settings/SettingsGroup.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/SettingsGroup.aidl
+* src/com/offsetnull/bt/service/plugin/settings/StringOption.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/service/plugin/settings/StringOption.aidl
+* src/com/offsetnull/bt/settings/ColorSetSettings.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/settings/ColorSetSettings.aidl
+* src/com/offsetnull/bt/speedwalk/DirectionData.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/speedwalk/DirectionData.aidl
+* src/com/offsetnull/bt/timer/TimerData.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/timer/TimerData.aidl
+* src/com/offsetnull/bt/timer/TimerProgress.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/timer/TimerProgress.aidl
+* src/com/offsetnull/bt/trigger/TriggerData.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/trigger/TriggerData.aidl
+* src/com/offsetnull/bt/window/StatusGroupData.aidl => BTLib2/src/main/aidl/com/offsetnull/bt/window/StatusGroupData.aidl
+* src/org/.DS_Store => BTLib2/src/main/resources/org/.DS_Store
+* src/org/keplerproject/.DS_Store => BTLib2/src/main/resources/org/keplerproject/.DS_Store
+* src/org/keplerproject/luajava/.DS_Store => BTLib2/src/main/resources/org/keplerproject/luajava/.DS_Store
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)
