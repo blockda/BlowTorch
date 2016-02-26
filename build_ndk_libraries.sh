@@ -10,7 +10,7 @@ echo $PWD
 }
 
 #The target LuaJit Library source archive unpacked location.
-LUAJIT="LuaJit-2.0.3"
+LUAJIT="LuaJIT-2.0.3"
 cd ./$LUAJIT
 echo `pwd` 
 #Make sure that the luaconf.h file has been appropriately modified to include the search path ./lib
