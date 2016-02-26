@@ -1,6 +1,6 @@
 #THIS SCRIPT ASSUMES THAT THE ANDROID NDK IS INSTALLED AND UNPACKED AT THE LOCATION BELOW
 
-NDK=/Users/render/android/android-ndk-r10c
+NDK=$NDK_HOME
 
 function print_pwd()
 {
