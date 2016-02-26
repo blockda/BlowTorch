@@ -42,8 +42,8 @@ cd ./$LUAJIT
 NDKABI=8
 
 NDKVER=$NDK/toolchains/arm-linux-androideabi-4.9
-
-ARMEABI_NDKP=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-
+#NDK_HOST_CC_TARGET <- darwin-x86_64 for osx, linux-x86_64 for ubuntu
+ARMEABI_NDKP=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/$NDK_HOST_CC_TARGET/bin/arm-linux-androideabi-
 
 NDKF="-march=armv5te -mtune=xscale --sysroot $NDK/platforms/android-$NDKABI/arch-arm"
 echo "Building ARMEABI Targets"
