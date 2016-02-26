@@ -10,8 +10,8 @@ echo $PWD
 }
 
 #The target LuaJit Library source archive unpacked location.
-LUAJIT=LuaJit-2.0.3
-cd $LUAJIT
+LUAJIT="LuaJit-2.0.3"
+cd ./$LUAJIT
 echo `pwd` 
 #Make sure that the luaconf.h file has been appropriately modified to include the search path ./lib
 #This is very important.
@@ -37,7 +37,7 @@ cd ..
 echo "**********************************************"
 echo "*************  STARTING BUILD ****************"
 echo "**********************************************"
-cd $LUAJIT
+cd ./$LUAJIT
 #start building.
 NDKABI=8
 
