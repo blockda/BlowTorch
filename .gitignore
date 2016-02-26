@@ -15,3 +15,4 @@ BT_Free/build
 BT_Aard/build
 build/
 *.o
+local.properties
