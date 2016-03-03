@@ -4,14 +4,6 @@
       android:versionCode="11"
       android:versionName="1.0.7">
     <application android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
-        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
-                  android:label="BlowTorch"
-                  >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
         		  android:windowSoftInputMode="adjustPan"
@@ -22,17 +14,6 @@
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
-        		  	<category android:name="android.intent.category.DEFAULT"/>
-        		  </intent-filter>
-        </activity>
-        <activity android:name="com.offsetnull.bt.settings.HyperSettingsActivity"
-        		  android:label="Settings Editor"
-        		  
-        		  
-        		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
-        		  android:noHistory = "true">
-        		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>

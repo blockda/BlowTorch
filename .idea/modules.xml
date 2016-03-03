@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/BTLib/BTLib.iml" filepath="$PROJECT_DIR$/BTLib/BTLib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/BT_Free/BT_Free.iml" filepath="$PROJECT_DIR$/BT_Free/BT_Free.iml" />
-    </modules>
-  </component>
-</project>
