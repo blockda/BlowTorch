@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v4.app.NotificationCompat;
 
 import com.offsetnull.bt.responder.TriggerResponder;
 import com.offsetnull.bt.settings.ConfigurationLoader;
@@ -218,7 +219,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		
 
 		NotificationManager NM = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
-		Notification note = new Notification(resId,xformedtitle,System.currentTimeMillis());
+		//Notification note = new Notification(resId,xformedtitle,System.currentTimeMillis());
 		//Intent notificationIntent  = new Intent(c,com.happygoatstudios.bt.window.MainWindow.class);
 		Intent notificationIntent = null;
 		//Context packageContext = null;
@@ -287,13 +288,18 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		PendingIntent contentIntent = PendingIntent.getActivity(c, myTriggerId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		//note.setLatestEventInfo(c, title, message, contentIntent);
-		note.setLatestEventInfo(c, xformedtitle, xformedmessage, contentIntent);
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
+		builder.setContentIntent(contentIntent)
+				.setContentTitle(xformedtitle)
+				.setContentText(xformedmessage);
+		//note.setLatestEventInfo(c, xformedtitle, xformedmessage, contentIntent);
 		
 		int defaults = 0;
 		if(useDefaultSound && soundPath.equals("")) {
 			defaults |= Notification.DEFAULT_SOUND;
 		} else if(useDefaultSound) {
-			note.sound = Uri.fromFile(new File(soundPath));
+			//note.sound = Uri.fromFile(new File(soundPath));
+			builder.setSound(Uri.fromFile(new File(soundPath)));
 		}
 		
 		if(useDefaultVibrate && vibrateLength == 0) {
@@ -301,16 +307,16 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		} else if(useDefaultVibrate) {
 			switch(vibrateLength) {
 			case 1:
-				note.vibrate = very_short;
+				builder.setVibrate(very_short);
 				break;
 			case 2:
-				note.vibrate = normal_short;
+				builder.setVibrate(normal_short);
 				break;
 			case 3:
-				note.vibrate = normal_long;
+				builder.setVibrate(normal_long);
 				break;
 			case 4:
-				note.vibrate = super_long;
+				builder.setVibrate(super_long);
 				break;
 			}
 		}
@@ -318,15 +324,20 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		if(useDefaultLight && colorToUse == 0) {
 			defaults |= Notification.DEFAULT_LIGHTS;
 		} else if(useDefaultLight) {
-			note.flags |= Notification.FLAG_SHOW_LIGHTS;
-			note.ledARGB = colorToUse;
-			note.ledOnMS = 300;
-			note.ledOffMS = 300;
+			builder.setLights(colorToUse,300,300);
+			//note.flags |= Notification.FLAG_SHOW_LIGHTS;
+			//note.ledARGB = colorToUse;
+			//note.ledOnMS = 300;
+			//note.ledOffMS = 300;
 		}
-		
-		note.flags = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL;
-		note.defaults = defaults;
-		note.icon = resId;
+
+		builder.setOnlyAlertOnce(true)
+				.setAutoCancel(true)
+				.setDefaults(defaults)
+				.setSmallIcon(resId);
+		//note.flags = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_AUTO_CANCEL;
+		//note.defaults = defaults;
+		//note.icon = resId;
 		
 		//long[] vp = new long[4];
 		//vp[0] = 0;
@@ -337,7 +348,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		//note.vibrate = vp;
 		NM.cancel(myTriggerId); //cancel my id if i am a not spawn new kind of guy, if that is true this shouldn't be a problem here, as the id doens't exist in the notification system yet.
 		
-		NM.notify(myTriggerId,note);
+		NM.notify(myTriggerId,builder.build());
 		
 		return false;
 	}

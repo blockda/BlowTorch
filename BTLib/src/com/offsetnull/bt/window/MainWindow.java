@@ -121,9 +121,10 @@ import com.offsetnull.bt.timer.BetterTimerSelectionDialog;
 import com.offsetnull.bt.timer.TimerSelectionDialog;
 import com.offsetnull.bt.trigger.BetterTriggerSelectionDialog;
 import com.offsetnull.bt.trigger.TriggerSelectionDialog;
+import android.support.v7.app.AppCompatActivity;
 
 @TargetApi(11)
-public class MainWindow extends Activity implements MainWindowCallback {
+public class MainWindow extends AppCompatActivity implements MainWindowCallback {
 	
 	public static String TEST_MODE = "blowTorchTestMode";
 	public static String NORMAL_MODE = "blowTorchNormalMode";
@@ -348,13 +349,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		//Debug.startMethodTracing("window");
 		super.onCreate(icicle);
 		windowMap = new HashMap<String,com.offsetnull.bt.window.Window>(0);
-		if(supportsActionBar()) {
-			this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-			
-		} else {
-			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-		}
+
 		
 		//this.requestWindowFeature(Window.FEATURE_ACTION_MODE_OVERLAY);
 		//this
@@ -368,7 +363,10 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		setContentView(R.layout.window_layout);
 		
 		history = new CommandKeeper(10);
-        
+
+		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
+		setSupportActionBar(myToolbar);
+
         //screen2 = (ByteView)findViewById(R.id.slickview);
         //RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         //screen2.setParentLayout(l);
@@ -642,17 +640,17 @@ public class MainWindow extends Activity implements MainWindowCallback {
 								null);
 					}
 					scriptCallbacks.add(0, cb);
-					if(supportsActionBar()) {
+					//if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
-					}
+					//}
 					break;
 				case MESSAGE_INITIALIZEWINDOWS:
 					//Log.e("WINDOW","INITIALIZE WINDOWS CALLED");
 					//windowsInitialized = false;
 					scriptCallbacks.clear();
-					if(supportsActionBar()) {
+					//if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
-					}
+					//}
 					
 					loadSettings();
 					MainWindow.this.initiailizeWindows();
@@ -1301,26 +1299,42 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		
 		mInputBox.setListener(mInputBarAnimationListener);
 		mRootView = (RelativeLayout)this.findViewById(R.id.window_container);
-		
-		if(supportsActionBar()) {
-			Button b = new Button(this);
-			b.setBackgroundColor(0x00000000);
-			LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
-			b.setLayoutParams(tmp);
-			
-			b.setOnTouchListener(new View.OnTouchListener() {
-				
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					// TODO Auto-generated method stub
-					//Log.e("lsfd","sldjfs");
-					
-					return mRootView.dispatchTouchEvent(event);
-				}
-			});
-			this.getActionBar().setCustomView(b);
-			this.getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-		}
+
+		this.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
+
+		this.getSupportActionBar().setDisplayOptions(0, android.support.v7.app.ActionBar.DISPLAY_SHOW_HOME);
+		this.getSupportActionBar().setDisplayOptions(0, android.support.v7.app.ActionBar.DISPLAY_SHOW_TITLE);
+
+
+
+		Button b = new Button(this);
+		b.setBackgroundColor(0x00000000);
+		//b.setBackgroundColor(0x33FF0000);
+		android.support.v7.app.ActionBar.LayoutParams tmp2 = new android.support.v7.app.ActionBar.LayoutParams(android.support.v7.app.ActionBar.LayoutParams.MATCH_PARENT,android.support.v7.app.ActionBar.LayoutParams.WRAP_CONTENT);
+
+		LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+		b.setLayoutParams(tmp);
+
+		b.setOnTouchListener(new View.OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				// TODO Auto-generated method stub
+				//Log.e("lsfd","sldjfs");
+				//mRootView.dispatchTouchEvent(event);
+
+				return mRootView.dispatchTouchEvent(event);
+				//return false;
+			}
+		});
+		//b.setEnabled(false);
+		this.getSupportActionBar().setCustomView(b,tmp2);
+		this.getSupportActionBar().setDisplayOptions(android.support.v7.app.ActionBar.DISPLAY_SHOW_CUSTOM);
+		this.getSupportActionBar().setDisplayShowCustomEnabled(true);
+		//this.getSupportActionBar().setContent
+		//android.support.v7.widget.Toolbar parent =(android.support.v7.widget.Toolbar) customView.getParent();
+		//parent.setContentInsetsAbsolute(0,0);
+
 		//Log.e("Window","End on create");
 	}
 	
@@ -1407,18 +1421,18 @@ public class MainWindow extends Activity implements MainWindowCallback {
 
 	protected void popMenuStack() {
 		menuStack.pop();
-		if(supportsActionBar()) {
+		//if(supportsActionBar()) {
 			this.invalidateOptionsMenu();
-		}
+		//}
 	}
 
 	Stack<MenuStackItem> menuStack = new Stack<MenuStackItem>();
 	protected void pushMenuStack(String obj,String callback) {
 		MenuStackItem tmp = new MenuStackItem(obj,callback);
 		menuStack.push(tmp);
-		if(supportsActionBar()) {
+		//if(supportsActionBar()) {
 			this.invalidateOptionsMenu();
-		}
+		//}
 	}
 	
 	private class MenuStackItem {
@@ -1560,7 +1574,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		
 		
 		//MenuItem tmp = null;
-		if(supportsActionBar()) {
+
 			/*for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
 				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
 				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
@@ -1587,24 +1601,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
 			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
 			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		} else {
-			
-			/*for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
-				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
-				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
-					hurdur.setIcon(scriptCallbacks.get(i-1000).getDrawable());
-					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-				} else {
-					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-				}
-			}*/
-			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias);
-			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers);
-			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers);
-			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options);
-			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
-			
-		}
+
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 500, 500 ,"Speedwalk Directions");
 		menu.add(0, 600, 600, "Plugins");
@@ -2275,19 +2272,13 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.TEST;
 		}*/
-		if(supportsActionBar()) {
-		//int height = this.getActionBar().getHeight();
-		//Log.e("ACFLSAFD","ACTION BAR HEIGHT(fg) IS :" + height);
-		this.getActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
-		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME);
-		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
-		this.getActionBar().addOnMenuVisibilityListener(new ActionBar.OnMenuVisibilityListener() {
-			
-			public void onMenuVisibilityChanged(boolean isVisible) {
-				//Log.e("FRAG","VISIBILITY  " + isVisible);
-			}
-		});
-		}
+		//if(supportsActionBar()) {
+			//int height = this.getActionBar().getHeight();
+			//Log.e("ACFLSAFD","ACTION BAR HEIGHT(fg) IS :" + height);
+
+
+
+		//}
 		
 		
 		if(!isServiceRunning()) {
@@ -3069,9 +3060,13 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			//mRootLayout.requestLayout();
 		//}
 			
-		if(supportsActionBar()) {
+		//if(supportsActionBar()) {
 			this.invalidateOptionsMenu();
-		}
+		//}
+
+		//bring the toolbar to the front
+		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
+		myToolbar.bringToFront();
 		//Debug.stopMethodTracing();
 	}
 	
@@ -3102,9 +3097,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			if(params == null) {
 				params = (android.widget.RelativeLayout.LayoutParams) w.getLayout(screenSize, !landscape);
 			}
-			if(supportsActionBar()) {
-				tmp.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-			}
+
 			tmp.setLayoutParams(params);
 			tmp.setTag(w.getName());
 			tmp.setVisibility(View.GONE);
