@@ -15,6 +15,9 @@ BT_Free/build
 BT_Aard/build
 build/
 *.o
+*.a
+buildvm
+minilua
 local.properties
 .idea
 .gradle
