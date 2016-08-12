@@ -51,6 +51,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.format.Time;
 import android.text.method.LinkMovementMethod;
@@ -82,7 +83,7 @@ import com.offsetnull.bt.settings.ConfigurationLoader;
 import dalvik.system.PathClassLoader;
 
 
-public class Launcher extends Activity implements ReadyListener {
+public class Launcher extends AppCompatActivity implements ReadyListener {
 	
 	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	
@@ -121,17 +122,7 @@ public class Launcher extends Activity implements ReadyListener {
 	
 	//make this save a change
 	boolean dowhatsnew = false;
-	private boolean supportsActionBar() {
-		try {
-			this.getClass().getMethod("getActionBar", null);
-			return true;
-		} catch(NoSuchMethodException e) {
-			return false;
-		}
-		//if(this.getClass().getM)
-		//return false;
-	}
-	
+
 	
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
@@ -139,11 +130,9 @@ public class Launcher extends Activity implements ReadyListener {
 		//Log.e("LAUNCHER","Launched from package: " + this.getPackageName());
 		//determine launch mode
 		//Intent intent = this.getIntent();
-		if(supportsActionBar()) {
-			
-		} else {
-			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-		}
+
+
+
 		
 		
 		launcher_source = this.getIntent().getStringExtra("LAUNCH_MODE");
@@ -227,6 +216,9 @@ public class Launcher extends Activity implements ReadyListener {
 		};
 		
 		setContentView(R.layout.new_launcher_layout);
+		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
+		//myToolbar.set
+		setSupportActionBar(myToolbar);
 		int testversion = 0;
 		//if(mode == LAUNCH_MODE.TEST) {
 		if(ConfigurationLoader.isTestMode(this)) {

@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-	compileSdkVersion 19
+	compileSdkVersion 23
 	buildToolsVersion "23.0.2"
 	signingConfigs {
     		release {
@@ -14,7 +14,7 @@ android {
 
 	defaultConfig {
 		minSdkVersion 8
-		targetSdkVersion 19
+		targetSdkVersion 23
 		versionCode 219
 		versionName "2.0"
 	}
