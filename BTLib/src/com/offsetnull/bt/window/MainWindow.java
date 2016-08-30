@@ -361,11 +361,13 @@ public class MainWindow extends AppCompatActivity implements MainWindowCallback 
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getResources().getDisplayMetrics().density));
 		titleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
 		setContentView(R.layout.window_layout);
-		
-		history = new CommandKeeper(10);
 
 		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
 		setSupportActionBar(myToolbar);
+
+		history = new CommandKeeper(10);
+
+
 
         //screen2 = (ByteView)findViewById(R.id.slickview);
         //RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
@@ -1314,23 +1316,28 @@ public class MainWindow extends AppCompatActivity implements MainWindowCallback 
 
 		LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		b.setLayoutParams(tmp);
-
+		b.setEnabled(false);
 		b.setOnTouchListener(new View.OnTouchListener() {
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				// TODO Auto-generated method stub
-				//Log.e("lsfd","sldjfs");
+				//if(v.isEnabled()) {
 				//mRootView.dispatchTouchEvent(event);
+				//}
 
-				return mRootView.dispatchTouchEvent(event);
-				//return false;
+				if (v.getParent() != mRootView && mRootView != null) {
+					return mRootView.dispatchTouchEvent(event);
+				} else {
+					return true;
+				}
 			}
+				//return true; //digest this event.
 		});
-		//b.setEnabled(false);
+
 		this.getSupportActionBar().setCustomView(b,tmp2);
 		this.getSupportActionBar().setDisplayOptions(android.support.v7.app.ActionBar.DISPLAY_SHOW_CUSTOM);
 		this.getSupportActionBar().setDisplayShowCustomEnabled(true);
+		b.setEnabled(true);
 		//this.getSupportActionBar().setContent
 		//android.support.v7.widget.Toolbar parent =(android.support.v7.widget.Toolbar) customView.getParent();
 		//parent.setContentInsetsAbsolute(0,0);
