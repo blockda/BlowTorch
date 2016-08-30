@@ -39,7 +39,7 @@ echo "*************  STARTING BUILD ****************"
 echo "**********************************************"
 cd ./$LUAJIT
 #start building.
-NDKABI=8
+NDKABI=9
 
 NDKVER=$NDK/toolchains/arm-linux-androideabi-4.9
 #NDK_HOST_CC_TARGET <- darwin-x86_64 for osx, linux-x86_64 for ubuntu
@@ -47,14 +47,14 @@ ARMEABI_NDKP=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/$NDK_HOST_CC_TAR
 
 NDKF="-march=armv5te -mtune=xscale --sysroot $NDK/platforms/android-$NDKABI/arch-arm"
 echo "Building ARMEABI Targets"
-make HOST_CC="gcc -m32" CROSS=$ARMEABI_NDKP TARGET_FLAGS="$NDKF" TARGET_SYS=Linux
+make HOST_CC="gcc-4.8 -m32" CROSS=$ARMEABI_NDKP TARGET_FLAGS="$NDKF" TARGET_SYS=Linux
 mv src/libluajit.a src/libluajit-armeabi.a
 mv src/libluajit.so src/libluajit-armeabi.so
 
 NDKF_V7A="--sysroot $NDK/platforms/android-$NDKABI/arch-arm"
 echo "Building ARMv7A TARGETS"
 make clean
-make HOST_CC="gcc -m32" CROSS=$ARMEABI_NDKP TARGET_FLAGS="$NDKF_V7A" TARGET_SYS=Linux
+make HOST_CC="gcc-4.8 -m32" CROSS=$ARMEABI_NDKP TARGET_FLAGS="$NDKF_V7A" TARGET_SYS=Other
 mv src/libluajit.a src/libluajit-armv7-a.a
 mv src/libluajit.so src/libluajit-armv7-a.so
 
