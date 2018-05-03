@@ -1,6 +1,6 @@
 package com.offsetnull.bt.launcher;
 
-
+import android.Manifest;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -28,6 +29,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.app.LauncherActivity;
 import android.app.ProgressDialog;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog.Builder;
@@ -51,6 +53,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.format.Time;
@@ -71,6 +74,10 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.support.v4.content.ContextCompat;
+//import android.support.v4.app.ActivityCompat;
+import android.support.design.widget.Snackbar;
+
 
 
 import com.offsetnull.bt.R;
@@ -79,11 +86,13 @@ import com.offsetnull.bt.service.IConnectionBinderCallback;
 import com.offsetnull.bt.service.ILauncherCallback;
 import com.offsetnull.bt.service.StellarService;
 import com.offsetnull.bt.settings.ConfigurationLoader;
+import com.offsetnull.bt.ui.SDCardUtils;
+
 
 import dalvik.system.PathClassLoader;
 
 
-public class Launcher extends AppCompatActivity implements ReadyListener {
+public class Launcher extends AppCompatActivity implements ReadyListener,ActivityCompat.OnRequestPermissionsResultCallback {
 	
 	public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	
@@ -97,6 +106,11 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 	protected static final int MESSAGE_USERNAME = 4;
 
 	protected static final int MESSAGE_DORECOVERY = 5;
+
+	protected static final int RP_INFO = 100;
+	protected static final int RP_SALVAGE = 101;
+	protected static final int RP_EXPORT = 102;
+	protected static final int RP_IMPORT = 103;
 	
 	private IConnectionBinder service = null;
 	
@@ -199,15 +213,10 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 					saveXML();
 					break;
 				case MESSAGE_EXPORT:
-					DoExport((String)msg.obj);
+
 					break;
 				case MESSAGE_DORECOVERY:
-					try {
-						DoRecovery((String)msg.obj);
-					} catch (NameNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+
 					break;
 				default:
 					break;
@@ -928,17 +937,29 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 		
 	}
 	
-	private void DoImportMenu() {
+	private void DoImportMenu(boolean external) {
 		
 		File tmp = Environment.getExternalStorageDirectory();
-		
-		File btermdir = new File(tmp,"/BlowTorch/launcher/");
+		String dir = SDCardUtils.getSDCardRoot(this, external);
+		File btermdir = null;
+		if(external) {
+			btermdir = new File(tmp, dir + "/launcher/");
+		} else {
+			btermdir = new File(dir + "/launcher/");
+		}
 		
 		String sdstate = Environment.getExternalStorageState();
 		HashMap<String,String> xmlfiles = new HashMap<String,String>();
 		if(Environment.MEDIA_MOUNTED.equals(sdstate) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(sdstate)) {
 			btermdir.mkdirs();
-			
+
+			String[] list = btermdir.list(xml_only);
+			if(list == null || list.length == 0) {
+				Toast t = Toast.makeText(this, "No XML files in /BlowTorch/launcher/", Toast.LENGTH_LONG);
+				t.show();
+				return;
+			}
+
 			for(File xml : btermdir.listFiles(xml_only)) {
 				xmlfiles.put(xml.getName(), xml.getPath());
 			}
@@ -1025,15 +1046,23 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 		return found;
 	}
 	
-	private void DoExport(String filename) {
-		
-		String dir = "/BlowTorch";
+	private void DoExport(String filename, boolean external) {
+
+		String dir = null;
+		try {
+			Context c = this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
+			dir = (external == true) ? "/BlowTorch" : c.getExternalFilesDir(null).getAbsolutePath();
+		} catch(NameNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		//String dir = "/BlowTorch";
 		String launcher = "/launcher";
-		String path = launcher + dir + filename;
+		String path = dir + launcher + filename;
 		
 		try {
 			//tmp = BaardTERMService.this.openFileOutput(path, Context.MODE_WORLD_READABLE|Context.MODE_WORLD_WRITEABLE);
 			//BaardTERMService.this.openF
+			String message = null;
 			File root = Environment.getExternalStorageDirectory();
 			String state = Environment.getExternalStorageState();
 			if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
@@ -1043,12 +1072,17 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 				Matcher xmlmatch = xmlend.matcher(updated);
 				String updatedname = filename;
 				if(!xmlmatch.matches()) {
-					added = true;
-					updated = path + ".xml";
+					//added = true;
+					//updated = path + ".xml";
 					updatedname = filename + ".xml";
 				}
 				
-				File blowtorchdir = new File(root,dir);
+				File blowtorchdir = null;
+				if(external == true) {
+					blowtorchdir =  new File(root, dir);
+				} else {
+					blowtorchdir = new File(dir);
+				}
 				blowtorchdir.mkdirs();
 				
 				
@@ -1064,40 +1098,60 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 				tmp.write(LauncherSettings.writeXml(launcher_settings));
 				tmp.close();
 				
-				String message = "Saved: " + file.getPath();
-				if(added) {
-					message += "\nAppended .xml extension.";
+				message = "Saved: " + file.getPath();
+				if(external == false) {
+					message += "This file will be removed when the application is uninstalled.";
 				}
 				
-				Toast msg = Toast.makeText(this,message,Toast.LENGTH_LONG);
+				//Toast msg = Toast.makeText(this,message,Toast.LENGTH_LONG);
 				//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), message, Toast.LENGTH_SHORT);
-				msg.show();
+				//msg.show();
 			} else {
 				//Log.e("SERVICE","COULD NOT WRITE SETTINGS FILE!");
 				//Toast msg = Toast.makeText(StellarService.this.getApplicationContext(), "SD Card not available. File not written.", Toast.LENGTH_SHORT);
 				//msg.show();
-				Toast msg = Toast.makeText(this,"SD Card not available. File not written.",Toast.LENGTH_LONG);
-				msg.show();
+				message = "SD Card not available. File not written.";
+				//msg.show();
 			}
+			Snackbar bar = Snackbar.make(findViewById(R.id.launcher_window_content), message,
+					Snackbar.LENGTH_INDEFINITE)
+					.setAction(android.R.string.ok,new View.OnClickListener() {
+						@Override
+						public void onClick(View view) {
+
+						}});
+
+			//View snackbarView = bar.getView();
+			//TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+			//textView.setMaxLines(5);  // show multiple line
+			bar.show();
 			} catch(Exception e) {
 				throw new RuntimeException(e);
 			}
 	}
 	
 	
-	private void DoRecovery(String targetPackage) throws NameNotFoundException {
-		String dir = "/BlowTorch";
-		String backupDir = "/recovered/";
+	private void DoRecovery(String targetPackage,boolean external) throws NameNotFoundException {
+
+
 		
 		Context c = this.createPackageContext(targetPackage, Context.CONTEXT_INCLUDE_CODE|Context.CONTEXT_IGNORE_SECURITY);
+		String dir = (external == true) ? "/BlowTorch" : c.getExternalFilesDir(null).getAbsolutePath();
+		String backupDir = "/recovered/";
+
 		String targetInstallation = c.getApplicationInfo().dataDir + "/files";
-		//c.get
+		String message = null;
 		try {
 			File root = Environment.getExternalStorageDirectory();
 			String state = Environment.getExternalStorageState();
 			if(Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 				//make sure destination directory exists
-				File btdir = new File(root,dir);
+				File btdir = null;
+				if(external) {
+					btdir = new File(root,dir);
+				} else {
+					btdir = new File(dir,"/");
+				}
 				btdir.mkdir();
 				
 				File backupdir = new File(btdir,backupDir);
@@ -1132,13 +1186,30 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 					out.close();
 					
 				}
-				
-				Toast t = Toast.makeText(this, "Settings copied to: " + backupdir.getAbsolutePath() + "/", Toast.LENGTH_LONG);
-				t.show();
+
+				message =  "Settings copied to: " + backupdir.getAbsolutePath() + "/";
+				if(external == false) {
+					message += "\nThis folder will be removed when the application is uninstalled.";
+				}
+				//Toast t = Toast.makeText(this, "Settings copied to: " + backupdir.getAbsolutePath() + "/", Toast.LENGTH_LONG);
+				//t.show();
 			} else {
-				Toast t = Toast.makeText(this, "SD Card Unavailabe. Cannot recover settings.", Toast.LENGTH_LONG);
-				t.show();
+				message = "SD Card Unavailabe. Cannot recover settings.";
+				//Toast t = Toast.makeText(this, "SD Card Unavailabe. Cannot recover settings.", Toast.LENGTH_LONG);
+				//t.show();
 			}
+			Snackbar bar = Snackbar.make(findViewById(R.id.launcher_window_content), message,
+					Snackbar.LENGTH_INDEFINITE)
+					.setAction(android.R.string.ok,new View.OnClickListener() {
+						@Override
+						public void onClick(View view) {
+
+						}});
+
+			View snackbarView = bar.getView();
+			TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+			textView.setMaxLines(3);  // show multiple line
+			bar.show();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1352,9 +1423,41 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 		menu.add(0,105,0,"Export List");
 		if(ConfigurationLoader.isTestMode(this)) menu.add(0,106,0,"User Name");
 		menu.add(0,107,0,"Recover Settings");
+		menu.add(0, 108, 0,"SDCard Permissions");
+		menu.add(0, 109, 0,"App Settings");
 		
 		return true;
 		
+	}
+
+	private void AskExportFileName(final boolean external) {
+
+		LayoutInflater factory = LayoutInflater.from(this);
+		View textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
+		entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
+
+		AlertDialog exporter = new AlertDialog.Builder(this)
+				.setIcon(android.R.drawable.ic_dialog_info)
+				.setTitle("Export List")
+				.setView(textEntryView)
+				.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						//boolean state = SDCardUtils.hasPermissions(Launcher.this,findViewById(R.id.launcher_window_content), RP_INFO);
+						//if(external == true) {
+							DoExport(entry.getText().toString(),external);
+						//}
+					}
+				})
+
+				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+
+						dialog.dismiss();
+					}
+				})
+				.create();
+
+		exporter.show();
 	}
 	
 	private EditText entry = null;
@@ -1372,67 +1475,21 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 			break;
 		case 100:
 			//start import
-			DoImportMenu();
+			//DoImportMenu();
+			if(SDCardUtils.hasPermissions(this,findViewById(R.id.launcher_window_content), RP_IMPORT)) {
+				//DoImportMenu();
+				showImportMessage(true);
+			}
 			break;
 		case 105:
 			//start export
-            LayoutInflater factory = LayoutInflater.from(this);
-            View textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
-            entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
-        
-            AlertDialog exporter = new AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .setTitle("Export List")
-                .setView(textEntryView)
-                .setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_EXPORT,entry.getText().toString()));
-                    }
-                })
-                
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        dialog.dismiss();
-                    }
-                })
-                .create();
-            
-            exporter.show();
+			if(SDCardUtils.hasPermissions(this,findViewById(R.id.launcher_window_content), RP_EXPORT)) {
+				//actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_DORECOVERY, this.getPackageName()));
+				AskExportFileName(true);
+			}//false is handled by the activity interface implementation
 
 			break;
 		case 106:
-			
-            factory = LayoutInflater.from(this);
-            textEntryView = factory.inflate(R.layout.dialog_text_entry, null);
-            entry = (EditText) textEntryView.findViewById(R.id.launcher_export);
-            TextView title = (TextView)textEntryView.findViewById(R.id.username_view);
-            title.setText("Enter user name:");
-            String username = "";
-            username = this.getSharedPreferences("TEST_USER", Context.MODE_PRIVATE).getString("USER_NAME", "");
-            if(!username.equals("")){ entry.setText(username); entry.setSelection(username.length()); }
-        
-            exporter = new AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .setTitle("Set Test User")
-                .setView(textEntryView)
-                .setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_USERNAME,entry.getText().toString()));
-                    }
-                })
-                
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        dialog.dismiss();
-                    }
-                })
-                .create();
-            
-            exporter.show();
 
 			break;
 		case 107:
@@ -1471,9 +1528,33 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 			
 			AlertDialog dialog = builder.create();
 			dialog.show();*/
-			actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_DORECOVERY, this.getPackageName()));
+			if(SDCardUtils.hasPermissions(this,findViewById(R.id.launcher_window_content), RP_SALVAGE)) {
+				//actionHandler.sendMessage(actionHandler.obtainMessage(MESSAGE_DORECOVERY, this.getPackageName()));
+				try {
+					DoRecovery(this.getPackageName(), true);
+				} catch(Exception e) {
+					throw new RuntimeException(e) ;
+				}
+			}//false is handled by the activity interface implementation
 			
 			break;
+		case 108:
+			// Here, thisActivity is the current activity
+			boolean state = SDCardUtils.hasPermissions(this,findViewById(R.id.launcher_window_content), RP_INFO);
+			String message = "SDCard permissions are granted. If this is incorrect, click this message to manage settings.";
+
+
+			if(state == true) {
+				showPermissionsMessage(true);
+			} // false is handled by the request permissions dialog (i think).
+			break;
+		case 109:
+			Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.setData(Uri.parse("package:" + Launcher.this.getPackageName()));
+			Launcher.this.startActivity(intent);
+			break;
+
 		default:
 			break;
 		}
@@ -1929,5 +2010,67 @@ public class Launcher extends AppCompatActivity implements ReadyListener {
 
 		
 	};
+
+	private void showImportMessage(final boolean external) {
+		String dir = SDCardUtils.getSDCardRoot(this,external);
+		String message = (external == true) ? String.format(getString(R.string.launcher_import_granted),dir) : String.format(getString(R.string.launcher_import_denied),dir);
+		Snackbar bar = Snackbar.make(findViewById(R.id.launcher_window_content), message,
+				Snackbar.LENGTH_INDEFINITE)
+				.setAction(android.R.string.ok,new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+						DoImportMenu(external);
+					}});
+
+		View snackbarView = bar.getView();
+		TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+		textView.setMaxLines(5);  // show multiple line
+		bar.show();
+	}
+
+	private void showPermissionsMessage(boolean granted) {
+		int message = (granted == true) ? R.string.sd_perm_granted : R.string.sd_perm_denies;
+		Snackbar bar = Snackbar.make(findViewById(R.id.launcher_window_content), message,
+				Snackbar.LENGTH_INDEFINITE)
+				.setAction(android.R.string.ok,new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+
+					}});
+
+		View snackbarView = bar.getView();
+		TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+		textView.setMaxLines(5);  // show multiple line
+		bar.show();
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions,
+										   int[] grantResults) {
+		boolean external = false;
+		if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+			external = true;
+		}
+
+		switch(requestCode) {
+			case RP_INFO:
+				showPermissionsMessage(external);
+				break;
+			case RP_SALVAGE:
+				try {
+					DoRecovery(this.getPackageName(), external);
+				} catch(Exception e) {
+					throw new RuntimeException(e) ;
+				}
+				break;
+			case RP_EXPORT:
+					AskExportFileName(external);
+				break;
+			case RP_IMPORT:
+					showImportMessage(external);
+			default:
+				break;
+		}
+	}
 
 }

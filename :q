@@ -1,0 +1,32 @@
+export ANT_HOME="/Users/render/ant"
+export ANDROID_HOME="/Users/render/android/sdk"
+export NDK_HOME="/Users/render/android/ndk-r16b"
+export NDK_HOST_CC_TARGET="darwin-x86_64"
+export PATH=$PATH:$ANT_HOME/bin
+export PATH=/usr/local/include/:/usr/local/Cellar/openssl/1.0.2n/include/openssl/:/usr/local/Cellar/openssl/1.0.2n/lib/:/usr/local/Cellar/git/2.7.0/bin:/Users/render/android/sdk/platform-tools:/Users/render/android/tools/:$PATH
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/Users/render/Downloads/ImageMagick-6.9.0/lib"
+export CLICOLOR=1
+export LSCOLORS=GxFxCxDxBxegedabagaced
+export PATH=$PATH:/opt/vagrant/bin
+alias ll='ls -l'
+alias ls='ls -GFh'
+alias gitk='gitk 2>/dev/null &'
+PROMPT_RAINBOW[0]='\[\033[32m\]]' 
+PROMPT_RAINBOW[1]='\[\033[33m\]]' 
+PROMPT_RAINBOW[2]='\[\033[34m\]]' 
+PROMPT_RAINBOW[3]='\[\033[35m\]]' 
+PROMPT_RAINBOW[4]='\[\033[36m\]]' 
+PROMPT_RAINBOW[5]='\[\033[37m\]]' 
+export PROMPT_COLOR_COUNTER=0
+# Git branch in prompt.
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+export PS1="\u@\h \W\[\033[32m\]\$(parse_git_branch)\[\033[00m\] $ "
+
+# added by Anaconda3 4.4.0 installer
+export PATH="/Users/render/anaconda/bin:$PATH"
+# Add new vim to path (not wise to replace the mac built-in)
+export PATH=/Applications/MacVim.app/Contents/bin:$PATH
+alias vi='vim'

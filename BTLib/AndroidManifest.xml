@@ -6,11 +6,11 @@
     <application android:label="BlowTorch" android:theme="@android:style/Theme.NoTitleBar">
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.happygoatstudios.bt.window.MainWindow"
-        		  android:windowSoftInputMode="adjustPan"
+        		  android:windowSoftInputMode="adjustPan|stateHidden"
         		  android:label="BlowTorch"
         		 
         		  
-				  android:configChanges="orientation|keyboard|keyboardHidden"
+				  android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|screenSize"
         		  android:launchMode = "singleTask">
         		  <intent-filter>
         		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
@@ -26,7 +26,7 @@
         		  
 
     </application>
-    <uses-sdk android:minSdkVersion="8" />
+    <uses-sdk android:minSdkVersion="14" />
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

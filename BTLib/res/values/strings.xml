@@ -2,7 +2,12 @@
 <resources>
     <string name="hello">Hello World, BaardTERMLauncher!</string>
     <string name="app_name">BaardTERM</string>
-<string name="thewelcometext">Welcome to BaardTERM version AWESOME!111!one!!!@1NOWWITHLINEBREAKSOMGWTFBBQOHANDYOUMADEITTAKEFOURTYPERCENTLESSBATTERY?!?!?!!??!!?OMGWTFBBQXIXORRRSSS!OMGDANISSOCOOL</string>
-<string name="hello2">This is the debug screen. However this text will dissapear when data arrives from the server.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n</string>
-<string name="whatisnew">--- New Features:\n*New button set editor\n*Auto Reconnect\n*Input bar now wraps and resizes\n*Lua Scripting Engine + sqlite3</string><string name="whatisnew_test">---- TEST VERSION 7 ----\n*Many bug fixes. Stay tuned for the switch over to the play store beta system.</string>
+    <string name="thewelcometext">Welcome to BaardTERM version AWESOME!111!one!!!@1NOWWITHLINEBREAKSOMGWTFBBQOHANDYOUMADEITTAKEFOURTYPERCENTLESSBATTERY?!?!?!!??!!?OMGWTFBBQXIXORRRSSS!OMGDANISSOCOOL</string>
+    <string name="hello2">This is the debug screen. However this text will dissapear when data arrives from the server.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n</string>
+    <string name="whatisnew">--- New Features:\n*New button set editor\n*Auto Reconnect\n*Input bar now wraps and resizes\n*Lua Scripting Engine + sqlite3</string><string name="whatisnew_test">---- TEST VERSION 7 ----\n*Many bug fixes. Stay tuned for the switch over to the play store beta system.</string>
+    <string name="sdcardpermissions">To access files that will not be not be removed when this app is uninstalled, grant permission to access external storage.</string>
+    <string name="sd_perm_granted">SDCard public access granted, external writes will happen to\nSDCard%1$s</string>
+    <string name="sd_perm_denies">SDCard public access denied, external writes will happen to\nSDCard%1$s\nThe folder will be removed when this app is uninstalled.</string>
+    <string name="launcher_import_granted">Attempting to load files from:\nSDCard%1$s</string>
+    <string name="launcher_import_denied">Attempting to load files from:\nSDCard%1$s\nThis folder will be removed when the application is uninstalled.</string>
 </resources>

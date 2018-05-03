@@ -1,49 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
       package="com.happygoatstudios.aardwolf"
-      android:versionName="1.1.3" android:versionCode="20"
+      android:versionName="2.1.0" android:versionCode="250"
       android:sharedUserId="com.blowtorchaard.user">
       
       
-    <application android:icon="@drawable/aard_icon" android:label="Aardwolf RPG" android:theme="@android:style/Theme.NoTitleBar">
-     	<activity android:name="com.happygoatstudios.aardwolf.AardLauncher"
+    <application tools:replace="android:theme,android:label" android:icon="@drawable/aard_icon" android:label="Aardwolf RPG" android:hardwareAccelerated="true" android:theme="@style/Theme.AppCompat.Dark.NoActionBar"> >
+        <meta-data android:value="83" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>
+        <activity android:name="com.happygoatstudios.aardwolf.AardLauncher"
                   android:label="Aardwolf RPG">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
+        <activity android:name="com.offsetnull.bt.launcher.Launcher"
                   android:label="Aardwolf RPG"
                   >
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
-        <activity android:name="com.happygoatstudios.bt.window.MainWindow"
-        		  android:windowSoftInputMode="adjustResize"
+        <activity android:name="com.offsetnull.bt.window.MainWindow"
         		  android:label="Aardwolf RPG"
-        		 
-        		  
-				  android:configChanges="orientation|keyboard|keyboardHidden"
-        		  android:launchMode = "singleTask">
+			  tools:replace="android:label"
+			  android:windowSoftInputMode="adjustPan|stateHidden"
+                          android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|screenSize"
+                           android:launchMode="singleTask">
         		  <intent-filter>
         		  	
-        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.AARDWOLF_CLIENT"/>
+       		  	<action android:name="com.offsetnull.bt.window.MainWindow.AARDWOLF_CLIENT"/>
         		  	<category android:name="android.intent.category.DEFAULT"/>
         		  </intent-filter>
         </activity>
-        <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
-        		  android:label="Settings Editor"
-        		  
-        		  
-        		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
-        		  android:noHistory = "true">
-        		  <intent-filter>
-        		  	<action android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"/>
-        		  	<category android:name="android.intent.category.DEFAULT"/>
-        		  </intent-filter>
-        </activity>
-        <service android:name="com.happygoatstudios.bt.service.StellarService"
-        		 android:process=":aardwolf">
+
+        <service tools:replace="process" android:name="com.offsetnull.bt.service.StellarService"
+        		 android:process=":stellar_aardwolf" exported="false">
         		 <intent-filter>
         		 	
         		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.AARDWOLF_CLIENT"/>
