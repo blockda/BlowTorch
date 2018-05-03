@@ -26,6 +26,16 @@ With the native libraries built, the android project can be built with gradle:
 
 note: the gradle project will attempt to sign the apk with a non existant certificate, drop your certificate into the appropriate location and the gradle project will pull the password from an environment variable, BT_RELEASE_PASS for the stock BlowTorch and BT_AARD_PASS for the Aardwolf client. If you do not know about apk signing, please see the android developer documentation.
 
+double note: the location that the build scripts look for certificates is in the build.gradle for the respective project. For the stock BlowTorch client it looks for BTLib/key/bt_privatekey.keystore and for the aardwolf client it looks for BT_Aard/key/signiture_cert the passwords are passed via system environment variable.
+
+If you want to set the password from the command line without seeing it use the following:
+```shell
+#!/bin/bash
+ 
+read -s -p "Enter Password: " BT_RELEASE_PASS
+export BT_RELEASE_PASS
+```
+
 The output from the gradle build is in BT_[Free|Aard]/build/outputs/apk.
  
 
