@@ -10,9 +10,9 @@ External libraries like sqlite and luajit have sources checked into this tree. T
 
 now set the following Environment Variables:
 
-- [x] export ANDROID_SDK_ROOT=<path to sdk root>
-- [x] export NDK_HOME=<path to ndk root>
-- [x] export NDK_HOST_CC_TARGET=<darwin-x86_64 for mac, linux-x86_64 for unix, i dont know for windows>
+- [x] export ANDROID_SDK_ROOT=path to sdk root
+- [x] export NDK_HOME=path to ndk root
+- [x] export NDK_HOST_CC_TARGET=darwin-x86_64 for mac, linux-x86_64 for unix, i dont know for windows
 - [x] NDKABI=14 is defined in build_ndk_libraries.sh this should be moved.
 
 Now execute the NDK build script:
