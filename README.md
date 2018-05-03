@@ -35,6 +35,10 @@ If you want to set the password from the command line without seeing it use the 
 read -s -p "Enter Password: " BT_RELEASE_PASS
 export BT_RELEASE_PASS
 ```
+Taking special care to source the script into your current environment, or the script will execute inside of its own session, set the variable and then the environment terminates with the program.
+```shell
+source ~/bt_enter.sh
+```
 
 The output from the gradle build is in BT_[Free|Aard]/build/outputs/apk.
  
