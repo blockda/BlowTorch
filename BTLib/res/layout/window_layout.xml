@@ -59,7 +59,7 @@
         android:id="@+id/divider"
         android:background="#FF444488"/>
 
-    <android.support.v7.widget.Toolbar
+    <com.offsetnull.bt.window.NoTouchActionBar
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"

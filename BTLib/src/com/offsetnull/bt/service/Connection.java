@@ -3,6 +3,7 @@
  */
 package com.offsetnull.bt.service;
 
+import android.Manifest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -87,6 +88,7 @@ import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.SystemClock;
 
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.SparseArray;
 //import android.util.Log;
@@ -3292,14 +3294,22 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 		boolean domessage = false;
 		boolean addextra = false;
 		String filename = path;
+		int state = ContextCompat.checkSelfPermission(mService.getApplicationContext(),Manifest.permission.WRITE_EXTERNAL_STORAGE);
+		boolean external = (state == PackageManager.PERMISSION_GRANTED) ? true : false;
 		File cachedir = this.getContext().getCacheDir();
+		String btdir = "/BlowTorch";
 		if (!filename.startsWith("/")) {
 			//mod
 			domessage = true;
 			File ext = Environment.getExternalStorageDirectory();
 			String dir = ConfigurationLoader.getConfigurationValue("exportDirectory", mService.getApplicationContext());
-			
-			filename = ext.getAbsolutePath() + "/" + dir + "/" + filename;
+			if(external) {
+				btdir = ext.getAbsolutePath() + "/" + dir + "/";
+				filename = ext.getAbsolutePath() + "/" + dir + "/" + filename;
+			} else {
+				btdir = mService.getApplicationContext().getExternalFilesDir(null).getAbsolutePath();
+				filename = mService.getApplicationContext().getExternalFilesDir(null).getAbsolutePath() + "/" + filename;
+			}
 			mXMLExtensionMatcher.reset(filename);
 			if (!mXMLExtensionMatcher.matches()) {
 				filename = filename + ".xml";
@@ -3344,7 +3354,9 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 				} catch (IOException e) {
 					//we are in real trouble here.
 				}
-				
+				//need to make sure the directory is created.
+				File makeme = new File(btdir);
+				makeme.mkdirs();
 				//copy the file over to the real path.
 				boolean success = tmpfile.renameTo(file);
 				if(success) {
@@ -3503,7 +3515,8 @@ public class Connection implements SettingsChangedListener, ConnectionPluginCall
 					//mService.getApplicationContext().getFilesDir();
 					File f = new File(mService.getApplicationContext().getFilesDir(),path);
 					String file = f.getName();
-					File p = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/recovered/");
+					//File p = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlowTorch/recovered/");
+					File p = new File(mService.getExternalFilesDir(null),"/recovered/");
 					if(!p.exists()) {
 						p.mkdirs();
 					}

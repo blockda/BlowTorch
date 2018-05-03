@@ -2,10 +2,10 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/window_container_container"
+    android:id="@+id/window_container"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-    <android.support.v7.widget.Toolbar
+    <com.offsetnull.bt.window.NoTouchActionBar
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -24,11 +24,6 @@
         app:contentInsetEnd="0dp"
 		android:title=""
         />
-
-    <RelativeLayout
-        android:id="@+id/window_container"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
     
     <LinearLayout
         android:id="@+id/inputbar"
@@ -81,7 +76,7 @@
         android:layout_above="@id/inputbar"
         android:id="@+id/divider"
         android:background="#FF444488"/>
-    </RelativeLayout>
+
 
 
 <!-- 

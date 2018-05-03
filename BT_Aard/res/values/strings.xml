@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
 	<string name="testMode">false</string>
-	<string name="windowAction">com.happygoatstudios.bt.window.MainWindow.AARDWOLF_CLIENT</string>
+	<string name="windowAction">com.offsetnull.bt.window.MainWindow.AARDWOLF_CLIENT</string>
 	<string name="notificationIcon">notification_icon</string>
 	<string name="serviceProcessName">:aardwolf</string>
-	<string name="serviceBindAction">com.happygoatstudios.bt.service.IStellarService.AARDWOLF_CLIENT</string>
+	<string name="serviceBindAction">com.offsetnull.bt.service.IStellarService.AARDWOLF_CLIENT</string>
 	<string name="ongoingNotificationLabel">Aardwolf RPG</string>
 	<string name="packageName">com.happygoatstudios.aardwolf</string>
 	<string name="exportDirectory">Aardwolf</string>

@@ -1,0 +1,60 @@
+apply plugin: 'com.android.application'
+
+android {
+	compileSdkVersion 27
+	buildToolsVersion '27.0.3'
+	signingConfigs {
+   		release {
+        		storeFile file("./key/signiture_cert")
+        		storePassword System.getenv("BT_AARD_PASS")
+        		keyAlias "keysigner"
+        		keyPassword System.getenv("BT_AARD_PASS")
+    		}
+	}
+
+	defaultConfig {
+		minSdkVersion 14
+		targetSdkVersion 27
+		versionCode 222
+		versionName "2.1"
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled true
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+			signingConfig signingConfigs.release
+		}	
+
+		debug {
+            		debuggable true
+        	}
+	}
+
+	sourceSets {
+		main {
+			manifest.srcFile 'AndroidManifest.xml'
+			java.srcDirs = ['src']
+			resources.srcDirs = ['src']
+			aidl.srcDirs = ['src']
+			res.srcDirs = ['res']
+			assets.srcDirs = ['assets']
+		}
+	}
+
+
+}
+
+	task copyButtonEx(type: Copy) {
+    		from("../../btscripts/button_ex/src/") {
+        		exclude "**/*.xml"
+        		exclude "**/*.cfg"
+        		exclude "**/config.lua"
+    		}	
+    		into "./assets/share/lua/5.1/"
+	}
+dependencies {
+	copyButtonEx
+	compile project(":BTLib")
+}
+

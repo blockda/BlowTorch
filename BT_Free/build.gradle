@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-	compileSdkVersion 23
-	buildToolsVersion "23.0.2"
+	compileSdkVersion 27
+	buildToolsVersion '27.0.3'
 	signingConfigs {
     		release {
         		storeFile file("../BTLib/key/bt_privatekey.keystore")
@@ -13,10 +13,10 @@ android {
 	}
 
 	defaultConfig {
-		minSdkVersion 8
-		targetSdkVersion 23
-		versionCode 221
-		versionName "2.0"
+		minSdkVersion 14
+		targetSdkVersion 27
+		versionCode 222
+		versionName "2.1"
 	}
 
 	buildTypes {
@@ -24,7 +24,11 @@ android {
 			minifyEnabled true
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 			signingConfig signingConfigs.release
-		}
+		}	
+
+		debug {
+            		debuggable true
+        	}
 	}
 
 	sourceSets {
@@ -38,9 +42,19 @@ android {
 		}
 	}
 
+
 }
 
+	task copyButtonEx(type: Copy) {
+    		from("../../btscripts/button_ex/src/") {
+        		exclude "**/*.xml"
+        		exclude "**/*.cfg"
+        		exclude "**/config.lua"
+    		}	
+    		into "./assets/share/lua/5.1/"
+	}
 dependencies {
+	copyButtonEx
 	compile project(":BTLib")
 }
 
