@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 	<RelativeLayout
 		xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:app="http://schemas.android.com/apk/res-auto"
 		android:id = "@+id/launcher_window_content"
 		android:layout_height = "wrap_content"
 		android:layout_width = "wrap_content">
+	<ImageView
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:scaleType="centerCrop"
+		android:src="@drawable/background"/>
+
+	<android.support.v7.widget.Toolbar
+		android:id="@+id/my_toolbar"
+		android:layout_width="match_parent"
+		android:layout_height="?attr/actionBarSize"
+		android:background="?attr/colorPrimary"
+		android:elevation="4dp"
+		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+		android:layout_alignParentTop = "true"
+		app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"/>
 		
-		<ImageView
-			android:layout_width="fill_parent"
-			android:layout_height="fill_parent"
-			android:scaleType="centerCrop"
-			android:src="@drawable/background"/>
+
 		
 		<TextView
 			android:text = "Connections:"
@@ -18,7 +30,7 @@
 			android:layout_width = "300dip"
 			android:id = "@+id/c_label"
 			android:layout_alignParentRight = "true"
-			android:layout_alignParentTop = "true"
+			android:layout_below="@id/my_toolbar"
 			android:gravity = "center"
 			android:background = "#AAAAAAAA"
 			android:textColor = "#AA222222"

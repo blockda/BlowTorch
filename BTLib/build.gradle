@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+
+android {
+	compileSdkVersion 27
+	buildToolsVersion '27.0.3'
+
+	defaultConfig {
+		minSdkVersion 14
+		targetSdkVersion 27
+		versionCode 219
+		versionName "2.0"
+	}
+
+	sourceSets {
+		main {
+			manifest.srcFile 'AndroidManifest.xml'
+			java.srcDirs = ['src']
+			resources.srcDirs = ['src']
+			aidl.srcDirs = ['src']
+			res.srcDirs = ['res']
+			assets.srcDirs = ['assets']
+			jniLibs.srcDirs = ['libs']
+		}
+	}
+
+}
+
+dependencies {
+	compile "com.android.support:support-core-utils:27.1.1"
+	compile "com.android.support:appcompat-v7:27.1.1"
+	compile "com.android.support:support-compat:27.1.1"
+	compile "com.android.support:design:27.1.1"
+}

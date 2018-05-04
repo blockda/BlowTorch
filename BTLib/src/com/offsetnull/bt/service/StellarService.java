@@ -43,6 +43,8 @@ import com.offsetnull.bt.service.plugin.settings.SettingsGroup;
 import com.offsetnull.bt.settings.ConfigurationLoader;
 import com.offsetnull.bt.alias.AliasData;
 
+import android.support.v4.app.NotificationCompat;
+
 import dalvik.system.PathClassLoader;
 
 /** The implementation of the background Service handler.
@@ -310,7 +312,7 @@ public class StellarService extends Service {
 	public final void doNotifyBell(final String display, final String host, final int port) { 
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
-		Notification note = new Notification(resId, "Alert!", System.currentTimeMillis());
+		//Notification note = new Notification(resId, "Alert!", System.currentTimeMillis());
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = display + " - Alert!";
@@ -325,7 +327,15 @@ public class StellarService extends Service {
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
-		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+
+
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(
+				this);
+		Notification note = builder.setContentIntent(contentIntent)
+				.setContentTitle(contentTitle)
+				.setContentText(contentText).build();
+		//mNM.notify(NOTIFICATION, notification);
 		note.icon = resId;
 		note.flags = Notification.DEFAULT_ALL;
 		
@@ -415,7 +425,7 @@ public class StellarService extends Service {
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
 		CharSequence brandName = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
-		Notification note = new Notification(resId, brandName + " Disconnected", System.currentTimeMillis());
+		//Notification note = new Notification(resId, brandName + " Disconnected", System.currentTimeMillis());
 		//String defaultmsg = "Click to reconnect: "+ host +":"+ port;
 		Context context = getApplicationContext();
 		CharSequence contentTitle = brandName + " Disconnected";
@@ -455,9 +465,17 @@ public class StellarService extends Service {
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		int id = getNotificationId();
 		PendingIntent contentIntent = PendingIntent.getActivity(this, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		note.icon = resId;
-		note.flags = note.flags | Notification.FLAG_AUTO_CANCEL | Notification.FLAG_ONLY_ALERT_ONCE;
+		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+		Notification note = builder.setContentIntent(contentIntent)
+							.setContentTitle(contentTitle)
+							.setContentText(contentText)
+							.setSmallIcon(resId)
+							.setAutoCancel(true)
+							.setOnlyAlertOnce(true).build();
+		//note.icon = resId;
+		//note.flags = note.flags | Notification.FLAG_AUTO_CANCEL | Notification.FLAG_ONLY_ALERT_ONCE;
 		mNotificationManager.notify(id, note);
 		
 		//now, if the launcher connection list has a listener, we should notify it that a connection has gone
@@ -485,7 +503,7 @@ public class StellarService extends Service {
 		if (mConnectionNotificationMap.containsKey(display)) { return; }
 		int resId = this.getResources().getIdentifier(ConfigurationLoader.getConfigurationValue("notificationIcon", this.getApplicationContext()), "drawable", this.getPackageName());
 		
-		Notification note = new Notification(resId, "BlowTorch Connected", System.currentTimeMillis());
+		//Notification note = new Notification(resId, "BlowTorch Connected", System.currentTimeMillis());
 		Context context = getApplicationContext();
 		
 		CharSequence contentTitle = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel", this.getApplicationContext());
@@ -530,9 +548,17 @@ public class StellarService extends Service {
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, notificationID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		note.icon = resId;
-		note.flags = Notification.FLAG_ONGOING_EVENT;
+
+		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+		Notification note = builder.setContentIntent(contentIntent)
+				.setContentTitle(contentTitle)
+				.setSmallIcon(resId)
+				.setContentText(contentText)
+				.setOngoing(true).build();
+
+		//note.icon = resId;
+		//note.flags = Notification.FLAG_ONGOING_EVENT;
 		
 		
 		if (!mHasForegroundNotification) {

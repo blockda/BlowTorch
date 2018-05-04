@@ -26,5 +26,12 @@
 	<item name="android:layout_marginRight">5dip</item>
 </style>
 
+	<style name="Theme.AppCompat.Test.NoActionBar" parent="@style/Theme.AppCompat.NoActionBar">
+
+	</style>
+
+	<style name="Theme.AppCompat.Dark.NoActionBar" parent="@style/Theme.AppCompat.NoActionBar">
+
+	</style>
 
 </resources>

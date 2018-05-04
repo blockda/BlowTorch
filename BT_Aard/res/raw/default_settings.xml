@@ -1,8 +1,18 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<root>
-  <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="1" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" />
+<blowtorch xmlversion="2">
+  <window lineSize="10" spaceExtra="2" maxLines="300" fontName="monospace" fontPath="none" useExtractUI="false" useSuggest="false" keepLast="false" backspaceBugFix="false" launchEditor="true" disableColor="false" hapticFeedBackOnModify="auto" hapticFeedBackOnPress="auto" hapticFeedBackOnFlip="none" encoding="ISO-8859-1" keepScreenOn="true" fullScreen="true" roundButtons="true" orientation="0" breakAmount="0" wordWrap="true" removeExtraColor="true" debugTelnet="false" wrapMode="1" hyperLinkMode="highlight_color_bland_only" hyperLinkColor="ff3333aa" hyperLinkEnabled="true" id="6666"/>
+  <windows>
+    <window name="mainDisplay" id="6666">
+      <layoutGroup target="normal">
+      	<layout orientation="landscape" above="40" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+        <layout orientation="portrait" above="40" alignParentLeft="true" width="fill_parent" height="fill_parent" />
+      </layoutGroup>
+      <options/>
+    </window>
+  </windows>
+  
   <service processSemi="true" throttle="false" processPeriod="true" keepWifiActive="true" localEcho="true" vibrateOnBell="true" notifyOnBell="false" displayOnBell="false" />
-  <aliases />
+  <aliases/>
   <directions>
     <entry dir="w" cmd="w" />
     <entry dir="e" cmd="e" />
@@ -23,13 +33,85 @@
       <button xPos="24" yPos="130" label="D" command="down" flipCommand="open d" moveMethod="2" labelSize="24" />
       <button xPos="130" yPos="130" label="LOOK" command="look" moveMethod="2" />
       <button xPos="130" yPos="24" label="SCORE" command="score" moveMethod="2" />
-      <button xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".loadset cleared" />
+      <button
+xPos="130" yPos="183" label="CLEAR" moveMethod="0" command=".clearbuttons" />
     </buttonset>
-    <buttonset setName="cleared">
-      <button xPos="95" yPos="24" width="90" label="ACTIONS" command=".loadset default" moveMethod="2" labelSize="21" />
-    </buttonset>
-    <selectedset>cleared</selectedset>
+    <selectedset>default</selectedset>
   </buttonsets>
   <triggers />
   <timers />
-</root>
+  <plugins>
+  	 <!-- <link file="plugin.xml"/> -->
+  	 <plugin author="Daniel Block" name="button_window" id="10">
+  	 	<windows>
+  	 		<window name="button_window" id="10203" script="buttonwindow">
+  	 			<layoutGroup target="normal">
+  	 				<layout orientation="landscape" height="fill_parent" width="fill_parent" above="40"/>
+  	 				<layout orientation="portrait" height="fill_parent" width="fill_parent" above="40"/>
+  	 			</layoutGroup>
+  	 		</window>
+  	 	</windows>
+  	 	<options title="Button" summary="Haptic feedback, roundess and other button options.">
+  	 		<boolean title="Automatically launch editor" key="auto_launch" summary="Automatically launch the editor on the long press action.">true</boolean>
+  	 		<boolean title="Automatically create buttons" key="auto_create" summary="Will add new buttons to emty regions that are long pressed.">true</boolean>
+  	 		<integer title="Button roundness" key="roundess" summary="Radius of button corners.">6</integer>
+  	 		<list title="Haptic feedback on editor launch." key="haptic_edit" summary="Perform haptic feedback when the editor is opened.">
+  	 			<value>0</value>
+  	 			<item>Auto. Obey System Setting</item>
+  	 			<item>Always. Override System Setting</item>
+  	 			<item>Off</item>
+  	 		</list>
+  	 		<list title="Haptic feedback on press." key="haptic_press" summary="Perform haptic feedback when pressed.">
+  	 			<value>0</value>
+  	 			<item>Auto. Obey System Setting</item>
+  	 			<item>Always. Override System Setting</item>
+  	 			<item>Off</item>
+  	 		</list>
+  	 		<list title="Haptic feedback on flip." key="haptic_flip" summary="Perform Haptic feedback when flipped (swipe action).">
+  	 			<value>0</value>
+  	 			<item>Auto. Obey System Setting</item>
+  	 			<item>Always. Override System Setting</item>
+  	 			<item>Off</item>
+  	 		</list>
+  	 		
+  	 	</options>
+		<script name="bootstrap" execute="true">
+		<![CDATA[
+			require("buttonserver")
+		]]>
+		</script>
+		<script name="buttonwindow">
+			<![CDATA[
+			require("buttonwindow")
+		]]>
+  		</script>
+  		<buttonsets>
+   			<buttonset setName="default" width="48" height="48">
+     			<button x="77" y="24" label="N" command="north" flipCommand="open n" labelSize="24" />
+     			<button x="130" y="77" label="E" command="east" flipCommand="open e" labelSize="24" />
+     			<button x="77" y="130" label="S" command="south" flipCommand="open s" labelSize="24" />
+     			<button x="24" y="77" label="W" command="west" flipCommand="open w" labelSize="24" />
+     			<button x="24" y="24" label="U" command="up" flipCommand="open u" labelSize="24" />
+     			<button x="24" y="130" label="D" command="down" flipCommand="open d" labelSize="24" />
+     			<button x="130" y="130" label="LOOK" command="look" />
+     			<button x="130" y="24" label="SCORE" command="score" />
+     			<button x="130" y="183" label="CLEAR" command=".clearbuttons" />
+    		</buttonset>
+			<selected>default</selected>
+  		</buttonsets>
+	</plugin>
+	<!-- <plugin name="dbtest" id="10" author="Daniel Block">
+		<triggers>
+			<trigger title="room_mapper" pattern="%room.info" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="got_gmcp_room" fireWhen="always"/>
+			</trigger>
+			<trigger title="area_mapper" pattern="%room.area" interpretLiteral="false" fireOnce="false" enabled="true" sequence="1">
+				<script function="update_gmcp_area" fireWhen="always"/>
+			</trigger>
+		</triggers>
+		<script name="bootstrap">
+		dofile(GetExternalStorageDirectory()..""/BlowTorch/simpledb.lua")
+		</script>
+	</plugin> -->
+  </plugins>
+</blowtorch>

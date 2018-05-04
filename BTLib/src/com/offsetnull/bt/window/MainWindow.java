@@ -57,6 +57,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.text.InputType;
 import android.util.Log;
 //import android.util.Log;
@@ -121,12 +123,19 @@ import com.offsetnull.bt.timer.BetterTimerSelectionDialog;
 import com.offsetnull.bt.timer.TimerSelectionDialog;
 import com.offsetnull.bt.trigger.BetterTriggerSelectionDialog;
 import com.offsetnull.bt.trigger.TriggerSelectionDialog;
+import com.offsetnull.bt.ui.SDCardUtils;
 
-@TargetApi(11)
-public class MainWindow extends Activity implements MainWindowCallback {
+import android.support.v7.app.AppCompatActivity;
+import android.support.v4.view.MenuItemCompat;
+
+public class MainWindow extends AppCompatActivity implements MainWindowCallback,ActivityCompat.OnRequestPermissionsResultCallback {
 	
 	public static String TEST_MODE = "blowTorchTestMode";
 	public static String NORMAL_MODE = "blowTorchNormalMode";
+
+	private static final int RP_INFO = 5000;
+	private static final int RP_EXPORT = 5001;
+	private static final int RP_IMPORT = 5002;
 	
 	//public static final String PREFS_NAME = "CONDIALOG_SETTINGS";
 	//public String PREFS_NAME;
@@ -348,13 +357,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		//Debug.startMethodTracing("window");
 		super.onCreate(icicle);
 		windowMap = new HashMap<String,com.offsetnull.bt.window.Window>(0);
-		if(supportsActionBar()) {
-			this.requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-			this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-			
-		} else {
-			this.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-		}
+
 		
 		//this.requestWindowFeature(Window.FEATURE_ACTION_MODE_OVERLAY);
 		//this
@@ -366,9 +369,14 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		statusBarHeight = sprefs.getInt("STATUS_BAR_HEIGHT", (int)(25 * this.getResources().getDisplayMetrics().density));
 		titleBarHeight = sprefs.getInt("TITLE_BAR_HEIGHT", 0);
 		setContentView(R.layout.window_layout);
-		
+
+		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
+		setSupportActionBar(myToolbar);
+
 		history = new CommandKeeper(10);
-        
+
+
+
         //screen2 = (ByteView)findViewById(R.id.slickview);
         //RelativeLayout l = (RelativeLayout)findViewById(R.id.slickholder);
         //screen2.setParentLayout(l);
@@ -642,17 +650,17 @@ public class MainWindow extends Activity implements MainWindowCallback {
 								null);
 					}
 					scriptCallbacks.add(0, cb);
-					if(supportsActionBar()) {
+					//if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
-					}
+					//}
 					break;
 				case MESSAGE_INITIALIZEWINDOWS:
 					//Log.e("WINDOW","INITIALIZE WINDOWS CALLED");
 					//windowsInitialized = false;
 					scriptCallbacks.clear();
-					if(supportsActionBar()) {
+					//if(supportsActionBar()) {
 						MainWindow.this.invalidateOptionsMenu();
-					}
+					//}
 					
 					loadSettings();
 					MainWindow.this.initiailizeWindows();
@@ -853,13 +861,26 @@ public class MainWindow extends Activity implements MainWindowCallback {
 					
 					break;
 				case MESSAGE_SHOWTOAST:
-					Toast t = null;
-					if(msg.arg1 == 1) {
-						t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_LONG);
-					} else {
-						t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_SHORT);		
-					}
-					t.show();
+					//Toast t = null;
+					//if(msg.arg1 == 1) {
+					//	t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_LONG);
+					//} else {
+					//	t = Toast.makeText(MainWindow.this, (String)msg.obj, Toast.LENGTH_SHORT);
+					//}
+					//t.show();
+
+					Snackbar bar = Snackbar.make(findViewById(R.id.window_container), (String)msg.obj,
+							Snackbar.LENGTH_INDEFINITE)
+							.setAction(android.R.string.ok,new View.OnClickListener() {
+								@Override
+								public void onClick(View view) {
+
+								}});
+
+					View snackbarView = bar.getView();
+					TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+					textView.setMaxLines(5);  // show multiple line
+					bar.show();
 					break;
 
 				case MESSAGE_DOHAPTICFEEDBACK:
@@ -1253,14 +1274,17 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			}*/
 			
 			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
-			Intent startAction = new Intent(serviceBindAction);
+			Intent startAction = new Intent(this,StellarService.class);
+			startAction.setPackage(this.getPackageName());
 			//startAction.putExtra(name, value)
 			//Bundle b = startAction.getExtras();
-			startAction.putExtra("DISPLAY", "aardwolf");
-			startAction.putExtra("PORT", 4010);
-			startAction.putExtra("HOST", "aardmud.org");
+			Intent mine = getIntent();
+
+			startAction.putExtra("DISPLAY", mine.getExtras().getString("DISPLAY","Aardwolf RPG"));
+			startAction.putExtra("PORT", mine.getExtras().getString("PORT","7777"));
+			startAction.putExtra("HOST", mine.getExtras().getString("HOST","aardmud.org"));
 			
-			this.startService(new Intent(serviceBindAction));
+			this.startService(startAction);
 			
 			//this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName()));
 			//servicestarted = true;
@@ -1301,26 +1325,54 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		
 		mInputBox.setListener(mInputBarAnimationListener);
 		mRootView = (RelativeLayout)this.findViewById(R.id.window_container);
-		
-		if(supportsActionBar()) {
-			Button b = new Button(this);
-			b.setBackgroundColor(0x00000000);
-			LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
-			b.setLayoutParams(tmp);
-			
-			b.setOnTouchListener(new View.OnTouchListener() {
-				
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					// TODO Auto-generated method stub
-					//Log.e("lsfd","sldjfs");
-					
-					return mRootView.dispatchTouchEvent(event);
-				}
-			});
-			this.getActionBar().setCustomView(b);
-			this.getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-		}
+
+
+		this.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
+
+		this.getSupportActionBar().setDisplayOptions(0, android.support.v7.app.ActionBar.DISPLAY_SHOW_HOME);
+		this.getSupportActionBar().setDisplayOptions(0, android.support.v7.app.ActionBar.DISPLAY_SHOW_TITLE);
+
+
+
+		Button b = new Button(this);
+		b.setBackgroundColor(0x00000000);
+		//b.setBackgroundColor(0x33FF0000);
+		android.support.v7.app.ActionBar.LayoutParams tmp2 = new android.support.v7.app.ActionBar.LayoutParams(android.support.v7.app.ActionBar.LayoutParams.MATCH_PARENT,android.support.v7.app.ActionBar.LayoutParams.WRAP_CONTENT);
+
+		LinearLayout.LayoutParams tmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+		b.setLayoutParams(tmp);
+		b.setEnabled(false);
+		//b.setClickable(false);
+		//b.setFocusable(false);
+		b.setOnTouchListener(new View.OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				//if(v.isEnabled()) {
+				//mRootView.dispatchTouchEvent(event);
+				//}
+
+				//if (v.getParent() != mRootView && mRootView != null) {
+				//if(v )
+				//return mRootView.dispatchTouchEvent(event);
+				return false;
+				//} else {
+				//	return true;
+				//}
+				//super.onTouchEvent(e);
+				//return false;
+			}
+				//return true; //digest this event.
+		});
+
+		//this.getSupportActionBar().setCustomView(b,tmp2);
+		//this.getSupportActionBar().setDisplayOptions(android.support.v7.app.ActionBar.DISPLAY_SHOW_CUSTOM);
+		//this.getSupportActionBar().setDisplayShowCustomEnabled(true);
+		//b.setEnabled(true);
+		//this.getSupportActionBar().setContent
+		//android.support.v7.widget.Toolbar parent =(android.support.v7.widget.Toolbar) customView.getParent();
+		//parent.setContentInsetsAbsolute(0,0);
+
 		//Log.e("Window","End on create");
 	}
 	
@@ -1407,18 +1459,18 @@ public class MainWindow extends Activity implements MainWindowCallback {
 
 	protected void popMenuStack() {
 		menuStack.pop();
-		if(supportsActionBar()) {
+		//if(supportsActionBar()) {
 			this.invalidateOptionsMenu();
-		}
+		//}
 	}
 
 	Stack<MenuStackItem> menuStack = new Stack<MenuStackItem>();
 	protected void pushMenuStack(String obj,String callback) {
 		MenuStackItem tmp = new MenuStackItem(obj,callback);
 		menuStack.push(tmp);
-		if(supportsActionBar()) {
+		//if(supportsActionBar()) {
 			this.invalidateOptionsMenu();
-		}
+		//}
 	}
 	
 	private class MenuStackItem {
@@ -1560,7 +1612,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		
 		
 		//MenuItem tmp = null;
-		if(supportsActionBar()) {
+
 			/*for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
 				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
 				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
@@ -1582,29 +1634,13 @@ public class MainWindow extends Activity implements MainWindowCallback {
 //			}
 			boolean hide = true;
 			
-			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options).setShowAsAction((hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+			MenuItemCompat.setShowAsAction(menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias),(hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+		    MenuItemCompat.setShowAsAction(menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers),(hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+		    MenuItemCompat.setShowAsAction(menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers),(hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
+		    MenuItemCompat.setShowAsAction(menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options),(hide==true) ? MenuItem.SHOW_AS_ACTION_NEVER : MenuItem.SHOW_AS_ACTION_ALWAYS);
 			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		} else {
-			
-			/*for(int i=1000;i<scriptCallbacks.size()+1000;i++) {
-				MenuItem hurdur = menu.add(0,i,0,scriptCallbacks.get(i-1000).getTitle());
-				if(scriptCallbacks.get(i-1000).getDrawable() != null) {
-					hurdur.setIcon(scriptCallbacks.get(i-1000).getDrawable());
-					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-				} else {
-					//hurdur.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-				}
-			}*/
-			menu.add(0,100,100,"Aliases").setIcon(R.drawable.ic_menu_alias);
-			menu.add(0,200,200,"Triggers").setIcon(R.drawable.ic_menu_triggers);
-			menu.add(0,300,300,"Timers").setIcon(R.drawable.ic_menu_timers);
-			menu.add(0,400,400,"Options").setIcon(R.drawable.ic_menu_options);
-			//menu.add(0,102,0,"Button Sets").setIcon(R.drawable.ic_menu_button_sets);
-			
-		}
+
 		//SubMenu sm = menu.addSubMenu(0, 900, 0, "More");
 		menu.add(0, 500, 500 ,"Speedwalk Directions");
 		menu.add(0, 600, 600, "Plugins");
@@ -1616,6 +1652,8 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		menu.add(0, 1200,1200,"Reset Settings");
 		menu.add(0, 1300,1300,"Export Settings");
 		menu.add(0, 1400,1400,"Import Settings");
+		menu.add(0, 1500,1500,"SDCard Permissions");
+		//menu.add(0, 1600,1600,"App Settings");
 		
 		
 		
@@ -1642,16 +1680,25 @@ public class MainWindow extends Activity implements MainWindowCallback {
 //		}
 		
 		switch(item.getItemId()) {
+			case 1500:
+				if(SDCardUtils.hasPermissions(this,findViewById(R.id.window_container),RP_INFO)) {
+					showPermissionsMessage(true);
+				}
+				break;
 		case 1200:
 			//reset
 			doResetDialog();
 			break;
 		case 1300:
-			doExportDialog();
+			if(SDCardUtils.hasPermissions(this,findViewById(R.id.window_container),RP_EXPORT)) {
+				doExportDialog();
+			}
 			//export
 			break;
 		case 1400:
-			doImportDialog();
+			if(SDCardUtils.hasPermissions(this,findViewById(R.id.window_container),RP_IMPORT)) {
+				doImportDialog(true);
+			}
 			break;
 		case 600:
 			BetterPluginSelectionDialog pd = new BetterPluginSelectionDialog(this,service);
@@ -1815,12 +1862,30 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	private Pattern xmlinsensitive = Pattern.compile("^.+\\.[Xx][Mm][Ll]$");
 	private Matcher xmlimatcher = xmlinsensitive.matcher("");
 	
-	private void doImportDialog() {
+	private void doImportDialog(boolean external) {
+		Context c = null;
+		try {
+			c = this.createPackageContext(this.getPackageName(), Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
+		} catch(NameNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		//dir = (external == true) ? "/BlowTorch" : c.getExternalFilesDir(null).getAbsolutePath();
+
 		String exportDir = ConfigurationLoader.getConfigurationValue("exportDirectory", this);
-		
-		File tmp = Environment.getExternalStorageDirectory();
+
+		File tmp = null;
+		if(external) {
+			tmp = Environment.getExternalStorageDirectory();
+		} else {
+			tmp = c.getExternalFilesDir(null);
+		}
 		//String exportDir = ConfigurationLoader.getConfigurationValue("exportDirectory", this);
-		File btermdir = new File(tmp,"/"+exportDir+"/");
+		File btermdir = null;
+		if(external) {
+			btermdir = new File(tmp, "/" + exportDir + "/");
+		} else {
+			btermdir = new File(tmp,"/");
+		}
 		
 		FilenameFilter xml_only = new FilenameFilter() {
 
@@ -2275,24 +2340,23 @@ public class MainWindow extends Activity implements MainWindowCallback {
 		} else if("com.happygoatstudios.bt.window.MainWindow.TEST_MODE".equals(this.getIntent().getAction())) {
 			mode = LAUNCH_MODE.TEST;
 		}*/
-		if(supportsActionBar()) {
-		//int height = this.getActionBar().getHeight();
-		//Log.e("ACFLSAFD","ACTION BAR HEIGHT(fg) IS :" + height);
-		this.getActionBar().setBackgroundDrawable(new ColorDrawable(0x00FFFFFF));
-		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_HOME);
-		this.getActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
-		this.getActionBar().addOnMenuVisibilityListener(new ActionBar.OnMenuVisibilityListener() {
-			
-			public void onMenuVisibilityChanged(boolean isVisible) {
-				//Log.e("FRAG","VISIBILITY  " + isVisible);
-			}
-		});
-		}
+		//if(supportsActionBar()) {
+			//int height = this.getActionBar().getHeight();
+			//Log.e("ACFLSAFD","ACTION BAR HEIGHT(fg) IS :" + height);
+
+
+
+		//}
 		
 		
 		if(!isServiceRunning()) {
 			String serviceBindAction = ConfigurationLoader.getConfigurationValue("serviceBindAction", this);
-			this.startService(new Intent(serviceBindAction));
+			Intent intent = new Intent(this, StellarService.class);
+			Intent mine = this.getIntent();
+			intent.putExtra("DISPLAY",mine.getExtras().getString("DISPLAY"));
+			intent.putExtra("HOST",mine.getExtras().getString("HOST"));
+			intent.putExtra("PORT",mine.getExtras().getString("PORT"));
+			this.startService(intent);
 			//start the service
 			/*if(mode == LAUNCH_MODE.FREE) {
 				this.startService(new Intent(com.happygoatstudios.bt.service.IStellarService.class.getName() + ".MODE_NORMAL"));
@@ -3069,9 +3133,13 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			//mRootLayout.requestLayout();
 		//}
 			
-		if(supportsActionBar()) {
+		//if(supportsActionBar()) {
 			this.invalidateOptionsMenu();
-		}
+		//}
+
+		//bring the toolbar to the front
+		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
+		myToolbar.bringToFront();
 		//Debug.stopMethodTracing();
 	}
 	
@@ -3102,9 +3170,7 @@ public class MainWindow extends Activity implements MainWindowCallback {
 			if(params == null) {
 				params = (android.widget.RelativeLayout.LayoutParams) w.getLayout(screenSize, !landscape);
 			}
-			if(supportsActionBar()) {
-				tmp.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-			}
+
 			tmp.setLayoutParams(params);
 			tmp.setTag(w.getName());
 			tmp.setVisibility(View.GONE);
@@ -3350,5 +3416,64 @@ public class MainWindow extends Activity implements MainWindowCallback {
 	public String getPluginOption(String plugin, String value) throws RemoteException {
 		String ret = service.getPluginOption(plugin,value);
 		return ret;
+	}
+
+	private void showPermissionsMessage(boolean granted) {
+		String dir = SDCardUtils.getSDCardRoot(this,granted);
+
+		String message = (granted == true) ? String.format(getString(R.string.sd_perm_granted),dir) : String.format(getString(R.string.sd_perm_denies),dir);
+		Snackbar bar = Snackbar.make(mRootView, message,
+				Snackbar.LENGTH_INDEFINITE)
+				.setAction(android.R.string.ok,new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+
+					}});
+
+		View snackbarView = bar.getView();
+		TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+		textView.setMaxLines(5);  // show multiple line
+		bar.show();
+	}
+
+	private void showImportMessage(final boolean external) {
+		String dir = SDCardUtils.getSDCardRoot(this,external);
+		String message = (external == true) ? String.format(getString(R.string.launcher_import_granted),dir) : String.format(getString(R.string.launcher_import_denied),dir);
+		Snackbar bar = Snackbar.make(mRootView, message,
+				Snackbar.LENGTH_INDEFINITE)
+				.setAction(android.R.string.ok,new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+						doImportDialog(external);
+					}});
+
+		View snackbarView = bar.getView();
+		TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+		textView.setMaxLines(5);  // show multiple line
+		bar.show();
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions,
+										   int[] grantResults) {
+		boolean external = false;
+		if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+			external = true;
+		}
+
+		switch(requestCode) {
+			case RP_INFO:
+				showPermissionsMessage(external);
+				break;
+			case RP_EXPORT:
+				doExportDialog();
+				break;
+			case RP_IMPORT:
+				//doImportDialog(external);
+				showImportMessage(external);
+				break;
+			default:
+				break;
+		}
 	}
 }
