@@ -13,7 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -26,6 +28,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -549,13 +552,18 @@ public class StellarService extends Service {
 	
 		PendingIntent contentIntent = PendingIntent.getActivity(this, notificationID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+		String channelId = null;
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			channelId = createNotificationChannel();
+		}
 		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context,channelId);
 		Notification note = builder.setContentIntent(contentIntent)
 				.setContentTitle(contentTitle)
 				.setSmallIcon(resId)
 				.setContentText(contentText)
-				.setOngoing(true).build();
+				.setOngoing(true).setChannelId(channelId).build();
+
 
 		//note.icon = resId;
 		//note.flags = Notification.FLAG_ONGOING_EVENT;
@@ -572,6 +580,22 @@ public class StellarService extends Service {
 		
 		mConnectionNotificationIdMap.put(display, notificationID);
 		mConnectionNotificationMap.put(display, note);
+	}
+
+	/** Create notification channel. This is require for startForeground starting on Android O
+	 *
+	 * @param none
+	 */
+	@TargetApi(26)
+	public final String createNotificationChannel() {
+		String channelId = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",this) + "_service";
+		String channelName = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",this);
+		NotificationChannel c = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+		c.setShowBadge(false);
+		c.setSound(null,null);
+		NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationManager.createNotificationChannel(c);
+		return channelId;
 	}
 
 	/** Called by a connection when disconnected to remove the associated notification.
