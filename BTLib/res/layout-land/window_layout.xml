@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/window_container"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-    
+    <com.offsetnull.bt.window.NoTouchActionBar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_alignParentTop = "true"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"
+        android:contentInsetLeft="0dp"
+        android:contentInsetStart="0dp"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        android:contentInsetRight="0dp"
+        android:contentInsetEnd="0dp"
+        app:contentInsetRight="0dp"
+        app:contentInsetEnd="0dp"
+		android:title=""
+        />
     
     <LinearLayout
         android:id="@+id/inputbar"
@@ -57,6 +76,9 @@
         android:layout_above="@id/inputbar"
         android:id="@+id/divider"
         android:background="#FF444488"/>
+
+
+
 <!-- 
 <RelativeLayout
 	android:layout_height="20dip"
