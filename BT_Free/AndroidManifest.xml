@@ -11,7 +11,7 @@
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
     <application tools:replace="android:theme" android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch" android:allowBackup="true" android:process="com.offsetnull.bt" android:hardwareAccelerated="true" android:theme="@style/Theme.AppCompat.Dark.NoActionBar">
-    	<meta-data android:value="82" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>     	<activity android:name="com.offsetnull.btfree.FreeLauncher"                  android:label="BlowTorch">            <intent-filter>                <action android:name="android.intent.action.MAIN" />                <category android:name="android.intent.category.LAUNCHER" />            </intent-filter>        </activity>        <activity android:name="com.offsetnull.bt.launcher.Launcher"                  android:label="BlowTorch"                  >
+    	<meta-data android:value="84" android:name="BLOWTORCH_LUA_LIBS_VERSION"/>     	<activity android:name="com.offsetnull.btfree.FreeLauncher"                  android:label="BlowTorch">            <intent-filter>                <action android:name="android.intent.action.MAIN" />                <category android:name="android.intent.category.LAUNCHER" />            </intent-filter>        </activity>        <activity android:name="com.offsetnull.bt.launcher.Launcher"                  android:label="BlowTorch"                  >
         </activity>
         <!-- android:windowSoftInputMode="adjustResize" -->
         <activity android:name="com.offsetnull.bt.window.MainWindow"
