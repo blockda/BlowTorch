@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="com.happygoatstudios.btpro"
+      android:versionCode="11"
+      android:versionName="1.0.8">
+      
+      
+    <application android:icon="@drawable/blowtorch_logo3" android:label="BlowTorch Pro" android:theme="@android:style/Theme.NoTitleBar">
+     	<activity android:name="com.happygoatstudios.btpro.ProLauncher"
+                  android:label="BlowTorch Pro">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.happygoatstudios.bt.launcher.Launcher"
+                  android:label="BlowTorch"
+                  >
+        </activity>
+        <!-- android:windowSoftInputMode="adjustResize" -->
+        <activity android:name="com.happygoatstudios.bt.window.MainWindow"
+        		  android:windowSoftInputMode="adjustResize"
+        		  android:label="BlowTorch"
+        		 
+        		  
+				  android:configChanges="orientation|keyboard|keyboardHidden"
+        		  android:launchMode = "singleTask">
+        		  <intent-filter>
+        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow"/>
+        		  	<action android:name="com.happygoatstudios.bt.window.MainWindow.NORMAL_MODE"/>
+        		  	<category android:name="android.intent.category.DEFAULT"/>
+        		  </intent-filter>
+        </activity>
+        <activity android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"
+        		  android:label="Settings Editor"
+        		  
+        		  
+        		  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden"
+        		  android:noHistory = "true">
+        		  <intent-filter>
+        		  	<action android:name="com.happygoatstudios.bt.settings.HyperSettingsActivity"/>
+        		  	<category android:name="android.intent.category.DEFAULT"/>
+        		  </intent-filter>
+        </activity>
+        <service android:name="com.happygoatstudios.bt.service.StellarService"
+        		 android:process=":stellar_pro">
+        		 <intent-filter>
+        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService"/>
+        		 	<action android:name="com.happygoatstudios.bt.service.IStellarService.MODE_NORMAL"/>
+        		 </intent-filter>
+        </service>
+        		  
+
+    </application>
+    <uses-sdk android:minSdkVersion="7" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+
+</manifest> 
