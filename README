@@ -1,8 +1,0 @@
-This is the BlowTorch repository.
-Most everything that is BlowTorch resides in /BTlib.
-
-The other folders, BT_Free, BT_Pro and BT_Test are launcher wrappers that invoke the com.happygoatstudios.bt.window.MainWindow Activity.
-
-gfx_src is just graphics stuff that has been accumulated.
-
-test commit
