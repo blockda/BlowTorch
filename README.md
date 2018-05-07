@@ -1,10 +1,15 @@
-#BlowTorch Source Code Repository
+# Contributors Notice
+
+I am accepting pull requests, feature requests and issues using the github project tracking tools. If you need more help setting up the code base for compilation, assistance in finding out how something works, or where to go to look for "x". This is the first time I've ever managed an open source project so I could use feedback on how I could do things better. Or let me know if I've got something out of bad practice checked into source code, BlowTorch is a work in progress; It can always be better.
+
+# BlowTorch Source Code Repository
 
 To Build BlowTorch you will need the following things downloaded:
 
 - [x] Android SDK (latest version is fine)
 - [x] Android NDK, specifically any version that isn't the latest. r15c is what I use.
 - [x] Unpack these, note the paths, they will be needed later
+- [x] For now the LuaJit, SQLite3, LuaJava, and Lua extension modules have their source code checked in for ease of use. I am pretty sure this is bad practice so it will probably be replaced by a downloader script or instructions here on what version to download and where to extract it.
 
 External libraries like sqlite and luajit have sources checked into this tree. That may change in the future.
 
@@ -14,6 +19,7 @@ now set the following Environment Variables:
 - [x] export NDK_HOME=path to ndk root
 - [x] export NDK_HOST_CC_TARGET=darwin-x86_64 for mac, linux-x86_64 for unix, i dont know for windows
 - [x] NDKABI=14 is defined in build_ndk_libraries.sh this should be moved.
+- [x] The current build script hard codes the compiler as GCC v.7. This should be pulled out into an environment variable.
 
 Now execute the NDK build script:
 
