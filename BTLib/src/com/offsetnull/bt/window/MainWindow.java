@@ -3139,7 +3139,9 @@ public class MainWindow extends AppCompatActivity implements MainWindowCallback,
 
 		//bring the toolbar to the front
 		android.support.v7.widget.Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
-		myToolbar.bringToFront();
+		if(myToolbar != null) {
+			myToolbar.bringToFront();
+		}
 		//Debug.stopMethodTracing();
 	}
 	
