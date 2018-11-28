@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
 	compileSdkVersion 27
-	buildToolsVersion '27.0.3'
+	buildToolsVersion '28.0.3'
 	signingConfigs {
     		release {
         		storeFile file("../BTLib/key/bt_privatekey.keystore")
@@ -55,6 +55,6 @@ android {
 	}
 dependencies {
 	copyButtonEx
-	compile project(":BTLib")
+	api project(":BTLib")
 }
 
