@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
- <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_pressed="true"
-           android:drawable="@drawable/up2d" /> <!-- pressed -->
-	<item android:drawable="@drawable/up2u" /> <!-- default -->
- </selector>
