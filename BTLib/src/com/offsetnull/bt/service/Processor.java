@@ -126,13 +126,17 @@ public class Processor {
 						boolean done = false;
 						int j = i + SKIP_BYTES;
 						while (!done) {
-							if (data[j] == TC.IAC) {
-								if (data[j + 1] == TC.SE) {
-									done = true;
-								}
+							if(j > data.length - 1) {
+								done = true; //immediately stop looking for the IAC bytes.
 							} else {
-								//opbuf.put(data[j]);
-								j++;
+								if (data[j] == TC.IAC) {
+									if (data[j + 1] == TC.SE) {
+										done = true;
+									}
+								} else {
+									//opbuf.put(data[j]);
+									j++;
+								}
 							}
 						}
 						// so if we are here, than j - (i+3) is the number of
@@ -193,7 +197,6 @@ public class Processor {
 					case TC.IAC:
 						buff.put(data[i]); // and one IAC and consume the extra.
 						count++;
-						break;
 					case TC.GOAHEAD:
 					case TC.IP:
 						// TODO: REAL IP HANDLING HERE, I THINK THIS INVOLVES
