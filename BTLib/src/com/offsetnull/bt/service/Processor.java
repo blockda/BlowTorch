@@ -195,7 +195,7 @@ public class Processor {
 
 					switch (data[i + 1]) {
 					case TC.IAC:
-						buff.put(data[i]); // and one IAC and consume the extra.
+						buff.put(data[i]); // add one IAC and consume the extra.
 						count++;
 					case TC.GOAHEAD:
 					case TC.IP:

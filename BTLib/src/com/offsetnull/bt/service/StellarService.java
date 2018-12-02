@@ -554,7 +554,7 @@ public class StellarService extends Service {
 
 		String channelId = null;
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			channelId = createNotificationChannel();
+			channelId = createNotificationChannel(display);
 		}
 		//note.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(context,channelId);
@@ -587,8 +587,8 @@ public class StellarService extends Service {
 	 * @param none
 	 */
 	@TargetApi(26)
-	public final String createNotificationChannel() {
-		String channelId = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",this) + "_service";
+	public final String createNotificationChannel(final String display) {
+		String channelId = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",this) + "_service" + "_" + display;
 		String channelName = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",this);
 		NotificationChannel c = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT);
 		c.setShowBadge(false);

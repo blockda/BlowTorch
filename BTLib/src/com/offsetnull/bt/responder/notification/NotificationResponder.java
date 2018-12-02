@@ -288,7 +288,7 @@ public class NotificationResponder extends TriggerResponder implements Parcelabl
 		PendingIntent contentIntent = PendingIntent.getActivity(c, myTriggerId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		//note.setLatestEventInfo(c, title, message, contentIntent);
-		String channelId = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",c) + "_service";
+		String channelId = ConfigurationLoader.getConfigurationValue("ongoingNotificationLabel",c) + "_service" + "_" + displayname;
 
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(c,channelId);
 		builder.setContentIntent(contentIntent)
